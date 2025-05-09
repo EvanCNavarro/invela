@@ -319,16 +319,97 @@ export default function RiskScoreConfigurationPage() {
       />
       
       <PageTemplate>
-        <Tabs defaultValue="priority" className="w-full">
-          <TabsList>
-            <TabsTrigger value="priority">Dimension Priorities</TabsTrigger>
-            <TabsTrigger value="comparative">Comparative Analysis</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Right column: Risk score summary - Now always visible */}
+          <div className="col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Score Summary</CardTitle>
+              </CardHeader>
+              
+              <CardContent>
+                {isLoading || !initialLoadAttempted ? (
+                  <div className="flex flex-col items-center justify-center">
+                    <Skeleton className="h-40 w-40 rounded-full mb-4" />
+                    <Skeleton className="h-6 w-32 rounded mb-2" />
+                    <Skeleton className="h-4 w-24 rounded mb-6" />
+                    
+                    <Skeleton className="h-4 w-full rounded mb-2" />
+                    <Skeleton className="h-8 w-full rounded mb-6" />
+                    
+                    <Skeleton className="h-4 w-3/4 rounded mb-4" />
+                    <Skeleton className="h-3 w-full rounded mb-2" />
+                    <Skeleton className="h-3 w-full rounded mb-2" />
+                    <Skeleton className="h-3 w-full rounded mb-2" />
+                    <Skeleton className="h-3 w-full rounded mb-2" />
+                    <Skeleton className="h-3 w-full rounded mb-2" />
+                    <Skeleton className="h-3 w-full rounded" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <RiskGauge score={score} riskLevel={riskLevel} />
+                    
+                    <div className="mt-8 w-full">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium">Risk Acceptance Level</span>
+                        <span className="font-medium text-blue-800">{score}</span>
+                      </div>
+                      
+                      <div className="flex justify-between mb-2">
+                        <span className="text-xs">Low</span>
+                        <span className="text-xs">Medium</span>
+                        <span className="text-xs">High</span>
+                      </div>
+                      
+                      <Slider
+                        key={`risk-slider-${score}`} // Add key to force re-render when score changes
+                        defaultValue={[score]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[score]}
+                        onValueChange={(value) => {
+                          handleScoreChange(value[0]);
+                        }}
+                        onClick={() => {
+                          // When user clicks the slider, set userSetScore to true
+                          if (!userSetScore) {
+                            setUserSetScore(true);
+                            riskScoreLogger.log('user:action', 'User manually adjusted risk acceptance level');
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex justify-between w-full mt-6">
+                      <Button variant="outline" onClick={handleReset} disabled={isSaving} size="sm">
+                        Reset to Defaults
+                      </Button>
+                      
+                      <Button onClick={handleSave} disabled={isSaving} size="sm">
+                        {isSaving ? (
+                          <>Saving</>
+                        ) : (
+                          <>Save Configuration</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
           
-          <TabsContent value="priority" className="p-0 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Left column: Dimension priorities */}
-              <div className="col-span-2">
+          {/* Left column: Tabs for Dimension Priorities and Comparative Analysis */}
+          <div className="col-span-2">
+            <Tabs defaultValue="priority" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="priority">Dimension Priorities</TabsTrigger>
+                <TabsTrigger value="comparative">Comparative Analysis</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="priority" className="p-0">
                 <Card>
                   <CardHeader>
                     <CardTitle>Dimension Priorities</CardTitle>
@@ -349,123 +430,41 @@ export default function RiskScoreConfigurationPage() {
                         {renderDimensionRows()}
                       </DndProvider>
                     </div>
-                    
-                    <div className="flex justify-between mt-6">
-                      <Button variant="outline" onClick={handleReset} disabled={isSaving}>
-                        Reset to Defaults
-                      </Button>
-                      
-                      <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving ? (
-                          <>Saving</>
-                        ) : (
-                          <>Save Configuration</>
-                        )}
-                      </Button>
-                    </div>
                   </CardContent>
                 </Card>
-              </div>
+              </TabsContent>
               
-              {/* Right column: Risk score summary */}
-              <div className="col-span-1">
+              <TabsContent value="comparative" className="p-0">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Risk Score Summary</CardTitle>
+                    <CardTitle>Comparative Risk Analysis</CardTitle>
+                    <CardDescription>
+                      Compare your organization's risk profile against industry benchmarks and similar organizations.
+                    </CardDescription>
                   </CardHeader>
                   
                   <CardContent>
                     {isLoading || !initialLoadAttempted ? (
-                      <div className="flex flex-col items-center justify-center">
-                        <Skeleton className="h-40 w-40 rounded-full mb-4" />
-                        <Skeleton className="h-6 w-32 rounded mb-2" />
-                        <Skeleton className="h-4 w-24 rounded mb-6" />
-                        
-                        <Skeleton className="h-4 w-full rounded mb-2" />
-                        <Skeleton className="h-8 w-full rounded mb-6" />
-                        
-                        <Skeleton className="h-4 w-3/4 rounded mb-4" />
-                        <Skeleton className="h-3 w-full rounded mb-2" />
-                        <Skeleton className="h-3 w-full rounded mb-2" />
-                        <Skeleton className="h-3 w-full rounded mb-2" />
-                        <Skeleton className="h-3 w-full rounded mb-2" />
-                        <Skeleton className="h-3 w-full rounded mb-2" />
-                        <Skeleton className="h-3 w-full rounded" />
+                      <div className="flex justify-center items-center h-96">
+                        <div className="flex flex-col items-center">
+                          <Skeleton className="h-64 w-64 rounded-full mb-6" />
+                          <Skeleton className="h-4 w-3/4 rounded mb-2" />
+                          <Skeleton className="h-4 w-1/2 rounded" />
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center">
-                        <RiskGauge score={score} riskLevel={riskLevel} />
-                        
-                        <div className="mt-8 w-full">
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium">Risk Acceptance Level</span>
-                            <span className="font-medium text-blue-800">{score}</span>
-                          </div>
-                          
-                          <div className="flex justify-between mb-2">
-                            <span className="text-xs">Low</span>
-                            <span className="text-xs">Medium</span>
-                            <span className="text-xs">High</span>
-                          </div>
-                          
-                          <Slider
-                            key={`risk-slider-${score}`} // Add key to force re-render when score changes
-                            defaultValue={[score]}
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={[score]}
-                            onValueChange={(value) => {
-                              handleScoreChange(value[0]);
-                            }}
-                            onClick={() => {
-                              // When user clicks the slider, set userSetScore to true
-                              if (!userSetScore) {
-                                setUserSetScore(true);
-                                riskScoreLogger.log('user:action', 'User manually adjusted risk acceptance level');
-                              }
-                            }}
-                          />
-                        </div>
-                        
-                        {/* Weight Distribution section removed as requested */}
-                      </div>
+                      <ComparativeVisualization 
+                        dimensions={dimensions} 
+                        globalScore={score} 
+                        riskLevel={riskLevel} 
+                      />
                     )}
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="comparative" className="p-0 mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Comparative Risk Analysis</CardTitle>
-                <CardDescription>
-                  Compare your organization's risk profile against industry benchmarks and similar organizations.
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent>
-                {isLoading || !initialLoadAttempted ? (
-                  <div className="flex justify-center items-center h-96">
-                    <div className="flex flex-col items-center">
-                      <Skeleton className="h-64 w-64 rounded-full mb-6" />
-                      <Skeleton className="h-4 w-3/4 rounded mb-2" />
-                      <Skeleton className="h-4 w-1/2 rounded" />
-                    </div>
-                  </div>
-                ) : (
-                  <ComparativeVisualization 
-                    dimensions={dimensions} 
-                    globalScore={score} 
-                    riskLevel={riskLevel} 
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </PageTemplate>
     </>
   );
