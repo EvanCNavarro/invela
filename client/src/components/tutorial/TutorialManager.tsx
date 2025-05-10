@@ -201,6 +201,11 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Analytics Dashboard',
         description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
         imagePath: '/assets/tutorials/claims/analytics.svg',
+      },
+      {
+        title: 'Documentation Management',
+        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
+        imagePath: '/assets/tutorials/claims/documentation.svg',
       }
     ]
   },
