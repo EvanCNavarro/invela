@@ -10,6 +10,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import {
   Settings,
   Check,
@@ -118,6 +119,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Add the Tutorial Manager component */}
+      <TutorialManager tabName="dashboard" />
+      
       <PageTemplate
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
