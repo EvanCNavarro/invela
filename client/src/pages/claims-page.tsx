@@ -10,27 +10,66 @@ import { apiRequest } from '@/lib/queryClient';
 import { TabTutorialModal } from '@/components/tutorial/TabTutorialModal';
 import { ClaimsTutorial } from '@/components/tutorial/tabs/ClaimsTutorial';
 
-// Simplified tutorial manager for claims page
+/**
+ * Claims Tutorial Manager
+ * 
+ * This component handles displaying the claims tutorial based on user's progress.
+ * It uses a specialized tutorial component for claims rather than the generic TutorialManager
+ * to provide better control and detailed logging for debugging purposes.
+ */
 function ClaimsTutorialManager() {
-  // Force tutorial to display initially to ensure it works correctly
-  const [forceDisplay, setForceDisplay] = useState<boolean>(true);
+  // Track whether we've already checked the tutorial status
+  const [statusChecked, setStatusChecked] = useState<boolean>(false);
+  // Initial state management
+  const [shouldDisplay, setShouldDisplay] = useState<boolean>(false);
   
   useEffect(() => {
-    console.log('[ClaimsTutorialManager] Setting up claims tutorial with forced display');
+    // Standard logging for initialization
+    console.log('[ClaimsTutorialManager] Initializing claims tutorial component');
     
-    // Log that we attempted to force display the tutorial
+    // Directly check tutorial status via API
+    const checkTutorialStatus = async () => {
+      try {
+        console.log('[ClaimsTutorialManager] Checking claims tutorial status via API');
+        const response = await fetch('/api/user-tab-tutorials/claims/status');
+        const data = await response.json();
+        
+        console.log('[ClaimsTutorialManager] Claims tutorial status:', data);
+        
+        // If the tutorial exists and is not completed, we should show it
+        const shouldShowTutorial = data.exists && !data.completed;
+        console.log(`[ClaimsTutorialManager] Should display tutorial: ${shouldShowTutorial}`);
+        
+        setShouldDisplay(shouldShowTutorial);
+        setStatusChecked(true);
+      } catch (error) {
+        console.error('[ClaimsTutorialManager] Error checking tutorial status:', error);
+        // Default to showing tutorial if we can't check status
+        setShouldDisplay(true);
+        setStatusChecked(true);
+      }
+    };
+    
+    checkTutorialStatus();
+    
+    // Clean up function
     return () => {
       console.log('[ClaimsTutorialManager] Claims tutorial component unmounted');
     };
   }, []);
   
-  // Import and use our specialized claims tutorial component
+  // Only render if we've checked the status to avoid flickering
+  if (!statusChecked) {
+    console.log('[ClaimsTutorialManager] Status not yet checked, deferring render');
+    return null;
+  }
+  
+  console.log(`[ClaimsTutorialManager] Rendering with shouldDisplay=${shouldDisplay}`);
+  
+  // Render the claims tutorial component
   return (
     <>
-      <TutorialManager tabName="claims" />
-      {forceDisplay && (
-        <ClaimsTutorial forceTutorial={true} />
-      )}
+      {shouldDisplay && <ClaimsTutorial forceTutorial={true} />}
     </>
   );
 }

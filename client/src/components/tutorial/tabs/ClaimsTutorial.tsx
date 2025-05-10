@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from '@/components/tutorial/TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+
+// Create a dedicated logger for claims tutorial
+const logger = createTutorialLogger('Claims');
 
 const claimsTutorialSteps: TutorialStep[] = [
   {
@@ -42,8 +46,19 @@ export interface ClaimsTutorialProps {
  * showing step-by-step instructions with custom images
  * and handling tutorial state persistence.
  */
+/**
+ * Claims Tutorial Component
+ * 
+ * This enhanced implementation focuses on better state management,
+ * more detailed logging, and guaranteed display of the tutorial modal.
+ * 
+ * @param forceTutorial Whether to force the tutorial to display regardless of database state
+ */
 export function ClaimsTutorial({ forceTutorial = false }: ClaimsTutorialProps) {
-  const [tutorialVisible, setTutorialVisible] = useState(false);
+  // Track visibility state
+  const [tutorialVisible, setTutorialVisible] = useState(forceTutorial);
+  // Enhanced logging state
+  const [renderAttempts, setRenderAttempts] = useState(0);
   
   // Get tutorial state from hook
   const { 
@@ -61,56 +76,115 @@ export function ClaimsTutorial({ forceTutorial = false }: ClaimsTutorialProps) {
   // Connect to WebSocket updates for real-time sync
   const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket('claims');
   
-  // Determine whether to show the tutorial
+  // Keep track of render attempts
   useEffect(() => {
-    console.log('[ClaimsTutorial] Initializing component', { 
+    setRenderAttempts(prev => prev + 1);
+  }, []);
+  
+  // Determine whether to show the tutorial with detailed logging
+  useEffect(() => {
+    // Log with generous details for debugging
+    logger.init('Initializing component', { 
       tutorialEnabled, 
       isLoading, 
       isCompleted,
-      forceTutorial 
+      forceTutorial,
+      currentStep,
+      totalSteps,
+      renderAttempts
     });
     
+    // Logic determining visibility
     if (!isLoading) {
-      const shouldShowTutorial = 
-        (tutorialEnabled && !isCompleted) || forceTutorial;
+      // Calculate visibility: show if forced OR (enabled AND not completed)
+      const shouldShowTutorial = forceTutorial || (tutorialEnabled && !isCompleted);
       
-      console.log('[ClaimsTutorial] Setting tutorial visibility:', shouldShowTutorial);
+      logger.debug('Visibility decision', {
+        forceTutorial,
+        tutorialEnabled,
+        isCompleted,
+        decision: shouldShowTutorial
+      });
+      
+      // If this is forced, we'll enforce visibility by setting state directly
+      if (forceTutorial) {
+        logger.info('Force enabled - showing tutorial regardless of DB state');
+      }
+      
       setTutorialVisible(shouldShowTutorial);
+    } else {
+      logger.debug('Still loading, deferring visibility decision');
     }
-  }, [tutorialEnabled, isLoading, isCompleted, forceTutorial]);
+  }, [tutorialEnabled, isLoading, isCompleted, forceTutorial, renderAttempts, currentStep, totalSteps]);
   
   // Handle WebSocket updates
   useEffect(() => {
     if (tutorialProgress) {
-      console.log('[ClaimsTutorial] Received tutorial progress update via WebSocket:', tutorialProgress);
+      logger.debug('Received tutorial progress update via WebSocket', tutorialProgress);
     }
     
     if (tutorialCompleted) {
-      console.log('[ClaimsTutorial] Tutorial completed via WebSocket update');
+      logger.info('Tutorial completed via WebSocket update');
       setTutorialVisible(false);
     }
   }, [tutorialProgress, tutorialCompleted]);
   
-  // Don't render anything if tutorial should not be shown
-  if (!tutorialVisible || isLoading) {
+  // For forced display, we'll use a manual approach with raw data from assets
+  const manualStep = Math.min(currentStep, claimsTutorialSteps.length - 1);
+  logger.debug(`Render preparation - tutorial visible: ${tutorialVisible}, step: ${manualStep}/${claimsTutorialSteps.length}`);
+  
+  // Early return for non-visible state
+  if (!tutorialVisible) {
+    logger.debug('Tutorial not visible, skipping render');
     return null;
   }
   
-  // Get current step content
-  const currentStepContent = claimsTutorialSteps[currentStep] || claimsTutorialSteps[0];
+  // If still loading and not forced, don't render yet
+  if (isLoading && !forceTutorial) {
+    logger.debug('Tutorial still loading, deferring render');
+    return null;
+  }
   
-  // Render the modal
+  // Get current step content safely
+  const currentStepContent = claimsTutorialSteps[manualStep] || claimsTutorialSteps[0];
+  
+  // Log render event for debugging
+  logger.render('Rendering tutorial modal', {
+    step: manualStep + 1,
+    title: currentStepContent.title,
+    totalSteps: claimsTutorialSteps.length
+  });
+  
+  // Render the modal with enhanced logging of props
   return (
     <TabTutorialModal
       title={currentStepContent.title}
       description={currentStepContent.description}
       imageUrl={currentStepContent.imagePath}
-      currentStep={currentStep}
-      totalSteps={totalSteps}
-      onNext={handleNext}
-      onBack={currentStep > 0 ? handleBack : undefined}
-      onClose={markTutorialSeen}
-      onComplete={handleComplete}
+      currentStep={manualStep}
+      totalSteps={claimsTutorialSteps.length}
+      onNext={() => {
+        logger.interaction('Next button clicked');
+        // Log the step transition for diagnostics
+        logger.debug(`Moving from step ${manualStep} to ${manualStep + 1}`);
+        handleNext();
+      }}
+      onBack={manualStep > 0 ? () => {
+        logger.interaction('Back button clicked');
+        // Log the step transition for diagnostics
+        logger.debug(`Moving from step ${manualStep} to ${manualStep - 1}`);
+        handleBack();
+      } : undefined}
+      onClose={() => {
+        logger.interaction('Close/Skip button clicked');
+        logger.info('Tutorial skipped and marked as seen');
+        markTutorialSeen();
+      }}
+      onComplete={() => {
+        logger.interaction('Complete button clicked');
+        logger.info('Tutorial completed successfully');
+        handleComplete();
+      }}
     />
   );
 }
