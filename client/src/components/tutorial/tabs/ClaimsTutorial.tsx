@@ -40,21 +40,34 @@ export interface ClaimsTutorialProps {
 }
 
 /**
- * Claims Tutorial Component
+ * DEPRECATED: Claims Tutorial Component
  * 
- * This component manages the tutorial for the Claims page,
- * showing step-by-step instructions with custom images
- * and handling tutorial state persistence.
- */
-/**
- * Claims Tutorial Component
+ * @deprecated This component is deprecated and will be removed in a future release.
+ * Please use the TutorialManager component with tabName="claims" instead:
  * 
- * This enhanced implementation focuses on better state management,
- * more detailed logging, and guaranteed display of the tutorial modal.
+ * ```jsx
+ * <TutorialManager tabName="claims" />
+ * ```
+ * 
+ * The centralized TutorialManager component in @/components/tutorial/TutorialManager.tsx 
+ * now includes all claims tutorial content and provides a more consistent experience
+ * across all tabs in the application.
+ * 
+ * This custom implementation is being phased out in favor of the unified approach
+ * to ensure consistent behavior, better logging, and centralized tutorial management.
  * 
  * @param forceTutorial Whether to force the tutorial to display regardless of database state
  */
 export function ClaimsTutorial({ forceTutorial = false }: ClaimsTutorialProps) {
+  // Log deprecation warning
+  useEffect(() => {
+    console.warn(
+      '[DEPRECATED] ClaimsTutorial component is deprecated. Please use <TutorialManager tabName="claims" /> instead. ' +
+      'This component will be removed in a future release.'
+    );
+    logger.warn('ClaimsTutorial component is deprecated. Migration to TutorialManager recommended.');
+  }, []);
+  
   // Track visibility state
   const [tutorialVisible, setTutorialVisible] = useState(forceTutorial);
   // Enhanced logging state
