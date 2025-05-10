@@ -79,172 +79,6 @@ const TUTORIAL_CONTENT: Record<string, {
       },
     ]
   },
-  'claims-risk': {
-    title: 'Claims Risk Analysis',
-    description: 'Learn how to analyze and interpret insurance claims risk data',
-    steps: [
-      {
-        title: 'Claims Risk Analysis',
-        description: 'Welcome to the Claims Risk Analysis page. Here you can analyze insurance claims data and identify potential risk patterns across your organization.',
-        imagePath: '/assets/tutorials/claims-risk/overview.svg',
-      },
-      {
-        title: 'Claims Distribution',
-        description: 'This visualization shows the distribution of claims by category. Larger segments represent areas with higher claim frequency.',
-        imagePath: '/assets/tutorials/claims-risk/distribution.svg',
-      },
-      {
-        title: 'Claim Types',
-        description: 'Review different claim types and their associated risk factors. Higher risk claims are highlighted for easier identification.',
-        imagePath: '/assets/tutorials/claims-risk/types.svg',
-      },
-      {
-        title: 'Temporal Analysis',
-        description: 'Examine claims patterns over time to identify seasonal trends or emerging risk areas that require attention.',
-        imagePath: '/assets/tutorials/claims-risk/temporal.svg',
-      }
-    ]
-  },
-  'network-view': {
-    title: 'Network Visualization',
-    description: 'Learn how to use the network visualization to understand relationships and risk exposure',
-    steps: [
-      {
-        title: 'Network Overview',
-        description: 'Welcome to the Network Visualization page. This tool helps you understand connections and risk relationships between different entities in your network.',
-        imagePath: '/assets/tutorials/network-view/overview.svg',
-      },
-      {
-        title: 'Connection Types',
-        description: 'Different connection lines represent various relationship types. Thicker lines indicate stronger connections and potentially higher risk exposure.',
-        imagePath: '/assets/tutorials/network-view/connections.svg',
-      },
-      {
-        title: 'Entity Information',
-        description: 'Click on any entity to view detailed information. You can see risk scores, connection details, and historical data.',
-        imagePath: '/assets/tutorials/network-view/entity-details.svg',
-      },
-      {
-        title: 'Filtering Options',
-        description: 'Use the filtering options to focus on specific relationship types, risk thresholds, or entity categories.',
-        imagePath: '/assets/tutorials/network-view/filtering.svg',
-      }
-    ]
-  },
-  'dashboard': {
-    title: 'Dashboard Overview',
-    description: 'Learn how to navigate and use the main dashboard',
-    steps: [
-      {
-        title: 'Dashboard Overview',
-        description: 'Welcome to your dashboard. This is your central hub for monitoring risk, tasks, and important metrics across your organization.',
-        imagePath: '/assets/tutorials/dashboard/overview.svg',
-      },
-      {
-        title: 'Summary Cards',
-        description: 'These cards provide quick insights into key metrics. Click any card to view more detailed information about that specific area.',
-        imagePath: '/assets/tutorials/dashboard/summary-cards.svg',
-      },
-      {
-        title: 'Recent Activity',
-        description: 'The Recent Activity section shows the latest changes, updates, and important events related to your organization.',
-        imagePath: '/assets/tutorials/dashboard/recent-activity.svg',
-      },
-      {
-        title: 'Action Items',
-        description: 'Action Items highlight tasks that require your attention. Click on any item to take immediate action or view more details.',
-        imagePath: '/assets/tutorials/dashboard/action-items.svg',
-      }
-    ]
-  },
-  'task-center': {
-    title: 'Task Center',
-    description: 'Learn how to manage and track tasks in the Task Center',
-    steps: [
-      {
-        title: 'Task Center Overview',
-        description: 'Welcome to the Task Center. This is where you can track, manage, and complete all tasks assigned to your organization.',
-        imagePath: '/assets/tutorials/task-center/overview.svg',
-      },
-      {
-        title: 'Task Filtering',
-        description: 'Use these filters to find specific tasks based on status, type, priority, or assignee. This helps you focus on what\'s most important.',
-        imagePath: '/assets/tutorials/task-center/filtering.svg',
-      },
-      {
-        title: 'Task Details',
-        description: 'Click on any task to view its full details. You can see deadlines, attachments, comments, and all related information.',
-        imagePath: '/assets/tutorials/task-center/details.svg',
-      },
-      {
-        title: 'Task Actions',
-        description: 'Use these action buttons to update task status, add comments, upload files, or assign tasks to team members.',
-        imagePath: '/assets/tutorials/task-center/actions.svg',
-      },
-      {
-        title: 'Task Analytics',
-        description: 'The analytics section shows trends in task completion, outstanding items, and overall productivity metrics.',
-        imagePath: '/assets/tutorials/task-center/analytics.svg',
-      }
-    ]
-  },
-  'file-vault': {
-    title: 'File Vault',
-    description: 'Learn how to securely store and manage files',
-    steps: [
-      {
-        title: 'File Vault Overview',
-        description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
-        imagePath: '/assets/tutorials/file-vault/overview.svg',
-      },
-      {
-        title: 'Document Categories',
-        description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
-        imagePath: '/assets/tutorials/file-vault/categories.svg',
-      },
-      {
-        title: 'Upload Process',
-        description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
-        imagePath: '/assets/tutorials/file-vault/upload.svg',
-      },
-      {
-        title: 'Security Settings',
-        description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
-        imagePath: '/assets/tutorials/file-vault/security.svg',
-      }
-    ]
-  },
-  'claims': {
-    title: 'Claims Management',
-    description: 'Learn how to manage insurance claims efficiently',
-    steps: [
-      {
-        title: 'Claims Dashboard',
-        description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
-        imagePath: '/assets/tutorials/claims/overview.svg',
-      },
-      {
-        title: 'Claim Details',
-        description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
-        imagePath: '/assets/tutorials/claims/details.svg',
-      },
-      {
-        title: 'Claims Processing',
-        description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
-        imagePath: '/assets/tutorials/claims/processing.svg',
-      },
-      {
-        title: 'Analytics Dashboard',
-        description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
-        imagePath: '/assets/tutorials/claims/analytics.svg',
-      },
-      {
-        title: 'Documentation Management',
-        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
-        imagePath: '/assets/tutorials/claims/documentation.svg',
-      }
-    ]
-  },
   'insights': {
     title: 'Insights Dashboard',
     description: 'Learn how to interpret and use business intelligence insights',
@@ -297,6 +131,32 @@ const TUTORIAL_CONTENT: Record<string, {
       }
     ]
   },
+  'file-vault': {
+    title: 'File Vault',
+    description: 'Learn how to securely store and manage files',
+    steps: [
+      {
+        title: 'File Vault Overview',
+        description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
+        imagePath: '/assets/tutorials/file-vault/overview.svg',
+      },
+      {
+        title: 'Document Categories',
+        description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
+        imagePath: '/assets/tutorials/file-vault/categories.svg',
+      },
+      {
+        title: 'Upload Process',
+        description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
+        imagePath: '/assets/tutorials/file-vault/upload.svg',
+      },
+      {
+        title: 'Security Settings',
+        description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
+        imagePath: '/assets/tutorials/file-vault/security.svg',
+      }
+    ]
+  },
   'company-profile': {
     title: 'Company Profile',
     description: 'Learn how to manage and update your company information',
@@ -343,6 +203,32 @@ const TUTORIAL_CONTENT: Record<string, {
         imagePath: '/assets/tutorials/playground/results.svg',
       }
     ]
+  },
+  'dashboard': {
+    title: 'Dashboard Overview',
+    description: 'Learn how to navigate and use the main dashboard',
+    steps: [
+      {
+        title: 'Dashboard Overview',
+        description: 'Welcome to your dashboard. This is your central hub for monitoring risk, tasks, and important metrics across your organization.',
+        imagePath: '/assets/tutorials/dashboard/overview.svg',
+      },
+      {
+        title: 'Summary Cards',
+        description: 'These cards provide quick insights into key metrics. Click any card to view more detailed information about that specific area.',
+        imagePath: '/assets/tutorials/dashboard/summary-cards.svg',
+      },
+      {
+        title: 'Recent Activity',
+        description: 'The Recent Activity section shows the latest changes, updates, and important events related to your organization.',
+        imagePath: '/assets/tutorials/dashboard/recent-activity.svg',
+      },
+      {
+        title: 'Action Items',
+        description: 'Action Items highlight tasks that require your attention. Click on any item to take immediate action or view more details.',
+        imagePath: '/assets/tutorials/dashboard/action-items.svg',
+      }
+    ]
   }
 };
 
@@ -358,7 +244,8 @@ interface TutorialManagerProps {
  * and manages state, WebSocket communication, and UI rendering.
  */
 export function TutorialManager({ tabName }: TutorialManagerProps) {
-  console.log(`[TutorialManager] Initializing for tab: ${tabName}`);
+  // Initialize with detailed logging
+  logger.init(`Initializing for tab: ${tabName}`);
   
   const [initializationComplete, setInitializationComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -373,264 +260,146 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
       'claims-risk-analysis': 'claims-risk',
       'network-visualization': 'network-view',
       
-      // Company profile variations
-      'company-profile-page': 'company-profile',
+      // File management
+      'file-manager': 'file-vault',
       
-      // Task center variations
-      'task-center-page': 'task-center',
-      
-      // File vault variations
-      'file-vault-page': 'file-vault',
-      'FileVault': 'file-vault',
-      
-      // Dashboard variations
-      'dashboard-page': 'dashboard',
-      
-      // Ensure consistent handling for all known tabs
-      'risk-score-page': 'risk-score',
-      'claims-risk-page': 'claims-risk',
-      'insights-page': 'insights',
-      'network-page': 'network',
-      'playground-page': 'playground',
-      'claims-page': 'claims'
+      // Default fallback - assume direct match
+      [inputTabName]: inputTabName
     };
     
-    // Return normalized name if mapping exists, otherwise return original
+    // Return the normalized version or the original if no mapping exists
     return tabMappings[inputTabName] || inputTabName;
   };
   
-  // Get normalized tab name for better compatibility
+  // Get normalized tab name for consistency
   const normalizedTabName = normalizeTabName(tabName);
-  console.log(`[TutorialManager] Normalized tab name: ${normalizedTabName} (original: ${tabName})`);
   
-  // Get tutorial content for the current tab
-  const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
-  
-  // If no tutorial content exists for this tab, don't render anything
-  if (!tutorialContent) {
-    console.log(`[TutorialManager] No tutorial content found for tab: ${tabName}`);
-    return null;
-  }
-  
-  const { steps } = tutorialContent;
-  
-  // Initialize tutorial entry when component mounts
-  useEffect(() => {
-    const initializeTutorial = async () => {
-      try {
-        console.log(`[TutorialManager] Checking if tutorial exists for tab: ${tabName}`);
-        
-        // Track initialization attempts for diagnostics
-        console.log(`[TutorialManager] Tutorial initialization started for: ${tabName} (normalized: ${normalizedTabName})`);
-        
-        // Check if tutorial exists by fetching status
-        console.log(`[TutorialManager] Fetching tutorial status for tab: ${tabName}`);
-        const url = `/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`;
-        console.log(`[TutorialManager] Status URL: ${url}`);
-        
-        let statusResponse;
-        try {
-          statusResponse = await apiRequest<{exists?: boolean}>(url);
-          console.log(`[TutorialManager] Tutorial status response:`, statusResponse);
-          
-          // Log the actual response 
-          console.log(`[TutorialManager] Status response details:`, JSON.stringify(statusResponse));
-        } catch (statusError) {
-          console.error(`[TutorialManager] Error fetching tutorial status:`, statusError);
-          console.log(`[TutorialManager] Will attempt to create a new tutorial entry`);
-          // Continue with creation if status check fails
-          statusResponse = { exists: false };
-        }
-        
-        // If tutorial doesn't exist (exists is explicitly false), create it
-        if (statusResponse && 'exists' in statusResponse && statusResponse.exists === false) {
-          console.log(`[TutorialManager] Creating new tutorial entry for tab: ${tabName}`);
-          
-          // Create a new tutorial entry - explicitly using POST method and direct payload
-          console.log(`[TutorialManager] Raw tab name value:`, tabName);
-          
-          try {
-            // Try direct POST with payload instead of using the options pattern
-            const initResponse = await apiRequest(
-              'POST', // Explicit method parameter
-              '/api/user-tab-tutorials', // URL as second parameter
-              {
-                tabName: tabName, // Explicitly use the exact property name expected by the server
-                currentStep: 0,
-                completed: false,
-                totalSteps: steps.length
-              } // Data as third parameter 
-            );
-            
-            console.log(`[TutorialManager] Tutorial initialization response:`, initResponse);
-          } catch (createError) {
-            console.error(`[TutorialManager] Error creating tutorial entry:`, createError);
-            console.log(`[TutorialManager] Will use fallback mechanism for tutorial display`);
-            // Continue even if creation fails - we'll use the fallback mechanism
-          }
-        }
-        
-        setInitializationComplete(true);
-      } catch (error) {
-        console.error(`[TutorialManager] Error in initialization process:`, error);
-        setInitializationError(String(error));
-        // Still mark as complete so the fallback can take over
-        setInitializationComplete(true);
-      }
-    };
-    
-    initializeTutorial();
-  }, [tabName, normalizedTabName, steps.length]);
-  
-  // Get tutorial status from the server
+  // Get tutorial data from hooks
   const { 
     tutorialEnabled, 
     currentStep, 
     totalSteps, 
+    isLoading, 
     isCompleted, 
-    isLoading: tutorialLoading,
-    error: tutorialError,
-    handleNext, 
+    handleNext,
     handleBack,
-    handleComplete, 
-    markTutorialSeen 
-  } = useTabTutorials(tabName);
+    handleComplete,
+    markTutorialSeen
+  } = useTabTutorials(normalizedTabName);
   
-  // Connect to WebSocket for real-time updates
-  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(tabName);
+  // Subscribe to WebSocket updates
+  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(normalizedTabName);
   
-  // Load tutorial assets (only if we have a valid current step)
-  const { isLoading: assetLoading, imageUrl } = useTutorialAssets(
-    currentStep >= 0 && currentStep < steps.length 
-      ? (steps[currentStep]?.imagePath || steps[currentStep]?.imageUrl || '')
-      : '',
-    tutorialEnabled && !isCompleted && currentStep >= 0 && currentStep < steps.length
-  );
+  // Get any custom assets for this tutorial
+  const { assets, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
   
-  // Log tutorial errors if any
+  // Handle initialization with comprehensive logging
   useEffect(() => {
-    if (tutorialError) {
-      console.error(`[TutorialManager] Error loading tutorial status:`, tutorialError);
+    // Check if we have tutorial content for this tab
+    const hasContent = TUTORIAL_CONTENT[normalizedTabName] !== undefined;
+    
+    if (!hasContent) {
+      const errorMsg = `No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`;
+      logger.error(errorMsg);
+      setInitializationError(errorMsg);
+    } else {
+      logger.debug(`Found tutorial content for ${normalizedTabName} with ${TUTORIAL_CONTENT[normalizedTabName].steps.length} steps`);
     }
     
-    if (initializationError) {
-      console.error(`[TutorialManager] Initialization error:`, initializationError);
+    // Mark initialization as complete
+    setInitializationComplete(true);
+    
+    // Clean up function
+    return () => {
+      logger.debug(`Cleaning up TutorialManager for tab: ${normalizedTabName}`);
+    };
+  }, [normalizedTabName, tabName]);
+  
+  // Handle WebSocket updates
+  useEffect(() => {
+    if (tutorialProgress !== null) {
+      logger.debug(`Received WebSocket update for tutorial progress: Step ${tutorialProgress.currentStep + 1} of ${tutorialProgress.totalSteps}`);
     }
-  }, [tutorialError, initializationError]);
-  
-  // Combine loading states
-  const isLoading = tutorialLoading || assetLoading || !initializationComplete;
-  
-  // Handle WebSocket updates if needed
-  React.useEffect(() => {
+    
     if (tutorialCompleted) {
-      // If we received a completion notification via WebSocket
-      console.log(`[TutorialManager] Received ${tabName} tutorial completion notification via WebSocket`);
+      logger.info(`Tutorial marked as completed via WebSocket update`);
     }
-    
-    if (tutorialProgress && tutorialProgress.currentStep !== currentStep) {
-      // If we received a progress update via WebSocket
-      console.log(`[TutorialManager] Received ${tabName} tutorial progress update via WebSocket:`, tutorialProgress);
-    }
-  }, [tutorialProgress, tutorialCompleted, currentStep, tabName]);
+  }, [tutorialProgress, tutorialCompleted]);
 
-  console.log(`[TutorialManager] Render state:`, {
-    tutorialEnabled,
-    currentStep,
-    totalSteps,
-    isCompleted,
-    isLoading,
-    steps: steps.length
-  });
+  // Debugging information to help diagnose issues
+  useEffect(() => {
+    logger.debug('Current tutorial state', {
+      tabName,
+      normalizedTabName,
+      currentStep,
+      totalSteps,
+      enabled: tutorialEnabled,
+      completed: isCompleted,
+      loading: isLoading
+    });
+  }, [tabName, normalizedTabName, currentStep, totalSteps, tutorialEnabled, isCompleted, isLoading]);
   
-  // Direct database entry check - check if we have tutorials in the database (from the SQL inserts)
-  // This is a fallback for when the API call fails or while waiting for it to complete
-  const dbTutorialEntries: Record<string, { exists: boolean, tabName: string, completed: boolean, currentStep: number }> = {
-    // Main navigation tabs - original names
-    'dashboard': { exists: true, tabName: 'dashboard', completed: false, currentStep: 0 },
-    'network': { exists: true, tabName: 'network', completed: false, currentStep: 0 },
-    'task-center': { exists: true, tabName: 'task-center', completed: false, currentStep: 0 },
-    'file-vault': { exists: true, tabName: 'file-vault', completed: false, currentStep: 0 },
-    'insights': { exists: true, tabName: 'insights', completed: false, currentStep: 0 },
-    
-    // Risk scoring tabs - both original and normalized names
-    'risk-score': { exists: true, tabName: 'risk-score', completed: false, currentStep: 0 },
-    'risk-score-configuration': { exists: true, tabName: 'risk-score', completed: false, currentStep: 0 },
-    'claims-risk': { exists: true, tabName: 'claims-risk', completed: false, currentStep: 0 },
-    'claims-risk-analysis': { exists: true, tabName: 'claims-risk', completed: false, currentStep: 0 },
-    'network-view': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 },
-    'network-visualization': { exists: true, tabName: 'network-view', completed: false, currentStep: 0 },
-    
-    // Claims-related tabs
-    'claims': { exists: true, tabName: 'claims', completed: false, currentStep: 0 },
-    
-    // Other tabs that might need tutorials
-    'company-profile': { exists: true, tabName: 'company-profile', completed: false, currentStep: 0 },
-    'playground': { exists: true, tabName: 'playground', completed: false, currentStep: 0 }
-  };
-  
-  // Check if we have a direct database entry for this tab
-  // First try the original tab name, then fall back to the normalized name
-  const directDbEntry = (dbTutorialEntries[tabName] || dbTutorialEntries[normalizedTabName]);
-  const shouldForceTutorial = directDbEntry && !isCompleted;
-  
-  console.log(`[TutorialManager] Direct DB check - Entry for ${tabName}:`, directDbEntry);
-  console.log(`[TutorialManager] Should force tutorial: ${shouldForceTutorial}`);
-  
-  // Enhanced fallback system for tutorial display
-  // Set default values for tutorial state before conditional checks
-  let shouldDisplay = false;
-  let stepToUse = 0;
-  
-  // First, check if we have a valid API response (normal path)
-  if (tutorialEnabled && !isLoading && !isCompleted && currentStep >= 0 && currentStep < steps.length) {
-    console.log(`[TutorialManager] Displaying tutorial via standard API path`);
-    shouldDisplay = true;
-    stepToUse = currentStep;
-  }
-  // Otherwise, check if we have a valid fallback entry (fallback path)
-  else if (shouldForceTutorial) {
-    console.log(`[TutorialManager] Displaying tutorial via fallback path - forceTutorial`);
-    shouldDisplay = true;
-    // Get step from directDbEntry, defaulting to 0 if not available
-    stepToUse = directDbEntry?.currentStep || 0;
-    
-    // Ensure step is within valid range
-    if (stepToUse < 0 || stepToUse >= steps.length) {
-      console.log(`[TutorialManager] Fallback step ${stepToUse} out of bounds, resetting to 0`);
-      stepToUse = 0;
-    }
-  }
-  // If neither condition is met, don't display tutorial
-  else {
-    console.log(`[TutorialManager] Not rendering tutorial: ${isLoading ? 'Loading' : !tutorialEnabled ? 'Not enabled' : isCompleted ? 'Completed' : 'Unknown state'}`);
+  // Wait for data to load before rendering
+  if (isLoading || !initializationComplete) {
+    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
     return null;
   }
   
-  // Additional logging for successful tutorial display
-  console.log(`[TutorialManager] Tutorial will display for ${tabName} (step ${stepToUse + 1}/${steps.length})`);
-  
-  // Safety check for step value - should never happen with the above logic
-  if (stepToUse < 0 || stepToUse >= steps.length) {
-    console.error(`[TutorialManager] Critical error - invalid step after all checks: ${stepToUse}`);
-    stepToUse = 0; // Recover by setting to first step
+  // If we have an error or tutorial is not enabled/already completed, don't show
+  if (initializationError || !tutorialEnabled || isCompleted) {
+    if (initializationError) {
+      logger.warn(`Not showing tutorial due to error: ${initializationError}`);
+    } else if (!tutorialEnabled) {
+      logger.debug(`Tutorial not enabled for tab: ${normalizedTabName}`);
+    } else if (isCompleted) {
+      logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
+    }
+    return null;
   }
   
-  console.log(`[TutorialManager] Rendering tutorial step ${stepToUse + 1} of ${steps.length}`);
-    
-  // Use our new content-area-only tutorial modal
+  // Find the content for this tab
+  const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
+  if (!tutorialContent) {
+    logger.error(`No tutorial content found for tab: ${normalizedTabName}`);
+    return null;
+  }
+  
+  // Calculate which step to use, ensuring we don't go out of bounds
+  const maxStep = tutorialContent.steps.length - 1;
+  const stepToUse = Math.min(currentStep, maxStep);
+  
+  // Generate descriptive log message about the tutorial being shown
+  logger.render(`Rendering tutorial step ${stepToUse + 1} of ${tutorialContent.steps.length} for ${normalizedTabName}`);
+  
+  // Prepare modal title based on active step
+  const modalTitle = tutorialContent.title;
+  
+  // Render the tutorial modal with current step content
+  const steps = tutorialContent.steps;
+  
   return (
     <ContentTutorialModal
       title={steps[stepToUse]?.title || ''}
       description={steps[stepToUse]?.description || ''}
-      imageUrl={imageUrl}
-      isLoading={isLoading}
+      imageUrl={steps[stepToUse]?.imagePath || ''}
       currentStep={stepToUse}
-      totalSteps={shouldForceTutorial ? steps.length : totalSteps}
-      onNext={handleNext}
-      onBack={handleBack}
-      onComplete={handleComplete}
-      onClose={() => markTutorialSeen()}
+      totalSteps={steps.length}
+      onNext={() => {
+        logger.interaction('Next button clicked');
+        handleNext();
+      }}
+      onBack={stepToUse > 0 ? () => {
+        logger.interaction('Back button clicked');
+        handleBack();
+      } : undefined}
+      onClose={() => {
+        logger.interaction('Close button clicked');
+        markTutorialSeen();
+      }}
+      onComplete={() => {
+        logger.interaction('Complete button clicked');
+        handleComplete();
+      }}
     />
   );
 }
