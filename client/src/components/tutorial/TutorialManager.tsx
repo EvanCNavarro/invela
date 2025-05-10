@@ -291,7 +291,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(normalizedTabName);
   
   // Get any custom assets for this tutorial
-  const { assets, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
+  const { imageUrl, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
