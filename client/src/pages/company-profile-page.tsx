@@ -2,6 +2,7 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -586,6 +587,9 @@ export default function CompanyProfilePage() {
 
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for company profile page */}
+      <TutorialManager tabName="company-profile" />
+      
       <PageTemplate
         showBreadcrumbs
       >
