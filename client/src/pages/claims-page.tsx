@@ -9,8 +9,8 @@ import { FileText } from "lucide-react";
 export default function ClaimsPage() {
   return (
     <DashboardLayout>
-      {/* Add tutorial manager for claims page */}
-      <TutorialManager tabName="claims" />
+      {/* Add tutorial manager for claims page with forced initialization */}
+      <TutorialManager tabName="claims" key={`claims-tutorial-${Date.now()}`} />
       
       <PageTemplate
         showBreadcrumbs
