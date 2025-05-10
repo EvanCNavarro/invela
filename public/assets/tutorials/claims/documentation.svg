@@ -1,0 +1,59 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="500" fill="#f8f9fa" rx="10" ry="10" />
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="720" height="60" fill="#e9ecef" rx="5" ry="5" />
+  <text x="70" y="80" font-family="Arial" font-size="24" font-weight="bold" fill="#333">Claims Documentation Management</text>
+  
+  <!-- Left Panel - Document Upload -->
+  <rect x="40" y="120" width="350" height="360" fill="#ffffff" stroke="#dee2e6" stroke-width="2" rx="5" ry="5" />
+  <text x="60" y="150" font-family="Arial" font-size="18" font-weight="bold" fill="#495057">Document Upload</text>
+  
+  <!-- Upload Area -->
+  <rect x="60" y="170" width="310" height="150" fill="#f8f9fa" stroke="#dee2e6" stroke-dasharray="5,5" stroke-width="2" rx="5" ry="5" />
+  
+  <!-- Upload Icon -->
+  <circle cx="215" cy="220" r="40" fill="#e6f7ff" stroke="#1677ff" stroke-width="2" />
+  <path d="M215,195 L215,245 M195,215 L235,215 M195,235 L215,215 L235,235" fill="none" stroke="#1677ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <text x="215" y="275" font-family="Arial" font-size="14" fill="#495057" text-anchor="middle">Drag &amp; Drop Files Here</text>
+  <text x="215" y="295" font-family="Arial" font-size="12" fill="#8c8c8c" text-anchor="middle">or click to browse files</text>
+  
+  <!-- Document Types -->
+  <text x="60" y="350" font-family="Arial" font-size="16" font-weight="bold" fill="#495057">Required Documentation</text>
+  
+  <rect x="60" y="370" width="310" height="30" fill="#f0f5ff" rx="5" ry="5" />
+  <text x="80" y="390" font-family="Arial" font-size="14" fill="#495057">Incident Report</text>
+  
+  <rect x="60" y="410" width="310" height="30" fill="#f0f5ff" rx="5" ry="5" />
+  <text x="80" y="430" font-family="Arial" font-size="14" fill="#495057">Third-Party Communications</text>
+  
+  <rect x="60" y="450" width="310" height="30" fill="#f0f5ff" rx="5" ry="5" />
+  <text x="80" y="470" font-family="Arial" font-size="14" fill="#495057">Evidence &amp; Supporting Documentation</text>
+  
+  <!-- Right Panel - Document Library -->
+  <rect x="410" y="120" width="350" height="360" fill="#ffffff" stroke="#dee2e6" stroke-width="2" rx="5" ry="5" />
+  <text x="430" y="150" font-family="Arial" font-size="18" font-weight="bold" fill="#495057">Document Library</text>
+  
+  <!-- Search Bar -->
+  <rect x="430" y="170" width="310" height="40" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1" rx="5" ry="5" />
+  <text x="450" y="195" font-family="Arial" font-size="14" fill="#8c8c8c">Search documents...</text>
+  
+  <!-- Document List -->
+  <rect x="430" y="230" width="310" height="50" fill="#ffffff" stroke="#e6f7ff" stroke-width="1" rx="5" ry="5" />
+  <text x="450" y="255" font-family="Arial" font-size="14" fill="#1677ff">Incident_Report_CL1023.pdf</text>
+  <text x="450" y="275" font-family="Arial" font-size="12" fill="#8c8c8c">Uploaded: May 1, 2025 - 2.3 MB</text>
+  
+  <rect x="430" y="290" width="310" height="50" fill="#ffffff" stroke="#e6f7ff" stroke-width="1" rx="5" ry="5" />
+  <text x="450" y="315" font-family="Arial" font-size="14" fill="#1677ff">Security_Breach_Evidence.zip</text>
+  <text x="450" y="335" font-family="Arial" font-size="12" fill="#8c8c8c">Uploaded: May 2, 2025 - 15.7 MB</text>
+  
+  <rect x="430" y="350" width="310" height="50" fill="#ffffff" stroke="#e6f7ff" stroke-width="1" rx="5" ry="5" />
+  <text x="450" y="375" font-family="Arial" font-size="14" fill="#1677ff">Customer_Data_Impact_Analysis.xlsx</text>
+  <text x="450" y="395" font-family="Arial" font-size="12" fill="#8c8c8c">Uploaded: May 3, 2025 - 4.1 MB</text>
+  
+  <rect x="430" y="410" width="310" height="50" fill="#ffffff" stroke="#e6f7ff" stroke-width="1" rx="5" ry="5" />
+  <text x="450" y="435" font-family="Arial" font-size="14" fill="#1677ff">Legal_Correspondence.pdf</text>
+  <text x="450" y="455" font-family="Arial" font-size="12" fill="#8c8c8c">Uploaded: May 5, 2025 - 1.8 MB</text>
+</svg>

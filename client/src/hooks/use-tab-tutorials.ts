@@ -32,6 +32,8 @@ export function useTabTutorials(tabName: string) {
         return 5;
       case 'claims-risk':
         return 4;
+      case 'claims':
+        return 5;
       default:
         return 5;
     }
