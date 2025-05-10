@@ -1,13 +1,17 @@
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { PageHeader } from "@/components/page-header";
-import { PageTemplate } from "@/components/page-template";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTemplate } from "@/components/ui/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 
 export default function ClaimsPage() {
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for claims page */}
+      <TutorialManager tabName="claims" />
+      
       <PageTemplate
         showBreadcrumbs
       >
