@@ -183,6 +183,9 @@ export default function PlaygroundPage() {
 
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for playground page */}
+      <TutorialManager tabName="playground" />
+      
       <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <PageHeader
