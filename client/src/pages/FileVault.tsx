@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import Fuse from 'fuse.js';
 import {
   FileIcon,
@@ -603,6 +604,9 @@ export const FileVault: React.FC = () => {
 
   return (
     <DashboardLayout>
+      {/* Add the tutorial manager for file-vault */}
+      <TutorialManager tabName="file-vault" />
+      
       {!user ? (
         <div className="flex items-center justify-center h-[50vh]">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

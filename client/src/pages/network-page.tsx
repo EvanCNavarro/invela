@@ -2,6 +2,7 @@ import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
