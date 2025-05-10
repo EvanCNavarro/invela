@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import {
   ResponsiveContainer,
 } from "recharts";
@@ -70,6 +71,9 @@ export default function InsightsPage() {
 
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for insights page */}
+      <TutorialManager tabName="insights" />
+      
       <div className="space-y-6 flex flex-col overflow-y-auto pb-8">
         <div className="flex items-center justify-between">
           <PageHeader

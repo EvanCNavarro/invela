@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import CompanySearchPlayground from "@/components/playground/CompanySearchPlayground";
 import HeadlessCrawlerPlayground from "@/components/playground/HeadlessCrawlerPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
