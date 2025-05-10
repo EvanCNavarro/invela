@@ -19,6 +19,7 @@ export interface TabTutorialModalProps {
   currentStep: number;
   totalSteps: number;
   onNext: () => void;
+  onBack?: () => void;
   onComplete: () => void;
   onClose: () => void;
 }
@@ -37,6 +38,7 @@ export function TabTutorialModal({
   currentStep,
   totalSteps,
   onNext,
+  onBack,
   onComplete,
   onClose
 }: TabTutorialModalProps) {
@@ -109,6 +111,11 @@ export function TabTutorialModal({
             <Button variant="outline" onClick={handleClose}>
               Skip
             </Button>
+            {onBack && currentStep > 0 && (
+              <Button variant="outline" onClick={onBack}>
+                Back
+              </Button>
+            )}
             <Button onClick={handleNext}>
               {currentStep >= totalSteps - 1 ? 'Complete' : 'Next'}
             </Button>
