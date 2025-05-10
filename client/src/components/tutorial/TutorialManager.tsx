@@ -5,6 +5,10 @@ import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+
+// Create a dedicated logger for TutorialManager
+const logger = createTutorialLogger('TutorialManager');
 
 // Define all tutorial content in a central location
 const TUTORIAL_CONTENT: Record<string, {
@@ -12,6 +16,38 @@ const TUTORIAL_CONTENT: Record<string, {
   title: string;
   description: string;
 }> = {
+  // Claims Tutorial - Added to ensure consistent integration with TutorialManager
+  'claims': {
+    title: 'Claims Management',
+    description: 'Learn how to view, manage, and analyze claims across your organization',
+    steps: [
+      {
+        title: 'Claims Dashboard',
+        description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
+        imagePath: '/assets/tutorials/claims/overview.svg',
+      },
+      {
+        title: 'Claim Details',
+        description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
+        imagePath: '/assets/tutorials/claims/details.svg',
+      },
+      {
+        title: 'Claims Processing',
+        description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
+        imagePath: '/assets/tutorials/claims/processing.svg',
+      },
+      {
+        title: 'Analytics Dashboard',
+        description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
+        imagePath: '/assets/tutorials/claims/analytics.svg',
+      },
+      {
+        title: 'Documentation Management',
+        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
+        imagePath: '/assets/tutorials/claims/documentation.svg',
+      }
+    ]
+  },
   'risk-score': {
     title: 'Risk Score Configuration',
     description: 'Learn how to customize and interpret risk scoring for your organization',
