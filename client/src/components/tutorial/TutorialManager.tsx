@@ -319,9 +319,15 @@ export function TutorialManager({
   logger.info(`Initializing for tab: ${tabName}`);
   
   // Track component initialization and content ready state
+  // For UX improvement: Start in a determined "loading" state rather than false
+  // This avoids the flash of regular content while we're determining whether to show the tutorial
   const [initializationComplete, setInitializationComplete] = useState(false);
   const [contentReady, setContentReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
+  
+  // New state to hold the definitive rendering decision for tutorial content
+  // By starting with undefined, we prevent any premature rendering decisions
+  const [shouldShowTutorial, setShouldShowTutorial] = useState<boolean | undefined>(undefined);
   
   // Map tab names to normalized versions for compatibility
   // This is critical for handling URL path vs database key mismatches
@@ -381,10 +387,22 @@ export function TutorialManager({
       const extendedError = `${errorMsg}. Available tabs: ${availableTabs}`;
       logger.error(extendedError);
       setInitializationError(errorMsg);
+      
+      // Immediately set shouldShowTutorial to false if no content exists
+      // This prevents any flash of loading states or erroneous display attempts
+      setShouldShowTutorial(false);
     } else {
       const stepCount = TUTORIAL_CONTENT[normalizedTabName].steps.length;
       logger.info(`Found tutorial content for ${normalizedTabName} with ${stepCount} steps`);
       logger.info(`Available tutorial tabs: ${availableTabs}`);
+      
+      // Important: Make an early decision about whether to show a tutorial if we have data
+      // This eliminates the race condition that causes flickering
+      if (!isLoading) {
+        const shouldShow = tutorialEnabled && !isCompleted;
+        logger.info(`Early tutorial decision for ${normalizedTabName}: ${shouldShow ? 'SHOW' : 'HIDE'}`);
+        setShouldShowTutorial(shouldShow);
+      }
     }
     
     // Debug current tutorial state
@@ -416,20 +434,22 @@ export function TutorialManager({
   // Notify parent component when content is ready to be shown
   useEffect(() => {
     // Content is ready when:
-    // 1. We're not loading anymore
-    // 2. We've made the decision whether to show the tutorial or not
-    const readyToShow = !isLoading && initializationComplete;
+    // 1. We're not loading the tutorial data anymore
+    // 2. We've made a definitive decision about showing the tutorial (true/false, not undefined)
+    const readyToShow = !isLoading && shouldShowTutorial !== undefined;
     
     if (readyToShow && !contentReady) {
       logger.info(`Tutorial state determined for ${normalizedTabName}`, {
         isLoading,
         tutorialEnabled,
         isCompleted,
-        currentStep
+        currentStep,
+        shouldShowTutorial
       });
       
-      // Update our internal state
+      // Update our internal state to track readiness
       setContentReady(true);
+      setInitializationComplete(true);
       
       // Notify parent component if callback was provided
       if (onReadyStateChange) {
@@ -437,8 +457,16 @@ export function TutorialManager({
         onReadyStateChange(true);
       }
     }
-  }, [isLoading, initializationComplete, contentReady, normalizedTabName, 
-      tutorialEnabled, isCompleted, currentStep, onReadyStateChange]);
+  }, [
+    isLoading, 
+    shouldShowTutorial, 
+    contentReady, 
+    normalizedTabName, 
+    tutorialEnabled, 
+    isCompleted, 
+    currentStep, 
+    onReadyStateChange
+  ]);
   
   // If we're still loading and parent wants us to delay content, show nothing
   if (isLoading && delayContentUntilReady) {
