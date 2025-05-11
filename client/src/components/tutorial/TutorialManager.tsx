@@ -381,11 +381,21 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     return null;
   }
   
+  // Force enabled flag for claims tab to fix persistent issue
+  // This is a targeted fix for the claims tab which isn't showing tutorials properly
+  const forceEnabled = normalizedTabName === 'claims';
+  
+  // Log the force-enabled status
+  if (forceEnabled) {
+    logger.info(`FORCE ENABLED tutorial for claims tab regardless of state`);
+  }
+
   // If we have an error or tutorial is not enabled/already completed, don't show
-  if (initializationError || !tutorialEnabled || isCompleted) {
+  // Special case: Claims tab bypasses the tutorialEnabled check
+  if (initializationError || (!tutorialEnabled && !forceEnabled) || isCompleted) {
     if (initializationError) {
       logger.warn(`Not showing tutorial due to error: ${initializationError}`);
-    } else if (!tutorialEnabled) {
+    } else if (!tutorialEnabled && !forceEnabled) {
       logger.debug(`Tutorial not enabled for tab: ${normalizedTabName}`);
     } else if (isCompleted) {
       logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
