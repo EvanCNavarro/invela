@@ -12,45 +12,11 @@ import { ClaimsProcessFlowChart } from '@/components/claims/ClaimsProcessFlowCha
 import PageHeader from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
-import { TutorialManager } from '@/components/tutorial/TutorialManager';
+import { ClaimsTutorial } from '@/components/tutorial/tabs/ClaimsTutorial';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
-
-/**
- * CleanupLegacyStorage Component
- * 
- * This component performs cleanup of legacy localStorage values without
- * adding any visual elements to the page. It ensures that old localStorage
- * values don't interfere with the new unified tutorial system.
- */
-function CleanupLegacyStorage() {
-  // Clean up legacy localStorage values on mount
-  useEffect(() => {
-    try {
-      logger.info('Claims: Cleaning up legacy localStorage values');
-      localStorage.removeItem('claims-tutorial-completed');
-      localStorage.removeItem('claims-tutorial-skipped');
-    } catch (error) {
-      logger.error('Claims: Error cleaning up localStorage', error);
-    }
-  }, []);
-  
-  // This component doesn't render anything
-  return null;
-}
-
-/**
- * Directly including TutorialManager in the Claims page
- * 
- * After researching the implementation in other tabs, the cleanest solution is to:
- * 1. Create a cleanup component to handle legacy localStorage values
- * 2. Include the TutorialManager directly in the main component 
- * 
- * This matches how other tabs implement tutorials and avoids TypeScript issues.
- * The cleanup component runs first, then TutorialManager displays immediately.
- */
 
 export default function ClaimsPage() {
   const [isNewClaimModalOpen, setIsNewClaimModalOpen] = useState(false);
