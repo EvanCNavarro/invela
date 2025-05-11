@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSidebarStore } from '@/stores/sidebar-store';
+import { cn } from '@/lib/utils';
 
 // Define the tutorial step interface
 export interface TutorialStep {
@@ -43,6 +45,7 @@ export function TabTutorialModal({
   onClose
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
+  const { isExpanded } = useSidebarStore();
   
   // Handle skip action
   const handleClose = () => {
@@ -69,8 +72,14 @@ export function TabTutorialModal({
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" style={{ pointerEvents: 'none' }}>
-      {/* Content-only overlay - doesn't cover navbar or sidebar */}
-      <div className="absolute top-[64px] left-[70px] right-0 bottom-0 bg-black/20" style={{ pointerEvents: 'auto' }}></div>
+      {/* Content-only overlay - dynamically adjusts to sidebar width */}
+      <div 
+        className={cn(
+          "absolute top-[64px] right-0 bottom-0 bg-black/20 transition-all duration-300",
+          isExpanded ? "left-[256px]" : "left-[80px]"
+        )} 
+        style={{ pointerEvents: 'auto' }}
+      ></div>
       
       {/* Modal container */}
       <div 
