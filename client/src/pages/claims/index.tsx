@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,12 +12,61 @@ import { ClaimsProcessFlowChart } from '@/components/claims/ClaimsProcessFlowCha
 import PageHeader from '@/components/layout/PageHeader';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
+import { TutorialManager } from '@/components/tutorial/TutorialManager';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+
+// Create a dedicated logger for the Claims page
+const logger = createTutorialLogger('ClaimsPage');
+
+/**
+ * ClaimsTutorialWrapper Component
+ * 
+ * This component handles the legacy localStorage cleanup and renders the TutorialManager
+ * once the cleanup is complete. It ensures that the old DirectClaimsTutorial 
+ * implementation doesn't interfere with our unified tutorial system.
+ */
+function ClaimsTutorialWrapper() {
+  const [isReady, setIsReady] = useState(false);
+  
+  // Run the cleanup immediately when the component mounts
+  useEffect(() => {
+    try {
+      // Remove any conflicting localStorage values from the old implementation
+      localStorage.removeItem('claims-tutorial-completed');
+      localStorage.removeItem('claims-tutorial-skipped');
+      
+      // Log the cleanup
+      logger.info('ClaimsTutorialWrapper: Legacy localStorage values cleared');
+      
+      // Mark the component as ready to render the TutorialManager
+      setIsReady(true);
+    } catch (error) {
+      logger.error('ClaimsTutorialWrapper: Error clearing localStorage', error);
+    }
+  }, []);
+  
+  // Only render the TutorialManager after cleanup is complete
+  if (!isReady) {
+    logger.info('ClaimsTutorialWrapper: Not yet ready, waiting for cleanup');
+    return null;
+  }
+  
+  logger.info('ClaimsTutorialWrapper: Ready, rendering TutorialManager');
+  
+  // @ts-ignore - The component is correct but TypeScript has issues with the return type
+  return <TutorialManager tabName="claims" />;
+}
 
 export default function ClaimsPage() {
   const [isNewClaimModalOpen, setIsNewClaimModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Log when the claims page mounts
+  useEffect(() => {
+    logger.info('Claims Management page mounted');
+  }, []);
 
   const activeClaims = useQuery<any[]>({
     queryKey: ['/api/claims/active'],
@@ -52,6 +101,9 @@ export default function ClaimsPage() {
 
   return (
     <DashboardLayout>
+      {/* Add the Tutorial Wrapper */}
+      <ClaimsTutorialWrapper />
+      
       <PageTemplate
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
