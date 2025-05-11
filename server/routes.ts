@@ -6,6 +6,7 @@ import fs from 'fs';
 import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
+import tutorialRouter from './routes/tutorial';
 // Open Banking field update router is imported below
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';

@@ -42,7 +42,8 @@ type MessageType =
   | 'task_reconciled'
   | 'form_submission_completed'
   | 'tabs_updated'
-  | 'notification';
+  | 'notification'
+  | 'tutorial_updated';
 
 // Base message interface
 interface WebSocketMessage {
@@ -120,6 +121,16 @@ interface NotificationMessage extends WebSocketMessage {
   metadata?: Record<string, any>;
 }
 
+// Tutorial update message
+interface TutorialUpdateMessage extends WebSocketMessage {
+  type: 'tutorial_updated';
+  tabName: string;
+  userId: number;
+  currentStep: number;
+  completed: boolean;
+  metadata?: Record<string, any>;
+}
+
 // Union type of all message types
 type WebSocketPayload = 
   | AuthMessage
@@ -129,7 +140,8 @@ type WebSocketPayload =
   | TaskReconciledMessage
   | FormSubmissionCompletedMessage
   | TabsUpdatedMessage
-  | NotificationMessage;
+  | NotificationMessage
+  | TutorialUpdateMessage;
 
 /**
  * Initialize the WebSocket server
@@ -390,4 +402,17 @@ export function broadcastTabsUpdated(payload: Omit<TabsUpdatedMessage, 'type' | 
  */
 export function broadcastNotification(payload: Omit<NotificationMessage, 'type' | 'timestamp'>): void {
   broadcast<NotificationMessage>('notification', payload);
+}
+
+/**
+ * Broadcast a tutorial update message
+ * 
+ * @param payload Tutorial update payload
+ * @param filter Optional filter function to determine which clients receive the message
+ */
+export function broadcastTutorialUpdate(
+  payload: Omit<TutorialUpdateMessage, 'type' | 'timestamp'>,
+  filter?: (client: ConnectedClient) => boolean
+): void {
+  broadcast<TutorialUpdateMessage>('tutorial_updated', payload, filter);
 }
