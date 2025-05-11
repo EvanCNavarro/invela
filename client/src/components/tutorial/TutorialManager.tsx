@@ -403,9 +403,25 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
   }
   
   // Find the content for this tab
+  console.log('TUTORIAL_CONTENT keys:', Object.keys(TUTORIAL_CONTENT));
+  console.log('Looking for content for tab:', normalizedTabName);
+  console.log('Does key exist?', normalizedTabName in TUTORIAL_CONTENT);
+  console.log('Direct access result:', TUTORIAL_CONTENT[normalizedTabName]);
+  
   const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
   if (!tutorialContent) {
-    logger.error(`No tutorial content found for tab: ${normalizedTabName}`);
+    logger.error(`No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`);
+    
+    // Try case-insensitive search as fallback
+    const lowerCaseTabName = normalizedTabName.toLowerCase();
+    const allKeys = Object.keys(TUTORIAL_CONTENT);
+    const possibleMatch = allKeys.find(key => key.toLowerCase() === lowerCaseTabName);
+    
+    if (possibleMatch) {
+      logger.info(`Found possible case-sensitive match: ${possibleMatch}`);
+      return TUTORIAL_CONTENT[possibleMatch];
+    }
+    
     return null;
   }
   
