@@ -11,12 +11,34 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 const logger = createTutorialLogger('ClaimsPage');
 
 export default function ClaimsPage() {
+  // DEBUG: Added more logging for tutorial debugging
+  console.log('[ClaimsPage] Mounting claims page component');
+  
+  // Force log to verify if tutorialEnabled state is being set correctly
+  React.useEffect(() => {
+    console.log('[ClaimsPage] Claims page mounted - checking tutorial status');
+    
+    // Make a direct API call to check tutorial status
+    fetch('/api/user-tab-tutorials/claims/status')
+      .then(response => response.json())
+      .then(data => {
+        console.log('[ClaimsPage] Tutorial status from API:', data);
+      })
+      .catch(error => {
+        console.error('[ClaimsPage] Error fetching tutorial status:', error);
+      });
+  }, []);
   logger.info('Rendering Claims Page with standard TutorialManager');
   
   return (
     <DashboardLayout>
       {/* Use standard TutorialManager component for consistency */}
-      <TutorialManager tabName="claims" />
+      {/* DEBUG: Force tutorial to display for testing */}
+      <TutorialManager 
+        tabName="claims"
+        // Add key to force component recreation
+        key="claims-tutorial-1746962397809" 
+      />
       
       <PageTemplate
         showBreadcrumbs
