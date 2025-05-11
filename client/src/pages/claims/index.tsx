@@ -24,9 +24,10 @@ export default function ClaimsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { toast } = useToast();
   
-  // Log when the claims page mounts
+  // Log when the claims page mounts for debugging
   useEffect(() => {
     logger.info('Claims Management page mounted');
+    return () => logger.info('Claims Management page unmounting');
   }, []);
 
   const activeClaims = useQuery<any[]>({
@@ -67,11 +68,9 @@ export default function ClaimsPage() {
 
   return (
     <DashboardLayout>
-      {/* First, clean up any legacy localStorage values */}
-      <CleanupLegacyStorage />
-      
-      {/* Then include the TutorialManager directly (standard approach used by other tabs) */}
-      <TutorialManager tabName="claims" />
+      {/* Include the ClaimsTutorial component that handles both localStorage cleanup
+          and includes the TutorialManager with the correct tabName */}
+      <ClaimsTutorial />
       
       <PageTemplate
         drawerOpen={drawerOpen}
