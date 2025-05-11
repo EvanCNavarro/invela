@@ -75,8 +75,8 @@ export function TabTutorialModal({
       {/* Content-only overlay - dynamically adjusts to sidebar width */}
       <div 
         className={cn(
-          "absolute top-[64px] right-0 bottom-0 bg-black/20 transition-all duration-300",
-          isExpanded ? "left-[256px]" : "left-[80px]"
+          "absolute top-[3.5rem] right-0 bottom-0 bg-black/20 transition-all duration-300 ease-in-out",
+          isExpanded ? "left-[16rem]" : "left-[5rem]"
         )} 
         style={{ pointerEvents: 'auto' }}
       ></div>
