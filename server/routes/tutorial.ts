@@ -8,7 +8,7 @@
 import { Router } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@db';
-import { tutorials } from '@db/schema';
+import { userTabTutorials } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { broadcastTutorialUpdate } from '../utils/unified-websocket';
@@ -29,10 +29,10 @@ router.get('/user/tab/:tabName/status', requireAuth, async (req, res) => {
     const normalizedTabName = tabName.toLowerCase().trim();
     
     // Get tutorial status for the specified tab and user
-    const tutorialEntry = await db.query.tutorials.findFirst({
+    const tutorialEntry = await db.query.userTabTutorials.findFirst({
       where: and(
-        eq(tutorials.userId, userId),
-        eq(tutorials.tabName, normalizedTabName)
+        eq(userTabTutorials.user_id, userId),
+        eq(userTabTutorials.tab_name, normalizedTabName)
       )
     });
 
@@ -74,10 +74,10 @@ router.post('/user/tab/:tabName/update', requireAuth, async (req, res) => {
     const normalizedTabName = tabName.toLowerCase().trim();
     
     // Find existing tutorial entry
-    const existingEntry = await db.query.tutorials.findFirst({
+    const existingEntry = await db.query.userTabTutorials.findFirst({
       where: and(
-        eq(tutorials.userId, userId),
-        eq(tutorials.tabName, normalizedTabName)
+        eq(userTabTutorials.user_id, userId),
+        eq(userTabTutorials.tab_name, normalizedTabName)
       )
     });
 
@@ -85,10 +85,10 @@ router.post('/user/tab/:tabName/update', requireAuth, async (req, res) => {
 
     if (!existingEntry) {
       // Create a new tutorial entry if none exists
-      const newEntry = await db.insert(tutorials).values({
-        userId,
-        tabName: normalizedTabName,
-        currentStep: currentStep || 0,
+      const newEntry = await db.insert(userTabTutorials).values({
+        user_id: userId,
+        tab_name: normalizedTabName,
+        current_step: currentStep || 0,
         completed: completed || false,
         created_at: now,
         updated_at: now
@@ -106,16 +106,16 @@ router.post('/user/tab/:tabName/update', requireAuth, async (req, res) => {
     }
 
     // Update existing tutorial entry
-    const updatedEntry = await db.update(tutorials)
+    const updatedEntry = await db.update(userTabTutorials)
       .set({
-        currentStep: currentStep !== undefined ? currentStep : existingEntry.currentStep,
+        current_step: currentStep !== undefined ? currentStep : existingEntry.current_step,
         completed: completed !== undefined ? completed : existingEntry.completed,
         updated_at: now
       })
       .where(
         and(
-          eq(tutorials.userId, userId),
-          eq(tutorials.tabName, normalizedTabName)
+          eq(userTabTutorials.user_id, userId),
+          eq(userTabTutorials.tab_name, normalizedTabName)
         )
       )
       .returning();
@@ -124,7 +124,7 @@ router.post('/user/tab/:tabName/update', requireAuth, async (req, res) => {
     broadcastTutorialUpdate({
       tabName: normalizedTabName,
       userId,
-      currentStep: currentStep !== undefined ? currentStep : existingEntry.currentStep,
+      currentStep: currentStep !== undefined ? currentStep : existingEntry.current_step,
       completed: completed !== undefined ? completed : existingEntry.completed
     });
 
@@ -154,10 +154,10 @@ router.post('/user/tab/:tabName/create', requireAuth, async (req, res) => {
     const normalizedTabName = tabName.toLowerCase().trim();
     
     // Check if a tutorial entry already exists
-    const existingEntry = await db.query.tutorials.findFirst({
+    const existingEntry = await db.query.userTabTutorials.findFirst({
       where: and(
-        eq(tutorials.userId, userId),
-        eq(tutorials.tabName, normalizedTabName)
+        eq(userTabTutorials.user_id, userId),
+        eq(userTabTutorials.tab_name, normalizedTabName)
       )
     });
 
@@ -171,10 +171,10 @@ router.post('/user/tab/:tabName/create', requireAuth, async (req, res) => {
 
     // Create a new tutorial entry
     const now = new Date();
-    const newEntry = await db.insert(tutorials).values({
-      userId,
-      tabName: normalizedTabName,
-      currentStep: 0,
+    const newEntry = await db.insert(userTabTutorials).values({
+      user_id: userId,
+      tab_name: normalizedTabName,
+      current_step: 0,
       completed: false,
       created_at: now,
       updated_at: now
@@ -215,10 +215,10 @@ router.post('/user/tab/:tabName/complete', requireAuth, async (req, res) => {
     const normalizedTabName = tabName.toLowerCase().trim();
     
     // Find existing tutorial entry
-    const existingEntry = await db.query.tutorials.findFirst({
+    const existingEntry = await db.query.userTabTutorials.findFirst({
       where: and(
-        eq(tutorials.userId, userId),
-        eq(tutorials.tabName, normalizedTabName)
+        eq(userTabTutorials.user_id, userId),
+        eq(userTabTutorials.tab_name, normalizedTabName)
       )
     });
 
@@ -226,11 +226,12 @@ router.post('/user/tab/:tabName/complete', requireAuth, async (req, res) => {
 
     if (!existingEntry) {
       // Create a new completed tutorial entry if none exists
-      const newEntry = await db.insert(tutorials).values({
-        userId,
-        tabName: normalizedTabName,
-        currentStep: 99, // Use a high number to indicate completion
+      const newEntry = await db.insert(userTabTutorials).values({
+        user_id: userId,
+        tab_name: normalizedTabName,
+        current_step: 99, // Use a high number to indicate completion
         completed: true,
+        completed_at: now,
         created_at: now,
         updated_at: now
       }).returning();
@@ -247,15 +248,16 @@ router.post('/user/tab/:tabName/complete', requireAuth, async (req, res) => {
     }
 
     // Update existing tutorial entry to completed
-    const updatedEntry = await db.update(tutorials)
+    const updatedEntry = await db.update(userTabTutorials)
       .set({
         completed: true,
+        completed_at: now,
         updated_at: now
       })
       .where(
         and(
-          eq(tutorials.userId, userId),
-          eq(tutorials.tabName, normalizedTabName)
+          eq(userTabTutorials.user_id, userId),
+          eq(userTabTutorials.tab_name, normalizedTabName)
         )
       )
       .returning();
@@ -264,7 +266,7 @@ router.post('/user/tab/:tabName/complete', requireAuth, async (req, res) => {
     broadcastTutorialUpdate({
       tabName: normalizedTabName,
       userId,
-      currentStep: existingEntry.currentStep,
+      currentStep: existingEntry.current_step,
       completed: true
     });
 
