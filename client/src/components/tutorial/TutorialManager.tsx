@@ -303,6 +303,18 @@ interface TutorialManagerProps {
  * It uses the tab name to dynamically load the appropriate tutorial content
  * and manages state, WebSocket communication, and UI rendering.
  * 
+ * ANTI-FLICKERING SOLUTION (May 2025):
+ * This component has been enhanced with a deterministic rendering approach to eliminate
+ * UI flickering. Instead of making multiple state-based decisions, we now use a central
+ * shouldShowTutorial state that can have three values:
+ * - undefined: still deciding whether to show a tutorial (loading state)
+ * - true: definitely show the tutorial 
+ * - false: definitely do not show the tutorial
+ * 
+ * This approach ensures that the UI doesn't "flicker" between states as data loads.
+ * The decision is made early and cached, with state transitions properly coordinated
+ * to prevent jarring UI changes.
+ * 
  * When using this component, you can pass an onReadyStateChange callback
  * to be notified when the component has determined whether to show a tutorial.
  * This allows parent components to show skeleton loaders during the initial
@@ -468,38 +480,41 @@ export function TutorialManager({
     onReadyStateChange
   ]);
   
-  // If we're still loading and parent wants us to delay content, show nothing
-  if (isLoading && delayContentUntilReady) {
-    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
-    return null;
-  }
-  
-  // If initialization is complete but tutorial is not enabled, don't render anything
-  if (initializationComplete && !tutorialEnabled) {
-    logger.info(`Tutorial not enabled for tab: ${normalizedTabName}`);
-    
-    // Debug current tutorial state
-    logger.info('Current tutorial state', {
-      tabName,
-      normalizedTabName,
-      currentStep,
-      totalSteps, 
-      enabled: tutorialEnabled,
-      completed: isCompleted,
-      loading: isLoading
-    });
-    
-    return null;
-  }
-  
-  // Do not render if tutorial is completed
-  if (isCompleted) {
-    // Only log if we have data
-    if (initializationComplete) {
-      logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
+  // Use our deterministic shouldShowTutorial state to make rendering decisions
+  // This is the key to eliminating the flickering issue
+  if (shouldShowTutorial === undefined) {
+    // If we haven't made a firm decision yet, and the parent component wants
+    // us to delay content rendering until ready, show nothing
+    if (delayContentUntilReady) {
+      logger.debug(`Waiting for tutorial decision to be made`, {
+        isLoading,
+        tutorialEnabled,
+        isCompleted,
+        shouldShowTutorial
+      });
+      return null;
     }
+    // Otherwise, we fall through to potentially show a tutorial if one is needed
+  } else if (shouldShowTutorial === false) {
+    // We've made a firm decision NOT to show a tutorial
+    logger.info(`Tutorial decisively not showing for tab: ${normalizedTabName}`, {
+      tutorialEnabled,
+      isCompleted,
+      currentStep
+    });
     return null;
   }
+  
+  // At this point, we should show the tutorial (or we're still deciding but allowing content)
+  // Log the definitive state for debugging
+  logger.info(`Tutorial render decision for tab: ${normalizedTabName}`, {
+    shouldShowTutorial,
+    isLoading, 
+    tutorialEnabled, 
+    isCompleted,
+    contentReady,
+    currentStep
+  });
   
   // Find the content for this tab
   const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
