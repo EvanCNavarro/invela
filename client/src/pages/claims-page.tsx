@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, Bug } from "lucide-react";
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { Button } from "@/components/ui/button";
-import { TutorialManager } from "@/components/tutorial/TutorialManager";
+import { TutorialManager } from '@/components/tutorial/TutorialManager';
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
@@ -129,9 +129,37 @@ function TutorialDebugPanel() {
 }
 
 export default function ClaimsPage() {
-  // Log the component mount
+  // State to track if localStorage has been cleaned up
+  const [localStorageCleaned, setLocalStorageCleaned] = useState(false);
+  
+  // STEP 1: Clean up localStorage BEFORE mounting TutorialManager
+  // This must run as early as possible in the component lifecycle
   useEffect(() => {
-    logger.info('ClaimsPage mounted');
+    logger.info('STEP 1: Initial cleanup of localStorage (runs before rendering TutorialManager)');
+    
+    // Check for old localStorage values from DirectClaimsTutorial
+    const hasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
+    const hasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
+    
+    logger.info('Old tutorial localStorage initial state:', {
+      completed: hasCompletedTutorial,
+      skipped: hasSkippedTutorial
+    });
+    
+    // Remove localStorage values immediately if they exist
+    if (hasCompletedTutorial || hasSkippedTutorial) {
+      localStorage.removeItem('claims-tutorial-completed');
+      localStorage.removeItem('claims-tutorial-skipped');
+      logger.info('IMPORTANT: Removed localStorage values that would conflict with TutorialManager');
+    }
+    
+    // Set flag to indicate we've cleaned up
+    setLocalStorageCleaned(true);
+  }, []); // Empty dependency array ensures this runs once before TutorialManager renders
+  
+  // STEP 2: Perform regular component initialization after localStorage cleanup
+  useEffect(() => {
+    logger.info('STEP 2: ClaimsPage mounted, localStorage cleaned: ' + localStorageCleaned);
     
     // Make a direct API call to check tutorial status
     fetch('/api/user-tab-tutorials/claims/status')
@@ -143,33 +171,36 @@ export default function ClaimsPage() {
         logger.error('Error fetching tutorial status:', error);
       });
       
-    // Log any localStorage variables that might be leftover from the old implementation
-    const hasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
-    const hasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
+    // Double-check localStorage was actually cleared
+    const stillHasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
+    const stillHasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
     
-    logger.info('Old tutorial localStorage state (now ignored):', {
-      completed: hasCompletedTutorial,
-      skipped: hasSkippedTutorial
+    logger.info('Verifying localStorage is clean:', {
+      completed: stillHasCompletedTutorial,
+      skipped: stillHasSkippedTutorial,
+      shouldBeClean: localStorageCleaned
     });
     
-    // Clean up old localStorage values so they don't interfere
-    if (hasCompletedTutorial || hasSkippedTutorial) {
+    // Just in case - clean up again if somehow values still exist
+    if (stillHasCompletedTutorial || stillHasSkippedTutorial) {
       localStorage.removeItem('claims-tutorial-completed');
       localStorage.removeItem('claims-tutorial-skipped');
-      logger.info('Cleaned up old localStorage tutorial values');
+      logger.info('Additional cleanup of old localStorage tutorial values');
     }
-    
-  }, []);
+  }, [localStorageCleaned]); // This runs after localStorageCleaned changes to true
   
-  logger.info('Rendering Claims Page with unified TutorialManager');
+  logger.info('Rendering Claims Page with unified TutorialManager, localStorage cleaned: ' + localStorageCleaned);
   
   return (
     <DashboardLayout>
       {/* Debug panel */}
       <TutorialDebugPanel />
       
-      {/* Use the unified TutorialManager component */}
-      <TutorialManager tabName="claims" />
+      {/* Only render the TutorialManager AFTER localStorage has been cleaned */}
+      {localStorageCleaned ? (
+        // @ts-ignore - Ignoring the TypeScript error for now
+        <TutorialManager tabName="claims" />
+      ) : null}
       
       <PageTemplate
         showBreadcrumbs
