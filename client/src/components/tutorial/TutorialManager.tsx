@@ -276,7 +276,24 @@ const TUTORIAL_CONTENT: Record<string, {
 };
 
 interface TutorialManagerProps {
+  /**
+   * The name of the tab for which to show tutorials
+   */
   tabName: string;
+  
+  /**
+   * Optional callback fired when tutorial state is determined
+   * Parent components can use this to know when to show actual content
+   * instead of a loading skeleton
+   */
+  onReadyStateChange?: (isReady: boolean) => void;
+  
+  /**
+   * Whether the parent component should delay rendering content
+   * until tutorial state is determined
+   * @default true
+   */
+  delayContentUntilReady?: boolean;
 }
 
 /**
@@ -286,13 +303,24 @@ interface TutorialManagerProps {
  * It uses the tab name to dynamically load the appropriate tutorial content
  * and manages state, WebSocket communication, and UI rendering.
  * 
+ * When using this component, you can pass an onReadyStateChange callback
+ * to be notified when the component has determined whether to show a tutorial.
+ * This allows parent components to show skeleton loaders during the initial
+ * loading phase, preventing the flash of tutorial content.
+ * 
  * @returns A React element containing the TabTutorialModal or null if no tutorial is available
  */
-export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactNode {
+export function TutorialManager({ 
+  tabName,
+  onReadyStateChange,
+  delayContentUntilReady = true
+}: TutorialManagerProps): React.ReactNode {
   // Initialize with detailed logging
   logger.init(`Initializing for tab: ${tabName}`);
   
+  // Track component initialization and content ready state
   const [initializationComplete, setInitializationComplete] = useState(false);
+  const [contentReady, setContentReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
   // Map tab names to normalized versions for compatibility
