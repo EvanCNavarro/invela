@@ -7,6 +7,15 @@ import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 
+// Import tutorial debugging utilities if available
+let tutorialDebug: any = null;
+try {
+  // Dynamic import to avoid circular dependencies
+  tutorialDebug = require('@/lib/tutorial-debug').default;
+} catch (e) {
+  console.warn('[TutorialManager] Tutorial debug utilities not available');
+}
+
 // Create a dedicated logger for TutorialManager
 const logger = createTutorialLogger('TutorialManager');
 
