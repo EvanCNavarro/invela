@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -12,16 +12,34 @@ import { TutorialManager } from '@/components/tutorial/TutorialManager';
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
 
-// Debug component to display tutorial status
+/**
+ * Enhanced Debug Panel for Claims Tutorial
+ * 
+ * This component provides a robust debugging interface for the claims page tutorials.
+ * It shows both database state and localStorage values to help diagnose issues.
+ */
 function TutorialDebugPanel() {
   const [isVisible, setIsVisible] = useState(false);
   const [apiStatus, setApiStatus] = useState<any>(null);
   const [dbStatus, setDbStatus] = useState<any>(null);
+  const [localStorageState, setLocalStorageState] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Directly call API to get status
-  useEffect(() => {
+  // Function to refresh the local storage display
+  const refreshLocalStorageState = () => {
+    setLocalStorageState({
+      'claims-tutorial-completed': localStorage.getItem('claims-tutorial-completed'),
+      'claims-tutorial-skipped': localStorage.getItem('claims-tutorial-skipped'),
+      // Add any other relevant localStorage keys here
+    });
+  };
+  
+  // Function to refresh all data
+  const refreshAllData = () => {
+    setLoading(true);
+    
+    // Refresh API status
     fetch('/api/user-tab-tutorials/claims/status')
       .then(response => response.json())
       .then(data => {
@@ -33,7 +51,7 @@ function TutorialDebugPanel() {
         setLoading(false);
       });
       
-    // Get database entry directly
+    // Refresh DB entry
     fetch('/api/user-tab-tutorials/claims')
       .then(response => response.json())
       .then(data => {
@@ -42,6 +60,14 @@ function TutorialDebugPanel() {
       .catch(error => {
         console.error('Error fetching DB entry:', error);
       });
+      
+    // Refresh localStorage state
+    refreshLocalStorageState();
+  };
+  
+  // Initial data load
+  useEffect(() => {
+    refreshAllData();
   }, []);
   
   if (!isVisible) {
@@ -53,7 +79,7 @@ function TutorialDebugPanel() {
         className="fixed bottom-4 right-4 z-50"
       >
         <Bug className="mr-2 h-4 w-4" />
-        Debug
+        Tutorial Debug
       </Button>
     );
   }
@@ -61,11 +87,20 @@ function TutorialDebugPanel() {
   return (
     <div className="fixed bottom-4 right-4 w-96 bg-black bg-opacity-95 p-4 rounded-lg border border-red-500 z-50 text-white">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-bold text-red-400">Tutorial Debug</h3>
+        <h3 className="text-lg font-bold text-red-400">Claims Tutorial Debug</h3>
         <Button variant="ghost" size="sm" onClick={() => setIsVisible(false)}>×</Button>
       </div>
       
       <div className="space-y-4 text-xs overflow-y-auto max-h-80">
+        {/* LocalStorage Section */}
+        <div>
+          <h4 className="font-bold border-b border-gray-700 pb-1 mb-2">LocalStorage State</h4>
+          <pre className="whitespace-pre-wrap bg-gray-900 p-2 rounded text-yellow-400">
+            {JSON.stringify(localStorageState, null, 2)}
+          </pre>
+        </div>
+        
+        {/* API Status Section */}
         <div>
           <h4 className="font-bold border-b border-gray-700 pb-1 mb-2">API Status</h4>
           {loading ? (
@@ -79,6 +114,7 @@ function TutorialDebugPanel() {
           )}
         </div>
         
+        {/* Database Entry Section */}
         <div>
           <h4 className="font-bold border-b border-gray-700 pb-1 mb-2">DB Entry</h4>
           {dbStatus ? (
@@ -90,9 +126,18 @@ function TutorialDebugPanel() {
           )}
         </div>
         
+        {/* Actions Section */}
         <div>
           <h4 className="font-bold border-b border-gray-700 pb-1 mb-2">Actions</h4>
           <div className="grid grid-cols-2 gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={refreshAllData}
+              className="text-xs h-8"
+            >
+              Refresh Data
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
@@ -104,7 +149,8 @@ function TutorialDebugPanel() {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => fetch('/api/user-tab-tutorials/claims/reset', { method: 'POST' })}
+              onClick={() => fetch('/api/user-tab-tutorials/claims/reset', { method: 'POST' })
+                .then(() => refreshAllData())}
               className="text-xs h-8"
             >
               Reset Tutorial
@@ -115,11 +161,11 @@ function TutorialDebugPanel() {
               onClick={() => {
                 localStorage.removeItem('claims-tutorial-completed');
                 localStorage.removeItem('claims-tutorial-skipped');
-                window.location.reload();
+                refreshLocalStorageState();
               }}
-              className="text-xs h-8 col-span-2"
+              className="text-xs h-8"
             >
-              Clear Storage & Reset
+              Clear Storage
             </Button>
           </div>
         </div>
@@ -128,79 +174,55 @@ function TutorialDebugPanel() {
   );
 }
 
-export default function ClaimsPage() {
-  // State to track if localStorage has been cleaned up
-  const [localStorageCleaned, setLocalStorageCleaned] = useState(false);
+/**
+ * ClaimsTutorialWrapper Component
+ * 
+ * This component handles the legacy localStorage cleanup and renders the TutorialManager
+ * once the cleanup is complete. It ensures that the old DirectClaimsTutorial 
+ * implementation doesn't interfere with our unified tutorial system.
+ */
+function ClaimsTutorialWrapper() {
+  const [isReady, setIsReady] = useState(false);
   
-  // STEP 1: Clean up localStorage BEFORE mounting TutorialManager
-  // This must run as early as possible in the component lifecycle
+  // Run the cleanup immediately when the component mounts
   useEffect(() => {
-    logger.info('STEP 1: Initial cleanup of localStorage (runs before rendering TutorialManager)');
-    
-    // Check for old localStorage values from DirectClaimsTutorial
-    const hasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
-    const hasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
-    
-    logger.info('Old tutorial localStorage initial state:', {
-      completed: hasCompletedTutorial,
-      skipped: hasSkippedTutorial
-    });
-    
-    // Remove localStorage values immediately if they exist
-    if (hasCompletedTutorial || hasSkippedTutorial) {
+    try {
+      // Remove any conflicting localStorage values from the old implementation
       localStorage.removeItem('claims-tutorial-completed');
       localStorage.removeItem('claims-tutorial-skipped');
-      logger.info('IMPORTANT: Removed localStorage values that would conflict with TutorialManager');
-    }
-    
-    // Set flag to indicate we've cleaned up
-    setLocalStorageCleaned(true);
-  }, []); // Empty dependency array ensures this runs once before TutorialManager renders
-  
-  // STEP 2: Perform regular component initialization after localStorage cleanup
-  useEffect(() => {
-    logger.info('STEP 2: ClaimsPage mounted, localStorage cleaned: ' + localStorageCleaned);
-    
-    // Make a direct API call to check tutorial status
-    fetch('/api/user-tab-tutorials/claims/status')
-      .then(response => response.json())
-      .then(data => {
-        logger.info('Tutorial status from API:', data);
-      })
-      .catch(error => {
-        logger.error('Error fetching tutorial status:', error);
-      });
       
-    // Double-check localStorage was actually cleared
-    const stillHasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
-    const stillHasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
-    
-    logger.info('Verifying localStorage is clean:', {
-      completed: stillHasCompletedTutorial,
-      skipped: stillHasSkippedTutorial,
-      shouldBeClean: localStorageCleaned
-    });
-    
-    // Just in case - clean up again if somehow values still exist
-    if (stillHasCompletedTutorial || stillHasSkippedTutorial) {
-      localStorage.removeItem('claims-tutorial-completed');
-      localStorage.removeItem('claims-tutorial-skipped');
-      logger.info('Additional cleanup of old localStorage tutorial values');
+      // Log the cleanup
+      logger.info('ClaimsTutorialWrapper: Legacy localStorage values cleared');
+      
+      // Mark the component as ready to render the TutorialManager
+      setIsReady(true);
+    } catch (error) {
+      logger.error('ClaimsTutorialWrapper: Error clearing localStorage', error);
     }
-  }, [localStorageCleaned]); // This runs after localStorageCleaned changes to true
+  }, []);
   
-  logger.info('Rendering Claims Page with unified TutorialManager, localStorage cleaned: ' + localStorageCleaned);
+  // Only render the TutorialManager after cleanup is complete
+  if (!isReady) {
+    logger.info('ClaimsTutorialWrapper: Not yet ready, waiting for cleanup');
+    return null;
+  }
+  
+  logger.info('ClaimsTutorialWrapper: Ready, rendering TutorialManager');
+  
+  // @ts-ignore - The component is correct but TypeScript has issues with the return type
+  return <TutorialManager tabName="claims" />;
+}
+
+export default function ClaimsPage() {
+  logger.info('Rendering Claims Page with ClaimsTutorialWrapper');
   
   return (
     <DashboardLayout>
       {/* Debug panel */}
       <TutorialDebugPanel />
       
-      {/* Only render the TutorialManager AFTER localStorage has been cleaned */}
-      {localStorageCleaned ? (
-        // @ts-ignore - Ignoring the TypeScript error for now
-        <TutorialManager tabName="claims" />
-      ) : null}
+      {/* Use our wrapper component to handle cleanup and rendering */}
+      <ClaimsTutorialWrapper />
       
       <PageTemplate
         showBreadcrumbs
