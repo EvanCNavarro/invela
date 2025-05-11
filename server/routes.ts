@@ -473,6 +473,9 @@ export function registerRoutes(app: Express): Express {
   // Register Claims Management routes
   app.use('/api/claims', claimsRouter);
   
+  // Register Tutorial API routes
+  app.use('/api/tutorial', tutorialRouter);
+  
   // Register our unified form submission router - centralized endpoint for all form types
   // Set up our transaction-based unified form submission router
   try {
