@@ -16,6 +16,38 @@ const TUTORIAL_CONTENT: Record<string, {
   title: string;
   description: string;
 }> = {
+  // Risk Score Configuration - Complete tutorial for risk scoring configuration
+  'risk-score-configuration': {
+    title: 'Risk Score Configuration',
+    description: 'Learn how to customize and interpret risk scoring for your organization',
+    steps: [
+      {
+        title: 'Risk Score Configuration',
+        description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
+        imagePath: '/assets/tutorials/risk-score/overview.svg',
+      },
+      {
+        title: 'Risk Gauge',
+        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
+        imagePath: '/assets/tutorials/risk-score/gauge.svg',
+      },
+      {
+        title: 'Risk Dimensions',
+        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
+        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+      },
+      {
+        title: 'Risk Acceptance Level',
+        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
+        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+      },
+      {
+        title: 'Comparative Analysis',
+        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
+        imagePath: '/assets/tutorials/risk-score/comparative.svg',
+      },
+    ]
+  },
   // Claims Tutorial - Added to ensure consistent integration with TutorialManager
   'claims': {
     title: 'Claims Management',
@@ -256,7 +288,6 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     // Track all tab name mappings in a central object for consistency
     const tabMappings: Record<string, string> = {
       // Risk scoring related tabs
-      'risk-score-configuration': 'risk-score',
       'claims-risk-analysis': 'claims-risk',
       'network-visualization': 'network-view',
       
@@ -298,12 +329,17 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     // Check if we have tutorial content for this tab
     const hasContent = TUTORIAL_CONTENT[normalizedTabName] !== undefined;
     
+    // Additional debug information to help diagnose tab name issues
+    const availableTabs = Object.keys(TUTORIAL_CONTENT).join(', ');
+    
     if (!hasContent) {
       const errorMsg = `No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`;
-      logger.error(errorMsg);
+      const extendedError = `${errorMsg}. Available tabs: ${availableTabs}`;
+      logger.error(extendedError);
       setInitializationError(errorMsg);
     } else {
       logger.debug(`Found tutorial content for ${normalizedTabName} with ${TUTORIAL_CONTENT[normalizedTabName].steps.length} steps`);
+      logger.debug(`Available tutorial tabs: ${availableTabs}`);
     }
     
     // Mark initialization as complete
