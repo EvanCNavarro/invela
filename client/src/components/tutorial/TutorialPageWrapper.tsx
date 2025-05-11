@@ -65,7 +65,16 @@ export function TutorialPageWrapper({
   // Handle tutorial readiness state changes
   const handleReadyStateChange = (isReady: boolean) => {
     logger.info(`Tutorial ready state changed for ${tabName}: ${isReady}`);
-    setContentReady(isReady);
+    
+    // Add a small extra delay after tutorial manager signals readiness
+    // This further prevents flashing for completed tutorials
+    if (isReady) {
+      setTimeout(() => {
+        setContentReady(true);
+      }, 250); // Quarter-second delay for smoother transition
+    } else {
+      setContentReady(false);
+    }
   };
   
   return (
