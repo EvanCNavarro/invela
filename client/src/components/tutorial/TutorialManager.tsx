@@ -332,7 +332,10 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   } = useTabTutorials(normalizedTabName);
   
   // Subscribe to WebSocket updates
-  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(normalizedTabName);
+  const { tutorialUpdate } = useTutorialWebSocket(normalizedTabName);
+  
+  // Query client for invalidating cache on WebSocket updates
+  const queryClient = useQueryClient();
   
   // Get any custom assets for this tutorial
   const { imageUrl, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
@@ -372,13 +375,15 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   
   // React to WebSocket updates
   useEffect(() => {
-    if (tutorialProgress !== null) {
-      logger.info(`WebSocket update: tutorial progress changed to ${tutorialProgress}`);
+    if (tutorialUpdate !== null) {
+      logger.info(`WebSocket update received:`, tutorialUpdate);
+      
+      // Invalidate tutorial queries to refresh data from the server
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/user-tab-tutorials/status', normalizedTabName] 
+      });
     }
-    if (tutorialCompleted !== null) {
-      logger.info(`WebSocket update: tutorial completion status changed to ${tutorialCompleted}`);
-    }
-  }, [tutorialProgress, tutorialCompleted]);
+  }, [tutorialUpdate, normalizedTabName, queryClient]);
   
   // If we're still loading, show a loading state
   if (isLoading) {
