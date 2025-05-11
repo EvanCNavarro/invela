@@ -19,42 +19,57 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 const logger = createTutorialLogger('ClaimsPage');
 
 /**
- * ClaimsTutorialWrapper Component
+ * ImprovedClaimsTutorialWrapper Component
  * 
- * This component handles the legacy localStorage cleanup and renders the TutorialManager
- * once the cleanup is complete. It ensures that the old DirectClaimsTutorial 
- * implementation doesn't interfere with our unified tutorial system.
+ * This component renders the TutorialManager immediately while handling legacy localStorage
+ * cleanup in the background. This approach ensures the tutorial modal is the first thing
+ * users see when visiting the page, without any delay caused by state changes or re-renders.
+ * 
+ * Key improvements:
+ * 1. No state-based rendering delay (modal appears immediately)
+ * 2. Cleanup happens in parallel with modal display
+ * 3. Comprehensive logging for debugging
+ * 4. Follows the pattern used by other tabs in the application
  */
-function ClaimsTutorialWrapper() {
-  const [isReady, setIsReady] = useState(false);
+function ImprovedClaimsTutorialWrapper() {
+  logger.info('ClaimsTutorial: Initializing tutorial wrapper');
   
-  // Run the cleanup immediately when the component mounts
-  useEffect(() => {
-    try {
-      // Remove any conflicting localStorage values from the old implementation
-      localStorage.removeItem('claims-tutorial-completed');
-      localStorage.removeItem('claims-tutorial-skipped');
+  // Clean up legacy localStorage values immediately
+  try {
+    // This happens synchronously during the first render
+    if (typeof localStorage !== 'undefined') {
+      const hasLegacyValue = (
+        localStorage.getItem('claims-tutorial-completed') !== null || 
+        localStorage.getItem('claims-tutorial-skipped') !== null
+      );
       
-      // Log the cleanup
-      logger.info('ClaimsTutorialWrapper: Legacy localStorage values cleared');
-      
-      // Mark the component as ready to render the TutorialManager
-      setIsReady(true);
-    } catch (error) {
-      logger.error('ClaimsTutorialWrapper: Error clearing localStorage', error);
+      if (hasLegacyValue) {
+        logger.info('ClaimsTutorial: Found legacy localStorage values, cleaning up');
+        localStorage.removeItem('claims-tutorial-completed');
+        localStorage.removeItem('claims-tutorial-skipped');
+      } else {
+        logger.info('ClaimsTutorial: No legacy localStorage values found');
+      }
     }
-  }, []);
-  
-  // Only render the TutorialManager after cleanup is complete
-  if (!isReady) {
-    logger.info('ClaimsTutorialWrapper: Not yet ready, waiting for cleanup');
-    return null;
+  } catch (error) {
+    logger.error('ClaimsTutorial: Error during localStorage cleanup', error);
+    // Continue rendering the TutorialManager even if cleanup fails
   }
   
-  logger.info('ClaimsTutorialWrapper: Ready, rendering TutorialManager');
+  // Effect for additional logging after mount
+  useEffect(() => {
+    logger.info('ClaimsTutorial: Component mounted, tutorial should be visible');
+    
+    return () => {
+      logger.info('ClaimsTutorial: Component unmounting');
+    };
+  }, []);
   
-  // @ts-ignore - The component is correct but TypeScript has issues with the return type
-  return <TutorialManager tabName="claims" />;
+  // Render the TutorialManager immediately, without waiting
+  logger.info('ClaimsTutorial: Rendering TutorialManager component');
+  
+  // Use JSX.Element type assertion to satisfy TypeScript
+  return <TutorialManager tabName="claims" /> as JSX.Element;
 }
 
 export default function ClaimsPage() {
@@ -101,8 +116,8 @@ export default function ClaimsPage() {
 
   return (
     <DashboardLayout>
-      {/* Add the Tutorial Wrapper */}
-      <ClaimsTutorialWrapper />
+      {/* Tutorial component that immediately renders and handles cleanup */}
+      <ImprovedClaimsTutorialWrapper />
       
       <PageTemplate
         drawerOpen={drawerOpen}
