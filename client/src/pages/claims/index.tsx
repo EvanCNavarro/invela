@@ -19,58 +19,38 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 const logger = createTutorialLogger('ClaimsPage');
 
 /**
- * ImprovedClaimsTutorialWrapper Component
+ * CleanupLegacyStorage Component
  * 
- * This component renders the TutorialManager immediately while handling legacy localStorage
- * cleanup in the background. This approach ensures the tutorial modal is the first thing
- * users see when visiting the page, without any delay caused by state changes or re-renders.
- * 
- * Key improvements:
- * 1. No state-based rendering delay (modal appears immediately)
- * 2. Cleanup happens in parallel with modal display
- * 3. Comprehensive logging for debugging
- * 4. Follows the pattern used by other tabs in the application
+ * This component performs cleanup of legacy localStorage values without
+ * adding any visual elements to the page. It ensures that old localStorage
+ * values don't interfere with the new unified tutorial system.
  */
-function ImprovedClaimsTutorialWrapper() {
-  logger.info('ClaimsTutorial: Initializing tutorial wrapper');
-  
-  // Clean up legacy localStorage values immediately
-  try {
-    // This happens synchronously during the first render
-    if (typeof localStorage !== 'undefined') {
-      const hasLegacyValue = (
-        localStorage.getItem('claims-tutorial-completed') !== null || 
-        localStorage.getItem('claims-tutorial-skipped') !== null
-      );
-      
-      if (hasLegacyValue) {
-        logger.info('ClaimsTutorial: Found legacy localStorage values, cleaning up');
-        localStorage.removeItem('claims-tutorial-completed');
-        localStorage.removeItem('claims-tutorial-skipped');
-      } else {
-        logger.info('ClaimsTutorial: No legacy localStorage values found');
-      }
-    }
-  } catch (error) {
-    logger.error('ClaimsTutorial: Error during localStorage cleanup', error);
-    // Continue rendering the TutorialManager even if cleanup fails
-  }
-  
-  // Effect for additional logging after mount
+function CleanupLegacyStorage() {
+  // Clean up legacy localStorage values on mount
   useEffect(() => {
-    logger.info('ClaimsTutorial: Component mounted, tutorial should be visible');
-    
-    return () => {
-      logger.info('ClaimsTutorial: Component unmounting');
-    };
+    try {
+      logger.info('Claims: Cleaning up legacy localStorage values');
+      localStorage.removeItem('claims-tutorial-completed');
+      localStorage.removeItem('claims-tutorial-skipped');
+    } catch (error) {
+      logger.error('Claims: Error cleaning up localStorage', error);
+    }
   }, []);
   
-  // Render the TutorialManager immediately, without waiting
-  logger.info('ClaimsTutorial: Rendering TutorialManager component');
-  
-  // Use JSX.Element type assertion to satisfy TypeScript
-  return <TutorialManager tabName="claims" /> as JSX.Element;
+  // This component doesn't render anything
+  return null;
 }
+
+/**
+ * Directly including TutorialManager in the Claims page
+ * 
+ * After researching the implementation in other tabs, the cleanest solution is to:
+ * 1. Create a cleanup component to handle legacy localStorage values
+ * 2. Include the TutorialManager directly in the main component 
+ * 
+ * This matches how other tabs implement tutorials and avoids TypeScript issues.
+ * The cleanup component runs first, then TutorialManager displays immediately.
+ */
 
 export default function ClaimsPage() {
   const [isNewClaimModalOpen, setIsNewClaimModalOpen] = useState(false);
@@ -114,10 +94,18 @@ export default function ClaimsPage() {
     activeClaims.refetch();
   };
 
+  // Log when the claims page mounts for debugging purposes
+  useEffect(() => {
+    logger.info('ClaimsPage: Component mounted');
+  }, []);
+
   return (
     <DashboardLayout>
-      {/* Tutorial component that immediately renders and handles cleanup */}
-      <ImprovedClaimsTutorialWrapper />
+      {/* First, clean up any legacy localStorage values */}
+      <CleanupLegacyStorage />
+      
+      {/* Then include the TutorialManager directly (standard approach used by other tabs) */}
+      <TutorialManager tabName="claims" />
       
       <PageTemplate
         drawerOpen={drawerOpen}
