@@ -44,6 +44,12 @@ export function ClaimsTutorial({ forceTutorial = false }: ClaimsTutorialProps) {
     };
   }, []);
   
-  // Simply render the TutorialManager with claims tab name
-  return <TutorialManager tabName="claims" />;
+  // Render the TutorialManager with claims tab name
+  // The TutorialManager component will return a React element with the tutorial UI
+  return (
+    <>
+      {/* TutorialManager returns the appropriate tutorial UI or null */}
+      <TutorialManager tabName="claims" />
+    </>
+  );
 }

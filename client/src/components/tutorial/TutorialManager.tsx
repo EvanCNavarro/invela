@@ -284,8 +284,10 @@ interface TutorialManagerProps {
  * This component handles rendering tutorials for any tab in the application.
  * It uses the tab name to dynamically load the appropriate tutorial content
  * and manages state, WebSocket communication, and UI rendering.
+ * 
+ * @returns A React element containing the TabTutorialModal or null if no tutorial is available
  */
-export function TutorialManager({ tabName }: TutorialManagerProps) {
+export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactNode {
   // Initialize with detailed logging
   logger.init(`Initializing for tab: ${tabName}`);
   
@@ -427,7 +429,21 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     
     if (possibleMatch) {
       logger.info(`Found possible case-sensitive match: ${possibleMatch}`);
-      return TUTORIAL_CONTENT[possibleMatch];
+      // We must return a React element, not just the tutorial content object
+      const content = TUTORIAL_CONTENT[possibleMatch];
+      return (
+        <TabTutorialModal
+          title={content.title}
+          description={content.steps[0].description}
+          imageUrl={content.steps[0].imageUrl || content.steps[0].imagePath || `/assets/tutorials/${possibleMatch}/${1}.svg`}
+          isLoading={false}
+          currentStep={0}
+          totalSteps={content.steps.length}
+          onNext={() => {}}
+          onComplete={() => {}}
+          onClose={() => {}}
+        />
+      );
     }
     
     return null;
@@ -459,13 +475,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps) {
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse].description}
-      imagePath={tutorialContent.steps[stepToUse].imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`}
-      step={stepToUse + 1}
+      imageUrl={tutorialContent.steps[stepToUse].imageUrl || tutorialContent.steps[stepToUse].imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`}
+      isLoading={isLoading}
+      currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
       onBack={handleBack}
       onComplete={handleComplete}
-      onClose={() => markTutorialSeen(normalizedTabName)}
+      onClose={() => markTutorialSeen()}
     />
   );
 }
