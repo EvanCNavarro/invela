@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { 
+  cacheTutorialState, 
+  getCachedTutorialState, 
+  clearCachedTutorialState 
+} from '@/lib/tutorial-cache';
+
+// Create a dedicated logger for this hook
+const logger = createTutorialLogger('useTabTutorials');
 
 // Define tutorial status interface
 interface TutorialStatus {
@@ -10,6 +19,10 @@ interface TutorialStatus {
   lastSeenAt: string | null;
   exists?: boolean;
 }
+
+// Tracking the current user ID for cache purposes
+// We'll update this when user info becomes available
+let currentUserId: number | null = null;
 
 /**
  * Hook to manage tab-specific tutorial state
@@ -22,6 +35,9 @@ export function useTabTutorials(tabName: string) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [tutorialEnabled, setTutorialEnabled] = useState(false);
+  
+  // Add a new state to track cache preload status
+  const [cachePreloaded, setCachePreloaded] = useState(false);
   
   const queryClient = useQueryClient();
   
@@ -41,28 +57,68 @@ export function useTabTutorials(tabName: string) {
   
   const totalSteps = getTotalSteps(tabName);
   
-  console.log(`[TabTutorials] Initializing for tab: ${tabName}`);
+  logger.info(`Initializing for tab: ${tabName}`);
+  
+  // Try to load from cache immediately (synchronously)
+  useEffect(() => {
+    try {
+      const cachedState = getCachedTutorialState(currentUserId, tabName);
+      
+      if (cachedState) {
+        logger.info(`Using cached tutorial state for ${tabName}`, cachedState);
+        setCurrentStep(cachedState.currentStep);
+        setIsCompleted(cachedState.completed);
+        setTutorialEnabled(true);
+      }
+      
+      // Mark cache check as complete regardless of result
+      setCachePreloaded(true);
+    } catch (error) {
+      logger.error(`Error loading tutorial cache for ${tabName}`, error);
+      setCachePreloaded(true);
+    }
+  }, [tabName]);
   
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
     queryKey: ['/api/user-tab-tutorials/status', tabName],
     queryFn: async (): Promise<TutorialStatus> => {
-      console.log(`[TabTutorials] Fetching tutorial status for: ${tabName}`);
+      logger.info(`Fetching tutorial status for: ${tabName}`);
       try {
         const result = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
-        console.log(`[TabTutorials] Received tutorial status for ${tabName}:`, result);
+        
+        // Get user ID from result if available
+        if (result && typeof result === 'object' && 'userId' in result) {
+          currentUserId = result.userId as number;
+        }
+        
+        logger.info(`Received tutorial status for ${tabName}:`, result);
+        
+        // Cache the result for faster access on future visits
+        if (result && typeof result === 'object') {
+          const tutorialStatus = result as TutorialStatus;
+          cacheTutorialState(
+            currentUserId, 
+            tabName, 
+            tutorialStatus.completed || false, 
+            tutorialStatus.currentStep || 0
+          );
+        }
+        
         return result as TutorialStatus;
       } catch (err) {
-        console.error(`[TabTutorials] Error fetching tutorial status for ${tabName}:`, err);
+        logger.error(`Error fetching tutorial status for ${tabName}:`, err);
         throw err;
       }
-    }
+    },
+    // Skip the query entirely if we already have cached data and are just showing it
+    enabled: !isCompleted || !cachePreloaded
   });
   
   // Update tutorial progress mutation
   const updateTutorialMutation = useMutation({
     mutationFn: async (payload: { step: number, completed: boolean }) => {
-      console.log(`[TabTutorials] Updating tutorial for ${tabName}:`, payload);
+      logger.info(`Updating tutorial for ${tabName}:`, payload);
       
       // Use the direct method+url+data pattern for the API request
       return apiRequest(
@@ -77,19 +133,28 @@ export function useTabTutorials(tabName: string) {
       );
     },
     onSuccess: (result) => {
-      console.log(`[TabTutorials] Successfully updated tutorial for ${tabName}:`, result);
+      logger.info(`Successfully updated tutorial for ${tabName}:`, result);
+      
+      // Update the cache immediately for faster UI updates
+      cacheTutorialState(
+        currentUserId, 
+        tabName, 
+        result?.completed || false, 
+        result?.currentStep || 0
+      );
+      
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     },
     onError: (error) => {
-      console.error(`[TabTutorials] Error updating tutorial for ${tabName}:`, error);
+      logger.error(`Error updating tutorial for ${tabName}:`, error);
     }
   });
   
   // Mark tutorial as seen mutation (for "Skip" functionality)
   const markSeenMutation = useMutation({
     mutationFn: async () => {
-      console.log(`[TabTutorials] Marking tutorial as seen for ${tabName}`);
+      logger.info(`Marking tutorial as seen for ${tabName}`);
       
       // Use the direct method+url+data pattern for the API request
       return apiRequest(
@@ -102,22 +167,43 @@ export function useTabTutorials(tabName: string) {
       );
     },
     onSuccess: (result) => {
-      console.log(`[TabTutorials] Successfully marked tutorial as seen for ${tabName}:`, result);
+      logger.info(`Successfully marked tutorial as seen for ${tabName}:`, result);
+      
+      // Update the cache to reflect that tutorial has been seen
+      // We don't mark it as completed, just update the timestamp
+      if (result && typeof result === 'object') {
+        const tutorialStatus = result as TutorialStatus;
+        cacheTutorialState(
+          currentUserId, 
+          tabName, 
+          tutorialStatus.completed || false, 
+          tutorialStatus.currentStep || 0
+        );
+      }
+      
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     },
     onError: (error) => {
-      console.error(`[TabTutorials] Error marking tutorial as seen for ${tabName}:`, error);
+      logger.error(`Error marking tutorial as seen for ${tabName}:`, error);
     }
   });
   
   // Update local state when data changes
   useEffect(() => {
     if (data) {
-      console.log(`[TabTutorials] Updating local state for ${tabName}:`, data);
+      logger.info(`Updating local state for ${tabName}:`, data);
       
       // Log the real step information from the database
-      console.log(`[TabTutorials] Real step information: currentStep=${data.currentStep}, totalSteps=${totalSteps}`);
+      logger.info(`Real step information: currentStep=${data.currentStep}, totalSteps=${totalSteps}`);
+      
+      // Update our shared user ID for caching
+      if ('userId' in data && data.userId) {
+        currentUserId = data.userId as number;
+      }
+      
+      // Cache the data for faster access on future page loads
+      cacheTutorialState(currentUserId, tabName, data.completed || false, data.currentStep || 0);
       
       // Ensure we're using the exact value from the server
       // This will synchronize UI display with database values
@@ -125,7 +211,7 @@ export function useTabTutorials(tabName: string) {
       setIsCompleted(data.completed || false);
       setTutorialEnabled(true);
     } else if (error) {
-      console.error(`[TabTutorials] Error in tutorial data for ${tabName}:`, error);
+      logger.error(`Error in tutorial data for ${tabName}:`, error);
     }
   }, [data, error, tabName, totalSteps]);
   
