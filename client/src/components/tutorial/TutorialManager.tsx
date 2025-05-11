@@ -413,8 +413,35 @@ export function TutorialManager({
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
-  // If we're still loading, show a loading state
-  if (isLoading) {
+  // Notify parent component when content is ready to be shown
+  useEffect(() => {
+    // Content is ready when:
+    // 1. We're not loading anymore
+    // 2. We've made the decision whether to show the tutorial or not
+    const readyToShow = !isLoading && initializationComplete;
+    
+    if (readyToShow && !contentReady) {
+      logger.info(`Tutorial state determined for ${normalizedTabName}`, {
+        isLoading,
+        tutorialEnabled,
+        isCompleted,
+        currentStep
+      });
+      
+      // Update our internal state
+      setContentReady(true);
+      
+      // Notify parent component if callback was provided
+      if (onReadyStateChange) {
+        logger.info(`Notifying parent that content is ready to show`);
+        onReadyStateChange(true);
+      }
+    }
+  }, [isLoading, initializationComplete, contentReady, normalizedTabName, 
+      tutorialEnabled, isCompleted, currentStep, onReadyStateChange]);
+  
+  // If we're still loading and parent wants us to delay content, show nothing
+  if (isLoading && delayContentUntilReady) {
     logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
     return null;
   }
