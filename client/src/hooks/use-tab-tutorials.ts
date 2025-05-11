@@ -136,12 +136,15 @@ export function useTabTutorials(tabName: string) {
       logger.info(`Successfully updated tutorial for ${tabName}:`, result);
       
       // Update the cache immediately for faster UI updates
-      cacheTutorialState(
-        currentUserId, 
-        tabName, 
-        result?.completed || false, 
-        result?.currentStep || 0
-      );
+      if (result && typeof result === 'object') {
+        const tutorialResult = result as TutorialStatus;
+        cacheTutorialState(
+          currentUserId, 
+          tabName, 
+          tutorialResult.completed || false, 
+          tutorialResult.currentStep || 0
+        );
+      }
       
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
