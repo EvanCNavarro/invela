@@ -1,65 +1,110 @@
 import { useState, useEffect } from 'react';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
 
-// Define interfaces for tutorial progress and status
-interface TutorialProgress {
+// Create a dedicated logger for the WebSocket component
+const logger = createTutorialLogger('TutorialWebSocket');
+
+// Define interfaces for tutorial updates
+interface TutorialUpdate {
   tabName: string;
+  userId: number;
   currentStep: number;
-  totalSteps: number;
-  timestamp: string;
-}
-
-interface TutorialCompletion {
-  tabName: string;
   completed: boolean;
-  timestamp: string;
+  timestamp?: string;
+  metadata?: Record<string, any>;
 }
 
 /**
  * Hook for receiving real-time tutorial updates via WebSocket
  * 
- * This hook subscribes to tutorial-related WebSocket messages and
- * provides real-time updates for tutorial progress and completion.
+ * This hook subscribes to WebSocket messages with type 'tutorial_updated'
+ * and provides real-time updates for the current tab's tutorial state.
+ * It works with the unified WebSocket implementation to keep the UI
+ * synchronized with the server state.
  * 
  * @param tabName - The name of the tab to subscribe to updates for
- * @returns Object containing tutorial update data
+ * @returns Object containing the latest tutorial update
  */
 export function useTutorialWebSocket(tabName: string) {
-  const [tutorialProgress, setTutorialProgress] = useState<TutorialProgress | null>(null);
-  const [tutorialCompleted, setTutorialCompleted] = useState<TutorialCompletion | null>(null);
+  const [tutorialUpdate, setTutorialUpdate] = useState<TutorialUpdate | null>(null);
+  
+  // Normalize tab name for comparison
+  const normalizedTabName = tabName.toLowerCase().trim();
   
   // Subscribe to WebSocket events
   useEffect(() => {
-    console.log(`[TutorialWebSocket] Setting up WebSocket listener for ${tabName}`);
+    logger.info(`Setting up WebSocket listener for ${normalizedTabName}`);
     
-    // Define event handlers
-    const handleTutorialProgress = (event: any) => {
-      if (event.detail?.tabName === tabName) {
-        console.log(`[TutorialWebSocket] Received progress update for ${tabName}:`, event.detail);
-        setTutorialProgress(event.detail);
+    /**
+     * Handle tutorial update messages from WebSocket
+     * 
+     * This function processes 'tutorial_updated' messages from the unified
+     * WebSocket implementation and updates the local state if the message
+     * is relevant to the current tab.
+     */
+    const handleWebSocketMessage = (event: MessageEvent) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        // Check if this is a tutorial update message
+        if (message.type === 'tutorial_updated') {
+          logger.info(`Received tutorial update message:`, message);
+          
+          // Only process messages for this tab
+          if (message.tabName?.toLowerCase() === normalizedTabName) {
+            logger.info(`Processing update for ${normalizedTabName}:`, message);
+            
+            // Update local state with the message data
+            setTutorialUpdate({
+              tabName: message.tabName,
+              userId: message.userId,
+              currentStep: message.currentStep,
+              completed: message.completed,
+              timestamp: message.timestamp,
+              metadata: message.metadata
+            });
+          }
+        }
+      } catch (error) {
+        logger.error(`Error processing WebSocket message:`, error);
       }
     };
     
-    const handleTutorialCompletion = (event: any) => {
-      if (event.detail?.tabName === tabName) {
-        console.log(`[TutorialWebSocket] Received completion update for ${tabName}:`, event.detail);
-        setTutorialCompleted(event.detail);
+    // Connect to the global WebSocket manager
+    window.addEventListener('message', (event) => {
+      // Check if this is a WebSocket message event from our bridge
+      if (event.data?.source === 'websocket-bridge' && 
+          event.data?.messageType === 'tutorial_updated') {
+        logger.info(`Received bridged tutorial update:`, event.data);
+        
+        // Process the message if it's for our tab
+        if (event.data.message?.tabName?.toLowerCase() === normalizedTabName) {
+          setTutorialUpdate(event.data.message);
+        }
       }
-    };
+    });
     
-    // Add event listeners
-    window.addEventListener('tutorial_progress', handleTutorialProgress);
-    window.addEventListener('tutorial_completed', handleTutorialCompletion);
+    // Get the WebSocket instance if available
+    const webSocket = (window as any).appWebSocket;
+    
+    // If we have direct access to the WebSocket, listen for messages
+    if (webSocket && webSocket.addEventListener) {
+      webSocket.addEventListener('message', handleWebSocketMessage);
+      logger.info(`Attached listener to app WebSocket`);
+    } else {
+      logger.warn(`App WebSocket not available, using event bridge only`);
+    }
     
     // Clean up
     return () => {
-      window.removeEventListener('tutorial_progress', handleTutorialProgress);
-      window.removeEventListener('tutorial_completed', handleTutorialCompletion);
-      console.log(`[TutorialWebSocket] Cleaned up WebSocket listener for ${tabName}`);
+      if (webSocket && webSocket.removeEventListener) {
+        webSocket.removeEventListener('message', handleWebSocketMessage);
+      }
+      logger.info(`Cleaned up WebSocket listener for ${normalizedTabName}`);
     };
-  }, [tabName]);
+  }, [normalizedTabName]);
   
   return {
-    tutorialProgress,
-    tutorialCompleted
+    tutorialUpdate
   };
 }
