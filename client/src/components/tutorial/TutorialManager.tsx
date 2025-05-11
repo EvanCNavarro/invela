@@ -316,7 +316,7 @@ export function TutorialManager({
   delayContentUntilReady = true
 }: TutorialManagerProps): React.ReactNode {
   // Initialize with detailed logging
-  logger.init(`Initializing for tab: ${tabName}`);
+  logger.info(`Initializing for tab: ${tabName}`);
   
   // Track component initialization and content ready state
   const [initializationComplete, setInitializationComplete] = useState(false);
@@ -510,7 +510,7 @@ export function TutorialManager({
   const stepToUse = Math.min(currentStep, maxStep);
   
   // Generate descriptive log message about the tutorial being shown
-  logger.render(`Rendering tutorial step ${stepToUse + 1} of ${tutorialContent.steps.length} for ${normalizedTabName}`);
+  logger.info(`Rendering tutorial step ${stepToUse + 1} of ${tutorialContent.steps.length} for ${normalizedTabName}`);
   
   // Prepare modal title based on active step
   const modalTitle = tutorialContent.title;

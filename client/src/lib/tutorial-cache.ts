@@ -8,16 +8,18 @@
 
 import { createTutorialLogger } from './tutorial-logger';
 
-// Create a dedicated logger for the tutorial cache
+// Create a dedicated logger for the cache system
 const logger = createTutorialLogger('TutorialCache');
 
-// The key used for storing the tutorial cache in localStorage
-const TUTORIAL_CACHE_KEY = 'invela_tutorial_cache';
+// Local storage key for tutorial cache
+const TUTORIAL_CACHE_KEY = 'invela-tutorial-cache';
 
-// Maximum age of cache entries in milliseconds (12 hours)
-const CACHE_MAX_AGE = 12 * 60 * 60 * 1000;
+// Cache entry timeout in milliseconds (24 hours)
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-// Type definitions for the tutorial cache
+/**
+ * Structure of a single tutorial cache entry
+ */
 interface TutorialCacheEntry {
   tabName: string;
   completed: boolean;
@@ -25,6 +27,9 @@ interface TutorialCacheEntry {
   timestamp: number;
 }
 
+/**
+ * Structure of the entire tutorial cache
+ */
 interface TutorialCache {
   entries: Record<string, TutorialCacheEntry>;
   userId: number | null;
@@ -37,7 +42,6 @@ interface TutorialCache {
  * @returns The initialized cache
  */
 function initializeCache(userId: number | null): TutorialCache {
-  logger.info('Initializing tutorial cache for user', userId);
   return {
     entries: {},
     userId
@@ -52,41 +56,24 @@ function initializeCache(userId: number | null): TutorialCache {
  */
 function getCache(userId: number | null): TutorialCache {
   try {
-    const cacheString = localStorage.getItem(TUTORIAL_CACHE_KEY);
-    if (!cacheString) {
-      return initializeCache(userId);
-    }
-
-    const cache = JSON.parse(cacheString) as TutorialCache;
+    const cachedDataString = localStorage.getItem(TUTORIAL_CACHE_KEY);
     
-    // If the user ID doesn't match, reset the cache
-    if (cache.userId !== userId) {
-      logger.info('User ID mismatch, resetting cache', { 
-        cachedUserId: cache.userId, 
-        currentUserId: userId 
-      });
+    if (!cachedDataString) {
+      logger.debug('No cache found, initializing new cache');
       return initializeCache(userId);
     }
     
-    // Clean up expired entries
-    const now = Date.now();
-    let entriesRemoved = 0;
+    const cachedData = JSON.parse(cachedDataString) as TutorialCache;
     
-    Object.keys(cache.entries).forEach(key => {
-      const entry = cache.entries[key];
-      if (now - entry.timestamp > CACHE_MAX_AGE) {
-        delete cache.entries[key];
-        entriesRemoved++;
-      }
-    });
-    
-    if (entriesRemoved > 0) {
-      logger.debug(`Removed ${entriesRemoved} expired cache entries`);
+    // If the cache is for a different user, create a new one
+    if (cachedData.userId !== userId) {
+      logger.debug(`User ID mismatch in cache (cached: ${cachedData.userId}, current: ${userId}), reinitializing`);
+      return initializeCache(userId);
     }
     
-    return cache;
+    return cachedData;
   } catch (error) {
-    logger.error('Error retrieving tutorial cache', error);
+    logger.error('Error retrieving cache from localStorage', error);
     return initializeCache(userId);
   }
 }
@@ -99,8 +86,9 @@ function getCache(userId: number | null): TutorialCache {
 function saveCache(cache: TutorialCache): void {
   try {
     localStorage.setItem(TUTORIAL_CACHE_KEY, JSON.stringify(cache));
+    logger.debug('Cache saved successfully', { userId: cache.userId, entryCount: Object.keys(cache.entries).length });
   } catch (error) {
-    logger.error('Error saving tutorial cache', error);
+    logger.error('Error saving cache to localStorage', error);
   }
 }
 
@@ -118,21 +106,32 @@ export function cacheTutorialState(
   completed: boolean,
   currentStep: number
 ): void {
-  const cache = getCache(userId);
-  
-  cache.entries[tabName] = {
-    tabName,
-    completed,
-    currentStep,
-    timestamp: Date.now()
-  };
-  
-  logger.debug(`Cached tutorial state for tab "${tabName}"`, { 
-    completed, 
-    currentStep 
-  });
-  
-  saveCache(cache);
+  try {
+    const cache = getCache(userId);
+    const now = Date.now();
+    
+    // Create or update the cache entry
+    cache.entries[tabName] = {
+      tabName,
+      completed,
+      currentStep,
+      timestamp: now
+    };
+    
+    // Clean up expired entries
+    Object.keys(cache.entries).forEach(key => {
+      const entry = cache.entries[key];
+      if (now - entry.timestamp > CACHE_EXPIRY_MS) {
+        logger.debug(`Removing expired cache entry for tab: ${key}`);
+        delete cache.entries[key];
+      }
+    });
+    
+    saveCache(cache);
+    logger.debug(`Cached tutorial state for tab: ${tabName}`, { completed, currentStep });
+  } catch (error) {
+    logger.error(`Error caching tutorial state for tab: ${tabName}`, error);
+  }
 }
 
 /**
@@ -145,25 +144,30 @@ export function cacheTutorialState(
 export function getCachedTutorialState(
   userId: number | null,
   tabName: string
-): { completed: boolean; currentStep: number } | null {
-  const cache = getCache(userId);
-  const entry = cache.entries[tabName];
-  
-  if (!entry) {
-    logger.debug(`No cached state found for tab "${tabName}"`);
+): TutorialCacheEntry | null {
+  try {
+    const cache = getCache(userId);
+    const entry = cache.entries[tabName];
+    
+    if (!entry) {
+      logger.debug(`No cached state found for tab: ${tabName}`);
+      return null;
+    }
+    
+    // Check if the entry is expired
+    if (Date.now() - entry.timestamp > CACHE_EXPIRY_MS) {
+      logger.debug(`Cache entry for tab: ${tabName} has expired`);
+      delete cache.entries[tabName];
+      saveCache(cache);
+      return null;
+    }
+    
+    logger.debug(`Retrieved cached state for tab: ${tabName}`, entry);
+    return entry;
+  } catch (error) {
+    logger.error(`Error retrieving cached state for tab: ${tabName}`, error);
     return null;
   }
-  
-  logger.debug(`Retrieved cached state for tab "${tabName}"`, { 
-    completed: entry.completed, 
-    currentStep: entry.currentStep,
-    age: Math.round((Date.now() - entry.timestamp) / 1000) + 's'
-  });
-  
-  return {
-    completed: entry.completed,
-    currentStep: entry.currentStep
-  };
 }
 
 /**
@@ -176,12 +180,16 @@ export function clearCachedTutorialState(
   userId: number | null,
   tabName: string
 ): void {
-  const cache = getCache(userId);
-  
-  if (cache.entries[tabName]) {
-    delete cache.entries[tabName];
-    logger.debug(`Cleared cached state for tab "${tabName}"`);
-    saveCache(cache);
+  try {
+    const cache = getCache(userId);
+    
+    if (tabName in cache.entries) {
+      delete cache.entries[tabName];
+      saveCache(cache);
+      logger.debug(`Cleared cache for tab: ${tabName}`);
+    }
+  } catch (error) {
+    logger.error(`Error clearing cache for tab: ${tabName}`, error);
   }
 }
 
@@ -191,7 +199,11 @@ export function clearCachedTutorialState(
  * @param userId - The ID of the current user
  */
 export function clearAllCachedTutorialState(userId: number | null): void {
-  const cache = initializeCache(userId);
-  logger.info('Cleared all cached tutorial states');
-  saveCache(cache);
+  try {
+    const cache = initializeCache(userId);
+    saveCache(cache);
+    logger.debug('Cleared all tutorial cache entries');
+  } catch (error) {
+    logger.error('Error clearing all tutorial cache entries', error);
+  }
 }
