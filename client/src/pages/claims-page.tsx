@@ -3,11 +3,11 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DirectClaimsTutorial } from "@/components/tutorial/DirectClaimsTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Bug } from "lucide-react";
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { Button } from "@/components/ui/button";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
@@ -143,26 +143,33 @@ export default function ClaimsPage() {
         logger.error('Error fetching tutorial status:', error);
       });
       
-    // Log any storage state
+    // Log any localStorage variables that might be leftover from the old implementation
     const hasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
     const hasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
     
-    logger.info('Tutorial localStorage state:', {
+    logger.info('Old tutorial localStorage state (now ignored):', {
       completed: hasCompletedTutorial,
       skipped: hasSkippedTutorial
     });
     
+    // Clean up old localStorage values so they don't interfere
+    if (hasCompletedTutorial || hasSkippedTutorial) {
+      localStorage.removeItem('claims-tutorial-completed');
+      localStorage.removeItem('claims-tutorial-skipped');
+      logger.info('Cleaned up old localStorage tutorial values');
+    }
+    
   }, []);
   
-  logger.info('Rendering Claims Page with DirectClaimsTutorial');
+  logger.info('Rendering Claims Page with unified TutorialManager');
   
   return (
     <DashboardLayout>
       {/* Debug panel */}
       <TutorialDebugPanel />
       
-      {/* Direct tutorial implementation that bypasses the hook system */}
-      <DirectClaimsTutorial />
+      {/* Use the unified TutorialManager component */}
+      <TutorialManager tabName="claims" />
       
       <PageTemplate
         showBreadcrumbs
