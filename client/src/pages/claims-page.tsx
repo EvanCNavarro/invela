@@ -3,13 +3,10 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TutorialManager } from "@/components/tutorial/TutorialManager";
+import { DirectClaimsTutorial } from "@/components/tutorial/DirectClaimsTutorial";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Bug } from "lucide-react";
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import tutorialDebug from '@/lib/tutorial-debug';
-import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { Button } from "@/components/ui/button";
 
 // Create a dedicated logger for the Claims page
@@ -99,14 +96,6 @@ function TutorialDebugPanel() {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => tutorialDebug.showConsole()}
-              className="text-xs h-8"
-            >
-              Show Console
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
               onClick={() => window.location.reload()}
               className="text-xs h-8"
             >
@@ -124,12 +113,13 @@ function TutorialDebugPanel() {
               variant="destructive" 
               size="sm"
               onClick={() => {
-                localStorage.setItem('FORCE_CLAIMS_TUTORIAL', 'true');
+                localStorage.removeItem('claims-tutorial-completed');
+                localStorage.removeItem('claims-tutorial-skipped');
                 window.location.reload();
               }}
-              className="text-xs h-8"
+              className="text-xs h-8 col-span-2"
             >
-              Force Enable
+              Clear Storage & Reset
             </Button>
           </div>
         </div>
@@ -138,116 +128,41 @@ function TutorialDebugPanel() {
   );
 }
 
-// Custom debug-enabled tutorial manager
-function DebugTutorialManager({ tabName }: { tabName: string }) {
-  // Create a wrapper to access and debug the hook
-  const hookResult = useTabTutorials(tabName);
-  const wsResult = useTutorialWebSocket(tabName);
-  
-  // Log the hook state
-  useEffect(() => {
-    tutorialDebug.hooks.init('useTabTutorials', hookResult);
-    tutorialDebug.hooks.init('useTutorialWebSocket', wsResult);
-    
-    logger.debug('Tutorial hook state:', {
-      tutorialEnabled: hookResult.tutorialEnabled,
-      isLoading: hookResult.isLoading, 
-      isCompleted: hookResult.isCompleted,
-      currentStep: hookResult.currentStep,
-      totalSteps: hookResult.totalSteps,
-      wsProgress: wsResult.tutorialProgress
-    });
-  }, [
-    hookResult.tutorialEnabled, 
-    hookResult.isLoading,
-    hookResult.isCompleted,
-    hookResult.currentStep,
-    wsResult.tutorialProgress
-  ]);
-  
-  // Force tutorial if requested
-  const forceTutorial = localStorage.getItem('FORCE_CLAIMS_TUTORIAL') === 'true';
-  
-  return (
-    <>
-      {/* Debug message if forced */}
-      {forceTutorial && (
-        <div className="bg-red-500 text-white p-2 text-sm fixed top-0 left-0 right-0 z-50 text-center">
-          Tutorial forced via localStorage. <button onClick={() => {
-            localStorage.removeItem('FORCE_CLAIMS_TUTORIAL');
-            window.location.reload();
-          }} className="underline">Disable</button>
-        </div>
-      )}
-      
-      {/* Standard tutorial manager with extra props */}
-      <TutorialManager 
-        tabName={tabName}
-        key={`claims-tutorial-${Date.now()}`} 
-        {...(forceTutorial ? { _debugForceEnabled: true } : {})}
-      />
-    </>
-  );
-}
-
 export default function ClaimsPage() {
-  // Track mount time for debugging
-  const mountTime = React.useRef(new Date().toISOString());
-  
-  // Initialize tutorial debugging
+  // Log the component mount
   useEffect(() => {
-    // Track page navigation
-    tutorialDebug.navigation.navigate('unknown', 'claims');
-    
-    // Log component lifecycle
-    tutorialDebug.lifecycle.mount('ClaimsPage', { mountTime: mountTime.current });
-    
-    // Log beginning of direct API check
-    tutorialDebug.api.log('/api/user-tab-tutorials/claims/status', 'GET', null, null);
+    logger.info('ClaimsPage mounted');
     
     // Make a direct API call to check tutorial status
     fetch('/api/user-tab-tutorials/claims/status')
       .then(response => response.json())
       .then(data => {
-        // Log successful API response
-        tutorialDebug.api.log('/api/user-tab-tutorials/claims/status', 'GET', null, data);
         logger.info('Tutorial status from API:', data);
       })
       .catch(error => {
-        // Log API error
-        tutorialDebug.api.error('/api/user-tab-tutorials/claims/status', 'GET', error);
         logger.error('Error fetching tutorial status:', error);
       });
+      
+    // Log any storage state
+    const hasCompletedTutorial = localStorage.getItem('claims-tutorial-completed') === 'true';
+    const hasSkippedTutorial = localStorage.getItem('claims-tutorial-skipped') === 'true';
     
-    // Also make a direct call to get the full entry
-    fetch('/api/user-tab-tutorials/claims')
-      .then(response => response.json())
-      .then(data => {
-        tutorialDebug.api.log('/api/user-tab-tutorials/claims', 'GET', null, data);
-        logger.info('Full tutorial entry:', data);
-      })
-      .catch(error => {
-        tutorialDebug.api.error('/api/user-tab-tutorials/claims', 'GET', error);
-        logger.error('Error fetching full tutorial entry:', error);
-      });
+    logger.info('Tutorial localStorage state:', {
+      completed: hasCompletedTutorial,
+      skipped: hasSkippedTutorial
+    });
     
-    // Clean up on unmount
-    return () => {
-      tutorialDebug.lifecycle.unmount('ClaimsPage');
-    };
   }, []);
   
-  // Log render start
-  tutorialDebug.render.start('ClaimsPage', { time: new Date().toISOString() });
-  logger.info('Rendering Claims Page with Debug-Enabled TutorialManager');
+  logger.info('Rendering Claims Page with DirectClaimsTutorial');
   
   return (
     <DashboardLayout>
       {/* Debug panel */}
       <TutorialDebugPanel />
       
-      {/* Debug-enhanced tutorial manager */}
-      <DebugTutorialManager tabName="claims" />
+      {/* Direct tutorial implementation that bypasses the hook system */}
+      <DirectClaimsTutorial />
       
       <PageTemplate
         showBreadcrumbs
