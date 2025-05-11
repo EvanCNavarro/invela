@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { TutorialManager } from '../TutorialManager';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 
 // Create a dedicated logger for claims tutorial
@@ -9,28 +10,40 @@ export interface ClaimsTutorialProps {
 }
 
 /**
- * REMOVED: Claims Tutorial Component
+ * Claims Tutorial Component
  * 
- * This component has been removed and replaced with the unified TutorialManager approach.
- * Please use the TutorialManager component with tabName="claims" instead:
+ * This component implements the unified tutorial system for the Claims tab.
+ * It wraps the TutorialManager component with the correct tab name and
+ * handles cleanup of any legacy localStorage values that might interfere.
  * 
- * ```jsx
- * <TutorialManager tabName="claims" />
- * ```
- * 
- * This file exists only as a placeholder to prevent import errors in existing code.
- * It does not render anything and simply logs warnings when imported.
+ * This implementation ensures the tutorial modal appears immediately when 
+ * visiting the Claims page, providing the best onboarding experience.
  */
 export function ClaimsTutorial({ forceTutorial = false }: ClaimsTutorialProps) {
-  // Log removal warning
-  React.useEffect(() => {
-    console.warn(
-      '[REMOVED] ClaimsTutorial component has been removed. Please use <TutorialManager tabName="claims" /> instead. ' +
-      'This component no longer renders anything and will be completely removed in a future release.'
-    );
-    logger.warn('ClaimsTutorial component has been removed. Migration to TutorialManager required.');
+  // Log component initialization
+  useEffect(() => {
+    logger.info('Claims tutorial component mounted');
+    
+    // Clean up legacy localStorage values that could interfere with the unified system
+    try {
+      // Only remove these values if they exist (to avoid unnecessary localStorage operations)
+      const hasLegacyCompleted = localStorage.getItem('claims-tutorial-completed') !== null;
+      const hasLegacySkipped = localStorage.getItem('claims-tutorial-skipped') !== null;
+      
+      if (hasLegacyCompleted || hasLegacySkipped) {
+        logger.info('Cleaning up legacy localStorage values for claims tutorial');
+        localStorage.removeItem('claims-tutorial-completed');
+        localStorage.removeItem('claims-tutorial-skipped');
+      }
+    } catch (error) {
+      logger.error('Error during localStorage cleanup', error);
+    }
+    
+    return () => {
+      logger.info('Claims tutorial component unmounting');
+    };
   }, []);
   
-  // Don't render anything - just return null
-  return null;
+  // Simply render the TutorialManager with claims tab name
+  return <TutorialManager tabName="claims" />;
 }
