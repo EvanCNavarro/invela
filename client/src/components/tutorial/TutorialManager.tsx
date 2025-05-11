@@ -413,19 +413,38 @@ export function TutorialManager({
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
+  // Add a small delay to prevent flickering when checking tutorial state
+  // This helps ensure we don't show a flash of content or tutorial modal
+  const [isStateStable, setIsStateStable] = useState(false);
+  
+  useEffect(() => {
+    // Only start the stability timer once loading is complete and initialization is done
+    if (!isLoading && initializationComplete) {
+      // Add a small delay to ensure stable state and prevent flickering
+      const stabilityTimer = setTimeout(() => {
+        logger.info(`Tutorial state stabilized for ${normalizedTabName} after delay`);
+        setIsStateStable(true);
+      }, 500); // Half second delay helps prevent visual flash
+      
+      return () => clearTimeout(stabilityTimer);
+    }
+  }, [isLoading, initializationComplete, normalizedTabName]);
+  
   // Notify parent component when content is ready to be shown
   useEffect(() => {
     // Content is ready when:
     // 1. We're not loading anymore
     // 2. We've made the decision whether to show the tutorial or not
-    const readyToShow = !isLoading && initializationComplete;
+    // 3. The state has had time to stabilize (prevents flashing)
+    const readyToShow = !isLoading && initializationComplete && isStateStable;
     
     if (readyToShow && !contentReady) {
       logger.info(`Tutorial state determined for ${normalizedTabName}`, {
         isLoading,
         tutorialEnabled,
         isCompleted,
-        currentStep
+        currentStep,
+        isStateStable
       });
       
       // Update our internal state
@@ -438,7 +457,14 @@ export function TutorialManager({
       }
     }
   }, [isLoading, initializationComplete, contentReady, normalizedTabName, 
-      tutorialEnabled, isCompleted, currentStep, onReadyStateChange]);
+      tutorialEnabled, isCompleted, currentStep, onReadyStateChange, isStateStable]);
+  
+  // Don't render anything until we've stabilized the state
+  // This prevents both flickering of content and tutorial modal
+  if (!isStateStable && delayContentUntilReady) {
+    logger.debug(`Waiting for state to stabilize before rendering decision (isStateStable: ${isStateStable})`);
+    return null;
+  }
   
   // If we're still loading and parent wants us to delay content, show nothing
   if (isLoading && delayContentUntilReady) {
@@ -458,7 +484,8 @@ export function TutorialManager({
       totalSteps, 
       enabled: tutorialEnabled,
       completed: isCompleted,
-      loading: isLoading
+      loading: isLoading,
+      stateStable: isStateStable
     });
     
     return null;
@@ -474,11 +501,6 @@ export function TutorialManager({
   }
   
   // Find the content for this tab
-  console.log('TUTORIAL_CONTENT keys:', Object.keys(TUTORIAL_CONTENT));
-  console.log('Looking for content for tab:', normalizedTabName);
-  console.log('Does key exist?', normalizedTabName in TUTORIAL_CONTENT);
-  console.log('Direct access result:', TUTORIAL_CONTENT[normalizedTabName]);
-  
   const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
   if (!tutorialContent) {
     logger.error(`No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`);
