@@ -96,7 +96,7 @@ export function useTabTutorials(inputTabName: string) {
       case 'network':
         return 5;
       case 'file-vault':
-        return 4;
+        return 2;
       case 'insights':
         return 4;
       case 'dashboard':
