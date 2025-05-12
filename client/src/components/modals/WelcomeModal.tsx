@@ -442,7 +442,7 @@ export function WelcomeModal() {
       onOpenChange={handleOpenChange} // Allow modal to be closed
       modal={true} // Force modal behavior
     >
-      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none max-h-[80vh]">
+      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl backdrop-blur-xl bg-background/80 border-none max-h-[80vh]">
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         
@@ -455,7 +455,7 @@ export function WelcomeModal() {
               {/* Content with title and subtitle */}
               <div className="mb-5">
                 <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full mb-4">
-                  Step {currentSlide + 1} of {carouselContent.length}
+                  Onboarding Modal
                 </div>
                 
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
