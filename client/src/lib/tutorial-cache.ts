@@ -148,21 +148,41 @@ export function getCachedTutorialState(
   try {
     const cache = getCache(userId);
     const entry = cache.entries[tabName];
+    const now = Date.now();
     
     if (!entry) {
-      logger.debug(`No cached state found for tab: ${tabName}`);
+      logger.debug(`HOLISTIC FIX: No cached state found for tab: ${tabName}`, {
+        userId,
+        availableTabs: Object.keys(cache.entries),
+        cacheEntryCount: Object.keys(cache.entries).length
+      });
       return null;
     }
     
     // Check if the entry is expired
-    if (Date.now() - entry.timestamp > CACHE_EXPIRY_MS) {
-      logger.debug(`Cache entry for tab: ${tabName} has expired`);
+    const ageMs = now - entry.timestamp;
+    const isExpired = ageMs > CACHE_EXPIRY_MS;
+    
+    if (isExpired) {
+      logger.debug(`HOLISTIC FIX: Cache entry for tab: ${tabName} has expired`, {
+        age: ageMs,
+        expiry: CACHE_EXPIRY_MS,
+        timestamp: new Date(entry.timestamp).toISOString(),
+        current: new Date(now).toISOString()
+      });
       delete cache.entries[tabName];
       saveCache(cache);
       return null;
     }
     
-    logger.debug(`Retrieved cached state for tab: ${tabName}`, entry);
+    // Enhanced logging for tutorial state caching
+    logger.debug(`HOLISTIC FIX: Retrieved cached tutorial state for tab: ${tabName}`, {
+      completed: entry.completed,
+      currentStep: entry.currentStep,
+      timestamp: new Date(entry.timestamp).toISOString(),
+      age: ageMs,
+      expiresIn: CACHE_EXPIRY_MS - ageMs
+    });
     return entry;
   } catch (error) {
     logger.error(`Error retrieving cached state for tab: ${tabName}`, error);
