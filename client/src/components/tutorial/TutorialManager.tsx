@@ -295,6 +295,21 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Get normalized tab name for consistency
   const normalizedTabName = normalizeTabNameWithLogging(tabName);
   
+  // Helper function to get the step count for a tab
+  const getStepCountForTab = (tabName: string): number => {
+    // Default step counts for each tab
+    const STEP_COUNTS: Record<string, number> = {
+      'dashboard': 3,
+      'risk-score-configuration': 3,
+      'network': 3,
+      'claims': 3,
+      'file-vault': 2,
+      'insights': 3,
+    };
+    
+    return STEP_COUNTS[tabName] || 3; // Default to 3 steps if not specified
+  };
+  
   // Check if current location is a base route or a subpage
   const isBaseRoute = useCallback((): boolean => {
     // Extract the base path without query parameters
@@ -378,6 +393,58 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     setInitializationComplete(true);
   }, [normalizedTabName, tabName]);
   
+  // Function to attempt automatic tutorial initialization for new users
+  const attemptTutorialInitialization = useCallback(async () => {
+    // Only initialize tutorials on base routes that should have tutorials
+    if (!isBaseRoute() || !isTutorialEnabledForTab(normalizedTabName)) {
+      return false;
+    }
+    
+    logger.info(`Checking if tutorial should be initialized for ${normalizedTabName}`);
+    
+    try {
+      // Check if a tutorial entry already exists
+      const response = await fetch(`/api/user-tab-tutorials/${encodeURIComponent(normalizedTabName)}/status`);
+      const data = await response.json();
+      
+      // If no tutorial exists yet, create one automatically
+      if (!data.exists) {
+        logger.info(`No tutorial found for ${normalizedTabName} - initializing automatically`);
+        
+        // Create a new tutorial entry via API
+        const createResponse = await fetch('/api/user-tab-tutorials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tabName: normalizedTabName,
+            currentStep: 0, // Start at beginning
+            completed: false,
+            totalSteps: getStepCountForTab(normalizedTabName),
+          }),
+        });
+        
+        const result = await createResponse.json();
+        
+        if (result && result.success) {
+          logger.info(`Successfully initialized tutorial for ${normalizedTabName}`);
+          // Force query to refresh
+          queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', normalizedTabName] });
+          return true;
+        } else {
+          logger.warn(`Failed to initialize tutorial for ${normalizedTabName}`);
+        }
+      } else {
+        logger.info(`Tutorial already exists for ${normalizedTabName} - no initialization needed`);
+      }
+    } catch (error) {
+      logger.error(`Error checking or initializing tutorial for ${normalizedTabName}:`, error);
+    }
+    
+    return false;
+  }, [normalizedTabName, isBaseRoute, queryClient]);
+
   // React to WebSocket updates
   useEffect(() => {
     if (tutorialUpdate !== null) {
@@ -409,9 +476,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     };
   }, [isLoading, normalizedTabName, setLoading, initializationComplete]);
   
+  // Track initialization attempts
+  const [initAttempted, setInitAttempted] = useState(false);
+  
   // Early return conditions - "don't show until we're sure we should" approach
   // Check all reasons why we would NOT show a tutorial first
-  const shouldShowTutorial = () => {
+  const shouldShowTutorial = useCallback(async () => {
     // Don't render anything during loading
     if (isLoading) {
       logger.debug(`Tutorial not shown - still loading data for tab: ${normalizedTabName}`);
@@ -422,6 +492,18 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     if (!isBaseRoute()) {
       logger.info(`Tutorial not shown - not on base route for tab: ${normalizedTabName}, path: ${location}`);
       return false;
+    }
+    
+    // If tutorial entries don't exist yet but should be enabled
+    // try to initialize them automatically
+    if (initializationComplete && !tutorialEnabled && !isCompleted && !initAttempted) {
+      const hasTutorial = await attemptTutorialInitialization();
+      setInitAttempted(true);
+      
+      if (hasTutorial) {
+        // If initialization succeeded, we'll wait for the query to refresh
+        return false;
+      }
     }
     
     // If initialization is complete but tutorial is not enabled, don't render anything
@@ -442,12 +524,26 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     // If we've passed all conditions, we should show the tutorial
     logger.info(`Tutorial will be shown for tab: ${normalizedTabName}`);
     return true;
-  };
+  }, [isLoading, normalizedTabName, isBaseRoute, location, initializationComplete, 
+      tutorialEnabled, isCompleted, initAttempted, attemptTutorialInitialization]);
+  
+  // Check if we should show the tutorial and handle initialization
+  const [shouldShow, setShouldShow] = useState(false);
+  
+  // Run the async check when conditions change
+  useEffect(() => {
+    // Call the async function and update state
+    const checkTutorial = async () => {
+      const shouldShowResult = await shouldShowTutorial();
+      setShouldShow(shouldShowResult);
+    };
+    
+    // Run the check
+    checkTutorial();
+  }, [shouldShowTutorial]);
   
   // Return early if we shouldn't show the tutorial
-  // This is the key change - we explicitly check if we should show the tutorial
-  // rather than checking each condition individually
-  if (!shouldShowTutorial()) {
+  if (!shouldShow) {
     return null;
   }
   
