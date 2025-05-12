@@ -2,11 +2,15 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialAssets, useTutorialAssetsPreloader } from '@/hooks/use-tutorial-assets';
+import { 
+  useTutorialAssets, 
+  useTutorialAssetsPreloader, 
+  preloadTutorialImages 
+} from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { preloadImage, isImageCached, getCacheStats } from '@/lib/image-cache';
+import { isImageCached, getCacheStats } from '@/lib/image-cache';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 
@@ -683,7 +687,10 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Extract all image paths for preloading - only when tutorial content is available
+  // Get global preloader state - this doesn't change on conditional rendering
+  const preloader = useTutorialAssetsPreloader();
+  
+  // Extract all image paths once we have tutorial content
   const allStepImages = useMemo(() => {
     if (!tutorialContent || !tutorialContent.steps) return [];
     
@@ -695,24 +702,26 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     }).filter(Boolean); // Filter out any empty strings
   }, [tutorialContent, normalizedTabName]);
   
-  // IMPORTANT: Only use the preloader hook when we have valid tutorial content
-  // This avoids the "more hooks than during previous render" error
-  const preloader = tutorialContent ? useTutorialAssetsPreloader(allStepImages) : 
-    { isLoading: false, loadedCount: 0, totalCount: 0, progress: 0, errors: [], hasErrors: false };
-  
-  // Log preloading status when it changes - only when we have tutorial content
+  // Trigger preloading when tutorial content is available
   useEffect(() => {
-    if (!tutorialContent) return;
-    
+    if (tutorialContent && allStepImages.length > 0) {
+      logger.info(`Starting preload of ${allStepImages.length} tutorial images for ${normalizedTabName}`);
+      // This function works outside React's hook system
+      preloadTutorialImages(allStepImages);
+    }
+  }, [tutorialContent, allStepImages, normalizedTabName]);
+  
+  // Log preloading status when it changes
+  useEffect(() => {
     if (preloader.isLoading) {
       logger.info(`Preloading ${preloader.totalCount} tutorial images (${preloader.progress}% complete)`);
     } else if (preloader.hasErrors) {
       logger.warn(`Preloading completed with ${preloader.errors.length} errors`);
-    } else if (preloader.totalCount > 0) {
+    } else if (preloader.totalCount > 0 && preloader.loadedCount === preloader.totalCount) {
       logger.info(`Successfully preloaded all ${preloader.totalCount} tutorial images`);
       logger.debug('Image cache stats:', getCacheStats());
     }
-  }, [tutorialContent, preloader.isLoading, preloader.progress, preloader.hasErrors]);
+  }, [preloader.isLoading, preloader.progress, preloader.hasErrors, preloader.loadedCount, preloader.totalCount]);
   
   // Current step image with fallback - safely handle undefined tutorial content
   const currentStepImage = tutorialContent && tutorialContent.steps && tutorialContent.steps[stepToUse] ? (
@@ -721,25 +730,29 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`
   ) : '';
   
+  // Determine if the current step image is still loading
+  const isCurrentImageLoading = preloader.isLoading && 
+    currentStepImage && 
+    !isImageCached(currentStepImage);
+    
   // Use the TabTutorialModal with enhanced image preloading
-  return (
+  return tutorialContent && tutorialContent.steps ? (
     <TabTutorialModal
       title={modalTitle}
-      description={tutorialContent.steps[stepToUse].description}
+      description={tutorialContent.steps[stepToUse]?.description || ''}
       imageUrl={currentStepImage}
-      isLoading={isLoading || (preloader.isLoading && !isImageCached(currentStepImage))}
+      isLoading={isLoading || isCurrentImageLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
       onBack={handleBack}
       onComplete={handleComplete}
       onClose={() => markTutorialSeen()}
-      stepTitle={tutorialContent.steps[stepToUse].title}
-      bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
-      // Pass all image paths for advanced preloading
-      allStepImages={allStepImages}
-      // Pass any already preloaded images
-      preloadedImages={preloader.isLoading ? [] : allStepImages}
+      stepTitle={tutorialContent.steps[stepToUse]?.title || ''}
+      bulletPoints={tutorialContent.steps[stepToUse]?.bulletPoints || []}
+      // Pass preloader state for status info
+      preloadProgress={preloader.progress}
+      preloadComplete={!preloader.isLoading && preloader.loadedCount === preloader.totalCount}
     />
-  );
+  ) : null;
 }
