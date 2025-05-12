@@ -408,29 +408,47 @@ export function TutorialManager({
       logger.info(`Found tutorial content for ${normalizedTabName} with ${stepCount} steps`);
       logger.info(`Available tutorial tabs: ${availableTabs}`);
       
-      // Important: Make an early decision about whether to show a tutorial if we have data
-      // This eliminates the race condition that causes flickering
+      // ROOT CAUSE FIX: Make an early and definitive decision about tutorial visibility
+      // This completely eliminates the race condition that causes flickering
       if (!isLoading) {
-        // CRITICAL FIX: Ensure completed tutorials don't show at all, even briefly
-        // If tutorial is completed and at final step, we should never show it again
-        const isFinalStepCompleted = isCompleted && currentStep >= stepCount - 1;
+        // CRITICAL FIX #1: Check if tutorial is explicitly marked as completed in database
+        const isExplicitlyCompleted = isCompleted === true;
         
-        // Only show if: tutorial enabled AND not completed AND not on the final step 
-        const shouldShow = tutorialEnabled && !isCompleted && !isFinalStepCompleted;
+        // CRITICAL FIX #2: Check if we're at the final step (which would show the 4/4 modal briefly)
+        // We need to explicitly handle the case where currentStep equals total steps - 1 (final step)
+        const isFinalStep = currentStep >= stepCount - 1;
         
-        logger.info(`Early tutorial decision for ${normalizedTabName}: ${shouldShow ? 'SHOW' : 'HIDE'}`, {
-          tutorialEnabled, 
-          isCompleted,
+        // CRITICAL FIX #3: Combine both conditions - NEVER show a tutorial if:
+        // 1. It's marked as completed OR
+        // 2. It's at the final step (which would cause the flashing 4/4 modal)
+        const shouldNeverShow = isExplicitlyCompleted || isFinalStep;
+        
+        // Only show tutorial if explicitly enabled AND not in a state where it should never show
+        const shouldShow = tutorialEnabled && !shouldNeverShow;
+        
+        // Log detailed information about the decision
+        logger.info(`ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${shouldShow ? 'SHOW' : 'HIDE'}`, {
+          tutorialEnabled,
+          isExplicitlyCompleted,
+          isFinalStep,
+          shouldNeverShow,
           currentStep,
           totalSteps: stepCount,
-          isFinalStepCompleted
+          rawIsCompleted: isCompleted
         });
         
+        // This is the critical state that controls whether the modal renders
         setShouldShowTutorial(shouldShow);
       } else {
-        // CRITICAL FIX: Default to showing tutorials before we have definite data
-        // This prevents tutorials from not showing when they should
-        setShouldShowTutorial(true);
+        // IMPORTANT: When still loading, we need to be careful about what default to choose
+        // If we default to true, we might show a tutorial momentarily before hiding it
+        // If we default to false, we might not show a tutorial that should be shown
+        
+        // The safer choice is to keep undefined until we have data
+        // This prevents the tutorial from showing until we know for sure
+        setShouldShowTutorial(undefined);
+        
+        logger.info(`Tutorial data is still loading - deferring decision for ${normalizedTabName}`);
       }
     }
     
@@ -497,32 +515,59 @@ export function TutorialManager({
     onReadyStateChange
   ]);
   
-  // Use our deterministic shouldShowTutorial state to make rendering decisions
-  // This is the key to eliminating the flickering issue
+  // ROOT CAUSE FIX: Enhanced defensive rendering logic to eliminate the flickering issue
+  // This is the key decision point for whether to show tutorials or not
+  
+  // DEFENSIVE CHECK #1: If we're still loading and haven't made a decision, don't render prematurely
   if (shouldShowTutorial === undefined) {
-    // If we haven't made a firm decision yet, and the parent component wants
-    // us to delay content rendering until ready, show nothing
+    // If parent wants to delay content rendering until we have a firm decision, return null
     if (delayContentUntilReady) {
-      logger.debug(`Waiting for tutorial decision to be made`, {
+      logger.debug(`ROOT CAUSE FIX - Waiting for tutorial decision to be made`, {
         isLoading,
         tutorialEnabled,
         isCompleted,
+        currentStep,
         shouldShowTutorial
       });
       return null;
     }
-    // Otherwise, we fall through to potentially show a tutorial if one is needed
-  } else if (shouldShowTutorial === false) {
+    // Otherwise, we'd fall through, but for safety we'll add an extra check
+    
+    // DEFENSIVE CHECK #2: Even if we're allowing content, NEVER render a tutorial
+    // that's completed or at final step - this prevents the 4/4 flash
+    if (isCompleted || currentStep >= TUTORIAL_CONTENT[normalizedTabName].steps.length - 1) {
+      logger.info(`ROOT CAUSE FIX - Preventing tutorial flash for completed/final step tutorial`, {
+        isCompleted,
+        currentStep,
+        totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
+      });
+      return null;
+    }
+  } 
+  // DEFENSIVE CHECK #3: If we've explicitly decided not to show the tutorial, don't show it
+  else if (shouldShowTutorial === false) {
     // We've made a firm decision NOT to show a tutorial
-    logger.info(`Tutorial decisively not showing for tab: ${normalizedTabName}`, {
+    logger.info(`ROOT CAUSE FIX - Tutorial decisively not showing for tab: ${normalizedTabName}`, {
       tutorialEnabled,
       isCompleted,
       currentStep
     });
     return null;
-  } else {
+  } 
+  // DEFENSIVE CHECK #4: Final explicit check before showing the tutorial
+  else {
     // shouldShowTutorial is explicitly true - we WANT to show a tutorial
-    logger.info(`Tutorial SHOULD show for tab: ${normalizedTabName}`, {
+    // But do one final check to be absolutely sure
+    if (isCompleted || currentStep >= TUTORIAL_CONTENT[normalizedTabName].steps.length - 1) {
+      logger.info(`ROOT CAUSE FIX - Overriding shouldShowTutorial=true because tutorial is completed/at final step`, {
+        isCompleted,
+        currentStep,
+        totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
+      });
+      return null;
+    }
+    
+    logger.info(`ROOT CAUSE FIX - Tutorial SHOULD show for tab: ${normalizedTabName}`, {
       tutorialEnabled,
       isCompleted,
       isLoading,
