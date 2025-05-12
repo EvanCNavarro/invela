@@ -451,8 +451,7 @@ export function TutorialManager({
         const logData = {
           tutorialEnabled,
           isMarkedCompleted,
-          isAtFinalStep,
-          hasCompletionDate,
+          isFinalStep,
           hasInvalidStep,
           shouldNeverShow,
           currentStep,
@@ -470,8 +469,7 @@ export function TutorialManager({
             ...logData,
             // Add the exact reason why we're not showing the tutorial
             hideReason: isMarkedCompleted ? 'COMPLETED_FLAG' :
-                       isAtFinalStep ? 'AT_FINAL_STEP' :
-                       hasCompletionDate ? 'HAS_COMPLETION_DATE' :
+                       isFinalStep ? 'AT_FINAL_STEP' :
                        hasInvalidStep ? 'INVALID_STEP' :
                        !tutorialEnabled ? 'TUTORIAL_DISABLED' : 'UNKNOWN'
           });
@@ -573,10 +571,10 @@ export function TutorialManager({
     }
     // Otherwise, we'd fall through, but for safety we'll add an extra check
     
-    // DEFENSIVE CHECK #2: Even if we're allowing content, NEVER render a tutorial
-    // that's completed or at final step - this prevents the 4/4 flash
-    if (isCompleted || currentStep >= TUTORIAL_CONTENT[normalizedTabName].steps.length - 1) {
-      logger.info(`ROOT CAUSE FIX - Preventing tutorial flash for completed/final step tutorial`, {
+    // FIXED IMPLEMENTATION: Only prevent tutorials that are actually completed
+    // Final step tutorials that aren't marked completed should still show
+    if (isCompleted) {
+      logger.info(`ROOT CAUSE FIX - Preventing tutorial flash for completed tutorial`, {
         isCompleted,
         currentStep,
         totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
@@ -598,8 +596,8 @@ export function TutorialManager({
   else {
     // shouldShowTutorial is explicitly true - we WANT to show a tutorial
     // But do one final check to be absolutely sure
-    if (isCompleted || currentStep >= TUTORIAL_CONTENT[normalizedTabName].steps.length - 1) {
-      logger.info(`ROOT CAUSE FIX - Overriding shouldShowTutorial=true because tutorial is completed/at final step`, {
+    if (isCompleted) {
+      logger.info(`ROOT CAUSE FIX - Overriding shouldShowTutorial=true because tutorial is completed`, {
         isCompleted,
         currentStep,
         totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
