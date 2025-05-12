@@ -426,14 +426,19 @@ export function WelcomeModal() {
     }
   }, [user, showModal]);
   
-  // Don't render anything if user has completed onboarding or modal isn't ready to show
-  if (!user || user.onboarding_user_completed === true || !showModal) {
-    return null;
-  }
+  // TEMPORARY FOR TESTING: Force modal to show regardless of onboarding status
+  // We'll uncomment the conditional return after testing
+  
+  // if (!user || user.onboarding_user_completed === true || !showModal) {
+  //   return null;
+  // }
+  
+  // Force modal for testing - REMOVE AFTER TESTING
+  const forceTestingModal = true;
 
   return (
     <Dialog 
-      open={showModal} 
+      open={true} // Force modal open for testing
       onOpenChange={handleOpenChange} // Allow modal to be closed
       modal={true} // Force modal behavior
     >
