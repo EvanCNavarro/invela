@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { normalizeTabName } from '@/hooks/use-tutorial-websocket';
 
 // Create a dedicated logger for the TabTutorials hook
 const logger = createTutorialLogger('TabTutorials');
@@ -16,55 +17,6 @@ interface TutorialStatus {
 }
 
 /**
- * Normalizes tab names to a consistent format
- * This is a duplicate of the function in TutorialManager to ensure consistency
- * across the tutorial system.
- * 
- * @param inputTabName The tab name to normalize
- * @returns The normalized (canonical) tab name
- */
-function normalizeTabName(inputTabName: string): string {
-  // First, convert to lowercase and trim to handle case variations
-  const cleanedTabName = inputTabName.toLowerCase().trim();
-  
-  // Define canonical names for each tab
-  // This mapping ensures all variations of a tab name resolve to a single canonical name
-  const tabMappings: Record<string, string> = {
-    // Network tab variations
-    'network-view': 'network',
-    'network-visualization': 'network',
-    
-    // Claims tab variations
-    'claims-risk': 'claims',
-    'claims-risk-analysis': 'claims',
-    
-    // File vault tab variations
-    'file-manager': 'file-vault',
-    'filevault': 'file-vault',  // Handle PascalCase version
-    'file-vault-page': 'file-vault',
-    
-    // Dashboard variations
-    'dashboard-page': 'dashboard',
-    
-    // Risk score configuration variations
-    'risk-score-config': 'risk-score-configuration',
-  };
-  
-  logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
-  
-  // Return the canonical version or the original cleaned name
-  const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
-  
-  if (canonicalName !== cleanedTabName) {
-    logger.info(`Tab name normalized: '${cleanedTabName}' → '${canonicalName}'`);
-  } else {
-    logger.info(`Tab name already in canonical form: '${canonicalName}'`);
-  }
-  
-  return canonicalName;
-}
-
-/**
  * Hook to manage tab-specific tutorial state
  * 
  * This hook handles loading tutorial status from the server,
@@ -72,8 +24,9 @@ function normalizeTabName(inputTabName: string): string {
  * all tab names are normalized to their canonical form for consistency.
  */
 export function useTabTutorials(inputTabName: string) {
-  // First normalize the tab name to ensure consistency
+  // First normalize the tab name to ensure consistency using the central function
   const tabName = normalizeTabName(inputTabName);
+  logger.info(`Using normalized tab name: '${tabName}' (original: '${inputTabName}')`);
   
   // Local state to track tutorial status
   // Start with sensible defaults that won't cause flickering
