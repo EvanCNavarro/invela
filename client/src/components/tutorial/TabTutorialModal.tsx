@@ -7,6 +7,7 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { preloadImage, isImageCached, preloadTutorialImages, getCacheStats } from '@/lib/image-cache';
 import { useTutorialImageCache } from '@/hooks/use-tutorial-image-cache';
 import { AnimatePresence, motion } from 'framer-motion';
+import { getImageBaseName } from '@/lib/tutorial-config';
 
 // Create dedicated logger for this component
 const logger = createTutorialLogger('TabTutorialModal');
@@ -78,7 +79,12 @@ export function TabTutorialModal({
     
     // Parse the tab name from URL patterns like /assets/tutorials/tab-name/image.png
     const match = imageUrl.match(/\/assets\/tutorials\/([^\/]+)\//);
-    return match ? match[1] : '';
+    const extractedTabName = match ? match[1] : '';
+    
+    // Log tab name extraction for debugging
+    logger.debug(`Extracted tab name from URL: ${extractedTabName}`);
+    
+    return extractedTabName;
   }, [imageUrl]);
   
   // Use our enhanced image caching hook
