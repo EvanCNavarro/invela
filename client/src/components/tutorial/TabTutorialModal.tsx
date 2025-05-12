@@ -75,7 +75,7 @@ export function TabTutorialModal({
       {/* Content-only overlay - dynamically adjusts to sidebar width */}
       <div 
         className={cn(
-          "absolute top-[3.5rem] right-0 bottom-0 bg-black/20 transition-all duration-300 ease-in-out",
+          "absolute top-[3.5rem] right-0 bottom-0 bg-black/15 backdrop-blur-sm transition-all duration-300 ease-in-out",
           isExpanded ? "left-[16rem]" : "left-[5rem]"
         )} 
         style={{ pointerEvents: 'auto' }}
@@ -83,7 +83,7 @@ export function TabTutorialModal({
       
       {/* Modal container */}
       <div 
-        className="bg-white rounded-lg shadow-xl w-[600px] z-50 overflow-hidden"
+        className="bg-white/95 rounded-lg shadow-xl w-[600px] z-50 overflow-hidden backdrop-blur-md border border-slate-200"
         style={{ pointerEvents: 'auto' }}
       >
         {/* Header */}
@@ -95,37 +95,43 @@ export function TabTutorialModal({
         </div>
         
         {/* Image area with loading state */}
-        <div className="p-6 flex justify-center items-center bg-muted/20">
+        <div className="p-6 flex justify-center items-center bg-gradient-to-b from-muted/10 to-muted/20">
           {isLoading ? (
-            <Skeleton className="w-full h-64 rounded-lg" />
+            <Skeleton className="w-full h-64 rounded-lg shadow-sm" />
           ) : imageUrl ? (
             <img 
               src={imageUrl} 
               alt={title} 
-              className="max-h-64 rounded-lg object-contain" 
+              className="max-h-64 rounded-lg object-contain shadow-md transition-all duration-300 hover:scale-[1.02]" 
             />
           ) : (
-            <div className="w-full h-64 rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
+            <div className="w-full h-64 rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground shadow-sm">
               No image available
             </div>
           )}
         </div>
         
         {/* Footer with progress indicator and controls */}
-        <div className="p-6 flex flex-row justify-between items-center border-t">
-          <div className="text-sm text-muted-foreground">
-            Step {currentStep + 1} of {totalSteps}
+        <div className="p-6 flex flex-row justify-between items-center border-t bg-slate-50/50">
+          <div className="text-sm font-medium flex items-center gap-2">
+            <div className="h-1.5 w-32 bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300 ease-in-out" 
+                style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+              ></div>
+            </div>
+            <span className="text-muted-foreground">Step {currentStep + 1} of {totalSteps}</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
               Skip
             </Button>
             {onBack && currentStep > 0 && (
-              <Button variant="outline" onClick={onBack}>
+              <Button variant="outline" size="sm" onClick={onBack}>
                 Back
               </Button>
             )}
-            <Button onClick={handleNext}>
+            <Button size="sm" onClick={handleNext} className="min-w-[80px]">
               {currentStep >= totalSteps - 1 ? 'Complete' : 'Next'}
             </Button>
           </div>
