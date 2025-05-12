@@ -31,7 +31,6 @@ export function TutorialLoadingOverlay({
           ? <FinTechDashboardSkeleton /> 
           : <DashboardSkeleton />;
       
-      case 'risk-score':
       case 'risk-score-configuration':
         return (
           <div className="space-y-6">
@@ -128,37 +127,6 @@ export function TutorialLoadingOverlay({
               <Skeleton className="h-9 w-36" />
             </div>
             <Skeleton className="h-[600px] w-full rounded-lg" />
-          </div>
-        );
-        
-      case 'company-profile':
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <Skeleton className="h-12 w-1/3" />
-              <Skeleton className="h-10 w-48" />
-            </div>
-            <div className="flex items-center space-x-4 mb-6">
-              <Skeleton className="h-24 w-24 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-6 w-32" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-40" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
           </div>
         );
         

@@ -14,10 +14,9 @@
 export function normalizeTabName(tabName: string): string {
   // Map of original tab names to their normalized versions
   const tabNameMap: Record<string, string> = {
-    'risk-score-configuration': 'risk-score',
     'claims-risk-score': 'claims-risk',
     'file-vault': 'file-vault',
-    'company-profile': 'company-profile',
+    // No longer mapping risk-score-configuration to risk-score
     // Add more mappings as needed
   };
 
