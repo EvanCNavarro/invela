@@ -276,24 +276,7 @@ const TUTORIAL_CONTENT: Record<string, {
 };
 
 interface TutorialManagerProps {
-  /**
-   * The name of the tab for which to show tutorials
-   */
   tabName: string;
-  
-  /**
-   * Optional callback fired when tutorial state is determined
-   * Parent components can use this to know when to show actual content
-   * instead of a loading skeleton
-   */
-  onReadyStateChange?: (isReady: boolean) => void;
-  
-  /**
-   * Whether the parent component should delay rendering content
-   * until tutorial state is determined
-   * @default true
-   */
-  delayContentUntilReady?: boolean;
 }
 
 /**
@@ -303,48 +286,14 @@ interface TutorialManagerProps {
  * It uses the tab name to dynamically load the appropriate tutorial content
  * and manages state, WebSocket communication, and UI rendering.
  * 
- * ANTI-FLICKERING SOLUTION (May 2025):
- * This component has been enhanced with a deterministic rendering approach to eliminate
- * UI flickering. Instead of making multiple state-based decisions, we now use a central
- * shouldShowTutorial state that can have three values:
- * - undefined: still deciding whether to show a tutorial (loading state)
- * - true: definitely show the tutorial 
- * - false: definitely do not show the tutorial
- * 
- * This approach ensures that the UI doesn't "flicker" between states as data loads.
- * The decision is made early and cached, with state transitions properly coordinated
- * to prevent jarring UI changes.
- * 
- * When using this component, you can pass an onReadyStateChange callback
- * to be notified when the component has determined whether to show a tutorial.
- * This allows parent components to show skeleton loaders during the initial
- * loading phase, preventing the flash of tutorial content.
- * 
  * @returns A React element containing the TabTutorialModal or null if no tutorial is available
  */
-export function TutorialManager({ 
-  tabName,
-  onReadyStateChange,
-  delayContentUntilReady = true
-}: TutorialManagerProps): React.ReactNode {
+export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactNode {
   // Initialize with detailed logging
-  logger.info(`Initializing for tab: ${tabName}`);
+  logger.init(`Initializing for tab: ${tabName}`);
   
-  // SUPER VERBOSE DEBUG - Log every initialization
-  console.log(`============== TUTORIAL INITIALIZATION ==============`);
-  console.log(`[TutorialManager] INITIALIZING for tab: ${tabName}`);
-  console.log(`[TutorialManager] Looking for content match...`);
-  
-  // Track component initialization and content ready state
-  // For UX improvement: Start in a determined "loading" state rather than false
-  // This avoids the flash of regular content while we're determining whether to show the tutorial
   const [initializationComplete, setInitializationComplete] = useState(false);
-  const [contentReady, setContentReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
-  
-  // New state to hold the definitive rendering decision for tutorial content
-  // By starting with undefined, we prevent any premature rendering decisions
-  const [shouldShowTutorial, setShouldShowTutorial] = useState<boolean | undefined>(undefined);
   
   // Map tab names to normalized versions for compatibility
   // This is critical for handling URL path vs database key mismatches
@@ -399,137 +348,15 @@ export function TutorialManager({
     // Additional debug information to help diagnose tab name issues
     const availableTabs = Object.keys(TUTORIAL_CONTENT).join(', ');
     
-    // EXTREME DEBUG LOGGING - content check
-    console.log(`[TutorialManager] Checking content for: ${normalizedTabName} (original: ${tabName})`, {
-      hasContent,
-      availableTabs,
-      allTabContentKeys: Object.keys(TUTORIAL_CONTENT),
-      contentExists: TUTORIAL_CONTENT[normalizedTabName] ? 'YES' : 'NO',
-      normalizedTabName,
-      rawTabName: tabName
-    });
-    
     if (!hasContent) {
       const errorMsg = `No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`;
       const extendedError = `${errorMsg}. Available tabs: ${availableTabs}`;
       logger.error(extendedError);
       setInitializationError(errorMsg);
-      
-      // Immediately set shouldShowTutorial to false if no content exists
-      // This prevents any flash of loading states or erroneous display attempts
-      setShouldShowTutorial(false);
     } else {
       const stepCount = TUTORIAL_CONTENT[normalizedTabName].steps.length;
       logger.info(`Found tutorial content for ${normalizedTabName} with ${stepCount} steps`);
       logger.info(`Available tutorial tabs: ${availableTabs}`);
-      
-      // ROOT CAUSE FIX: Make an early and definitive decision about tutorial visibility
-      // This completely eliminates the race condition that causes flickering
-      if (!isLoading) {
-        // CRITICAL FIX #1: Check if tutorial is explicitly marked as completed in database
-        const isExplicitlyCompleted = isCompleted === true;
-        
-        // CRITICAL FIX #2: Check if we're at the final step (which would show the 4/4 modal briefly)
-        // We need to explicitly handle the case where currentStep equals total steps - 1 (final step)
-        const isFinalStep = currentStep >= stepCount - 1;
-        
-        // FIXED DECISION LOGIC: Only prevent tutorials that are actually completed
-        // 1. It's marked as completed in the database - these should NEVER show
-        // 2. Invalid step conditions should be fixed, not hidden
-        
-        // Create clearly-named conditional checks for better maintainability
-        const isMarkedCompleted = isExplicitlyCompleted;
-        
-        // Step validation - we'll fix bad steps rather than hiding tutorials
-        const hasInvalidStep = currentStep < 0 || currentStep >= stepCount;
-        if (hasInvalidStep) {
-          // Reset to step 0 if we have an invalid step
-          logger.warn(`Found invalid step for tutorial ${normalizedTabName} - resetting to step 0`, {
-            currentStep,
-            stepCount
-          });
-          // This will reset the currentStep to 0 in the next render cycle
-          handleNext();
-        }
-        
-        // For decision making, we ONLY prevent tutorials that are marked completed
-        // This ensures incomplete tutorials will show properly
-        const shouldNeverShow = isMarkedCompleted;
-        
-        // CRITICAL DEBUG - Show the exact decision criteria
-        console.log(`[TutorialManager] CRITICAL DECISION POINT for ${normalizedTabName}`, {
-          isMarkedCompleted,  // Should be false for incomplete tutorials
-          isFinalStep,        // Is this the final step? (shouldn't block now)
-          currentStep,        // Current step (0-based index)
-          totalSteps: stepCount, // Total steps
-          tutorialEnabled,    // Should be true except in special cases
-          shouldNeverShow     // The decision point - should be false to allow showing
-        });
-        
-        // Only show tutorial if explicitly enabled AND not in a state where it should never show
-        const shouldShow = tutorialEnabled && !shouldNeverShow;
-        
-        // FORCED TESTING - ALWAYS SHOW TUTORIAL (TEMPORARY)
-        const forcedShow = true;
-        
-        // Log detailed information about the decision with highly visible formatting
-        const logMessage = `ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${forcedShow ? '✅ SHOW (FORCED)' : shouldShow ? '✅ SHOW' : '❌ HIDE'}`;
-        
-        console.log(`[TutorialManager] FINAL DECISION FOR ${normalizedTabName}: ${forcedShow ? 'FORCED SHOW' : shouldShow ? 'SHOW' : 'HIDE'}`, {
-          shouldShow,
-          tutorialEnabled,
-          shouldNeverShow,
-          forcedShow
-        });
-        
-        // Create a common log object with all the relevant information
-        const logData = {
-          tutorialEnabled,
-          isMarkedCompleted,
-          isFinalStep,
-          hasInvalidStep,
-          shouldNeverShow,
-          currentStep,
-          totalSteps: stepCount,
-          rawIsCompleted: isCompleted
-        };
-        
-        if (shouldShow) {
-          // Use info level for show decisions
-          logger.info(logMessage, logData);
-        } else {
-          // Use warn level for hide decisions to make them more visible in logs
-          // This helps with debugging by highlighting potential issues
-          logger.warn(logMessage, {
-            ...logData,
-            // Add the exact reason why we're not showing the tutorial
-            hideReason: isMarkedCompleted ? 'COMPLETED_FLAG' :
-                       isFinalStep ? 'AT_FINAL_STEP' :
-                       hasInvalidStep ? 'INVALID_STEP' :
-                       !tutorialEnabled ? 'TUTORIAL_DISABLED' : 'UNKNOWN'
-          });
-        }
-        
-        // This is the critical state that controls whether the modal renders
-        // FOR TESTING: Use forcedShow instead of shouldShow to override the decision
-        setShouldShowTutorial(forcedShow || shouldShow);
-        
-        console.log(`[TutorialManager] SETTING shouldShowTutorial to ${forcedShow || shouldShow}`, {
-          finalValue: forcedShow || shouldShow,
-          shouldShow,
-          forcedShow
-        });
-      } else {
-        // IMPORTANT: When still loading, we need to be careful about what default to choose
-        // If we default to true, we might show a tutorial momentarily before hiding it
-        // If we default to false, we might not show a tutorial that should be shown
-        
-        // The safer choice is to keep undefined until we have data
-        // This prevents the tutorial from showing until we know for sure
-        setShouldShowTutorial(undefined);
-        
-        logger.info(`Tutorial data is still loading - deferring decision for ${normalizedTabName}`);
-      }
     }
     
     // Debug current tutorial state
@@ -558,116 +385,45 @@ export function TutorialManager({
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
-  // Notify parent component when content is ready to be shown
-  useEffect(() => {
-    // Content is ready when:
-    // 1. We're not loading the tutorial data anymore
-    // 2. We've made a definitive decision about showing the tutorial (true/false, not undefined)
-    const readyToShow = !isLoading && shouldShowTutorial !== undefined;
-    
-    if (readyToShow && !contentReady) {
-      logger.info(`Tutorial state determined for ${normalizedTabName}`, {
-        isLoading,
-        tutorialEnabled,
-        isCompleted,
-        currentStep,
-        shouldShowTutorial
-      });
-      
-      // Update our internal state to track readiness
-      setContentReady(true);
-      setInitializationComplete(true);
-      
-      // Notify parent component if callback was provided
-      if (onReadyStateChange) {
-        logger.info(`Notifying parent that content is ready to show`);
-        onReadyStateChange(true);
-      }
-    }
-  }, [
-    isLoading, 
-    shouldShowTutorial, 
-    contentReady, 
-    normalizedTabName, 
-    tutorialEnabled, 
-    isCompleted, 
-    currentStep, 
-    onReadyStateChange
-  ]);
-  
-  // ROOT CAUSE FIX: Enhanced defensive rendering logic to eliminate the flickering issue
-  // This is the key decision point for whether to show tutorials or not
-  
-  // DEFENSIVE CHECK #1: If we're still loading and haven't made a decision, don't render prematurely
-  if (shouldShowTutorial === undefined) {
-    // If parent wants to delay content rendering until we have a firm decision, return null
-    if (delayContentUntilReady) {
-      logger.debug(`ROOT CAUSE FIX - Waiting for tutorial decision to be made`, {
-        isLoading,
-        tutorialEnabled,
-        isCompleted,
-        currentStep,
-        shouldShowTutorial
-      });
-      return null;
-    }
-    // Otherwise, we'd fall through, but for safety we'll add an extra check
-    
-    // FIXED IMPLEMENTATION: Only prevent tutorials that are actually completed
-    // Final step tutorials that aren't marked completed should still show
-    if (isCompleted) {
-      logger.info(`ROOT CAUSE FIX - Preventing tutorial flash for completed tutorial`, {
-        isCompleted,
-        currentStep,
-        totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
-      });
-      return null;
-    }
-  } 
-  // DEFENSIVE CHECK #3: If we've explicitly decided not to show the tutorial, don't show it
-  else if (shouldShowTutorial === false) {
-    // We've made a firm decision NOT to show a tutorial
-    logger.info(`ROOT CAUSE FIX - Tutorial decisively not showing for tab: ${normalizedTabName}`, {
-      tutorialEnabled,
-      isCompleted,
-      currentStep
-    });
+  // If we're still loading, show a loading state
+  if (isLoading) {
+    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
     return null;
-  } 
-  // DEFENSIVE CHECK #4: Final explicit check before showing the tutorial
-  else {
-    // shouldShowTutorial is explicitly true - we WANT to show a tutorial
-    // But do one final check to be absolutely sure
-    if (isCompleted) {
-      logger.info(`ROOT CAUSE FIX - Overriding shouldShowTutorial=true because tutorial is completed`, {
-        isCompleted,
-        currentStep,
-        totalSteps: TUTORIAL_CONTENT[normalizedTabName].steps.length
-      });
-      return null;
-    }
-    
-    logger.info(`ROOT CAUSE FIX - Tutorial SHOULD show for tab: ${normalizedTabName}`, {
-      tutorialEnabled,
-      isCompleted,
-      isLoading,
-      currentStep
-    });
-    // Continue to the rendering code below
   }
   
-  // At this point, we should show the tutorial (or we're still deciding but allowing content)
-  // Log the definitive state for debugging
-  logger.info(`Tutorial render decision for tab: ${normalizedTabName}`, {
-    shouldShowTutorial,
-    isLoading, 
-    tutorialEnabled, 
-    isCompleted,
-    contentReady,
-    currentStep
-  });
+  // If initialization is complete but tutorial is not enabled, don't render anything
+  if (initializationComplete && !tutorialEnabled) {
+    logger.info(`Tutorial not enabled for tab: ${normalizedTabName}`);
+    
+    // Debug current tutorial state
+    logger.info('Current tutorial state', {
+      tabName,
+      normalizedTabName,
+      currentStep,
+      totalSteps, 
+      enabled: tutorialEnabled,
+      completed: isCompleted,
+      loading: isLoading
+    });
+    
+    return null;
+  }
+  
+  // Do not render if tutorial is completed
+  if (isCompleted) {
+    // Only log if we have data
+    if (initializationComplete) {
+      logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
+    }
+    return null;
+  }
   
   // Find the content for this tab
+  console.log('TUTORIAL_CONTENT keys:', Object.keys(TUTORIAL_CONTENT));
+  console.log('Looking for content for tab:', normalizedTabName);
+  console.log('Does key exist?', normalizedTabName in TUTORIAL_CONTENT);
+  console.log('Direct access result:', TUTORIAL_CONTENT[normalizedTabName]);
+  
   const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
   if (!tutorialContent) {
     logger.error(`No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`);
@@ -704,7 +460,7 @@ export function TutorialManager({
   const stepToUse = Math.min(currentStep, maxStep);
   
   // Generate descriptive log message about the tutorial being shown
-  logger.info(`Rendering tutorial step ${stepToUse + 1} of ${tutorialContent.steps.length} for ${normalizedTabName}`);
+  logger.render(`Rendering tutorial step ${stepToUse + 1} of ${tutorialContent.steps.length} for ${normalizedTabName}`);
   
   // Prepare modal title based on active step
   const modalTitle = tutorialContent.title;
@@ -720,55 +476,7 @@ export function TutorialManager({
     loading: isLoading
   });
   
-  // HOLISTIC PROTECTION: Comprehensive validation before rendering
-  // This is our unified approach to prevent tutorial flashing
-  // We check both completion status AND if we're at the final step
-  
-  const isCompletedOrFinal = isCompleted || (currentStep >= totalSteps - 1);
-  
-  // Don't render the tutorial if it's completed or at the final step
-  if (isCompletedOrFinal) {
-    // Log detailed information about why we're not showing the tutorial
-    logger.warn(`HOLISTIC FIX - Preventing tutorial display - tutorial is completed or at final step`, {
-      isCompleted,
-      currentStep,
-      totalSteps,
-      atFinalStep: currentStep >= totalSteps - 1,
-      tutorialSteps: tutorialContent.steps.length
-    });
-    
-    // Never render the tutorial in this case
-    return null;
-  }
-  
-  // For final step tutorials that aren't marked as completed,
-  // we'll just ensure they get completed on render
-  const isFinalStep = currentStep >= tutorialContent.steps.length - 1;
-  if (isFinalStep) {
-    // Rather than blocking the render, ensure it gets marked as complete after showing
-    setTimeout(() => handleComplete(), 100);
-  }
-  
   // Use the TabTutorialModal with the appropriate content
-  logger.info(`ROOT CAUSE FIX - Rendering tutorial content after all safety checks passed`, {
-    tabName: normalizedTabName,
-    currentStep: stepToUse,
-    totalSteps: tutorialContent.steps.length
-  });
-  
-  // EXTRA DEBUG OUTPUT - Log additional details about tutorial state
-  console.log(`[TutorialManager] RENDERING TUTORIAL for ${normalizedTabName}!`, {
-    currentStep: stepToUse,
-    totalSteps: tutorialContent.steps.length,
-    isCompleted,
-    tutorialEnabled,
-    tutorialContent: {
-      title: tutorialContent.title,
-      stepCount: tutorialContent.steps.length,
-      firstStepDescription: tutorialContent.steps[0].description.substring(0, 30) + '...'
-    }
-  });
-  
   return (
     <TabTutorialModal
       title={modalTitle}

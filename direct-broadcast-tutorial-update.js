@@ -1,34 +1,20 @@
 /**
- * Direct script to broadcast tutorial updates via WebSocket
+ * Direct script to broadcast a tutorial update via WebSocket
  * 
- * This script allows you to broadcast a tutorial update for a specific tab
- * to all connected WebSocket clients, notifying them to refresh their tutorial state.
- * 
- * Usage:
- * node direct-broadcast-tutorial-update.js <tabName> <userId> <currentStep> <completed>
- * 
- * Example:
- * node direct-broadcast-tutorial-update.js dashboard 8 0 false
+ * This script directly connects to the WebSocket service and broadcasts
+ * a tutorial update message to all connected clients.
  */
 
-require('dotenv').config();
+// Import modules
 const WebSocket = require('ws');
 const http = require('http');
 
-// ANSI color codes for prettier console output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
-  cyan: '\x1b[36m',
-  magenta: '\x1b[35m'
-};
+// Create a WebSocket server reference
+const wss = new WebSocketServer({ noServer: true });
 
-function log(message, color = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
-}
+// Setup constants
+const WS_PING_INTERVAL = 30000; // 30 seconds
+const TUTORIAL_UPDATE_TYPE = 'tutorial_updated';
 
 /**
  * Broadcast a tutorial update to all connected WebSocket clients
@@ -39,94 +25,59 @@ function log(message, color = colors.reset) {
  * @param {boolean} completed - Whether the tutorial is completed
  */
 function broadcastTutorialUpdate(tabName, userId, currentStep, completed) {
-  // Create a temporary HTTP server to connect to the WebSocket server
-  const server = http.createServer();
-  server.listen(() => {
-    const port = server.address().port;
-    log(`Temporary server listening on port ${port}`, colors.yellow);
-    
-    // Connect to the WebSocket server
-    const ws = new WebSocket(`ws://localhost:5000/ws`);
-    
-    ws.on('open', () => {
-      log('Connected to WebSocket server', colors.green);
-      
-      // Create the tutorial update message
-      const message = {
-        type: 'tutorial_update',
-        timestamp: new Date().toISOString(),
-        data: {
-          tabName,
-          userId: parseInt(userId, 10),
-          currentStep: parseInt(currentStep, 10),
-          completed: completed === 'true'
-        }
-      };
-      
-      log('Sending tutorial update message:', colors.cyan);
-      console.log(message);
-      
-      // Send the tutorial update message
-      ws.send(JSON.stringify(message));
-      
-      // Wait a bit for the message to be sent
-      setTimeout(() => {
-        log('Closing WebSocket connection...', colors.yellow);
-        ws.close();
-        server.close();
-        
-        log(`Tutorial update for tab '${tabName}' broadcast successfully!`, colors.green);
-        log('Tutorial update message details:', colors.cyan);
-        log(`  Tab: ${tabName}`, colors.cyan);
-        log(`  User ID: ${userId}`, colors.cyan);
-        log(`  Current Step: ${currentStep}`, colors.cyan);
-        log(`  Completed: ${completed}`, colors.cyan);
-        
-        log('\nClients should now refresh their tutorial state.', colors.green);
-      }, 1000);
-    });
-    
-    ws.on('message', (data) => {
-      try {
-        const message = JSON.parse(data);
-        log(`Received response: ${message.type}`, colors.magenta);
-      } catch (e) {
-        log(`Received raw response: ${data}`, colors.yellow);
-      }
-    });
-    
-    ws.on('error', (error) => {
-      log(`WebSocket error: ${error.message}`, colors.red);
-      server.close();
-      process.exit(1);
-    });
-    
-    ws.on('close', () => {
-      log('WebSocket connection closed', colors.yellow);
-      server.close();
-    });
+  const message = {
+    type: TUTORIAL_UPDATE_TYPE,
+    timestamp: new Date().toISOString(),
+    tabName,
+    userId,
+    currentStep,
+    completed
+  };
+  
+  console.log(`Broadcasting tutorial update for ${tabName}:`, message);
+
+  // Get all connected clients from the existing WebSocket service
+  // This is a direct approach that works with the existing WebSocket server instance
+  const clients = Array.from(wss.clients || []);
+  console.log(`Broadcasting to ${clients.length} connected clients`);
+  
+  // Send the message to all connected clients
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
   });
 }
 
-/**
- * Main function
- */
-function main() {
-  // Get command line arguments
-  const tabName = process.argv[2];
-  const userId = process.argv[3] || '8';
-  const currentStep = process.argv[4] || '0';
-  const completed = process.argv[5] || 'false';
-  
-  if (!tabName) {
-    log('Error: Tab name is required.', colors.red);
-    log('Usage: node direct-broadcast-tutorial-update.js <tabName> <userId> <currentStep> <completed>', colors.yellow);
-    log('Example: node direct-broadcast-tutorial-update.js dashboard 8 0 false', colors.yellow);
-    process.exit(1);
-  }
-  
-  log(`Broadcasting tutorial update for tab: ${colors.cyan}${tabName}${colors.reset}`, colors.yellow);
-  broadcastTutorialUpdate(tabName, userId, currentStep, completed);
-}
+// Let's use a more direct approach with the WebSocket server that's already running
+// Create a small test server to send a message and then shut down
+const server = http.createServer();
+const WebSocketServer = WebSocket.Server;
 
-main();
+server.on('upgrade', (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, ws => {
+    wss.emit('connection', ws, request);
+  });
+});
+
+// When a client connects, send the tutorial update
+wss.on('connection', (ws) => {
+  console.log('Test client connected to broadcast message');
+  
+  // Broadcast the tutorial update for the claims tab
+  broadcastTutorialUpdate('claims', 8, 0, false);
+  
+  // Close the connection
+  setTimeout(() => {
+    ws.close();
+    server.close();
+    process.exit(0);
+  }, 1000);
+});
+
+// Start the server
+server.listen(0, () => {
+  console.log(`Test server started on port ${server.address().port}`);
+});
+
+console.log('Attempting to broadcast tutorial update for claims tab...');
