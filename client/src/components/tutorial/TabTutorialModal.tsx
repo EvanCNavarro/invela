@@ -10,6 +10,8 @@ export interface TutorialStep {
   description: string;
   imagePath?: string;
   imageUrl?: string;
+  bulletPoints?: string[];
+  stepTitle?: string;
 }
 
 // Define props interface
@@ -24,6 +26,8 @@ export interface TabTutorialModalProps {
   onBack?: () => void;
   onComplete: () => void;
   onClose: () => void;
+  bulletPoints?: string[];
+  stepTitle?: string;
 }
 
 /**
@@ -42,7 +46,9 @@ export function TabTutorialModal({
   onNext,
   onBack,
   onComplete,
-  onClose
+  onClose,
+  bulletPoints = [],
+  stepTitle = ''
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
   const { isExpanded } = useSidebarStore();
@@ -103,34 +109,72 @@ export function TabTutorialModal({
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
+              {/* Chip-style step header */}
+              {stepTitle && (
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    {stepTitle}
+                  </div>
+                </div>
+              )}
+              
               {/* Header */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
                 <p className="text-base mt-4 text-gray-600 leading-relaxed max-w-xl">
                   {description}
                 </p>
-                <div className="mt-8 space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <p className="text-sm text-gray-700">
-                      Follow the tutorial steps to learn how to use the {title.toLowerCase()} features effectively.
-                    </p>
+                
+                {/* Custom bullet points */}
+                {bulletPoints.length > 0 ? (
+                  <div className="mt-6 space-y-3">
+                    {bulletPoints.map((point, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <p className="text-sm text-gray-700">
+                          {point}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                ) : (
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        Drag and drop components to customize your layout
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-700">
-                      You can return to this tutorial anytime from the help menu.
-                    </p>
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        Configure each widget to display relevant information
+                      </p>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        Save your preferences for future sessions
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
             
