@@ -1092,6 +1092,89 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
   
+  // Update current company - supports POST with X-HTTP-Method-Override header for PATCH
+  app.post("/api/companies/current", requireAuth, async (req, res) => {
+    try {
+      const companyId = req.user.company_id;
+      const updateData = req.body;
+      
+      console.log(`[Current Company] Updating company ${companyId} with data:`, updateData);
+      
+      // Validate input
+      if (!updateData) {
+        return res.status(400).json({
+          message: "No update data provided",
+          code: "INVALID_REQUEST"
+        });
+      }
+      
+      // Check for the special header that indicates this should be treated as a PATCH
+      const methodOverride = req.headers['x-http-method-override'];
+      const isPatchOverride = methodOverride === 'PATCH';
+      
+      console.log(`[Current Company] Method override header: ${methodOverride}, treating as PATCH: ${isPatchOverride}`);
+      
+      // Prepare data for update - camel case to snake case conversion
+      const dbUpdateData: Record<string, any> = {};
+      
+      if (updateData.numEmployees !== undefined) {
+        dbUpdateData.num_employees = updateData.numEmployees;
+      }
+      
+      if (updateData.revenueTier !== undefined) {
+        dbUpdateData.revenue_tier = updateData.revenueTier;
+      }
+      
+      // Add any other fields that might be updated here
+      
+      if (Object.keys(dbUpdateData).length === 0) {
+        return res.status(400).json({
+          message: "No valid update fields provided",
+          code: "INVALID_UPDATE_DATA"
+        });
+      }
+      
+      // Update the company record
+      const [updatedCompany] = await db
+        .update(companies)
+        .set(dbUpdateData)
+        .where(eq(companies.id, companyId))
+        .returning({
+          id: companies.id,
+          name: companies.name,
+          category: companies.category,
+          is_demo: companies.is_demo,
+          revenue_tier: companies.revenue_tier,
+          num_employees: companies.num_employees,
+          onboarding_company_completed: companies.onboarding_company_completed
+        });
+      
+      // Invalidate the company cache to ensure future GET requests fetch fresh data
+      invalidateCompanyCache(companyId);
+      
+      console.log(`[Current Company] Successfully updated company ${companyId}:`, updatedCompany);
+      
+      // Return the updated company data
+      // Transform response to match frontend expectations with both snake_case and camelCase
+      const transformedCompany = {
+        ...updatedCompany,
+        numEmployees: updatedCompany.num_employees,
+        revenueTier: updatedCompany.revenue_tier,
+        isDemo: updatedCompany.is_demo,
+        onboardingCompanyCompleted: updatedCompany.onboarding_company_completed
+      };
+      
+      return res.json(transformedCompany);
+    } catch (error) {
+      console.error("[Current Company] Error updating company:", error);
+      return res.status(500).json({
+        message: "Error updating company data",
+        code: "SERVER_ERROR",
+        error: String(error)
+      });
+    }
+  });
+  
   // Get network companies for the current user's company
   app.get("/api/companies/network", requireAuth, async (req, res) => {
     try {
