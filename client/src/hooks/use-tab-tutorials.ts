@@ -111,8 +111,9 @@ export function useTabTutorials(tabName: string) {
         throw err;
       }
     },
-    // Skip the query entirely if we already have cached data and are just showing it
-    enabled: !isCompleted || !cachePreloaded
+    // Always fetch tutorial data, even if cache suggests completion
+    // This ensures we have the most up-to-date tutorial state
+    enabled: true
   });
   
   // Update tutorial progress mutation
