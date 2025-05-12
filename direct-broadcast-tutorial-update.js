@@ -11,18 +11,19 @@
  * node direct-broadcast-tutorial-update.js dashboard 8 0 false
  */
 
-const WebSocket = require('ws');
 require('dotenv').config();
+const WebSocket = require('ws');
+const http = require('http');
 
-// Color formatting for better readability
+// ANSI color codes for prettier console output
 const colors = {
   reset: '\x1b[0m',
-  red: '\x1b[31m',
+  bright: '\x1b[1m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m'
+  red: '\x1b[31m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m'
 };
 
 function log(message, color = colors.reset) {
@@ -38,92 +39,94 @@ function log(message, color = colors.reset) {
  * @param {boolean} completed - Whether the tutorial is completed
  */
 function broadcastTutorialUpdate(tabName, userId, currentStep, completed) {
-  try {
-    // Create WebSocket server instance pointing to existing server
-    const port = process.env.PORT || 3000;
-    const wss = new WebSocket.Server({ port: parseInt(port) + 1 });
+  // Create a temporary HTTP server to connect to the WebSocket server
+  const server = http.createServer();
+  server.listen(() => {
+    const port = server.address().port;
+    log(`Temporary server listening on port ${port}`, colors.yellow);
     
-    // Prepare the message to broadcast
-    const message = {
-      type: 'tutorial_update',
-      data: {
-        tabName,
-        userId,
-        currentStep: parseInt(currentStep),
-        completed: completed === 'true' || completed === true,
-        timestamp: new Date().toISOString()
-      }
-    };
+    // Connect to the WebSocket server
+    const ws = new WebSocket(`ws://localhost:5000/ws`);
     
-    log(`Broadcasting tutorial update:`, colors.cyan);
-    console.log(message);
-    
-    // Attach connection handler
-    wss.on('connection', (ws) => {
-      log(`Client connected to WebSocket server`, colors.green);
+    ws.on('open', () => {
+      log('Connected to WebSocket server', colors.green);
       
-      // Send the message to the client
+      // Create the tutorial update message
+      const message = {
+        type: 'tutorial_update',
+        timestamp: new Date().toISOString(),
+        data: {
+          tabName,
+          userId: parseInt(userId, 10),
+          currentStep: parseInt(currentStep, 10),
+          completed: completed === 'true'
+        }
+      };
+      
+      log('Sending tutorial update message:', colors.cyan);
+      console.log(message);
+      
+      // Send the tutorial update message
       ws.send(JSON.stringify(message));
       
-      // Close the connection after sending the message
-      ws.close();
+      // Wait a bit for the message to be sent
+      setTimeout(() => {
+        log('Closing WebSocket connection...', colors.yellow);
+        ws.close();
+        server.close();
+        
+        log(`Tutorial update for tab '${tabName}' broadcast successfully!`, colors.green);
+        log('Tutorial update message details:', colors.cyan);
+        log(`  Tab: ${tabName}`, colors.cyan);
+        log(`  User ID: ${userId}`, colors.cyan);
+        log(`  Current Step: ${currentStep}`, colors.cyan);
+        log(`  Completed: ${completed}`, colors.cyan);
+        
+        log('\nClients should now refresh their tutorial state.', colors.green);
+      }, 1000);
     });
     
-    // The broadcast server will keep running, ready to notify any clients
-    // that connect. To stop it manually, press Ctrl+C.
-    log(`WebSocket broadcast server started on port ${parseInt(port) + 1}`, colors.green);
-    log(`Press Ctrl+C to stop...`, colors.yellow);
-    
-    // Alternative approach: Find the actual WebSocket server module
-    try {
-      // Attempt to require the WebSocket service
-      const websocketService = require('../../server/services/websocket-service');
-      
-      if (websocketService && typeof websocketService.broadcastMessage === 'function') {
-        log(`Found WebSocket service, broadcasting directly...`, colors.green);
-        websocketService.broadcastMessage(message.type, message.data);
-        log(`Direct broadcast sent via WebSocket service`, colors.green);
-        
-        // Close the server since we sent directly
-        wss.close();
-        log(`WebSocket broadcast server closed`, colors.yellow);
-      } else {
-        log(`WebSocket service found but broadcastMessage method not available`, colors.yellow);
-        log(`Using standalone broadcast server instead`, colors.yellow);
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data);
+        log(`Received response: ${message.type}`, colors.magenta);
+      } catch (e) {
+        log(`Received raw response: ${data}`, colors.yellow);
       }
-    } catch (error) {
-      log(`Could not find WebSocket service, using standalone broadcast server`, colors.yellow);
-      log(`Error: ${error.message}`, colors.red);
-    }
-  } catch (error) {
-    log(`Error broadcasting tutorial update: ${error.message}`, colors.red);
-    throw error;
-  }
+    });
+    
+    ws.on('error', (error) => {
+      log(`WebSocket error: ${error.message}`, colors.red);
+      server.close();
+      process.exit(1);
+    });
+    
+    ws.on('close', () => {
+      log('WebSocket connection closed', colors.yellow);
+      server.close();
+    });
+  });
 }
 
 /**
  * Main function
  */
-async function main() {
-  const args = process.argv.slice(2);
-  const tabName = args[0];
-  const userId = args[1] ? parseInt(args[1], 10) : 8;
-  const currentStep = args[2] ? parseInt(args[2], 10) : 0;
-  const completed = args[3] === 'true';
+function main() {
+  // Get command line arguments
+  const tabName = process.argv[2];
+  const userId = process.argv[3] || '8';
+  const currentStep = process.argv[4] || '0';
+  const completed = process.argv[5] || 'false';
   
   if (!tabName) {
-    log('Usage: node direct-broadcast-tutorial-update.js <tabName> [userId] [currentStep] [completed]', colors.yellow);
+    log('Error: Tab name is required.', colors.red);
+    log('Usage: node direct-broadcast-tutorial-update.js <tabName> <userId> <currentStep> <completed>', colors.yellow);
     log('Example: node direct-broadcast-tutorial-update.js dashboard 8 0 false', colors.yellow);
     process.exit(1);
   }
   
-  try {
-    broadcastTutorialUpdate(tabName, userId, currentStep, completed);
-  } catch (error) {
-    log(`Error: ${error.message}`, colors.red);
-    process.exit(1);
-  }
+  log(`Broadcasting tutorial update for tab: ${colors.cyan}${tabName}${colors.reset}`, colors.yellow);
+  broadcastTutorialUpdate(tabName, userId, currentStep, completed);
 }
 
-// Execute main function
 main();

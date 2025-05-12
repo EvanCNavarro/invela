@@ -47,21 +47,25 @@ export function useTutorialWebSocket(tabName: string) {
         const message = JSON.parse(event.data);
         
         // Check if this is a tutorial update message
-        if (message.type === 'tutorial_updated') {
+        if (message.type === 'tutorial_updated' || message.type === 'tutorial_update') {
           logger.info(`Received tutorial update message:`, message);
           
+          // Extract data from the message based on format
+          // The new format uses message.data, older format had properties directly on message
+          const updateData = message.data || message;
+          
           // Only process messages for this tab
-          if (message.tabName?.toLowerCase() === normalizedTabName) {
-            logger.info(`Processing update for ${normalizedTabName}:`, message);
+          if (updateData.tabName?.toLowerCase() === normalizedTabName) {
+            logger.info(`Processing update for ${normalizedTabName}:`, updateData);
             
             // Update local state with the message data
             setTutorialUpdate({
-              tabName: message.tabName,
-              userId: message.userId,
-              currentStep: message.currentStep,
-              completed: message.completed,
+              tabName: updateData.tabName,
+              userId: updateData.userId,
+              currentStep: updateData.currentStep,
+              completed: updateData.completed,
               timestamp: message.timestamp,
-              metadata: message.metadata
+              metadata: updateData.metadata
             });
           }
         }
@@ -74,12 +78,24 @@ export function useTutorialWebSocket(tabName: string) {
     window.addEventListener('message', (event) => {
       // Check if this is a WebSocket message event from our bridge
       if (event.data?.source === 'websocket-bridge' && 
-          event.data?.messageType === 'tutorial_updated') {
+          (event.data?.messageType === 'tutorial_updated' || event.data?.messageType === 'tutorial_update')) {
         logger.info(`Received bridged tutorial update:`, event.data);
         
+        // Extract data based on message format
+        const bridgeData = event.data.message || {};
+        const updateData = bridgeData.data || bridgeData;
+        
         // Process the message if it's for our tab
-        if (event.data.message?.tabName?.toLowerCase() === normalizedTabName) {
-          setTutorialUpdate(event.data.message);
+        if (updateData.tabName?.toLowerCase() === normalizedTabName) {
+          logger.info(`Processing bridged update for ${normalizedTabName}:`, updateData);
+          setTutorialUpdate({
+            tabName: updateData.tabName,
+            userId: updateData.userId,
+            currentStep: updateData.currentStep,
+            completed: updateData.completed,
+            timestamp: bridgeData.timestamp || new Date().toISOString(),
+            metadata: updateData.metadata
+          });
         }
       }
     });
