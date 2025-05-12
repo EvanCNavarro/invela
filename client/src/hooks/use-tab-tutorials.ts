@@ -239,10 +239,29 @@ export function useTabTutorials(tabName: string) {
   
   // Handle completing the tutorial
   const handleComplete = useCallback(() => {
-    console.log(`[TabTutorials] Completing tutorial for ${tabName}`);
+    // Get the last step index for this tutorial (to ensure database consistency)
+    const finalStep = totalSteps - 1;
+    
+    logger.info(`[TabTutorials] Completing tutorial for ${tabName}`, {
+      currentStep,
+      finalStep,
+      totalSteps
+    });
+    
+    // Mark as completed in local state
     setIsCompleted(true);
-    updateTutorialMutation.mutate({ step: currentStep, completed: true });
-  }, [currentStep, updateTutorialMutation, tabName]);
+    setCurrentStep(finalStep);
+    
+    // Explicitly update the cache to ensure consistent behavior
+    cacheTutorialState(currentUserId, tabName, true, finalStep);
+    
+    // Call the mutation with the final step to update the server
+    // This ensures the tutorial is marked completed in the database
+    updateTutorialMutation.mutate({ 
+      step: finalStep, 
+      completed: true 
+    });
+  }, [currentStep, updateTutorialMutation, tabName, totalSteps]);
   
   // Mark tutorial as seen (Skip)
   const markTutorialSeen = useCallback(() => {
