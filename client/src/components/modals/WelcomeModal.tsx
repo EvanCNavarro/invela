@@ -12,6 +12,33 @@ import { unifiedToast } from "@/hooks/use-unified-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
+
+// Constants for form selections
+const EMPLOYEE_COUNTS = [
+  { value: "1-10", label: "1-10 employees" },
+  { value: "11-50", label: "11-50 employees" },
+  { value: "51-200", label: "51-200 employees" },
+  { value: "201-500", label: "201-500 employees" },
+  { value: "501-1000", label: "501-1000 employees" },
+  { value: "1001-5000", label: "1001-5000 employees" },
+  { value: "5001-10000", label: "5001-10000 employees" },
+  { value: "10000+", label: "10,000+ employees" },
+];
+
+const REVENUE_TIERS = [
+  { value: "pre-revenue", label: "Pre-revenue" },
+  { value: "less-than-1m", label: "Less than $1 million" },
+  { value: "1m-5m", label: "Between $1-5 million" },
+  { value: "5m-10m", label: "Between $5-10 million" },
+  { value: "10m-50m", label: "Between $10-50 million" },
+  { value: "50m-100m", label: "Between $50-100 million" },
+  { value: "100m-500m", label: "Between $100-500 million" },
+  { value: "500m-1b", label: "Between $500 million-1 billion" },
+  { value: "1b+", label: "Over $1 billion" },
+];
 
 // Create a custom dialog content without close button
 const CustomDialogContent = forwardRef<
