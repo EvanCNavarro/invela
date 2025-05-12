@@ -187,7 +187,7 @@ const preloadImages = (
 };
 
 export function WelcomeModal() {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [showModal, setShowModal] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   const [imageOpacity, setImageOpacity] = useState(0);
@@ -305,6 +305,12 @@ export function WelcomeModal() {
     
     return () => clearTimeout(timer);
   }, [user, completeOnboardingFromLocalStorage]);
+
+  // Get current company data
+  const { data: company } = useQuery<{id: number, name: string}>({
+    queryKey: ["/api/companies/current"],
+    enabled: !!user,
+  });
 
   const { data: onboardingTask } = useQuery<{id: number}>({
     queryKey: ["/api/tasks", { type: "user_onboarding", email: user?.email }],
@@ -647,7 +653,11 @@ export function WelcomeModal() {
                         }}
                         className="text-lg text-gray-700 leading-relaxed"
                       >
-                        {currentSlide === 1 ? <><span>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
+                        {currentSlide === 1 ? (
+                          <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
+                        ) : (
+                          carouselContent[currentSlide].subtitle
+                        )}
                       </motion.p>
                     </motion.div>
                   ) : (
