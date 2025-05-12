@@ -9,6 +9,13 @@
  */
 
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { 
+  normalizeTabName as normalizeTabNameCentralized,
+  getTutorialStepCount,
+  isTutorialEnabledForTab,
+  getTabBaseRoute,
+  createTutorialImageUrl 
+} from '@/constants/tutorial-constants';
 
 // Create a dedicated logger for the tutorial configuration
 const logger = createTutorialLogger('TutorialConfig');
