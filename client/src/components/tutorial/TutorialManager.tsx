@@ -454,7 +454,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'dashboard': {
-    title: 'Dashboard Overview',
+    title: 'Personalize Your Dashboard',
     description: 'Learn how to navigate and use the main dashboard',
     steps: [
       {
