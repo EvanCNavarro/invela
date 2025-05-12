@@ -1,104 +1,103 @@
 /**
- * Direct script to reset tutorial progress for a specific tab
+ * Reset Tutorial for a Specific Tab
  * 
- * This script allows you to reset the tutorial progress for a specific tab
- * to test the tutorial flow without having to clear all user data.
+ * This script allows direct resetting of a tutorial status for a given tab.
+ * Use it to test tutorial functionality by marking the tutorial as not completed
+ * and setting the current step back to 0.
  * 
- * Usage:
- * node direct-reset-tutorial-for-tab.js <tabName> [userId]
- * 
- * Example:
- * node direct-reset-tutorial-for-tab.js dashboard 8
+ * Usage: node direct-reset-tutorial-for-tab.js <tabName> [userId]
+ * Example: node direct-reset-tutorial-for-tab.js dashboard 8
  */
 
-const { Pool } = require('pg');
 require('dotenv').config();
+const { Pool } = require('pg');
 
-// Color formatting for better readability
+// ANSI color codes for prettier console output
 const colors = {
   reset: '\x1b[0m',
-  red: '\x1b[31m',
+  bright: '\x1b[1m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m'
+  red: '\x1b[31m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m'
 };
 
-// Initialize DB connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
+/**
+ * Enhanced logging function to make the script output more readable
+ */
 function log(message, color = colors.reset) {
   console.log(`${color}${message}${colors.reset}`);
 }
 
 /**
- * Reset the tutorial progress for a specific tab
+ * Reset a tutorial entry for a specific tab and user
  * 
- * @param {string} tabName - The name of the tab to reset
- * @param {number} userId - The user ID (defaults to 8)
+ * @param {string} tabName - The name of the tab
+ * @param {number} userId - User ID (defaults to 8)
+ * @returns {Promise<boolean>} - Success status
  */
 async function resetTutorialForTab(tabName, userId = 8) {
+  log(`Resetting tutorial status for tab: ${colors.cyan}${tabName}${colors.reset} and user ID: ${colors.cyan}${userId}${colors.reset}`, colors.yellow);
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+  
   const client = await pool.connect();
   
   try {
-    log(`Resetting tutorial progress for tab "${tabName}" for user ID ${userId}...`, colors.cyan);
+    // First check if an entry exists
+    const checkQuery = `
+      SELECT id, tab_name, current_step, completed
+      FROM user_tab_tutorials
+      WHERE user_id = $1 AND tab_name = $2
+    `;
     
-    // Start transaction
-    await client.query('BEGIN');
-    
-    // Check if tutorial entry exists
-    const checkResult = await client.query(
-      `SELECT * FROM user_tab_tutorials 
-       WHERE user_id = $1 AND tab_name = $2`,
-      [userId, tabName]
-    );
+    const checkResult = await client.query(checkQuery, [userId, tabName]);
     
     if (checkResult.rows.length === 0) {
-      log(`No tutorial entry found for tab "${tabName}" and user ${userId}. Creating new entry...`, colors.yellow);
+      log(`No tutorial entry found for tab: ${colors.cyan}${tabName}${colors.reset}. Creating one...`, colors.yellow);
       
-      // Insert new entry with completed = false and currentStep = 0
-      await client.query(
-        `INSERT INTO user_tab_tutorials 
-         (user_id, tab_name, completed, current_step) 
-         VALUES ($1, $2, $3, $4)`,
-        [userId, tabName, false, 0]
-      );
+      // Create a new entry that's not completed
+      const insertQuery = `
+        INSERT INTO user_tab_tutorials (user_id, tab_name, current_step, completed)
+        VALUES ($1, $2, 0, false)
+        RETURNING id
+      `;
       
-      log(`Created new tutorial entry with completed = false and currentStep = 0`, colors.green);
+      const insertResult = await client.query(insertQuery, [userId, tabName]);
+      log(`Created new tutorial entry with ID: ${colors.green}${insertResult.rows[0].id}${colors.reset}`, colors.green);
+      return true;
     } else {
-      // Update existing entry
-      await client.query(
-        `UPDATE user_tab_tutorials 
-         SET completed = $1, current_step = $2 
-         WHERE user_id = $3 AND tab_name = $4`,
-        [false, 0, userId, tabName]
-      );
+      // Update the existing entry
+      const tutorialId = checkResult.rows[0].id;
+      const currentStatus = checkResult.rows[0];
       
-      log(`Reset existing tutorial entry to completed = false and currentStep = 0`, colors.green);
+      log(`Existing tutorial status:`, colors.magenta);
+      log(`  Tab: ${currentStatus.tab_name}`, colors.magenta);
+      log(`  Current Step: ${currentStatus.current_step}`, colors.magenta);
+      log(`  Completed: ${currentStatus.completed}`, colors.magenta);
+      
+      const updateQuery = `
+        UPDATE user_tab_tutorials
+        SET current_step = 0, completed = false
+        WHERE id = $1
+        RETURNING id, current_step, completed
+      `;
+      
+      const updateResult = await client.query(updateQuery, [tutorialId]);
+      log(`Reset tutorial status for entry ID: ${colors.green}${updateResult.rows[0].id}${colors.reset}`, colors.green);
+      log(`New Status: Step=${colors.cyan}${updateResult.rows[0].current_step}${colors.reset}, Completed=${colors.cyan}${updateResult.rows[0].completed}${colors.reset}`, colors.green);
+      
+      return true;
     }
-    
-    // Commit transaction
-    await client.query('COMMIT');
-    
-    log(`Successfully reset tutorial progress for tab "${tabName}" for user ID ${userId}`, colors.green);
-    
-    // Return the updated state
-    return {
-      userId,
-      tabName,
-      completed: false,
-      currentStep: 0
-    };
   } catch (error) {
-    // Rollback transaction on error
-    await client.query('ROLLBACK');
-    log(`Error resetting tutorial progress: ${error.message}`, colors.red);
-    throw error;
+    log(`Error resetting tutorial entry: ${error.message}`, colors.red);
+    return false;
   } finally {
     client.release();
+    await pool.end();
   }
 }
 
@@ -106,28 +105,30 @@ async function resetTutorialForTab(tabName, userId = 8) {
  * Main function
  */
 async function main() {
-  const args = process.argv.slice(2);
-  const tabName = args[0];
-  const userId = args[1] ? parseInt(args[1], 10) : 8;
+  // Get command line arguments
+  const tabName = process.argv[2];
+  const userId = process.argv[3] ? parseInt(process.argv[3], 10) : 8;
   
   if (!tabName) {
+    log('Error: Tab name is required.', colors.red);
     log('Usage: node direct-reset-tutorial-for-tab.js <tabName> [userId]', colors.yellow);
     log('Example: node direct-reset-tutorial-for-tab.js dashboard 8', colors.yellow);
     process.exit(1);
   }
   
-  try {
-    const result = await resetTutorialForTab(tabName, userId);
-    log('Tutorial reset complete:', colors.green);
-    console.log(result);
-  } catch (error) {
-    log(`Error: ${error.message}`, colors.red);
-    process.exit(1);
-  } finally {
-    // Close the pool
-    pool.end();
+  const success = await resetTutorialForTab(tabName, userId);
+  
+  if (success) {
+    log(`Successfully reset tutorial for tab: ${colors.cyan}${tabName}${colors.reset}`, colors.green);
+    
+    // Now broadcast this update via WebSocket to notify clients
+    log('\nTo broadcast this update, you can run:', colors.yellow);
+    log(`node direct-broadcast-tutorial-update.js ${tabName} ${userId} 0 false`, colors.yellow);
+    
+    log('\nTo see this tutorial, navigate to the ${tabName} tab in the application.', colors.yellow);
+  } else {
+    log(`Failed to reset tutorial for tab: ${colors.red}${tabName}${colors.reset}`, colors.red);
   }
 }
 
-// Execute main function
 main();
