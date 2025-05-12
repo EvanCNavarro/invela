@@ -212,18 +212,26 @@ export function WelcomeModal() {
   // Mutation for updating company data
   const updateCompanyMutation = useMutation({
     mutationFn: async (data: { numEmployees?: string; revenueTier?: string }) => {
-      // Using POST instead of PATCH to ensure compatibility with server routing
-      // Some servers may not handle PATCH requests properly and return HTML instead of JSON
       console.log('[ONBOARDING DEBUG] Sending update with data:', data);
       
-      // Using the correct format for apiRequest - 'POST' method, URL, and data
-      return apiRequest<any>('POST', '/api/companies/current', {
-        ...data,
-        // Include the X-HTTP-Method-Override in a custom headers object that will be merged later
-        _headers: {
-          'X-HTTP-Method-Override': 'PATCH' // Signal the intended method
-        }
+      // Use a direct fetch call with specific headers to ensure proper handling
+      const response = await fetch('/api/companies/current', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HTTP-Method-Override': 'PATCH'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[ONBOARDING DEBUG] Error response:', response.status, errorText);
+        throw new Error(errorText || 'Failed to update company information');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
