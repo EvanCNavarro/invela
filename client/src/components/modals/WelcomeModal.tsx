@@ -15,20 +15,21 @@ import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 
 // Constants for form selections with specific value mappings to appropriate database values
-// For employee count, we use size categories: small, medium, large, xlarge
+// Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
+// So for employee count, we use numerical values, and for revenue tiers we use the enum values
 const EMPLOYEE_COUNTS = [
-  { value: "small", label: "Small (1-49 employees)" },
-  { value: "medium", label: "Medium (50–249 employees)" },
-  { value: "large", label: "Large (250–999 employees)" },
-  { value: "xlarge", label: "X Large (1K+ employees)" },
+  { value: "25", label: "Small (1-49 employees)" },       // Approx. midpoint of 1-49
+  { value: "150", label: "Medium (50–249 employees)" },   // Approx. midpoint of 50-249
+  { value: "625", label: "Large (250–999 employees)" },   // Approx. midpoint of 250-999
+  { value: "5000", label: "X Large (1K+ employees)" },    // Representative value for 1000+
 ];
 
-// For revenue tiers, we use the midpoint dollar amounts in database
+// For revenue tiers, we use the enum values from the database
 const REVENUE_TIERS = [
-  { value: "5000000", label: "$0–$10M" },     // $5M  (midpoint of $0-$10M)
-  { value: "30000000", label: "$10M–$50M" },  // $30M (midpoint of $10M-$50M)
-  { value: "150000000", label: "$50M–$250M" }, // $150M (midpoint of $50M-$250M)
-  { value: "300000000", label: "$250M+" },    // $300M (conventional value for "$250M+")
+  { value: "small", label: "$0–$10M" },
+  { value: "medium", label: "$10M–$50M" },
+  { value: "large", label: "$50M–$250M" },
+  { value: "xlarge", label: "$250M+" },
 ];
 
 // Create a custom dialog content without close button
