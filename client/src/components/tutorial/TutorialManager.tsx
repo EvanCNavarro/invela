@@ -29,62 +29,29 @@ const TUTORIAL_CONTENT: Record<string, {
 }> = {
   // Claims tab tutorial
   'claims': {
-    title: 'Claims Dashboard',
+    title: 'Claims Overview',
     description: 'Learn how to manage and track claims in your organization',
     steps: [
       {
-        title: 'Claims Dashboard',
-        description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
-        imagePath: '/assets/tutorials/claims/overview.svg',
-        stepTitle: 'Claims Dashboard Overview',
+        title: 'Manage Claims Lifecycle',
+        description: 'Track active, disputed, and resolved claims effortlessly, all from one clear dashboard view.',
+        imagePath: '/assets/tutorials/claims/modal_claims_1.png',
+        stepTitle: 'Manage Claims Lifecycle',
         bulletPoints: [
-          'View a summary of all claims activity across your organization',
-          'Monitor critical metrics including claim frequency and severity',
-          'Track claims trends over time with interactive visualizations'
+          'View all claims categorized by their current status',
+          'Easily distinguish between active, disputed, and resolved claims',
+          'Monitor claim progression through intuitive visual indicators'
         ]
       },
       {
-        title: 'Claim Details',
-        description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
-        imagePath: '/assets/tutorials/claims/details.svg',
-        stepTitle: 'Detailed Claims Information',
+        title: 'Detailed Claim Information',
+        description: 'Dive deeper into specific claims to view full details, history, and resolution statuses.',
+        imagePath: '/assets/tutorials/claims/modal_claims_2.png',
+        stepTitle: 'Detailed Claim Information',
         bulletPoints: [
-          'Access comprehensive information about individual claims',
-          'Review policy details, coverage limits, and claim history',
-          'Track claim status and progression through your workflow'
-        ]
-      },
-      {
-        title: 'Claims Processing',
-        description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
-        imagePath: '/assets/tutorials/claims/processing.svg',
-        stepTitle: 'Claims Processing Tools',
-        bulletPoints: [
-          'Update claim status using standardized workflow steps',
-          'Request additional documentation when needed for evaluation',
-          'Process approvals and payments through integrated systems'
-        ]
-      },
-      {
-        title: 'Analytics Dashboard',
-        description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
-        imagePath: '/assets/tutorials/claims/analytics.svg',
-        stepTitle: 'Claims Analytics',
-        bulletPoints: [
-          'Identify patterns and trends in claims data over time',
-          'Compare performance metrics against industry benchmarks',
-          'Detect potential fraud indicators with advanced analytics'
-        ]
-      },
-      {
-        title: 'Documentation Management',
-        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
-        imagePath: '/assets/tutorials/claims/documentation.svg',
-        stepTitle: 'Document Management',
-        bulletPoints: [
-          'Upload and organize claim-related documents securely',
-          'Control access permissions for sensitive information',
-          'Share documentation with appropriate stakeholders seamlessly'
+          'Access comprehensive claim details with a single click',
+          'Review complete claim history including all previous actions',
+          'Track resolution process through detailed status indicators'
         ]
       }
     ]
