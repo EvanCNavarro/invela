@@ -46,8 +46,8 @@ function normalizeTabName(inputTabName: string): string {
     // Dashboard variations
     'dashboard-page': 'dashboard',
     
-    // Company profile variations
-    'company-profile-page': 'company-profile',
+    // Risk score configuration variations
+    'risk-score-config': 'risk-score-configuration',
   };
   
   logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
@@ -91,26 +91,20 @@ export function useTabTutorials(inputTabName: string) {
     
     // Return the appropriate step count for each tab
     switch (normalized) {
-      case 'risk-score':
-        return 5;
       case 'claims':
-        return 5;
+        return 2; // Two steps in claims tutorial
       case 'network':
-        return 5;
+        return 3; // Three steps in network tutorial
       case 'file-vault':
-        return 2;
+        return 2; // Two steps in file vault tutorial
       case 'insights':
-        return 4;
+        return 3; // Three steps in insights tutorial
       case 'dashboard':
-        return 4;
-      case 'company-profile':
-        return 5;
-      case 'playground':
-        return 5;
+        return 3; // Three steps in dashboard tutorial
       case 'risk-score-configuration':
-        return 5;
+        return 3; // Three steps in risk score configuration tutorial
       default:
-        return 5;
+        return 3; // Default to 3 steps
     }
   }, []);
   

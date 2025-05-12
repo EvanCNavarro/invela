@@ -50,10 +50,10 @@ export function RiskScoreTutorial() {
     handleNext, 
     handleComplete, 
     markTutorialSeen 
-  } = useTabTutorials('risk-score');
+  } = useTabTutorials('risk-score-configuration');
   
   // Connect to WebSocket for real-time updates
-  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket('risk-score');
+  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket('risk-score-configuration');
   
   // Load tutorial assets
   const { isLoading: assetLoading, imageUrl } = useTutorialAssets(
