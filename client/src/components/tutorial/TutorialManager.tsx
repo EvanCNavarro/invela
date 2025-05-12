@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
+import { useTutorialAssets, useTutorialAssetsPreloader } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { preloadImage, isImageCached, getCacheStats } from '@/lib/image-cache';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 
@@ -682,13 +683,45 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Use the TabTutorialModal with the appropriate content
+  // Extract all image paths for preloading
+  const allStepImages = useMemo(() => {
+    if (!tutorialContent || !tutorialContent.steps) return [];
+    
+    return tutorialContent.steps.map((step, index) => 
+      step.imageUrl || 
+      step.imagePath || 
+      `/assets/tutorials/${normalizedTabName}/${index + 1}.svg`
+    );
+  }, [tutorialContent, normalizedTabName]);
+  
+  // Use our preloader hook to load all step images in the background
+  const preloader = useTutorialAssetsPreloader(allStepImages);
+  
+  // Log preloading status when it changes
+  useEffect(() => {
+    if (preloader.isLoading) {
+      logger.info(`Preloading ${preloader.totalCount} tutorial images (${preloader.progress}% complete)`);
+    } else if (preloader.hasErrors) {
+      logger.warn(`Preloading completed with ${preloader.errors.length} errors`);
+    } else if (preloader.totalCount > 0) {
+      logger.info(`Successfully preloaded all ${preloader.totalCount} tutorial images`);
+      logger.debug('Image cache stats:', getCacheStats());
+    }
+  }, [preloader.isLoading, preloader.progress, preloader.hasErrors]);
+  
+  // Current step image with fallback
+  const currentStepImage = 
+    tutorialContent.steps[stepToUse].imageUrl || 
+    tutorialContent.steps[stepToUse].imagePath || 
+    `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`;
+  
+  // Use the TabTutorialModal with enhanced image preloading
   return (
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse].description}
-      imageUrl={tutorialContent.steps[stepToUse].imageUrl || tutorialContent.steps[stepToUse].imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`}
-      isLoading={isLoading}
+      imageUrl={currentStepImage}
+      isLoading={isLoading || (preloader.isLoading && !isImageCached(currentStepImage))}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
@@ -697,6 +730,10 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       onClose={() => markTutorialSeen()}
       stepTitle={tutorialContent.steps[stepToUse].title}
       bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
+      // Pass all image paths for advanced preloading
+      allStepImages={allStepImages}
+      // Pass any already preloaded images
+      preloadedImages={preloader.isLoading ? [] : allStepImages}
     />
   );
 }
