@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from '../TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { preloadTutorialImages } from '@/lib/image-cache';
