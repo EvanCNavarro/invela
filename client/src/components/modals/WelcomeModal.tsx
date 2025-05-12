@@ -390,15 +390,9 @@ export function WelcomeModal() {
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Don't complete onboarding when user clicks outside
-      // Just close the modal without showing toast or completing onboarding
-      console.log('[ONBOARDING DEBUG] Modal closed by user, but NOT triggering completion (requires last step)');
-      // Only update the modal visibility state
-    }
-    setShowModal(open);
-  };
+  // The modal can only be closed by completing the onboarding process
+  // We don't need a separate handleOpenChange function since we're 
+  // preventing modal closure via outside clicks directly in the Dialog component
 
   // Debounced effect to log only once per session (or when state changes)
   useEffect(() => {
@@ -439,7 +433,13 @@ export function WelcomeModal() {
   return (
     <Dialog 
       open={showModal} // Use the state variable to control modal visibility
-      onOpenChange={handleOpenChange} // Allow modal to be closed
+      onOpenChange={(open) => {
+        // Do nothing when trying to close - prevent outside clicks from closing the modal
+        if (open === false) {
+          return; // Ignore attempts to close via outside clicks
+        }
+        setShowModal(open);
+      }}
       modal={true} // Force modal behavior
     >
       <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl bg-background border-none max-h-[80vh]">
