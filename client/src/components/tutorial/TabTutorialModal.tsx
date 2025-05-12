@@ -33,9 +33,9 @@ export interface TabTutorialModalProps {
   onClose: () => void;
   bulletPoints?: string[];
   stepTitle?: string;
-  // New optional props for better image handling
-  preloadedImages?: string[];
-  allStepImages?: string[];
+  // Props for the new global preloader system
+  preloadProgress?: number;
+  preloadComplete?: boolean;
 }
 
 /**
@@ -59,8 +59,8 @@ export function TabTutorialModal({
   onClose,
   bulletPoints = [],
   stepTitle = '',
-  preloadedImages = [],
-  allStepImages = []
+  preloadProgress = 0,
+  preloadComplete = false
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
   const { isExpanded } = useSidebarStore();
@@ -84,17 +84,6 @@ export function TabTutorialModal({
       onComplete();
       setOpen(false);
     } else {
-      // Preload the next image before transitioning
-      if (allStepImages && allStepImages[currentStep + 1]) {
-        const nextImage = allStepImages[currentStep + 1];
-        if (!isImageCached(nextImage)) {
-          logger.debug(`Preloading next step image: ${nextImage}`);
-          preloadImage(nextImage).catch(err => 
-            logger.error(`Failed to preload next image: ${nextImage}`, err)
-          );
-        }
-      }
-      
       onNext();
     }
   };
@@ -117,111 +106,43 @@ export function TabTutorialModal({
     setImageOpacity(1); // Show error state
   };
   
-  // Preload adjacent images on mount or when current step changes
+  // Handle loading state for the current image
   useEffect(() => {
-    if (!allStepImages || allStepImages.length === 0) return;
+    if (!imageUrl) {
+      setImageLoadingState('loading');
+      setImageOpacity(0);
+      return;
+    }
     
-    // Reset loading state for the current image
+    // Reset loading state for the current image on step change
     setImageLoadingState('loading');
     setImageOpacity(0);
     
-    // We'll prioritize preloading:
-    // 1. Current image (if not already cached)
-    // 2. Next image
-    // 3. Previous image
-    // 4. Images 2 steps away
-    
-    // Current image
-    const currentImg = allStepImages[currentStep];
-    if (currentImg && !isImageCached(currentImg)) {
-      logger.debug(`Preloading current step image: ${currentImg}`);
-      preloadImage(currentImg)
-        .then(() => {
-          // Once the current image is loaded, set it to loaded state
-          if (currentImg === imageUrl) {
-            setImageLoadingState('loaded');
-            setTimeout(() => setImageOpacity(1), 50);
-          }
-        })
-        .catch(err => logger.error(`Failed to preload current image: ${currentImg}`, err));
-    } else if (currentImg && isImageCached(currentImg)) {
-      // Image already cached, mark as loaded
-      logger.debug(`Current image already cached: ${currentImg}`);
+    // Check if the image is already cached
+    if (isImageCached(imageUrl)) {
+      logger.debug(`Current image already cached: ${imageUrl}`);
       setImageLoadingState('loaded');
       setTimeout(() => setImageOpacity(1), 50);
+    } else {
+      // Let the image element handle the loading process
+      logger.debug(`Waiting for image to load: ${imageUrl}`);
+      // We'll let the onLoad/onError handlers manage the state
     }
-    
-    // Next image (if exists)
-    if (currentStep + 1 < totalSteps && allStepImages[currentStep + 1]) {
-      const nextImg = allStepImages[currentStep + 1];
-      if (!isImageCached(nextImg)) {
-        logger.debug(`Preloading next step image: ${nextImg}`);
-        preloadImage(nextImg).catch(err => 
-          logger.error(`Failed to preload next image: ${nextImg}`, err)
-        );
-      }
-    }
-    
-    // Previous image (if exists)
-    if (currentStep > 0 && allStepImages[currentStep - 1]) {
-      const prevImg = allStepImages[currentStep - 1];
-      if (!isImageCached(prevImg)) {
-        logger.debug(`Preloading previous step image: ${prevImg}`);
-        preloadImage(prevImg).catch(err => 
-          logger.error(`Failed to preload previous image: ${prevImg}`, err)
-        );
-      }
-    }
-  }, [currentStep, imageUrl, allStepImages, totalSteps]);
+  }, [imageUrl]);
   
   // Reset open state when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
     
-    // Log if we have preloaded images
-    if (preloadedImages && preloadedImages.length > 0) {
-      logger.debug(`Tutorial has ${preloadedImages.length} preloaded images`);
+    // Log preload progress if provided
+    if (preloadProgress > 0) {
+      logger.debug(`Tutorial images preload progress: ${preloadProgress}%`);
     }
     
-    // Preload all step images in the background if not already done
-    if (allStepImages && allStepImages.length > 0) {
-      logger.info(`Scheduling background preloading for ${allStepImages.length} tutorial images`);
-      
-      // Use a slight delay to avoid competing with the current image load
-      setTimeout(() => {
-        // Only preload images that aren't already cached
-        const uncachedImages = allStepImages.filter(img => !isImageCached(img));
-        
-        if (uncachedImages.length > 0) {
-          logger.debug(`Background preloading ${uncachedImages.length} uncached images`);
-          
-          // Load images in sequence with a small delay between each
-          let index = 0;
-          const loadNextImage = () => {
-            if (index >= uncachedImages.length) return;
-            
-            const img = uncachedImages[index];
-            preloadImage(img)
-              .then(() => {
-                logger.debug(`Background preloaded image ${index + 1}/${uncachedImages.length}: ${img}`);
-              })
-              .catch(err => {
-                logger.error(`Failed to background preload image: ${img}`, err);
-              })
-              .finally(() => {
-                index++;
-                // Use a small delay to avoid overwhelming the browser
-                setTimeout(loadNextImage, 100);
-              });
-          };
-          
-          loadNextImage();
-        } else {
-          logger.debug('All images already cached, skipping background preload');
-        }
-      }, 500);
+    if (preloadComplete) {
+      logger.info('All tutorial images have been preloaded');
     }
-  }, []);
+  }, [preloadProgress, preloadComplete]);
   
   if (!open) return null;
   

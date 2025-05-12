@@ -71,97 +71,149 @@ export function useTutorialAssets(assetPath: string, shouldLoad: boolean = true)
   };
 }
 
-/**
- * Hook for preloading multiple tutorial assets at once
- * 
- * This hook is useful for preloading all images in a tutorial sequence
- * when the tutorial first loads, ensuring smooth transitions between steps.
- * 
- * @param {string[]} assetPaths - Array of asset paths to preload
- * @param {boolean} shouldLoad - Whether to preload the assets or not
- * @returns {Object} - Object containing loading state
- */
-export function useTutorialAssetsPreloader(assetPaths: string[], shouldLoad: boolean = true) {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadedCount, setLoadedCount] = useState<number>(0);
-  const [errors, setErrors] = useState<Error[]>([]);
-  
-  // Calculate progress as a percentage
-  const progressPercentage = assetPaths.length > 0 
-    ? Math.round((loadedCount / assetPaths.length) * 100) 
-    : 100;
+// Global preloader state (outside of React)
+type PreloaderState = {
+  isLoading: boolean;
+  loadedCount: number;
+  totalCount: number;
+  progress: number;
+  errors: Error[];
+  hasErrors: boolean;
+  listeners: Set<() => void>;
+}
 
-  useEffect(() => {
-    if (!shouldLoad || !assetPaths.length) {
-      setIsLoading(false);
+// Create a singleton preloader that exists outside of React component lifecycle
+const globalPreloader: PreloaderState = {
+  isLoading: false,
+  loadedCount: 0,
+  totalCount: 0,
+  progress: 0,
+  errors: [],
+  hasErrors: false,
+  listeners: new Set()
+};
+
+/**
+ * Notify all listeners that the preloader state has changed
+ */
+function notifyListeners() {
+  globalPreloader.listeners.forEach(listener => listener());
+}
+
+/**
+ * Global preload function that can be called from anywhere
+ * This exists outside of React's component lifecycle to avoid hook order issues
+ * 
+ * @param paths - Array of image paths to preload
+ */
+export function preloadTutorialImages(paths: string[]): void {
+  // Filter out invalid paths
+  const validPaths = paths.filter(path => path && typeof path === 'string' && path.trim() !== '');
+  
+  if (!validPaths.length) {
+    return;
+  }
+  
+  if (globalPreloader.isLoading) {
+    // Don't start a new preload if one is already in progress
+    return;
+  }
+  
+  // Reset preloader state
+  globalPreloader.isLoading = true;
+  globalPreloader.loadedCount = 0;
+  globalPreloader.totalCount = validPaths.length;
+  globalPreloader.progress = 0;
+  globalPreloader.errors = [];
+  globalPreloader.hasErrors = false;
+  
+  // Notify listeners of initial state
+  notifyListeners();
+  
+  logger.info(`Starting global preload of ${validPaths.length} tutorial images`);
+  
+  // Track loading state
+  let successCount = 0;
+  let failCount = 0;
+  
+  // Preload images sequentially
+  const loadNext = (index: number) => {
+    if (index >= validPaths.length) {
+      // All done
+      globalPreloader.isLoading = false;
+      notifyListeners();
+      logger.info(`Completed preloading ${validPaths.length} images (${successCount} success, ${failCount} failed)`);
       return;
     }
     
-    logger.info(`Preloading ${assetPaths.length} tutorial assets`);
-    setIsLoading(true);
-    setLoadedCount(0);
-    setErrors([]);
+    const path = validPaths[index];
     
-    // Track successfully loaded images
-    let successCount = 0;
-    let failCount = 0;
-    const newErrors: Error[] = [];
+    // Skip if already cached
+    if (isImageCached(path)) {
+      successCount++;
+      globalPreloader.loadedCount++;
+      globalPreloader.progress = Math.round((globalPreloader.loadedCount / globalPreloader.totalCount) * 100);
+      notifyListeners();
+      
+      // Move to next image
+      setTimeout(() => loadNext(index + 1), 5);
+      return;
+    }
     
-    // Load each image sequentially with a slight delay to prevent overwhelming the browser
-    const loadImageSequentially = (index: number) => {
-      if (index >= assetPaths.length) {
-        // All images processed
-        setIsLoading(false);
-        if (failCount > 0) {
-          logger.warn(`Completed preloading with ${failCount} failures`);
-        } else {
-          logger.info('Successfully preloaded all tutorial assets');
-        }
-        return;
-      }
-      
-      const path = assetPaths[index];
-      
-      // Skip if already cached
-      if (isImageCached(path)) {
-        logger.debug(`Asset already cached: ${path}`);
+    // Preload the image
+    preloadImage(path)
+      .then(() => {
         successCount++;
-        setLoadedCount(prevCount => prevCount + 1);
-        
-        // Process next image with a minimal delay
-        setTimeout(() => loadImageSequentially(index + 1), 5);
-        return;
-      }
-      
-      // Preload the image
-      preloadImage(path)
-        .then(() => {
-          successCount++;
-          setLoadedCount(prevCount => prevCount + 1);
-        })
-        .catch((err) => {
-          failCount++;
-          newErrors.push(err);
-          setErrors(prev => [...prev, err]);
-          logger.error(`Failed to preload asset: ${path}`, err);
-        })
-        .finally(() => {
-          // Process next image with a slight delay
-          setTimeout(() => loadImageSequentially(index + 1), 20);
-        });
+        globalPreloader.loadedCount++;
+        globalPreloader.progress = Math.round((globalPreloader.loadedCount / globalPreloader.totalCount) * 100);
+        notifyListeners();
+      })
+      .catch(error => {
+        failCount++;
+        globalPreloader.errors.push(error);
+        globalPreloader.hasErrors = true;
+        notifyListeners();
+      })
+      .finally(() => {
+        // Move to next image with a slight delay
+        setTimeout(() => loadNext(index + 1), 20);
+      });
+  };
+  
+  // Start loading
+  loadNext(0);
+}
+
+/**
+ * Hook for accessing the global preloader state
+ * This avoids creating preloader state in components that might mount/unmount
+ * 
+ * @returns The current preloader state
+ */
+export function useTutorialAssetsPreloader() {
+  // Use a simple state to force re-renders when the global state changes
+  const [, setForceUpdate] = useState(0);
+  
+  // Register a listener to update the component when the global state changes
+  useEffect(() => {
+    const listener = () => {
+      setForceUpdate(prev => prev + 1);
     };
     
-    // Start loading the first image
-    loadImageSequentially(0);
+    globalPreloader.listeners.add(listener);
     
-  }, [assetPaths, shouldLoad]);
-
+    return () => {
+      globalPreloader.listeners.delete(listener);
+    };
+  }, []);
+  
+  // Return a copy of the current global state
   return {
-    isLoading,
-    loadedCount,
-    totalCount: assetPaths.length,
-    progress: progressPercentage,
-    errors,
-    hasErrors: errors.length > 0
+    isLoading: globalPreloader.isLoading,
+    loadedCount: globalPreloader.loadedCount,
+    totalCount: globalPreloader.totalCount,
+    progress: globalPreloader.progress,
+    errors: [...globalPreloader.errors],
+    hasErrors: globalPreloader.hasErrors
   };
 }
