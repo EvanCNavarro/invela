@@ -37,46 +37,73 @@ CustomDialogContent.displayName = "CustomDialogContent";
 // New carousel content with the expanded 7 steps
 const carouselContent = [
   {
-    src: "/welcome-1.svg",
-    alt: "The Invela Trust Network",
-    title: "The Invela Trust Network",
-    subtitle: "Your intelligent platform for managing Risk and Accreditation."
+    src: "/attached_assets/welcome_1.png",
+    alt: "Welcome to Invela Trust Network",
+    title: "Welcome to Invela Trust Network",
+    subtitle: "Welcome to Invela, your trusted partner in secure accreditation and onboarding processes. Our system ensures robust trust and security throughout your accreditation journey."
   },
   {
-    src: "/welcome-2.svg",
-    alt: "Easy Onboarding",
-    title: "Easy Onboarding",
-    subtitle: "A simple, goal-oriented setup."
+    src: "/attached_assets/welcome_2.png",
+    alt: "Company Information",
+    title: "Company Information",
+    subtitle: "Let's start with some basic details to streamline your accreditation process. Provide essential information to help us better understand your company.",
+    bulletPoints: [
+      "Company Name",
+      "Organization Size",
+      "Annual Revenue"
+    ]
   },
   {
-    src: "/welcome-3.svg",
-    alt: "Built for Trust",
-    title: "Built for Trust",
-    subtitle: "Progress through surveys, all in one secure flow."
+    src: "/attached_assets/welcome_3.png",
+    alt: "Tasks Ahead",
+    title: "Tasks Ahead",
+    subtitle: "Here's what you'll need to complete next. We've outlined essential tasks required for successful onboarding:",
+    bulletPoints: [
+      "KYB Form",
+      "S&P KY3P Security Assessment",
+      "Open Banking Survey"
+    ]
   },
   {
-    src: "/welcome-4.svg",
-    alt: "Your Data, Protected", 
-    title: "Your Data, Protected",
-    subtitle: "Best-in-class encryption and secure controls at every step."
+    src: "/attached_assets/welcome_4.png",
+    alt: "Streamline with Document Uploads", 
+    title: "Streamline with Document Uploads",
+    subtitle: "Accelerate your accreditation by uploading critical documents upfront. Our AI-driven system auto-fills forms, saving you time.",
+    bulletPoints: [
+      "SOC 2, ISO 27001, Penetration Test Reports",
+      "API Security, OAuth Certification",
+      "GDPR/CCPA Compliance, FDX Certification",
+      "Business Continuity Plan, Data Protection Policies"
+    ]
   },
   {
-    src: "/welcome-4.svg", // Using existing image as fallback
-    alt: "Risk Management",
-    title: "Risk Management",
-    subtitle: "Identify and mitigate risks with our comprehensive assessment tools."
+    src: "/attached_assets/welcome_5.png",
+    alt: "Invite Your Team",
+    title: "Invite Your Team",
+    subtitle: "Invite your colleagues to assist with specific tasks during onboarding. Ensure streamlined collaboration by assigning roles effectively.",
+    bulletPoints: [
+      "CFO for KYB Financials",
+      "CISO for Security Assessments",
+      "CTO or Legal for Open Banking Requirements"
+    ]
   },
   {
-    src: "/welcome-3.svg", // Using existing image as fallback
-    alt: "S&P Data Access Risk Score",
-    title: "S&P Data Access Risk Score",
-    subtitle: "Leverage industry-standard risk benchmarks to evaluate your position."
+    src: "/attached_assets/welcome_6.png",
+    alt: "Review Your Information",
+    title: "Review Your Information",
+    subtitle: "Review and confirm the details you provided before submission. Double-check for accuracy to ensure a seamless onboarding experience.",
+    bulletPoints: [
+      "Company Name",
+      "Organization Size",
+      "Annual Revenue",
+      "Team Members Invited (with assigned tasks)"
+    ]
   },
   {
-    src: "/welcome-2.svg", // Using existing image as fallback
-    alt: "Start Your Process",
-    title: "Start Your Process",
-    subtitle: "Jump into your Task Center and start shaping your network."
+    src: "/attached_assets/welcome_7.png",
+    alt: "Ready to Begin",
+    title: "Ready to Begin",
+    subtitle: "Your information has been submitted successfully. You're now ready to start your onboarding journey within the Invela Trust Network."
   }
 ];
 
@@ -465,6 +492,24 @@ export function WelcomeModal() {
                 <p className="text-lg text-gray-700">
                   {carouselContent[currentSlide].subtitle}
                 </p>
+
+                {/* Bullet points if available */}
+                {carouselContent[currentSlide].bulletPoints && (
+                  <div className="mt-8 space-y-5">
+                    {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <p className="text-lg font-medium text-gray-700">
+                          {point}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             
