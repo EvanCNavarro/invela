@@ -7,7 +7,7 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { preloadImage, isImageCached, preloadTutorialImages, getCacheStats } from '@/lib/image-cache';
 import { useTutorialImageCache } from '@/hooks/use-tutorial-image-cache';
 import { AnimatePresence, motion } from 'framer-motion';
-import { getImageBaseName } from '@/lib/tutorial-config';
+import { normalizeTabName, createTutorialImageUrl } from '@/constants/tutorial-constants';
 
 // Create dedicated logger for this component
 const logger = createTutorialLogger('TabTutorialModal');
@@ -117,7 +117,7 @@ export function TabTutorialModal({
     
     // Preload next step's image ahead of time
     if (currentStep < totalSteps - 1 && tabName) {
-      const nextImageUrl = `/assets/tutorials/${tabName}/modal_risk_${currentStep + 2}.png`;
+      const nextImageUrl = createTutorialImageUrl(tabName, currentStep + 2);
       logger.debug(`Preloading next step image: ${nextImageUrl}`);
       preloadImage(nextImageUrl);
     }
