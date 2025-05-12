@@ -544,7 +544,7 @@ export function WelcomeModal() {
               onClick={handleNext}
               className={cn(
                 "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
-                isLastSlide && "pulse-border-animation"
+                isLastSlide && "pulse-border-animation font-bold bg-green-600 hover:bg-green-700 px-8"
               )}
             >
               {isLastSlide ? "Start" : "Next"}
