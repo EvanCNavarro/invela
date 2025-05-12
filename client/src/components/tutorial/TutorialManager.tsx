@@ -64,7 +64,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Set Risk Thresholds',
         description: 'Define acceptable risk thresholds for fintech accreditation clearly and efficiently.',
-        imageUrl: '/attached_assets/modal_risk_1.png',
+        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_1.png',
         stepTitle: 'Risk Acceptance Level',
         bulletPoints: [
           'Set precise risk thresholds that align with your bank\'s standards',
@@ -75,7 +75,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Prioritize and Weight Dimensions',
         description: 'Customize dimension prioritization and weighting to align risk assessment precisely with your bank\'s standards.',
-        imageUrl: '/attached_assets/modal_risk_2.png',
+        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_2.png',
         stepTitle: 'Risk Dimension Weighting',
         bulletPoints: [
           'Adjust priority weights for critical security dimensions',
@@ -86,7 +86,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Evaluate and Compare Fintech Fit',
         description: 'Compare fintech applicants against your custom risk thresholds to determine accreditation eligibility at a glance.',
-        imageUrl: '/attached_assets/modal_risk_3.png',
+        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_3.png',
         stepTitle: 'Eligibility Assessment',
         bulletPoints: [
           'Instantly visualize eligibility status based on your defined thresholds',
