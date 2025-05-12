@@ -58,64 +58,42 @@ const TUTORIAL_CONTENT: Record<string, {
   
   // Risk Score Configuration - Complete tutorial for risk scoring configuration
   'risk-score-configuration': {
-    title: 'Risk Score Configuration',
+    title: 'S&P Data Access Risk Score Overview',
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
-        title: 'Risk Score Configuration',
-        description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
-        imagePath: '/assets/tutorials/risk-score/overview.svg',
-        stepTitle: 'Configuration Overview',
+        title: 'Set Risk Thresholds',
+        description: 'Define acceptable risk thresholds for fintech accreditation clearly and efficiently.',
+        imageUrl: '/attached_assets/modal_risk_1.png',
+        stepTitle: 'Risk Acceptance Level',
         bulletPoints: [
-          'Tailor the S&P Data Access Risk Score to your organization\'s needs',
-          'Adjust weighting factors to reflect your specific risk priorities',
-          'Save multiple configuration profiles for different risk assessments'
+          'Set precise risk thresholds that align with your bank\'s standards',
+          'Customize risk ranges for low, medium, and high risk levels',
+          'Easily save your configuration for consistent application across assessments'
         ]
       },
       {
-        title: 'Risk Gauge',
-        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        imagePath: '/assets/tutorials/risk-score/gauge.svg',
-        stepTitle: 'Risk Level Visualization',
-        bulletPoints: [
-          'Visualize your current risk score on the interactive gauge',
-          'Understand color-coded risk thresholds from low to critical',
-          'See real-time updates as you modify configuration settings'
-        ]
-      },
-      {
-        title: 'Risk Dimensions',
-        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        title: 'Prioritize and Weight Dimensions',
+        description: 'Customize dimension prioritization and weighting to align risk assessment precisely with your bank\'s standards.',
+        imageUrl: '/attached_assets/modal_risk_2.png',
         stepTitle: 'Risk Dimension Weighting',
         bulletPoints: [
-          'Customize weights for key risk factors like Cyber Security and Public Sentiment',
-          'Adjust the impact of Dark Web Data and Financial Stability indicators',
-          'Fine-tune Data Access Scope importance for your industry context'
+          'Adjust priority weights for critical security dimensions',
+          'Fine-tune assessment criteria based on your specific industry requirements',
+          'Create a weighted scoring system that accurately reflects your risk priorities'
         ]
       },
       {
-        title: 'Risk Acceptance Level',
-        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
-        stepTitle: 'Risk Tolerance Settings',
+        title: 'Evaluate and Compare Fintech Fit',
+        description: 'Compare fintech applicants against your custom risk thresholds to determine accreditation eligibility at a glance.',
+        imageUrl: '/attached_assets/modal_risk_3.png',
+        stepTitle: 'Eligibility Assessment',
         bulletPoints: [
-          'Set company-wide risk tolerance thresholds using the slider',
-          'Determine when alerts and notifications will be triggered',
-          'Configure different tolerance levels for various business units'
+          'Instantly visualize eligibility status based on your defined thresholds',
+          'Compare applicants side-by-side using consistent evaluation criteria',
+          'Make informed accreditation decisions with clear visual indicators'
         ]
-      },
-      {
-        title: 'Comparative Analysis',
-        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        imagePath: '/assets/tutorials/risk-score/comparative.svg',
-        stepTitle: 'Benchmarking Tools',
-        bulletPoints: [
-          'Compare your risk configuration with industry peers and competitors',
-          'Identify gaps in your risk assessment approach',
-          'Generate reports highlighting differences between configurations'
-        ]
-      },
+      }
     ]
   },
   // Main Risk Score Dashboard - Shows the S&P DARS score and overview
