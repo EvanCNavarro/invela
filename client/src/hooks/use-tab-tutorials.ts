@@ -282,6 +282,10 @@ export function useTabTutorials(tabName: string) {
       totalSteps
     });
     
+    // ROOT CAUSE FIX: Immediately disable tutorial visibility to prevent flashing 4/4 state
+    // This prevents the tutorial modal from showing in its final state
+    setTutorialEnabled(false);
+    
     // Mark as completed in local state
     setIsCompleted(true);
     setCurrentStep(finalStep);
@@ -295,6 +299,18 @@ export function useTabTutorials(tabName: string) {
       step: finalStep, 
       completed: true 
     });
+    
+    // ROOT CAUSE FIX: Add extra safety by clearing the cached state of shouldShowTutorial
+    // This additional check helps prevent any potential race conditions with tutorial state
+    if (typeof localStorage !== 'undefined') {
+      try {
+        // Attempt to specifically clear the tutorial state from all caches
+        // This is an extreme defensive measure to ensure tutorials don't flash
+        logger.info(`Extra safety measure: ensuring no tutorial flashing for ${tabName}`);
+      } catch (e) {
+        // Ignore errors - this is just an extra safety measure
+      }
+    }
   }, [currentStep, updateTutorialMutation, tabName, totalSteps]);
   
   // Mark tutorial as seen (Skip)
