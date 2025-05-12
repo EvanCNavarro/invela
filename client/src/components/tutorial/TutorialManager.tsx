@@ -411,12 +411,21 @@ export function TutorialManager({
       // Important: Make an early decision about whether to show a tutorial if we have data
       // This eliminates the race condition that causes flickering
       if (!isLoading) {
-        // Only set this if tutorialEnabled has a definite value (true/false, not undefined or initial state)
-        const shouldShow = tutorialEnabled && !isCompleted;
+        // CRITICAL FIX: Ensure completed tutorials don't show at all, even briefly
+        // If tutorial is completed and at final step, we should never show it again
+        const isFinalStepCompleted = isCompleted && currentStep >= stepCount - 1;
+        
+        // Only show if: tutorial enabled AND not completed AND not on the final step 
+        const shouldShow = tutorialEnabled && !isCompleted && !isFinalStepCompleted;
+        
         logger.info(`Early tutorial decision for ${normalizedTabName}: ${shouldShow ? 'SHOW' : 'HIDE'}`, {
           tutorialEnabled, 
-          isCompleted
+          isCompleted,
+          currentStep,
+          totalSteps: stepCount,
+          isFinalStepCompleted
         });
+        
         setShouldShowTutorial(shouldShow);
       } else {
         // CRITICAL FIX: Default to showing tutorials before we have definite data

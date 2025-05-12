@@ -68,7 +68,15 @@ export function useTabTutorials(tabName: string) {
         logger.info(`Using cached tutorial state for ${tabName}`, cachedState);
         setCurrentStep(cachedState.currentStep);
         setIsCompleted(cachedState.completed);
-        setTutorialEnabled(true);
+        
+        // CRITICAL FIX: If the tutorial is marked as completed in cache, we should disable it
+        // This fixes the issue where completed tutorials briefly show on page load
+        if (cachedState.completed) {
+          logger.info(`Tutorial is marked as completed in cache - disabling it`);
+          setTutorialEnabled(false);
+        } else {
+          setTutorialEnabled(true);
+        }
       }
       
       // Mark cache check as complete regardless of result
@@ -213,7 +221,14 @@ export function useTabTutorials(tabName: string) {
       // This will synchronize UI display with database values
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
-      setTutorialEnabled(true);
+      
+      // CRITICAL FIX: If the tutorial is completed, don't enable it
+      if (data.completed) {
+        logger.info(`Tutorial is marked as completed in server data - disabling it`);
+        setTutorialEnabled(false);
+      } else {
+        setTutorialEnabled(true);
+      }
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
     }
@@ -270,7 +285,7 @@ export function useTabTutorials(tabName: string) {
   }, [markSeenMutation, tabName]);
   
   // Log the current state on every render
-  console.log(`[TabTutorials] Current state for ${tabName}:`, {
+  logger.info(`[TabTutorials] Current state for ${tabName}:`, {
     tutorialEnabled,
     isLoading,
     error,
@@ -278,6 +293,16 @@ export function useTabTutorials(tabName: string) {
     totalSteps,
     isCompleted
   });
+  
+  // IMPORTANT FIX: If we detect we're on the final step AND marked as completed,
+  // we should not show the tutorial at all - this fixes the issue with tutorials
+  // showing final step on first navigation but then not showing again
+  useEffect(() => {
+    if (isCompleted && currentStep >= totalSteps - 1) {
+      logger.info(`[TabTutorials] Tutorial is completed and on final step - ensuring it won't show`);
+      setTutorialEnabled(false);
+    }
+  }, [isCompleted, currentStep, totalSteps]);
   
   return {
     tutorialEnabled,
