@@ -87,14 +87,23 @@ export function TabTutorialModal({
   // This prevents the 4/4 modal flash issue without blocking ALL tutorials
   const isLastStep = currentStep >= totalSteps - 1;
   
+  // ADDITIONAL DEBUG LOGGING FOR TUTORIAL DISPLAY
+  console.log(`[TabTutorialModal] Rendering modal with currentStep=${currentStep}, totalSteps=${totalSteps}, isLastStep=${isLastStep}`, {
+    title,
+    description: description.substring(0, 30) + '...',
+    imageUrl: imageUrl?.substring(0, 30) + '...',
+  });
+  
   // If this is the last step of the tutorial, we should automatically mark as complete
-  // but ONLY prevent rendering if we're explicitly told it's already been completed
+  // but CONTINUE to render it (unlike our previous implementation)
   if (isLastStep) {
+    console.log(`[TabTutorialModal] At final step - will mark as complete shortly but WILL STILL RENDER`);
     // If it's the final step, simply ensure completion is tracked
     // This helps ensure consistent state
     setTimeout(() => {
       // Only call complete if we're at the end
       if (currentStep >= totalSteps - 1) {
+        console.log(`[TabTutorialModal] Marking tutorial as complete via onComplete()`);
         onComplete();
       }
     }, 0);
