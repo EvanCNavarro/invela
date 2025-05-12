@@ -433,12 +433,11 @@ export function WelcomeModal() {
   //   return null;
   // }
   
-  // Force modal for testing - REMOVE AFTER TESTING
-  const forceTestingModal = true;
+  // Modal should only be shown based on user's onboarding status
 
   return (
     <Dialog 
-      open={true} // Force modal open for testing
+      open={showModal} // Use the state variable to control modal visibility
       onOpenChange={handleOpenChange} // Allow modal to be closed
       modal={true} // Force modal behavior
     >
