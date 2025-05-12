@@ -504,12 +504,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   }
   
   // Find the content for this tab
-  console.log('TUTORIAL_CONTENT keys:', Object.keys(TUTORIAL_CONTENT));
-  console.log('Looking for content for tab:', normalizedTabName);
-  console.log('Does key exist?', normalizedTabName in TUTORIAL_CONTENT);
-  console.log('Direct access result:', TUTORIAL_CONTENT[normalizedTabName]);
-  
   const tutorialContent = TUTORIAL_CONTENT[normalizedTabName];
+  
+  // Log available tutorial tabs for debugging
+  const availableTabs = Object.keys(TUTORIAL_CONTENT).join(', ');
+  logger.info(`Available tutorial tabs: ${availableTabs}`);
+  
   if (!tutorialContent) {
     logger.error(`No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`);
     

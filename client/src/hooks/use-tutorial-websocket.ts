@@ -28,8 +28,42 @@ interface TutorialUpdate {
 export function useTutorialWebSocket(tabName: string) {
   const [tutorialUpdate, setTutorialUpdate] = useState<TutorialUpdate | null>(null);
   
-  // Normalize tab name for comparison
-  const normalizedTabName = tabName.toLowerCase().trim();
+  // Normalize tab name for comparison using the shared function
+  const normalizeTabName = (inputTabName: string): string => {
+    // First, convert to lowercase and trim to handle case variations
+    const cleanedTabName = inputTabName.toLowerCase().trim();
+    
+    // Define canonical names for each tab
+    // This mapping ensures all variations of a tab name resolve to a single canonical name
+    const tabMappings: Record<string, string> = {
+      // Network tab variations
+      'network-view': 'network',
+      'network-visualization': 'network',
+      
+      // Claims tab variations
+      'claims-risk': 'claims',
+      'claims-risk-analysis': 'claims',
+      
+      // File vault tab variations
+      'file-manager': 'file-vault',
+      'filevault': 'file-vault',  // Handle PascalCase version
+      'file-vault-page': 'file-vault',
+      
+      // Dashboard variations
+      'dashboard-page': 'dashboard',
+      
+      // Company profile variations
+      'company-profile-page': 'company-profile',
+    };
+    
+    // Return the canonical version or the original cleaned name
+    const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
+    
+    return canonicalName;
+  };
+  
+  // Apply normalization
+  const normalizedTabName = normalizeTabName(tabName);
   
   // Subscribe to WebSocket events
   useEffect(() => {
@@ -50,13 +84,16 @@ export function useTutorialWebSocket(tabName: string) {
         if (message.type === 'tutorial_updated') {
           logger.info(`Received tutorial update message:`, message);
           
-          // Only process messages for this tab
-          if (message.tabName?.toLowerCase() === normalizedTabName) {
-            logger.info(`Processing update for ${normalizedTabName}:`, message);
+          // Normalize the message tab name for comparison
+          const messageTabName = normalizeTabName(message.tabName || '');
+          
+          // Only process messages for this tab (using normalized names)
+          if (messageTabName === normalizedTabName) {
+            logger.info(`Processing update for ${normalizedTabName} (original message tab: ${message.tabName}):`, message);
             
             // Update local state with the message data
             setTutorialUpdate({
-              tabName: message.tabName,
+              tabName: normalizedTabName, // Use normalized name for consistency
               userId: message.userId,
               currentStep: message.currentStep,
               completed: message.completed,
