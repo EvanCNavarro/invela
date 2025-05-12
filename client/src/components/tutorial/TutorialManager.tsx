@@ -255,18 +255,36 @@ const TUTORIAL_CONTENT: Record<string, {
     steps: [
       {
         title: 'Personalize Your Dashboard',
-        description: 'Select and arrange widgets to create your ideal dashboard. Easily drag-and-drop or choose from a list to customize your workspace based on your role.',
+        description: 'Select and arrange widgets to create your ideal dashboard. Easily customize your workspace based on your role and preferences.',
         imagePath: '/assets/tutorials/dashboard/modal_dash_1.png',
+        stepTitle: 'Personalize Your Dashboard',
+        bulletPoints: [
+          'Drag and drop widgets to reorganize your layout',
+          'Show or hide widgets based on your needs using the Customize menu',
+          'Save your preferences for future sessions automatically'
+        ]
       },
       {
         title: 'Quick Actions at Your Fingertips',
-        description: 'Choose Quick Actions to rapidly navigate common tasks. Tailor these shortcuts specifically for your daily workflow needs.',
+        description: 'Access frequently used features directly from your dashboard with Quick Actions.',
         imagePath: '/assets/tutorials/dashboard/modal_dash_2.png',
+        stepTitle: 'Quick Actions at Your Fingertips',
+        bulletPoints: [
+          'Launch common tasks with a single click',
+          'Access company profiles, invitations, and insights directly',
+          'Customize which actions appear in your Quick Actions panel'
+        ]
       },
       {
         title: 'Tailored Data Visualizations',
-        description: 'Customize charts and graphs to highlight the data that matters most to your role. Select metrics relevant to your financial insights and performance tracking.',
+        description: 'View and interact with key metrics and visualizations that matter most to your role.',
         imagePath: '/assets/tutorials/dashboard/modal_dash_3.png',
+        stepTitle: 'Tailored Data Visualizations',
+        bulletPoints: [
+          'Monitor performance metrics and risk indicators in real-time',
+          'Interact with charts to drill down into detailed information',
+          'Customize visualization types to best represent your data'
+        ]
       }
     ]
   }
