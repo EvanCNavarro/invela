@@ -60,32 +60,51 @@ export function useTabTutorials(tabName: string) {
   logger.info(`Initializing for tab: ${tabName}`);
   
   // Try to load from cache immediately (synchronously)
+  // This must happen before the API request to prevent flickering
   useEffect(() => {
     try {
+      // CRITICAL FIX: Load cache data synchronously BEFORE any rendering occurs
+      // This gives us immediate insight into whether the tutorial should be shown
       const cachedState = getCachedTutorialState(currentUserId, tabName);
       
       if (cachedState) {
         logger.info(`Using cached tutorial state for ${tabName}`, cachedState);
+        
+        // Apply cache values to local state
         setCurrentStep(cachedState.currentStep);
         setIsCompleted(cachedState.completed);
         
-        // CRITICAL FIX: If the tutorial is marked as completed in cache, we should disable it
-        // This fixes the issue where completed tutorials briefly show on page load
-        if (cachedState.completed) {
-          logger.info(`Tutorial is marked as completed in cache - disabling it`);
+        // ROOT CAUSE FIX: Determine tutorial visibility correctly based on cached completion
+        // If tutorial is completed or at final step, NEVER show it - this prevents the flash
+        // of step 4/4 that occurs when a tutorial is completed
+        const isCompletedOrFinal = cachedState.completed || 
+          (cachedState.currentStep >= (getTotalSteps(tabName) - 1));
+          
+        if (isCompletedOrFinal) {
+          logger.info(`Tutorial is marked as completed or at final step in cache - disabling it`, {
+            completed: cachedState.completed,
+            currentStep: cachedState.currentStep,
+            totalSteps: getTotalSteps(tabName)
+          });
           setTutorialEnabled(false);
         } else {
+          logger.info(`Tutorial is incomplete according to cache - enabling it`);
           setTutorialEnabled(true);
         }
+      } else {
+        // If no cache exists, default to showing tutorial if needed
+        // This ensures first-time visitors see tutorials
+        logger.info(`No cached state for ${tabName} - defaulting to enabled state`);
+        setTutorialEnabled(true);
       }
       
-      // Mark cache check as complete regardless of result
+      // Mark cache check as complete
       setCachePreloaded(true);
     } catch (error) {
       logger.error(`Error loading tutorial cache for ${tabName}`, error);
       setCachePreloaded(true);
     }
-  }, [tabName]);
+  }, [tabName, getTotalSteps]);
   
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
