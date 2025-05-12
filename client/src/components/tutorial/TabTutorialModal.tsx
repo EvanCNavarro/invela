@@ -130,19 +130,25 @@ export function TabTutorialModal({
     }
   }, [imageUrl]);
   
-  // Reset open state when a new tutorial is shown
+  // Reset open state and track progress when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
-    
+  }, []);
+  
+  // Track preload progress separately to avoid conditional hook calls
+  useEffect(() => {
     // Log preload progress if provided
     if (preloadProgress > 0) {
       logger.debug(`Tutorial images preload progress: ${preloadProgress}%`);
     }
-    
+  }, [preloadProgress]);
+  
+  // Track completion state separately
+  useEffect(() => {
     if (preloadComplete) {
       logger.info('All tutorial images have been preloaded');
     }
-  }, [preloadProgress, preloadComplete]);
+  }, [preloadComplete]);
   
   if (!open) return null;
   
