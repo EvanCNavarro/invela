@@ -299,24 +299,58 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   const [initializationComplete, setInitializationComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
-  // Map tab names to normalized versions for compatibility
-  // This is critical for handling URL path vs database key mismatches
+  /**
+   * Normalize tab names to a consistent format
+   * 
+   * This function maps all known tab name variations to their canonical form.
+   * It's critical for ensuring we have a single source of truth for each tab's tutorial status.
+   * 
+   * @param inputTabName The tab name to normalize
+   * @returns The normalized (canonical) tab name
+   */
   const normalizeTabName = (inputTabName: string): string => {
-    // Track all tab name mappings in a central object for consistency
+    // First, convert to lowercase and trim to handle case variations
+    const cleanedTabName = inputTabName.toLowerCase().trim();
+    
+    // Define canonical names for each tab
+    // This mapping ensures all variations of a tab name resolve to a single canonical name
     const tabMappings: Record<string, string> = {
-      // Risk scoring related tabs
-      'claims-risk-analysis': 'claims-risk',
-      'network-visualization': 'network-view',
+      // Network tab variations
+      'network-view': 'network',
+      'network-visualization': 'network',
       
-      // File management
+      // Claims tab variations
+      'claims-risk': 'claims',
+      'claims-risk-analysis': 'claims',
+      
+      // File vault tab variations
       'file-manager': 'file-vault',
+      'filevault': 'file-vault',  // Handle PascalCase version
+      'file-vault-page': 'file-vault',
       
-      // Default fallback - assume direct match
-      [inputTabName]: inputTabName
+      // Dashboard variations
+      'dashboard-page': 'dashboard',
+      
+      // Company profile variations
+      'company-profile-page': 'company-profile',
+      
+      // Risk score variations - keep these separate for now
+      // 'risk-score-configuration': 'risk-score-configuration',
+      // 'risk-score': 'risk-score',
     };
     
-    // Return the normalized version or the original if no mapping exists
-    return tabMappings[inputTabName] || inputTabName;
+    logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
+    
+    // Return the canonical version or the original cleaned name
+    const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
+    
+    if (canonicalName !== cleanedTabName) {
+      logger.info(`Tab name normalized: '${cleanedTabName}' → '${canonicalName}'`);
+    } else {
+      logger.info(`Tab name already in canonical form: '${canonicalName}'`);
+    }
+    
+    return canonicalName;
   };
   
   // Get normalized tab name for consistency
