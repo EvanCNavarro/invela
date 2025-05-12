@@ -292,45 +292,7 @@ const TUTORIAL_CONTENT: Record<string, {
       }
     ]
   },
-  'playground': {
-    title: 'Playground Environment',
-    description: 'Learn how to use the testing playground for risk simulations',
-    steps: [
-      {
-        title: 'Playground Overview',
-        description: 'Welcome to the Playground. This is a safe environment where you can test different scenarios without affecting your production data.',
-        imagePath: '/assets/tutorials/playground/overview.svg',
-        stepTitle: 'Simulation Environment',
-        bulletPoints: [
-          'Experiment with risk scenarios in a safe, isolated environment',
-          'Test configuration changes without affecting production settings',
-          'Use real company data with "what-if" analysis capabilities'
-        ]
-      },
-      {
-        title: 'Scenario Building',
-        description: 'Use these tools to create different test scenarios. You can simulate various risk events and see how they would impact your business.',
-        imagePath: '/assets/tutorials/playground/scenarios.svg',
-        stepTitle: 'Creating Risk Scenarios',
-        bulletPoints: [
-          'Build custom scenarios with multiple risk variables',
-          'Simulate market events and their impact on your risk profile',
-          'Save and share scenarios with your team for collaborative planning'
-        ]
-      },
-      {
-        title: 'Results Analysis',
-        description: 'After running a simulation, you can analyze the results here. Compare different scenarios to find optimal risk strategies.',
-        imagePath: '/assets/tutorials/playground/results.svg',
-        stepTitle: 'Analyzing Outcomes',
-        bulletPoints: [
-          'Compare simulation results side-by-side with detailed metrics',
-          'Visualize potential impacts through interactive charts',
-          'Export findings and recommendations for stakeholder review'
-        ]
-      }
-    ]
-  },
+
   'dashboard': {
     title: 'Dashboard Overview',
     description: 'Learn how to navigate and use the main dashboard',

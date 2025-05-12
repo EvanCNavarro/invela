@@ -189,7 +189,7 @@ export function TabTutorialModal({
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">{stepTitle}</h2>
                 
                 {/* Bullet points only - no duplicate descriptive text */}
-                <div className="mt-6 space-y-3">
+                <div className="mt-8 space-y-5">
                   {bulletPoints && bulletPoints.length > 0 ? (
                     bulletPoints.map((point, index) => (
                       <div key={index} className="flex items-start space-x-3">
