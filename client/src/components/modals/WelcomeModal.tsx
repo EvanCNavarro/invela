@@ -214,13 +214,15 @@ export function WelcomeModal() {
     mutationFn: async (data: { numEmployees?: string; revenueTier?: string }) => {
       // Using POST instead of PATCH to ensure compatibility with server routing
       // Some servers may not handle PATCH requests properly and return HTML instead of JSON
-      return apiRequest('/api/companies/current', {
-        method: 'POST', // Changed from PATCH to POST
-        headers: {
-          'Content-Type': 'application/json',
+      console.log('[ONBOARDING DEBUG] Sending update with data:', data);
+      
+      // Using the correct format for apiRequest - 'POST' method, URL, and data
+      return apiRequest<any>('POST', '/api/companies/current', {
+        ...data,
+        // Include the X-HTTP-Method-Override in a custom headers object that will be merged later
+        _headers: {
           'X-HTTP-Method-Override': 'PATCH' // Signal the intended method
-        },
-        body: JSON.stringify(data)
+        }
       });
     },
     onSuccess: () => {

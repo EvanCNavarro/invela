@@ -1099,6 +1099,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const updateData = req.body;
       
       console.log(`[Current Company] Updating company ${companyId} with data:`, updateData);
+      console.log(`[Current Company] Request headers:`, {
+        contentType: req.headers['content-type'],
+        methodOverride: req.headers['x-http-method-override']
+      });
+      // For debugging, dump the full raw body content
+      console.log(`[Current Company] Raw body type:`, typeof req.body, Array.isArray(req.body));
       
       // Validate input
       if (!updateData) {
