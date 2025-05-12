@@ -181,22 +181,29 @@ export function TutorialLoadingOverlay({
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
-      {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[9999] flex flex-col pointer-events-auto">
+      {/* Fully-blocking overlay with transparency */}
+      <div className="absolute inset-0 bg-background/90 backdrop-blur-sm pointer-events-auto" />
       
-      {/* Skeleton content */}
-      <div className="relative flex-1 p-6 overflow-hidden">
+      {/* Skeleton content with reduced opacity to show it's not interactive */}
+      <div className="relative flex-1 p-6 overflow-hidden opacity-70 pointer-events-none">
         {renderSkeletonContent()}
       </div>
       
-      {/* Loading indicator at the bottom */}
-      <div className="relative bg-muted/50 p-4 border-t">
-        <div className="flex items-center justify-center space-x-4">
-          <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
-          <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse delay-150" />
-          <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse delay-300" />
-          <span className="text-sm text-muted-foreground ml-2">Loading tutorial...</span>
+      {/* Loading indicator in the center */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="bg-background border border-border rounded-lg shadow-lg p-6 flex flex-col items-center max-w-md">
+          <div className="mb-4 flex space-x-3">
+            <div className="h-3 w-3 rounded-full bg-primary animate-pulse" />
+            <div className="h-3 w-3 rounded-full bg-primary animate-pulse delay-150" />
+            <div className="h-3 w-3 rounded-full bg-primary animate-pulse delay-300" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">
+            Loading Tutorial
+          </h3>
+          <p className="text-sm text-muted-foreground text-center">
+            Please wait while we prepare your experience. This page will be interactive once the tutorial is ready.
+          </p>
         </div>
       </div>
     </div>
