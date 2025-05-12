@@ -8,6 +8,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import type { Company } from '@/types/company';
 
 // Import tutorial debugging utilities if available
 let tutorialDebug: any = null;
@@ -523,14 +524,11 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
-  // If we're still loading, show a loading overlay
-  // Import the TutorialLoadingOverlay component
-  const { TutorialLoadingOverlay } = require('./TutorialLoadingOverlay');
-  
   // Get company data to determine the skeleton type
-  const { useQuery } = require('@tanstack/react-query');
-  const companyData = useQuery({ queryKey: ['/api/companies/current'] })?.data;
-  const companyCategory = companyData?.category || 'Invela';
+  const companyDataQuery = useQuery<Company>({ 
+    queryKey: ['/api/companies/current'] 
+  });
+  const companyCategory = companyDataQuery?.data?.category || 'Invela';
   
   // If loading, render the loading overlay
   if (isLoading) {
