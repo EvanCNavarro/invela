@@ -56,9 +56,18 @@ export function TabTutorialModal({
   // Handle next step or completion
   const handleNext = () => {
     if (currentStep >= totalSteps - 1) {
+      // This is the last step - mark as complete before closing
+      // We need to call onComplete first to ensure the state is updated
+      // in both local cache and server before closing the modal
       onComplete();
-      setOpen(false);
+      
+      // Add a small delay before closing to ensure state updates are processed
+      // This prevents the state mismatch between UI and persistence layer
+      setTimeout(() => {
+        setOpen(false);
+      }, 100);
     } else {
+      // Normal progression to next step
       onNext();
     }
   };
