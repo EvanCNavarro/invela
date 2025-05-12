@@ -9,6 +9,7 @@ import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import type { Company } from '@/types/company';
+import { useTutorialLoadingStore } from '@/hooks/use-tutorial-loading';
 
 // Import tutorial debugging utilities if available
 let tutorialDebug: any = null;
@@ -530,16 +531,26 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   });
   const companyCategory = companyDataQuery?.data?.category || 'Invela';
   
-  // If loading, render the loading overlay
+  // Get the loading state setter from the store
+  const setLoading = useTutorialLoadingStore(state => state.setLoading);
+  
+  // Update the global loading state when our loading state changes
+  useEffect(() => {
+    setLoading(isLoading, isLoading ? normalizedTabName : null);
+    
+    if (isLoading) {
+      logger.debug(`Tutorial data still loading (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
+    }
+    
+    // Cleanup when component unmounts
+    return () => {
+      setLoading(false, null);
+    };
+  }, [isLoading, normalizedTabName, setLoading, initializationComplete]);
+  
+  // Don't render anything during loading, allow the page to show its own skeleton loaders
   if (isLoading) {
-    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
-    return (
-      <TutorialLoadingOverlay 
-        isLoading={isLoading} 
-        tabName={normalizedTabName} 
-        companyCategory={companyCategory}
-      />
-    );
+    return null;
   }
   
   // If we're not on a base route, don't show the tutorial

@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
+import { useTutorialLoading } from "@/hooks/use-tutorial-loading";
 import {
   Settings,
   Check,
@@ -75,14 +76,21 @@ export default function DashboardPage() {
   });
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  // Get the tutorial loading state
+  const { isLoading: tutorialLoading, currentTabName } = useTutorialLoading();
+  const isTutorialLoadingForDashboard = tutorialLoading && currentTabName === 'dashboard';
 
   // Use optimized query options for better performance
-  const { data: companyData, isLoading } = useQuery<Company>({
+  const { data: companyData, isLoading: dataLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user,
     ...getOptimizedQueryOptions("/api/companies/current"),
     refetchInterval: false
   });
+  
+  // Combine data loading with tutorial loading
+  const isLoading = dataLoading || isTutorialLoadingForDashboard;
 
   type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar';
   
