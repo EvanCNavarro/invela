@@ -25,6 +25,55 @@ import { requireAuth } from '../middleware/auth';
 import WebSocketService, { WebSocketMessage, MessageType } from '../services/websocket-service';
 import { WebSocketServer } from 'ws';
 
+/**
+ * Normalizes tab names to a consistent format
+ * This ensures all tab name variations map to their canonical form
+ * for consistent database storage and retrieval.
+ * 
+ * @param inputTabName The tab name to normalize
+ * @returns The normalized (canonical) tab name
+ */
+function normalizeTabName(inputTabName: string): string {
+  // First, convert to lowercase and trim to handle case variations
+  const cleanedTabName = inputTabName.toLowerCase().trim();
+  
+  // Define canonical names for each tab
+  // This mapping ensures all variations of a tab name resolve to a single canonical name
+  const tabMappings: Record<string, string> = {
+    // Network tab variations
+    'network-view': 'network',
+    'network-visualization': 'network',
+    
+    // Claims tab variations
+    'claims-risk': 'claims',
+    'claims-risk-analysis': 'claims',
+    
+    // File vault tab variations
+    'file-manager': 'file-vault',
+    'filevault': 'file-vault',  // Handle PascalCase version
+    'file-vault-page': 'file-vault',
+    
+    // Dashboard variations
+    'dashboard-page': 'dashboard',
+    
+    // Company profile variations
+    'company-profile-page': 'company-profile',
+  };
+  
+  logger.info(`[TabTutorials] Normalizing tab name from '${inputTabName}' to canonical form`);
+  
+  // Return the canonical version or the original cleaned name
+  const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
+  
+  if (canonicalName !== cleanedTabName) {
+    logger.info(`[TabTutorials] Tab name normalized: '${cleanedTabName}' → '${canonicalName}'`);
+  } else {
+    logger.info(`[TabTutorials] Tab name already in canonical form: '${canonicalName}'`);
+  }
+  
+  return canonicalName;
+}
+
 // Create an instance of the WebSocket service
 // For broadcasts in this module, we don't need an actual WSS instance
 const webSocketService = new WebSocketService(null);
@@ -284,6 +333,7 @@ router.post('/', requireAuth, async (req: any, res) => {
  * GET /api/user-tab-tutorials/:tabName/status
  * 
  * Gets the status of a specific tab tutorial for the current user
+ * Uses normalized tab names to ensure consistency
  */
 router.get('/:tabName/status', requireAuth, async (req: any, res) => {
   try {
@@ -301,9 +351,10 @@ router.get('/:tabName/status', requireAuth, async (req: any, res) => {
       logger.info(`[TabTutorials] Status request for tab "${req.params.tabName}" from authenticated user ID: ${userId}`);
     }
     
-    const { tabName } = req.params;
+    // Get and normalize the tab name from the request
+    const rawTabName = req.params.tabName;
     
-    if (!tabName) {
+    if (!rawTabName) {
       logger.error(`[TabTutorials] Missing tab name in request params: ${JSON.stringify(req.params)}`);
       return res.status(400).json({
         error: 'Bad Request',
@@ -311,7 +362,10 @@ router.get('/:tabName/status', requireAuth, async (req: any, res) => {
       });
     }
     
-    logger.info(`[TabTutorials] Checking tutorial status for tab: ${tabName}, user: ${userId}`);
+    // Normalize the tab name to ensure consistency
+    const tabName = normalizeTabName(rawTabName);
+    
+    logger.info(`[TabTutorials] Checking tutorial status for tab: ${tabName} (raw: ${rawTabName}), user: ${userId}`);
     
     // Get the tutorial status for this tab
     const tutorial = await db.query.userTabTutorials.findFirst({
