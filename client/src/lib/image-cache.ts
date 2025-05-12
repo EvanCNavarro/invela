@@ -280,14 +280,51 @@ export function clearImageCache(sources?: string[]): void {
  * @param currentStep Current tutorial step index
  * @param totalSteps Total number of steps
  */
+// Helper function to normalize tab names (duplicated to avoid circular dependencies)
+function normalizeTabName(tabName: string): string {
+  if (!tabName) return '';
+  
+  // Convert to lowercase
+  let normalized = tabName.toLowerCase();
+  
+  // Handle special cases
+  switch (normalized) {
+    case 'dashboard':
+    case 'home':
+      return 'dashboard';
+      
+    case 'risk-score':
+    case 'riskscore':
+    case 'risk_score':
+    case 'risk-score-configuration':
+    case 'risk_score_configuration':
+      return 'risk-score-configuration';
+      
+    case 'network':
+      return 'network';
+      
+    case 'claims':
+      return 'claims';
+      
+    case 'file-vault':
+    case 'files':
+    case 'file_vault':
+      return 'file-vault';
+      
+    case 'insights':
+      return 'insights';
+      
+    default:
+      // Convert spaces and underscores to dashes
+      return normalized.replace(/[\s_]+/g, '-');
+  }
+}
+
 export function preloadTutorialImages(
   tabName: string,
   currentStep: number,
   totalSteps: number
 ): void {
-  // Import from utils (import at top of file was causing circular dependencies)
-  const { normalizeTabName } = require('@/utils/tutorial-utils');
-  
   // Normalize the tab name to ensure consistency
   const normalizedTabName = normalizeTabName(tabName);
   
