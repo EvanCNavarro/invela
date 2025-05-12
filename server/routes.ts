@@ -1130,12 +1130,26 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       
       if (updateData.numEmployees !== undefined) {
         console.log(`[Current Company] Setting num_employees to:`, updateData.numEmployees);
+        // For employee count, we keep the string value (small, medium, large, xlarge)
         dbUpdateData.num_employees = updateData.numEmployees;
       }
       
       if (updateData.revenueTier !== undefined) {
         console.log(`[Current Company] Setting revenue_tier to:`, updateData.revenueTier);
-        dbUpdateData.revenue_tier = updateData.revenueTier;
+        try {
+          // For revenue tier, convert the string number to actual integer
+          const revenueTier = parseInt(updateData.revenueTier, 10);
+          if (isNaN(revenueTier)) {
+            console.log(`[Current Company] Warning: Revenue tier couldn't be parsed as integer: ${updateData.revenueTier}`);
+            dbUpdateData.revenue_tier = updateData.revenueTier; // Fallback to string
+          } else {
+            dbUpdateData.revenue_tier = revenueTier;
+            console.log(`[Current Company] Parsed revenue_tier as integer:`, revenueTier);
+          }
+        } catch (err) {
+          console.error(`[Current Company] Error parsing revenue tier:`, err);
+          dbUpdateData.revenue_tier = updateData.revenueTier; // Fallback to string
+        }
       }
       
       // Add any other fields that might be updated here

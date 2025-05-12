@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 
-// Constants for form selections
+// Constants for form selections with specific value mappings to appropriate database values
+// For employee count, we use size categories: small, medium, large, xlarge
 const EMPLOYEE_COUNTS = [
   { value: "small", label: "Small (1-49 employees)" },
   { value: "medium", label: "Medium (50–249 employees)" },
@@ -22,11 +23,12 @@ const EMPLOYEE_COUNTS = [
   { value: "xlarge", label: "X Large (1K+ employees)" },
 ];
 
+// For revenue tiers, we use the midpoint dollar amounts in database
 const REVENUE_TIERS = [
-  { value: "0-10m", label: "$0–$10M" },
-  { value: "10m-50m", label: "$10M–$50M" },
-  { value: "50m-250m", label: "$50M–$250M" },
-  { value: "250m+", label: "$250M+" },
+  { value: "5000000", label: "$0–$10M" },     // $5M  (midpoint of $0-$10M)
+  { value: "30000000", label: "$10M–$50M" },  // $30M (midpoint of $10M-$50M)
+  { value: "150000000", label: "$50M–$250M" }, // $150M (midpoint of $50M-$250M)
+  { value: "300000000", label: "$250M+" },    // $300M (conventional value for "$250M+")
 ];
 
 // Create a custom dialog content without close button
