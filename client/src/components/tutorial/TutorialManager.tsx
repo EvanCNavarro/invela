@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
+import { useTutorialWebSocket, normalizeTabName } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -269,45 +269,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
   /**
-   * Normalize tab names to a consistent format
-   * 
-   * This function maps all known tab name variations to their canonical form.
-   * It's critical for ensuring we have a single source of truth for each tab's tutorial status.
-   * 
-   * @param inputTabName The tab name to normalize
-   * @returns The normalized (canonical) tab name
+   * Using the imported normalizeTabName function to ensure consistency across components
+   * We add logging here for better visibility in the TutorialManager context
    */
-  const normalizeTabName = (inputTabName: string): string => {
-    // First, convert to lowercase and trim to handle case variations
-    const cleanedTabName = inputTabName.toLowerCase().trim();
-    
-    // Define canonical names for each tab
-    // This mapping ensures all variations of a tab name resolve to a single canonical name
-    const tabMappings: Record<string, string> = {
-      // Network tab variations
-      'network-view': 'network',
-      'network-visualization': 'network',
-      
-      // Claims tab variations
-      'claims-risk': 'claims',
-      'claims-risk-analysis': 'claims',
-      
-      // File vault tab variations
-      'file-manager': 'file-vault',
-      'filevault': 'file-vault',  // Handle PascalCase version
-      'file-vault-page': 'file-vault',
-      
-      // Dashboard variations
-      'dashboard-page': 'dashboard',
-      
-      // Risk score configuration variations
-      'risk-score-config': 'risk-score-configuration',
-    };
-    
+  const normalizeTabNameWithLogging = (inputTabName: string): string => {
     logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
     
-    // Return the canonical version or the original cleaned name
-    const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
+    const cleanedTabName = inputTabName.toLowerCase().trim();
+    const canonicalName = normalizeTabName(inputTabName);
     
     if (canonicalName !== cleanedTabName) {
       logger.info(`Tab name normalized: '${cleanedTabName}' → '${canonicalName}'`);
@@ -319,7 +288,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   };
   
   // Get normalized tab name for consistency
-  const normalizedTabName = normalizeTabName(tabName);
+  const normalizedTabName = normalizeTabNameWithLogging(tabName);
   
   // Check if current location is a base route or a subpage
   const isBaseRoute = (): boolean => {
