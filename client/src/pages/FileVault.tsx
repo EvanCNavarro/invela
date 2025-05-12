@@ -462,13 +462,13 @@ export const FileVault: React.FC = () => {
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
     
-    // Create an upload toast with a unique ID using the hook version instead
-    // of the standalone unifiedToast, as the hook version is always available
+    // Create an upload toast with a unique ID that will auto-dismiss
+    // after a reasonable timeout even if dismissal fails
     const toastRef = toast({
       variant: "file-upload",
       title: `Uploading '${file.name}'`,
       description: "Please wait while we upload your file...",
-      duration: Infinity, // Stay open until explicitly closed
+      duration: 8000, // Auto-dismiss after 8 seconds as fallback
       id: `file-upload-${tempId}`
     });
     
@@ -502,7 +502,7 @@ export const FileVault: React.FC = () => {
           variant: "success",
           title: "File uploaded successfully",
           description: `${file.name} has been uploaded.`,
-          duration: 3000,
+          duration: 4000,
         });
         console.log('[FileVault] Showed success toast for file:', file.name);
       }, 300);
@@ -538,7 +538,7 @@ export const FileVault: React.FC = () => {
           variant: "error",
           title: "Upload failed",
           description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : "Please try again."}`,
-          duration: 4500,
+          duration: 5000,
           id: `file-error-${tempId}`
         });
         console.log('[FileVault] Showed error toast for file:', file.name);
