@@ -6,6 +6,7 @@
  * and detailed performance monitoring.
  */
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { getImageBaseName } from '@/lib/tutorial-config';
 
 // Create a dedicated logger for the image cache system
 const logger = createTutorialLogger('ImageCache');
@@ -287,10 +288,8 @@ export function preloadTutorialImages(
   // Calculate which images to preload
   const imagesToPreload: string[] = [];
   
-  // Create dynamic naming pattern based on tab type
-  const imageBaseName = tabName === 'risk-score-configuration' 
-    ? 'modal_risk_' 
-    : `modal_${tabName.replace('-', '_')}_`;
+  // Get the correct image base name from the centralized configuration
+  const imageBaseName = getImageBaseName(tabName);
   
   // Always preload current step
   imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep + 1}.png`);
