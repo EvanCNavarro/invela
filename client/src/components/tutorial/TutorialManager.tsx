@@ -429,7 +429,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       'risk-score': '/risk-score',
       'claims-risk': '/claims-risk',
       'risk-score-configuration': '/risk-score-configuration',
-      'playground': '/playground'
+
     };
     
     // Special handling for dashboard (both '/' and '/dashboard' are valid base routes)
