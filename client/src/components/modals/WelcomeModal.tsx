@@ -7,8 +7,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
-import { unifiedToast } from "@/hooks/use-unified-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -207,7 +205,6 @@ export function WelcomeModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const unifiedToastHook = useUnifiedToast();
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
   
@@ -687,8 +684,61 @@ export function WelcomeModal() {
                     </>
                   )}
 
+                  {/* Form fields for step 2 */}
+                  {currentSlide === 1 && (
+                    <motion.div
+                      className="mt-8 space-y-5 transform-gpu"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      style={{ willChange: 'opacity', overflow: 'hidden' }}
+                    >
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="employeeCount" className="text-base font-medium">Company Size</Label>
+                          <Select 
+                            value={employeeCount} 
+                            onValueChange={setEmployeeCount}
+                            disabled={isSubmitting}
+                          >
+                            <SelectTrigger id="employeeCount" className="w-full">
+                              <SelectValue placeholder="Select number of employees" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {EMPLOYEE_COUNT_OPTIONS.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="revenueTier" className="text-base font-medium">Annual Revenue</Label>
+                          <Select 
+                            value={revenueTier} 
+                            onValueChange={setRevenueTier} 
+                            disabled={isSubmitting}
+                          >
+                            <SelectTrigger id="revenueTier" className="w-full">
+                              <SelectValue placeholder="Select annual revenue" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {REVENUE_TIER_OPTIONS.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Bullet points if available - enhanced for first slide */}
-                  {carouselContent[currentSlide].bulletPoints && (
+                  {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
                     <motion.div 
                       className="mt-8 space-y-5 transform-gpu"
                       initial={{ opacity: 0 }}
