@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
@@ -534,8 +534,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // No custom assets loading - simplified approach
-  const assetsLoading = false;
+  // Simple flag for loading state
+  const [assetsLoading, setAssetsLoading] = useState(false);
   
   // Handle initialization with comprehensive logging
   useEffect(() => {

@@ -140,20 +140,7 @@ export function TabTutorialModal({
     setOpen(true);
   }, []);
   
-  // Track preload progress separately to avoid conditional hook calls
-  useEffect(() => {
-    // Log preload progress if provided
-    if (preloadProgress > 0) {
-      logger.debug(`Tutorial images preload progress: ${preloadProgress}%`);
-    }
-  }, [preloadProgress]);
-  
-  // Track completion state separately
-  useEffect(() => {
-    if (preloadComplete) {
-      logger.info('All tutorial images have been preloaded');
-    }
-  }, [preloadComplete]);
+  // No preloader tracking in this simplified version
   
   if (!open) return null;
   
