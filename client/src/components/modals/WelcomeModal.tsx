@@ -647,7 +647,7 @@ export function WelcomeModal() {
                         }}
                         className="text-lg text-gray-700 leading-relaxed"
                       >
-                        {currentSlide === 1 ? <><span>Let's start with some basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
+                        {currentSlide === 1 ? <><span>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
                       </motion.p>
                     </motion.div>
                   ) : (
@@ -672,7 +672,7 @@ export function WelcomeModal() {
                         transition={{ delay: 0.3 }}
                         className="text-lg text-gray-700"
                       >
-                        {currentSlide === 1 ? <><span>Let's start with some basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
+                        {currentSlide === 1 ? <><span>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
                       </motion.p>
                     </>
                   )}
@@ -696,12 +696,22 @@ export function WelcomeModal() {
                             onValueChange={setEmployeeCount}
                             disabled={isSubmitting}
                           >
-                            <SelectTrigger id="employeeCount" className="w-full overflow-visible">
+                            <SelectTrigger 
+                              id="employeeCount" 
+                              className={cn(
+                                "w-[360px] overflow-visible transition-all duration-200",
+                                employeeCount ? "border-green-500 bg-green-50/30" : ""
+                              )}
+                            >
                               <SelectValue placeholder="Select number of employees" className="text-gray-400" />
                             </SelectTrigger>
                             <SelectContent className="overflow-visible">
                               {EMPLOYEE_COUNTS.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem 
+                                  key={option.value} 
+                                  value={option.value}
+                                  className="hover:bg-gray-100 transition-colors duration-150"
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
@@ -718,12 +728,22 @@ export function WelcomeModal() {
                             onValueChange={setRevenueTier} 
                             disabled={isSubmitting}
                           >
-                            <SelectTrigger id="revenueTier" className="w-full overflow-visible">
+                            <SelectTrigger 
+                              id="revenueTier" 
+                              className={cn(
+                                "w-[360px] overflow-visible transition-all duration-200",
+                                revenueTier ? "border-green-500 bg-green-50/30" : ""
+                              )}
+                            >
                               <SelectValue placeholder="Select annual revenue" className="text-gray-400" />
                             </SelectTrigger>
                             <SelectContent className="overflow-visible">
                               {REVENUE_TIERS.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem 
+                                  key={option.value} 
+                                  value={option.value}
+                                  className="hover:bg-gray-100 transition-colors duration-150"
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
