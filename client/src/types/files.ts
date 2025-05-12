@@ -1,10 +1,12 @@
+export type FileStatus = 'uploaded' | 'uploading' | 'error' | 'paused' | 'canceled' | 'deleted' | 'restored';
+
 export interface FileItem {
-  id?: number;
+  id: string;
   name: string;
   size: number;
   type: string;
-  status?: string;
-  createdAt?: string;
+  status: FileStatus;
+  createdAt: string;
   updatedAt?: string;
   uploadTime?: number;
   url?: string;

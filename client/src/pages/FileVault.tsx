@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { useUnifiedToast, unifiedToast } from "@/hooks/use-unified-toast";
 import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
 import type { FileStatus, FileItem } from "@/types/files";
@@ -462,10 +462,17 @@ export const FileVault: React.FC = () => {
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
     
-    // Create an upload toast with a unique ID
-    const toastId = unifiedToast.fileUploadProgress(file.name);
+    // Create an upload toast with a unique ID using the hook version instead
+    // of the standalone unifiedToast, as the hook version is always available
+    const toastRef = toast({
+      variant: "file-upload",
+      title: `Uploading '${file.name}'`,
+      description: "Please wait while we upload your file...",
+      duration: Infinity, // Stay open until explicitly closed
+      id: `file-upload-${tempId}`
+    });
     
-    console.log('[FileVault] Created upload toast with ID:', toastId);
+    console.log('[FileVault] Created upload toast with ID:', toastRef);
     
     try {
       // Perform the actual upload
@@ -481,9 +488,18 @@ export const FileVault: React.FC = () => {
       });
 
       // First explicitly dismiss the uploading toast
-      // Need to use the dismiss method directly from the toast reference
-      if (toastId && toastId.dismiss) {
-        toastId.dismiss();
+      // Need to handle different toast reference formats
+      if (toastId) {
+        // Check if the toast reference has a dismiss function
+        if (typeof toastId === 'object' && toastId.dismiss) {
+          toastId.dismiss();
+        } else {
+          // If no dismiss method, use the baseToast function with open: false
+          toast({
+            id: typeof toastId === 'object' && toastId.id ? toastId.id : `file-upload-${tempId}`,
+            open: false,
+          });
+        }
         console.log('[FileVault] Successfully dismissed upload toast');
       }
       
@@ -510,18 +526,28 @@ export const FileVault: React.FC = () => {
       );
 
       // First explicitly dismiss the uploading toast
-      // Need to use the dismiss method directly from the toast reference
-      if (toastId && toastId.dismiss) {
-        toastId.dismiss();
+      // Need to handle different toast reference formats
+      if (toastId) {
+        // Check if the toast reference has a dismiss function
+        if (typeof toastId === 'object' && toastId.dismiss) {
+          toastId.dismiss();
+        } else {
+          // If no dismiss method, use the baseToast function with open: false
+          toast({
+            id: typeof toastId === 'object' && toastId.id ? toastId.id : `file-upload-${tempId}`,
+            open: false,
+          });
+        }
         console.log('[FileVault] Dismissed error upload toast');
       }
       
       // Then show the error toast
       setTimeout(() => {
-        unifiedToast.fileUploadError(
-          file.name, 
-          error instanceof Error ? error.message : "Upload failed"
-        );
+        unifiedToast.fileUploadError({
+          fileName: file.name,
+          error: error instanceof Error ? error.message : "Upload failed",
+          id: `file-error-${tempId}`
+        });
         console.log('[FileVault] Showed error toast for file:', file.name);
       }, 300);
     }
