@@ -788,15 +788,9 @@ export function WelcomeModal() {
                     </motion.div>
                   )}
 
-                  {/* Bullet points if available - enhanced for first slide */}
+                  {/* Bullet points section - special styling for step 3 */}
                   {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
-                    <motion.div 
-                      className="mt-8 space-y-4 transform-gpu"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                      style={{ willChange: 'opacity', overflow: 'hidden' }}
-                    >
+                    <div className="mt-8">
                       {currentSlide === 2 ? (
                         // Special numbered list with gray rounded borders for step 3
                         <div className="space-y-3">
@@ -807,13 +801,12 @@ export function WelcomeModal() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.4 + (index * 0.15) }}
-                              style={{ willChange: 'transform, opacity' }}
                             >
-                              <div className="flex">
+                              <div className="flex items-center">
                                 <div className="h-7 w-7 text-white flex-shrink-0 rounded-full bg-primary flex items-center justify-center mr-4 font-semibold text-sm">
                                   {index + 1}
                                 </div>
-                                <p className="text-lg font-medium text-gray-800 pt-0.5">
+                                <p className="text-lg font-medium text-gray-800">
                                   {point}
                                 </p>
                               </div>
@@ -822,61 +815,39 @@ export function WelcomeModal() {
                         </div>
                       ) : (
                         // Standard bullets for other slides
-                        carouselContent[currentSlide].bulletPoints?.map((point, index) => (
-                          <motion.div 
-                            key={index} 
-                            className="flex items-start space-x-3 transform-gpu"
-                            initial={{ 
-                              opacity: 0, 
-                              x: currentSlide === 0 ? 20 : 10,
-                              scale: currentSlide === 0 ? 0.95 : 1
-                            }}
-                            animate={{ 
-                              opacity: 1, 
-                              x: 0,
-                              scale: 1 
-                            }}
-                            transition={{ 
-                              delay: 0.4 + (index * 0.15),
-                              duration: 0.4,
-                              type: currentSlide === 0 ? "spring" : "tween",
-                              stiffness: currentSlide === 0 ? 100 : undefined,
-                              damping: currentSlide === 0 ? 10 : undefined
-                            }}
-                            style={{ willChange: 'transform, opacity' }}
-                          >
-                            {currentSlide === 0 ? (
-                              <motion.div 
-                                className="mt-1 h-7 w-7 text-primary flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 flex items-center justify-center shadow-sm border border-primary/10"
-                                initial={{ rotate: -10, scale: 0.8 }}
-                                animate={{ rotate: 0, scale: 1 }}
-                                transition={{ 
-                                  delay: 0.4 + (index * 0.15) + 0.1,
-                                  type: "spring",
-                                  stiffness: 200
-                                }}
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </motion.div>
-                            ) : (
-                              <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </div>
-                            )}
-                            <p className={cn(
-                              "text-lg font-medium",
-                              currentSlide === 0 ? "text-gray-800" : "text-gray-700"
-                            )}>
-                              {point}
-                            </p>
-                          </motion.div>
-                        ))
+                        <div className="space-y-5">
+                          {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
+                            <motion.div 
+                              key={index} 
+                              className="flex items-start space-x-3"
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.4 + (index * 0.15) }}
+                            >
+                              {currentSlide === 0 ? (
+                                <div className="mt-1 h-7 w-7 text-primary flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 flex items-center justify-center shadow-sm border border-primary/10">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              )}
+                              <p className={cn(
+                                "text-lg font-medium",
+                                currentSlide === 0 ? "text-gray-800" : "text-gray-700"
+                              )}>
+                                {point}
+                              </p>
+                            </motion.div>
+                          ))}
+                        </div>
                       )}
-                    </motion.div>
+                    </div>
                   )}
                 </motion.div>
               </AnimatePresence>
