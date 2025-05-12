@@ -118,7 +118,7 @@ export function TabTutorialModal({
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{stepTitle || title}</h2>
                 
                 {/* Bullet points only - no duplicate descriptive text */}
                 <div className="mt-6 space-y-3">
