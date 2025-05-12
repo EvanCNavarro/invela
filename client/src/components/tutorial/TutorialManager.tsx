@@ -304,7 +304,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'file-vault': {
-    title: 'File Vault',
+    title: 'File Vault Overview',
     description: 'Learn how to securely store and manage files',
     steps: [
       {
