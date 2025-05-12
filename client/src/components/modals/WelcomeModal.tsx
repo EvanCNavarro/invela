@@ -453,6 +453,45 @@ export function WelcomeModal() {
   });
 
   const handleNext = () => {
+    // For step 2 (index 1), check if both form fields are filled out
+    if (currentSlide === 1) {
+      if (!employeeCount || !revenueTier) {
+        // Display toast if form is incomplete
+        toast({
+          title: "Please complete all fields",
+          description: "Both company size and annual revenue are required to continue.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // If form is valid, save the data
+      setIsSubmitting(true);
+      updateCompanyMutation.mutate(
+        { 
+          numEmployees: employeeCount,
+          revenueTier: revenueTier 
+        },
+        {
+          onSuccess: () => {
+            setIsSubmitting(false);
+            setCurrentSlide(prev => prev + 1);
+          },
+          onError: (error) => {
+            setIsSubmitting(false);
+            toast({
+              title: "Error saving company information",
+              description: "There was a problem saving your company details. Please try again.",
+              variant: "destructive"
+            });
+            console.error('[ONBOARDING DEBUG] Error saving company information:', error);
+          }
+        }
+      );
+      return;
+    }
+    
+    // For other slides, just advance to the next one
     if (currentSlide < carouselContent.length - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
@@ -873,12 +912,13 @@ export function WelcomeModal() {
             >
               <Button
                 onClick={handleNext}
+                disabled={isSubmitting || (currentSlide === 1 && (!employeeCount || !revenueTier))}
                 className={cn(
                   "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
                   isLastSlide && "pulse-border-animation font-bold bg-blue-600 hover:bg-blue-700 px-8"
                 )}
               >
-                {isLastSlide ? "Start" : "Next"}
+                {isSubmitting ? "Saving..." : isLastSlide ? "Start" : "Next"}
               </Button>
             </motion.div>
           </div>
