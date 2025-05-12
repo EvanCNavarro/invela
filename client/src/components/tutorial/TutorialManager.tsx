@@ -308,47 +308,25 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to securely store and manage files',
     steps: [
       {
-        title: 'File Vault Overview',
-        description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
-        imagePath: '/assets/tutorials/file-vault/overview.svg',
-        stepTitle: 'File Vault Overview',
+        title: 'Centralized File Management',
+        description: 'Upload, download, and manage your important files from a single centralized location.',
+        imagePath: '/assets/tutorials/file-vault/modal_file_1.png',
+        stepTitle: 'Centralized File Management',
         bulletPoints: [
           'Access all your documents in one secure, centralized location',
-          'Benefit from automatic versioning and audit trail features',
-          'Experience enterprise-grade security for sensitive information'
+          'Easily upload files via drag-and-drop or file browser',
+          'Track document versions with built-in history and audit trail'
         ]
       },
       {
-        title: 'Document Categories',
-        description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
-        imagePath: '/assets/tutorials/file-vault/categories.svg',
-        stepTitle: 'Document Organization',
+        title: 'Generate System Files',
+        description: 'Generate necessary system documents directly from your file vault. Choose document type and customize your file generation.',
+        imagePath: '/assets/tutorials/file-vault/modal_file_2.png',
+        stepTitle: 'Generate System Files',
         bulletPoints: [
-          'Browse files organized by logical categories and subcategories',
-          'Use powerful search and filtering to quickly locate documents',
-          'Apply custom tags to improve document categorization and findability'
-        ]
-      },
-      {
-        title: 'Upload Process',
-        description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
-        imagePath: '/assets/tutorials/file-vault/upload.svg',
-        stepTitle: 'File Upload & Management',
-        bulletPoints: [
-          'Upload multiple files with drag-and-drop or file selection',
-          'Add metadata and tags to enhance document searchability',
-          'Set document expiration dates and automatic retention policies'
-        ]
-      },
-      {
-        title: 'Security Settings',
-        description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
-        imagePath: '/assets/tutorials/file-vault/security.svg',
-        stepTitle: 'Security Controls',
-        bulletPoints: [
-          'Set granular permissions for individuals or groups of users',
-          'Apply document-level encryption for highly sensitive files',
-          'Monitor file access logs and receive security alerts'
+          'Choose from various document types and templates',
+          'Customize generated files with your specific requirements',
+          'Export in multiple formats including PDF and CSV'
         ]
       }
     ]
