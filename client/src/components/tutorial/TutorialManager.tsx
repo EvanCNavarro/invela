@@ -427,7 +427,26 @@ export function TutorialManager({
         // Create multiple, clearly-named conditional checks for better maintainability
         const isMarkedCompleted = isExplicitlyCompleted;
         const isAtFinalStep = isFinalStep;
-        const hasCompletionDate = Boolean(tutorialData?.lastSeenAt); 
+        
+        // Get API data from the useTabTutorials hook data
+        // The useQuery in useTabTutorials hook returns data with lastSeenAt
+        const queryState = useQueryClient().getQueryState(['/api/user-tab-tutorials/status', normalizedTabName]);
+        
+        // We need to cast the data to the TutorialStatus type to access lastSeenAt
+        interface TutorialStatus {
+          tabName: string;
+          completed: boolean;
+          currentStep: number;
+          lastSeenAt: string | null;
+        }
+        
+        // Safely extract data with proper type
+        const apiData = queryState?.data as TutorialStatus | undefined;
+        
+        // Check if there's a completion date set
+        const hasCompletionDate = Boolean(apiData?.lastSeenAt);
+        
+        // Check for invalid step conditions 
         const hasInvalidStep = currentStep < 0 || currentStep >= stepCount;
         
         // Combine all conditions - if ANY are true, we should never show the tutorial
@@ -449,7 +468,7 @@ export function TutorialManager({
             shouldNeverShow,
             currentStep,
             totalSteps: stepCount,
-            lastSeenAt: tutorialData?.lastSeenAt || null,
+            lastSeenAt: apiData?.lastSeenAt || null,
             rawIsCompleted: isCompleted
           });
         } else {
@@ -464,7 +483,7 @@ export function TutorialManager({
             shouldNeverShow,
             currentStep,
             totalSteps: stepCount,
-            lastSeenAt: tutorialData?.lastSeenAt || null,
+            lastSeenAt: apiData?.lastSeenAt || null,
             rawIsCompleted: isCompleted,
             // Add the exact reason why we're not showing the tutorial
             hideReason: isMarkedCompleted ? 'COMPLETED_FLAG' :
