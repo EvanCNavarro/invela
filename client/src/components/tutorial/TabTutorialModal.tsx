@@ -100,7 +100,7 @@ export function TabTutorialModal({
         style={{ 
           pointerEvents: 'auto', 
           margin: '0 1.5rem',
-          height: 'min(calc(100vh - 7rem), 600px)'
+          height: 'min(calc(100vh - 12rem), 500px)'
         }}
       >
         {/* Main content container */}
@@ -130,7 +130,7 @@ export function TabTutorialModal({
                             <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-base text-gray-700">
                           {point}
                         </p>
                       </div>
@@ -144,7 +144,7 @@ export function TabTutorialModal({
                             <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-base text-gray-700">
                           {sentence}
                         </p>
                       </div>
@@ -154,15 +154,15 @@ export function TabTutorialModal({
               </div>
             </div>
             
-            {/* Right side: Image container */}
+            {/* Right side: Image container - more square-shaped */}
             <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Skeleton className="w-[90%] h-[80%] rounded-lg mx-auto" />
+                  <Skeleton className="w-[90%] aspect-square rounded-lg mx-auto" />
                 </div>
               ) : imageUrl ? (
                 <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
                     <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
                     <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
                     <img 
@@ -174,7 +174,7 @@ export function TabTutorialModal({
                 </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <div className="w-full h-64 rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
+                  <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
                     No image available
                   </div>
                 </div>
