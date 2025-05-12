@@ -322,11 +322,14 @@ export function WelcomeModal() {
         }
       }
 
-      // Use the unified toast for consistent styling
-      unifiedToast.success({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully."
-      });
+      // Only show the toast if we're completing from the handleNext function (last step)
+      // This ensures the toast only shows when the user finishes the onboarding process
+      if (currentSlide === carouselContent.length - 1) {
+        unifiedToast.success({
+          title: "Welcome aboard!",
+          description: "Your onboarding has been completed successfully."
+        });
+      }
 
       // Close modal after successful completion
       setShowModal(false);
@@ -334,12 +337,15 @@ export function WelcomeModal() {
     onError: (error: Error) => {
       console.error('[WelcomeModal] Error completing onboarding:', error);
       
-      // Even if there's an error, let's try to show the success message and close the modal
-      // This is a fallback to ensure the modal doesn't get stuck
-      unifiedToast.success({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully."
-      });
+      // Only show the toast if we're completing from the handleNext function (last step)
+      // This ensures the toast only shows when the user finishes the onboarding flow
+      // NOT when they click outside the modal
+      if (currentSlide === carouselContent.length - 1) {
+        unifiedToast.success({
+          title: "Welcome aboard!",
+          description: "Your onboarding has been completed successfully."
+        });
+      }
       
       // Still need to close the modal to prevent a bad UX where the modal gets stuck
       setShowModal(false);
@@ -386,15 +392,10 @@ export function WelcomeModal() {
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // When modal is closed, complete onboarding
-      console.log('[ONBOARDING DEBUG] Modal closed by user, triggering completion');
-      completeOnboardingMutation.mutate();
-      
-      // Force set the user's onboarding status to completed in the local state as well
-      // This is a fallback in case the API call fails
-      if (user) {
-        user.onboarding_user_completed = true;
-      }
+      // Don't complete onboarding when user clicks outside
+      // Just close the modal without showing toast or completing onboarding
+      console.log('[ONBOARDING DEBUG] Modal closed by user, but NOT triggering completion (requires last step)');
+      // Only update the modal visibility state
     }
     setShowModal(open);
   };
