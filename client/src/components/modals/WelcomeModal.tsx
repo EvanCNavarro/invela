@@ -16,26 +16,17 @@ import { apiRequest } from "@/lib/queryClient";
 
 // Constants for form selections
 const EMPLOYEE_COUNTS = [
-  { value: "1-10", label: "1-10 employees" },
-  { value: "11-50", label: "11-50 employees" },
-  { value: "51-200", label: "51-200 employees" },
-  { value: "201-500", label: "201-500 employees" },
-  { value: "501-1000", label: "501-1000 employees" },
-  { value: "1001-5000", label: "1001-5000 employees" },
-  { value: "5001-10000", label: "5001-10000 employees" },
-  { value: "10000+", label: "10,000+ employees" },
+  { value: "small", label: "Small (1-49 employees)" },
+  { value: "medium", label: "Medium (50–249 employees)" },
+  { value: "large", label: "Large (250–999 employees)" },
+  { value: "xlarge", label: "X Large (1K+ employees)" },
 ];
 
 const REVENUE_TIERS = [
-  { value: "pre-revenue", label: "Pre-revenue" },
-  { value: "less-than-1m", label: "Less than $1 million" },
-  { value: "1m-5m", label: "Between $1-5 million" },
-  { value: "5m-10m", label: "Between $5-10 million" },
-  { value: "10m-50m", label: "Between $10-50 million" },
-  { value: "50m-100m", label: "Between $50-100 million" },
-  { value: "100m-500m", label: "Between $100-500 million" },
-  { value: "500m-1b", label: "Between $500 million-1 billion" },
-  { value: "1b+", label: "Over $1 billion" },
+  { value: "0-10m", label: "$0–$10M" },
+  { value: "10m-50m", label: "$10M–$50M" },
+  { value: "50m-250m", label: "$50M–$250M" },
+  { value: "250m+", label: "$250M+" },
 ];
 
 // Create a custom dialog content without close button
@@ -86,7 +77,7 @@ const carouselContent: CarouselItem[] = [
     src: "/attached_assets/welcome_2.png",
     alt: "Company Information",
     title: "Company Information",
-    subtitle: "Let's start with some basic details to streamline your accreditation process. Provide essential information to help us better understand your company.",
+    subtitle: "Let's start with some basic details about <b>DevTest30</b>:",
     bulletPoints: [
       "Company Name",
       "Organization Size",
@@ -697,16 +688,18 @@ export function WelcomeModal() {
                     >
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="employeeCount" className="text-base font-medium">Company Size</Label>
+                          <Label htmlFor="employeeCount" className="text-base font-medium">
+                            Company Size <span className="text-red-500">*</span>
+                          </Label>
                           <Select 
                             value={employeeCount} 
                             onValueChange={setEmployeeCount}
                             disabled={isSubmitting}
                           >
-                            <SelectTrigger id="employeeCount" className="w-full">
-                              <SelectValue placeholder="Select number of employees" />
+                            <SelectTrigger id="employeeCount" className="w-full overflow-visible">
+                              <SelectValue placeholder="Select number of employees" className="text-gray-400" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="overflow-visible">
                               {EMPLOYEE_COUNTS.map(option => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
@@ -717,16 +710,18 @@ export function WelcomeModal() {
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="revenueTier" className="text-base font-medium">Annual Revenue</Label>
+                          <Label htmlFor="revenueTier" className="text-base font-medium">
+                            Annual Revenue <span className="text-red-500">*</span>
+                          </Label>
                           <Select 
                             value={revenueTier} 
                             onValueChange={setRevenueTier} 
                             disabled={isSubmitting}
                           >
-                            <SelectTrigger id="revenueTier" className="w-full">
-                              <SelectValue placeholder="Select annual revenue" />
+                            <SelectTrigger id="revenueTier" className="w-full overflow-visible">
+                              <SelectValue placeholder="Select annual revenue" className="text-gray-400" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="overflow-visible">
                               {REVENUE_TIERS.map(option => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
