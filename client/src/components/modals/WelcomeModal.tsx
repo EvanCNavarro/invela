@@ -202,6 +202,9 @@ export function WelcomeModal() {
   const [showModal, setShowModal] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   const [imageOpacity, setImageOpacity] = useState(0);
+  const [employeeCount, setEmployeeCount] = useState<string>("");
+  const [revenueTier, setRevenueTier] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const unifiedToastHook = useUnifiedToast();
@@ -217,6 +220,19 @@ export function WelcomeModal() {
     prevSlideRef.current = currentSlide;
     return direction;
   }, [currentSlide]);
+  
+  // Mutation for updating company data
+  const updateCompanyMutation = useMutation({
+    mutationFn: async (data: { numEmployees?: string; revenueTier?: string }) => {
+      return apiRequest('/api/companies/current', {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+    }
+  });
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
