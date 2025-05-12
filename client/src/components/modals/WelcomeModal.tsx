@@ -50,11 +50,11 @@ const carouselContent: CarouselItem[] = [
     src: "/attached_assets/welcome_1.png",
     alt: "Welcome to Invela Trust Network",
     title: "Welcome to Invela Trust Network",
-    subtitle: "Your trusted partner in secure accreditation. Our platform streamlines verification processes while maintaining the highest levels of security and compliance.",
+    subtitle: "Your premier partner for secure and efficient accreditation. We streamline complex verification processes while upholding industry-leading security and compliance standards.",
     bulletPoints: [
-      "Enterprise-grade risk assessment platform",
-      "Simplified onboarding with smart automation",
-      "Centralized compliance management"
+      "Advanced enterprise-grade risk assessment platform",
+      "Streamlined onboarding with AI-powered automation",
+      "Comprehensive compliance management in one central dashboard"
     ]
   },
   {
@@ -503,8 +503,8 @@ export function WelcomeModal() {
         <div className="flex flex-col h-full overflow-hidden" style={{ height: 'min(calc(100vh - 12rem), 550px)' }}>
           {/* Content container - side by side layout */}
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
+            {/* Left side: Text content - added will-change and hidden overflow to prevent flickering */}
+            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-hidden will-change-transform">
               {/* Content with title and subtitle */}
               <AnimatePresence mode="wait">
                 <motion.div
@@ -525,7 +525,8 @@ export function WelcomeModal() {
                     duration: 0.4, 
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="mb-5"
+                  className="mb-5 h-full flex flex-col transform-gpu"
+                  style={{ willChange: 'transform, opacity' }}
                 >
                   <motion.div 
                     initial={{ opacity: 0, y: 5 }}
@@ -536,46 +537,120 @@ export function WelcomeModal() {
                     Onboarding Modal
                   </motion.div>
                   
-                  <motion.h2 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-2xl font-bold text-gray-900 mb-4"
-                  >
-                    {carouselContent[currentSlide].title}
-                  </motion.h2>
-                  
-                  <motion.p 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-lg text-gray-700"
-                  >
-                    {carouselContent[currentSlide].subtitle}
-                  </motion.p>
+                  {currentSlide === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <motion.h2 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          type: "spring", 
+                          stiffness: 200, 
+                          damping: 15,
+                          delay: 0.2 
+                        }}
+                        className="text-3xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent"
+                      >
+                        {carouselContent[currentSlide].title}
+                      </motion.h2>
+                      
+                      <motion.p 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          type: "spring", 
+                          stiffness: 150, 
+                          damping: 15,
+                          delay: 0.3 
+                        }}
+                        className="text-lg text-gray-700 leading-relaxed"
+                      >
+                        {carouselContent[currentSlide].subtitle}
+                      </motion.p>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <motion.h2 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-2xl font-bold text-gray-900 mb-4"
+                      >
+                        {carouselContent[currentSlide].title}
+                      </motion.h2>
+                      
+                      <motion.p 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="text-lg text-gray-700"
+                      >
+                        {carouselContent[currentSlide].subtitle}
+                      </motion.p>
+                    </>
+                  )}
 
-                  {/* Bullet points if available */}
+                  {/* Bullet points if available - enhanced for first slide */}
                   {carouselContent[currentSlide].bulletPoints && (
                     <motion.div 
-                      className="mt-8 space-y-5"
+                      className="mt-8 space-y-5 transform-gpu"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
+                      style={{ willChange: 'opacity', overflow: 'hidden' }}
                     >
                       {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                         <motion.div 
                           key={index} 
-                          className="flex items-start space-x-3"
-                          initial={{ opacity: 0, x: 10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.4 + (index * 0.1) }}
+                          className="flex items-start space-x-3 transform-gpu"
+                          initial={{ 
+                            opacity: 0, 
+                            x: currentSlide === 0 ? 20 : 10,
+                            scale: currentSlide === 0 ? 0.95 : 1
+                          }}
+                          animate={{ 
+                            opacity: 1, 
+                            x: 0,
+                            scale: 1 
+                          }}
+                          transition={{ 
+                            delay: 0.4 + (index * 0.15),
+                            duration: 0.4,
+                            type: currentSlide === 0 ? "spring" : "tween",
+                            stiffness: currentSlide === 0 ? 100 : undefined,
+                            damping: currentSlide === 0 ? 10 : undefined
+                          }}
+                          style={{ willChange: 'transform, opacity' }}
                         >
-                          <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                          <p className="text-lg font-medium text-gray-700">
+                          {currentSlide === 0 ? (
+                            <motion.div 
+                              className="mt-1 h-7 w-7 text-primary flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 flex items-center justify-center shadow-sm border border-primary/10"
+                              initial={{ rotate: -10, scale: 0.8 }}
+                              animate={{ rotate: 0, scale: 1 }}
+                              transition={{ 
+                                delay: 0.4 + (index * 0.15) + 0.1,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </motion.div>
+                          ) : (
+                            <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          )}
+                          <p className={cn(
+                            "text-lg font-medium",
+                            currentSlide === 0 ? "text-gray-800" : "text-gray-700"
+                          )}>
                             {point}
                           </p>
                         </motion.div>
@@ -630,25 +705,29 @@ export function WelcomeModal() {
                         duration: 0.5,
                         ease: [0.22, 1, 0.36, 1]
                       }}
-                      className="relative p-6 w-full h-full flex items-center justify-center"
+                      className="relative p-6 w-full h-full flex items-center justify-center transform-gpu"
+                      style={{ willChange: 'transform, opacity' }}
                     >
                       <motion.div 
-                        className="relative w-full h-full flex items-center justify-center"
+                        className="relative w-full h-full flex items-center justify-center transform-gpu"
                         initial={{ rotate: animationDirection * -1 }}
                         animate={{ rotate: 0 }}
                         transition={{ duration: 0.5, ease: "easeOut" }}
+                        style={{ willChange: 'transform' }}
                       >
                         <motion.div 
-                          className="absolute inset-4 bg-blue-50/50 rounded-lg"
+                          className="absolute inset-4 bg-blue-50/50 rounded-lg transform-gpu"
                           initial={{ rotate: animationDirection * 2 }}
                           animate={{ rotate: 1 }}
                           transition={{ duration: 0.6, ease: "easeOut" }}
+                          style={{ willChange: 'transform' }}
                         />
                         <motion.div 
-                          className="absolute inset-4 bg-blue-100/20 rounded-lg"
+                          className="absolute inset-4 bg-blue-100/20 rounded-lg transform-gpu"
                           initial={{ rotate: animationDirection * -2 }}
                           animate={{ rotate: -1 }}
                           transition={{ duration: 0.7, ease: "easeOut" }}
+                          style={{ willChange: 'transform' }}
                         />
                         <img 
                           src={carouselContent[currentSlide].src} 
