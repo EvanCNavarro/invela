@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { WebSocketEventBridge } from "@/components/websocket/WebSocketEventBridge";
+import { ForcedTutorialTest } from "@/components/tutorial/ForcedTutorialTest";
 
 interface Company {
   id: number;
@@ -200,6 +201,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#FAFCFD] relative flex flex-col">
+      {/* FORCED TEST: This component will always try to render a tutorial modal */}
+      <ForcedTutorialTest />
+      
       <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
