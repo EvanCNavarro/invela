@@ -37,8 +37,8 @@ async function broadcastTutorialUpdate(tabName, userId, currentStep, completed) 
     // Update the tutorial using the API endpoint
     log(`Updating tutorial via API for tab ${tabName}, user ${userId}`, colors.blue);
     
-    // Use the current host domain instead of localhost
-    const host = 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co';
+    // Use localhost for development environment
+    const host = 'http://localhost:3000';
     const endpoint = `${host}/api/user-tab-tutorials/${tabName}/update`;
     
     log(`Using API endpoint: ${endpoint}`, colors.blue);
