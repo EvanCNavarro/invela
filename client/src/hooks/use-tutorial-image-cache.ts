@@ -10,7 +10,6 @@ import { useState, useEffect } from 'react';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { isImageCached, preloadTutorialImages, getCacheStats } from '@/lib/image-cache';
 import { getImageBaseName } from '@/lib/tutorial-config';
-import { normalizeTabName, createTutorialImageUrl } from '@/utils/tutorial-utils';
 
 // Create dedicated logger for this hook
 const logger = createTutorialLogger('TutorialImageCache');
@@ -54,11 +53,17 @@ export function useTutorialImageCache({
     logger.debug(`Tutorial image cache hook initialized for ${tabName}`);
   }, []);
 
+  // Helper for tab name normalization (to avoid circular dependencies)
+  function normalizeTabInternal(tab: string): string {
+    if (!tab) return '';
+    return tab.toLowerCase().replace(/[\s_]+/g, '-');
+  }
+
   // Preload images when tab name or step changes
   useEffect(() => {
     if (!tabName) return;
 
-    const normalizedTabName = normalizeTabName(tabName);
+    const normalizedTabName = normalizeTabInternal(tabName);
     
     // Only preload if we have a valid tab name and step
     if (normalizedTabName && currentStep >= 0 && totalSteps > 0) {
