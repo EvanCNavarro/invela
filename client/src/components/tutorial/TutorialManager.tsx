@@ -683,22 +683,27 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Extract all image paths for preloading
+  // Extract all image paths for preloading - only when tutorial content is available
   const allStepImages = useMemo(() => {
     if (!tutorialContent || !tutorialContent.steps) return [];
     
-    return tutorialContent.steps.map((step, index) => 
-      step.imageUrl || 
-      step.imagePath || 
-      `/assets/tutorials/${normalizedTabName}/${index + 1}.svg`
-    );
+    return tutorialContent.steps.map((step, index) => {
+      // Ensure we have valid image paths
+      const imagePath = step.imageUrl || step.imagePath || `/assets/tutorials/${normalizedTabName}/${index + 1}.svg`;
+      // Return empty string for invalid paths to avoid errors
+      return typeof imagePath === 'string' && imagePath.trim() !== '' ? imagePath : '';
+    }).filter(Boolean); // Filter out any empty strings
   }, [tutorialContent, normalizedTabName]);
   
-  // Use our preloader hook to load all step images in the background
-  const preloader = useTutorialAssetsPreloader(allStepImages);
+  // IMPORTANT: Only use the preloader hook when we have valid tutorial content
+  // This avoids the "more hooks than during previous render" error
+  const preloader = tutorialContent ? useTutorialAssetsPreloader(allStepImages) : 
+    { isLoading: false, loadedCount: 0, totalCount: 0, progress: 0, errors: [], hasErrors: false };
   
-  // Log preloading status when it changes
+  // Log preloading status when it changes - only when we have tutorial content
   useEffect(() => {
+    if (!tutorialContent) return;
+    
     if (preloader.isLoading) {
       logger.info(`Preloading ${preloader.totalCount} tutorial images (${preloader.progress}% complete)`);
     } else if (preloader.hasErrors) {
@@ -707,13 +712,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       logger.info(`Successfully preloaded all ${preloader.totalCount} tutorial images`);
       logger.debug('Image cache stats:', getCacheStats());
     }
-  }, [preloader.isLoading, preloader.progress, preloader.hasErrors]);
+  }, [tutorialContent, preloader.isLoading, preloader.progress, preloader.hasErrors]);
   
-  // Current step image with fallback
-  const currentStepImage = 
+  // Current step image with fallback - safely handle undefined tutorial content
+  const currentStepImage = tutorialContent && tutorialContent.steps && tutorialContent.steps[stepToUse] ? (
     tutorialContent.steps[stepToUse].imageUrl || 
     tutorialContent.steps[stepToUse].imagePath || 
-    `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`;
+    `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`
+  ) : '';
   
   // Use the TabTutorialModal with enhanced image preloading
   return (
