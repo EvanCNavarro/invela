@@ -37,43 +37,43 @@ CustomDialogContent.displayName = "CustomDialogContent";
 // New carousel content with the expanded 7 steps
 const carouselContent = [
   {
-    src: "/assets/modal_userOboarding_1.png",
+    src: "/welcome-1.svg",
     alt: "The Invela Trust Network",
     title: "The Invela Trust Network",
     subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_2.png",
+    src: "/welcome-2.svg",
     alt: "Easy Onboarding",
     title: "Easy Onboarding",
     subtitle: "A simple, goal-oriented setup."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_3.png",
+    src: "/welcome-3.svg",
     alt: "Built for Trust",
     title: "Built for Trust",
     subtitle: "Progress through surveys, all in one secure flow."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_4.png",
+    src: "/welcome-4.svg",
     alt: "Your Data, Protected", 
     title: "Your Data, Protected",
     subtitle: "Best-in-class encryption and secure controls at every step."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_5.png",
+    src: "/welcome-4.svg", // Using existing image as fallback
     alt: "Risk Management",
     title: "Risk Management",
     subtitle: "Identify and mitigate risks with our comprehensive assessment tools."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_5.png", // Placeholder - should be updated
+    src: "/welcome-3.svg", // Using existing image as fallback
     alt: "S&P Data Access Risk Score",
     title: "S&P Data Access Risk Score",
     subtitle: "Leverage industry-standard risk benchmarks to evaluate your position."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_5.png", // Placeholder - should be updated
+    src: "/welcome-2.svg", // Using existing image as fallback
     alt: "Start Your Process",
     title: "Start Your Process",
     subtitle: "Jump into your Task Center and start shaping your network."
@@ -434,15 +434,15 @@ export function WelcomeModal() {
   return (
     <Dialog 
       open={showModal} 
-      onOpenChange={() => {}} // Disabled clicking outside to close
+      onOpenChange={handleOpenChange} // Allow modal to be closed
       modal={true} // Force modal behavior
     >
-      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none">
+      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none max-h-[80vh]">
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         
         {/* Main content container */}
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden" style={{ height: 'min(calc(100vh - 12rem), 550px)' }}>
           {/* Content container - side by side layout */}
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Left side: Text content */}
@@ -464,7 +464,7 @@ export function WelcomeModal() {
             </div>
             
             {/* Right side: Image container */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] min-h-[400px] flex-shrink-0 border-l border-slate-100">
               {/* Image with loading state */}
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* Skeleton during loading */}
