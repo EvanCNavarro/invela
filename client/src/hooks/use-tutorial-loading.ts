@@ -15,7 +15,15 @@ interface TutorialLoadingState {
   setLoading: (isLoading: boolean, tabName: string | null) => void;
 }
 
+/**
+ * Tutorial loading store with sane defaults
+ * 
+ * The initial state is explicitly set to not loading (false) to ensure
+ * we don't flash the tutorial loading state when the app first loads.
+ * This follows a "show only when confirmed necessary" pattern.
+ */
 export const useTutorialLoadingStore = create<TutorialLoadingState>((set) => ({
+  // Start with "not loading" as the default for better UX
   isLoading: false,
   currentTabName: null,
   setLoading: (isLoading, tabName) => {

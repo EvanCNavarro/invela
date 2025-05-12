@@ -76,9 +76,11 @@ export function useTabTutorials(inputTabName: string) {
   const tabName = normalizeTabName(inputTabName);
   
   // Local state to track tutorial status
+  // Start with sensible defaults that won't cause flickering
+  // We default to "not showing" states until we explicitly confirm we should show
   const [currentStep, setCurrentStep] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [tutorialEnabled, setTutorialEnabled] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(true); // Default to completed (hidden)
+  const [tutorialEnabled, setTutorialEnabled] = useState(false); // Default to disabled
   
   const queryClient = useQueryClient();
   
@@ -195,8 +197,21 @@ export function useTabTutorials(inputTabName: string) {
       // Ensure we're using the exact value from the server
       // This will synchronize UI display with database values
       setCurrentStep(data.currentStep || 0);
+      
+      // IMPORTANT: Only update the "isCompleted" state if we have confirmed data
+      // This prevents the tutorial from flickering when data is loading
       setIsCompleted(data.completed || false);
-      setTutorialEnabled(true);
+      
+      // Now we can enable the tutorial - this should only happen AFTER we have data
+      // and ONLY when certain conditions are met
+      // This is the key change to avoid flickering
+      if (!data.completed && data.exists) {
+        logger.info(`Enabling tutorial for ${tabName} - tutorial exists and is not completed`);
+        setTutorialEnabled(true);
+      } else {
+        logger.info(`Not showing tutorial for ${tabName} - completed=${data.completed}, exists=${data.exists}`);
+        setTutorialEnabled(false);
+      }
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
     }

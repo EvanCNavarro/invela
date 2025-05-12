@@ -542,41 +542,45 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     };
   }, [isLoading, normalizedTabName, setLoading, initializationComplete]);
   
-  // Don't render anything during loading, allow the page to show its own skeleton loaders
-  if (isLoading) {
-    return null;
-  }
-  
-  // If we're not on a base route, don't show the tutorial
-  if (!isBaseRoute()) {
-    logger.info(`Tutorial not shown - not on base route for tab: ${normalizedTabName}, path: ${location}`);
-    return null;
-  }
-  
-  // If initialization is complete but tutorial is not enabled, don't render anything
-  if (initializationComplete && !tutorialEnabled) {
-    logger.info(`Tutorial not enabled for tab: ${normalizedTabName}`);
-    
-    // Debug current tutorial state
-    logger.info('Current tutorial state', {
-      tabName,
-      normalizedTabName,
-      currentStep,
-      totalSteps, 
-      enabled: tutorialEnabled,
-      completed: isCompleted,
-      loading: isLoading
-    });
-    
-    return null;
-  }
-  
-  // Do not render if tutorial is completed
-  if (isCompleted) {
-    // Only log if we have data
-    if (initializationComplete) {
-      logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
+  // Early return conditions - "don't show until we're sure we should" approach
+  // Check all reasons why we would NOT show a tutorial first
+  const shouldShowTutorial = () => {
+    // Don't render anything during loading
+    if (isLoading) {
+      logger.debug(`Tutorial not shown - still loading data for tab: ${normalizedTabName}`);
+      return false;
     }
+    
+    // If we're not on a base route, don't show the tutorial
+    if (!isBaseRoute()) {
+      logger.info(`Tutorial not shown - not on base route for tab: ${normalizedTabName}, path: ${location}`);
+      return false;
+    }
+    
+    // If initialization is complete but tutorial is not enabled, don't render anything
+    if (initializationComplete && !tutorialEnabled) {
+      logger.info(`Tutorial not shown - not enabled for tab: ${normalizedTabName}`);
+      return false;
+    }
+    
+    // Do not render if tutorial is completed
+    if (isCompleted) {
+      // Only log if we have data
+      if (initializationComplete) {
+        logger.debug(`Tutorial not shown - already completed for tab: ${normalizedTabName}`);
+      }
+      return false;
+    }
+    
+    // If we've passed all conditions, we should show the tutorial
+    logger.info(`Tutorial will be shown for tab: ${normalizedTabName}`);
+    return true;
+  };
+  
+  // Return early if we shouldn't show the tutorial
+  // This is the key change - we explicitly check if we should show the tutorial
+  // rather than checking each condition individually
+  if (!shouldShowTutorial()) {
     return null;
   }
   
