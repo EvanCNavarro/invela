@@ -330,6 +330,11 @@ export function TutorialManager({
   // Initialize with detailed logging
   logger.info(`Initializing for tab: ${tabName}`);
   
+  // SUPER VERBOSE DEBUG - Log every initialization
+  console.log(`============== TUTORIAL INITIALIZATION ==============`);
+  console.log(`[TutorialManager] INITIALIZING for tab: ${tabName}`);
+  console.log(`[TutorialManager] Looking for content match...`);
+  
   // Track component initialization and content ready state
   // For UX improvement: Start in a determined "loading" state rather than false
   // This avoids the flash of regular content while we're determining whether to show the tutorial
@@ -394,6 +399,16 @@ export function TutorialManager({
     // Additional debug information to help diagnose tab name issues
     const availableTabs = Object.keys(TUTORIAL_CONTENT).join(', ');
     
+    // EXTREME DEBUG LOGGING - content check
+    console.log(`[TutorialManager] Checking content for: ${normalizedTabName} (original: ${tabName})`, {
+      hasContent,
+      availableTabs,
+      allTabContentKeys: Object.keys(TUTORIAL_CONTENT),
+      contentExists: TUTORIAL_CONTENT[normalizedTabName] ? 'YES' : 'NO',
+      normalizedTabName,
+      rawTabName: tabName
+    });
+    
     if (!hasContent) {
       const errorMsg = `No tutorial content found for tab: ${normalizedTabName} (original: ${tabName})`;
       const extendedError = `${errorMsg}. Available tabs: ${availableTabs}`;
@@ -441,11 +456,31 @@ export function TutorialManager({
         // This ensures incomplete tutorials will show properly
         const shouldNeverShow = isMarkedCompleted;
         
+        // CRITICAL DEBUG - Show the exact decision criteria
+        console.log(`[TutorialManager] CRITICAL DECISION POINT for ${normalizedTabName}`, {
+          isMarkedCompleted,  // Should be false for incomplete tutorials
+          isFinalStep,        // Is this the final step? (shouldn't block now)
+          currentStep,        // Current step (0-based index)
+          totalSteps: stepCount, // Total steps
+          tutorialEnabled,    // Should be true except in special cases
+          shouldNeverShow     // The decision point - should be false to allow showing
+        });
+        
         // Only show tutorial if explicitly enabled AND not in a state where it should never show
         const shouldShow = tutorialEnabled && !shouldNeverShow;
         
+        // FORCED TESTING - ALWAYS SHOW TUTORIAL (TEMPORARY)
+        const forcedShow = true;
+        
         // Log detailed information about the decision with highly visible formatting
-        const logMessage = `ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${shouldShow ? '✅ SHOW' : '❌ HIDE'}`;
+        const logMessage = `ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${forcedShow ? '✅ SHOW (FORCED)' : shouldShow ? '✅ SHOW' : '❌ HIDE'}`;
+        
+        console.log(`[TutorialManager] FINAL DECISION FOR ${normalizedTabName}: ${forcedShow ? 'FORCED SHOW' : shouldShow ? 'SHOW' : 'HIDE'}`, {
+          shouldShow,
+          tutorialEnabled,
+          shouldNeverShow,
+          forcedShow
+        });
         
         // Create a common log object with all the relevant information
         const logData = {
@@ -476,7 +511,14 @@ export function TutorialManager({
         }
         
         // This is the critical state that controls whether the modal renders
-        setShouldShowTutorial(shouldShow);
+        // FOR TESTING: Use forcedShow instead of shouldShow to override the decision
+        setShouldShowTutorial(forcedShow || shouldShow);
+        
+        console.log(`[TutorialManager] SETTING shouldShowTutorial to ${forcedShow || shouldShow}`, {
+          finalValue: forcedShow || shouldShow,
+          shouldShow,
+          forcedShow
+        });
       } else {
         // IMPORTANT: When still loading, we need to be careful about what default to choose
         // If we default to true, we might show a tutorial momentarily before hiding it
