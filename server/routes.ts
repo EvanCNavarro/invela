@@ -1130,25 +1130,44 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       
       if (updateData.numEmployees !== undefined) {
         console.log(`[Current Company] Setting num_employees to:`, updateData.numEmployees);
-        // For employee count, we keep the string value (small, medium, large, xlarge)
-        dbUpdateData.num_employees = updateData.numEmployees;
+        try {
+          // For employee count, we need to convert from string to integer
+          const numEmployees = parseInt(updateData.numEmployees, 10);
+          if (isNaN(numEmployees)) {
+            console.log(`[Current Company] Warning: Employee count couldn't be parsed as integer: ${updateData.numEmployees}`);
+            return res.status(400).json({
+              message: "Error updating company data",
+              code: "VALIDATION_ERROR",
+              details: "Employee count must be a valid number."
+            });
+          } else {
+            dbUpdateData.num_employees = numEmployees;
+            console.log(`[Current Company] Parsed num_employees as integer:`, numEmployees);
+          }
+        } catch (err) {
+          console.error(`[Current Company] Error parsing employee count:`, err);
+          return res.status(400).json({
+            message: "Error updating company data",
+            code: "VALIDATION_ERROR",
+            details: "Invalid employee count format."
+          });
+        }
       }
       
       if (updateData.revenueTier !== undefined) {
         console.log(`[Current Company] Setting revenue_tier to:`, updateData.revenueTier);
-        try {
-          // For revenue tier, convert the string number to actual integer
-          const revenueTier = parseInt(updateData.revenueTier, 10);
-          if (isNaN(revenueTier)) {
-            console.log(`[Current Company] Warning: Revenue tier couldn't be parsed as integer: ${updateData.revenueTier}`);
-            dbUpdateData.revenue_tier = updateData.revenueTier; // Fallback to string
-          } else {
-            dbUpdateData.revenue_tier = revenueTier;
-            console.log(`[Current Company] Parsed revenue_tier as integer:`, revenueTier);
-          }
-        } catch (err) {
-          console.error(`[Current Company] Error parsing revenue tier:`, err);
-          dbUpdateData.revenue_tier = updateData.revenueTier; // Fallback to string
+        // For revenue tier, we use the string value as is since it's an ENUM type
+        // Valid values are: 'small', 'medium', 'large', 'xlarge'
+        const validTiers = ['small', 'medium', 'large', 'xlarge'];
+        if (!validTiers.includes(updateData.revenueTier)) {
+          console.log(`[Current Company] Warning: Invalid revenue tier: ${updateData.revenueTier}`);
+          return res.status(400).json({
+            message: "Error updating company data",
+            code: "VALIDATION_ERROR",
+            details: "Revenue tier must be one of: small, medium, large, xlarge."
+          });
+        } else {
+          dbUpdateData.revenue_tier = updateData.revenueTier;
         }
       }
       
