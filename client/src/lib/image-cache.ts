@@ -280,45 +280,8 @@ export function clearImageCache(sources?: string[]): void {
  * @param currentStep Current tutorial step index
  * @param totalSteps Total number of steps
  */
-// Helper function to normalize tab names (duplicated to avoid circular dependencies)
-function normalizeTabName(tabName: string): string {
-  if (!tabName) return '';
-  
-  // Convert to lowercase
-  let normalized = tabName.toLowerCase();
-  
-  // Handle special cases
-  switch (normalized) {
-    case 'dashboard':
-    case 'home':
-      return 'dashboard';
-      
-    case 'risk-score':
-    case 'riskscore':
-    case 'risk_score':
-    case 'risk-score-configuration':
-    case 'risk_score_configuration':
-      return 'risk-score-configuration';
-      
-    case 'network':
-      return 'network';
-      
-    case 'claims':
-      return 'claims';
-      
-    case 'file-vault':
-    case 'files':
-    case 'file_vault':
-      return 'file-vault';
-      
-    case 'insights':
-      return 'insights';
-      
-    default:
-      // Convert spaces and underscores to dashes
-      return normalized.replace(/[\s_]+/g, '-');
-  }
-}
+// Import from the centralized constants file
+import { normalizeTabName, createTutorialImageUrl } from '@/constants/tutorial-constants';
 
 export function preloadTutorialImages(
   tabName: string,
@@ -331,22 +294,19 @@ export function preloadTutorialImages(
   // Calculate which images to preload
   const imagesToPreload: string[] = [];
   
-  // Get the correct image base name from the centralized configuration
-  const imageBaseName = getImageBaseName(normalizedTabName);
-  
   // Always preload current step - use step+1 because our indexes are 0-based but image names are 1-based
-  const currentImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep + 1}.png`;
+  const currentImageUrl = createTutorialImageUrl(normalizedTabName, currentStep + 1);
   imagesToPreload.push(currentImageUrl);
   
   // Preload next step if not at the end
   if (currentStep < totalSteps - 1) {
-    const nextImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep + 2}.png`;
+    const nextImageUrl = createTutorialImageUrl(normalizedTabName, currentStep + 2);
     imagesToPreload.push(nextImageUrl);
   }
   
   // Optionally preload previous step for back navigation
   if (currentStep > 0) {
-    const prevImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep}.png`;
+    const prevImageUrl = createTutorialImageUrl(normalizedTabName, currentStep);
     imagesToPreload.push(prevImageUrl);
   }
   
