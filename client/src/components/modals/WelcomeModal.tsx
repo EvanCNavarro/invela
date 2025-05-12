@@ -89,9 +89,9 @@ const carouselContent: CarouselItem[] = [
   },
   {
     src: "/attached_assets/welcome_3.png",
-    alt: "Tasks Ahead",
-    title: "Tasks Ahead",
-    subtitle: "Here's what you'll need to complete next. We've outlined essential tasks required for successful onboarding:",
+    alt: "3 Tasks Ahead",
+    title: "3 Tasks Ahead",
+    subtitle: "To complete your accreditation application, you'll need to work through the following tasks:",
     bulletPoints: [
       "KYB Form",
       "S&P KY3P Security Assessment",
@@ -790,23 +790,26 @@ export function WelcomeModal() {
 
                   {/* Bullet points section - special styling for step 3 */}
                   {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
-                    <div className="mt-8">
+                    <div className={currentSlide === 2 ? "mt-10" : "mt-8"}>
                       {currentSlide === 2 ? (
-                        // Special numbered list with gray rounded borders for step 3
-                        <div className="space-y-3">
+                        // Special numbered list with neumorphic design for step 3
+                        <div className="space-y-6 mt-5">
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                             <motion.div 
                               key={index} 
-                              className="flex p-4 bg-gray-100 rounded-xl border border-gray-200 shadow-sm transform-gpu"
+                              className="flex p-5 bg-gray-50 rounded-xl border border-gray-100 shadow-lg transform-gpu"
+                              style={{
+                                boxShadow: '6px 6px 12px rgba(166, 180, 200, 0.1), -6px -6px 12px rgba(255, 255, 255, 0.8), inset 1px 1px 1px rgba(255, 255, 255, 0.4)'
+                              }}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.4 + (index * 0.15) }}
                             >
-                              <div className="flex items-center">
-                                <div className="h-7 w-7 text-white flex-shrink-0 rounded-full bg-primary flex items-center justify-center mr-4 font-semibold text-sm">
+                              <div className="flex items-center w-full">
+                                <div className="h-8 w-8 text-white flex-shrink-0 rounded-full bg-primary flex items-center justify-center mr-5 font-semibold text-sm shadow-md">
                                   {index + 1}
                                 </div>
-                                <p className="text-lg font-medium text-gray-800">
+                                <p className="text-lg font-medium text-gray-700">
                                   {point}
                                 </p>
                               </div>
