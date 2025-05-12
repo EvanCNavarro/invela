@@ -209,15 +209,19 @@ router.post('/', requireAuth, async (req: any, res) => {
     // Log the full request body
     logger.info(`[TabTutorials] Request body: ${JSON.stringify(req.body)}`);
     
-    const { tabName, completed, currentStep, totalSteps } = req.body;
+    const { tabName: rawTabName, completed, currentStep, totalSteps } = req.body;
     
-    if (!tabName) {
+    if (!rawTabName) {
       logger.error(`[TabTutorials] Missing tab name in request body: ${JSON.stringify(req.body)}`);
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Tab name is required'
       });
     }
+    
+    // Normalize the tab name to ensure consistency
+    const tabName = normalizeTabName(rawTabName);
+    logger.info(`[TabTutorials] Using normalized tab name for update: ${tabName} (raw: ${rawTabName})`);
     
     // Check if this tutorial already exists for the user
     const existingTutorial = await db.query.userTabTutorials.findFirst({
@@ -435,18 +439,21 @@ router.post('/mark-seen', requireAuth, async (req: any, res) => {
       logger.info(`[TabTutorials] Using authenticated user ID for mark-seen: ${userId}`);
     }
     
-    const { tabName } = req.body;
+    const { tabName: rawTabName } = req.body;
     
-    if (!tabName) {
+    if (!rawTabName) {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Tab name is required'
       });
     }
     
-    logger.info(`[TabTutorials] Marking tutorial as seen for tab: ${tabName}, user: ${userId}`);
+    // Normalize the tab name to ensure consistency
+    const tabName = normalizeTabName(rawTabName);
     
-    // Check if this tutorial exists for the user
+    logger.info(`[TabTutorials] Marking tutorial as seen for tab: ${tabName} (raw: ${rawTabName}), user: ${userId}`);
+    
+    // Check if this tutorial exists for the user using the normalized tab name
     const existingTutorial = await db.query.userTabTutorials.findFirst({
       where: and(
         eq(userTabTutorials.user_id, userId),
