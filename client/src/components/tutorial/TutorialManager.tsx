@@ -121,62 +121,40 @@ const TUTORIAL_CONTENT: Record<string, {
   },
   // Main Risk Score Dashboard - Shows the S&P DARS score and overview
   'risk-score': {
-    title: 'S&P Data Access Risk Score',
+    title: 'S&P Data Access Risk Score Overview',
     description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
-        title: 'Risk Score Dashboard',
-        description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
-        imagePath: '/assets/tutorials/risk-score/overview.svg',
-        stepTitle: 'Risk Score Overview',
+        title: 'Set Risk Thresholds',
+        description: 'Define acceptable risk thresholds for fintech accreditation clearly and efficiently.',
+        imagePath: '/assets/tutorials/risk-score/modal_risk_1.png',
+        stepTitle: 'Set Risk Thresholds',
         bulletPoints: [
-          'View your current risk score and trend over time',
-          'Explore detailed breakdown of contributing risk factors',
-          'Access risk mitigation recommendations based on your profile'
+          'Adjust the risk acceptance dial to set your organization\'s tolerance level',
+          'Clearly visualize low, medium, and high risk threshold ranges',
+          'Save your custom configuration to ensure consistent assessment'
         ]
       },
       {
-        title: 'Risk Gauge',
-        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        imagePath: '/assets/tutorials/risk-score/gauge.svg',
-        stepTitle: 'Understanding the Risk Gauge',
+        title: 'Prioritize and Weight Dimensions',
+        description: 'Customize dimension prioritization and weighting to align risk assessment precisely with your bank\'s standards.',
+        imagePath: '/assets/tutorials/risk-score/modal_risk_2.png',
+        stepTitle: 'Prioritize and Weight Dimensions',
         bulletPoints: [
-          'Interpret color-coded risk levels from low to critical',
-          'See how your score compares to industry benchmarks',
-          'Track changes in your risk gauge with historical data'
+          'Assign priority levels to different risk dimensions based on importance',
+          'Customize percentage weights for each assessment category',
+          'Create a weighted evaluation model tailored to your organization'
         ]
       },
       {
-        title: 'Risk Dimensions',
-        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
-        stepTitle: 'Managing Risk Dimensions',
+        title: 'Evaluate and Compare Fintech Fit',
+        description: 'Compare fintech applicants against your custom risk thresholds to determine accreditation eligibility at a glance.',
+        imagePath: '/assets/tutorials/risk-score/modal_risk_3.png',
+        stepTitle: 'Evaluate and Compare Fintech Fit',
         bulletPoints: [
-          'Prioritize risk dimensions based on your business needs',
-          'Understand how each dimension affects your overall score',
-          'Create a custom weighting system for your industry context'
-        ]
-      },
-      {
-        title: 'Risk Acceptance Level',
-        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
-        stepTitle: 'Setting Risk Tolerance',
-        bulletPoints: [
-          'Define acceptable risk thresholds for your organization',
-          'Receive alerts when risks exceed your defined tolerance',
-          'Adjust your tolerance levels based on business requirements'
-        ]
-      },
-      {
-        title: 'Comparative Analysis',
-        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        imagePath: '/assets/tutorials/risk-score/comparative.svg',
-        stepTitle: 'Risk Comparison Tools',
-        bulletPoints: [
-          'Compare your risk profile with industry peers',
-          'Identify areas where you outperform or underperform',
-          'Use benchmarking data to set realistic improvement goals'
+          'Quickly assess eligibility status of fintech companies',
+          'Compare multiple applicants against standardized criteria',
+          'Make data-driven accreditation decisions with confidence'
         ]
       },
     ]
