@@ -215,51 +215,40 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'insights': {
-    title: 'Insights Dashboard',
+    title: 'Insights Overview',
     description: 'Learn how to interpret and use business intelligence insights',
     steps: [
       {
-        title: 'Insights Overview',
-        description: 'Welcome to the Insights Dashboard. This analytics center provides data-driven insights to help you make informed decisions.',
-        imagePath: '/assets/tutorials/insights/overview.svg',
-        stepTitle: 'Insights Overview',
+        title: 'Visualize Key Metrics',
+        description: 'Quickly visualize data like risk scores and accreditation status in easy-to-understand graphs and charts.',
+        imagePath: '/assets/tutorials/insights/modal_insights_1.png',
+        stepTitle: 'Visualize Key Metrics',
         bulletPoints: [
-          'Access comprehensive analytics on your business risk profile',
-          'View high-level KPIs and drill down into detailed metrics',
-          'Receive AI-powered recommendations based on your data'
+          'View comprehensive metrics in intuitive visualizations',
+          'Monitor risk scores and compliance status at a glance',
+          'Track changes over time with dynamic trend charts'
         ]
       },
       {
-        title: 'Data Visualization',
-        description: 'These charts and graphs represent key metrics and trends. Hover over any element to see detailed information.',
-        imagePath: '/assets/tutorials/insights/visualization.svg',
-        stepTitle: 'Interactive Visualizations',
+        title: 'Interactive Data Exploration',
+        description: 'Drill down into specific insights or trends by interacting with dynamic graphs to understand deeper data patterns.',
+        imagePath: '/assets/tutorials/insights/modal_insights_2.png',
+        stepTitle: 'Interactive Data Exploration',
         bulletPoints: [
-          'Explore dynamic charts that respond to your interactions',
-          'Customize visualization types to best represent your data',
-          'Filter and segment data to uncover specific patterns'
+          'Explore data in depth through interactive charts and graphs',
+          'Filter information to focus on specific time periods or metrics',
+          'Discover data patterns and correlations through direct interaction'
         ]
       },
       {
-        title: 'Custom Reports',
-        description: 'Create customized reports based on your specific needs. Select metrics, time periods, and presentation formats.',
-        imagePath: '/assets/tutorials/insights/reports.svg',
-        stepTitle: 'Report Customization',
+        title: 'Export Insights Easily',
+        description: 'Easily export any insights and visualizations for offline review or presentations.',
+        imagePath: '/assets/tutorials/insights/modal_insights_3.png',
+        stepTitle: 'Export Insights Easily',
         bulletPoints: [
-          'Build tailored reports focusing on metrics that matter to you',
-          'Schedule automated report generation and delivery',
-          'Save report templates for consistent analysis over time'
-        ]
-      },
-      {
-        title: 'Export Options',
-        description: 'Use these options to export insights as PDFs, spreadsheets, or presentations to share with stakeholders.',
-        imagePath: '/assets/tutorials/insights/export.svg',
-        stepTitle: 'Sharing & Exporting',
-        bulletPoints: [
-          'Export data in multiple formats including PDF, CSV, and PowerPoint',
-          'Share insights directly with team members via email or link',
-          'Create annotated snapshots to highlight important findings'
+          'Export data in multiple formats including PDF, CSV, and Excel',
+          'Create presentation-ready visualizations with a single click',
+          'Share insights with team members and stakeholders seamlessly'
         ]
       }
     ]
