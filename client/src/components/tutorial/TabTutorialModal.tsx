@@ -186,19 +186,19 @@ export function TabTutorialModal({
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900">{stepTitle}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{stepTitle}</h2>
                 
                 {/* Bullet points only - no duplicate descriptive text */}
                 <div className="mt-6 space-y-3">
                   {bulletPoints && bulletPoints.length > 0 ? (
                     bulletPoints.map((point, index) => (
                       <div key={index} className="flex items-start space-x-3">
-                        <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                        <p className="text-base text-gray-700">
+                        <p className="text-lg font-medium text-gray-700">
                           {point}
                         </p>
                       </div>
@@ -207,12 +207,12 @@ export function TabTutorialModal({
                     // Create bullet points from description if none provided
                     description.split('. ').filter(s => s.trim()).map((sentence, index) => (
                       <div key={index} className="flex items-start space-x-3">
-                        <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                        <p className="text-base text-gray-700">
+                        <p className="text-lg font-medium text-gray-700">
                           {sentence}
                         </p>
                       </div>
