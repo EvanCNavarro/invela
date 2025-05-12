@@ -686,7 +686,10 @@ export function WelcomeModal() {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-2xl font-bold text-gray-900 mb-4 leading-tight"
+                        className={cn(
+                          "text-2xl font-bold text-gray-900 leading-tight",
+                          currentSlide === 2 ? "mb-6" : "mb-4"
+                        )}
                       >
                         {carouselContent[currentSlide].title.split('\n').map((line, i) => (
                           <React.Fragment key={i}>
@@ -700,7 +703,10 @@ export function WelcomeModal() {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="text-lg text-gray-700"
+                        className={cn(
+                          "text-lg text-gray-700",
+                          currentSlide === 2 ? "mb-6" : "mb-3"
+                        )}
                       >
                         {Number(currentSlide) === 1 ? (
                           <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
