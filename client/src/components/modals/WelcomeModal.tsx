@@ -1000,7 +1000,7 @@ export function WelcomeModal() {
             >
               <Button
                 onClick={handleNext}
-                disabled={isSubmitting || (currentSlide === 1 && (!employeeCount || !revenueTier))}
+                disabled={isSubmitting || (Number(currentSlide) === 1 && (!employeeCount || !revenueTier))}
                 className={cn(
                   "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
                   isLastSlide && "pulse-border-animation font-bold bg-blue-600 hover:bg-blue-700 px-8"
