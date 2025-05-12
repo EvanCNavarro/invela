@@ -36,26 +36,56 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Claims Dashboard',
         description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
         imagePath: '/assets/tutorials/claims/overview.svg',
+        stepTitle: 'Claims Dashboard Overview',
+        bulletPoints: [
+          'View a summary of all claims activity across your organization',
+          'Monitor critical metrics including claim frequency and severity',
+          'Track claims trends over time with interactive visualizations'
+        ]
       },
       {
         title: 'Claim Details',
         description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
         imagePath: '/assets/tutorials/claims/details.svg',
+        stepTitle: 'Detailed Claims Information',
+        bulletPoints: [
+          'Access comprehensive information about individual claims',
+          'Review policy details, coverage limits, and claim history',
+          'Track claim status and progression through your workflow'
+        ]
       },
       {
         title: 'Claims Processing',
         description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
         imagePath: '/assets/tutorials/claims/processing.svg',
+        stepTitle: 'Claims Processing Tools',
+        bulletPoints: [
+          'Update claim status using standardized workflow steps',
+          'Request additional documentation when needed for evaluation',
+          'Process approvals and payments through integrated systems'
+        ]
       },
       {
         title: 'Analytics Dashboard',
         description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
         imagePath: '/assets/tutorials/claims/analytics.svg',
+        stepTitle: 'Claims Analytics',
+        bulletPoints: [
+          'Identify patterns and trends in claims data over time',
+          'Compare performance metrics against industry benchmarks',
+          'Detect potential fraud indicators with advanced analytics'
+        ]
       },
       {
         title: 'Documentation Management',
         description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
         imagePath: '/assets/tutorials/claims/documentation.svg',
+        stepTitle: 'Document Management',
+        bulletPoints: [
+          'Upload and organize claim-related documents securely',
+          'Control access permissions for sensitive information',
+          'Share documentation with appropriate stakeholders seamlessly'
+        ]
       }
     ]
   },
@@ -69,26 +99,56 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Risk Score Configuration',
         description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
         imagePath: '/assets/tutorials/risk-score/overview.svg',
+        stepTitle: 'Configuration Overview',
+        bulletPoints: [
+          'Tailor the S&P Data Access Risk Score to your organization\'s needs',
+          'Adjust weighting factors to reflect your specific risk priorities',
+          'Save multiple configuration profiles for different risk assessments'
+        ]
       },
       {
         title: 'Risk Gauge',
         description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
         imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        stepTitle: 'Risk Level Visualization',
+        bulletPoints: [
+          'Visualize your current risk score on the interactive gauge',
+          'Understand color-coded risk thresholds from low to critical',
+          'See real-time updates as you modify configuration settings'
+        ]
       },
       {
         title: 'Risk Dimensions',
         description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
         imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        stepTitle: 'Risk Dimension Weighting',
+        bulletPoints: [
+          'Customize weights for key risk factors like Cyber Security and Public Sentiment',
+          'Adjust the impact of Dark Web Data and Financial Stability indicators',
+          'Fine-tune Data Access Scope importance for your industry context'
+        ]
       },
       {
         title: 'Risk Acceptance Level',
         description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
         imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        stepTitle: 'Risk Tolerance Settings',
+        bulletPoints: [
+          'Set company-wide risk tolerance thresholds using the slider',
+          'Determine when alerts and notifications will be triggered',
+          'Configure different tolerance levels for various business units'
+        ]
       },
       {
         title: 'Comparative Analysis',
         description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
         imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        stepTitle: 'Benchmarking Tools',
+        bulletPoints: [
+          'Compare your risk configuration with industry peers and competitors',
+          'Identify gaps in your risk assessment approach',
+          'Generate reports highlighting differences between configurations'
+        ]
       },
     ]
   },
@@ -101,26 +161,56 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Risk Score Dashboard',
         description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
         imagePath: '/assets/tutorials/risk-score/overview.svg',
+        stepTitle: 'Risk Score Overview',
+        bulletPoints: [
+          'View your current risk score and trend over time',
+          'Explore detailed breakdown of contributing risk factors',
+          'Access risk mitigation recommendations based on your profile'
+        ]
       },
       {
         title: 'Risk Gauge',
         description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
         imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        stepTitle: 'Understanding the Risk Gauge',
+        bulletPoints: [
+          'Interpret color-coded risk levels from low to critical',
+          'See how your score compares to industry benchmarks',
+          'Track changes in your risk gauge with historical data'
+        ]
       },
       {
         title: 'Risk Dimensions',
         description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
         imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        stepTitle: 'Managing Risk Dimensions',
+        bulletPoints: [
+          'Prioritize risk dimensions based on your business needs',
+          'Understand how each dimension affects your overall score',
+          'Create a custom weighting system for your industry context'
+        ]
       },
       {
         title: 'Risk Acceptance Level',
         description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
         imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        stepTitle: 'Setting Risk Tolerance',
+        bulletPoints: [
+          'Define acceptable risk thresholds for your organization',
+          'Receive alerts when risks exceed your defined tolerance',
+          'Adjust your tolerance levels based on business requirements'
+        ]
       },
       {
         title: 'Comparative Analysis',
         description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
         imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        stepTitle: 'Risk Comparison Tools',
+        bulletPoints: [
+          'Compare your risk profile with industry peers',
+          'Identify areas where you outperform or underperform',
+          'Use benchmarking data to set realistic improvement goals'
+        ]
       },
     ]
   },
@@ -132,21 +222,45 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Insights Overview',
         description: 'Welcome to the Insights Dashboard. This analytics center provides data-driven insights to help you make informed decisions.',
         imagePath: '/assets/tutorials/insights/overview.svg',
+        stepTitle: 'Insights Overview',
+        bulletPoints: [
+          'Access comprehensive analytics on your business risk profile',
+          'View high-level KPIs and drill down into detailed metrics',
+          'Receive AI-powered recommendations based on your data'
+        ]
       },
       {
         title: 'Data Visualization',
         description: 'These charts and graphs represent key metrics and trends. Hover over any element to see detailed information.',
         imagePath: '/assets/tutorials/insights/visualization.svg',
+        stepTitle: 'Interactive Visualizations',
+        bulletPoints: [
+          'Explore dynamic charts that respond to your interactions',
+          'Customize visualization types to best represent your data',
+          'Filter and segment data to uncover specific patterns'
+        ]
       },
       {
         title: 'Custom Reports',
         description: 'Create customized reports based on your specific needs. Select metrics, time periods, and presentation formats.',
         imagePath: '/assets/tutorials/insights/reports.svg',
+        stepTitle: 'Report Customization',
+        bulletPoints: [
+          'Build tailored reports focusing on metrics that matter to you',
+          'Schedule automated report generation and delivery',
+          'Save report templates for consistent analysis over time'
+        ]
       },
       {
         title: 'Export Options',
         description: 'Use these options to export insights as PDFs, spreadsheets, or presentations to share with stakeholders.',
         imagePath: '/assets/tutorials/insights/export.svg',
+        stepTitle: 'Sharing & Exporting',
+        bulletPoints: [
+          'Export data in multiple formats including PDF, CSV, and PowerPoint',
+          'Share insights directly with team members via email or link',
+          'Create annotated snapshots to highlight important findings'
+        ]
       }
     ]
   },
@@ -158,21 +272,45 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Network Overview',
         description: 'Welcome to the Partner Network. This tool helps you manage and visualize all your business relationships and connections.',
         imagePath: '/assets/tutorials/network/overview.svg',
+        stepTitle: 'Network Overview',
+        bulletPoints: [
+          'View your entire business network in an interactive visualization',
+          'Identify key relationships and connection patterns at a glance',
+          'Filter the network view by relationship type, risk level, or industry'
+        ]
       },
       {
         title: 'Company Profiles',
         description: 'Click on any company to view their profile, including risk information, contact details, and relationship history.',
         imagePath: '/assets/tutorials/network/company-profile.svg',
+        stepTitle: 'Company Profiles',
+        bulletPoints: [
+          'Access detailed information about any company in your network',
+          'Review risk scores and compliance status for each partner',
+          'Track relationship history and important milestones'
+        ]
       },
       {
         title: 'Relationship Management',
         description: 'Use these tools to manage your business relationships, track interactions, and monitor partnership health.',
         imagePath: '/assets/tutorials/network/relationship.svg',
+        stepTitle: 'Relationship Management',
+        bulletPoints: [
+          'Define and categorize different types of business relationships',
+          'Log important interactions and set follow-up reminders',
+          'Evaluate relationship health with customizable metrics'
+        ]
       },
       {
         title: 'Network Insights',
         description: 'The analytics section shows relationship metrics, risk exposure patterns, and network growth trends.',
         imagePath: '/assets/tutorials/network/insights.svg',
+        stepTitle: 'Network Analytics',
+        bulletPoints: [
+          'Analyze your network for risk concentration or dependencies',
+          'Identify growth opportunities and potential new connections',
+          'Generate reports on network changes and relationship performance'
+        ]
       }
     ]
   },
@@ -184,21 +322,45 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'File Vault Overview',
         description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
         imagePath: '/assets/tutorials/file-vault/overview.svg',
+        stepTitle: 'File Vault Overview',
+        bulletPoints: [
+          'Access all your documents in one secure, centralized location',
+          'Benefit from automatic versioning and audit trail features',
+          'Experience enterprise-grade security for sensitive information'
+        ]
       },
       {
         title: 'Document Categories',
         description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
         imagePath: '/assets/tutorials/file-vault/categories.svg',
+        stepTitle: 'Document Organization',
+        bulletPoints: [
+          'Browse files organized by logical categories and subcategories',
+          'Use powerful search and filtering to quickly locate documents',
+          'Apply custom tags to improve document categorization and findability'
+        ]
       },
       {
         title: 'Upload Process',
         description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
         imagePath: '/assets/tutorials/file-vault/upload.svg',
+        stepTitle: 'File Upload & Management',
+        bulletPoints: [
+          'Upload multiple files with drag-and-drop or file selection',
+          'Add metadata and tags to enhance document searchability',
+          'Set document expiration dates and automatic retention policies'
+        ]
       },
       {
         title: 'Security Settings',
         description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
         imagePath: '/assets/tutorials/file-vault/security.svg',
+        stepTitle: 'Security Controls',
+        bulletPoints: [
+          'Set granular permissions for individuals or groups of users',
+          'Apply document-level encryption for highly sensitive files',
+          'Monitor file access logs and receive security alerts'
+        ]
       }
     ]
   },
@@ -210,21 +372,45 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Profile Overview',
         description: 'Welcome to your Company Profile. Here you can view and update all your organization\'s information and settings.',
         imagePath: '/assets/tutorials/company-profile/overview.svg',
+        stepTitle: 'Company Profile Overview',
+        bulletPoints: [
+          'View and edit your company\'s core information in one place',
+          'Access historical profile changes and audit logs',
+          'Understand how your profile data influences risk assessments'
+        ]
       },
       {
         title: 'Business Information',
         description: 'This section contains your core business details. Keep this information up-to-date for accurate risk assessment.',
         imagePath: '/assets/tutorials/company-profile/business-info.svg',
+        stepTitle: 'Business Details',
+        bulletPoints: [
+          'Update essential company information including address and contacts',
+          'Maintain industry classifications and business descriptions',
+          'Manage financial information and corporate structure details'
+        ]
       },
       {
         title: 'Team Management',
         description: 'Manage your team members, their roles, and permissions. You can add new users or update existing access levels.',
         imagePath: '/assets/tutorials/company-profile/team.svg',
+        stepTitle: 'Team Management',
+        bulletPoints: [
+          'Add new team members and assign appropriate roles',
+          'Set granular permissions based on job responsibilities',
+          'Monitor user activity and access logs for security'
+        ]
       },
       {
         title: 'Compliance Status',
         description: 'Review your compliance status and certification levels. This section shows any outstanding requirements or upcoming renewals.',
         imagePath: '/assets/tutorials/company-profile/compliance.svg',
+        stepTitle: 'Compliance Tracking',
+        bulletPoints: [
+          'Track compliance status across multiple regulatory frameworks',
+          'Receive alerts for upcoming certification expirations',
+          'Upload and manage compliance documentation securely'
+        ]
       }
     ]
   },
@@ -236,16 +422,34 @@ const TUTORIAL_CONTENT: Record<string, {
         title: 'Playground Overview',
         description: 'Welcome to the Playground. This is a safe environment where you can test different scenarios without affecting your production data.',
         imagePath: '/assets/tutorials/playground/overview.svg',
+        stepTitle: 'Simulation Environment',
+        bulletPoints: [
+          'Experiment with risk scenarios in a safe, isolated environment',
+          'Test configuration changes without affecting production settings',
+          'Use real company data with "what-if" analysis capabilities'
+        ]
       },
       {
         title: 'Scenario Building',
         description: 'Use these tools to create different test scenarios. You can simulate various risk events and see how they would impact your business.',
         imagePath: '/assets/tutorials/playground/scenarios.svg',
+        stepTitle: 'Creating Risk Scenarios',
+        bulletPoints: [
+          'Build custom scenarios with multiple risk variables',
+          'Simulate market events and their impact on your risk profile',
+          'Save and share scenarios with your team for collaborative planning'
+        ]
       },
       {
         title: 'Results Analysis',
         description: 'After running a simulation, you can analyze the results here. Compare different scenarios to find optimal risk strategies.',
         imagePath: '/assets/tutorials/playground/results.svg',
+        stepTitle: 'Analyzing Outcomes',
+        bulletPoints: [
+          'Compare simulation results side-by-side with detailed metrics',
+          'Visualize potential impacts through interactive charts',
+          'Export findings and recommendations for stakeholder review'
+        ]
       }
     ]
   },
