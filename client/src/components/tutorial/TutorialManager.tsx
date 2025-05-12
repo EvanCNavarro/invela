@@ -1,16 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { 
-  useTutorialAssets, 
-  useTutorialAssetsPreloader, 
-  preloadTutorialImages 
-} from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { isImageCached, getCacheStats } from '@/lib/image-cache';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 
@@ -540,8 +534,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // Get any custom assets for this tutorial
-  const { imageUrl, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
+  // No custom assets loading - simplified approach
+  const assetsLoading = false;
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
@@ -687,62 +681,23 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Get global preloader state - this doesn't change on conditional rendering
-  const preloader = useTutorialAssetsPreloader();
-  
-  // Extract all image paths once we have tutorial content
-  const allStepImages = useMemo(() => {
-    if (!tutorialContent || !tutorialContent.steps) return [];
-    
-    return tutorialContent.steps.map((step, index) => {
-      // Ensure we have valid image paths
-      const imagePath = step.imageUrl || step.imagePath || `/assets/tutorials/${normalizedTabName}/${index + 1}.svg`;
-      // Return empty string for invalid paths to avoid errors
-      return typeof imagePath === 'string' && imagePath.trim() !== '' ? imagePath : '';
-    }).filter(Boolean); // Filter out any empty strings
-  }, [tutorialContent, normalizedTabName]);
-  
-  // Trigger preloading when tutorial content is available
-  useEffect(() => {
-    if (tutorialContent && allStepImages.length > 0) {
-      logger.info(`Starting preload of ${allStepImages.length} tutorial images for ${normalizedTabName}`);
-      // This function works outside React's hook system
-      preloadTutorialImages(allStepImages);
+  // Simple image path calculation without hooks
+  const getImagePath = () => {
+    if (!tutorialContent || !tutorialContent.steps || !tutorialContent.steps[stepToUse]) {
+      return '';
     }
-  }, [tutorialContent, allStepImages, normalizedTabName]);
-  
-  // Log preloading status when it changes
-  useEffect(() => {
-    if (preloader.isLoading) {
-      logger.info(`Preloading ${preloader.totalCount} tutorial images (${preloader.progress}% complete)`);
-    } else if (preloader.hasErrors) {
-      logger.warn(`Preloading completed with ${preloader.errors.length} errors`);
-    } else if (preloader.totalCount > 0 && preloader.loadedCount === preloader.totalCount) {
-      logger.info(`Successfully preloaded all ${preloader.totalCount} tutorial images`);
-      logger.debug('Image cache stats:', getCacheStats());
-    }
-  }, [preloader.isLoading, preloader.progress, preloader.hasErrors, preloader.loadedCount, preloader.totalCount]);
-  
-  // Current step image with fallback - safely handle undefined tutorial content
-  const currentStepImage = tutorialContent && tutorialContent.steps && tutorialContent.steps[stepToUse] ? (
-    tutorialContent.steps[stepToUse].imageUrl || 
-    tutorialContent.steps[stepToUse].imagePath || 
-    `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`
-  ) : '';
-  
-  // Determine if the current step image is still loading
-  const isCurrentImageLoading = preloader.isLoading && 
-    typeof currentStepImage === 'string' && 
-    currentStepImage.length > 0 && 
-    !isImageCached(currentStepImage);
     
-  // Use the TabTutorialModal with enhanced image preloading
+    const step = tutorialContent.steps[stepToUse];
+    return step.imageUrl || step.imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`;
+  };
+  
+  // Use the TabTutorialModal with simplified props
   return tutorialContent && tutorialContent.steps ? (
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse]?.description || ''}
-      imageUrl={currentStepImage}
-      isLoading={isLoading || (isCurrentImageLoading ? true : false)}
+      imageUrl={getImagePath()}
+      isLoading={isLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
@@ -751,9 +706,6 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       onClose={() => markTutorialSeen()}
       stepTitle={tutorialContent.steps[stepToUse]?.title || ''}
       bulletPoints={tutorialContent.steps[stepToUse]?.bulletPoints || []}
-      // Pass preloader state for status info
-      preloadProgress={preloader.progress}
-      preloadComplete={!preloader.isLoading && preloader.loadedCount === preloader.totalCount}
     />
   ) : null;
 }

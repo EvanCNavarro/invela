@@ -19,7 +19,17 @@ export interface TutorialStep {
   stepTitle?: string;
 }
 
-// Define props interface
+// Define the tutorial step interface
+export interface TutorialStep {
+  title: string;
+  description: string;
+  imagePath?: string;
+  imageUrl?: string;
+  bulletPoints?: string[];
+  stepTitle?: string;
+}
+
+// Define props interface - simplified version
 export interface TabTutorialModalProps {
   title: string;
   description: string;
@@ -33,9 +43,6 @@ export interface TabTutorialModalProps {
   onClose: () => void;
   bulletPoints?: string[];
   stepTitle?: string;
-  // Props for the new global preloader system
-  preloadProgress?: number;
-  preloadComplete?: boolean;
 }
 
 /**
@@ -58,9 +65,7 @@ export function TabTutorialModal({
   onComplete,
   onClose,
   bulletPoints = [],
-  stepTitle = '',
-  preloadProgress = 0,
-  preloadComplete = false
+  stepTitle = ''
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
   const { isExpanded } = useSidebarStore();
