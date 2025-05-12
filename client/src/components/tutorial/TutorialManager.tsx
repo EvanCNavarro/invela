@@ -428,23 +428,12 @@ export function TutorialManager({
         const isMarkedCompleted = isExplicitlyCompleted;
         const isAtFinalStep = isFinalStep;
         
-        // Get API data from the useTabTutorials hook data
-        // The useQuery in useTabTutorials hook returns data with lastSeenAt
-        const queryState = useQueryClient().getQueryState(['/api/user-tab-tutorials/status', normalizedTabName]);
+        // For tutorial completion, we only need to rely on the isCompleted flag
+        // which is already available from the useTabTutorials hook
+        // This avoids the need to directly access the query state
         
-        // We need to cast the data to the TutorialStatus type to access lastSeenAt
-        interface TutorialStatus {
-          tabName: string;
-          completed: boolean;
-          currentStep: number;
-          lastSeenAt: string | null;
-        }
-        
-        // Safely extract data with proper type
-        const apiData = queryState?.data as TutorialStatus | undefined;
-        
-        // Check if there's a completion date set
-        const hasCompletionDate = Boolean(apiData?.lastSeenAt);
+        // Check for completion based on the existing state from useTabTutorials
+        const hasCompletionDate = false; // We'll rely on isCompleted instead
         
         // Check for invalid step conditions 
         const hasInvalidStep = currentStep < 0 || currentStep >= stepCount;
@@ -458,33 +447,27 @@ export function TutorialManager({
         // Log detailed information about the decision with highly visible formatting
         const logMessage = `ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${shouldShow ? '✅ SHOW' : '❌ HIDE'}`;
         
+        // Create a common log object with all the relevant information
+        const logData = {
+          tutorialEnabled,
+          isMarkedCompleted,
+          isAtFinalStep,
+          hasCompletionDate,
+          hasInvalidStep,
+          shouldNeverShow,
+          currentStep,
+          totalSteps: stepCount,
+          rawIsCompleted: isCompleted
+        };
+        
         if (shouldShow) {
-          logger.info(logMessage, {
-            tutorialEnabled,
-            isMarkedCompleted,
-            isAtFinalStep,
-            hasCompletionDate,
-            hasInvalidStep,
-            shouldNeverShow,
-            currentStep,
-            totalSteps: stepCount,
-            lastSeenAt: apiData?.lastSeenAt || null,
-            rawIsCompleted: isCompleted
-          });
+          // Use info level for show decisions
+          logger.info(logMessage, logData);
         } else {
           // Use warn level for hide decisions to make them more visible in logs
           // This helps with debugging by highlighting potential issues
           logger.warn(logMessage, {
-            tutorialEnabled,
-            isMarkedCompleted,
-            isAtFinalStep,
-            hasCompletionDate,
-            hasInvalidStep,
-            shouldNeverShow,
-            currentStep,
-            totalSteps: stepCount,
-            lastSeenAt: apiData?.lastSeenAt || null,
-            rawIsCompleted: isCompleted,
+            ...logData,
             // Add the exact reason why we're not showing the tutorial
             hideReason: isMarkedCompleted ? 'COMPLETED_FLAG' :
                        isAtFinalStep ? 'AT_FINAL_STEP' :
