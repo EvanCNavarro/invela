@@ -660,10 +660,10 @@ export function WelcomeModal() {
                         }}
                         className="text-lg text-gray-700 leading-relaxed"
                       >
-                        {currentSlide === 1 ? (
+                        {Number(currentSlide) === 1 ? (
                           <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
                         ) : (
-                          carouselContent[currentSlide].subtitle
+                          carouselContent[currentSlide]?.subtitle || ""
                         )}
                       </motion.p>
                     </motion.div>
@@ -689,10 +689,10 @@ export function WelcomeModal() {
                         transition={{ delay: 0.3 }}
                         className="text-lg text-gray-700"
                       >
-                        {currentSlide === 1 ? (
+                        {Number(currentSlide) === 1 ? (
                           <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
                         ) : (
-                          carouselContent[currentSlide].subtitle
+                          carouselContent[currentSlide]?.subtitle || ""
                         )}
                       </motion.p>
                     </>
