@@ -97,46 +97,6 @@ const TUTORIAL_CONTENT: Record<string, {
       }
     ]
   },
-  // Main Risk Score Dashboard - Shows the S&P DARS score and overview
-  'risk-score': {
-    title: 'S&P Data Access Risk Score Overview',
-    description: 'Understand how to interpret and use your risk assessment dashboard',
-    steps: [
-      {
-        title: 'Set Risk Thresholds',
-        description: 'Define acceptable risk thresholds for fintech accreditation clearly and efficiently.',
-        imagePath: '/assets/tutorials/risk-score/modal_risk_1.png',
-        stepTitle: 'Set Risk Thresholds',
-        bulletPoints: [
-          'Adjust the risk acceptance dial to set your organization\'s tolerance level',
-          'Clearly visualize low, medium, and high risk threshold ranges',
-          'Save your custom configuration to ensure consistent assessment'
-        ]
-      },
-      {
-        title: 'Prioritize and Weight Dimensions',
-        description: 'Customize dimension prioritization and weighting to align risk assessment precisely with your bank\'s standards.',
-        imagePath: '/assets/tutorials/risk-score/modal_risk_2.png',
-        stepTitle: 'Prioritize and Weight Dimensions',
-        bulletPoints: [
-          'Assign priority levels to different risk dimensions based on importance',
-          'Customize percentage weights for each assessment category',
-          'Create a weighted evaluation model tailored to your organization'
-        ]
-      },
-      {
-        title: 'Evaluate and Compare Fintech Fit',
-        description: 'Compare fintech applicants against your custom risk thresholds to determine accreditation eligibility at a glance.',
-        imagePath: '/assets/tutorials/risk-score/modal_risk_3.png',
-        stepTitle: 'Evaluate and Compare Fintech Fit',
-        bulletPoints: [
-          'Quickly assess eligibility status of fintech companies',
-          'Compare multiple applicants against standardized criteria',
-          'Make data-driven accreditation decisions with confidence'
-        ]
-      },
-    ]
-  },
   'insights': {
     title: 'Insights Overview',
     description: 'Learn how to interpret and use business intelligence insights',
