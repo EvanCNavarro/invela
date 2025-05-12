@@ -720,18 +720,21 @@ export function TutorialManager({
     loading: isLoading
   });
   
-  // FIXED ROOT CAUSE FIX: Last-chance validation before rendering
-  // This is our last line of defense against tutorial flashing
-  // BUT we only prevent rendering for COMPLETED tutorials, not ALL tutorials
+  // HOLISTIC PROTECTION: Comprehensive validation before rendering
+  // This is our unified approach to prevent tutorial flashing
+  // We check both completion status AND if we're at the final step
   
-  // Only if the tutorial is explicitly marked as completed, we should not render it
-  if (isCompleted) {
-    // Emergency fallback - this should never happen due to earlier checks,
-    // but we're being extra defensive here
-    logger.warn(`ROOT CAUSE FIX - Last chance prevention of tutorial flash - tutorial is marked as completed`, {
+  const isCompletedOrFinal = isCompleted || (currentStep >= totalSteps - 1);
+  
+  // Don't render the tutorial if it's completed or at the final step
+  if (isCompletedOrFinal) {
+    // Log detailed information about why we're not showing the tutorial
+    logger.warn(`HOLISTIC FIX - Preventing tutorial display - tutorial is completed or at final step`, {
       isCompleted,
       currentStep,
-      totalSteps: tutorialContent.steps.length
+      totalSteps,
+      atFinalStep: currentStep >= totalSteps - 1,
+      tutorialSteps: tutorialContent.steps.length
     });
     
     // Never render the tutorial in this case
