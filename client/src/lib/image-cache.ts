@@ -287,17 +287,22 @@ export function preloadTutorialImages(
   // Calculate which images to preload
   const imagesToPreload: string[] = [];
   
+  // Create dynamic naming pattern based on tab type
+  const imageBaseName = tabName === 'risk-score-configuration' 
+    ? 'modal_risk_' 
+    : `modal_${tabName.replace('-', '_')}_`;
+  
   // Always preload current step
-  imagesToPreload.push(`/assets/tutorials/${tabName}/modal_risk_${currentStep + 1}.png`);
+  imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep + 1}.png`);
   
   // Preload next step if not at the end
   if (currentStep < totalSteps - 1) {
-    imagesToPreload.push(`/assets/tutorials/${tabName}/modal_risk_${currentStep + 2}.png`);
+    imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep + 2}.png`);
   }
   
   // Optionally preload previous step for back navigation
   if (currentStep > 0) {
-    imagesToPreload.push(`/assets/tutorials/${tabName}/modal_risk_${currentStep}.png`);
+    imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep}.png`);
   }
   
   // Preload all images
