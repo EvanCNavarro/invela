@@ -18,7 +18,7 @@ const CustomDialogContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className="backdrop-blur-md bg-background/40" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
@@ -442,7 +442,7 @@ export function WelcomeModal() {
       onOpenChange={handleOpenChange} // Allow modal to be closed
       modal={true} // Force modal behavior
     >
-      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl backdrop-blur-xl bg-background/80 border-none max-h-[80vh]">
+      <CustomDialogContent className="sm:max-w-4xl p-0 overflow-hidden rounded-xl bg-background border-none max-h-[80vh]">
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         
