@@ -36,6 +36,12 @@ function log(message: string, data?: any) {
  * @returns Promise that resolves when the image is loaded
  */
 export function preloadImage(src: string): Promise<void> {
+  // Handle invalid or empty URLs
+  if (!src || typeof src !== 'string' || src.trim() === '') {
+    log(`Invalid image path provided: ${src}`);
+    return Promise.resolve();
+  }
+  
   // Skip if already in cache
   if (imageCache[src]) {
     log(`Image already cached: ${src}`);
@@ -55,7 +61,9 @@ export function preloadImage(src: string): Promise<void> {
     
     img.onerror = (error) => {
       log(`Failed to load image: ${src}`, error);
-      reject(new Error(`Failed to preload image: ${src}`));
+      // Don't reject; this can cause React hook errors when used with useEffect
+      // Instead, resolve but don't add to cache
+      resolve();
     };
     
     img.src = src;
