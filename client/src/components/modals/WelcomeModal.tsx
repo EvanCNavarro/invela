@@ -212,13 +212,20 @@ export function WelcomeModal() {
   // Mutation for updating company data
   const updateCompanyMutation = useMutation({
     mutationFn: async (data: { numEmployees?: string; revenueTier?: string }) => {
+      // Using POST instead of PATCH to ensure compatibility with server routing
+      // Some servers may not handle PATCH requests properly and return HTML instead of JSON
       return apiRequest('/api/companies/current', {
-        method: 'PATCH',
+        method: 'POST', // Changed from PATCH to POST
+        headers: {
+          'Content-Type': 'application/json',
+          'X-HTTP-Method-Override': 'PATCH' // Signal the intended method
+        },
         body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      console.log('[ONBOARDING DEBUG] Successfully updated company information');
     }
   });
 
@@ -682,7 +689,11 @@ export function WelcomeModal() {
                         transition={{ delay: 0.3 }}
                         className="text-lg text-gray-700"
                       >
-                        {currentSlide === 1 ? <><span>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</span></> : carouselContent[currentSlide].subtitle}
+                        {currentSlide === 1 ? (
+                          <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
+                        ) : (
+                          carouselContent[currentSlide].subtitle
+                        )}
                       </motion.p>
                     </>
                   )}
