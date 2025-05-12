@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
+import { TutorialLoadingOverlay } from './TutorialLoadingOverlay';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 
 // Import tutorial debugging utilities if available
@@ -522,10 +523,25 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
-  // If we're still loading, show a loading state
+  // If we're still loading, show a loading overlay
+  // Import the TutorialLoadingOverlay component
+  const { TutorialLoadingOverlay } = require('./TutorialLoadingOverlay');
+  
+  // Get company data to determine the skeleton type
+  const { useQuery } = require('@tanstack/react-query');
+  const companyData = useQuery({ queryKey: ['/api/companies/current'] })?.data;
+  const companyCategory = companyData?.category || 'Invela';
+  
+  // If loading, render the loading overlay
   if (isLoading) {
     logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
-    return null;
+    return (
+      <TutorialLoadingOverlay 
+        isLoading={isLoading} 
+        tabName={normalizedTabName} 
+        companyCategory={companyCategory}
+      />
+    );
   }
   
   // If we're not on a base route, don't show the tutorial
