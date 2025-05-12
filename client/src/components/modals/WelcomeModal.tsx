@@ -49,12 +49,12 @@ const carouselContent: CarouselItem[] = [
   {
     src: "/attached_assets/welcome_1.png",
     alt: "Welcome to Invela Trust Network",
-    title: "Welcome to Invela Trust Network",
-    subtitle: "Your premier partner for secure and efficient accreditation. We streamline complex verification processes while upholding industry-leading security and compliance standards.",
+    title: "Welcome to the\nInvela Trust Network",
+    subtitle: "", // Removing subtitle as requested, using bullet points instead
     bulletPoints: [
-      "Advanced enterprise-grade risk assessment platform",
-      "Streamlined onboarding with AI-powered automation",
-      "Comprehensive compliance management in one central dashboard"
+      "Your premier partner for secure and efficient accreditation",
+      "Enterprise-grade risk assessment and management platform",
+      "Streamlined compliance processes with advanced automation"
     ]
   },
   {
