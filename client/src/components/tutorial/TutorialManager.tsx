@@ -732,7 +732,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   
   // Determine if the current step image is still loading
   const isCurrentImageLoading = preloader.isLoading && 
-    currentStepImage && 
+    typeof currentStepImage === 'string' && 
+    currentStepImage.length > 0 && 
     !isImageCached(currentStepImage);
     
   // Use the TabTutorialModal with enhanced image preloading
@@ -741,7 +742,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       title={modalTitle}
       description={tutorialContent.steps[stepToUse]?.description || ''}
       imageUrl={currentStepImage}
-      isLoading={isLoading || isCurrentImageLoading}
+      isLoading={isLoading || (isCurrentImageLoading ? true : false)}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
