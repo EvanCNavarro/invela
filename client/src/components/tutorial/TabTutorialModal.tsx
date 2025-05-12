@@ -114,11 +114,11 @@ export function TabTutorialModal({
                 {/* Title header with chip-style design */}
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
-                    {stepTitle || title}
+                    {title}
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900">{stepTitle || title}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{stepTitle}</h2>
                 
                 {/* Bullet points only - no duplicate descriptive text */}
                 <div className="mt-6 space-y-3">

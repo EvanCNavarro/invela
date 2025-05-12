@@ -751,6 +751,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
           onNext={() => {}}
           onComplete={() => {}}
           onClose={() => {}}
+          stepTitle={content.steps[0].title}
+          bulletPoints={content.steps[0].bulletPoints}
         />
       );
     }
@@ -792,6 +794,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       onBack={handleBack}
       onComplete={handleComplete}
       onClose={() => markTutorialSeen()}
+      stepTitle={tutorialContent.steps[stepToUse].title}
+      bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
     />
   );
 }
