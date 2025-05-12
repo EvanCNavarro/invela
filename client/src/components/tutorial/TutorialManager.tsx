@@ -418,28 +418,28 @@ export function TutorialManager({
         // We need to explicitly handle the case where currentStep equals total steps - 1 (final step)
         const isFinalStep = currentStep >= stepCount - 1;
         
-        // CRITICAL FIX #3: Enhanced decision logic - NEVER show a tutorial if:
-        // 1. It's marked as completed in the database OR
-        // 2. It's at the final step (which would cause the flashing 4/4 modal) OR
-        // 3. It has a completion date (any past date when it was finished)
-        // 4. The current step is somehow invalid or out of bounds
+        // FIXED DECISION LOGIC: Only prevent tutorials that are actually completed
+        // 1. It's marked as completed in the database - these should NEVER show
+        // 2. Invalid step conditions should be fixed, not hidden
         
-        // Create multiple, clearly-named conditional checks for better maintainability
+        // Create clearly-named conditional checks for better maintainability
         const isMarkedCompleted = isExplicitlyCompleted;
-        const isAtFinalStep = isFinalStep;
         
-        // For tutorial completion, we only need to rely on the isCompleted flag
-        // which is already available from the useTabTutorials hook
-        // This avoids the need to directly access the query state
-        
-        // Check for completion based on the existing state from useTabTutorials
-        const hasCompletionDate = false; // We'll rely on isCompleted instead
-        
-        // Check for invalid step conditions 
+        // Step validation - we'll fix bad steps rather than hiding tutorials
         const hasInvalidStep = currentStep < 0 || currentStep >= stepCount;
+        if (hasInvalidStep) {
+          // Reset to step 0 if we have an invalid step
+          logger.warn(`Found invalid step for tutorial ${normalizedTabName} - resetting to step 0`, {
+            currentStep,
+            stepCount
+          });
+          // This will reset the currentStep to 0 in the next render cycle
+          handleNext();
+        }
         
-        // Combine all conditions - if ANY are true, we should never show the tutorial
-        const shouldNeverShow = isMarkedCompleted || isAtFinalStep || hasCompletionDate || hasInvalidStep;
+        // For decision making, we ONLY prevent tutorials that are marked completed
+        // This ensures incomplete tutorials will show properly
+        const shouldNeverShow = isMarkedCompleted;
         
         // Only show tutorial if explicitly enabled AND not in a state where it should never show
         const shouldShow = tutorialEnabled && !shouldNeverShow;
@@ -680,24 +680,30 @@ export function TutorialManager({
     loading: isLoading
   });
   
-  // FINAL ROOT CAUSE FIX: Last-chance validation before rendering
+  // FIXED ROOT CAUSE FIX: Last-chance validation before rendering
   // This is our last line of defense against tutorial flashing
-  const isFinalOrCompleted = isCompleted || currentStep >= tutorialContent.steps.length - 1;
+  // BUT we only prevent rendering for COMPLETED tutorials, not ALL tutorials
   
-  if (isFinalOrCompleted) {
+  // Only if the tutorial is explicitly marked as completed, we should not render it
+  if (isCompleted) {
     // Emergency fallback - this should never happen due to earlier checks,
     // but we're being extra defensive here
-    logger.warn(`ROOT CAUSE FIX - Last chance prevention of tutorial flash - tutorial is completed or at final step`, {
+    logger.warn(`ROOT CAUSE FIX - Last chance prevention of tutorial flash - tutorial is marked as completed`, {
       isCompleted,
       currentStep,
       totalSteps: tutorialContent.steps.length
     });
     
-    // Immediately mark as completed to ensure consistent state
-    setTimeout(() => handleComplete(), 0);
-    
     // Never render the tutorial in this case
     return null;
+  }
+  
+  // For final step tutorials that aren't marked as completed,
+  // we'll just ensure they get completed on render
+  const isFinalStep = currentStep >= tutorialContent.steps.length - 1;
+  if (isFinalStep) {
+    // Rather than blocking the render, ensure it gets marked as complete after showing
+    setTimeout(() => handleComplete(), 100);
   }
   
   // Use the TabTutorialModal with the appropriate content
