@@ -1,15 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { 
-  cacheTutorialState, 
-  getCachedTutorialState, 
-  clearCachedTutorialState 
-} from '@/lib/tutorial-cache';
-
-// Create a dedicated logger for this hook
-const logger = createTutorialLogger('useTabTutorials');
 
 // Define tutorial status interface
 interface TutorialStatus {
@@ -19,10 +10,6 @@ interface TutorialStatus {
   lastSeenAt: string | null;
   exists?: boolean;
 }
-
-// Tracking the current user ID for cache purposes
-// We'll update this when user info becomes available
-let currentUserId: number | null = null;
 
 /**
  * Hook to manage tab-specific tutorial state
@@ -35,9 +22,6 @@ export function useTabTutorials(tabName: string) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [tutorialEnabled, setTutorialEnabled] = useState(false);
-  
-  // Add a new state to track cache preload status
-  const [cachePreloaded, setCachePreloaded] = useState(false);
   
   const queryClient = useQueryClient();
   
@@ -57,96 +41,28 @@ export function useTabTutorials(tabName: string) {
   
   const totalSteps = getTotalSteps(tabName);
   
-  logger.info(`Initializing for tab: ${tabName}`);
-  
-  // Try to load from cache immediately (synchronously)
-  // This must happen before the API request to prevent flickering
-  useEffect(() => {
-    try {
-      // CRITICAL FIX: Load cache data synchronously BEFORE any rendering occurs
-      // This gives us immediate insight into whether the tutorial should be shown
-      const cachedState = getCachedTutorialState(currentUserId, tabName);
-      
-      if (cachedState) {
-        logger.info(`Using cached tutorial state for ${tabName}`, cachedState);
-        
-        // Apply cache values to local state
-        setCurrentStep(cachedState.currentStep);
-        setIsCompleted(cachedState.completed);
-        
-        // ROOT CAUSE FIX: Determine tutorial visibility correctly based on cached completion
-        // If tutorial is completed or at final step, NEVER show it - this prevents the flash
-        // of step 4/4 that occurs when a tutorial is completed
-        const isCompletedOrFinal = cachedState.completed || 
-          (cachedState.currentStep >= (getTotalSteps(tabName) - 1));
-          
-        if (isCompletedOrFinal) {
-          logger.info(`Tutorial is marked as completed or at final step in cache - disabling it`, {
-            completed: cachedState.completed,
-            currentStep: cachedState.currentStep,
-            totalSteps: getTotalSteps(tabName)
-          });
-          setTutorialEnabled(false);
-        } else {
-          logger.info(`Tutorial is incomplete according to cache - enabling it`);
-          setTutorialEnabled(true);
-        }
-      } else {
-        // If no cache exists, default to showing tutorial if needed
-        // This ensures first-time visitors see tutorials
-        logger.info(`No cached state for ${tabName} - defaulting to enabled state`);
-        setTutorialEnabled(true);
-      }
-      
-      // Mark cache check as complete
-      setCachePreloaded(true);
-    } catch (error) {
-      logger.error(`Error loading tutorial cache for ${tabName}`, error);
-      setCachePreloaded(true);
-    }
-  }, [tabName, getTotalSteps]);
+  console.log(`[TabTutorials] Initializing for tab: ${tabName}`);
   
   // Fetch tutorial status from the server
   const { data, isLoading, error } = useQuery<TutorialStatus>({
     queryKey: ['/api/user-tab-tutorials/status', tabName],
     queryFn: async (): Promise<TutorialStatus> => {
-      logger.info(`Fetching tutorial status for: ${tabName}`);
+      console.log(`[TabTutorials] Fetching tutorial status for: ${tabName}`);
       try {
         const result = await apiRequest(`/api/user-tab-tutorials/${encodeURIComponent(tabName)}/status`);
-        
-        // Get user ID from result if available
-        if (result && typeof result === 'object' && 'userId' in result) {
-          currentUserId = result.userId as number;
-        }
-        
-        logger.info(`Received tutorial status for ${tabName}:`, result);
-        
-        // Cache the result for faster access on future visits
-        if (result && typeof result === 'object') {
-          const tutorialStatus = result as TutorialStatus;
-          cacheTutorialState(
-            currentUserId, 
-            tabName, 
-            tutorialStatus.completed || false, 
-            tutorialStatus.currentStep || 0
-          );
-        }
-        
+        console.log(`[TabTutorials] Received tutorial status for ${tabName}:`, result);
         return result as TutorialStatus;
       } catch (err) {
-        logger.error(`Error fetching tutorial status for ${tabName}:`, err);
+        console.error(`[TabTutorials] Error fetching tutorial status for ${tabName}:`, err);
         throw err;
       }
-    },
-    // Always fetch tutorial data, even if cache suggests completion
-    // This ensures we have the most up-to-date tutorial state
-    enabled: true
+    }
   });
   
   // Update tutorial progress mutation
   const updateTutorialMutation = useMutation({
     mutationFn: async (payload: { step: number, completed: boolean }) => {
-      logger.info(`Updating tutorial for ${tabName}:`, payload);
+      console.log(`[TabTutorials] Updating tutorial for ${tabName}:`, payload);
       
       // Use the direct method+url+data pattern for the API request
       return apiRequest(
@@ -161,31 +77,19 @@ export function useTabTutorials(tabName: string) {
       );
     },
     onSuccess: (result) => {
-      logger.info(`Successfully updated tutorial for ${tabName}:`, result);
-      
-      // Update the cache immediately for faster UI updates
-      if (result && typeof result === 'object') {
-        const tutorialResult = result as TutorialStatus;
-        cacheTutorialState(
-          currentUserId, 
-          tabName, 
-          tutorialResult.completed || false, 
-          tutorialResult.currentStep || 0
-        );
-      }
-      
+      console.log(`[TabTutorials] Successfully updated tutorial for ${tabName}:`, result);
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     },
     onError: (error) => {
-      logger.error(`Error updating tutorial for ${tabName}:`, error);
+      console.error(`[TabTutorials] Error updating tutorial for ${tabName}:`, error);
     }
   });
   
   // Mark tutorial as seen mutation (for "Skip" functionality)
   const markSeenMutation = useMutation({
     mutationFn: async () => {
-      logger.info(`Marking tutorial as seen for ${tabName}`);
+      console.log(`[TabTutorials] Marking tutorial as seen for ${tabName}`);
       
       // Use the direct method+url+data pattern for the API request
       return apiRequest(
@@ -198,71 +102,32 @@ export function useTabTutorials(tabName: string) {
       );
     },
     onSuccess: (result) => {
-      logger.info(`Successfully marked tutorial as seen for ${tabName}:`, result);
-      
-      // Update the cache to reflect that tutorial has been seen
-      // We don't mark it as completed, just update the timestamp
-      if (result && typeof result === 'object') {
-        const tutorialStatus = result as TutorialStatus;
-        cacheTutorialState(
-          currentUserId, 
-          tabName, 
-          tutorialStatus.completed || false, 
-          tutorialStatus.currentStep || 0
-        );
-      }
-      
+      console.log(`[TabTutorials] Successfully marked tutorial as seen for ${tabName}:`, result);
       // Invalidate tutorial status after update
       queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
     },
     onError: (error) => {
-      logger.error(`Error marking tutorial as seen for ${tabName}:`, error);
+      console.error(`[TabTutorials] Error marking tutorial as seen for ${tabName}:`, error);
     }
   });
   
   // Update local state when data changes
   useEffect(() => {
     if (data) {
-      logger.info(`Updating local state for ${tabName}:`, data);
+      console.log(`[TabTutorials] Updating local state for ${tabName}:`, data);
       
       // Log the real step information from the database
-      logger.info(`Real step information: currentStep=${data.currentStep}, totalSteps=${totalSteps}`);
-      
-      // Update our shared user ID for caching
-      if ('userId' in data && data.userId) {
-        currentUserId = data.userId as number;
-      }
-      
-      // Cache the data for faster access on future page loads
-      cacheTutorialState(currentUserId, tabName, data.completed || false, data.currentStep || 0);
+      console.log(`[TabTutorials] Real step information: currentStep=${data.currentStep}, totalSteps=${totalSteps}`);
       
       // Ensure we're using the exact value from the server
       // This will synchronize UI display with database values
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
-      
-      // HOLISTIC FIX: Check both completion status and if we're at the final step
-      const isCompletedOrFinal = data.completed || (data.currentStep >= (getTotalSteps(tabName) - 1));
-      
-      if (isCompletedOrFinal) {
-        logger.info(`Tutorial is marked as completed or at final step in server data - disabling it`, {
-          completed: data.completed,
-          currentStep: data.currentStep,
-          totalSteps: getTotalSteps(tabName)
-        });
-        setTutorialEnabled(false);
-      } else {
-        logger.info(`Tutorial is incomplete and not at final step - enabling it`, {
-          completed: data.completed,
-          currentStep: data.currentStep,
-          totalSteps: getTotalSteps(tabName)
-        });
-        setTutorialEnabled(true);
-      }
+      setTutorialEnabled(true);
     } else if (error) {
-      logger.error(`Error in tutorial data for ${tabName}:`, error);
+      console.error(`[TabTutorials] Error in tutorial data for ${tabName}:`, error);
     }
-  }, [data, error, tabName, totalSteps, getTotalSteps]);
+  }, [data, error, tabName, totalSteps]);
   
   // Handle advancing to next step
   const handleNext = useCallback(() => {
@@ -284,45 +149,10 @@ export function useTabTutorials(tabName: string) {
   
   // Handle completing the tutorial
   const handleComplete = useCallback(() => {
-    // Get the last step index for this tutorial (to ensure database consistency)
-    const finalStep = totalSteps - 1;
-    
-    logger.info(`[TabTutorials] Completing tutorial for ${tabName}`, {
-      currentStep,
-      finalStep,
-      totalSteps
-    });
-    
-    // ROOT CAUSE FIX: Immediately disable tutorial visibility to prevent flashing 4/4 state
-    // This prevents the tutorial modal from showing in its final state
-    setTutorialEnabled(false);
-    
-    // Mark as completed in local state
+    console.log(`[TabTutorials] Completing tutorial for ${tabName}`);
     setIsCompleted(true);
-    setCurrentStep(finalStep);
-    
-    // Explicitly update the cache to ensure consistent behavior
-    cacheTutorialState(currentUserId, tabName, true, finalStep);
-    
-    // Call the mutation with the final step to update the server
-    // This ensures the tutorial is marked completed in the database
-    updateTutorialMutation.mutate({ 
-      step: finalStep, 
-      completed: true 
-    });
-    
-    // ROOT CAUSE FIX: Add extra safety by clearing the cached state of shouldShowTutorial
-    // This additional check helps prevent any potential race conditions with tutorial state
-    if (typeof localStorage !== 'undefined') {
-      try {
-        // Attempt to specifically clear the tutorial state from all caches
-        // This is an extreme defensive measure to ensure tutorials don't flash
-        logger.info(`Extra safety measure: ensuring no tutorial flashing for ${tabName}`);
-      } catch (e) {
-        // Ignore errors - this is just an extra safety measure
-      }
-    }
-  }, [currentStep, updateTutorialMutation, tabName, totalSteps]);
+    updateTutorialMutation.mutate({ step: currentStep, completed: true });
+  }, [currentStep, updateTutorialMutation, tabName]);
   
   // Mark tutorial as seen (Skip)
   const markTutorialSeen = useCallback(() => {
@@ -331,7 +161,7 @@ export function useTabTutorials(tabName: string) {
   }, [markSeenMutation, tabName]);
   
   // Log the current state on every render
-  logger.info(`[TabTutorials] Current state for ${tabName}:`, {
+  console.log(`[TabTutorials] Current state for ${tabName}:`, {
     tutorialEnabled,
     isLoading,
     error,
@@ -339,16 +169,6 @@ export function useTabTutorials(tabName: string) {
     totalSteps,
     isCompleted
   });
-  
-  // IMPORTANT FIX: If we detect we're on the final step AND marked as completed,
-  // we should not show the tutorial at all - this fixes the issue with tutorials
-  // showing final step on first navigation but then not showing again
-  useEffect(() => {
-    if (isCompleted && currentStep >= totalSteps - 1) {
-      logger.info(`[TabTutorials] Tutorial is completed and on final step - ensuring it won't show`);
-      setTutorialEnabled(false);
-    }
-  }, [isCompleted, currentStep, totalSteps]);
   
   return {
     tutorialEnabled,

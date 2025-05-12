@@ -56,18 +56,9 @@ export function TabTutorialModal({
   // Handle next step or completion
   const handleNext = () => {
     if (currentStep >= totalSteps - 1) {
-      // This is the last step - mark as complete before closing
-      // We need to call onComplete first to ensure the state is updated
-      // in both local cache and server before closing the modal
       onComplete();
-      
-      // Add a small delay before closing to ensure state updates are processed
-      // This prevents the state mismatch between UI and persistence layer
-      setTimeout(() => {
-        setOpen(false);
-      }, 100);
+      setOpen(false);
     } else {
-      // Normal progression to next step
       onNext();
     }
   };
@@ -77,37 +68,7 @@ export function TabTutorialModal({
     setOpen(true);
   }, []);
   
-  // ROOT CAUSE FIX: Add critical early returns to prevent tutorial modal from showing
-  // when it shouldn't, specifically for final steps or edge cases
-  
-  // If the modal is closed, don't render anything
   if (!open) return null;
-  
-  // FIXED IMPLEMENTATION: Only prevent render of FINAL step when marked completed
-  // This prevents the 4/4 modal flash issue without blocking ALL tutorials
-  const isLastStep = currentStep >= totalSteps - 1;
-  
-  // ADDITIONAL DEBUG LOGGING FOR TUTORIAL DISPLAY
-  console.log(`[TabTutorialModal] Rendering modal with currentStep=${currentStep}, totalSteps=${totalSteps}, isLastStep=${isLastStep}`, {
-    title,
-    description: description.substring(0, 30) + '...',
-    imageUrl: imageUrl?.substring(0, 30) + '...',
-  });
-  
-  // If this is the last step of the tutorial, we should automatically mark as complete
-  // but CONTINUE to render it (unlike our previous implementation)
-  if (isLastStep) {
-    console.log(`[TabTutorialModal] At final step - will mark as complete shortly but WILL STILL RENDER`);
-    // If it's the final step, simply ensure completion is tracked
-    // This helps ensure consistent state
-    setTimeout(() => {
-      // Only call complete if we're at the end
-      if (currentStep >= totalSteps - 1) {
-        console.log(`[TabTutorialModal] Marking tutorial as complete via onComplete()`);
-        onComplete();
-      }
-    }, 0);
-  }
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" style={{ pointerEvents: 'none' }}>
