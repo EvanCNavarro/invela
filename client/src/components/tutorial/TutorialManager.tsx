@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
-import { TutorialLoadingOverlay } from './TutorialLoadingOverlay';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import type { Company } from '@/types/company';
 import { useTutorialLoadingStore } from '@/hooks/use-tutorial-loading';
 
 // Import tutorial debugging utilities if available
@@ -524,12 +522,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       });
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
-  
-  // Get company data to determine the skeleton type
-  const companyDataQuery = useQuery<Company>({ 
-    queryKey: ['/api/companies/current'] 
-  });
-  const companyCategory = companyDataQuery?.data?.category || 'Invela';
+  // We no longer need to get company data for the tutorial manager
+  // since we're using the dashboard's own skeleton loaders
   
   // Get the loading state setter from the store
   const setLoading = useTutorialLoadingStore(state => state.setLoading);

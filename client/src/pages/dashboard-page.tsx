@@ -46,7 +46,11 @@ import { NetworkVisualization } from "@/components/network";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { 
   DashboardSkeleton, 
-  FinTechDashboardSkeleton 
+  FinTechDashboardSkeleton,
+  SkeletonQuickActionsWidget,
+  SkeletonCompanySnapshotWidget,
+  SkeletonNetworkVisualizationWidget,
+  SkeletonRiskRadarWidget
 } from "@/components/dashboard/SkeletonWidgets";
 
 // Create separate default widget sets based on company type
@@ -228,8 +232,12 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : isLoading ? (
-            // Show appropriate skeleton based on current loading state
-            <DashboardSkeleton />
+            // Show appropriate skeleton based on company type
+            companyData?.category === 'FinTech' ? (
+              <FinTechDashboardSkeleton />
+            ) : (
+              <DashboardSkeleton />
+            )
           ) : (
             <div className="grid grid-cols-3 gap-4 flex-1 pb-8">
               {/* Quick Actions - Full width at the top */}
