@@ -77,6 +77,8 @@ export function TabTutorialModal({
   // Handle skip action
   const handleClose = () => {
     setOpen(false);
+    // Restore body scrolling
+    document.body.style.overflow = 'auto';
     onClose();
   };
   
@@ -88,6 +90,8 @@ export function TabTutorialModal({
     if (currentStep >= totalSteps - 1) {
       onComplete();
       setOpen(false);
+      // Restore body scrolling when tutorial is completed
+      document.body.style.overflow = 'auto';
     } else {
       onNext();
     }
@@ -138,6 +142,14 @@ export function TabTutorialModal({
   // Reset open state and track progress when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
+    
+    // Disable body scrolling when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    // Re-enable scrolling when component unmounts or modal is closed
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
   }, []);
   
   // No preloader tracking in this simplified version
