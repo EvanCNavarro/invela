@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useCallback } from "react";
+import { useState, useEffect, forwardRef, useCallback, useRef, useMemo } from "react";
 import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { unifiedToast } from "@/hooks/use-unified-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Create a custom dialog content without close button
 const CustomDialogContent = forwardRef<
@@ -49,7 +50,12 @@ const carouselContent: CarouselItem[] = [
     src: "/attached_assets/welcome_1.png",
     alt: "Welcome to Invela Trust Network",
     title: "Welcome to Invela Trust Network",
-    subtitle: "Welcome to Invela, your trusted partner in secure accreditation and onboarding processes. Our system ensures robust trust and security throughout your accreditation journey."
+    subtitle: "Your trusted partner in secure accreditation. Our platform streamlines verification processes while maintaining the highest levels of security and compliance.",
+    bulletPoints: [
+      "Enterprise-grade risk assessment platform",
+      "Simplified onboarding with smart automation",
+      "Centralized compliance management"
+    ]
   },
   {
     src: "/attached_assets/welcome_2.png",
@@ -168,11 +174,22 @@ export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
+  const [imageOpacity, setImageOpacity] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
   const unifiedToastHook = useUnifiedToast();
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
+  
+  // Use a ref to track previous slide for determining animation direction
+  const prevSlideRef = useRef(currentSlide);
+  
+  // Calculate animation direction (1 for forward, -1 for backward)
+  const animationDirection = useMemo(() => {
+    const direction = currentSlide >= prevSlideRef.current ? 1 : -1;
+    prevSlideRef.current = currentSlide;
+    return direction;
+  }, [currentSlide]);
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
