@@ -506,37 +506,84 @@ export function WelcomeModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
               {/* Content with title and subtitle */}
-              <div className="mb-5">
-                <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full mb-4">
-                  Onboarding Modal
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  {carouselContent[currentSlide].title}
-                </h2>
-                
-                <p className="text-lg text-gray-700">
-                  {carouselContent[currentSlide].subtitle}
-                </p>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`content-${currentSlide}`}
+                  initial={{ 
+                    opacity: 0, 
+                    x: animationDirection * 30 
+                  }}
+                  animate={{ 
+                    opacity: 1, 
+                    x: 0 
+                  }}
+                  exit={{ 
+                    opacity: 0, 
+                    x: animationDirection * -30 
+                  }}
+                  transition={{ 
+                    duration: 0.4, 
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="mb-5"
+                >
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full mb-4"
+                  >
+                    Onboarding Modal
+                  </motion.div>
+                  
+                  <motion.h2 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-2xl font-bold text-gray-900 mb-4"
+                  >
+                    {carouselContent[currentSlide].title}
+                  </motion.h2>
+                  
+                  <motion.p 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-lg text-gray-700"
+                  >
+                    {carouselContent[currentSlide].subtitle}
+                  </motion.p>
 
-                {/* Bullet points if available */}
-                {carouselContent[currentSlide].bulletPoints && (
-                  <div className="mt-8 space-y-5">
-                    {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                        <p className="text-lg font-medium text-gray-700">
-                          {point}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {/* Bullet points if available */}
+                  {carouselContent[currentSlide].bulletPoints && (
+                    <motion.div 
+                      className="mt-8 space-y-5"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
+                        <motion.div 
+                          key={index} 
+                          className="flex items-start space-x-3"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.4 + (index * 0.1) }}
+                        >
+                          <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <p className="text-lg font-medium text-gray-700">
+                            {point}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
             
             {/* Right side: Image container */}
@@ -545,39 +592,92 @@ export function WelcomeModal() {
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* Skeleton during loading */}
                 {!imagesLoaded[carouselContent[currentSlide].src] && (
-                  <div className="w-[90%] aspect-square rounded-lg mx-auto">
+                  <motion.div
+                    initial={{ opacity: 0.6 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ 
+                      duration: 0.8, 
+                      repeat: Infinity, 
+                      repeatType: "reverse" 
+                    }}
+                    className="w-[90%] aspect-square rounded-lg mx-auto"
+                  >
                     <Skeleton className="w-full h-full rounded-lg" />
-                  </div>
+                  </motion.div>
                 )}
                 
-                {/* Actual image */}
-                <div className="relative p-6 w-full h-full flex items-center justify-center">
-                  <img 
-                    src={carouselContent[currentSlide].src} 
-                    alt={carouselContent[currentSlide].alt} 
-                    className={cn(
-                      "max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10 transition-opacity duration-300",
-                      imagesLoaded[carouselContent[currentSlide].src] ? "opacity-100" : "opacity-0"
-                    )}
-                    onError={(e) => {
-                      // Use dynamic import to avoid bundling logger in case it's not used
-                      import('@/lib/logger').then(({ logger }) => {
-                        logger.error('[WelcomeModal] Failed to load carousel image', {
-                          src: carouselContent[currentSlide].src,
-                          slide: currentSlide,
-                          error: e
-                        });
-                      });
-                    }}
-                    onLoad={() => {
-                      // Mark this image as loaded without excessive logging
-                      setImagesLoaded(prev => ({
-                        ...prev,
-                        [carouselContent[currentSlide].src]: true
-                      }));
-                    }}
-                  />
-                </div>
+                {/* Animated image with transitions */}
+                <AnimatePresence mode="wait">
+                  {imagesLoaded[carouselContent[currentSlide].src] && (
+                    <motion.div
+                      key={`image-${currentSlide}`}
+                      initial={{ 
+                        opacity: 0,
+                        scale: 0.95,
+                        y: animationDirection * 10 
+                      }}
+                      animate={{ 
+                        opacity: 1,
+                        scale: 1,
+                        y: 0
+                      }}
+                      exit={{ 
+                        opacity: 0,
+                        scale: 0.95,
+                        y: animationDirection * -10
+                      }}
+                      transition={{ 
+                        duration: 0.5,
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
+                      className="relative p-6 w-full h-full flex items-center justify-center"
+                    >
+                      <motion.div 
+                        className="relative w-full h-full flex items-center justify-center"
+                        initial={{ rotate: animationDirection * -1 }}
+                        animate={{ rotate: 0 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      >
+                        <motion.div 
+                          className="absolute inset-4 bg-blue-50/50 rounded-lg"
+                          initial={{ rotate: animationDirection * 2 }}
+                          animate={{ rotate: 1 }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                        />
+                        <motion.div 
+                          className="absolute inset-4 bg-blue-100/20 rounded-lg"
+                          initial={{ rotate: animationDirection * -2 }}
+                          animate={{ rotate: -1 }}
+                          transition={{ duration: 0.7, ease: "easeOut" }}
+                        />
+                        <img 
+                          src={carouselContent[currentSlide].src} 
+                          alt={carouselContent[currentSlide].alt} 
+                          className="max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10"
+                          onError={(e) => {
+                            // Use dynamic import to avoid bundling logger in case it's not used
+                            import('@/lib/logger').then(({ logger }) => {
+                              logger.error('[WelcomeModal] Failed to load carousel image', {
+                                src: carouselContent[currentSlide].src,
+                                slide: currentSlide,
+                                error: e
+                              });
+                            });
+                          }}
+                          onLoad={() => {
+                            // Mark this image as loaded without excessive logging
+                            setImagesLoaded(prev => ({
+                              ...prev,
+                              [carouselContent[currentSlide].src]: true
+                            }));
+                            // Fade in the image
+                            setImageOpacity(1);
+                          }}
+                        />
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -586,40 +686,67 @@ export function WelcomeModal() {
           <div className="flex items-center justify-between p-6 border-t">
             {/* Back button - hidden on first slide */}
             <div className="min-w-[100px]">
-              {currentSlide > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  className="px-6 py-2 h-auto text-base"
-                >
-                  Back
-                </Button>
-              )}
+              <AnimatePresence>
+                {currentSlide > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={handlePrevious}
+                      className="px-6 py-2 h-auto text-base"
+                    >
+                      Back
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Step indicators in the middle */}
             <div className="flex gap-2 mx-4">
               {carouselContent.map((_, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className={`h-2.5 rounded-full transition-all ${
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    width: index === currentSlide ? "2rem" : "1rem",
+                  }}
+                  transition={{ 
+                    duration: 0.4,
+                    delay: 0.05 * index,
+                    width: { duration: 0.3 }
+                  }}
+                  className={`h-2.5 rounded-full ${
                     index === currentSlide
-                      ? "bg-primary w-8"
-                      : "bg-primary/20 w-4"
+                      ? "bg-primary"
+                      : "bg-primary/20"
                   }`}
                 />
               ))}
             </div>
 
-            <Button
-              onClick={handleNext}
-              className={cn(
-                "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
-                isLastSlide && "pulse-border-animation font-bold bg-blue-600 hover:bg-blue-700 px-8"
-              )}
+            {/* Next/Start button with pulsing animation on final step */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
             >
-              {isLastSlide ? "Start" : "Next"}
-            </Button>
+              <Button
+                onClick={handleNext}
+                className={cn(
+                  "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                  isLastSlide && "pulse-border-animation font-bold bg-blue-600 hover:bg-blue-700 px-8"
+                )}
+              >
+                {isLastSlide ? "Start" : "Next"}
+              </Button>
+            </motion.div>
           </div>
         </div>
       </CustomDialogContent>
