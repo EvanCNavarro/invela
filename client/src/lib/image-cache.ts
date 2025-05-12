@@ -285,28 +285,37 @@ export function preloadTutorialImages(
   currentStep: number,
   totalSteps: number
 ): void {
+  // Import from utils (import at top of file was causing circular dependencies)
+  const { normalizeTabName } = require('@/utils/tutorial-utils');
+  
+  // Normalize the tab name to ensure consistency
+  const normalizedTabName = normalizeTabName(tabName);
+  
   // Calculate which images to preload
   const imagesToPreload: string[] = [];
   
   // Get the correct image base name from the centralized configuration
-  const imageBaseName = getImageBaseName(tabName);
+  const imageBaseName = getImageBaseName(normalizedTabName);
   
-  // Always preload current step
-  imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep + 1}.png`);
+  // Always preload current step - use step+1 because our indexes are 0-based but image names are 1-based
+  const currentImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep + 1}.png`;
+  imagesToPreload.push(currentImageUrl);
   
   // Preload next step if not at the end
   if (currentStep < totalSteps - 1) {
-    imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep + 2}.png`);
+    const nextImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep + 2}.png`;
+    imagesToPreload.push(nextImageUrl);
   }
   
   // Optionally preload previous step for back navigation
   if (currentStep > 0) {
-    imagesToPreload.push(`/assets/tutorials/${tabName}/${imageBaseName}${currentStep}.png`);
+    const prevImageUrl = `/assets/tutorials/${normalizedTabName}/${imageBaseName}${currentStep}.png`;
+    imagesToPreload.push(prevImageUrl);
   }
   
   // Preload all images
   preloadImages(imagesToPreload);
-  logger.debug(`Preloaded ${imagesToPreload.length} tutorial images for ${tabName}`);
+  logger.debug(`Preloaded ${imagesToPreload.length} tutorial images for ${normalizedTabName}`);
 }
 
 /**

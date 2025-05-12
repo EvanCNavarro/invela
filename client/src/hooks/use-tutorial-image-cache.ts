@@ -1,14 +1,18 @@
 /**
  * Tutorial Image Cache Hook
  * 
- * This hook manages the caching of tutorial images to ensure smooth transitions
- * between tutorial steps with minimal loading times.
+ * This hook provides a convenient way to interact with the image cache system 
+ * specifically for tutorial images, handling preloading, loading states,
+ * and performance monitoring.
  */
-import { useState, useEffect } from 'react';
-import { preloadImage, preloadImages, isImageCached, preloadTutorialImages } from '@/lib/image-cache';
-import { createTutorialLogger } from '@/lib/tutorial-logger';
 
-// Create a dedicated logger for this hook
+import { useState, useEffect } from 'react';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { isImageCached, preloadTutorialImages, getCacheStats } from '@/lib/image-cache';
+import { getImageBaseName } from '@/lib/tutorial-config';
+import { normalizeTabName, createTutorialImageUrl } from '@/utils/tutorial-utils';
+
+// Create dedicated logger for this hook
 const logger = createTutorialLogger('TutorialImageCache');
 
 interface UseTutorialImageCacheProps {
@@ -18,110 +22,80 @@ interface UseTutorialImageCacheProps {
   imageUrl?: string;
 }
 
-interface UseTutorialImageCacheReturn {
+interface UseTutorialImageCacheResult {
   isLoading: boolean;
-  imageUrl: string | undefined;
   cachePerformance: {
-    cacheHit: boolean;
-    loadTimeMs?: number;
-    imageLoaded: boolean;
+    cacheSize: number;
+    hitRate: number;
   };
 }
 
 /**
- * Hook for caching and preloading tutorial images
+ * Hook for managing tutorial image caching
  * 
- * This hook manages the loading, caching, and preloading of tutorial images
- * for smoother transitions between steps.
- * 
- * @param tabName - Name of the current tutorial tab
- * @param currentStep - Current step index
- * @param totalSteps - Total number of steps
- * @param imageUrl - Current image URL
- * @returns Object with loading state and image URL
+ * This hook handles the preloading of tutorial images and provides
+ * loading state management and performance metrics.
  */
 export function useTutorialImageCache({
   tabName,
   currentStep,
   totalSteps,
   imageUrl
-}: UseTutorialImageCacheProps): UseTutorialImageCacheReturn {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadStartTime, setLoadStartTime] = useState<number | null>(null);
-  const [loadTimeMs, setLoadTimeMs] = useState<number | undefined>(undefined);
-  const [cacheHit, setCacheHit] = useState<boolean>(false);
-  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
-  
-  // On mount, we setup performance tracking
+}: UseTutorialImageCacheProps): UseTutorialImageCacheResult {
+  const [isLoading, setIsLoading] = useState(true);
+  const [cachePerformance, setCachePerformance] = useState({
+    cacheSize: 0,
+    hitRate: 0
+  });
+
+  // Initialize cache on first load
   useEffect(() => {
+    // Log initialization for debugging
     logger.debug(`Tutorial image cache hook initialized for ${tabName}`);
+  }, []);
+
+  // Preload images when tab name or step changes
+  useEffect(() => {
+    if (!tabName) return;
+
+    const normalizedTabName = normalizeTabName(tabName);
     
-    // Clean up function
-    return () => {
-      logger.debug(`Tutorial image cache hook cleanup for ${tabName}`);
-    };
-  }, [tabName]);
-  
-  // When image URL changes, handle loading and caching
+    // Only preload if we have a valid tab name and step
+    if (normalizedTabName && currentStep >= 0 && totalSteps > 0) {
+      logger.debug(`Preloading tutorial images for ${normalizedTabName} (step ${currentStep + 1}/${totalSteps})`);
+      
+      // Use the preloading function from the image cache module
+      preloadTutorialImages(normalizedTabName, currentStep, totalSteps);
+      
+      // Update cache performance stats
+      const stats = getCacheStats();
+      setCachePerformance({
+        cacheSize: stats.size,
+        hitRate: stats.totalHits > 0 ? stats.averageHits : 0
+      });
+    }
+  }, [tabName, currentStep, totalSteps]);
+
+  // Check if current image is already cached and update loading state
   useEffect(() => {
     if (!imageUrl) {
       setIsLoading(false);
-      setCacheHit(false);
-      setImageLoaded(false);
       return;
     }
-    
-    // Start loading timer
-    setLoadStartTime(Date.now());
-    setIsLoading(true);
-    setImageLoaded(false);
-    
-    // Check if image is already in cache
-    const cached = isImageCached(imageUrl);
-    setCacheHit(cached);
-    
-    if (cached) {
-      // Image is already cached, so we can show it immediately
+
+    // Check if the specific image is cached
+    if (isImageCached(imageUrl)) {
       logger.debug(`Cache hit for tutorial image: ${imageUrl}`);
       setIsLoading(false);
-      setImageLoaded(true);
-      setLoadTimeMs(0); // Instant load from cache
     } else {
-      // Image is not cached, so we need to load it
       logger.debug(`Cache miss for tutorial image: ${imageUrl}`);
-      
-      // Load the image
-      preloadImage(imageUrl)
-        .then(() => {
-          setIsLoading(false);
-          setImageLoaded(true);
-          // Calculate load time
-          if (loadStartTime) {
-            const loadTime = Date.now() - loadStartTime;
-            setLoadTimeMs(loadTime);
-            logger.debug(`Image loaded in ${loadTime}ms: ${imageUrl}`);
-          }
-        })
-        .catch(error => {
-          logger.error(`Error loading image: ${imageUrl}`, error);
-          setIsLoading(false);
-          setImageLoaded(false);
-        });
+      setIsLoading(true);
     }
-    
-    // Preload adjacent steps for a smoother experience
-    preloadTutorialImages(tabName, currentStep, totalSteps);
-    
-  }, [imageUrl, tabName, currentStep, totalSteps]);
-  
+  }, [imageUrl]);
+
   return {
     isLoading,
-    imageUrl,
-    cachePerformance: {
-      cacheHit,
-      loadTimeMs,
-      imageLoaded
-    }
+    cachePerformance
   };
 }
 
