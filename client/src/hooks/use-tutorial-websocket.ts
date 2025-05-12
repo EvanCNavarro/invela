@@ -52,8 +52,8 @@ export function useTutorialWebSocket(tabName: string) {
       // Dashboard variations
       'dashboard-page': 'dashboard',
       
-      // Company profile variations
-      'company-profile-page': 'company-profile',
+      // Risk score configuration variations
+      'risk-score-config': 'risk-score-configuration',
     };
     
     // Return the canonical version or the original cleaned name
