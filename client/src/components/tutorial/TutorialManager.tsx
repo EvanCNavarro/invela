@@ -2,12 +2,17 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialWebSocket, normalizeTabName } from '@/hooks/use-tutorial-websocket';
+import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { useTutorialLoadingStore } from '@/hooks/use-tutorial-loading';
+import { 
+  normalizeTabName, 
+  getTabBaseRoute, 
+  isTutorialEnabledForTab 
+} from '@/constants/tutorial-constants';
 
 // Import tutorial debugging utilities if available
 let tutorialDebug: any = null;
@@ -291,20 +296,9 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   const normalizedTabName = normalizeTabNameWithLogging(tabName);
   
   // Check if current location is a base route or a subpage
-  const isBaseRoute = (): boolean => {
+  const isBaseRoute = useCallback((): boolean => {
     // Extract the base path without query parameters
     const path = location.split('?')[0];
-    
-    // Map from tab name to expected base route
-    const baseRouteMap: Record<string, string> = {
-      'dashboard': '/',
-      'insights': '/insights',
-      'network': '/network',
-      'file-vault': '/file-vault',
-      'claims': '/claims',
-      'claims-risk': '/claims-risk',
-      'risk-score-configuration': '/risk-score-configuration',
-    };
     
     // Special handling for dashboard (both '/' and '/dashboard' are valid base routes)
     if (normalizedTabName === 'dashboard' && (path === '/' || path === '/dashboard')) {
@@ -312,8 +306,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       return true;
     }
     
-    // Get the expected base route for this tab
-    const expectedBaseRoute = baseRouteMap[normalizedTabName];
+    // Get the expected route for this tab
+    const expectedBaseRoute = getTabBaseRoute(normalizedTabName);
     
     // If no expected base route is defined, don't show the tutorial
     if (!expectedBaseRoute) {
@@ -322,12 +316,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     }
     
     // Check if current path is the base route
-    const isOnBaseRoute: boolean = path === expectedBaseRoute;
+    const isOnBaseRoute = path === expectedBaseRoute;
     
     logger.info(`Base route check: ${isOnBaseRoute ? 'true' : 'false'} for tab ${normalizedTabName} (path: ${path}, expected: ${expectedBaseRoute})`);
     
     return isOnBaseRoute;
-  };
+  }, [location, normalizedTabName]);
   
   // Get tutorial data from hooks
   const { 

@@ -181,3 +181,53 @@ export function extractTabNameFromPath(path: string): string {
   
   return normalizeTabName(firstSegment);
 }
+
+/**
+ * Create a new tutorial entry for a tab
+ * 
+ * This function handles initializing a new tutorial entry for a user
+ * when they visit a tab for the first time.
+ * 
+ * @param tabName The tab name
+ * @returns Promise that resolves when the tutorial is created
+ */
+export async function createTutorialEntry(tabName: string): Promise<any> {
+  // First normalize the tab name to ensure consistency
+  const normalizedTabName = normalizeTabName(tabName);
+  
+  // Don't create entries for tabs that don't have tutorials
+  if (!isTutorialEnabledForTab(normalizedTabName)) {
+    console.log(`[Tutorial] Not creating tutorial entry for ${normalizedTabName} - tutorial not enabled for this tab`);
+    return null;
+  }
+  
+  try {
+    // Calculate total steps for this tab
+    const totalSteps = getTutorialStepCount(normalizedTabName);
+    
+    // Make an API request to create the tutorial entry
+    const response = await fetch('/api/user-tab-tutorials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        tabName: normalizedTabName,
+        currentStep: 0, // Always start at step 0
+        completed: false, // Not completed initially
+        totalSteps, // Pass the total steps for this tutorial
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create tutorial entry: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log(`[Tutorial] Created new tutorial entry for ${normalizedTabName}:`, result);
+    return result;
+  } catch (error) {
+    console.error(`[Tutorial] Error creating tutorial entry for ${normalizedTabName}:`, error);
+    throw error;
+  }
+}

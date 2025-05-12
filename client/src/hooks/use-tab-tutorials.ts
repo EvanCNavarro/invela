@@ -2,7 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { normalizeTabName } from '@/hooks/use-tutorial-websocket';
+import { 
+  normalizeTabName, 
+  createTutorialEntry, 
+  isTutorialEnabledForTab, 
+  getTutorialStepCount 
+} from '@/constants/tutorial-constants';
 
 // Create a dedicated logger for the TabTutorials hook
 const logger = createTutorialLogger('TabTutorials');
@@ -133,6 +138,34 @@ export function useTabTutorials(inputTabName: string) {
     }
   });
   
+  // State to track if we've tried initializing a new tutorial
+  const [initializationAttempted, setInitializationAttempted] = useState(false);
+  
+  // Function to initialize a new tutorial for this tab
+  const initializeTutorial = useCallback(async () => {
+    if (!isTutorialEnabledForTab(tabName) || initializationAttempted) {
+      return;
+    }
+    
+    logger.info(`Attempting to initialize tutorial for ${tabName}`);
+    setInitializationAttempted(true);
+    
+    try {
+      // Create the tutorial entry
+      const result = await createTutorialEntry(tabName);
+      
+      if (result && result.success) {
+        logger.info(`Successfully initialized tutorial for ${tabName}:`, result);
+        // Invalidate the query to refetch with the new tutorial
+        queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', tabName] });
+      } else {
+        logger.warn(`Failed to initialize tutorial for ${tabName}:`, result);
+      }
+    } catch (error) {
+      logger.error(`Error initializing tutorial for ${tabName}:`, error);
+    }
+  }, [tabName, initializationAttempted, queryClient]);
+
   // Update local state when data changes
   useEffect(() => {
     if (data) {
@@ -155,6 +188,13 @@ export function useTabTutorials(inputTabName: string) {
       if (!data.completed && data.exists) {
         logger.info(`Enabling tutorial for ${tabName} - tutorial exists and is not completed`);
         setTutorialEnabled(true);
+      } else if (!data.exists && !initializationAttempted && isTutorialEnabledForTab(tabName)) {
+        // If the tutorial doesn't exist yet but should be enabled for this tab,
+        // initialize it automatically
+        logger.info(`Tutorial for ${tabName} doesn't exist - initializing automatically`);
+        initializeTutorial();
+        // Don't enable yet - wait for the initialization and refetch
+        setTutorialEnabled(false);
       } else {
         logger.info(`Not showing tutorial for ${tabName} - completed=${data.completed}, exists=${data.exists}`);
         setTutorialEnabled(false);
@@ -162,7 +202,7 @@ export function useTabTutorials(inputTabName: string) {
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
     }
-  }, [data, error, tabName, totalSteps]);
+  }, [data, error, tabName, totalSteps, initializeTutorial, initializationAttempted]);
   
   // Handle advancing to next step
   const handleNext = useCallback(() => {
