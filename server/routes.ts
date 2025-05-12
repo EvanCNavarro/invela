@@ -1095,6 +1095,13 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Update current company - supports POST with X-HTTP-Method-Override header for PATCH
   app.post("/api/companies/current", requireAuth, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          message: "Unauthorized - User not logged in",
+          code: "UNAUTHORIZED"
+        });
+      }
+      
       const companyId = req.user.company_id;
       const updateData = req.body;
       
@@ -1103,8 +1110,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         contentType: req.headers['content-type'],
         methodOverride: req.headers['x-http-method-override']
       });
-      // For debugging, dump the full raw body content
-      console.log(`[Current Company] Raw body type:`, typeof req.body, Array.isArray(req.body));
       
       // Validate input
       if (!updateData) {
@@ -1124,10 +1129,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const dbUpdateData: Record<string, any> = {};
       
       if (updateData.numEmployees !== undefined) {
+        console.log(`[Current Company] Setting num_employees to:`, updateData.numEmployees);
         dbUpdateData.num_employees = updateData.numEmployees;
       }
       
       if (updateData.revenueTier !== undefined) {
+        console.log(`[Current Company] Setting revenue_tier to:`, updateData.revenueTier);
         dbUpdateData.revenue_tier = updateData.revenueTier;
       }
       
@@ -1139,6 +1146,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           code: "INVALID_UPDATE_DATA"
         });
       }
+      
+      console.log(`[Current Company] Executing update with data:`, dbUpdateData);
       
       // Update the company record
       const [updatedCompany] = await db
@@ -1154,6 +1163,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           num_employees: companies.num_employees,
           onboarding_company_completed: companies.onboarding_company_completed
         });
+      
+      if (!updatedCompany) {
+        console.error(`[Current Company] Update query did not return company data for ID ${companyId}`);
+        return res.status(404).json({
+          message: "Company not found after update",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
       
       // Invalidate the company cache to ensure future GET requests fetch fresh data
       invalidateCompanyCache(companyId);
@@ -1176,7 +1193,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       return res.status(500).json({
         message: "Error updating company data",
         code: "SERVER_ERROR",
-        error: String(error)
+        details: error instanceof Error ? error.message : String(error)
       });
     }
   });
