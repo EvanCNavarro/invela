@@ -34,8 +34,17 @@ const CustomDialogContent = forwardRef<
 ));
 CustomDialogContent.displayName = "CustomDialogContent";
 
+// Define the type for carousel content items
+interface CarouselItem {
+  src: string;
+  alt: string;
+  title: string;
+  subtitle: string;
+  bulletPoints?: string[];
+}
+
 // New carousel content with the expanded 7 steps
-const carouselContent = [
+const carouselContent: CarouselItem[] = [
   {
     src: "/attached_assets/welcome_1.png",
     alt: "Welcome to Invela Trust Network",
