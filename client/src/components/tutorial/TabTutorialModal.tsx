@@ -3,6 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { cn } from '@/lib/utils';
+import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { preloadImage, isImageCached } from '@/lib/image-cache';
+
+// Create dedicated logger for this component
+const logger = createTutorialLogger('TabTutorialModal');
 
 // Define the tutorial step interface
 export interface TutorialStep {
@@ -28,6 +33,9 @@ export interface TabTutorialModalProps {
   onClose: () => void;
   bulletPoints?: string[];
   stepTitle?: string;
+  // New optional props for better image handling
+  preloadedImages?: string[];
+  allStepImages?: string[];
 }
 
 /**
@@ -35,6 +43,8 @@ export interface TabTutorialModalProps {
  * 
  * This reusable component renders a tutorial modal specifically for the content area
  * with a consistent UI and navigation controls, while keeping sidebar and navbar accessible.
+ * 
+ * The component now supports image preloading for smoother transitions between steps.
  */
 export function TabTutorialModal({
   title,
@@ -48,10 +58,16 @@ export function TabTutorialModal({
   onComplete,
   onClose,
   bulletPoints = [],
-  stepTitle = ''
+  stepTitle = '',
+  preloadedImages = [],
+  allStepImages = []
 }: TabTutorialModalProps) {
   const [open, setOpen] = useState(true);
   const { isExpanded } = useSidebarStore();
+  
+  // State for image loading management
+  const [imageLoadingState, setImageLoadingState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [imageOpacity, setImageOpacity] = useState(0);
   
   // Handle skip action
   const handleClose = () => {
@@ -61,17 +77,150 @@ export function TabTutorialModal({
   
   // Handle next step or completion
   const handleNext = () => {
+    // Reset image opacity for smooth transition
+    setImageOpacity(0);
+    
     if (currentStep >= totalSteps - 1) {
       onComplete();
       setOpen(false);
     } else {
+      // Preload the next image before transitioning
+      if (allStepImages && allStepImages[currentStep + 1]) {
+        const nextImage = allStepImages[currentStep + 1];
+        if (!isImageCached(nextImage)) {
+          logger.debug(`Preloading next step image: ${nextImage}`);
+          preloadImage(nextImage).catch(err => 
+            logger.error(`Failed to preload next image: ${nextImage}`, err)
+          );
+        }
+      }
+      
       onNext();
     }
   };
+
+  // Image loading handler
+  const handleImageLoad = () => {
+    logger.debug(`Image loaded successfully: ${imageUrl}`);
+    setImageLoadingState('loaded');
+    
+    // Fade in the image
+    setTimeout(() => {
+      setImageOpacity(1);
+    }, 50);
+  };
+  
+  // Image error handler
+  const handleImageError = () => {
+    logger.error(`Failed to load image: ${imageUrl}`);
+    setImageLoadingState('error');
+    setImageOpacity(1); // Show error state
+  };
+  
+  // Preload adjacent images on mount or when current step changes
+  useEffect(() => {
+    if (!allStepImages || allStepImages.length === 0) return;
+    
+    // Reset loading state for the current image
+    setImageLoadingState('loading');
+    setImageOpacity(0);
+    
+    // We'll prioritize preloading:
+    // 1. Current image (if not already cached)
+    // 2. Next image
+    // 3. Previous image
+    // 4. Images 2 steps away
+    
+    // Current image
+    const currentImg = allStepImages[currentStep];
+    if (currentImg && !isImageCached(currentImg)) {
+      logger.debug(`Preloading current step image: ${currentImg}`);
+      preloadImage(currentImg)
+        .then(() => {
+          // Once the current image is loaded, set it to loaded state
+          if (currentImg === imageUrl) {
+            setImageLoadingState('loaded');
+            setTimeout(() => setImageOpacity(1), 50);
+          }
+        })
+        .catch(err => logger.error(`Failed to preload current image: ${currentImg}`, err));
+    } else if (currentImg && isImageCached(currentImg)) {
+      // Image already cached, mark as loaded
+      logger.debug(`Current image already cached: ${currentImg}`);
+      setImageLoadingState('loaded');
+      setTimeout(() => setImageOpacity(1), 50);
+    }
+    
+    // Next image (if exists)
+    if (currentStep + 1 < totalSteps && allStepImages[currentStep + 1]) {
+      const nextImg = allStepImages[currentStep + 1];
+      if (!isImageCached(nextImg)) {
+        logger.debug(`Preloading next step image: ${nextImg}`);
+        preloadImage(nextImg).catch(err => 
+          logger.error(`Failed to preload next image: ${nextImg}`, err)
+        );
+      }
+    }
+    
+    // Previous image (if exists)
+    if (currentStep > 0 && allStepImages[currentStep - 1]) {
+      const prevImg = allStepImages[currentStep - 1];
+      if (!isImageCached(prevImg)) {
+        logger.debug(`Preloading previous step image: ${prevImg}`);
+        preloadImage(prevImg).catch(err => 
+          logger.error(`Failed to preload previous image: ${prevImg}`, err)
+        );
+      }
+    }
+  }, [currentStep, imageUrl, allStepImages, totalSteps]);
   
   // Reset open state when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
+    
+    // Log if we have preloaded images
+    if (preloadedImages && preloadedImages.length > 0) {
+      logger.debug(`Tutorial has ${preloadedImages.length} preloaded images`);
+    }
+    
+    // Preload all step images in the background if not already done
+    if (allStepImages && allStepImages.length > 0) {
+      logger.info(`Scheduling background preloading for ${allStepImages.length} tutorial images`);
+      
+      // Use a slight delay to avoid competing with the current image load
+      setTimeout(() => {
+        // Only preload images that aren't already cached
+        const uncachedImages = allStepImages.filter(img => !isImageCached(img));
+        
+        if (uncachedImages.length > 0) {
+          logger.debug(`Background preloading ${uncachedImages.length} uncached images`);
+          
+          // Load images in sequence with a small delay between each
+          let index = 0;
+          const loadNextImage = () => {
+            if (index >= uncachedImages.length) return;
+            
+            const img = uncachedImages[index];
+            preloadImage(img)
+              .then(() => {
+                logger.debug(`Background preloaded image ${index + 1}/${uncachedImages.length}: ${img}`);
+              })
+              .catch(err => {
+                logger.error(`Failed to background preload image: ${img}`, err);
+              })
+              .finally(() => {
+                index++;
+                // Use a small delay to avoid overwhelming the browser
+                setTimeout(loadNextImage, 100);
+              });
+          };
+          
+          loadNextImage();
+        } else {
+          logger.debug('All images already cached, skipping background preload');
+        }
+      }, 500);
+    }
   }, []);
   
   if (!open) return null;
@@ -156,29 +305,55 @@ export function TabTutorialModal({
             
             {/* Right side: Image container - more square-shaped */}
             <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
+              {/* Enhanced image loading with smooth transitions */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* Always show skeleton during initial load */}
+                {(isLoading || imageLoadingState === 'loading') && (
                   <Skeleton className="w-[90%] aspect-square rounded-lg mx-auto" />
-                </div>
-              ) : imageUrl ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src={imageUrl} 
-                      alt={title} 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
+                )}
+                
+                {/* Image with transition */}
+                {imageUrl && (
+                  <div 
+                    className={`absolute inset-0 flex items-center justify-center p-6 transition-opacity duration-300 ease-in-out`}
+                    style={{ opacity: imageOpacity }}
+                  >
+                    <div className="relative w-full aspect-square flex items-center justify-center">
+                      <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                      <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                      <img 
+                        src={imageUrl} 
+                        alt={stepTitle || title} 
+                        className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                        onLoad={handleImageLoad}
+                        onError={handleImageError}
+                      />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
-                    No image available
+                )}
+                
+                {/* Error state */}
+                {imageLoadingState === 'error' && !isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center p-5">
+                    <div className="w-full aspect-square rounded-lg bg-red-50 flex flex-col items-center justify-center text-red-500 p-4">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <p className="mt-2 text-center">Image could not be loaded</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                
+                {/* No image available state */}
+                {!imageUrl && !isLoading && imageLoadingState !== 'error' && (
+                  <div className="absolute inset-0 flex items-center justify-center p-5">
+                    <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
+                      No image available
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
