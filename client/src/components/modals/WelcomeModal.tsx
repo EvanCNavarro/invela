@@ -528,14 +528,16 @@ export function WelcomeModal() {
                   className="mb-5 h-full flex flex-col transform-gpu"
                   style={{ willChange: 'transform, opacity' }}
                 >
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full mb-4"
-                  >
-                    Onboarding Modal
-                  </motion.div>
+                  <div className="flex">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="inline-flex px-4 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full mb-4 w-auto mx-0"
+                    >
+                      Onboarding Modal
+                    </motion.div>
+                  </div>
                   
                   {currentSlide === 0 ? (
                     <motion.div
