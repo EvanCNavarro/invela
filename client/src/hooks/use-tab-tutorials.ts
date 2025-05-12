@@ -241,17 +241,28 @@ export function useTabTutorials(tabName: string) {
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
       
-      // CRITICAL FIX: If the tutorial is completed, don't enable it
-      if (data.completed) {
-        logger.info(`Tutorial is marked as completed in server data - disabling it`);
+      // HOLISTIC FIX: Check both completion status and if we're at the final step
+      const isCompletedOrFinal = data.completed || (data.currentStep >= (getTotalSteps(tabName) - 1));
+      
+      if (isCompletedOrFinal) {
+        logger.info(`Tutorial is marked as completed or at final step in server data - disabling it`, {
+          completed: data.completed,
+          currentStep: data.currentStep,
+          totalSteps: getTotalSteps(tabName)
+        });
         setTutorialEnabled(false);
       } else {
+        logger.info(`Tutorial is incomplete and not at final step - enabling it`, {
+          completed: data.completed,
+          currentStep: data.currentStep,
+          totalSteps: getTotalSteps(tabName)
+        });
         setTutorialEnabled(true);
       }
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
     }
-  }, [data, error, tabName, totalSteps]);
+  }, [data, error, tabName, totalSteps, getTotalSteps]);
   
   // Handle advancing to next step
   const handleNext = useCallback(() => {
