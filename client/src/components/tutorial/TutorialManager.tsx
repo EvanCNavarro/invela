@@ -254,24 +254,19 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to navigate and use the main dashboard',
     steps: [
       {
-        title: 'Dashboard Overview',
-        description: 'Welcome to your dashboard. This is your central hub for monitoring risk, tasks, and important metrics across your organization.',
-        imagePath: '/assets/tutorials/dashboard/overview.svg',
+        title: 'Personalize Your Dashboard',
+        description: 'Select and arrange widgets to create your ideal dashboard. Easily drag-and-drop or choose from a list to customize your workspace based on your role.',
+        imagePath: '/assets/tutorials/dashboard/modal_dash_1.png',
       },
       {
-        title: 'Summary Cards',
-        description: 'These cards provide quick insights into key metrics. Click any card to view more detailed information about that specific area.',
-        imagePath: '/assets/tutorials/dashboard/summary-cards.svg',
+        title: 'Quick Actions at Your Fingertips',
+        description: 'Choose Quick Actions to rapidly navigate common tasks. Tailor these shortcuts specifically for your daily workflow needs.',
+        imagePath: '/assets/tutorials/dashboard/modal_dash_2.png',
       },
       {
-        title: 'Recent Activity',
-        description: 'The Recent Activity section shows the latest changes, updates, and important events related to your organization.',
-        imagePath: '/assets/tutorials/dashboard/recent-activity.svg',
-      },
-      {
-        title: 'Action Items',
-        description: 'Action Items highlight tasks that require your attention. Click on any item to take immediate action or view more details.',
-        imagePath: '/assets/tutorials/dashboard/action-items.svg',
+        title: 'Tailored Data Visualizations',
+        description: 'Customize charts and graphs to highlight the data that matters most to your role. Select metrics relevant to your financial insights and performance tracking.',
+        imagePath: '/assets/tutorials/dashboard/modal_dash_3.png',
       }
     ]
   }
