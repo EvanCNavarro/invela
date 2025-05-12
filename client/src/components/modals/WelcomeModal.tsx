@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, forwardRef, useCallback, useRef, useMemo, Fragment } from "react";
 import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
@@ -554,9 +554,14 @@ export function WelcomeModal() {
                           damping: 15,
                           delay: 0.2 
                         }}
-                        className="text-3xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent"
+                        className="text-3xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent leading-tight"
                       >
-                        {carouselContent[currentSlide].title}
+                        {carouselContent[currentSlide].title.split('\n').map((line, i) => (
+                          <React.Fragment key={i}>
+                            {line}
+                            {i < carouselContent[currentSlide].title.split('\n').length - 1 && <br />}
+                          </React.Fragment>
+                        ))}
                       </motion.h2>
                       
                       <motion.p 
@@ -579,9 +584,14 @@ export function WelcomeModal() {
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-2xl font-bold text-gray-900 mb-4"
+                        className="text-2xl font-bold text-gray-900 mb-4 leading-tight"
                       >
-                        {carouselContent[currentSlide].title}
+                        {carouselContent[currentSlide].title.split('\n').map((line, i) => (
+                          <React.Fragment key={i}>
+                            {line}
+                            {i < carouselContent[currentSlide].title.split('\n').length - 1 && <br />}
+                          </React.Fragment>
+                        ))}
                       </motion.h2>
                       
                       <motion.p 
