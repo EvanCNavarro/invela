@@ -203,56 +203,6 @@ const TUTORIAL_CONTENT: Record<string, {
       }
     ]
   },
-  'company-profile': {
-    title: 'Company Profile',
-    description: 'Learn how to manage and update your company information',
-    steps: [
-      {
-        title: 'Profile Overview',
-        description: 'Welcome to your Company Profile. Here you can view and update all your organization\'s information and settings.',
-        imagePath: '/assets/tutorials/company-profile/overview.svg',
-        stepTitle: 'Company Profile Overview',
-        bulletPoints: [
-          'View and edit your company\'s core information in one place',
-          'Access historical profile changes and audit logs',
-          'Understand how your profile data influences risk assessments'
-        ]
-      },
-      {
-        title: 'Business Information',
-        description: 'This section contains your core business details. Keep this information up-to-date for accurate risk assessment.',
-        imagePath: '/assets/tutorials/company-profile/business-info.svg',
-        stepTitle: 'Business Details',
-        bulletPoints: [
-          'Update essential company information including address and contacts',
-          'Maintain industry classifications and business descriptions',
-          'Manage financial information and corporate structure details'
-        ]
-      },
-      {
-        title: 'Team Management',
-        description: 'Manage your team members, their roles, and permissions. You can add new users or update existing access levels.',
-        imagePath: '/assets/tutorials/company-profile/team.svg',
-        stepTitle: 'Team Management',
-        bulletPoints: [
-          'Add new team members and assign appropriate roles',
-          'Set granular permissions based on job responsibilities',
-          'Monitor user activity and access logs for security'
-        ]
-      },
-      {
-        title: 'Compliance Status',
-        description: 'Review your compliance status and certification levels. This section shows any outstanding requirements or upcoming renewals.',
-        imagePath: '/assets/tutorials/company-profile/compliance.svg',
-        stepTitle: 'Compliance Tracking',
-        bulletPoints: [
-          'Track compliance status across multiple regulatory frameworks',
-          'Receive alerts for upcoming certification expirations',
-          'Upload and manage compliance documentation securely'
-        ]
-      }
-    ]
-  },
 
   'dashboard': {
     title: 'Dashboard Overview',
@@ -350,12 +300,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       // Dashboard variations
       'dashboard-page': 'dashboard',
       
-      // Company profile variations
-      'company-profile-page': 'company-profile',
-      
-      // Risk score variations - keep these separate for now
-      // 'risk-score-configuration': 'risk-score-configuration',
-      // 'risk-score': 'risk-score',
+      // Risk score configuration variations
+      'risk-score-config': 'risk-score-configuration',
     };
     
     logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
@@ -387,10 +333,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       'network': '/network',
       'file-vault': '/file-vault',
       'claims': '/claims',
-      'risk-score': '/risk-score',
       'claims-risk': '/claims-risk',
       'risk-score-configuration': '/risk-score-configuration',
-
     };
     
     // Special handling for dashboard (both '/' and '/dashboard' are valid base routes)
