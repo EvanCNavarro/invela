@@ -1,23 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { cn } from '@/lib/utils';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { preloadImage, isImageCached } from '@/lib/image-cache';
+import { preloadImage, isImageCached, preloadTutorialImages, getCacheStats } from '@/lib/image-cache';
+import { useTutorialImageCache } from '@/hooks/use-tutorial-image-cache';
 
 // Create dedicated logger for this component
 const logger = createTutorialLogger('TabTutorialModal');
-
-// Define the tutorial step interface
-export interface TutorialStep {
-  title: string;
-  description: string;
-  imagePath?: string;
-  imageUrl?: string;
-  bulletPoints?: string[];
-  stepTitle?: string;
-}
 
 // Define the tutorial step interface
 export interface TutorialStep {
@@ -51,7 +42,7 @@ export interface TabTutorialModalProps {
  * This reusable component renders a tutorial modal specifically for the content area
  * with a consistent UI and navigation controls, while keeping sidebar and navbar accessible.
  * 
- * The component now supports image preloading for smoother transitions between steps.
+ * The component now supports advanced image caching for smoother transitions between steps.
  */
 export function TabTutorialModal({
   title,
@@ -70,6 +61,26 @@ export function TabTutorialModal({
   const [open, setOpen] = useState(true);
   const { isExpanded } = useSidebarStore();
   
+  // Extract tab name from image URL for preloading adjacent images
+  const tabName = useMemo(() => {
+    if (!imageUrl) return '';
+    
+    // Parse the tab name from URL patterns like /assets/tutorials/tab-name/image.png
+    const match = imageUrl.match(/\/assets\/tutorials\/([^\/]+)\//);
+    return match ? match[1] : '';
+  }, [imageUrl]);
+  
+  // Use our enhanced image caching hook
+  const { 
+    isLoading: isImageLoading, 
+    cachePerformance 
+  } = useTutorialImageCache({
+    tabName,
+    currentStep,
+    totalSteps,
+    imageUrl
+  });
+  
   // State for image loading management
   const [imageLoadingState, setImageLoadingState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [imageOpacity, setImageOpacity] = useState(0);
@@ -86,6 +97,13 @@ export function TabTutorialModal({
   const handleNext = () => {
     // Reset image opacity for smooth transition
     setImageOpacity(0);
+    
+    // Preload next step's image ahead of time
+    if (currentStep < totalSteps - 1 && tabName) {
+      const nextImageUrl = `/assets/tutorials/${tabName}/modal_risk_${currentStep + 2}.png`;
+      logger.debug(`Preloading next step image: ${nextImageUrl}`);
+      preloadImage(nextImageUrl);
+    }
     
     if (currentStep >= totalSteps - 1) {
       onComplete();
@@ -139,6 +157,17 @@ export function TabTutorialModal({
     }
   }, [imageUrl]);
   
+  // Preload adjacent tutorial images for smoother navigation
+  useEffect(() => {
+    if (tabName && currentStep >= 0 && totalSteps > 0) {
+      // Use the dedicated preloading function
+      preloadTutorialImages(tabName, currentStep, totalSteps);
+      
+      // Log cache statistics for debugging
+      logger.debug('Current image cache stats:', getCacheStats());
+    }
+  }, [tabName, currentStep, totalSteps]);
+  
   // Reset open state and track progress when a new tutorial is shown
   useEffect(() => {
     setOpen(true);
@@ -151,8 +180,6 @@ export function TabTutorialModal({
       document.body.style.overflow = 'auto';
     };
   }, []);
-  
-  // No preloader tracking in this simplified version
   
   if (!open) return null;
   
