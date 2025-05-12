@@ -418,24 +418,62 @@ export function TutorialManager({
         // We need to explicitly handle the case where currentStep equals total steps - 1 (final step)
         const isFinalStep = currentStep >= stepCount - 1;
         
-        // CRITICAL FIX #3: Combine both conditions - NEVER show a tutorial if:
-        // 1. It's marked as completed OR
-        // 2. It's at the final step (which would cause the flashing 4/4 modal)
-        const shouldNeverShow = isExplicitlyCompleted || isFinalStep;
+        // CRITICAL FIX #3: Enhanced decision logic - NEVER show a tutorial if:
+        // 1. It's marked as completed in the database OR
+        // 2. It's at the final step (which would cause the flashing 4/4 modal) OR
+        // 3. It has a completion date (any past date when it was finished)
+        // 4. The current step is somehow invalid or out of bounds
+        
+        // Create multiple, clearly-named conditional checks for better maintainability
+        const isMarkedCompleted = isExplicitlyCompleted;
+        const isAtFinalStep = isFinalStep;
+        const hasCompletionDate = Boolean(tutorialData?.lastSeenAt); 
+        const hasInvalidStep = currentStep < 0 || currentStep >= stepCount;
+        
+        // Combine all conditions - if ANY are true, we should never show the tutorial
+        const shouldNeverShow = isMarkedCompleted || isAtFinalStep || hasCompletionDate || hasInvalidStep;
         
         // Only show tutorial if explicitly enabled AND not in a state where it should never show
         const shouldShow = tutorialEnabled && !shouldNeverShow;
         
-        // Log detailed information about the decision
-        logger.info(`ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${shouldShow ? 'SHOW' : 'HIDE'}`, {
-          tutorialEnabled,
-          isExplicitlyCompleted,
-          isFinalStep,
-          shouldNeverShow,
-          currentStep,
-          totalSteps: stepCount,
-          rawIsCompleted: isCompleted
-        });
+        // Log detailed information about the decision with highly visible formatting
+        const logMessage = `ROOT CAUSE FIX - Tutorial decision for ${normalizedTabName}: ${shouldShow ? '✅ SHOW' : '❌ HIDE'}`;
+        
+        if (shouldShow) {
+          logger.info(logMessage, {
+            tutorialEnabled,
+            isMarkedCompleted,
+            isAtFinalStep,
+            hasCompletionDate,
+            hasInvalidStep,
+            shouldNeverShow,
+            currentStep,
+            totalSteps: stepCount,
+            lastSeenAt: tutorialData?.lastSeenAt || null,
+            rawIsCompleted: isCompleted
+          });
+        } else {
+          // Use warn level for hide decisions to make them more visible in logs
+          // This helps with debugging by highlighting potential issues
+          logger.warn(logMessage, {
+            tutorialEnabled,
+            isMarkedCompleted,
+            isAtFinalStep,
+            hasCompletionDate,
+            hasInvalidStep,
+            shouldNeverShow,
+            currentStep,
+            totalSteps: stepCount,
+            lastSeenAt: tutorialData?.lastSeenAt || null,
+            rawIsCompleted: isCompleted,
+            // Add the exact reason why we're not showing the tutorial
+            hideReason: isMarkedCompleted ? 'COMPLETED_FLAG' :
+                       isAtFinalStep ? 'AT_FINAL_STEP' :
+                       hasCompletionDate ? 'HAS_COMPLETION_DATE' :
+                       hasInvalidStep ? 'INVALID_STEP' :
+                       !tutorialEnabled ? 'TUTORIAL_DISABLED' : 'UNKNOWN'
+          });
+        }
         
         // This is the critical state that controls whether the modal renders
         setShouldShowTutorial(shouldShow);
@@ -640,7 +678,33 @@ export function TutorialManager({
     loading: isLoading
   });
   
+  // FINAL ROOT CAUSE FIX: Last-chance validation before rendering
+  // This is our last line of defense against tutorial flashing
+  const isFinalOrCompleted = isCompleted || currentStep >= tutorialContent.steps.length - 1;
+  
+  if (isFinalOrCompleted) {
+    // Emergency fallback - this should never happen due to earlier checks,
+    // but we're being extra defensive here
+    logger.warn(`ROOT CAUSE FIX - Last chance prevention of tutorial flash - tutorial is completed or at final step`, {
+      isCompleted,
+      currentStep,
+      totalSteps: tutorialContent.steps.length
+    });
+    
+    // Immediately mark as completed to ensure consistent state
+    setTimeout(() => handleComplete(), 0);
+    
+    // Never render the tutorial in this case
+    return null;
+  }
+  
   // Use the TabTutorialModal with the appropriate content
+  logger.info(`ROOT CAUSE FIX - Rendering tutorial content after all safety checks passed`, {
+    tabName: normalizedTabName,
+    currentStep: stepToUse,
+    totalSteps: tutorialContent.steps.length
+  });
+  
   return (
     <TabTutorialModal
       title={modalTitle}
