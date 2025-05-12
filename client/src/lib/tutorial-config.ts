@@ -85,71 +85,25 @@ export const TUTORIAL_CONFIGS: Record<string, TutorialTabConfig> = {
  * @param tabName Canonical tab name
  * @returns Base name for tutorial images or a fallback if not found
  */
-// Local function to normalize tab names without circular dependencies
+// Use the centralized normalizeTabName function
 function normalizeTabName(tabName: string): string {
-  if (!tabName) return '';
-  
-  // Convert to lowercase
-  let normalized = tabName.toLowerCase();
-  
-  // Handle special cases and common variations
-  switch (normalized) {
-    case 'dashboard':
-    case 'home':
-      return 'dashboard';
-      
-    case 'risk-score':
-    case 'riskscore':
-    case 'risk_score':
-    case 'risk score':
-    case 'risk-score-configuration':
-    case 'risk_score_configuration':
-    case 'riskscoreconfiguration':
-      return 'risk-score-configuration';
-      
-    case 'network':
-    case 'connections':
-    case 'relationship network':
-    case 'relationship-network':
-      return 'network';
-      
-    case 'claims':
-    case 'claim':
-      return 'claims';
-      
-    case 'file-vault':
-    case 'files':
-    case 'file_vault':
-    case 'filevault':
-    case 'documents':
-      return 'file-vault';
-      
-    case 'insights':
-    case 'insight':
-    case 'analytics':
-      return 'insights';
-      
-    default:
-      // Convert spaces and underscores to dashes for other tab names
-      normalized = normalized.replace(/[\s_]+/g, '-');
-      logger.debug(`Normalized tab name: ${tabName} -> ${normalized}`);
-      return normalized;
-  }
+  // We use the centralized version to ensure consistency across all components
+  return normalizeTabNameCentralized(tabName);
 }
 
 export function getImageBaseName(tabName: string): string {
-  // Normalize the tab name to ensure consistent lookups
+  // Use the createTutorialImageUrl function but extract just the base name part
   const normalizedTabName = normalizeTabName(tabName);
+  const imagePath = createTutorialImageUrl(normalizedTabName, 1);
   
-  const config = TUTORIAL_CONFIGS[normalizedTabName];
+  // Extract the base name from the full path by manipulating the string
+  // Example: /assets/tutorials/dashboard/modal_dash_1.png -> modal_dash_
+  const baseName = imagePath.split('/').pop()?.replace('1.png', '') || '';
   
-  if (!config) {
-    logger.warn(`No tutorial configuration found for tab: ${normalizedTabName} (original: ${tabName})`);
-    // Generate a reasonable fallback pattern based on tab name
-    return `modal_${normalizedTabName.replace(/-/g, '_')}_`;
-  }
+  // Log for debugging
+  logger.debug(`Image base name for ${normalizedTabName}: ${baseName}`);
   
-  return config.imageBaseName;
+  return baseName;
 }
 
 /**
@@ -159,17 +113,8 @@ export function getImageBaseName(tabName: string): string {
  * @returns Number of steps for the tutorial
  */
 export function getStepCount(tabName: string): number {
-  // Using the local normalizeTabName function
-  const normalizedTabName = normalizeTabName(tabName);
-  
-  const config = TUTORIAL_CONFIGS[normalizedTabName];
-  
-  if (!config) {
-    logger.warn(`No tutorial configuration found for tab: ${normalizedTabName} (original: ${tabName})`);
-    return 3; // Default to 3 steps if not found
-  }
-  
-  return config.stepCount;
+  // Use the centralized getTutorialStepCount function
+  return getTutorialStepCount(tabName);
 }
 
 /**
@@ -179,17 +124,8 @@ export function getStepCount(tabName: string): number {
  * @returns Boolean indicating if the tutorial is enabled
  */
 export function isTutorialEnabled(tabName: string): boolean {
-  // Using the local normalizeTabName function
-  const normalizedTabName = normalizeTabName(tabName);
-  
-  const config = TUTORIAL_CONFIGS[normalizedTabName];
-  
-  if (!config) {
-    logger.warn(`No tutorial configuration found for tab: ${normalizedTabName} (original: ${tabName})`);
-    return false; // Default to disabled if not found
-  }
-  
-  return config.enabled;
+  // Use the centralized isTutorialEnabledForTab function
+  return isTutorialEnabledForTab(tabName);
 }
 
 /**
@@ -199,17 +135,8 @@ export function isTutorialEnabled(tabName: string): boolean {
  * @returns Base route string
  */
 export function getBaseRoute(tabName: string): string {
-  // Using the local normalizeTabName function
-  const normalizedTabName = normalizeTabName(tabName);
-  
-  const config = TUTORIAL_CONFIGS[normalizedTabName];
-  
-  if (!config) {
-    logger.warn(`No tutorial configuration found for tab: ${normalizedTabName} (original: ${tabName})`);
-    return `/${normalizedTabName}`; // Reasonable fallback
-  }
-  
-  return config.baseRoute;
+  // Use the centralized getTabBaseRoute function
+  return getTabBaseRoute(tabName);
 }
 
 export default {
