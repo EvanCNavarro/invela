@@ -92,13 +92,14 @@ const TUTORIAL_CONTENT: Record<string, {
       },
     ]
   },
+  // Main Risk Score Dashboard - Shows the S&P DARS score and overview
   'risk-score': {
-    title: 'Risk Score Configuration',
-    description: 'Learn how to customize and interpret risk scoring for your organization',
+    title: 'S&P Data Access Risk Score',
+    description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
-        title: 'Risk Score Configuration',
-        description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
+        title: 'Risk Score Dashboard',
+        description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
         imagePath: '/assets/tutorials/risk-score/overview.svg',
       },
       {
