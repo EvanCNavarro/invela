@@ -711,6 +711,19 @@ export function TutorialManager({
     totalSteps: tutorialContent.steps.length
   });
   
+  // EXTRA DEBUG OUTPUT - Log additional details about tutorial state
+  console.log(`[TutorialManager] RENDERING TUTORIAL for ${normalizedTabName}!`, {
+    currentStep: stepToUse,
+    totalSteps: tutorialContent.steps.length,
+    isCompleted,
+    tutorialEnabled,
+    tutorialContent: {
+      title: tutorialContent.title,
+      stepCount: tutorialContent.steps.length,
+      firstStepDescription: tutorialContent.steps[0].description.substring(0, 30) + '...'
+    }
+  });
+  
   return (
     <TabTutorialModal
       title={modalTitle}
