@@ -18,6 +18,7 @@ import {
 } from '../utils/form-submission-notifications';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { db } from '@db';
+import { handleOpenBankingPostSubmission } from './unified-form-submission-service';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
