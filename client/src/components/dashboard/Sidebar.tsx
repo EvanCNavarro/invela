@@ -437,19 +437,12 @@ export function Sidebar({
     : menuItems;
 
   // Admin menu items (only for Invela users)
-  const { isVisible: showPlayground } = usePlaygroundVisibility();
+  // Playground tab has been removed during cleanup
   const adminMenuItems = [];
 
   const isInvelaUser = isPlayground ? showInvelaTabs : (category === 'Invela');
 
-  if (isInvelaUser && (isPlayground || showPlayground)) {
-    adminMenuItems.push({
-      icon: MousePointer2Icon,
-      label: "Playground",
-      href: "/playground",
-      locked: !availableTabs.includes('playground')
-    });
-  }
+  // No playground tab anymore - removed during cleanup
 
   return (
     <div className={cn(
