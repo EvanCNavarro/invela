@@ -169,14 +169,15 @@ export default function ClaimsPage() {
   );
 }
 
+/**
+ * Standardized loading state using Invela loading spinner
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-8 w-24" />
-      </div>
-      <Skeleton className="h-[400px] w-full" />
+    <div className="flex flex-col items-center justify-center h-[400px] w-full">
+      <LoadingSpinner size="lg" />
+      <p className="mt-4 text-muted-foreground">Loading claims data...</p>
     </div>
   );
 }

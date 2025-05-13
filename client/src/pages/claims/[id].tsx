@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Clock, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function ClaimDetailsPage() {
   const params = useParams();
@@ -552,18 +553,15 @@ export default function ClaimDetailsPage() {
   );
 }
 
+/**
+ * Standardized loading state using Invela loading spinner
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-96" />
-      </div>
-      <div className="space-y-6">
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-32" />
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[500px] w-full">
+      <LoadingSpinner size="lg" />
+      <p className="mt-4 text-muted-foreground">Loading claim details...</p>
     </div>
   );
 }
