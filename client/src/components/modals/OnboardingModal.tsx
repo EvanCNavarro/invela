@@ -45,11 +45,11 @@ const CustomDialogContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay className="bg-black/50" />
+    <DialogOverlay className="bg-black/50 z-[100]" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-[101] grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
         className
       )}
       {...props}
@@ -920,8 +920,10 @@ export function OnboardingModal() {
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
       <CustomDialogContent className="overflow-hidden max-w-4xl p-0">
-        <div className="bg-blue-50/50 py-2 px-4 rounded-t-lg">
-          <span className="text-sm font-medium text-blue-600">Onboarding Modal</span>
+        <div className="p-6">
+          <div className="text-sm font-medium bg-blue-100 text-blue-600 py-1 px-3 rounded-full inline-block">
+            Onboarding Modal
+          </div>
         </div>
         
         {renderStepContent()}
