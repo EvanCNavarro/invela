@@ -68,22 +68,30 @@ export default function ClaimDetailsPage() {
     });
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'MMM dd, yyyy');
     } catch (error) {
+      console.error('Error formatting date:', error);
       return dateString;
     }
   };
 
-  // Format time as h:mm a
+  /**
+   * Format time as h:mm a (hours:minutes AM/PM)
+   * Provides consistent time display across the application
+   */
   const formatTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'h:mm a');
     } catch (error) {
+      console.error('Error formatting time:', error);
       return '';
     }
   };
