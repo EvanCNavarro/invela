@@ -1440,7 +1440,7 @@ export function WelcomeModal() {
                         className="text-lg text-gray-700 leading-relaxed"
                       >
                         {Number(currentSlide) === 1 ? (
-                          <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
+                          <>Add basic details about <span className="font-bold">{companyData?.name || 'your company'}</span>:</>
                         ) : (
                           carouselContent[currentSlide]?.subtitle || ""
                         )}
@@ -1523,7 +1523,7 @@ export function WelcomeModal() {
                         )}
                       >
                         {Number(currentSlide) === 1 ? (
-                          <>Add basic details about <span className="font-bold">{company?.name || 'your company'}</span>:</>
+                          <>Add basic details about <span className="font-bold">{companyData?.name || 'your company'}</span>:</>
                         ) : (
                           carouselContent[currentSlide]?.subtitle || ""
                         )}
