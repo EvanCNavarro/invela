@@ -17,7 +17,8 @@ export type MessageType =
   | 'authenticated'
   | 'task_updated'
   | 'tutorial_updated'
-  | 'company_tabs_updated';
+  | 'company_tabs_updated'
+  | 'connection_established';
 
 // Structure for WebSocket messages
 export interface WebSocketMessage {
