@@ -227,6 +227,32 @@ export function WelcomeModal() {
   const [cisoEmail, setCisoEmail] = useState<string>("");
   const [teamInvites, setTeamInvites] = useState<TeamMemberInvite[]>([]);
   
+  // Refs for component lifecycle management
+  const isMountedRef = useRef<boolean>(true);
+  const pendingOperations = useRef<AbortController[]>([]);
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      // Mark component as unmounted to prevent async operations from continuing
+      isMountedRef.current = false;
+      
+      // Abort any pending fetch operations
+      pendingOperations.current.forEach(controller => {
+        try {
+          controller.abort();
+        } catch (e) {
+          console.error('[ONBOARDING DEBUG] Error aborting controller:', e);
+        }
+      });
+      
+      // Clear the array
+      pendingOperations.current = [];
+      
+      console.log('[ONBOARDING DEBUG] WelcomeModal unmounted - cleaned up resources');
+    };
+  }, []);
+  
   const { user } = useAuth();
   const { toast } = useToast();
   const websocket = useWebSocketContext();
@@ -326,152 +352,28 @@ export function WelcomeModal() {
   });
 
   /**
-   * Process team member invitations asynchronously
-   * Sends invitations for CFO and CISO if both name and email are provided
-   * Updates UI state to reflect sent invitations
-   * Logs detailed information for debugging and auditing
+   * Helper function to process a list of team invitations
    * 
-   * @returns {Promise<boolean>} Promise that resolves to true if invitations were sent, false otherwise
-   * @throws {Error} If there's an issue with sending the invitations that shouldn't be ignored
+   * @param invitations - List of invitation objects to process
+   * @param logger - Logger instance for consistent logging
+   * @returns Promise that resolves to true if invitations were processed
    */
-  const processTeamInvites = async () => {
-    // Dynamically import logger to use in this function
-    const { logger } = await import('@/lib/logger');
-    
-    // Enhanced validation with detailed logging to diagnose issues
-    const validationResults = {
-      hasUser: !!user,
-      userHasId: user?.id !== undefined,
-      userHasEmail: !!user?.email,
-      userHasFullName: !!user?.full_name,
-      userHasCompany: !!user?.company,
-      companyHasId: user?.company?.id !== undefined,
-      companyHasName: !!user?.company?.name
-    };
-    
-    logger.info('[WelcomeModal] Team invitation validation check', validationResults);
-    
-    // Validate required data is available with more detailed error
-    if (!user || !user.company || !user.company.id) {
-      const errorMessage = 'Cannot invite team members without user or company data';
-      const detailedError = `${errorMessage}. Missing: ${!user ? 'user' : !user.company ? 'company' : 'company.id'}`;
-      
-      logger.error('[WelcomeModal] ' + detailedError, validationResults);
-      console.error('[ONBOARDING DEBUG] ' + detailedError, validationResults);
-      
-      // Attempt to use data from our own component state
-      try {
-        const companyId = companyData?.id || user?.company?.id;
-        const companyName = companyData?.name || user?.company?.name;
-        const senderName = user?.full_name || user?.email || 'Invela User';
-        
-        logger.debug('[WelcomeModal] Attempted recovery with component state data', {
-          hasCompanyId: !!companyId,
-          hasCompanyName: !!companyName,
-          hasSenderName: !!senderName
-        });
-        
-        // If we can't recover minimum data needed, throw error
-        if (!companyId || !companyName) {
-          throw new Error(detailedError);
-        }
-        
-        // Use the recovered data for invitations
-        logger.info('[WelcomeModal] Recovered with component state data', {
-          companyId,
-          companyName,
-          senderName
-        });
-        
-        // Create minimal recovery objects with the essential fields
-        const recoveredUser = {
-          id: user?.id,
-          full_name: senderName,
-          email: user?.email || 'user@invela.com'
-        };
-        
-        const recoveredCompany = {
-          id: companyId,
-          name: companyName
-        };
-        
-        // Create invitations with recovered data
-        const invitations = [];
-        
-        // Process CFO invitation if both name and email are provided
-        if (cfoName && cfoEmail) {
-          invitations.push({
-            email: cfoEmail,
-            full_name: cfoName,
-            company_id: recoveredCompany.id,
-            company_name: recoveredCompany.name,
-            sender_name: recoveredUser.full_name || recoveredUser.email,
-            role: 'CFO'
-          });
-        }
-        
-        // Process CISO invitation if both name and email are provided
-        if (cisoName && cisoEmail) {
-          invitations.push({
-            email: cisoEmail,
-            full_name: cisoName,
-            company_id: recoveredCompany.id,
-            company_name: recoveredCompany.name,
-            sender_name: recoveredUser.full_name || recoveredUser.email,
-            role: 'CISO'
-          });
-        }
-        
-        // Return early with the new invitations
-        return processInvitationsList(invitations, logger);
-      } catch (recoveryError) {
-        // If recovery failed, throw the original error
-        throw new Error(detailedError);
-      }
-    }
-    
-    logger.debug('[WelcomeModal] Starting team invitation process', {
-      hasCfo: !!(cfoName && cfoEmail),
-      hasCiso: !!(cisoName && cisoEmail),
-      companyId: user.company.id,
-      companyName: user.company.name
-    });
-    
-    const invitations = [];
-    
-    // Process CFO invitation if both name and email are provided
-    if (cfoName && cfoEmail) {
-      invitations.push({
-        email: cfoEmail,
-        full_name: cfoName,
-        company_id: user.company.id,
-        company_name: user.company.name,
-        sender_name: user.full_name || user.email,
-        role: 'CFO'
-      });
-    }
-    
-    // Process CISO invitation if both name and email are provided
-    if (cisoName && cisoEmail) {
-      invitations.push({
-        email: cisoEmail,
-        full_name: cisoName,
-        company_id: user.company.id,
-        company_name: user.company.name,
-        sender_name: user.full_name || user.email,
-        role: 'CISO'
-      });
-    }
-    
+  const processInvitationsList = async (invitations: any[], logger: any): Promise<boolean> => {
     // If no invitations to process, return early
     if (invitations.length === 0) {
       logger.debug('[WelcomeModal] No team invitations to process');
       return false;
     }
     
+    // Check again for component mounting
+    if (!isMountedRef.current) {
+      logger.debug('[WelcomeModal] Aborting invitation processing - component unmounted');
+      return false;
+    }
+    
     logger.info('[WelcomeModal] Processing team invitations', { 
       count: invitations.length,
-      emails: invitations.map(inv => inv.email) 
+      emails: invitations.map(inv => inv.email)
     });
     
     // Process all invitations in parallel
@@ -489,6 +391,11 @@ export function WelcomeModal() {
       await Promise.all(
         invitations.map(async invite => {
           try {
+            // Skip if component unmounted during processing
+            if (!isMountedRef.current) {
+              return null;
+            }
+            
             logger.debug('[WelcomeModal] Sending invitation', { 
               email: invite.email, 
               role: invite.role 
@@ -502,6 +409,11 @@ export function WelcomeModal() {
               company_name: invite.company_name,
               sender_name: invite.sender_name
             });
+            
+            // Skip state updates if component unmounted during API call
+            if (!isMountedRef.current) {
+              return null;
+            }
             
             logger.debug('[WelcomeModal] Invitation sent successfully', { 
               email: invite.email,
@@ -519,6 +431,11 @@ export function WelcomeModal() {
             
             return result;
           } catch (error) {
+            // Skip error processing if component unmounted
+            if (!isMountedRef.current) {
+              return null;
+            }
+            
             logger.error('[WelcomeModal] Failed to send invitation', { 
               email: invite.email,
               role: invite.role,
@@ -537,6 +454,12 @@ export function WelcomeModal() {
           }
         })
       );
+      
+      // If component unmounted during promise.all, exit early
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Component unmounted during invitation processing');
+        return false;
+      }
       
       // If we had any failures, report them but continue
       if (failedInvitations.length > 0) {
@@ -561,6 +484,193 @@ export function WelcomeModal() {
       // Propagate the error to be handled by the caller
       throw error;
     }
+  };
+
+  /**
+   * Process team member invitations asynchronously
+   * Sends invitations for CFO and CISO if both name and email are provided
+   * Updates UI state to reflect sent invitations
+   * Logs detailed information for debugging and auditing
+   * Handles component lifecycle to prevent errors during unmount
+   * 
+   * @returns {Promise<boolean>} Promise that resolves to true if invitations were sent, false otherwise
+   * @throws {Error} If there's an issue with sending the invitations that shouldn't be ignored
+   */
+  const processTeamInvites = async () => {
+    // First check if component is still mounted before proceeding
+    if (!isMountedRef.current) {
+      console.log('[ONBOARDING DEBUG] Skipping team invite processing - component unmounting');
+      return false;
+    }
+    
+    // Create an abort controller for this operation
+    const controller = new AbortController();
+    pendingOperations.current.push(controller);
+    
+    try {
+      // Dynamically import logger to use in this function
+      const { logger } = await import('@/lib/logger');
+      
+      // Early exit if component unmounted during async import
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Aborting team invite processing after logger import - component unmounted');
+        return false;
+      }
+      
+      // Enhanced validation with detailed logging to diagnose issues
+      const validationResults = {
+        hasUser: !!user,
+        userHasId: user?.id !== undefined,
+        userHasEmail: !!user?.email,
+        userHasFullName: !!user?.full_name,
+        userHasCompany: !!user?.company,
+        companyHasId: user?.company?.id !== undefined,
+        companyHasName: !!user?.company?.name,
+        componentMounted: isMountedRef.current,
+        hasCompanyData: !!companyData
+      };
+      
+      logger.info('[WelcomeModal] Team invitation validation check', validationResults);
+      
+      // Validate required data is available with more detailed error
+      // First try to use companyData from our query cache, then fall back to user.company
+      if ((!companyData?.id && (!user || !user.company || !user.company.id)) || !isMountedRef.current) {
+        const errorMessage = 'Cannot invite team members without user or company data';
+        const detailedError = `${errorMessage}. Missing: ${!user ? 'user' : !companyData?.id && !user.company ? 'company' : 'company.id'}`;
+        
+        logger.error('[WelcomeModal] ' + detailedError, validationResults);
+        console.error('[ONBOARDING DEBUG] ' + detailedError, validationResults);
+        
+        // Attempt to use data from our own component state
+        try {
+          const companyId = companyData?.id || user?.company?.id;
+          const companyName = companyData?.name || user?.company?.name;
+          const senderName = user?.full_name || user?.email || 'Invela User';
+          
+          logger.debug('[WelcomeModal] Attempted recovery with component state data', {
+            hasCompanyId: !!companyId,
+            hasCompanyName: !!companyName,
+            hasSenderName: !!senderName,
+            componentMounted: isMountedRef.current
+          });
+          
+          // If we can't recover minimum data needed, throw error
+          if (!companyId || !companyName) {
+            throw new Error(detailedError);
+          }
+          
+          // Use the recovered data for invitations
+          logger.info('[WelcomeModal] Recovered with component state data', {
+            companyId,
+            companyName,
+            senderName
+          });
+          
+          // Create minimal recovery objects with the essential fields
+          const recoveredUser = {
+            id: user?.id,
+            full_name: senderName,
+            email: user?.email || 'user@invela.com'
+          };
+          
+          const recoveredCompany = {
+            id: companyId,
+            name: companyName
+          };
+          
+          // Create invitations with recovered data
+          const invitations = [];
+          
+          // Process CFO invitation if both name and email are provided
+          if (cfoName && cfoEmail) {
+            invitations.push({
+              email: cfoEmail,
+              full_name: cfoName,
+              company_id: recoveredCompany.id,
+              company_name: recoveredCompany.name,
+              sender_name: recoveredUser.full_name || recoveredUser.email,
+              role: 'CFO'
+            });
+          }
+          
+          // Process CISO invitation if both name and email are provided
+          if (cisoName && cisoEmail) {
+            invitations.push({
+              email: cisoEmail,
+              full_name: cisoName,
+              company_id: recoveredCompany.id,
+              company_name: recoveredCompany.name,
+              sender_name: recoveredUser.full_name || recoveredUser.email,
+              role: 'CISO'
+            });
+          }
+          
+          // Return early with the new invitations
+          return await processInvitationsList(invitations, logger);
+        } catch (recoveryError) {
+          // If recovery failed, throw the original error
+          throw new Error(detailedError);
+        }
+      }
+      
+      // Check if component is still mounted before continuing with normal flow
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Component unmounted during processing');
+        return false;
+      }
+      
+      // Normal flow continues here with validated user and company data
+      logger.debug('[WelcomeModal] Starting team invitation process', {
+        hasCfo: !!(cfoName && cfoEmail),
+        hasCiso: !!(cisoName && cisoEmail),
+        companyId: companyData?.id || user?.company?.id,
+        companyName: companyData?.name || user?.company?.name
+      });
+      
+      const invitations = [];
+      
+      // Process CFO invitation if both name and email are provided
+      if (cfoName && cfoEmail) {
+        invitations.push({
+          email: cfoEmail,
+          full_name: cfoName,
+          company_id: companyData?.id || user?.company?.id,
+          company_name: companyData?.name || user?.company?.name,
+          sender_name: user?.full_name || user?.email,
+          role: 'CFO'
+        });
+      }
+      
+      // Process CISO invitation if both name and email are provided
+      if (cisoName && cisoEmail) {
+        invitations.push({
+          email: cisoEmail,
+          full_name: cisoName,
+          company_id: companyData?.id || user?.company?.id,
+          company_name: companyData?.name || user?.company?.name,
+          sender_name: user?.full_name || user?.email,
+          role: 'CISO'
+        });
+      }
+      
+      return await processInvitationsList(invitations, logger);
+    } catch (error) {
+      // Clean up the abort controller if there's an error
+      const index = pendingOperations.current.indexOf(controller);
+      if (index !== -1) {
+        pendingOperations.current.splice(index, 1);
+      }
+      
+      // Re-throw the error
+      throw error;
+    } finally {
+      // Always clean up the abort controller
+      const index = pendingOperations.current.indexOf(controller);
+      if (index !== -1) {
+        pendingOperations.current.splice(index, 1);
+      }
+    }
+  };
   };
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
@@ -996,48 +1106,81 @@ export function WelcomeModal() {
    * Submits the company updates to the server with robust error handling
    * This function is called when the onboarding flow is completed and stored company
    * information needs to be persisted on the server
+   * Includes proper lifecycle management to prevent issues during component unmount
    * 
    * @returns {Promise<boolean>} Promise that resolves to true if updates were saved successfully
    * @throws {Error} If there's an unrecoverable issue with saving company data
    */
   const submitCompanyUpdates = async (): Promise<boolean> => {
-    // Dynamically import logger to use in this function
-    const { logger } = await import('@/lib/logger');
-    
-    // If no pending company data to submit, just return success
-    if (!pendingCompanyData || !employeeCount || !revenueTier) {
-      logger.debug('[WelcomeModal] No pending company data to submit');
-      return true;
+    // Check if component is still mounted before proceeding
+    if (!isMountedRef.current) {
+      console.log('[ONBOARDING DEBUG] Skipping company update submission - component unmounting');
+      return false;
     }
     
-    logger.info('[WelcomeModal] Submitting company updates', {
-      numEmployees: employeeCount,
-      revenueTier: revenueTier,
-      companyId: user?.company?.id
-    });
+    // Create an abort controller for this operation
+    const controller = new AbortController();
+    pendingOperations.current.push(controller);
     
     try {
-      // Prepare data for the API call
-      const companyData = {
-        numEmployees: employeeCount.toString(),
-        revenueTier: revenueTier
-      };
+      // Dynamically import logger to use in this function
+      const { logger } = await import('@/lib/logger');
       
-      // Use mutateAsync to properly handle the promise
-      const result = await updateCompanyMutation.mutateAsync(companyData);
+      // Early exit if component unmounted during async import
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Aborting company update submission - component unmounted');
+        return false;
+      }
       
-      logger.info('[WelcomeModal] Company updates submitted successfully', {
-        result,
-        companyId: result?.id
+      // If no pending company data to submit, just return success
+      if (!pendingCompanyData || !employeeCount || !revenueTier) {
+        logger.debug('[WelcomeModal] No pending company data to submit');
+        return true;
+      }
+      
+      logger.info('[WelcomeModal] Submitting company updates', {
+        numEmployees: employeeCount,
+        revenueTier: revenueTier,
+        companyId: user?.company?.id,
+        componentMounted: isMountedRef.current
       });
       
-      // Show success toast
-      toast({
-        title: "Company information saved",
-        description: "Your company details have been updated successfully.",
-        variant: "success",
-        duration: 2500
-      });
+      // Check again if component is mounted before proceeding with the API call
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Aborting company update submission - component unmounted');
+        return false;
+      }
+      
+      try {
+        // Prepare data for the API call
+        const companyData = {
+          numEmployees: employeeCount.toString(),
+          revenueTier: revenueTier
+        };
+        
+        // Use mutateAsync to properly handle the promise
+        const result = await updateCompanyMutation.mutateAsync(companyData);
+        
+        // Skip further processing if component unmounted during API call
+        if (!isMountedRef.current) {
+          logger.debug('[WelcomeModal] Component unmounted during company update API call');
+          return false;
+        }
+        
+        logger.info('[WelcomeModal] Company updates submitted successfully', {
+          result,
+          companyId: result?.id
+        });
+        
+        // Show success toast - only if component is still mounted
+        if (isMountedRef.current) {
+          toast({
+            title: "Company information saved",
+            description: "Your company details have been updated successfully.",
+            variant: "success",
+            duration: 2500
+          });
+        }
       
       // Mark company data as submitted
       setPendingCompanyData(false);
@@ -1311,6 +1454,49 @@ export function WelcomeModal() {
   // We don't need a separate handleOpenChange function since we're 
   // preventing modal closure via outside clicks directly in the Dialog component
 
+  // Setup component lifecycle management
+  useEffect(() => {
+    // Set up component state and signal we're mounted
+    isMountedRef.current = true;
+    
+    // Import logger to log component mounting
+    import('@/lib/logger').then(({ logger }) => {
+      if (isMountedRef.current) {
+        logger.debug('[WelcomeModal] Component mounted', {
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+    
+    // Clean up on unmount
+    return () => {
+      // Signal that component is unmounting
+      isMountedRef.current = false;
+      
+      // Log unmount event
+      import('@/lib/logger').then(({ logger }) => {
+        logger.debug('[WelcomeModal] Component unmounting', {
+          hasPendingOperations: pendingOperations.current.length > 0,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      // Cancel any in-flight operations
+      pendingOperations.current.forEach(controller => {
+        try {
+          controller.abort();
+        } catch (e) {
+          console.error('[ONBOARDING DEBUG] Error aborting operation:', e);
+        }
+      });
+      
+      // Clear the array
+      pendingOperations.current = [];
+      
+      console.log('[ONBOARDING DEBUG] Welcome modal unmounted, all operations aborted');
+    };
+  }, []);
+  
   // Debounced effect to log only once per session (or when state changes)
   useEffect(() => {
     // We only want to log this once per session
@@ -1321,12 +1507,14 @@ export function WelcomeModal() {
       if (!hasLogged) {
         // Import logger dynamically to avoid bundling it unnecessarily
         import('@/lib/logger').then(({ logger }) => {
-          logger.debug('[WelcomeModal] Not rendering modal because', {
-            noUser: !user,
-            onboardingCompleted: user?.onboarding_user_completed === true,
-            modalHidden: !showModal,
-            timestamp: new Date().toISOString()
-          });
+          if (isMountedRef.current) {
+            logger.debug('[WelcomeModal] Not rendering modal because', {
+              noUser: !user,
+              onboardingCompleted: user?.onboarding_user_completed === true,
+              modalHidden: !showModal,
+              timestamp: new Date().toISOString()
+            });
+          }
         });
         // Mark that we've logged this state
         try {
