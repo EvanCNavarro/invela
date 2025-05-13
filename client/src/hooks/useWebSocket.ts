@@ -1,92 +1,113 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { wsService } from '@/lib/websocket';
+/**
+ * WebSocket Hook
+ * 
+ * This hook provides a way to use the WebSocket service in React components.
+ * It handles connection, reconnection, and event listening for components.
+ */
 
-type MessageType = 'text' | 'connection_established' | 'ping' | 'pong';
+import { useEffect, useState, useCallback } from 'react';
+import websocketService from '@/services/websocket-service';
 
-export interface WebSocketMessage {
-  type: MessageType;
-  data?: any;
-  sender?: string;
-  timestamp?: string;
-  content?: string;
+interface WebSocketHookOptions {
+  autoConnect?: boolean;
+  pingInterval?: number;
 }
 
-/**
- * IMPORTANT: This hook is deprecated. Use the wsService from @/lib/websocket.ts instead. 
- * This separate implementation causes duplicate WebSocket connections.
- * 
- * This exists for backward compatibility only and will be removed in the future.
- */
-export const useWebSocket = () => {
-  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
-  const [connected, setConnected] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Use the singleton WebSocket service instead of creating a new connection
+interface WebSocketHookResult {
+  isConnected: boolean;
+  connect: () => void;
+  disconnect: () => void;
+  send: (type: string, data?: any) => boolean;
+  lastMessage: any;
+  connectionState: number;
+}
+
+export function useWebSocket(
+  events: Record<string, (data: any) => void> = {},
+  options: WebSocketHookOptions = {}
+): WebSocketHookResult {
+  const { autoConnect = true, pingInterval = 30000 } = options;
+  const [isConnected, setIsConnected] = useState(websocketService.isConnected());
+  const [lastMessage, setLastMessage] = useState<any>(null);
+  const [connectionState, setConnectionState] = useState(websocketService.getState());
+
+  // Handle connection status changes
+  const handleConnectionChange = useCallback(() => {
+    setIsConnected(websocketService.isConnected());
+    setConnectionState(websocketService.getState());
+  }, []);
+
+  // Handle incoming messages
+  const handleMessage = useCallback((message: any) => {
+    setLastMessage(message);
+  }, []);
+
+  // Connect to WebSocket server
+  const connect = useCallback(() => {
+    websocketService.connect();
+  }, []);
+
+  // Disconnect from WebSocket server
+  const disconnect = useCallback(() => {
+    websocketService.disconnect();
+  }, []);
+
+  // Send a message
+  const send = useCallback((type: string, data?: any) => {
+    return websocketService.send(type, data);
+  }, []);
+
+  // Set up event handlers and connection
   useEffect(() => {
-    // Mark as using WebSocket services
-    let unsubscribeFunc: (() => void) | null = null;
-    
-    setConnected(true);
-    // Using a proper logger would be overkill for a deprecated hook
-    // Just leave a small debug message to indicate usage
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[Deprecated] Using shared WebSocket connection (compatibility mode)');
+    // Register all event handlers from props
+    for (const [event, handler] of Object.entries(events)) {
+      websocketService.on(event, handler);
     }
-    
-    // Subscribe to text messages through the shared service
-    const subscribeToMessages = async () => {
-      try {
-        unsubscribeFunc = await wsService.subscribe('text', (data) => {
-          setMessages((prevMessages) => [...prevMessages, {
-            type: 'text',
-            ...data,
-            timestamp: data.timestamp || new Date().toISOString()
-          }]);
-        });
-      } catch (err) {
-        // Keep simple error handling in deprecated hook
-        setError('Failed to connect to chat server');
-      }
-    };
-    
-    subscribeToMessages();
-    
-    // Clean up subscription on unmount
+
+    // Register general event handlers
+    websocketService.on('open', handleConnectionChange);
+    websocketService.on('close', handleConnectionChange);
+    websocketService.on('message', handleMessage);
+
+    // Connect if autoConnect is true
+    if (autoConnect && !websocketService.isConnected()) {
+      websocketService.connect();
+    }
+
+    // Set up ping interval
+    let pingTimer: NodeJS.Timeout | null = null;
+    if (pingInterval > 0) {
+      pingTimer = setInterval(() => {
+        if (websocketService.isConnected()) {
+          websocketService.ping();
+        }
+      }, pingInterval);
+    }
+
+    // Cleanup event handlers and ping timer
     return () => {
-      if (unsubscribeFunc) {
-        unsubscribeFunc();
+      for (const [event, handler] of Object.entries(events)) {
+        websocketService.off(event, handler);
+      }
+
+      websocketService.off('open', handleConnectionChange);
+      websocketService.off('close', handleConnectionChange);
+      websocketService.off('message', handleMessage);
+
+      if (pingTimer) {
+        clearInterval(pingTimer);
       }
     };
-  }, []);
-
-  // Send messages through the shared service - returns a promise for better error handling
-  const sendMessage = useCallback(async (content: string, sender: string) => {
-    try {
-      const message: WebSocketMessage = {
-        type: 'text',
-        content,
-        sender,
-        timestamp: new Date().toISOString()
-      };
-
-      // Use await to properly handle any errors from the send operation
-      await wsService.send('text', message);
-      
-      // Add the message to our local state immediately
-      setMessages((prevMessages) => [...prevMessages, message]);
-      return true;
-    } catch (err) {
-      // Still set error state but avoid console logging in deprecated hook
-      setError('Failed to send message');
-      return false;
-    }
-  }, []);
+  }, [autoConnect, events, handleConnectionChange, handleMessage, pingInterval]);
 
   return {
-    messages,
-    connected,
-    error,
-    sendMessage
+    isConnected,
+    connect,
+    disconnect,
+    send,
+    lastMessage,
+    connectionState
   };
-};
+}
+
+export default useWebSocket;
