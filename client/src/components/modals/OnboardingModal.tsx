@@ -596,23 +596,23 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-4">Company Information</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 mb-4">Company Information</h2>
+              <p className="text-gray-600 text-sm mb-6">
                 Add basic details about {currentCompany?.name}:
               </p>
               
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="company-size" className="mb-2 block">
+                  <Label htmlFor="company-size" className="text-sm font-medium block mb-1.5">
                     Company Size <span className="text-red-500">*</span>
                   </Label>
                   <Select 
                     value={companyInfo.size} 
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
                   >
-                    <SelectTrigger id="company-size">
+                    <SelectTrigger id="company-size" className="h-9">
                       <SelectValue placeholder="Select number of employees" />
                     </SelectTrigger>
                     <SelectContent>
@@ -626,14 +626,14 @@ export function OnboardingModal() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="company-revenue" className="mb-2 block">
+                  <Label htmlFor="company-revenue" className="text-sm font-medium block mb-1.5">
                     Annual Revenue <span className="text-red-500">*</span>
                   </Label>
                   <Select 
                     value={companyInfo.revenue} 
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
                   >
-                    <SelectTrigger id="company-revenue">
+                    <SelectTrigger id="company-revenue" className="h-9">
                       <SelectValue placeholder="Select annual revenue" />
                     </SelectTrigger>
                     <SelectContent>
@@ -647,15 +647,15 @@ export function OnboardingModal() {
               </div>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_2.png" 
                   alt="Company Information" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
@@ -663,15 +663,15 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-4">A Few Tasks Ahead</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 mb-4">A Few Tasks Ahead</h2>
+              <p className="text-gray-600 text-sm mb-6">
                 To complete your accreditation application, you'll
                 need to work through the following tasks:
               </p>
               
-              <ol className="space-y-4">
+              <ol className="space-y-4 text-sm">
                 <li className="flex items-center gap-3">
                   <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-medium">1</span>
                   <span className="font-medium">KYB Form</span>
@@ -687,15 +687,15 @@ export function OnboardingModal() {
               </ol>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_3.png" 
                   alt="Task Overview" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
@@ -703,10 +703,10 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-4">Streamline with Document Uploads</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 mb-4">Streamline with Document Uploads</h2>
+              <p className="text-gray-600 text-sm mb-6">
                 Accelerate your accreditation by uploading critical
                 documents upfront. Our AI-driven system auto-fills
                 forms, saving you time.
@@ -724,22 +724,22 @@ export function OnboardingModal() {
                   "Business Continuity Plan",
                   "Data Protection Policies"
                 ].map((doc, i) => (
-                  <div key={i} className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                  <div key={i} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                     {doc}
                   </div>
                 ))}
               </div>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_4.png" 
                   alt="Document Upload" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
