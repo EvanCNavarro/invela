@@ -26,19 +26,21 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function ClaimDetailsPage() {
   const params = useParams();
-  const { id } = params;
+  // Fix parameter extraction - params contains claimId, not id
+  const claimId = params.claimId || params[0]; // fallback to first param if needed
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const { toast } = useToast();
   
   // Debug logging for component rendering and params
-  console.log('[ClaimDetailsPage] Rendering with ID param:', id);
+  console.log('[ClaimDetailsPage] Rendering with claimId param:', claimId);
   console.log('[ClaimDetailsPage] Full params:', params);
 
-  // Fetch claim details
+  // Fetch claim details with corrected parameter
   const { data: claim, isLoading, isError } = useQuery<any>({
-    queryKey: [`/api/claims/${id}`],
+    queryKey: [`/api/claims/${claimId}`],
     refetchOnWindowFocus: false,
+    enabled: !!claimId, // Only run the query if we have a valid ID
   });
 
   const handleRequestInfo = () => {
