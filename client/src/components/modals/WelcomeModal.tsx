@@ -1209,9 +1209,9 @@ export function WelcomeModal() {
                         })()}
                       </div>
                       
-                      {/* Company Information Section - clean list format */}
-                      <div className="rounded-lg border border-gray-200 p-5 bg-white/80 shadow-sm">
-                        <h3 className="text-lg font-medium mb-4 flex items-center text-gray-800">
+                      {/* Company Information Section - modernized visual design */}
+                      <div className="rounded-lg border border-blue-100 p-5 bg-white/95 shadow-sm hover:shadow transition-all">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
                           <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1225,77 +1225,81 @@ export function WelcomeModal() {
                           )}
                         </h3>
                         
-                        <div className="grid gap-3">
-                          <div className="flex">
+                        <div className="grid gap-4">
+                          {/* Company Name */}
+                          <div className="flex items-center p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors">
                             <div className="w-1/2 flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M19 21V19C19 17.9391 18.5786 16.9217 17.8284 16.1716C17.0783 15.4214 16.0609 15 15 15H9C7.93913 15 6.92172 15.4214 6.17157 16.1716C5.42143 16.9217 5 17.9391 5 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              <span className="text-gray-600">Company Name</span>
+                              <span className="text-gray-700 font-medium">Company Name</span>
                             </div>
                             <div className="w-1/2">
-                              <span className="font-medium">{company?.name || "Not provided"}</span>
+                              <span className="font-semibold text-gray-900">{company?.name || "Not provided"}</span>
                             </div>
                           </div>
                           
-                          <div className="flex">
+                          {/* Organization Size */}
+                          <div className="flex items-center p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors">
                             <div className="w-1/2 flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M23 21V19C22.9986 18.1137 22.7054 17.2528 22.1573 16.5523C21.6092 15.8519 20.8308 15.3516 19.95 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M16.5 3.13C17.3808 3.35031 18.1623 3.85071 18.7121 4.55232C19.2619 5.25392 19.5564 6.11683 19.5564 7.005C19.5564 7.89318 19.2619 8.75608 18.7121 9.45769C18.1623 10.1593 17.3808 10.6597 16.5 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              <span className="text-gray-600">Organization Size</span>
+                              <span className="text-gray-700 font-medium">Organization Size</span>
                             </div>
                             <div className="w-1/2">
-                              <span className="font-medium">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</span>
+                              <span className="font-semibold text-gray-900">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</span>
                             </div>
                           </div>
                           
-                          <div className="flex">
+                          {/* Annual Revenue */}
+                          <div className="flex items-center p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors">
                             <div className="w-1/2 flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 1V23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              <span className="text-gray-600">Annual Revenue</span>
+                              <span className="text-gray-700 font-medium">Annual Revenue</span>
                             </div>
                             <div className="w-1/2">
-                              <span className="font-medium">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</span>
+                              <span className="font-semibold text-gray-900">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</span>
                             </div>
                           </div>
                           
-                          <div className="flex">
+                          {/* Company Category */}
+                          <div className="flex items-center p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors">
                             <div className="w-1/2 flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M3 9H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M9 21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
-                              <span className="text-gray-600">Company Category</span>
+                              <span className="text-gray-700 font-medium">Company Category</span>
                             </div>
                             <div className="w-1/2">
-                              <span className="font-medium">{company?.category || "Not provided"}</span>
+                              <span className="font-semibold text-gray-900">{company?.category || "Not provided"}</span>
                             </div>
                           </div>
                         </div>
                         
                         {pendingCompanyData && (
-                          <div className="mt-3 bg-amber-50 p-2 rounded border border-amber-200">
-                            <p className="text-xs text-amber-800 flex items-center">
-                              <AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <div className="mt-4 bg-amber-50 p-3 rounded-md border border-amber-200 shadow-sm">
+                            <p className="text-sm text-amber-800 flex items-center">
+                              <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0 text-amber-500" />
                               These changes will be submitted when you click Next
                             </p>
                           </div>
                         )}
                       </div>
                       
-                      {/* Team Invitations Section - only show if invitations have been added */}
+                      {/* Team Invitations Section - modernized visual design */}
                       {(cfoName || cisoName) && (
-                        <div className="rounded-lg border border-gray-200 p-5 bg-white/80 shadow-sm">
-                          <h3 className="text-lg font-medium mb-4 flex items-center text-gray-800">
+                        <div className="rounded-lg border border-blue-100 p-5 bg-white/95 shadow-sm hover:shadow transition-all mt-5">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-800">
                             <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1305,7 +1309,7 @@ export function WelcomeModal() {
                             Team Invitations
                           </h3>
                           
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             {/* Add structured logging for team invites */}
                             {(() => {
                               // Use dynamic import to avoid bundling logger if not used
@@ -1325,48 +1329,48 @@ export function WelcomeModal() {
                             
                             {/* CFO Invitation - only show if both fields are filled */}
                             {cfoName && cfoEmail && (
-                              <div className="flex items-center py-2 border-b border-gray-100">
-                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-800 mr-3">
+                              <div className="p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors flex items-center">
+                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-800 mr-3 whitespace-nowrap">
                                   CFO
                                 </span>
                                 <div className="flex-1 grid grid-cols-2">
-                                  <span className="font-medium text-sm">{cfoName}</span>
-                                  <span className="text-gray-600 text-sm">{cfoEmail}</span>
+                                  <span className="font-semibold text-gray-900">{cfoName}</span>
+                                  <span className="text-gray-600">{cfoEmail}</span>
                                 </div>
                               </div>
                             )}
                             
                             {/* CISO Invitation - only show if both fields are filled */}
                             {cisoName && cisoEmail && (
-                              <div className="flex items-center py-2">
-                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-800 mr-3">
+                              <div className="p-3 bg-blue-50/70 rounded-md border border-blue-100 hover:border-blue-200 transition-colors flex items-center">
+                                <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-200 text-gray-800 mr-3 whitespace-nowrap">
                                   CISO
                                 </span>
                                 <div className="flex-1 grid grid-cols-2">
-                                  <span className="font-medium text-sm">{cisoName}</span>
-                                  <span className="text-gray-600 text-sm">{cisoEmail}</span>
+                                  <span className="font-semibold text-gray-900">{cisoName}</span>
+                                  <span className="text-gray-600">{cisoEmail}</span>
                                 </div>
                               </div>
                             )}
                             
                             {/* No invitations message if none were added */}
                             {!cfoName && !cisoName && (
-                              <div className="text-center py-2">
-                                <p className="text-sm text-gray-500">No team members invited</p>
+                              <div className="p-4 bg-gray-50 rounded-md border border-gray-200 text-center">
+                                <p className="text-gray-500">No team members have been invited</p>
                               </div>
                             )}
                           </div>
                         </div>
                       )}
                       
-                      {/* Final confirmation message with better formatting */}
-                      <div className="mt-4 bg-green-50 rounded-lg p-4 border border-green-100 shadow-sm">
+                      {/* Final confirmation message with modernized styling */}
+                      <div className="mt-6 bg-green-50/90 rounded-lg p-4 border border-green-200 shadow-sm hover:shadow transition-all">
                         <p className="text-sm text-gray-700 flex items-start">
-                          <svg className="w-5 h-5 mr-2 text-green-600 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg className="w-6 h-6 mr-3 text-green-600 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          <span>
+                          <span className="leading-relaxed">
                             Please review the information above. When you're ready, click the "Next" button to 
                             complete your onboarding process and submit your information.
                           </span>
