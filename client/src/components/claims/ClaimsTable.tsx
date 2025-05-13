@@ -83,9 +83,9 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     navigate(`/claims/${claim.id}/resolve`);
   };
 
-  // Format amount as a flat number without decimals
+  // Format amount as a flat number without currency symbol
   const formatCurrency = (amount: number) => {
-    return `$${Math.round(amount).toLocaleString('en-US')}`;
+    return Math.round(amount).toLocaleString('en-US');
   };
 
   // Format date as MMM DD, YYYY

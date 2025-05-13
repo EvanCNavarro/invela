@@ -149,9 +149,9 @@ export default function ClaimDetailsPage() {
     }
   };
 
-  // Format amount as a flat number without decimals
+  // Format amount as a flat number without currency symbol
   const formatCurrency = (amount: number) => {
-    return `$${Math.round(amount).toLocaleString('en-US')}`;
+    return Math.round(amount).toLocaleString('en-US');
   };
 
   return (
