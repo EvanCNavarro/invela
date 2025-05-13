@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useParams } from 'wouter';
+import { useParams, Link } from 'wouter';
+import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -188,16 +189,37 @@ export default function ClaimDetailsPage() {
 
   return (
     <DashboardLayout>
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center px-4 py-2">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">
+              <div className="relative w-4 h-4">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+                </svg>
+              </div>
+            </Link>
+            <span>&gt;</span>
+            <Link href="/claims" className="hover:text-foreground hover:underline">Claims</Link>
+            <span>&gt;</span>
+            <span className="font-semibold text-foreground">{claim?.claim_id || 'Loading...'}</span>
+          </div>
+        </div>
+        
+        <div className="px-4">
+          <Link href="/claims" className="inline-flex items-center space-x-1 py-2 px-4 border rounded-md hover:bg-muted">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Claims</span>
+          </Link>
+        </div>
+      </div>
+        
       <PageTemplate
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
         title={`PII Data Loss Claim ${claim?.claim_id || ''}`}
         description={claim ? `Filed on ${formatDate(claim.claim_date)} ${statusBadge()}` : 'Loading claim details...'}
-        backButton={{
-          label: 'Back to Claims',
-          href: '/claims'
-        }}
-        breadcrumbs={breadcrumbs}
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
