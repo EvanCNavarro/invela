@@ -950,18 +950,19 @@ export function WelcomeModal() {
                   {/* Team member invitation form for step 5 */}
                   {currentSlide === 4 && (
                     <motion.div
-                      className="mt-6 space-y-6 transform-gpu"
+                      className="mt-4 space-y-4 transform-gpu"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
                       style={{ willChange: 'opacity', overflow: 'hidden' }}
                     >
                       {/* CFO Invitation */}
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <Label className="text-base font-semibold">Invite your CFO to provide Financial Data for the <span className="font-bold">KYB Form</span> task:</Label>
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="mb-2">
+                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">CFO</span>
+                          <Label className="text-base font-semibold block">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
                             <Label htmlFor="cfoName" className="text-sm">
                               Full Name
@@ -991,11 +992,12 @@ export function WelcomeModal() {
                       </div>
                       
                       {/* CISO Invitation */}
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <Label className="text-base font-semibold">Invite your CISO to provide Compliance Info for the <span className="font-bold">S&P KY3P Security Assessment</span> task:</Label>
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="mb-2">
+                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">CISO</span>
+                          <Label className="text-base font-semibold block">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
                             <Label htmlFor="cisoName" className="text-sm">
                               Full Name
@@ -1025,11 +1027,12 @@ export function WelcomeModal() {
                       </div>
                       
                       {/* Legal Dept Invitation */}
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                          <Label className="text-base font-semibold">Invite your Legal Dept. for the <span className="font-bold">Open Banking Survey</span>:</Label>
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="mb-2">
+                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">Legal</span>
+                          <Label className="text-base font-semibold block">Regulatory Compliance for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">Open Banking Survey</span></Label>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
                             <Label htmlFor="legalName" className="text-sm">
                               Full Name
@@ -1058,9 +1061,9 @@ export function WelcomeModal() {
                         </div>
                       </div>
                       
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-gray-500 mt-1">
                         <Info className="h-4 w-4 inline-block mr-1 text-blue-600" />
-                        Enter contact information for team members who will help complete your accreditation. Invites will be sent on the final step.
+                        Invites will be sent on the final step.
                       </p>
                     </motion.div>
                   )}
