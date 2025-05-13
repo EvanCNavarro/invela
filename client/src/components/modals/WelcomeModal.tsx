@@ -956,6 +956,11 @@ export function WelcomeModal() {
                         )}
                       </motion.p>
                     </motion.div>
+                  ) : currentSlide === 5 ? (
+                    /* Skip showing default title for step 6 (review page) since it has its own title */
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+                      {/* Intentionally empty - no title for review page here */}
+                    </motion.div>
                   ) : (
                     <>
                       <motion.h2 
