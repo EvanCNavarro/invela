@@ -596,6 +596,71 @@ export function WelcomeModal() {
     },
   });
 
+  /**
+   * Validates that team invitation fields are either both filled or both empty
+   * Shows validation UI and toast notifications for incomplete invitations
+   * 
+   * @returns {boolean} True if validation passes, false otherwise
+   */
+  const validateTeamInvites = (): boolean => {
+    // Check if CFO has one field filled but not the other
+    const cfoNameFilled = !!cfoName && cfoName.trim().length > 0;
+    const cfoEmailFilled = !!cfoEmail && cfoEmail.trim().length > 0;
+    
+    // Check if CISO has one field filled but not the other
+    const cisoNameFilled = !!cisoName && cisoName.trim().length > 0;
+    const cisoEmailFilled = !!cisoEmail && cisoEmail.trim().length > 0;
+    
+    // Track if we have any validation errors
+    let hasValidationErrors = false;
+    
+    // Validate CFO fields
+    if ((cfoNameFilled && !cfoEmailFilled) || (!cfoNameFilled && cfoEmailFilled)) {
+      hasValidationErrors = true;
+      
+      // Show toast for CFO validation error
+      toast({
+        title: "Please complete CFO invitation",
+        description: "You must provide both name and email, or leave both fields empty.",
+        variant: "destructive",
+        duration: 2500
+      });
+      
+      // Log for debugging purposes
+      import('@/lib/logger').then(({ logger }) => {
+        logger.debug('[WelcomeModal] CFO invitation validation failed', {
+          hasName: cfoNameFilled,
+          hasEmail: cfoEmailFilled
+        });
+      });
+    }
+    
+    // Validate CISO fields
+    if ((cisoNameFilled && !cisoEmailFilled) || (!cisoNameFilled && cisoEmailFilled)) {
+      hasValidationErrors = true;
+      
+      // Only show CISO toast if we didn't already show CFO toast to avoid multiple toasts
+      if (!(cfoNameFilled && !cfoEmailFilled) && !(!cfoNameFilled && cfoEmailFilled)) {
+        toast({
+          title: "Please complete CISO invitation",
+          description: "You must provide both name and email, or leave both fields empty.",
+          variant: "destructive",
+          duration: 2500
+        });
+      }
+      
+      // Log for debugging purposes
+      import('@/lib/logger').then(({ logger }) => {
+        logger.debug('[WelcomeModal] CISO invitation validation failed', {
+          hasName: cisoNameFilled,
+          hasEmail: cisoEmailFilled
+        });
+      });
+    }
+    
+    return !hasValidationErrors;
+  };
+
   const handleNext = async () => {
     // For step 2 (index 1), check if both form fields are filled out
     if (currentSlide === 1) {
@@ -633,6 +698,15 @@ export function WelcomeModal() {
         }
       );
       return;
+    }
+    
+    // For team invitation slide (index 4), validate that inputs are properly filled
+    if (currentSlide === 4) {
+      // Validate that invitation fields are either both filled or both empty
+      if (!validateTeamInvites()) {
+        // If validation failed, don't proceed to the next slide
+        return;
+      }
     }
     
     // For other slides, just advance to the next one
@@ -935,14 +1009,14 @@ export function WelcomeModal() {
                   {/* Team member invitation form for step 5 */}
                   {currentSlide === 4 && (
                     <motion.div
-                      className="mt-2 space-y-4 transform-gpu"
+                      className="mt-1 space-y-4 transform-gpu" /* Reduced space between title and content */
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
                       style={{ willChange: 'opacity', overflow: 'hidden' }}
                     >
                       {/* CFO Invitation */}
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-100"> {/* Changed to a soft blue-gray background */}
                         <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CFO</span>
                           <Label className="text-base font-semibold inline">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
@@ -957,7 +1031,11 @@ export function WelcomeModal() {
                               placeholder="John Doe"
                               value={cfoName}
                               onChange={(e) => setCfoName(e.target.value)}
-                              className={`transition-all duration-200 ${cfoName ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${
+                                cfoName 
+                                  ? "border-green-500 bg-green-50/30" 
+                                  : cfoEmail ? "border-red-500" : ""
+                              }`}
                             />
                           </div>
                           <div className="space-y-1 col-span-3">
@@ -970,14 +1048,18 @@ export function WelcomeModal() {
                               type="email"
                               value={cfoEmail}
                               onChange={(e) => setCfoEmail(e.target.value)}
-                              className={`transition-all duration-200 ${cfoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${
+                                cfoEmail 
+                                  ? "border-green-500 bg-green-50/30" 
+                                  : cfoName ? "border-red-500" : ""
+                              }`}
                             />
                           </div>
                         </div>
                       </div>
                       
                       {/* CISO Invitation */}
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-100"> {/* Changed to a soft blue-gray background */}
                         <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CISO</span>
                           <Label className="text-base font-semibold inline">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
@@ -992,7 +1074,11 @@ export function WelcomeModal() {
                               placeholder="Jane Smith"
                               value={cisoName}
                               onChange={(e) => setCisoName(e.target.value)}
-                              className={`transition-all duration-200 ${cisoName ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${
+                                cisoName 
+                                  ? "border-green-500 bg-green-50/30" 
+                                  : cisoEmail ? "border-red-500" : ""
+                              }`}
                             />
                           </div>
                           <div className="space-y-1 col-span-3">
@@ -1005,7 +1091,11 @@ export function WelcomeModal() {
                               type="email"
                               value={cisoEmail}
                               onChange={(e) => setCisoEmail(e.target.value)}
-                              className={`transition-all duration-200 ${cisoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${
+                                cisoEmail 
+                                  ? "border-green-500 bg-green-50/30" 
+                                  : cisoName ? "border-red-500" : ""
+                              }`}
                             />
                           </div>
                         </div>
