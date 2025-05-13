@@ -220,6 +220,12 @@ export function WelcomeModal() {
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
   
+  // Fetch current company data to ensure we have it for team invites
+  const { data: companyData, isLoading: isLoadingCompany } = useQuery({
+    queryKey: ['/api/companies/current'],
+    enabled: !!user?.id,
+  });
+  
   // Use a ref to track previous slide for determining animation direction
   const prevSlideRef = useRef(currentSlide);
   
@@ -341,30 +347,41 @@ export function WelcomeModal() {
       logger.error('[WelcomeModal] ' + detailedError, validationResults);
       console.error('[ONBOARDING DEBUG] ' + detailedError, validationResults);
       
-      // Attempt to fetch fresh user data if available
+      // Attempt to use data from our own component state
       try {
-        const currentUser = currentCompanyQueryData?.currentUser;
-        const currentCompany = currentCompanyQueryData?.company;
+        const companyId = company?.id || user?.company?.id;
+        const companyName = company?.name || user?.company?.name;
+        const senderName = user?.full_name || user?.email || 'Invela User';
         
-        logger.debug('[WelcomeModal] Attempted recovery with fresh data', {
-          freshUserAvailable: !!currentUser,
-          freshCompanyAvailable: !!currentCompany
+        logger.debug('[WelcomeModal] Attempted recovery with component state data', {
+          hasCompanyId: !!companyId,
+          hasCompanyName: !!companyName,
+          hasSenderName: !!senderName
         });
         
-        // If we can't recover, throw error
-        if (!currentUser || !currentCompany || !currentCompany.id) {
+        // If we can't recover minimum data needed, throw error
+        if (!companyId || !companyName) {
           throw new Error(detailedError);
         }
         
-        // Use the fresh data for invitations
-        logger.info('[WelcomeModal] Recovered with fresh user/company data', {
-          userId: currentUser.id,
-          companyId: currentCompany.id
+        // Use the recovered data for invitations
+        logger.info('[WelcomeModal] Recovered with component state data', {
+          companyId,
+          companyName,
+          senderName
         });
         
-        // Continue with the recovered data (stored in closure variables)
-        const recoveredUser = currentUser;
-        const recoveredCompany = currentCompany;
+        // Create minimal recovery objects with the essential fields
+        const recoveredUser = {
+          id: user?.id,
+          full_name: senderName,
+          email: user?.email || 'user@invela.com'
+        };
+        
+        const recoveredCompany = {
+          id: companyId,
+          name: companyName
+        };
         
         // Create invitations with recovered data
         const invitations = [];
@@ -619,10 +636,7 @@ export function WelcomeModal() {
   }, [user, completeOnboardingFromLocalStorage]);
 
   // Get current company data
-  const { data: company } = useQuery<{id: number, name: string}>({
-    queryKey: ["/api/companies/current"],
-    enabled: !!user,
-  });
+  // Use the company data we already fetched above via companyData
 
   const { data: onboardingTask } = useQuery<{id: number}>({
     queryKey: ["/api/tasks", { type: "user_onboarding", email: user?.email }],
