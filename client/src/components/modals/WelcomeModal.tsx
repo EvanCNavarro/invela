@@ -1151,56 +1151,71 @@ export function WelcomeModal() {
         return false;
       }
       
-      try {
-        // Prepare data for the API call
-        const companyData = {
-          numEmployees: employeeCount.toString(),
-          revenueTier: revenueTier
-        };
-        
-        // Use mutateAsync to properly handle the promise
-        const result = await updateCompanyMutation.mutateAsync(companyData);
-        
-        // Skip further processing if component unmounted during API call
-        if (!isMountedRef.current) {
-          logger.debug('[WelcomeModal] Component unmounted during company update API call');
-          return false;
-        }
-        
-        logger.info('[WelcomeModal] Company updates submitted successfully', {
-          result,
-          companyId: result?.id
+      // Prepare data for the API call
+      const companyUpdateData = {
+        numEmployees: employeeCount.toString(),
+        revenueTier: revenueTier
+      };
+      
+      // Use mutateAsync to properly handle the promise
+      const result = await updateCompanyMutation.mutateAsync(companyUpdateData);
+      
+      // Skip further processing if component unmounted during API call
+      if (!isMountedRef.current) {
+        logger.debug('[WelcomeModal] Component unmounted during company update API call');
+        return false;
+      }
+      
+      logger.info('[WelcomeModal] Company updates submitted successfully', {
+        result,
+        companyId: result?.id
+      });
+      
+      // Show success toast - only if component is still mounted
+      if (isMountedRef.current) {
+        toast({
+          title: "Company information saved",
+          description: "Your company details have been updated successfully.",
+          variant: "success",
+          duration: 2500
         });
-        
-        // Show success toast - only if component is still mounted
-        if (isMountedRef.current) {
-          toast({
-            title: "Company information saved",
-            description: "Your company details have been updated successfully.",
-            variant: "success",
-            duration: 2500
-          });
-        }
+      }
       
       // Mark company data as submitted
       setPendingCompanyData(false);
-      
       return true;
     } catch (error) {
-      logger.error('[WelcomeModal] Failed to submit company updates', { error });
+      // Only log and show error if component is still mounted
+      if (isMountedRef.current) {
+        console.error('[ONBOARDING DEBUG] Error saving company information:', error);
+        
+        let logger;
+        try {
+          // Try to get logger, but don't fail if this fails
+          const module = await import('@/lib/logger');
+          logger = module.logger;
+          logger.error('[WelcomeModal] Failed to submit company updates', { error });
+        } catch (loggerError) {
+          console.error('[ONBOARDING DEBUG] Additionally failed to import logger:', loggerError);
+        }
+        
+        // Show error toast only if still mounted
+        toast({
+          title: "Error saving company information",
+          description: "There was a problem saving your company details. Please try again.",
+          variant: "destructive",
+          duration: 2500
+        });
+      }
       
-      // Show error toast
-      toast({
-        title: "Error saving company information",
-        description: "There was a problem saving your company details. Please try again.",
-        variant: "destructive",
-        duration: 2500
-      });
-      
-      console.error('[ONBOARDING DEBUG] Error saving company information:', error);
-      
-      // Propagate the error to be handled by the caller
+      // Re-throw the error to be handled by the caller
       throw error;
+    } finally {
+      // Always clean up the abort controller regardless of success/failure
+      const index = pendingOperations.current.indexOf(controller);
+      if (index !== -1) {
+        pendingOperations.current.splice(index, 1);
+      }
     }
   };
   
