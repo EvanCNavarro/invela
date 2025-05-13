@@ -23,12 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Clock, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { 
-  CardSkeleton, 
-  ProfileCardSkeleton, 
-  TabsContentSkeleton,
-  TwoColumnCardSkeleton
-} from '@/components/ui/skeleton-table';
+import { ClaimDetailSkeleton } from '@/components/claims/ClaimDetailSkeleton';
 
 export default function ClaimDetailsPage() {
   const params = useParams();
@@ -607,48 +602,7 @@ export default function ClaimDetailsPage() {
  * Provides consistent loading experience across all pages
  */
 function LoadingSkeleton() {
-  return (
-    <div className="space-y-6 w-full relative">
-      {/* Skeleton UI */}
-      <div className="animate-fade-in transition-opacity duration-500">
-        {/* Breadcrumb and back button skeletons */}
-        <div className="flex flex-col px-6 space-y-4 mb-6">
-          <div className="flex items-center space-x-2 py-4">
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-          <Skeleton className="h-10 w-[150px]" />
-        </div>
-        
-        {/* Header Skeleton */}
-        <div className="px-6 mb-6">
-          <Skeleton className="h-8 w-[350px] mb-1" />
-          <Skeleton className="h-5 w-[250px]" />
-        </div>
-        
-        {/* Main content skeleton */}
-        <div className="px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <TwoColumnCardSkeleton />
-              <TabsContentSkeleton tabCount={3} />
-            </div>
-            
-            <div className="space-y-6">
-              <ProfileCardSkeleton />
-              <ProfileCardSkeleton />
-              <CardSkeleton rows={4} />
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Center loading spinner */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-muted-foreground">Loading claim details...</p>
-      </div>
-    </div>
-  );
+  return <ClaimDetailSkeleton />;
 }
 
 function ErrorCard({ message }: { message: string }) {
