@@ -681,6 +681,14 @@ export function WelcomeModal() {
   };
 
   const handleNext = async () => {
+    // Add enhanced console logging for debugging
+    console.log('[ONBOARDING DEBUG] Handle Next called for slide', currentSlide, {
+      employeeCount,
+      revenueTier,
+      pendingCompanyData,
+      teamInvites: teamInvites.filter(invite => invite.fullName && invite.email)
+    });
+    
     // For step 2 (index 1), check if both form fields are filled out
     if (currentSlide === 1) {
       if (!employeeCount || !revenueTier) {
@@ -691,6 +699,7 @@ export function WelcomeModal() {
           variant: "destructive",
           duration: 2500
         });
+        console.log('[ONBOARDING DEBUG] Company information incomplete, preventing advance');
         return;
       }
       
@@ -702,6 +711,15 @@ export function WelcomeModal() {
           employeeLabel: getEmployeeCountLabel(employeeCount),
           revenueLabel: getRevenueTierLabel(revenueTier)
         });
+      });
+      
+      // Log to console for immediate visibility
+      console.log('[ONBOARDING DEBUG] Company information stored locally:', {
+        numEmployees: employeeCount,
+        revenueTier: revenueTier,
+        employeeLabel: getEmployeeCountLabel(employeeCount),
+        revenueLabel: getRevenueTierLabel(revenueTier),
+        pendingFlag: true
       });
       
       // Mark that we have pending company data to be submitted at the end
