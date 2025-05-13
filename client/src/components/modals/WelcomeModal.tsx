@@ -721,6 +721,45 @@ export function WelcomeModal() {
       }
     }
     
+    // For review slide (index 5), submit company data if we have pending changes
+    if (currentSlide === 5 && pendingCompanyData) {
+      setIsSubmitting(true);
+      
+      // First, save the company data
+      try {
+        await updateCompanyMutation.mutateAsync({ 
+          numEmployees: employeeCount,
+          revenueTier: revenueTier 
+        });
+        
+        // Mark company data as submitted
+        setPendingCompanyData(false);
+        
+        // Show success toast
+        toast({
+          title: "Company information saved",
+          description: "Your company details have been updated successfully.",
+          variant: "success",
+          duration: 2500
+        });
+        
+        // Continue to the next slide
+        setCurrentSlide(prev => prev + 1);
+        setIsSubmitting(false);
+        return;
+      } catch (error) {
+        setIsSubmitting(false);
+        toast({
+          title: "Error saving company information",
+          description: "There was a problem saving your company details. Please try again.",
+          variant: "destructive", 
+          duration: 2500
+        });
+        console.error('[ONBOARDING DEBUG] Error saving company information:', error);
+        return;
+      }
+    }
+    
     // For other slides, just advance to the next one
     if (currentSlide < carouselContent.length - 1) {
       setCurrentSlide(prev => prev + 1);
