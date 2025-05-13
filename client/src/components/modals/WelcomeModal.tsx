@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
-import { Info } from "lucide-react";
+import { Info, AlertTriangle, DollarSign, Shield, AlertCircle } from "lucide-react";
 
 // Constants for form selections with specific value mappings to appropriate database values
 // Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
@@ -728,7 +728,7 @@ export function WelcomeModal() {
       // First, save the company data
       try {
         await updateCompanyMutation.mutateAsync({ 
-          numEmployees: employeeCount,
+          numEmployees: employeeCount !== null ? employeeCount.toString() : undefined,
           revenueTier: revenueTier 
         });
         
@@ -1173,6 +1173,9 @@ export function WelcomeModal() {
                             <path d="M11 22V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           Company Information
+                          {pendingCompanyData && (
+                            <span className="ml-2 text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Pending Update</span>
+                          )}
                         </h3>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
@@ -1186,7 +1189,7 @@ export function WelcomeModal() {
                           <div className="space-y-1">
                             <p className="text-xs font-medium text-gray-500">Organization Size</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {employeeCount ? getEmployeeCountLabel(Number(employeeCount)) : "Not provided"}
+                              {employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}
                             </p>
                           </div>
                           
@@ -1204,6 +1207,15 @@ export function WelcomeModal() {
                             <p className="text-sm font-semibold text-gray-800">{user?.full_name || user?.email || "Not provided"}</p>
                           </div>
                         </div>
+                        
+                        {pendingCompanyData && (
+                          <div className="mt-2 bg-amber-50 p-2 rounded border border-amber-200">
+                            <p className="text-xs text-amber-800 flex items-center">
+                              <AlertTriangle className="h-3 w-3 mr-1 flex-shrink-0" />
+                              These changes will be submitted when you click Next
+                            </p>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Team Invitations Section - only show if invitations have been added */}
