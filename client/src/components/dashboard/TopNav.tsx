@@ -98,11 +98,11 @@ export function TopNav() {
   return (
     <div className="w-full h-full">
       <div className="h-14 px-6 flex items-center w-full">
-        <div className="flex-1 min-w-0 w-full max-w-[calc(100%-150px)]">
+        <div className="min-w-0 w-auto">
           <SearchBar
             isGlobalSearch
             onSearch={handleSearch}
-            containerClassName="w-full"
+            containerClassName="w-[350px]"
             autoFocus={false}
           />
         </div>
