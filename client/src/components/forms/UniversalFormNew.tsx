@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { shouldHideDownloadButtons } from '@/utils/hide-downloads';
 
 // Define window property for tracking clear operations
 declare global {
