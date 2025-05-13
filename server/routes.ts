@@ -16,7 +16,7 @@ import { logoUpload } from './middleware/upload';
 import * as LegacyWebSocketService from './services/websocket';
 import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
-import { websocketManager } from './websocket';
+import { websocketManager, type MessageType as NewMessageType } from './websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
