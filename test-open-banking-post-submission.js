@@ -5,7 +5,9 @@
  * with the transactional form submission process.
  */
 
-const { Pool } = require('pg');
+import pg from 'pg';
+const { Pool } = pg;
+
 const colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
@@ -65,7 +67,7 @@ async function checkCompanyOnboardingStatus(companyId) {
   
   try {
     const { rows } = await pool.query(`
-      SELECT id, name, onboarding_completed, risk_score, accreditation_status, risk_clusters
+      SELECT id, name, onboarding_company_completed, risk_score, accreditation_status, risk_clusters
       FROM companies
       WHERE id = $1
     `, [companyId]);
@@ -77,8 +79,8 @@ async function checkCompanyOnboardingStatus(companyId) {
     
     const company = rows[0];
     log(`Company "${company.name}" (${company.id}) onboarding status:`, colors.cyan);
-    log(`  - Onboarding Completed: ${company.onboarding_completed ? 'YES' : 'NO'}`, 
-        company.onboarding_completed ? colors.green : colors.red);
+    log(`  - Onboarding Completed: ${company.onboarding_company_completed ? 'YES' : 'NO'}`, 
+        company.onboarding_company_completed ? colors.green : colors.red);
     log(`  - Risk Score: ${company.risk_score || 'Not set'}`, 
         company.risk_score ? colors.green : colors.red);
     log(`  - Accreditation Status: ${company.accreditation_status || 'Not set'}`, 
