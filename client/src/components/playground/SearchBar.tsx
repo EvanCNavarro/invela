@@ -111,7 +111,7 @@ export function SearchBar({
   }
 
   return (
-    <div className={cn("relative flex w-full items-center", containerClassName)}>
+    <div className={cn("relative flex w-full items-center min-w-0", containerClassName)}>
       <SearchIcon 
         className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
       />
@@ -121,13 +121,14 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px] text-sm text-ellipsis",
+          "pl-9 pr-[70px] text-sm w-full",
           className
         )}
         style={{
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          width: '100%'
         }}
         autoFocus={false}
         {...props}
