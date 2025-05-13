@@ -307,62 +307,152 @@ export function WelcomeModal() {
     }
   });
 
-  // Process team member invitations before final submission
-  const processTeamInvites = () => {
+  /**
+   * Process team member invitations asynchronously
+   * Sends invitations for CFO and CISO if both name and email are provided
+   * Updates UI state to reflect sent invitations
+   * Logs detailed information for debugging and auditing
+   * 
+   * @returns {Promise<boolean>} Promise that resolves to true if invitations were sent, false otherwise
+   * @throws {Error} If there's an issue with sending the invitations that shouldn't be ignored
+   */
+  const processTeamInvites = async () => {
+    // Dynamically import logger to use in this function
+    const { logger } = await import('@/lib/logger');
+    
+    // Validate required data is available
     if (!user || !user.company) {
-      console.error('[ONBOARDING DEBUG] Cannot invite team members without user or company data');
-      return Promise.resolve(false);
+      const errorMessage = 'Cannot invite team members without user or company data';
+      logger.error('[WelcomeModal] ' + errorMessage);
+      console.error('[ONBOARDING DEBUG] ' + errorMessage);
+      throw new Error(errorMessage);
     }
+    
+    logger.debug('[WelcomeModal] Starting team invitation process', {
+      hasCfo: !!(cfoName && cfoEmail),
+      hasCiso: !!(cisoName && cisoEmail),
+      companyId: user.company.id,
+      companyName: user.company.name
+    });
     
     const invitations = [];
     
-    // Process CFO invitation
+    // Process CFO invitation if both name and email are provided
     if (cfoName && cfoEmail) {
       invitations.push({
         email: cfoEmail,
         full_name: cfoName,
         company_id: user.company.id,
         company_name: user.company.name,
-        sender_name: user.full_name || user.email
+        sender_name: user.full_name || user.email,
+        role: 'CFO'
       });
     }
     
-    // Process CISO invitation
+    // Process CISO invitation if both name and email are provided
     if (cisoName && cisoEmail) {
       invitations.push({
         email: cisoEmail,
         full_name: cisoName,
         company_id: user.company.id,
         company_name: user.company.name,
-        sender_name: user.full_name || user.email
+        sender_name: user.full_name || user.email,
+        role: 'CISO'
       });
     }
     
+    // If no invitations to process, return early
     if (invitations.length === 0) {
-      return Promise.resolve(false);
+      logger.debug('[WelcomeModal] No team invitations to process');
+      return false;
     }
     
-    // Return a promise that resolves when all invites are processed
-    return Promise.all(
-      invitations.map(invite => 
-        inviteTeamMemberMutation.mutateAsync(invite)
-          .then(result => {
-            // Add to tracked invites for review screen
+    logger.info('[WelcomeModal] Processing team invitations', { 
+      count: invitations.length,
+      emails: invitations.map(inv => inv.email) 
+    });
+    
+    // Process all invitations in parallel
+    try {
+      // Track any failed invitations to report them
+      const failedInvitations = [];
+      
+      // Process each invitation and collect results
+      await Promise.all(
+        invitations.map(async invite => {
+          try {
+            logger.debug('[WelcomeModal] Sending invitation', { 
+              email: invite.email, 
+              role: invite.role 
+            });
+            
+            // Send the invitation via API
+            const result = await inviteTeamMemberMutation.mutateAsync({
+              email: invite.email,
+              full_name: invite.full_name,
+              company_id: invite.company_id,
+              company_name: invite.company_name,
+              sender_name: invite.sender_name
+            });
+            
+            logger.debug('[WelcomeModal] Invitation sent successfully', { 
+              email: invite.email,
+              role: invite.role,
+              result 
+            });
+            
+            // Track this invitation in UI state for the review screen
             setTeamInvites(prev => [...prev, {
-              role: invite.email === cfoEmail ? "CFO" : "CISO",
+              role: invite.role,
               fullName: invite.full_name,
               email: invite.email,
-              taskType: invite.email === cfoEmail ? "KYB Form" : "KY3P Security Assessment"
+              taskType: invite.role === "CFO" ? "KYB Form" : "KY3P Security Assessment"
             }]);
+            
             return result;
-          })
-          .catch(error => {
+          } catch (error) {
+            logger.error('[WelcomeModal] Failed to send invitation', { 
+              email: invite.email,
+              role: invite.role,
+              error 
+            });
             console.error('[ONBOARDING DEBUG] Failed to send invitation to', invite.email, error);
-            // Continue with other invitations even if one fails
+            
+            // Track the failure but don't block other invitations
+            failedInvitations.push({
+              email: invite.email,
+              role: invite.role,
+              error: error instanceof Error ? error.message : String(error)
+            });
+            
             return null;
-          })
-      )
-    ).then(() => true);
+          }
+        })
+      );
+      
+      // If we had any failures, report them but continue
+      if (failedInvitations.length > 0) {
+        logger.warn('[WelcomeModal] Some team invitations failed', { 
+          failedCount: failedInvitations.length,
+          totalCount: invitations.length,
+          failures: failedInvitations
+        });
+        
+        // If ALL invitations failed, throw an error to trigger the error handling flow
+        if (failedInvitations.length === invitations.length) {
+          throw new Error(`All ${invitations.length} team invitations failed to send`);
+        }
+      }
+      
+      // Return true to indicate we processed invitations (even if some failed)
+      return true;
+    } catch (error) {
+      logger.error('[WelcomeModal] Critical error in team invitation process', { error });
+      console.error('[ONBOARDING DEBUG] Critical team invitation error:', error);
+      
+      // Propagate the error to be handled by the caller
+      throw error;
+    }
   };
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
@@ -780,34 +870,107 @@ export function WelcomeModal() {
       console.log('[ONBOARDING DEBUG] Final slide reached, completing onboarding');
       setIsSubmitting(true);
       
-      // Process team invitations before completing
-      try {
-        // Process any team invitations
-        await processTeamInvites();
-      } catch (error) {
-        console.error('[ONBOARDING DEBUG] Error sending team invitations:', error);
-        // Continue with onboarding completion even if invitations fail
-      }
-      
-      // Set a local flag immediately to prevent modal from showing again
-      if (user) {
-        user.onboarding_user_completed = true;
-      }
-      
-      // Store completion in localStorage as a fail-safe backup
-      try {
-        localStorage.setItem('onboarding_completed', 'true');
-        localStorage.setItem('onboarding_user_id', user?.id?.toString() || '');
-        console.log('[ONBOARDING DEBUG] Stored onboarding completion in localStorage');
-      } catch (err) {
-        console.error('[ONBOARDING DEBUG] Failed to store in localStorage:', err);
-      }
-      
-      // Make the API call to update the server
-      completeOnboardingMutation.mutate();
-      
-      // Close the modal immediately
-      setShowModal(false);
+      // Import logger for enhanced debugging
+      import('@/lib/logger').then(async ({ logger }) => {
+        logger.info('[WelcomeModal] Starting final onboarding completion process', {
+          hasTeamInvites: !!(cfoName && cfoEmail) || !!(cisoName && cisoEmail),
+          userId: user?.id,
+          email: user?.email
+        });
+        
+        // Track overall operation success for proper modal closure
+        let operationSucceeded = true;
+        
+        // STEP 1: Process team invitations if needed
+        try {
+          if ((cfoName && cfoEmail) || (cisoName && cisoEmail)) {
+            logger.debug('[WelcomeModal] Processing team invitations');
+            await processTeamInvites();
+            logger.info('[WelcomeModal] Team invitations processed successfully');
+            
+            // Show success toast for team invitations
+            toast({
+              title: "Team invitations sent",
+              description: "Your team members have been invited to join.",
+              variant: "success",
+              duration: 2500
+            });
+          } else {
+            logger.debug('[WelcomeModal] No team invitations to process');
+          }
+        } catch (error) {
+          logger.error('[WelcomeModal] Error sending team invitations', { error });
+          console.error('[ONBOARDING DEBUG] Error sending team invitations:', error);
+          
+          // Show error toast for team invitations
+          toast({
+            title: "Team invitation failed",
+            description: "We couldn't send some team invitations. You can try again later from the team management page.",
+            variant: "destructive",
+            duration: 2500
+          });
+          
+          // Don't fail the entire process for team invitation errors
+          // Users can send invitations later
+        }
+        
+        // STEP 2: Set local flags to prevent the modal from showing again
+        if (user) {
+          user.onboarding_user_completed = true;
+        }
+        
+        // STEP 3: Store completion in localStorage as a fail-safe backup
+        try {
+          localStorage.setItem('onboarding_completed', 'true');
+          localStorage.setItem('onboarding_user_id', user?.id?.toString() || '');
+          logger.debug('[WelcomeModal] Stored onboarding completion in localStorage');
+        } catch (err) {
+          logger.error('[WelcomeModal] Failed to store in localStorage', { error: err });
+          console.error('[ONBOARDING DEBUG] Failed to store in localStorage:', err);
+          // Continue despite localStorage errors - not critical
+        }
+        
+        // STEP 4: Make the API call to update the server
+        try {
+          logger.debug('[WelcomeModal] Making API call to complete onboarding');
+          
+          // Use mutateAsync instead of mutate to properly await the result
+          const result = await completeOnboardingMutation.mutateAsync();
+          
+          logger.info('[WelcomeModal] Server-side onboarding completion successful', { result });
+          
+          // Show success toast for completion
+          toast({
+            title: "Welcome aboard!",
+            description: "Your onboarding has been completed successfully.",
+            variant: "success",
+            duration: 2500
+          });
+        } catch (error) {
+          logger.error('[WelcomeModal] Error completing onboarding on server', { error });
+          console.error('[ONBOARDING DEBUG] Server-side onboarding completion failed:', error);
+          
+          // Show error toast
+          toast({
+            title: "Onboarding completion issue",
+            description: "There was a problem completing your onboarding. Please try again.",
+            variant: "destructive",
+            duration: 2500
+          });
+          
+          // Mark operation as failed - keep modal open
+          operationSucceeded = false;
+        }
+        
+        // Only close the modal if all critical operations succeeded
+        if (operationSucceeded) {
+          logger.info('[WelcomeModal] All operations successful, closing modal');
+          setShowModal(false);
+        } else {
+          logger.warn('[WelcomeModal] Operation failed, keeping modal open');
+          setIsSubmitting(false); // Re-enable the button to try again
+        }
+      });
     }
   };
 
