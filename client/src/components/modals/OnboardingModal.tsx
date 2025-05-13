@@ -45,11 +45,11 @@ const CustomDialogContent = forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay className="bg-black/50 z-[100]" />
+    <DialogOverlay className="bg-black/50 z-[1000]" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-[101] grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
+        "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
         className
       )}
       {...props}
@@ -552,9 +552,9 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold text-blue-600 mb-4">
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">
                 Welcome to the<br />Invela Trust Network
               </h2>
               <ul className="space-y-4">
@@ -578,7 +578,7 @@ export function OnboardingModal() {
                 </li>
               </ul>
             </div>
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_1.png" 
