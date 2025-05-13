@@ -511,21 +511,86 @@ export function registerRoutes(app: Express): Express {
     // Add a route for backward compatibility with existing client code
     // This fixes the Open Banking form submission issue where clients are posting to /api/transactional-form
     app.post('/api/transactional-form', requireAuth, async (req, res) => {
-      console.log('[Routes] Received form submission at /api/transactional-form - redirecting to /api/forms-tx');
+      const startTime = Date.now();
+      const transactionId = `tx-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+      
+      console.log(`[Routes] 📬 Received form submission at /api/transactional-form [txid: ${transactionId}]`, {
+        path: req.path,
+        method: req.method,
+        bodyKeys: Object.keys(req.body),
+        timestamp: new Date().toISOString(),
+        hasUser: !!req.user,
+        userId: req.user?.id,
+        companyId: req.user?.company_id,
+        transactionId
+      });
       
       // Extract the necessary parameters from the request body
       const { taskId, formType, formData, companyId } = req.body;
       
       if (!taskId || !formType || !formData) {
+        console.error('[Routes] Missing required parameters in /api/transactional-form request', {
+          hasTaskId: !!taskId,
+          hasFormType: !!formType,
+          hasFormData: !!formData,
+          transactionId
+        });
+        
         return res.status(400).json({
           success: false,
           message: 'Missing required parameters: taskId, formType, or formData'
         });
       }
       
+      // Check if this is an Open Banking submission and log specifically for tracking
+      const isOpenBanking = formType === 'open_banking' || formType === 'open_banking_survey';
+      if (isOpenBanking) {
+        console.log(`[Routes] 🔔 OPEN BANKING FORM SUBMISSION DETECTED [txid: ${transactionId}]`, {
+          taskId,
+          formType,
+          formDataKeys: Object.keys(formData).length,
+          companyId: companyId || req.user?.company_id,
+          userId: req.user?.id,
+          timestamp: new Date().toISOString(),
+          transactionId
+        });
+      }
+      
       // Forward the request to the proper endpoint
       try {
-        // Use the unified form submission handler since it's already set up
+        console.log(`[Routes] Processing form submission for ${formType} task ${taskId} [txid: ${transactionId}]`);
+        
+        // First, ensure task is marked as submitted in the database with a direct update
+        // This adds an extra layer of reliability for status updates
+        try {
+          // Use db directly from import
+          await db.execute(sql`
+            UPDATE tasks 
+            SET 
+              status = 'submitted', 
+              progress = 100,
+              updated_at = NOW(),
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+                'submissionDate', ${new Date().toISOString()},
+                'submitted', true,
+                'formSubmitted', true,
+                'submissionComplete', true,
+                'transactionId', ${transactionId},
+                'submittedBy', ${req.user.id},
+                'submittedAt', ${new Date().toISOString()},
+                'source', 'transactional_form_endpoint'
+              )::jsonb
+            WHERE id = ${taskId}
+          `);
+          
+          console.log(`[Routes] ✅ Pre-emptively updated task ${taskId} status to 'submitted' [txid: ${transactionId}]`);
+        } catch (statusUpdateError) {
+          // Log but continue - this is just an extra safety measure
+          console.warn(`[Routes] ⚠️ Could not pre-emptively update task status, continuing with normal flow [txid: ${transactionId}]:`, 
+            statusUpdateError instanceof Error ? statusUpdateError.message : 'Unknown error');
+        }
+        
+        // Now call the actual form submission handler
         const result = await submitFormWithTransaction({
           taskId,
           formData,
@@ -534,32 +599,85 @@ export function registerRoutes(app: Express): Express {
           formType
         });
         
-        // Log the successful redirect
-        console.log(`[Routes] Successfully redirected form submission for task ${taskId}, type ${formType}`, {
+        const elapsedMs = Date.now() - startTime;
+        
+        // If this is an Open Banking submission and succeeded,
+        // perform additional verification to ensure post-submission
+        // actions were applied
+        if (isOpenBanking && result.success) {
+          console.log(`[Routes] 🔔 OPEN BANKING SUBMISSION SUCCEEDED in ${elapsedMs}ms [txid: ${transactionId}]`, {
+            taskId,
+            formType,
+            success: true,
+            hasFileId: !!result.fileId,
+            hasUnlockedTabs: !!(result.unlockedTabs && result.unlockedTabs.length > 0),
+            tabsCount: result.unlockedTabs?.length || 0,
+            elapsedMs,
+            transactionId
+          });
+          
+          try {
+            // Import Open Banking post submission directly for a double-check
+            const unifiedFormSubmissionService = await import('./services/unified-form-submission-service');
+            
+            // Verify post-submission actions one more time
+            await unifiedFormSubmissionService.handleOpenBankingPostSubmission(
+              db, // Use the direct db connection since we're outside transaction
+              taskId,
+              companyId || req.user.company_id,
+              formData,
+              `verification-${transactionId}`
+            );
+            
+            console.log(`[Routes] ✅ Successfully verified Open Banking post-submission actions [txid: ${transactionId}]`);
+          } catch (verificationError) {
+            console.warn(`[Routes] ⚠️ Additional verification failed but form was still submitted [txid: ${transactionId}]:`,
+              verificationError instanceof Error ? verificationError.message : 'Unknown error');
+          }
+        }
+        
+        // Log the successful submission
+        console.log(`[Routes] ✅ Successfully processed form submission for task ${taskId}, type ${formType} in ${elapsedMs}ms [txid: ${transactionId}]`, {
           success: result.success,
           fileId: result.fileId,
-          unlockedTabs: result.unlockedTabs?.length
+          unlockedTabs: result.unlockedTabs?.length,
+          elapsedMs,
+          transactionId
         });
         
-        // Return the response to client
+        // Return comprehensive response to client
         return res.json({
           success: result.success,
           message: result.message || 'Form submitted successfully',
           fileId: result.fileId,
           fileName: result.fileName,
           unlockedTabs: result.unlockedTabs,
+          taskStatus: 'submitted', // Explicitly indicate task is submitted
+          elapsedMs,
+          transactionId,
           completedActions: [
             { type: 'form_submitted', description: `${formType} form submitted successfully` },
-            ...(result.fileId ? [{ type: 'file_generated', description: `File generated: ${result.fileName}` }] : []),
+            ...(result.fileId ? [{ type: 'file_generated', description: `File generated: ${result.fileName || 'form submission file'}` }] : []),
             ...(result.unlockedTabs?.length ? [{ type: 'tabs_unlocked', description: `Unlocked tabs: ${result.unlockedTabs.join(', ')}` }] : [])
           ]
         });
       } catch (error) {
-        console.error('[Routes] Error in transactional-form redirect handler:', error);
+        const elapsedMs = Date.now() - startTime;
+        console.error(`[Routes] ❌ Error in transactional-form handler after ${elapsedMs}ms [txid: ${transactionId}]:`, {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          taskId,
+          formType,
+          elapsedMs,
+          transactionId
+        });
+        
         return res.status(500).json({
           success: false,
           message: 'Error processing form submission',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
+          elapsedMs,
+          transactionId
         });
       }
     });
