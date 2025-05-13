@@ -18,7 +18,7 @@ import { Check, ChevronRight, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { useToast, toast as toastFn } from "@/hooks/use-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
@@ -149,7 +149,6 @@ export function OnboardingModal() {
   
   // Get authentication and toast utilities
   const { user } = useAuth();
-  const { toast } = useToast();
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
 
@@ -390,7 +389,7 @@ export function OnboardingModal() {
       }
 
       // Show success message
-      toast({
+      toastFn({
         title: "Welcome aboard!",
         description: "Your onboarding has been completed successfully.",
         variant: "default"
@@ -403,7 +402,7 @@ export function OnboardingModal() {
       console.error('[OnboardingModal] Error completing onboarding:', error);
       
       // Still show success and close modal to prevent blocking user
-      toast({
+      toastFn({
         title: "Welcome aboard!",
         description: "Your onboarding has been completed successfully.",
         variant: "default"
@@ -422,7 +421,7 @@ export function OnboardingModal() {
     // Validate current step before proceeding
     if (currentStep === 1) { // Company Information step
       if (!companyInfo.size || !companyInfo.revenue) {
-        toast({
+        toastFn({
           title: "Missing Information",
           description: "Please fill in all required company information.",
           variant: "destructive"
@@ -442,7 +441,7 @@ export function OnboardingModal() {
       });
       
       if (!validEmails) {
-        toast({
+        toastFn({
           title: "Invalid Email",
           description: "Please enter valid email addresses for team members.",
           variant: "destructive"
@@ -492,7 +491,7 @@ export function OnboardingModal() {
           user.onboarding_user_completed = true;
         }
         
-        toast({
+        toastFn({
           title: "Welcome aboard!",
           description: "Your onboarding has been completed successfully.",
           variant: "default"
