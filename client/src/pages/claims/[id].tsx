@@ -172,30 +172,45 @@ export default function ClaimDetailsPage() {
     return Math.round(amount).toLocaleString('en-US');
   };
 
+  // Prepare breadcrumb data
+  const breadcrumbs = [
+    {
+      label: 'Claims',
+      href: '/claims',
+      icon: <ArrowLeft className="h-4 w-4" />
+    },
+    {
+      label: claim?.claim_id || 'Loading...',
+      href: '#',
+      current: true
+    }
+  ];
+
   return (
     <DashboardLayout>
       <PageTemplate
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
-        title={`PII Data Loss Claim ${claim.claim_id}`}
-        description={`Filed on ${formatDate(claim.claim_date)} ${statusBadge()}`}
+        title={`PII Data Loss Claim ${claim?.claim_id || ''}`}
+        description={claim ? `Filed on ${formatDate(claim.claim_date)} ${statusBadge()}` : 'Loading claim details...'}
         backButton={{
           label: 'Back to Claims',
           href: '/claims'
         }}
+        breadcrumbs={breadcrumbs}
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle>Claim Information</CardTitle>
                 <CardDescription>Basic details about this PII data loss claim</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Bank Information</h3>
-                    <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Bank Information</h3>
+                    <div className="space-y-4">
                       <div>
                         <p className="text-sm font-medium">Bank Name</p>
                         <p>{claim.bank_name}</p>
@@ -206,21 +221,21 @@ export default function ClaimDetailsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">Account Number</p>
-                        <p>{claim.account_number || 'ACCT-48987654'}</p>
+                        <p>{claim.account_number || 'ACCT-46550812'}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">FinTech & Policy</h3>
-                    <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">FinTech & Policy</h3>
+                    <div className="space-y-4">
                       <div>
                         <p className="text-sm font-medium">FinTech</p>
                         <p>{claim.fintech_name}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'POL-2025-16998'}</p>
+                        <p>{claim.policy_number || 'POL-2025-88231'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Claim Amount</p>
@@ -420,20 +435,21 @@ export default function ClaimDetailsPage() {
 
           <div className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle>Bank Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-600 font-bold">FB</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <span className="font-medium">FB</span>
                   </div>
                   <div>
-                    <p className="font-medium">{claim.bank_name}</p>
-                    <p className="text-sm text-muted-foreground">financial@{claim.bank_id.toLowerCase()}.com</p>
+                    <h3 className="font-medium">{claim.bank_name || 'First National Bank'}</h3>
+                    <p className="text-sm text-muted-foreground">financial@bnk-12009.com</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                
+                <div className="space-y-4">
                   <div>
                     <p className="text-sm font-medium">Contact</p>
                     <p>Jennifer Martinez</p>
@@ -444,7 +460,7 @@ export default function ClaimDetailsPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Bank ID</p>
-                    <p>{claim.bank_id}</p>
+                    <p>{claim.bank_id || 'BNK-12009'}</p>
                   </div>
                 </div>
               </CardContent>
