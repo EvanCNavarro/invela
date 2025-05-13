@@ -566,7 +566,8 @@ export function WelcomeModal() {
         toast({
           variant: "success",
           title: "Welcome aboard!",
-          description: "Your onboarding has been completed successfully."
+          description: "Your onboarding has been completed successfully.",
+          duration: 2500
         });
       }
 
@@ -583,7 +584,8 @@ export function WelcomeModal() {
         toast({
           variant: "success",
           title: "Welcome aboard!",
-          description: "Your onboarding has been completed successfully."
+          description: "Your onboarding has been completed successfully.",
+          duration: 2500
         });
       }
       
