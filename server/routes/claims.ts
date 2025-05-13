@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { eq } from 'drizzle-orm';
-import { claims, disputes, resolutions, breaches } from '@db/schema';
+// Note: These schema imports are placeholders since they're not used yet
+// and will be properly implemented when the database schema is created
+import { claims } from '@db/schema';
 
 const router = Router();
 
@@ -240,7 +242,7 @@ router.get('/:id', async (req, res) => {
     
     // In a real app, we would query the database
     // This is mock data for the purpose of this demo
-    const allClaims = [
+    const activeClaims = [
       {
         id: 1,
         claim_id: 'CLM-2025-001',
@@ -322,6 +324,65 @@ router.get('/:id', async (req, res) => {
         incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.'
       }
     ];
+    
+    // Include disputed claims (which were missing from the allClaims array)
+    const disputedClaims = [
+      {
+        id: 5,
+        claim_id: 'CLM-2025-005',
+        bank_id: 'BNK-54321',
+        bank_name: 'Liberty Savings',
+        fintech_name: 'Financial Data Connect',
+        account_number: 'ACCT-7891235',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-28T15:45:00Z',
+        claim_amount: 150.25,
+        status: 'escalated',
+        policy_number: 'POL-2025-98765',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-03-25T07:20:00Z',
+        affected_records: 290,
+        consent_id: 'd9e4231fa6c7890b3e56d72ab',
+        consent_scope: 'PII',
+        incident_description: 'API vulnerability exploited by unauthorized party, resulting in customer data exposure.',
+        dispute: {
+          id: 2,
+          dispute_date: '2025-03-30T13:20:00Z',
+          dispute_reason: 'Dispute over responsibility for security breach that led to data loss.',
+          status: 'escalated'
+        }
+      },
+      {
+        id: 6,
+        claim_id: 'CLM-2025-006',
+        bank_id: 'BNK-11223',
+        bank_name: 'Central State Bank',
+        fintech_name: 'SmartFunds Inc.',
+        account_number: 'ACCT-22334455',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-20T09:10:00Z',
+        claim_amount: 200.00,
+        status: 'escalated',
+        policy_number: 'POL-2025-55443',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-03-18T18:45:00Z',
+        affected_records: 420,
+        consent_id: 'e3d5620f1a9b7c84d25e97fb',
+        consent_scope: 'PII',
+        incident_description: 'Unauthorized database access resulted in customer PII data leak.',
+        dispute: {
+          id: 3,
+          dispute_date: '2025-03-22T14:35:00Z',
+          dispute_reason: 'Liability dispute based on contractual terms regarding data security responsibilities.',
+          status: 'under_review'
+        }
+      }
+    ];
+    
+    // Combine active and disputed claims to create a complete list
+    const allClaims = [...activeClaims, ...disputedClaims];
     
     // Important: Need to handle both number and string IDs
     console.log('[API] Looking for claim with ID:', claimId);
