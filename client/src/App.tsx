@@ -266,21 +266,7 @@ function Router() {
           )} 
         />
 
-        <ProtectedRoute 
-          path="/playground" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <div className={cn(
-                  "min-h-screen",
-                  location === "/playground" && "bg-emerald-950/5"
-                )}>
-                  <PlaygroundPage />
-                </div>
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
+        {/* Playground route removed during cleanup */}
         
         {/* Diagnostic Page - For Developers */}
         <Route path="/diagnostic">
@@ -288,11 +274,6 @@ function Router() {
         </Route>
         
         {/* Removed test route */}
-        
-        {/* Diagnostic Page Route */}
-        <Route path="/diagnostic">
-          <DiagnosticPage />
-        </Route>
         
         {/* Form Submission Workflow Page - For Full Submission Workflow Demo */}
         <Route path="/form-submission-workflow">

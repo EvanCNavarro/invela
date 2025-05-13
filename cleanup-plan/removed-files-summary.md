@@ -4,7 +4,7 @@
 - `client/src/pages/debug/*` - All debug pages
 - `client/src/pages/form-debug-page.tsx` - Form debugging page
 - `client/src/pages/websocket-debugger-page.tsx` - WebSocket debugging page
-- `client/src/pages/playground-page.tsx` - Playground testing page
+- `client/src/pages/playground-page.tsx` - Playground testing page (route also removed)
 
 ## Test Scripts
 - `check-open-banking-task.js` - Test script for Open Banking task state
