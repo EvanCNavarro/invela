@@ -503,16 +503,16 @@ export default function ClaimDetailsPage() {
                 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium">Contact</p>
+                    <p className="text-sm font-medium mb-1">Contact</p>
                     <p>Alex Thompson</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm font-medium mb-1">Phone</p>
                     <p>(555) 987-6543</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Policy Number</p>
-                    <p>{claim.policy_number || 'POL-2025-88231'}</p>
+                    <p className="text-sm font-medium mb-1">Policy Number</p>
+                    <p>{claim?.policy_number}</p>
                   </div>
                 </div>
               </CardContent>
