@@ -3,6 +3,7 @@ import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } f
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
+import { Info } from "lucide-react";
 
 // Constants for form selections with specific value mappings to appropriate database values
 // Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
@@ -194,6 +196,14 @@ const preloadImages = (
   });
 };
 
+// Define type for team member invites
+interface TeamMemberInvite {
+  role: string;
+  fullName: string;
+  email: string;
+  taskType: string;
+}
+
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [showModal, setShowModal] = useState(false);
@@ -202,6 +212,16 @@ export function WelcomeModal() {
   const [employeeCount, setEmployeeCount] = useState<string>("");
   const [revenueTier, setRevenueTier] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Team member invitation states
+  const [cfoName, setCfoName] = useState<string>("");
+  const [cfoEmail, setCfoEmail] = useState<string>("");
+  const [cisoName, setCisoName] = useState<string>("");
+  const [cisoEmail, setCisoEmail] = useState<string>("");
+  const [legalName, setLegalName] = useState<string>("");
+  const [legalEmail, setLegalEmail] = useState<string>("");
+  const [teamInvites, setTeamInvites] = useState<TeamMemberInvite[]>([]);
+  
   const { user } = useAuth();
   const { toast } = useToast();
   const websocket = useWebSocketContext();
@@ -246,6 +266,124 @@ export function WelcomeModal() {
       console.log('[ONBOARDING DEBUG] Successfully updated company information');
     }
   });
+  
+  // Mutation for inviting team members
+  const inviteTeamMemberMutation = useMutation({
+    mutationFn: async (data: {
+      email: string;
+      full_name: string;
+      company_id: number;
+      company_name: string;
+      sender_name: string;
+    }) => {
+      console.log('[ONBOARDING DEBUG] Inviting team member:', data);
+      
+      const response = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[ONBOARDING DEBUG] Error inviting user:', response.status, errorText);
+        throw new Error(errorText || 'Failed to invite team member');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('[ONBOARDING DEBUG] Successfully invited team member:', data);
+      toast({
+        title: "Invitation sent",
+        description: "Team member invitation has been sent successfully",
+        duration: 2500
+      });
+    },
+    onError: (error) => {
+      console.error('[ONBOARDING DEBUG] Failed to invite team member:', error);
+      toast({
+        title: "Invitation failed",
+        description: error.message || "Failed to send invitation",
+        variant: "destructive",
+        duration: 2500
+      });
+    }
+  });
+
+  // Process team member invitations before final submission
+  const processTeamInvites = () => {
+    if (!user || !user.company) {
+      console.error('[ONBOARDING DEBUG] Cannot invite team members without user or company data');
+      return Promise.resolve(false);
+    }
+    
+    const invitations = [];
+    
+    // Process CFO invitation
+    if (cfoName && cfoEmail) {
+      invitations.push({
+        email: cfoEmail,
+        full_name: cfoName,
+        company_id: user.company.id,
+        company_name: user.company.name,
+        sender_name: user.full_name || user.email
+      });
+    }
+    
+    // Process CISO invitation
+    if (cisoName && cisoEmail) {
+      invitations.push({
+        email: cisoEmail,
+        full_name: cisoName,
+        company_id: user.company.id,
+        company_name: user.company.name,
+        sender_name: user.full_name || user.email
+      });
+    }
+    
+    // Process Legal invitation
+    if (legalName && legalEmail) {
+      invitations.push({
+        email: legalEmail,
+        full_name: legalName,
+        company_id: user.company.id,
+        company_name: user.company.name,
+        sender_name: user.full_name || user.email
+      });
+    }
+    
+    if (invitations.length === 0) {
+      return Promise.resolve(false);
+    }
+    
+    // Return a promise that resolves when all invites are processed
+    return Promise.all(
+      invitations.map(invite => 
+        inviteTeamMemberMutation.mutateAsync(invite)
+          .then(result => {
+            // Add to tracked invites for review screen
+            setTeamInvites(prev => [...prev, {
+              role: invite.email === cfoEmail ? "CFO" : 
+                    invite.email === cisoEmail ? "CISO" : "Legal",
+              fullName: invite.full_name,
+              email: invite.email,
+              taskType: invite.email === cfoEmail ? "KYB Form" : 
+                      invite.email === cisoEmail ? "KY3P Security Assessment" : "Open Banking Survey"
+            }]);
+            return result;
+          })
+          .catch(error => {
+            console.error('[ONBOARDING DEBUG] Failed to send invitation to', invite.email, error);
+            // Continue with other invitations even if one fails
+            return null;
+          })
+      )
+    ).then(() => true);
+  };
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
@@ -517,6 +655,16 @@ export function WelcomeModal() {
       setCurrentSlide(prev => prev + 1);
     } else {
       console.log('[ONBOARDING DEBUG] Final slide reached, completing onboarding');
+      setIsSubmitting(true);
+      
+      // Process team invitations before completing
+      try {
+        // Process any team invitations
+        await processTeamInvites();
+      } catch (error) {
+        console.error('[ONBOARDING DEBUG] Error sending team invitations:', error);
+        // Continue with onboarding completion even if invitations fail
+      }
       
       // Set a local flag immediately to prevent modal from showing again
       if (user) {
@@ -799,8 +947,126 @@ export function WelcomeModal() {
                     </motion.div>
                   )}
 
+                  {/* Team member invitation form for step 5 */}
+                  {currentSlide === 4 && (
+                    <motion.div
+                      className="mt-6 space-y-6 transform-gpu"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      style={{ willChange: 'opacity', overflow: 'hidden' }}
+                    >
+                      {/* CFO Invitation */}
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-base font-semibold">Invite your CFO to provide Financial Data for the <span className="font-bold">KYB Form</span> task:</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="cfoName" className="text-sm">
+                              Full Name
+                            </Label>
+                            <Input
+                              id="cfoName"
+                              placeholder="John Doe"
+                              value={cfoName}
+                              onChange={(e) => setCfoName(e.target.value)}
+                              className={`transition-all duration-200 ${cfoName ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="cfoEmail" className="text-sm">
+                              Email Address
+                            </Label>
+                            <Input
+                              id="cfoEmail"
+                              placeholder="cfo@company.com"
+                              type="email"
+                              value={cfoEmail}
+                              onChange={(e) => setCfoEmail(e.target.value)}
+                              className={`transition-all duration-200 ${cfoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* CISO Invitation */}
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-base font-semibold">Invite your CISO to provide Compliance Info for the <span className="font-bold">S&P KY3P Security Assessment</span> task:</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="cisoName" className="text-sm">
+                              Full Name
+                            </Label>
+                            <Input
+                              id="cisoName"
+                              placeholder="Jane Smith"
+                              value={cisoName}
+                              onChange={(e) => setCisoName(e.target.value)}
+                              className={`transition-all duration-200 ${cisoName ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="cisoEmail" className="text-sm">
+                              Email Address
+                            </Label>
+                            <Input
+                              id="cisoEmail"
+                              placeholder="ciso@company.com"
+                              type="email"
+                              value={cisoEmail}
+                              onChange={(e) => setCisoEmail(e.target.value)}
+                              className={`transition-all duration-200 ${cisoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Legal Dept Invitation */}
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-base font-semibold">Invite your Legal Dept. for the <span className="font-bold">Open Banking Survey</span>:</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="legalName" className="text-sm">
+                              Full Name
+                            </Label>
+                            <Input
+                              id="legalName"
+                              placeholder="Robert Johnson"
+                              value={legalName}
+                              onChange={(e) => setLegalName(e.target.value)}
+                              className={`transition-all duration-200 ${legalName ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="legalEmail" className="text-sm">
+                              Email Address
+                            </Label>
+                            <Input
+                              id="legalEmail"
+                              placeholder="legal@company.com"
+                              type="email"
+                              value={legalEmail}
+                              onChange={(e) => setLegalEmail(e.target.value)}
+                              className={`transition-all duration-200 ${legalEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-500 mt-2">
+                        <Info className="h-4 w-4 inline-block mr-1 text-blue-600" />
+                        Enter contact information for team members who will help complete your accreditation. Invites will be sent on the final step.
+                      </p>
+                    </motion.div>
+                  )}
+                  
                   {/* Bullet points section - special styling for step 3 */}
-                  {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
+                  {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && currentSlide !== 4 && (
                     <div className={currentSlide === 2 ? "mt-2" : "mt-8"}>
                       {currentSlide === 2 ? (
                         // Special numbered list with neumorphic design for step 3
