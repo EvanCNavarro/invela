@@ -671,7 +671,6 @@ export function WelcomeModal() {
       }
     }
   };
-  };
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
   const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
@@ -1217,7 +1216,6 @@ export function WelcomeModal() {
         pendingOperations.current.splice(index, 1);
       }
     }
-  };
   
   // Map revenue tier to readable string for display in review
   const getRevenueTierLabel = (tier: string): string => {
