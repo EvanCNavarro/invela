@@ -1176,10 +1176,9 @@ export function WelcomeModal() {
                       transition={{ delay: 0.3 }}
                       style={{ willChange: 'opacity' }}
                     >
-                      {/* Simple title with relevant subtext */}
+                      {/* Simple title with standard format */}
                       <div className="mb-3">
-                        <h3 className="text-xl font-semibold text-gray-800">Company Profile Review</h3>
-                        <p className="text-sm text-gray-500">Confirm the information below that will be set for your company.</p>
+                        <h3 className="text-xl font-semibold text-gray-800">Review Provided Information</h3>
                       </div>
                     
                       {/* Add structured logging using utility logger */}
