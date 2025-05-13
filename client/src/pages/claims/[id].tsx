@@ -321,35 +321,35 @@ export default function ClaimDetailsPage() {
                     <div className="space-y-4">
                       <div className="text-sm border rounded-md overflow-hidden">
                         <div className="grid grid-cols-4 border-b bg-muted font-medium p-3">
-                          <div>Date & Time</div>
-                          <div>User</div>
-                          <div>Action</div>
-                          <div>Details</div>
+                          <div className="w-[180px] pl-4">Date & Time</div>
+                          <div className="w-[120px]">User</div>
+                          <div className="w-[150px]">Action</div>
+                          <div className="flex-1 pr-4">Details</div>
                         </div>
                         <div className="divide-y">
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>System</div>
                             <div>Claim Created</div>
-                            <div>Initial claim submission</div>
+                            <div className="pr-4">Initial claim submission</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>System</div>
                             <div>Status Change</div>
-                            <div>Status set to In Review</div>
+                            <div className="pr-4">Status set to In Review</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>J. Martinez</div>
                             <div>Document Upload</div>
-                            <div>Added incident report documentation</div>
+                            <div className="pr-4">Added incident report documentation</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>A. Thompson</div>
                             <div>Comment Added</div>
-                            <div>Added additional breach details</div>
+                            <div className="pr-4">Added additional breach details</div>
                           </div>
                         </div>
                       </div>
@@ -368,29 +368,29 @@ export default function ClaimDetailsPage() {
                     <div className="space-y-4">
                       <div className="text-sm border rounded-md overflow-hidden">
                         <div className="grid grid-cols-4 border-b bg-muted font-medium p-3">
-                          <div>Transaction ID</div>
-                          <div>Date & Time</div>
-                          <div>Type</div>
-                          <div>Status</div>
+                          <div className="w-[150px] pl-4">Transaction ID</div>
+                          <div className="w-[180px]">Date & Time</div>
+                          <div className="w-[140px]">Type</div>
+                          <div className="flex-1 pr-4">Status</div>
                         </div>
                         <div className="divide-y">
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1001-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1001-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Claim Creation</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Success</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Success</Badge></div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1002-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1002-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Notification</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Delivered</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Delivered</Badge></div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1003-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1003-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Document Storage</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Complete</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Complete</Badge></div>
                           </div>
                         </div>
                       </div>
