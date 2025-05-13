@@ -542,14 +542,14 @@ export function OnboardingModal() {
 
   // Progress indicator dots component - styled like tutorial modal
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-5 py-3">
+    <div className="flex justify-center items-center gap-4 py-3 mx-2">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
-            "h-5 w-5 rounded-full transition-colors duration-200",
+            "h-4 w-4 rounded-full transition-colors duration-200",
             i < currentStep ? "bg-blue-500" : 
-            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200 ring-offset-2" : 
+            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200 ring-offset-1" : 
             "bg-gray-200"
           )}
         />
@@ -562,15 +562,15 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-auto">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-hidden">
+            <div className="flex-1 flex flex-col justify-center">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-6">
                   Welcome to the<br />Invela Trust Network
                 </h2>
-                <div className="mt-6 space-y-5">
-                  <div className="flex items-start space-x-4">
+                <div className="mt-4 space-y-5">
+                  <div className="flex items-start gap-4">
                     <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -580,7 +580,7 @@ export function OnboardingModal() {
                       Your premier partner for secure and efficient accreditation
                     </p>
                   </div>
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start gap-4">
                     <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -590,7 +590,7 @@ export function OnboardingModal() {
                       Enterprise-grade risk assessment and management platform
                     </p>
                   </div>
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start gap-4">
                     <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -607,8 +607,8 @@ export function OnboardingModal() {
             {/* Right side: Image */}
             <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
+                <div className="flex items-center justify-center h-full p-6">
+                  <div className="relative w-full h-auto max-h-[300px] flex items-center justify-center">
                     <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
                     <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
                     <img 
@@ -619,8 +619,8 @@ export function OnboardingModal() {
                   </div>
                 </div>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                <div className="flex items-center justify-center h-full p-5">
+                  <EnhancedSkeleton className="w-[90%] h-[300px] rounded-lg" />
                 </div>
               )}
             </div>
@@ -629,9 +629,9 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-auto">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col">
               <div>
                 <div className="mb-6">
                   <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
@@ -640,7 +640,7 @@ export function OnboardingModal() {
                 </div>
                 
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Company Information</h2>
-                <p className="text-lg text-gray-700 mb-8">
+                <p className="text-lg text-gray-700 mb-6">
                   Add basic details about {currentCompany?.name} to help us customize your experience.
                 </p>
                 
@@ -1117,12 +1117,12 @@ export function OnboardingModal() {
           </div>
         </div>
         
-        <div className="flex-grow">
+        <div className="flex-grow px-8 pb-2">
           {renderStepContent()}
         </div>
         
-        <div className="p-6 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
-          <div className="w-36">
+        <div className="py-6 px-8 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
+          <div className="w-40">
             {currentStep > 0 ? (
               <Button
                 variant="outline"
@@ -1140,7 +1140,7 @@ export function OnboardingModal() {
           
           <ProgressDots />
           
-          <div className="w-36 flex justify-end">
+          <div className="w-40 flex justify-end">
             <Button
               size="lg"
               onClick={handleNext}
@@ -1149,7 +1149,7 @@ export function OnboardingModal() {
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
               }
-              className="flex items-center gap-3 h-12 px-7 min-w-[100px] shadow-sm text-base font-medium"
+              className="flex items-center gap-3 h-12 px-7 min-w-[120px] shadow-sm text-base font-medium"
             >
               {currentStep === 6 ? "Start" : "Next"}
               {currentStep !== 6 && <ChevronRight className="h-5 w-5" />}
