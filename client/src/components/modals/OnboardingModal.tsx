@@ -14,7 +14,7 @@ import { EnhancedSkeleton } from "@/components/ui/enhanced-skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, ChevronRight, ArrowLeft } from "lucide-react";
+import { Check, CheckCircle, ChevronRight, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -534,13 +534,13 @@ export function OnboardingModal() {
 
   // Progress indicator dots component
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-2 mt-4">
+    <div className="flex justify-center items-center gap-2">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
-            "h-2 w-2 rounded-full transition-all",
-            currentStep === i ? "bg-blue-500 w-4" : "bg-gray-300"
+            "h-2.5 w-2.5 rounded-full transition-colors duration-200",
+            currentStep === i ? "bg-blue-600" : "bg-gray-200"
           )}
         />
       ))}
@@ -559,15 +559,21 @@ export function OnboardingModal() {
               </h2>
               <ul className="space-y-4">
                 <li className="flex gap-2 items-start">
-                  <Check className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                  </div>
                   <span>Your premier partner for secure and efficient accreditation</span>
                 </li>
                 <li className="flex gap-2 items-start">
-                  <Check className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                  </div>
                   <span>Enterprise-grade risk assessment and management platform</span>
                 </li>
                 <li className="flex gap-2 items-start">
-                  <Check className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                  </div>
                   <span>Streamlined compliance processes with advanced automation</span>
                 </li>
               </ul>
@@ -928,7 +934,7 @@ export function OnboardingModal() {
         
         {renderStepContent()}
         
-        <div className="p-4 border-t flex justify-between items-center">
+        <div className="px-6 py-4 border-t flex justify-between items-center">
           {currentStep > 0 ? (
             <Button
               variant="outline"
