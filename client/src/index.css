@@ -9,6 +9,19 @@
   transition: opacity 400ms ease-out, transform 400ms ease-out;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
 .auth-layout-container {
   transition: max-width 350ms ease-out;
 }
