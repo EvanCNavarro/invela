@@ -554,7 +554,7 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
               <div>
@@ -621,7 +621,7 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
@@ -1102,7 +1102,7 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[600px] max-w-[860px]">
+      <CustomDialogContent className="overflow-hidden flex flex-col h-[700px] w-[860px]">
         <div className="p-6 pb-4">
           <div className="text-sm font-medium bg-primary/10 text-primary py-2 px-5 rounded-full inline-block">
             Onboarding
