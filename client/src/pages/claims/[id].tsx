@@ -188,8 +188,8 @@ export default function ClaimDetailsPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center px-4 py-2">
+      <div className="flex flex-col">
+        <div className="flex items-center px-6 py-4">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground">
               <div className="relative w-4 h-4">
@@ -206,20 +206,19 @@ export default function ClaimDetailsPage() {
           </div>
         </div>
         
-        <div className="px-4">
-          <Link href="/claims" className="inline-flex items-center space-x-1 py-2 px-4 border rounded-md hover:bg-muted">
+        <div className="px-6 mb-4">
+          <Link href="/claims" className="inline-flex items-center space-x-1 py-2 px-6 border rounded-md hover:bg-muted">
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Claims</span>
           </Link>
         </div>
       </div>
-        
-      <PageTemplate
-        drawerOpen={drawerOpen}
-        onDrawerOpenChange={setDrawerOpen}
-        title={`PII Data Loss Claim ${claim?.claim_id || ''}`}
-        description={claim ? `Filed on ${formatDate(claim.claim_date)} ${statusBadge()}` : 'Loading claim details...'}
-      >
+      
+      <div className="px-6">
+        <h1 className="text-2xl font-bold mb-1">PII Data Loss Claim {claim?.claim_id || ''}</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          {claim ? `Filed on ${formatDate(claim.claim_date)} ${statusBadge()}` : 'Loading claim details...'}
+        </p>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -228,39 +227,39 @@ export default function ClaimDetailsPage() {
                 <CardDescription>Basic details about this PII data loss claim</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Bank Information</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Bank Information</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium">Bank Name</p>
-                        <p>{claim.bank_name}</p>
+                        <p className="text-sm font-medium mb-1">Bank Name</p>
+                        <p>{claim?.bank_name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Bank ID</p>
-                        <p>{claim.bank_id}</p>
+                        <p className="text-sm font-medium mb-1">Bank ID</p>
+                        <p>{claim?.bank_id}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Account Number</p>
-                        <p>{claim.account_number || 'ACCT-46550812'}</p>
+                        <p className="text-sm font-medium mb-1">Account Number</p>
+                        <p>{claim?.account_number}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">FinTech & Policy</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">FinTech & Policy</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium">FinTech</p>
-                        <p>{claim.fintech_name}</p>
+                        <p className="text-sm font-medium mb-1">FinTech</p>
+                        <p>{claim?.fintech_name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'POL-2025-88231'}</p>
+                        <p className="text-sm font-medium mb-1">Policy Number</p>
+                        <p>{claim?.policy_number}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Claim Amount</p>
-                        <p>{formatCurrency(claim.claim_amount || 0)}</p>
+                        <p className="text-sm font-medium mb-1">Claim Amount</p>
+                        <p>{claim?.claim_amount}</p>
                       </div>
                     </div>
                   </div>
