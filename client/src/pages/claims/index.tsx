@@ -14,6 +14,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { ClaimsTutorial } from '@/components/tutorial/tabs/ClaimsTutorial';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
