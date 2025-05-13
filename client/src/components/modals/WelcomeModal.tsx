@@ -1002,21 +1002,7 @@ export function WelcomeModal() {
                         {carouselContent[currentSlide].subtitle}
                       </motion.p>
                       
-                      {/* Additional information about next steps */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.9 }}
-                        className="mt-6 mb-2 bg-blue-50 px-5 py-4 rounded-lg border border-blue-100 mx-auto max-w-md"
-                      >
-                        <h4 className="text-blue-700 font-medium text-sm mb-2 flex items-center">
-                          <Info className="h-4 w-4 mr-1.5" />
-                          Important Next Steps
-                        </h4>
-                        <p className="text-blue-600 text-sm">
-                          To complete your accreditation process and join the Invela Trust Network, you must now complete the <strong>KYB Form</strong> task in your Task Center.
-                        </p>
-                      </motion.div>
+
                     </motion.div>
                   ) : (
                     <>
