@@ -655,7 +655,6 @@ interface UniversalFormProps {
   companyName?: string; // Optional company name to display in the form title
   isReadOnly?: boolean; // Flag to force read-only mode (for completed/submitted forms)
   refreshData?: () => Promise<void>; // Function to refresh form data after clearing fields
-  isSubmitting?: boolean; // Flag to indicate the form is currently submitting - allows parent to control this state
 }
 
 /**
@@ -670,8 +669,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onProgress,
   companyName,
   isReadOnly,
-  refreshData,
-  isSubmitting: externalIsSubmitting // Parent component can control the submission state
+  refreshData
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -686,11 +684,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   const [forceRerender, setForceRerender] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
-  const [internalIsSubmitting, setInternalIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Use external submission state if provided, otherwise use internal state
-  const isSubmitting = externalIsSubmitting !== undefined ? externalIsSubmitting : internalIsSubmitting;
   
   // State for WebSocket-based form submission
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -710,12 +705,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   useEffect(() => {
     if (task?.status === 'submitted' && isSubmitting) {
       logger.info('Task status is now submitted, resetting submission state');
-      // Only update internal state if we're not externally controlled
-      if (externalIsSubmitting === undefined) {
-        setInternalIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
-  }, [task?.status, isSubmitting, externalIsSubmitting]);
+  }, [task?.status, isSubmitting]);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -1880,10 +1872,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
-    // Set form into submitting state - only if external control is not provided
-    if (externalIsSubmitting === undefined) {
-      setInternalIsSubmitting(true);
-    }
+    // Set form into submitting state
+    setIsSubmitting(true);
     
     // Update task status to in_progress immediately for better user feedback
     if (task) {
@@ -1965,10 +1955,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
       
-      // Reset submitting state - only if not externally controlled
-      if (externalIsSubmitting === undefined) {
-        setInternalIsSubmitting(false);
-      }
+      // Reset submitting state
+      setIsSubmitting(false);
     }
   };
   
@@ -1979,10 +1967,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Always set the submission result with the latest data from the server
     setSubmissionResult(event);
     
-    // Reset submission state - only if not externally controlled
-    if (externalIsSubmitting === undefined) {
-      setInternalIsSubmitting(false);
-    }
+    // Reset submission state
+    setIsSubmitting(false);
     
     // Force task status update to ensure read-only view appears
     if (task && task.status !== 'submitted') {
@@ -2018,10 +2004,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const handleSubmissionError = (event: FormSubmissionEvent) => {
     logger.error(`Submission error event received: ${JSON.stringify(event)}`);
     
-    // Reset submission state - only if not externally controlled
-    if (externalIsSubmitting === undefined) {
-      setInternalIsSubmitting(false);
-    }
+    // Reset submission state
+    setIsSubmitting(false);
     
     // Show error toast
     toast({

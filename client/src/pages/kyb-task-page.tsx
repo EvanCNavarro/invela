@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { enhancedKybServiceFactory } from "@/services/enhanced-kyb-service";
-import { enableFileVault } from "@/services/fileVaultService";
+import { directlyAddFileVaultTab, enableFileVault } from "@/services/fileVaultService";
 
 interface KYBTaskPageProps {
   params: {
@@ -28,7 +28,6 @@ interface Task {
     company_name?: string;
     [key: string]: any;
   } | null;
-  savedFormData?: any; // Added for form data compatibility
 }
 
 export default function KYBTaskPage({ params }: KYBTaskPageProps) {
@@ -100,43 +99,6 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
     );
   }
 
-  // Handle form submission state management
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Reset submission state when task status changes to submitted
-  useEffect(() => {
-    if (task?.status === 'submitted' && isSubmitting) {
-      console.log('[KYB Task Page] Task status is now submitted, resetting submission state');
-      setIsSubmitting(false);
-      
-      // Show success toast when submission is detected via task status change
-      toast({
-        title: "KYB Form Submitted Successfully",
-        description: "Your form has been processed and the task status has been updated.",
-      });
-    }
-  }, [task?.status, isSubmitting, toast]);
-
-  // Special handler for WebSocket form submission events
-  // This provides a backup mechanism to reset the submission state
-  const handleFormSubmissionComplete = useCallback((event: any) => {
-    if (event.detail?.taskId === task?.id && isSubmitting) {
-      console.log('[KYB Task Page] Received form submission completed via WebSocket');
-      setIsSubmitting(false);
-    }
-  }, [task?.id, isSubmitting]);
-
-  // Set up event listeners for WebSocket form submission events
-  useEffect(() => {
-    document.addEventListener('form-submission-completed', handleFormSubmissionComplete);
-    document.addEventListener('form-submission-success', handleFormSubmissionComplete);
-    
-    return () => {
-      document.removeEventListener('form-submission-completed', handleFormSubmissionComplete);
-      document.removeEventListener('form-submission-success', handleFormSubmissionComplete);
-    };
-  }, [handleFormSubmissionComplete]);
-
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -150,10 +112,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
             taskId={task.id}
             taskType="kyb"
             initialData={task.savedFormData}
-            isSubmitting={isSubmitting}
             onSubmit={(formData) => {
-              // Set submitting state to true when submission starts
-              setIsSubmitting(true);
               // Handle form submission
               console.log('[KYB Form] Starting form submission:', {
                 taskId: task.id,
@@ -188,8 +147,8 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 console.log('[KYB Form] Submission taking too long, forcing completion');
                 // Force the file vault tab to be unlocked even if API is slow
                 try {
-                  // Use the server-side API call instead of the direct cache method
-                  enableFileVault(task.id).catch(e => console.error('[KYB Form] Emergency file vault enable failed:', e));
+                  directlyAddFileVaultTab();
+                  enableFileVault().catch(e => console.error('[KYB Form] Emergency file vault enable failed:', e));
                 } catch (e) {
                   console.error('[KYB Form] Emergency file vault enable failed:', e);
                 }
@@ -269,9 +228,13 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 try {
                   console.log('[KYB Form] KYB form submitted successfully, updating file vault tab');
                   
-                  // Make the API call to make the change persistent in the database
-                  // Use the directly imported function with the taskId
-                  enableFileVault(task.id).then(apiResult => {
+                  // First, immediately update the local cache for instant UI update
+                  const cacheResult = directlyAddFileVaultTab();
+                  console.log('[KYB Form] Direct cache update result:', cacheResult);
+                  
+                  // Next, make the API call to make the change persistent in the database
+                  // Use the directly imported function
+                  enableFileVault().then(apiResult => {
                     console.log('[KYB Form] API file vault update result:', apiResult);
                   }).catch(apiError => {
                     console.error('[KYB Form] API file vault update failed:', apiError);
