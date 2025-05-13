@@ -54,6 +54,36 @@
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
+/* Wave animation like the welcome modal */
+@keyframes wave {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-wave {
+  position: relative;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.animate-wave::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: wave 1.5s ease-in-out infinite;
+}
+
 .auth-layout-container {
   transition: max-width 350ms ease-out;
 }

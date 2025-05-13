@@ -7,6 +7,16 @@ import { claims } from '@db/schema';
 
 const router = Router();
 
+// We need to ensure specific routes come before parameter routes
+// Reordering Express routes to prevent route conflicts
+const ROUTE_PRIORITY = [
+  '/active',        // 1. Get active claims
+  '/disputed',      // 2. Get disputed claims  
+  '/resolved',      // 3. Get resolved claims
+  '/dispute/:id',   // 4. Get dispute details
+  '/:id'            // 5. Get claim by ID (lowest priority, most generic)
+];
+
 // Get all active claims
 router.get('/active', async (req, res) => {
   try {
@@ -233,7 +243,126 @@ router.get('/resolved', async (req, res) => {
   }
 });
 
+// Get dispute details for a claim
+// This route must be defined BEFORE the '/:id' route to ensure proper route matching
+router.get('/dispute/:id', async (req, res) => {
+  try {
+    const claimId = req.params.id;
+    
+    // In a real app, we would query the database
+    // This is mock data for the purpose of this demo
+    const disputeDetails = {
+      id: 1,
+      claim_id: 'CLM-2025-004',
+      bank_id: 'BNK-67890',
+      bank_name: 'Metro Credit Union',
+      fintech_name: 'LendSecure Technologies',
+      account_number: 'ACCT-55578123',
+      claim_type: 'PII Data Loss',
+      claim_date: '2025-04-03T11:25:00Z',
+      claim_amount: 95.00,
+      status: 'under_review',
+      policy_number: 'POL-2025-45678',
+      is_disputed: true,
+      is_resolved: false,
+      breach_date: '2025-04-01T02:30:00Z',
+      affected_records: 175,
+      consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
+      consent_scope: 'PII',
+      incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.',
+      dispute: {
+        id: 1,
+        dispute_date: '2025-04-05T09:15:00Z',
+        dispute_reason: 'The bank disputes liability for the PII data loss, claiming the Fintech\'s security measures were inadequate and violated contractual obligations.',
+        status: 'under_review',
+        documents: [
+          {
+            id: 1, 
+            name: 'Security Audit Report',
+            type: 'pdf',
+            size: 1.2,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:30:00Z'
+          },
+          {
+            id: 2,
+            name: 'Data Access Logs',
+            type: 'xlsx',
+            size: 0.845,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:35:00Z'
+          },
+          {
+            id: 3,
+            name: 'Service Agreement',
+            type: 'pdf',
+            size: 2.8,
+            uploaded_by: 'Metro Credit Union',
+            uploaded_at: '2025-04-05T10:40:00Z'
+          },
+          {
+            id: 4,
+            name: 'Security Compliance Report',
+            type: 'pdf',
+            size: 3.1,
+            uploaded_by: 'LendSecure Technologies',
+            uploaded_at: '2025-04-06T14:15:00Z'
+          },
+          {
+            id: 5,
+            name: 'Incident Response Timeline',
+            type: 'docx',
+            size: 0.52,
+            uploaded_by: 'LendSecure Technologies',
+            uploaded_at: '2025-04-06T14:20:00Z'
+          },
+          {
+            id: 6,
+            name: 'Forensic Analysis Report',
+            type: 'pdf',
+            size: 5.7,
+            uploaded_by: 'Third-Party Auditor',
+            uploaded_at: '2025-04-07T09:30:00Z'
+          }
+        ],
+        timeline: [
+          {
+            id: 1,
+            event: 'Dispute Filed',
+            date: '2025-04-05T09:45:00Z',
+            description: 'Metro Credit Union filed a dispute against the claim, citing contractual terms violation.'
+          },
+          {
+            id: 2,
+            event: 'Documentation Requested',
+            date: '2025-04-05T11:30:00Z',
+            description: 'Additional documentation was requested from both parties to support the dispute review.'
+          },
+          {
+            id: 3,
+            event: 'Documentation Received',
+            date: '2025-04-07T14:15:00Z',
+            description: 'Security audit reports and compliance documentation received from both parties.'
+          },
+          {
+            id: 4,
+            event: 'Under Review',
+            date: '2025-04-08T16:30:00Z',
+            description: 'Dispute is currently under review by the resolution team.'
+          }
+        ]
+      }
+    };
+    
+    res.json(disputeDetails);
+  } catch (error) {
+    console.error('Error fetching dispute details:', error);
+    res.status(500).json({ error: 'Failed to fetch dispute details' });
+  }
+});
+
 // Get a single claim by ID
+// This is a generic catch-all route for any claim ID
 router.get('/:id', async (req, res) => {
   try {
     const claimId = req.params.id;
@@ -409,120 +538,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Get dispute details for a claim
-router.get('/dispute/:id', async (req, res) => {
+// Create a new dispute
+router.post('/:id/dispute', async (req, res) => {
   try {
     const claimId = req.params.id;
+    const disputeData = req.body;
     
-    // In a real app, we would query the database
-    // This is mock data for the purpose of this demo
-    const disputeDetails = {
-      id: 1,
-      claim_id: 'CLM-2025-004',
-      bank_id: 'BNK-67890',
-      bank_name: 'Metro Credit Union',
-      fintech_name: 'LendSecure Technologies',
-      account_number: 'ACCT-55578123',
-      claim_type: 'PII Data Loss',
-      claim_date: '2025-04-03T11:25:00Z',
-      claim_amount: 95.00,
-      status: 'under_review',
-      policy_number: 'POL-2025-45678',
-      is_disputed: true,
-      is_resolved: false,
-      breach_date: '2025-04-01T02:30:00Z',
-      affected_records: 175,
-      consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
-      consent_scope: 'PII',
-      incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.',
-      dispute: {
-        id: 1,
-        dispute_date: '2025-04-05T09:15:00Z',
-        dispute_reason: 'The bank disputes liability for the PII data loss, claiming the Fintech\'s security measures were inadequate and violated contractual obligations.',
-        status: 'under_review',
-        documents: [
-          {
-            id: 1, 
-            name: 'Security Audit Report',
-            type: 'pdf',
-            size: 1.2,
-            uploaded_by: 'Metro Credit Union',
-            uploaded_at: '2025-04-05T10:30:00Z'
-          },
-          {
-            id: 2,
-            name: 'Data Access Logs',
-            type: 'xlsx',
-            size: 0.845,
-            uploaded_by: 'Metro Credit Union',
-            uploaded_at: '2025-04-05T10:35:00Z'
-          },
-          {
-            id: 3,
-            name: 'Service Agreement',
-            type: 'pdf',
-            size: 2.8,
-            uploaded_by: 'Metro Credit Union',
-            uploaded_at: '2025-04-05T10:40:00Z'
-          },
-          {
-            id: 4,
-            name: 'Security Compliance Report',
-            type: 'pdf',
-            size: 3.1,
-            uploaded_by: 'LendSecure Technologies',
-            uploaded_at: '2025-04-06T14:15:00Z'
-          },
-          {
-            id: 5,
-            name: 'Incident Response Timeline',
-            type: 'docx',
-            size: 0.52,
-            uploaded_by: 'LendSecure Technologies',
-            uploaded_at: '2025-04-06T14:20:00Z'
-          },
-          {
-            id: 6,
-            name: 'Forensic Analysis Report',
-            type: 'pdf',
-            size: 5.7,
-            uploaded_by: 'Third-Party Auditor',
-            uploaded_at: '2025-04-07T09:30:00Z'
-          }
-        ],
-        timeline: [
-          {
-            id: 1,
-            event: 'Dispute Filed',
-            date: '2025-04-05T09:45:00Z',
-            description: 'Metro Credit Union filed a dispute against the claim, citing contractual terms violation.'
-          },
-          {
-            id: 2,
-            event: 'Documentation Requested',
-            date: '2025-04-05T11:30:00Z',
-            description: 'Additional documentation was requested from both parties to support the dispute review.'
-          },
-          {
-            id: 3,
-            event: 'Documentation Received',
-            date: '2025-04-07T14:15:00Z',
-            description: 'Security audit reports and compliance documentation received from both parties.'
-          },
-          {
-            id: 4,
-            event: 'Under Review',
-            date: '2025-04-08T16:30:00Z',
-            description: 'Dispute is currently under review by the resolution team.'
-          }
-        ]
-      }
-    };
+    // In a real app, we would insert into the database
+    // For now, just respond with success and a mock ID
     
-    res.json(disputeDetails);
+    res.status(201).json({
+      success: true,
+      message: 'Dispute created successfully',
+      dispute_id: 5
+    });
   } catch (error) {
-    console.error('Error fetching dispute details:', error);
-    res.status(500).json({ error: 'Failed to fetch dispute details' });
+    console.error('Error creating dispute:', error);
+    res.status(500).json({ error: 'Failed to create dispute' });
   }
 });
 

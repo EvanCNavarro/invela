@@ -7,6 +7,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EnhancedSkeleton } from '@/components/ui/enhanced-skeleton';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 /**
@@ -19,38 +20,38 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 export function ClaimsTableLoadingSkeleton() {
   return (
     <div className="space-y-4 relative">
-      {/* Skeleton UI overlay with improved animations */}
+      {/* Skeleton UI overlay with enhanced wave animations */}
       <div className="animate-fade-in transition-opacity duration-500">
         <div className="flex items-center gap-2 mb-4">
           <div className="relative flex-1">
-            <Skeleton className="h-10 w-full skeleton-shimmer" />
+            <EnhancedSkeleton animation="wave" className="h-10 w-full" />
           </div>
-          <Skeleton className="h-10 w-[80px] skeleton-shimmer" />
+          <EnhancedSkeleton animation="wave" className="h-10 w-[80px]" />
         </div>
         
         <div className="border rounded-md">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[120px]"><Skeleton className="h-4 w-[80px] animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[150px]"><Skeleton className="h-4 w-[100px] animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[150px]"><Skeleton className="h-4 w-[100px] animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[120px]"><Skeleton className="h-4 w-[80px] animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[120px] text-right"><Skeleton className="h-4 w-[80px] ml-auto animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[150px]"><Skeleton className="h-4 w-[100px] animate-skeleton-pulse" /></TableHead>
-                <TableHead className="w-[80px] text-right"><Skeleton className="h-4 w-[40px] ml-auto animate-skeleton-pulse" /></TableHead>
+                <TableHead className="w-[120px]"><EnhancedSkeleton animation="pulse" className="h-4 w-[80px]" /></TableHead>
+                <TableHead className="w-[150px]"><EnhancedSkeleton animation="pulse" className="h-4 w-[100px]" /></TableHead>
+                <TableHead className="w-[150px]"><EnhancedSkeleton animation="pulse" className="h-4 w-[100px]" /></TableHead>
+                <TableHead className="w-[120px]"><EnhancedSkeleton animation="pulse" className="h-4 w-[80px]" /></TableHead>
+                <TableHead className="w-[120px] text-right"><EnhancedSkeleton animation="pulse" className="h-4 w-[80px] ml-auto" /></TableHead>
+                <TableHead className="w-[150px]"><EnhancedSkeleton animation="pulse" className="h-4 w-[100px]" /></TableHead>
+                <TableHead className="w-[80px] text-right"><EnhancedSkeleton animation="pulse" className="h-4 w-[40px] ml-auto" /></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array(5).fill(0).map((_, i) => (
                 <TableRow key={i} className="h-[55px]">
-                  <TableCell><Skeleton className="h-4 w-[100px] skeleton-shimmer" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[120px] skeleton-shimmer" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[120px] skeleton-shimmer" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[100px] skeleton-shimmer" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-4 w-[80px] ml-auto skeleton-shimmer" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-[120px] skeleton-shimmer" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-5 w-[30px] ml-auto skeleton-shimmer" /></TableCell>
+                  <TableCell><EnhancedSkeleton animation="wave" className="h-4 w-[100px]" /></TableCell>
+                  <TableCell><EnhancedSkeleton animation="wave" className="h-4 w-[120px]" /></TableCell>
+                  <TableCell><EnhancedSkeleton animation="wave" className="h-4 w-[120px]" /></TableCell>
+                  <TableCell><EnhancedSkeleton animation="wave" className="h-4 w-[100px]" /></TableCell>
+                  <TableCell className="text-right"><EnhancedSkeleton animation="wave" className="h-4 w-[80px] ml-auto" /></TableCell>
+                  <TableCell><EnhancedSkeleton animation="wave" className="h-6 w-[120px]" /></TableCell>
+                  <TableCell className="text-right"><EnhancedSkeleton animation="wave" className="h-5 w-[30px] ml-auto" /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
