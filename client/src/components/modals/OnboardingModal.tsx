@@ -747,25 +747,25 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-6">Invite Your Team</h2>
+              <h2 className="text-2xl font-bold text-blue-600 mb-5">Invite Your Team</h2>
               
               {teamMembers.map((member, index) => (
-                <Card key={index} className="mb-4">
+                <Card key={index} className="mb-4 overflow-hidden border-gray-200">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="bg-gray-200 text-gray-700 py-1 px-3 rounded font-medium">
+                      <div className="bg-blue-100 text-blue-700 py-1 px-3 rounded-full text-xs font-medium">
                         {member.role}
                       </div>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-xs text-gray-600">
                         {member.roleDescription} {member.formType}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor={`name-${index}`} className="mb-1 block text-sm">
+                        <Label htmlFor={`name-${index}`} className="mb-1 block text-xs font-medium">
                           Full Name
                         </Label>
                         <Input
@@ -776,11 +776,11 @@ export function OnboardingModal() {
                             newMembers[index].fullName = e.target.value;
                             setTeamMembers(newMembers);
                           }}
-                          className={cn(member.fullName ? "border-green-500" : "")}
+                          className={cn("h-9", member.fullName ? "border-green-500" : "")}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`email-${index}`} className="mb-1 block text-sm">
+                        <Label htmlFor={`email-${index}`} className="mb-1 block text-xs font-medium">
                           Email Address
                         </Label>
                         <Input
@@ -792,7 +792,7 @@ export function OnboardingModal() {
                             newMembers[index].email = e.target.value;
                             setTeamMembers(newMembers);
                           }}
-                          className={cn(
+                          className={cn("h-9", 
                             member.email && member.email.includes('@') ? "border-green-500" : ""
                           )}
                         />
@@ -807,15 +807,15 @@ export function OnboardingModal() {
               </p>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_5.png" 
                   alt="Team Invitation" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
@@ -823,11 +823,11 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-semibold mb-6">Review Provided Information</h2>
+              <h2 className="text-2xl font-bold text-blue-600 mb-5">Review Provided Information</h2>
               
-              <div className="space-y-3">
+              <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-2">
                   <Check className="text-green-500 h-5 w-5" />
                   <span className="font-medium">Company:</span>
@@ -874,15 +874,15 @@ export function OnboardingModal() {
               </div>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_6.png" 
                   alt="Information Review" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
