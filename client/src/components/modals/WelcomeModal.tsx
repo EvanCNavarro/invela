@@ -34,37 +34,52 @@ const CustomDialogContent = forwardRef<
 ));
 CustomDialogContent.displayName = "CustomDialogContent";
 
-// New carousel content with the updated 5 steps
+// Updated carousel content with 7 steps
 const carouselContent = [
   {
-    src: "/assets/modal_userOboarding_1.png",
-    alt: "The Invela Trust Network",
-    title: "The Invela Trust Network",
+    src: "/assets/welcome_1.png",
+    alt: "Welcome to Invela Trust Network",
+    title: "Welcome to Invela Trust Network",
     subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_2.png",
-    alt: "Easy Onboarding",
-    title: "Easy Onboarding",
-    subtitle: "A simple, goal-oriented setup."
+    src: "/assets/welcome_2.png",
+    alt: "Easy Onboarding Process", 
+    title: "Easy Onboarding Process",
+    subtitle: "A simple, goal-oriented setup designed to get you started quickly."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_3.png",
-    alt: "Built for Trust",
-    title: "Built for Trust",
-    subtitle: "Progress through surveys, all in one secure flow."
+    src: "/assets/welcome_3.png",
+    alt: "Complete Security Assessment",
+    title: "Complete Security Assessment",
+    subtitle: "Progress through surveys and assessments in one secure flow."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_4.png",
-    alt: "Your Data, Protected", 
-    title: "Your Data, Protected",
-    subtitle: "Best-in-class encryption and secure controls at every step."
+    src: "/assets/welcome_4.png",
+    alt: "Comprehensive Risk Analysis",
+    title: "Comprehensive Risk Analysis",
+    subtitle: "Advanced analytics provide detailed risk insights at every step."
   },
   {
-    src: "/assets/harmonized_modal_userOboarding_5.png",
-    alt: "Start Your Process",
-    title: "Start Your Process",
-    subtitle: "Jump into your Task Center and start shaping your network."
+    // Will use welcome_4.png as fallback until welcome_5.png is available
+    src: "/assets/welcome_4.png",
+    alt: "Manage Claims Efficiently",
+    title: "Manage Claims Efficiently",
+    subtitle: "Keep track of all claims in one centralized location with complete history."
+  },
+  {
+    // Will use welcome_3.png as fallback until welcome_6.png is available
+    src: "/assets/welcome_3.png",
+    alt: "Build Your Trust Network",
+    title: "Build Your Trust Network",
+    subtitle: "Connect with partners and create a trusted business ecosystem."
+  },
+  {
+    // Will use welcome_1.png as fallback until welcome_7.png is available
+    src: "/assets/welcome_1.png",
+    alt: "Start Your Journey",
+    title: "Start Your Journey",
+    subtitle: "You're all set! Jump into your Task Center and start shaping your network."
   }
 ];
 
