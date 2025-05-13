@@ -534,12 +534,12 @@ export function OnboardingModal() {
 
   // Progress indicator dots component - styled like tutorial modal
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-3 py-2">
+    <div className="flex justify-center items-center gap-4 py-2">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
-            "h-3 w-3 rounded-full transition-colors duration-200",
+            "h-4 w-4 rounded-full transition-colors duration-200",
             i < currentStep ? "bg-blue-500" : 
             currentStep === i ? "bg-blue-600 ring-2 ring-blue-200 ring-offset-1" : 
             "bg-gray-200"
@@ -558,37 +558,37 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-hidden">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-8">
                   Welcome to the<br />Invela Trust Network
                 </h2>
-                <div className="mt-6 space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div className="mt-6 space-y-5">
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-base text-gray-700">
+                    <p className="text-lg font-medium text-gray-700">
                       Your premier partner for secure and efficient accreditation
                     </p>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-base text-gray-700">
+                    <p className="text-lg font-medium text-gray-700">
                       Enterprise-grade risk assessment and management platform
                     </p>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-base text-gray-700">
+                    <p className="text-lg font-medium text-gray-700">
                       Streamlined compliance processes with advanced automation
                     </p>
                   </div>
