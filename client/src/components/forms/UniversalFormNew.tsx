@@ -710,9 +710,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   useEffect(() => {
     if (task?.status === 'submitted' && isSubmitting) {
       logger.info('Task status is now submitted, resetting submission state');
-      setIsSubmitting(false);
+      // Only update internal state if we're not externally controlled
+      if (externalIsSubmitting === undefined) {
+        setInternalIsSubmitting(false);
+      }
     }
-  }, [task?.status, isSubmitting]);
+  }, [task?.status, isSubmitting, externalIsSubmitting]);
   
   // Use our new form data manager hook to handle form data
   const {
@@ -2015,8 +2018,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const handleSubmissionError = (event: FormSubmissionEvent) => {
     logger.error(`Submission error event received: ${JSON.stringify(event)}`);
     
-    // Reset submission state
-    setIsSubmitting(false);
+    // Reset submission state - only if not externally controlled
+    if (externalIsSubmitting === undefined) {
+      setInternalIsSubmitting(false);
+    }
     
     // Show error toast
     toast({
