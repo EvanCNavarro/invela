@@ -604,7 +604,8 @@ export function WelcomeModal() {
         toast({
           title: "Please complete all fields",
           description: "Both company size and annual revenue are required to continue.",
-          variant: "destructive"
+          variant: "destructive",
+          duration: 2500
         });
         return;
       }
@@ -626,13 +627,39 @@ export function WelcomeModal() {
             toast({
               title: "Error saving company information",
               description: "There was a problem saving your company details. Please try again.",
-              variant: "destructive"
+              variant: "destructive",
+              duration: 2500
             });
             console.error('[ONBOARDING DEBUG] Error saving company information:', error);
           }
         }
       );
       return;
+    }
+    
+    // For team invitation step (index 4), check if paired fields are properly filled
+    if (currentSlide === 4) {
+      // Check for mismatched CFO fields (one filled, one empty)
+      if ((cfoName && !cfoEmail) || (!cfoName && cfoEmail)) {
+        toast({
+          title: "Incomplete CFO information",
+          description: "Please provide both name and email for the CFO, or leave both fields empty.",
+          variant: "destructive",
+          duration: 2500
+        });
+        return;
+      }
+      
+      // Check for mismatched CISO fields (one filled, one empty)
+      if ((cisoName && !cisoEmail) || (!cisoName && cisoEmail)) {
+        toast({
+          title: "Incomplete CISO information",
+          description: "Please provide both name and email for the CISO, or leave both fields empty.",
+          variant: "destructive",
+          duration: 2500
+        });
+        return;
+      }
     }
     
     // For other slides, just advance to the next one
@@ -935,14 +962,14 @@ export function WelcomeModal() {
                   {/* Team member invitation form for step 5 */}
                   {currentSlide === 4 && (
                     <motion.div
-                      className="mt-2 space-y-4 transform-gpu"
+                      className="mt-1 space-y-3 transform-gpu"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
                       style={{ willChange: 'opacity', overflow: 'hidden' }}
                     >
                       {/* CFO Invitation */}
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="bg-blue-50/70 rounded-lg p-3 border border-blue-100/60">
                         <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CFO</span>
                           <Label className="text-base font-semibold inline">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
@@ -957,7 +984,7 @@ export function WelcomeModal() {
                               placeholder="John Doe"
                               value={cfoName}
                               onChange={(e) => setCfoName(e.target.value)}
-                              className={`transition-all duration-200 ${cfoName ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${cfoName && !cfoEmail ? "border-amber-500 bg-amber-50/30" : cfoName ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
                           <div className="space-y-1 col-span-3">
@@ -970,14 +997,14 @@ export function WelcomeModal() {
                               type="email"
                               value={cfoEmail}
                               onChange={(e) => setCfoEmail(e.target.value)}
-                              className={`transition-all duration-200 ${cfoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${!cfoName && cfoEmail ? "border-amber-500 bg-amber-50/30" : cfoEmail ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
                         </div>
                       </div>
                       
                       {/* CISO Invitation */}
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="bg-blue-50/70 rounded-lg p-3 border border-blue-100/60">
                         <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CISO</span>
                           <Label className="text-base font-semibold inline">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
@@ -992,7 +1019,7 @@ export function WelcomeModal() {
                               placeholder="Jane Smith"
                               value={cisoName}
                               onChange={(e) => setCisoName(e.target.value)}
-                              className={`transition-all duration-200 ${cisoName ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${cisoName && !cisoEmail ? "border-amber-500 bg-amber-50/30" : cisoName ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
                           <div className="space-y-1 col-span-3">
@@ -1005,7 +1032,7 @@ export function WelcomeModal() {
                               type="email"
                               value={cisoEmail}
                               onChange={(e) => setCisoEmail(e.target.value)}
-                              className={`transition-all duration-200 ${cisoEmail ? "border-green-500 bg-green-50/30" : ""}`}
+                              className={`transition-all duration-200 ${!cisoName && cisoEmail ? "border-amber-500 bg-amber-50/30" : cisoEmail ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
                         </div>
