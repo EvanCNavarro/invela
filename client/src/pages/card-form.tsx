@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { shouldHideDownloadButtons } from "@/utils/hide-downloads";
 
 interface CardFormProps {
   params: {
@@ -111,7 +112,7 @@ export default function CardForm({ params }: CardFormProps) {
           Back to Task Center
         </Button>
 
-        {isSubmitted && fileId && (
+        {isSubmitted && fileId && !shouldHideDownloadButtons() && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
