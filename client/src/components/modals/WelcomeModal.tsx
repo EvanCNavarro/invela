@@ -1170,32 +1170,17 @@ export function WelcomeModal() {
                   {/* Review Information (step 6) */}
                   {currentSlide === 5 && (
                     <motion.div
-                      className="mt-3 space-y-5 transform-gpu overflow-y-auto max-h-[420px] pr-2"
+                      className="mt-3 transform-gpu" 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
                       style={{ willChange: 'opacity' }}
                     >
-                      {/* Simple title with no subtext, as requested */}
-                      <div className="mb-4">
-                        <h3 className="text-xl font-semibold text-gray-800">Review Provided Information</h3>
-                        {/* Add structured logging using utility logger */}
-                        {(() => {
-                          // Use dynamic import to avoid bundling logger if not used
-                          import('@/lib/logger').then(({ logger }) => {
-                            logger.debug('[WelcomeModal] Rendering review page with data', {
-                              company, 
-                              employeeCount, 
-                              revenueTier, 
-                              pendingCompanyData,
-                              teamInvites: [
-                                cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
-                                cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
-                              ].filter(Boolean)
-                            });
-                          });
-                          // Also keep console log for immediate visibility during development
-                          console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
+                      {/* Add structured logging using utility logger */}
+                      {(() => {
+                        // Use dynamic import to avoid bundling logger if not used
+                        import('@/lib/logger').then(({ logger }) => {
+                          logger.debug('[WelcomeModal] Rendering review page with data', {
                             company, 
                             employeeCount, 
                             revenueTier, 
@@ -1205,76 +1190,66 @@ export function WelcomeModal() {
                               cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
                             ].filter(Boolean)
                           });
-                          return null;
-                        })()}
-                      </div>
+                        });
+                        // Also keep console log for immediate visibility during development
+                        console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
+                          company, 
+                          employeeCount, 
+                          revenueTier, 
+                          pendingCompanyData,
+                          teamInvites: [
+                            cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
+                            cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
+                          ].filter(Boolean)
+                        });
+                        return null;
+                      })()}
                       
-                      {/* Simple compact layout for review data */}
-                      <div className="mt-2">
-                        {/* Add structured logging for team invites */}
-                        {(() => {
-                          import('@/lib/logger').then(({ logger }) => {
-                            logger.debug('[WelcomeModal] Rendering review page with data', {
-                              company, 
-                              employeeCount, 
-                              revenueTier, 
-                              pendingCompanyData,
-                              teamInvites: [
-                                cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
-                                cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
-                              ].filter(Boolean)
-                            });
-                          });
-                          console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
-                            company, 
-                            employeeCount, 
-                            revenueTier, 
-                            pendingCompanyData,
-                            teamInvites: [
-                              cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
-                              cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
-                            ].filter(Boolean)
-                          });
-                          return null;
-                        })()}
-                        
-                        {/* Ultra-compact single line data presentation */}
-                        <div className="space-y-1.5 mt-1">
-                          {/* Company information - single line format */}
-                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                            <span className="text-xs font-medium text-gray-500">Company:</span>
-                            <span className="text-sm font-medium text-gray-900 ml-1">{company?.name || "Not provided"}</span>
+                      {/* Horizontal review data layout with checkmarks */}
+                      <div className="mt-6">
+                        {/* Display in a horizontal flow layout */}
+                        <div className="flex flex-wrap gap-2">
+                          {/* Company information with checkmarks */}
+                          <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-500 mr-1">Company:</span>
+                            <span className="text-sm font-medium text-gray-900">{company?.name || "Not provided"}</span>
                           </div>
                           
-                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                            <span className="text-xs font-medium text-gray-500">Category:</span>
-                            <span className="text-sm font-medium text-gray-900 ml-1">{company?.category || "Not provided"}</span>
+                          <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-500 mr-1">Category:</span>
+                            <span className="text-sm font-medium text-gray-900">{company?.category || "Not provided"}</span>
                           </div>
                           
-                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                            <span className="text-xs font-medium text-gray-500">Size:</span>
-                            <span className="text-sm font-medium text-gray-900 ml-1">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</span>
+                          <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-500 mr-1">Size:</span>
+                            <span className="text-sm font-medium text-gray-900">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</span>
                           </div>
                           
-                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                            <span className="text-xs font-medium text-gray-500">Revenue:</span>
-                            <span className="text-sm font-medium text-gray-900 ml-1">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</span>
+                          <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-500 mr-1">Revenue:</span>
+                            <span className="text-sm font-medium text-gray-900">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</span>
                           </div>
 
                           {/* Team invitations */}
                           {cfoName && cfoEmail && (
-                            <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                              <span className="text-xs font-medium text-gray-500">CFO:</span>
-                              <span className="text-sm font-medium text-gray-900 ml-1">{cfoName}</span>
-                              <span className="text-xs text-gray-500 ml-2">({cfoEmail})</span>
+                            <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                              <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                              <span className="text-xs font-medium text-gray-500 mr-1">CFO:</span>
+                              <span className="text-sm font-medium text-gray-900">{cfoName}</span>
+                              <span className="text-xs text-gray-500 ml-1">({cfoEmail})</span>
                             </div>
                           )}
                           
                           {cisoName && cisoEmail && (
-                            <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
-                              <span className="text-xs font-medium text-gray-500">CISO:</span>
-                              <span className="text-sm font-medium text-gray-900 ml-1">{cisoName}</span>
-                              <span className="text-xs text-gray-500 ml-2">({cisoEmail})</span>
+                            <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
+                              <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
+                              <span className="text-xs font-medium text-gray-500 mr-1">CISO:</span>
+                              <span className="text-sm font-medium text-gray-900">{cisoName}</span>
+                              <span className="text-xs text-gray-500 ml-1">({cfoEmail})</span>
                             </div>
                           )}
                         </div>
