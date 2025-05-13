@@ -235,6 +235,8 @@ router.get('/resolved', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const claimId = req.params.id;
+    console.log('[API] Fetching claim by ID:', claimId);
+    console.log('[API] Request params:', req.params);
     
     // In a real app, we would query the database
     // This is mock data for the purpose of this demo
@@ -260,6 +262,46 @@ router.get('/:id', async (req, res) => {
         incident_description: 'Unauthorized access to customer PII data was detected in the system.'
       },
       {
+        id: 2,
+        claim_id: 'CLM-2025-002',
+        bank_id: 'BNK-13557',
+        bank_name: 'Commerce Trust Bank',
+        fintech_name: 'DataSecure App',
+        account_number: 'ACCT-77812345',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-10T14:15:00Z',
+        claim_amount: 75.50,
+        status: 'processing',
+        policy_number: 'POL-2025-77654',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-08T06:45:00Z',
+        affected_records: 120,
+        consent_id: 'b8741ecd92a5687fb143ce09ad',
+        consent_scope: 'PII',
+        incident_description: 'Security vulnerability exploited resulting in unauthorized data access.'
+      },
+      {
+        id: 3,
+        claim_id: 'CLM-2025-003',
+        bank_id: 'BNK-22190',
+        bank_name: 'Pacific Regional Bank',
+        fintech_name: 'FinFlow Tech',
+        account_number: 'ACCT-99123456',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-05T10:20:00Z',
+        claim_amount: 120.75,
+        status: 'pending_info',
+        policy_number: 'POL-2025-33219',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-03T13:15:00Z',
+        affected_records: 315,
+        consent_id: 'c6532a9b78d01ef4521ab63ec',
+        consent_scope: 'PII',
+        incident_description: 'Customer PII data exposed through insecure API implementation.'
+      },
+      {
         id: 4,
         claim_id: 'CLM-2025-004',
         bank_id: 'BNK-67890',
@@ -281,12 +323,24 @@ router.get('/:id', async (req, res) => {
       }
     ];
     
-    const claim = allClaims.find(c => c.id.toString() === claimId || c.claim_id === claimId);
+    // Important: Need to handle both number and string IDs
+    console.log('[API] Looking for claim with ID:', claimId);
+    console.log('[API] ID type:', typeof claimId);
+    
+    // First try exact match, then try string comparison
+    const claim = allClaims.find(c => {
+      const stringMatch = c.id.toString() === claimId;
+      const claimIdMatch = c.claim_id === claimId;
+      console.log(`[API] Checking claim ${c.id}: stringMatch=${stringMatch}, claimIdMatch=${claimIdMatch}`);
+      return stringMatch || claimIdMatch;
+    });
     
     if (!claim) {
+      console.log('[API] No matching claim found for ID:', claimId);
       return res.status(404).json({ error: 'Claim not found' });
     }
     
+    console.log('[API] Found matching claim:', claim.id, claim.claim_id);
     res.json(claim);
   } catch (error) {
     console.error('Error fetching claim:', error);

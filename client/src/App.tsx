@@ -236,13 +236,16 @@ function Router() {
         
         <ProtectedRoute 
           path="/claims/:claimId" 
-          component={({ params }: { params: { claimId: string } }) => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <ClaimsPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
+          component={({ params }: { params: { claimId: string } }) => {
+            console.log('[Router] Rendering claim details page for ID:', params.claimId);
+            return (
+              <ProtectedLayout>
+                <OnboardingWrapper>
+                  <ClaimDetailsPage />
+                </OnboardingWrapper>
+              </ProtectedLayout>
+            );
+          }} 
         />
 
         <ProtectedRoute 

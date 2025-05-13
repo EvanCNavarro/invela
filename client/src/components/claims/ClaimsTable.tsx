@@ -68,9 +68,23 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     );
   });
 
+  /**
+   * Navigate to the claim detail page
+   * This function logs navigation attempts and details for debugging purposes
+   */
   const handleViewClaim = (claim: Claim) => {
+    console.log('[ClaimsTable] Attempting to navigate to claim details:', claim);
+    
+    if (!claim || !claim.id) {
+      console.error('[ClaimsTable] Cannot navigate - invalid claim or missing ID');
+      return;
+    }
+    
+    const detailPath = `/claims/${claim.id}`;
+    console.log('[ClaimsTable] Navigating to path:', detailPath);
+    
     // Use the numeric ID for navigation as it's expected by the route parameter
-    navigate(`/claims/${claim.id}`);
+    navigate(detailPath);
   };
 
   const handleDisputeClaim = (claim: Claim) => {
