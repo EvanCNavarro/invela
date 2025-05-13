@@ -464,23 +464,23 @@ export default function ClaimDetailsPage() {
                     <span className="font-medium">FB</span>
                   </div>
                   <div>
-                    <h3 className="font-medium">{claim.bank_name || 'First National Bank'}</h3>
+                    <h3 className="font-medium">{claim?.bank_name}</h3>
                     <p className="text-sm text-muted-foreground">financial@bnk-12009.com</p>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium">Contact</p>
+                    <p className="text-sm font-medium mb-1">Contact</p>
                     <p>Jennifer Martinez</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm font-medium mb-1">Phone</p>
                     <p>(555) 123-4567</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Bank ID</p>
-                    <p>{claim.bank_id || 'BNK-12009'}</p>
+                    <p className="text-sm font-medium mb-1">Bank ID</p>
+                    <p>{claim?.bank_id}</p>
                   </div>
                 </div>
               </CardContent>
@@ -496,7 +496,7 @@ export default function ClaimDetailsPage() {
                     <span className="font-medium">PQ</span>
                   </div>
                   <div>
-                    <h3 className="font-medium">{claim.fintech_name || 'PayQuick Solutions'}</h3>
+                    <h3 className="font-medium">{claim?.fintech_name}</h3>
                     <p className="text-sm text-muted-foreground">support@payquicksolutions.com</p>
                   </div>
                 </div>
@@ -591,7 +591,7 @@ export default function ClaimDetailsPage() {
             </Card>
           </div>
         </div>
-      </PageTemplate>
+      </div>
     </DashboardLayout>
   );
 }
