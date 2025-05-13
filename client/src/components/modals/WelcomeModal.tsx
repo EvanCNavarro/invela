@@ -89,8 +89,8 @@ const carouselContent: CarouselItem[] = [
   },
   {
     src: "/attached_assets/welcome_3.png",
-    alt: "3 Tasks Ahead",
-    title: "3 Tasks Ahead",
+    alt: "A Few Tasks Ahead",
+    title: "A Few Tasks Ahead",
     subtitle: "To complete your accreditation application, you'll need to work through the following tasks:",
     bulletPoints: [
       "KYB Form",
@@ -688,7 +688,7 @@ export function WelcomeModal() {
                         transition={{ delay: 0.2 }}
                         className={cn(
                           "text-2xl font-bold text-gray-900 leading-tight",
-                          currentSlide === 2 ? "mb-6" : "mb-4"
+                          currentSlide === 2 ? "mb-3" : "mb-4"
                         )}
                       >
                         {carouselContent[currentSlide].title.split('\n').map((line, i) => (
@@ -705,7 +705,7 @@ export function WelcomeModal() {
                         transition={{ delay: 0.3 }}
                         className={cn(
                           "text-lg text-gray-700",
-                          currentSlide === 2 ? "mb-6" : "mb-3"
+                          currentSlide === 2 ? "mb-2" : "mb-3"
                         )}
                       >
                         {Number(currentSlide) === 1 ? (
@@ -796,10 +796,10 @@ export function WelcomeModal() {
 
                   {/* Bullet points section - special styling for step 3 */}
                   {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
-                    <div className={currentSlide === 2 ? "mt-10" : "mt-8"}>
+                    <div className={currentSlide === 2 ? "mt-6" : "mt-8"}>
                       {currentSlide === 2 ? (
                         // Special numbered list with neumorphic design for step 3
-                        <div className="space-y-6 mt-5">
+                        <div className="space-y-4 mt-3">
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                             <motion.div 
                               key={index} 
