@@ -65,6 +65,7 @@ import LegalPage from "@/pages/landing/legal";
 import SiteMapPage from "@/pages/landing/site-map";
 import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 import ClaimsPage from "@/pages/claims";
+import ClaimDetailsPage from "@/pages/claims/[id]";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
