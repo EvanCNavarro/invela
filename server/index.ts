@@ -117,20 +117,30 @@ app.use((req, res, next) => {
 registerRoutes(app);
 
 // Initialize our new WebSocket implementation for better type safety and maintainability
-import { websocketManager } from './websocket';
-websocketManager.initialize(server);
-logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+// Initialize a proper WebSocket server the conventional way
+// to avoid duplicate initialization conflicts
+import { WebSocketServer } from 'ws';
+logger.info('[ServerStartup] Setting up a single WebSocket server instance');
 
-// Only use one WebSocket server to avoid conflicts
-// Use the legacy implementation for now to ensure backward compatibility
-const wssInstance = setupWebSocketServer(server);
+// Create a single WebSocket server instance with explicit path
+const wssInstance = new WebSocketServer({ 
+  server, 
+  path: '/ws',
+  // Skip Vite HMR connections to avoid conflicts
+  verifyClient: (info: { req: { headers: { [key: string]: string | string[] | undefined } } }) => {
+    if (info.req.headers['sec-websocket-protocol'] === 'vite-hmr') {
+      logger.debug('[WebSocket] Ignoring Vite HMR WebSocket connection');
+      return false;
+    }
+    return true;
+  }
+});
 
-// Ensure old-style handlers can still access the WebSocket server
-// by importing functions from the utilities that need access
+// Fix the import ordering issue - move these imports to the top
 import { registerWebSocketServer } from './utils/task-update';
 import { setWebSocketServer } from './utils/task-broadcast';
 
-// Register WebSocket server with task-update utility for backward compatibility
+// Register WebSocket server with task-update utility
 registerWebSocketServer(wssInstance);
 logger.info('[ServerStartup] WebSocket server registered with task-update utility');
 
@@ -138,13 +148,35 @@ logger.info('[ServerStartup] WebSocket server registered with task-update utilit
 setWebSocketServer(wssInstance);
 logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
 
-// Log WebSocket server initialization details for debugging
+// Listen for connections
+wssInstance.on('connection', (socket, req) => {
+  logger.info('[WebSocket] Client connected');
+  
+  socket.on('message', (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      logger.debug('[WebSocket] Received message:', message);
+      
+      // Handle different message types
+      if (message.type === 'ping') {
+        socket.send(JSON.stringify({
+          type: 'pong',
+          timestamp: new Date().toISOString()
+        }));
+      }
+    } catch (error) {
+      logger.error('[WebSocket] Error processing message:', error);
+    }
+  });
+  
+  socket.on('close', () => {
+    logger.info('[WebSocket] Client disconnected');
+  });
+});
+
+// Log current WebSocket server state
 setTimeout(() => {
-  if (wssInstance && wssInstance.clients) {
-    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
-  } else {
-    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
-  }
+  logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
 }, 1000);
 
 // Set up development environment
