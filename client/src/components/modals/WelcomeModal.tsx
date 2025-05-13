@@ -799,26 +799,22 @@ export function WelcomeModal() {
                     <div className={currentSlide === 2 ? "mt-2" : "mt-8"}>
                       {currentSlide === 2 ? (
                         // Special numbered list with neumorphic design for step 3
-                        <div className="space-y-2 mt-1">
+                        <div className="flex flex-wrap gap-2 mt-3">
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                             <motion.div 
                               key={index} 
-                              className="flex py-3 px-5 bg-gray-50 rounded-xl border border-gray-100 shadow-lg transform-gpu"
+                              className="inline-block py-2 px-4 rounded-full transform-gpu"
                               style={{
-                                boxShadow: '6px 6px 12px rgba(166, 180, 200, 0.1), -6px -6px 12px rgba(255, 255, 255, 0.8), inset 1px 1px 1px rgba(255, 255, 255, 0.4)'
+                                backgroundColor: index === 0 ? '#1e3a8a' : index === 1 ? '#1e293b' : '#1e3a8a',
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                               }}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.4 + (index * 0.15) }}
                             >
-                              <div className="flex items-center w-full">
-                                <div className="h-8 w-8 text-white flex-shrink-0 rounded-full bg-primary flex items-center justify-center mr-5 font-semibold text-sm shadow-md">
-                                  {index + 1}
-                                </div>
-                                <p className="text-lg font-medium text-gray-700">
-                                  {point}
-                                </p>
-                              </div>
+                              <span className="text-sm font-medium text-blue-100">
+                                {point}
+                              </span>
                             </motion.div>
                           ))}
                         </div>
