@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface KY3PDemoAutoFillProps {
@@ -157,7 +157,7 @@ export function KY3PDemoAutoFill({
     >
       {isLoading ? (
         <>
-          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+          <LoadingSpinner size="xs" className="mr-2" />
           Filling Demo Data...
         </>
       ) : (
