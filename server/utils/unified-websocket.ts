@@ -304,6 +304,15 @@ export function broadcast<T extends WebSocketPayload>(
 ): void {
   if (!wss) {
     wsLogger.warn('Cannot broadcast: WebSocket server not initialized');
+    
+    // Log the message we were trying to send for debugging
+    wsLogger.info('Would have broadcast message:', {
+      type,
+      ...payload,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return without error to prevent crashes in calling code
     return;
   }
   

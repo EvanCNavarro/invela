@@ -345,6 +345,16 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         try {
           console.log(`[TransactionalFormHandler] 🚀 Executing Open Banking post-submission actions for task ${taskId}, company ${companyId}`);
           
+          // ENHANCED LOGGING: Log detailed context before execution
+          logger.info('Calling Open Banking post-submission handler with full context', {
+            context: 'open_banking_post_submission',
+            taskId,
+            companyId,
+            formType,
+            transactionId, 
+            timestamp: new Date().toISOString()
+          });
+          
           // Call the unified Open Banking post-submission handler with the transaction client
           // This will update risk score, accreditation status, and onboarding completion flag
           const openBankingResult = await UnifiedFormSubmissionService.handleOpenBankingPostSubmission(
@@ -355,6 +365,7 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             transactionId
           );
           
+          // ENHANCED LOGGING: Log successful execution with detailed result
           console.log(`[TransactionalFormHandler] ✅ Open Banking post-submission actions completed successfully`, {
             taskId,
             companyId,
@@ -362,13 +373,37 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             timestamp: new Date().toISOString()
           });
           
+          // IMPROVED: Set more comprehensive result data
           postSubmissionResult = { 
             openBankingProcessed: true,
             // The returned array contains the unlocked tabs
             unlockedTabs: openBankingResult,
             dashboardUnlocked: Array.isArray(openBankingResult) && openBankingResult.includes('dashboard'),
-            insightsUnlocked: Array.isArray(openBankingResult) && openBankingResult.includes('insights')
+            insightsUnlocked: Array.isArray(openBankingResult) && openBankingResult.includes('insights'),
+            processingTimestamp: new Date().toISOString()
           };
+          
+          // ENSURE STATUS UPDATE: Double-check that task status is set to 'submitted'
+          try {
+            // Make a final direct update to ensure the status is 'submitted' and progress is 100%
+            await client.query(
+              `UPDATE tasks 
+               SET status = 'submitted', progress = 100, 
+                   ready_for_submission = false,
+                   metadata = jsonb_set(
+                     jsonb_set(COALESCE(metadata, '{}'::jsonb), 
+                       '{submittedAt}', to_jsonb($3::text)),
+                     '{statusUpdateSource}', '"post_processing"'
+                   )
+               WHERE id = $1 AND (status = 'ready_for_submission' OR progress < 100)`,
+              [taskId, companyId, new Date().toISOString()]
+            );
+            
+            console.log(`[TransactionalFormHandler] 🔒 Ensured task ${taskId} has status 'submitted' and progress 100%`);
+          } catch (statusCheckError) {
+            // Log but continue - this is just a safety check
+            console.warn(`[TransactionalFormHandler] ⚠️ Status double-check failed but process continues:`, statusCheckError);
+          }
         } catch (obError) {
           console.error(`[TransactionalFormHandler] ❌ Error in Open Banking post-submission actions:`, {
             error: obError instanceof Error ? obError.message : String(obError),
@@ -384,6 +419,18 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
             openBankingProcessed: false,
             error: obError instanceof Error ? obError.message : String(obError)
           };
+          
+          // Try to continue with at least setting the task status
+          try {
+            await client.query(
+              `UPDATE tasks 
+               SET status = 'submitted', progress = 100
+               WHERE id = $1`,
+              [taskId]
+            );
+          } catch (fallbackError) {
+            console.error(`[TransactionalFormHandler] ❌ Even fallback status update failed:`, fallbackError);
+          }
         }
       }
       
