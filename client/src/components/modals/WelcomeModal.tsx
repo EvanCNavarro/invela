@@ -1209,11 +1209,10 @@ export function WelcomeModal() {
                         })()}
                       </div>
                       
-                      {/* Bento box style layout for review data */}
+                      {/* Simple compact layout for review data */}
                       <div className="mt-2">
                         {/* Add structured logging for team invites */}
                         {(() => {
-                          // Use dynamic import to avoid bundling logger if not used
                           import('@/lib/logger').then(({ logger }) => {
                             logger.debug('[WelcomeModal] Rendering review page with data', {
                               company, 
@@ -1239,127 +1238,46 @@ export function WelcomeModal() {
                           return null;
                         })()}
                         
-                        {/* Main bento grid layout */}
-                        <div className="grid grid-cols-2 gap-3">
-                          {/* Company Name */}
-                          <div className="bg-white/95 p-3 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center mb-1.5">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">Company Name</span>
-                            </div>
-                            <div className="text-base font-semibold text-gray-900 ml-6">{company?.name || "Not provided"}</div>
+                        {/* Ultra-compact single line data presentation */}
+                        <div className="space-y-1.5 mt-1">
+                          {/* Company information - single line format */}
+                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                            <span className="text-xs font-medium text-gray-500">Company:</span>
+                            <span className="text-sm font-medium text-gray-900 ml-1">{company?.name || "Not provided"}</span>
+                          </div>
+                          
+                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                            <span className="text-xs font-medium text-gray-500">Category:</span>
+                            <span className="text-sm font-medium text-gray-900 ml-1">{company?.category || "Not provided"}</span>
+                          </div>
+                          
+                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                            <span className="text-xs font-medium text-gray-500">Size:</span>
+                            <span className="text-sm font-medium text-gray-900 ml-1">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</span>
+                          </div>
+                          
+                          <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                            <span className="text-xs font-medium text-gray-500">Revenue:</span>
+                            <span className="text-sm font-medium text-gray-900 ml-1">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</span>
                           </div>
 
-                          {/* Company Category */}
-                          <div className="bg-white/95 p-3 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center mb-1.5">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M3 9H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M9 21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">Category</span>
+                          {/* Team invitations */}
+                          {cfoName && cfoEmail && (
+                            <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                              <span className="text-xs font-medium text-gray-500">CFO:</span>
+                              <span className="text-sm font-medium text-gray-900 ml-1">{cfoName}</span>
+                              <span className="text-xs text-gray-500 ml-2">({cfoEmail})</span>
                             </div>
-                            <div className="text-base font-semibold text-gray-900 ml-6">{company?.category || "Not provided"}</div>
-                          </div>
-
-                          {/* Organization Size */}
-                          <div className="bg-white/95 p-3 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center mb-1.5">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M23 21V19C22.9986 18.1137 22.7054 17.2528 22.1573 16.5523C21.6092 15.8519 20.8308 15.3516 19.95 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M16.5 3.13C17.3808 3.35031 18.1623 3.85071 18.7121 4.55232C19.2619 5.25392 19.5564 6.11683 19.5564 7.005C19.5564 7.89318 19.2619 8.75608 18.7121 9.45769C18.1623 10.1593 17.3808 10.6597 16.5 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">Organization Size</span>
+                          )}
+                          
+                          {cisoName && cisoEmail && (
+                            <div className="bg-white py-1.5 px-2 rounded border border-blue-50">
+                              <span className="text-xs font-medium text-gray-500">CISO:</span>
+                              <span className="text-sm font-medium text-gray-900 ml-1">{cisoName}</span>
+                              <span className="text-xs text-gray-500 ml-2">({cisoEmail})</span>
                             </div>
-                            <div className="text-base font-semibold text-gray-900 ml-6">{employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}</div>
-                          </div>
-
-                          {/* Annual Revenue */}
-                          <div className="bg-white/95 p-3 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center mb-1.5">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 1V23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">Annual Revenue</span>
-                            </div>
-                            <div className="text-base font-semibold text-gray-900 ml-6">{revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}</div>
-                          </div>
+                          )}
                         </div>
-
-                        {/* Team invitations section - spans full width */}
-                        {(cfoName || cisoName) && (
-                          <div className="mt-3 bg-white/95 p-3 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-all">
-                            <div className="flex items-center mb-2">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span className="text-sm font-medium text-gray-700">Team Invitations</span>
-                            </div>
-
-                            {/* Invitation Cards Grid */}
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              {/* CFO Invitation */}
-                              {cfoName && cfoEmail && (
-                                <div className="bg-blue-50/70 p-2 rounded-md border border-blue-100">
-                                  <div className="flex items-center">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-800 mr-2">
-                                      CFO
-                                    </span>
-                                    <span className="font-medium text-sm text-gray-900 truncate">{cfoName}</span>
-                                  </div>
-                                  <div className="text-xs text-gray-600 mt-1 ml-10 truncate">{cfoEmail}</div>
-                                </div>
-                              )}
-                              
-                              {/* CISO Invitation */}
-                              {cisoName && cisoEmail && (
-                                <div className="bg-blue-50/70 p-2 rounded-md border border-blue-100">
-                                  <div className="flex items-center">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-800 mr-2">
-                                      CISO
-                                    </span>
-                                    <span className="font-medium text-sm text-gray-900 truncate">{cisoName}</span>
-                                  </div>
-                                  <div className="text-xs text-gray-600 mt-1 ml-10 truncate">{cisoEmail}</div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Pending updates notice */}
-                        {pendingCompanyData && (
-                          <div className="mt-3 bg-amber-50/80 p-2.5 rounded-md border border-amber-200 shadow-sm">
-                            <p className="text-xs text-amber-800 flex items-center">
-                              <AlertTriangle className="h-3.5 w-3.5 mr-2 flex-shrink-0 text-amber-500" />
-                              These changes will be submitted when you click Next
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Final confirmation message with modernized styling */}
-                      <div className="mt-6 bg-green-50/90 rounded-lg p-4 border border-green-200 shadow-sm hover:shadow transition-all">
-                        <p className="text-sm text-gray-700 flex items-start">
-                          <svg className="w-6 h-6 mr-3 text-green-600 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span className="leading-relaxed">
-                            Please review the information above. When you're ready, click the "Next" button to 
-                            complete your onboarding process and submit your information.
-                          </span>
-                        </p>
                       </div>
                     </motion.div>
                   )}
