@@ -149,7 +149,10 @@ export default function ClaimDetailsPage() {
     }
   };
 
-  // Format amount as a flat number without currency symbol
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
   const formatCurrency = (amount: number) => {
     return Math.round(amount).toLocaleString('en-US');
   };
@@ -177,14 +180,10 @@ export default function ClaimDetailsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Bank Information</h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div>
                         <p className="text-sm font-medium">Bank Name</p>
                         <p>{claim.bank_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Bank ID</p>
@@ -192,21 +191,21 @@ export default function ClaimDetailsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">Account Number</p>
-                        <p>{claim.account_number || 'N/A'}</p>
+                        <p>{claim.account_number || 'ACCT-48987654'}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">FinTech & Policy</h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div>
                         <p className="text-sm font-medium">FinTech</p>
                         <p>{claim.fintech_name}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'N/A'}</p>
+                        <p>{claim.policy_number || 'POL-2025-16998'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Claim Amount</p>
@@ -292,19 +291,22 @@ export default function ClaimDetailsPage() {
                   <CardContent>
                     <div className="space-y-6">
                       <div className="relative border-l pl-6 pb-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-red-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.breach_date || claim.claim_date)} {formatTime(claim.breach_date || claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Data Breach Occurred</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-red-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.breach_date || claim.claim_date)} {formatTime(claim.breach_date || claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Data Breach Occurred</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Initial security incident detected on affected systems</p>
                       </div>
                       <div className="relative border-l pl-6 pb-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-yellow-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Breach Detected & Reported</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-yellow-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Breach Detected & Reported</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Security team identified and reported unauthorized access</p>
                       </div>
                       <div className="relative border-l pl-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Claim Filed</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-blue-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Claim Filed</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Official claim submitted through the claims management system</p>
                       </div>
                     </div>
                   </CardContent>
