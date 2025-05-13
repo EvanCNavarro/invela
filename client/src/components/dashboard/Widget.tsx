@@ -123,7 +123,7 @@ export function Widget({
       <div className={cn(
         "p-4", 
         (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full",
-        "overflow-auto" // Changed from overflow-hidden to overflow-auto
+        "overflow-hidden" // Prevent content overflow
       )}>
         {children}
       </div>

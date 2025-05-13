@@ -1,328 +1,420 @@
 /**
  * WebSocket Service
  * 
- * This service manages WebSocket connections for real-time communications.
- * It follows the JavaScript WebSocket development guidelines by:
- * 1. Using the correct WebSocket protocol (ws:// or wss://)
- * 2. Connecting to the correct path (/ws)
- * 3. Using WebSocket.OPEN constant when checking connection state
- * 4. Implementing reconnection logic if connection is lost
+ * This service provides real-time communication capabilities for the application,
+ * particularly for tutorial progress updates and notifications.
  */
 
-import { toast } from "@/hooks/use-toast";
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-interface WebSocketOptions {
-  debug?: boolean;
-  autoReconnect?: boolean;
-  maxReconnectAttempts?: number;
-  reconnectDelay?: number;
+// Types for WebSocket messages
+export type MessageType = 
+  | 'ping'
+  | 'pong'
+  | 'authenticate'
+  | 'authenticated'
+  | 'notification'
+  | 'tutorial_progress'
+  | 'tutorial_completed'
+  | 'task_updated'
+  | 'error';
+
+export interface WebSocketMessage {
+  type: MessageType;
+  timestamp: string;
+  [key: string]: any;
 }
 
-// Default options
-const defaultOptions: WebSocketOptions = {
-  debug: false,
-  autoReconnect: true,
-  maxReconnectAttempts: 5,
-  reconnectDelay: 1000,
-};
+export interface NotificationMessage extends WebSocketMessage {
+  type: 'notification';
+  title: string;
+  message: string;
+  variant?: 'default' | 'destructive' | 'success';
+  metadata?: Record<string, any>;
+}
 
-export class WebSocketService {
+export interface TutorialProgressMessage extends WebSocketMessage {
+  type: 'tutorial_progress';
+  tabName: string;
+  progress: {
+    currentStep: number;
+    totalSteps: number;
+  };
+}
+
+export interface TutorialCompletedMessage extends WebSocketMessage {
+  type: 'tutorial_completed';
+  tabName: string;
+}
+
+// Main WebSocket service class
+class WebSocketService {
   private socket: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
-  private options: WebSocketOptions;
-  private connectionId: string;
-  private eventHandlers: Map<string, Array<(data: any) => void>> = new Map();
-
-  constructor(options: WebSocketOptions = {}) {
-    this.options = { ...defaultOptions, ...options };
-    this.connectionId = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-    this.log("WebSocket service created");
-  }
-
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000; // Start with 1 second delay
+  private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private connectionId: string | null = null;
+  
+  // Connection status
+  private _isConnected = false;
+  private _isAuthenticated = false;
+  
+  // Ping interval to keep connection alive
+  private pingInterval: NodeJS.Timeout | null = null;
+  
   /**
-   * Connect to the WebSocket server
+   * Initialize and connect to the WebSocket server
    */
-  public connect(): void {
-    if (this.socket) {
-      this.log("WebSocket already connected or connecting");
+  connect() {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      console.log('[WebSocket] Already connected');
       return;
     }
-
+    
     try {
-      // Determine the correct protocol based on the current page protocol
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      // Determine the WebSocket URL based on the current protocol
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      this.log(`Connecting to WebSocket: ${wsUrl}`);
+      console.log(`[WebSocket] Connecting to WebSocket: ${wsUrl}`);
       this.socket = new WebSocket(wsUrl);
-
+      
+      // Setup event handlers
       this.socket.onopen = this.handleOpen.bind(this);
+      this.socket.onmessage = this.handleMessage.bind(this);
       this.socket.onclose = this.handleClose.bind(this);
       this.socket.onerror = this.handleError.bind(this);
-      this.socket.onmessage = this.handleMessage.bind(this);
-      
-      this.log("Connection attempt initiated");
     } catch (error) {
-      this.error("Error creating WebSocket connection", error);
-      this.attemptReconnect();
+      console.error('[WebSocket] Connection error:', error);
+      this.scheduleReconnect();
     }
   }
-
+  
   /**
    * Disconnect from the WebSocket server
    */
-  public disconnect(): void {
-    if (!this.socket) {
-      return;
-    }
-
-    try {
+  disconnect() {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();
-      this.socket = null;
-      this.log("Disconnected from WebSocket server");
-    } catch (error) {
-      this.error("Error disconnecting from WebSocket server", error);
     }
-  }
-
-  /**
-   * Send a message to the WebSocket server
-   * 
-   * @param type Message type
-   * @param data Message data
-   * @returns True if message was sent, false otherwise
-   */
-  public send(type: string, data: any = {}): boolean {
-    if (!this.isConnected()) {
-      this.warn("Cannot send message: WebSocket not connected");
-      return false;
+    
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
-
-    try {
-      const message = {
-        type,
-        ...data,
-        timestamp: new Date().toISOString(),
-        connectionId: this.connectionId
-      };
-
-      this.socket!.send(JSON.stringify(message));
-      return true;
-    } catch (error) {
-      this.error("Error sending message", error);
-      return false;
-    }
+    
+    this._isConnected = false;
+    this._isAuthenticated = false;
+    this.connectionId = null;
   }
-
-  /**
-   * Register an event handler
-   * 
-   * @param event Event name
-   * @param handler Event handler function
-   */
-  public on(event: string, handler: (data: any) => void): void {
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
-    }
-
-    this.eventHandlers.get(event)!.push(handler);
-  }
-
-  /**
-   * Unregister an event handler
-   * 
-   * @param event Event name
-   * @param handler Event handler function
-   */
-  public off(event: string, handler: (data: any) => void): void {
-    if (!this.eventHandlers.has(event)) {
-      return;
-    }
-
-    const handlers = this.eventHandlers.get(event)!;
-    const index = handlers.indexOf(handler);
-
-    if (index !== -1) {
-      handlers.splice(index, 1);
-    }
-  }
-
-  /**
-   * Send a ping message to keep the connection alive
-   */
-  public ping(): void {
-    this.send("ping");
-  }
-
-  /**
-   * Check if connected to the WebSocket server
-   */
-  public isConnected(): boolean {
-    return !!this.socket && this.socket.readyState === WebSocket.OPEN;
-  }
-
-  /**
-   * Get the current connection state
-   */
-  public getState(): number {
-    return this.socket ? this.socket.readyState : -1;
-  }
-
+  
   /**
    * Handle WebSocket open event
    */
-  private handleOpen(event: Event): void {
-    this.log("Connection established");
+  private handleOpen(event: Event) {
+    console.log('[WebSocket] Connection established');
+    this._isConnected = true;
     this.reconnectAttempts = 0;
-    this.triggerEvent("open", event);
     
-    // Authenticate if needed
-    if (this.hasAuthenticationData()) {
-      this.authenticate();
+    // Start ping interval
+    this.startPingInterval();
+    
+    // Authenticate after connection
+    this.authenticate();
+    
+    // Notify listeners
+    this.notifyListeners('connection', { connected: true });
+  }
+  
+  /**
+   * Handle incoming WebSocket messages
+   */
+  private handleMessage(event: MessageEvent) {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('[WebSocket] Received message:', data);
+      
+      // Set connection ID if received
+      if (data.type === 'connection_established' && data.clientId) {
+        this.connectionId = data.clientId;
+        console.log(`[WebSocket] Connection established with ID: ${this.connectionId}`);
+      }
+      
+      // Handle authentication confirmation
+      if (data.type === 'authenticated') {
+        this._isAuthenticated = true;
+        console.log('[WebSocket] Authentication successful');
+      }
+      
+      // Notify message type specific listeners
+      if (data.type) {
+        this.notifyListeners(data.type, data);
+      }
+      
+      // Always notify generic message listeners
+      this.notifyListeners('message', data);
+      
+    } catch (error) {
+      console.error('[WebSocket] Error parsing message:', error, event.data);
     }
   }
-
+  
   /**
    * Handle WebSocket close event
    */
-  private handleClose(event: CloseEvent): void {
-    this.log(`Connection closed: ${event.code} ${event.reason}`);
-    this.triggerEvent("close", event);
-    this.socket = null;
-
-    if (this.options.autoReconnect) {
-      this.attemptReconnect();
+  private handleClose(event: CloseEvent) {
+    console.log(`[WebSocket] Connection closed: ${event.code} ${event.reason}`);
+    this._isConnected = false;
+    this._isAuthenticated = false;
+    
+    // Clear ping interval
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
+    
+    // Schedule reconnection
+    this.scheduleReconnect();
+    
+    // Notify listeners
+    this.notifyListeners('connection', { connected: false });
   }
-
+  
   /**
    * Handle WebSocket error event
    */
-  private handleError(event: Event): void {
-    this.error("Connection error:", event);
-    this.triggerEvent("error", event);
+  private handleError(event: Event) {
+    console.error('[WebSocket] Connection error:', event);
+    // The onclose handler will be called after this
   }
-
+  
   /**
-   * Handle WebSocket message event
+   * Schedule reconnection attempt
    */
-  private handleMessage(event: MessageEvent): void {
-    try {
-      const message = JSON.parse(event.data);
-      this.log("Received message:", message);
-      
-      // Trigger event handlers for this message type
-      this.triggerEvent(message.type, message);
-      
-      // Also trigger general 'message' event handlers
-      this.triggerEvent("message", message);
-    } catch (error) {
-      this.error("Error parsing message", error);
-    }
-  }
-
-  /**
-   * Attempt to reconnect to the WebSocket server
-   */
-  private attemptReconnect(): void {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-    }
-
-    if (this.options.maxReconnectAttempts && 
-        this.reconnectAttempts >= this.options.maxReconnectAttempts) {
-      this.warn(`Maximum reconnect attempts (${this.options.maxReconnectAttempts}) reached`);
-      this.triggerEvent("maxReconnectAttemptsReached", {
-        attempts: this.reconnectAttempts
-      });
+  private scheduleReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('[WebSocket] Maximum reconnection attempts reached');
       return;
     }
-
-    const delay = this.options.reconnectDelay! * Math.pow(1.5, this.reconnectAttempts);
+    
+    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts);
     this.reconnectAttempts++;
-
-    this.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.options.maxReconnectAttempts || 'unlimited'})`);
-
-    this.reconnectTimeout = setTimeout(() => {
-      this.log(`Executing reconnection attempt ${this.reconnectAttempts}`);
-      this.connect();
+    
+    console.log(`[WebSocket] Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    setTimeout(() => {
+      if (!this._isConnected) {
+        console.log('[WebSocket] Connection attempt initiated');
+        this.connect();
+      }
     }, delay);
   }
-
+  
   /**
-   * Trigger event handlers for an event
+   * Start ping interval to keep connection alive
    */
-  private triggerEvent(event: string, data: any): void {
-    if (!this.eventHandlers.has(event)) {
-      return;
+  private startPingInterval() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
     }
-
-    for (const handler of this.eventHandlers.get(event)!) {
-      try {
-        handler(data);
-      } catch (error) {
-        this.error(`Error in "${event}" event handler`, error);
+    
+    this.pingInterval = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.sendMessage({
+          type: 'ping',
+          timestamp: new Date().toISOString(),
+          connectionId: this.connectionId
+        });
+      }
+    }, 30000); // Send ping every 30 seconds
+  }
+  
+  /**
+   * Authenticate with the WebSocket server
+   * If userId and companyId are provided, they will be included in the authentication message
+   */
+  authenticate(userId?: string | number, companyId?: string | number) {
+    // Fetch current user data for authentication if not provided
+    if (!userId) {
+      const currentUserDataStr = localStorage.getItem('currentUser');
+      if (currentUserDataStr) {
+        try {
+          const userData = JSON.parse(currentUserDataStr);
+          userId = userData.id;
+          companyId = userData.companyId;
+        } catch (e) {
+          console.error('[WebSocket] Error parsing user data from localStorage', e);
+        }
       }
     }
-  }
-
-  /**
-   * Check if we have authentication data
-   */
-  private hasAuthenticationData(): boolean {
-    // In a real app, this would check if we have a user session or token
-    return true;
-  }
-
-  /**
-   * Send authentication message
-   */
-  private authenticate(): void {
-    // Get user data from your auth service, local storage, etc.
-    const userId = 331; // Example user ID
-    const companyId = 288; // Example company ID
-
-    this.send("authenticate", {
+    
+    console.log('[WebSocket] Sending authentication message', {
       userId,
       companyId,
-      clientId: this.connectionId,
+      connectionId: this.connectionId
+    });
+    
+    this.sendMessage({
+      type: 'authenticate',
+      userId: userId?.toString(),
+      companyId: companyId?.toString(),
+      connectionId: this.connectionId,
+      hasUserData: !!userId,
+      hasCompanyData: !!companyId,
       timestamp: new Date().toISOString()
     });
   }
-
+  
   /**
-   * Log message if debug is enabled
+   * Send a message to the WebSocket server
    */
-  private log(message: string, data?: any): void {
-    if (!this.options.debug) {
-      return;
+  sendMessage(message: any) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+      this.socket.send(messageStr);
+      return true;
     }
-
-    if (data) {
-      console.log(`[WebSocket] ${message}`, data);
-    } else {
-      console.log(`[WebSocket] ${message}`);
+    return false;
+  }
+  
+  /**
+   * Add an event listener
+   */
+  addEventListener(type: string, callback: (data: any) => void) {
+    if (!this.listeners.has(type)) {
+      this.listeners.set(type, new Set());
     }
+    this.listeners.get(type)?.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.listeners.get(type)?.delete(callback);
+    };
   }
-
+  
   /**
-   * Log warning message
+   * Remove an event listener
    */
-  private warn(message: string, data?: any): void {
-    console.warn(`%c[WebSocket] ${message}`, "color: #FF9800", data || "");
+  removeEventListener(type: string, callback: (data: any) => void) {
+    this.listeners.get(type)?.delete(callback);
   }
-
+  
   /**
-   * Log error message
+   * Notify listeners of an event
    */
-  private error(message: string, error?: any): void {
-    console.error(`[WebSocket] ${message}:`, error || "");
+  private notifyListeners(type: string, data: any) {
+    this.listeners.get(type)?.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`[WebSocket] Error in ${type} listener:`, error);
+      }
+    });
+  }
+  
+  /**
+   * Check if connected to the WebSocket server
+   */
+  get isConnected() {
+    return this._isConnected;
+  }
+  
+  /**
+   * Check if authenticated with the WebSocket server
+   */
+  get isAuthenticated() {
+    return this._isAuthenticated;
   }
 }
 
-// Create a singleton instance
-const websocketService = new WebSocketService({ debug: true });
+// Create singleton instance
+export const websocketService = new WebSocketService();
 
-// Export singleton
+// React hook for WebSocket connection
+export function useWebSocket() {
+  const [isConnected, setIsConnected] = useState(websocketService.isConnected);
+  const [isAuthenticated, setIsAuthenticated] = useState(websocketService.isAuthenticated);
+  
+  useEffect(() => {
+    // Connect on mount
+    websocketService.connect();
+    
+    // Track connection status
+    const connectionListener = (data: { connected: boolean }) => {
+      setIsConnected(data.connected);
+    };
+    
+    // Track authentication status
+    const authListener = () => {
+      setIsAuthenticated(websocketService.isAuthenticated);
+    };
+    
+    // Add event listeners
+    const removeConnectionListener = websocketService.addEventListener('connection', connectionListener);
+    const removeAuthListener = websocketService.addEventListener('authenticated', authListener);
+    
+    // Cleanup on unmount
+    return () => {
+      removeConnectionListener();
+      removeAuthListener();
+    };
+  }, []);
+  
+  // Method to send a message
+  const sendMessage = useCallback((message: any) => {
+    return websocketService.sendMessage(message);
+  }, []);
+  
+  // Method to add event listener
+  const addEventListener = useCallback((type: string, callback: (data: any) => void) => {
+    return websocketService.addEventListener(type, callback);
+  }, []);
+  
+  return {
+    isConnected,
+    isAuthenticated,
+    sendMessage,
+    addEventListener
+  };
+}
+
+// React hook for tutorial WebSocket messages
+export function useTutorialWebSocket(tabName: string) {
+  const { isConnected, addEventListener } = useWebSocket();
+  const [tutorialProgress, setTutorialProgress] = useState<{ currentStep: number, totalSteps: number } | null>(null);
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
+  
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    // Listen for tutorial progress updates
+    const removeProgressListener = addEventListener('tutorial_progress', (data: TutorialProgressMessage) => {
+      if (data.tabName === tabName) {
+        console.log('[WebSocket] Received tutorial progress update:', data);
+        setTutorialProgress(data.progress);
+      }
+    });
+    
+    // Listen for tutorial completion
+    const removeCompletedListener = addEventListener('tutorial_completed', (data: TutorialCompletedMessage) => {
+      if (data.tabName === tabName) {
+        console.log('[WebSocket] Received tutorial completion notification:', data);
+        setTutorialCompleted(true);
+      }
+    });
+    
+    // Cleanup listeners
+    return () => {
+      removeProgressListener();
+      removeCompletedListener();
+    };
+  }, [isConnected, tabName, addEventListener]);
+  
+  return {
+    tutorialProgress,
+    tutorialCompleted
+  };
+}
+
 export default websocketService;

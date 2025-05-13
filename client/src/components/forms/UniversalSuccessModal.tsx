@@ -21,7 +21,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { userContext } from "@/lib/user-context";
 import getLogger from "@/utils/logger";
-import { shouldHideDownloadButtons } from "@/utils/hide-downloads";
 
 export interface SubmissionResult {
   fileId?: number;
@@ -257,14 +256,12 @@ export function UniversalSuccessModal({
               
               {/* CRITICAL FIX: Clear instructions for accessing files in File Vault */}
               <p className="text-sm text-gray-500 mb-1">
-                {shouldHideDownloadButtons() 
-                  ? "Your file has been saved to the File Vault."
-                  : "Your file has been saved to the File Vault and is available for download."}
+                Your file has been saved to the File Vault and is available for download.
               </p>
               
               <div className="flex gap-2 mt-2">
-                {/* Support multiple ways of accessing file download URLs - Respects feature flag */}
-                {(submissionResult.fileId || submissionResult.downloadUrl) && !shouldHideDownloadButtons() && (
+                {/* Support multiple ways of accessing file download URLs */}
+                {(submissionResult.fileId || submissionResult.downloadUrl) && (
                   <Button 
                     variant="outline" 
                     size="sm"

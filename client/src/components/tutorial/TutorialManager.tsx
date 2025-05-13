@@ -1,18 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TabTutorialModal, TutorialStep } from './TabTutorialModal';
 import { ContentTutorialModal } from './ContentTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
+import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
 import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { useTutorialLoadingStore } from '@/hooks/use-tutorial-loading';
-import { 
-  normalizeTabName, 
-  getTabBaseRoute, 
-  isTutorialEnabledForTab 
-} from '@/constants/tutorial-constants';
 
 // Import tutorial debugging utilities if available
 let tutorialDebug: any = null;
@@ -34,29 +29,62 @@ const TUTORIAL_CONTENT: Record<string, {
 }> = {
   // Claims tab tutorial
   'claims': {
-    title: 'Claims Overview',
+    title: 'Claims Dashboard',
     description: 'Learn how to manage and track claims in your organization',
     steps: [
       {
-        title: 'Manage Claims Lifecycle',
-        description: 'Track active, disputed, and resolved claims effortlessly, all from one clear dashboard view.',
-        imagePath: '/assets/tutorials/claims/modal_claims_1.png',
-        stepTitle: 'Manage Claims Lifecycle',
+        title: 'Claims Dashboard',
+        description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
+        imagePath: '/assets/tutorials/claims/overview.svg',
+        stepTitle: 'Claims Dashboard Overview',
         bulletPoints: [
-          'View all claims categorized by their current status',
-          'Easily distinguish between active, disputed, and resolved claims',
-          'Monitor claim progression through intuitive visual indicators'
+          'View a summary of all claims activity across your organization',
+          'Monitor critical metrics including claim frequency and severity',
+          'Track claims trends over time with interactive visualizations'
         ]
       },
       {
-        title: 'Detailed Claim Information',
-        description: 'Dive deeper into specific claims to view full details, history, and resolution statuses.',
-        imagePath: '/assets/tutorials/claims/modal_claims_2.png',
-        stepTitle: 'Detailed Claim Information',
+        title: 'Claim Details',
+        description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
+        imagePath: '/assets/tutorials/claims/details.svg',
+        stepTitle: 'Detailed Claims Information',
         bulletPoints: [
-          'Access comprehensive claim details with a single click',
-          'Review complete claim history including all previous actions',
-          'Track resolution process through detailed status indicators'
+          'Access comprehensive information about individual claims',
+          'Review policy details, coverage limits, and claim history',
+          'Track claim status and progression through your workflow'
+        ]
+      },
+      {
+        title: 'Claims Processing',
+        description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
+        imagePath: '/assets/tutorials/claims/processing.svg',
+        stepTitle: 'Claims Processing Tools',
+        bulletPoints: [
+          'Update claim status using standardized workflow steps',
+          'Request additional documentation when needed for evaluation',
+          'Process approvals and payments through integrated systems'
+        ]
+      },
+      {
+        title: 'Analytics Dashboard',
+        description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
+        imagePath: '/assets/tutorials/claims/analytics.svg',
+        stepTitle: 'Claims Analytics',
+        bulletPoints: [
+          'Identify patterns and trends in claims data over time',
+          'Compare performance metrics against industry benchmarks',
+          'Detect potential fraud indicators with advanced analytics'
+        ]
+      },
+      {
+        title: 'Documentation Management',
+        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
+        imagePath: '/assets/tutorials/claims/documentation.svg',
+        stepTitle: 'Document Management',
+        bulletPoints: [
+          'Upload and organize claim-related documents securely',
+          'Control access permissions for sensitive information',
+          'Share documentation with appropriate stakeholders seamlessly'
         ]
       }
     ]
@@ -64,79 +92,174 @@ const TUTORIAL_CONTENT: Record<string, {
   
   // Risk Score Configuration - Complete tutorial for risk scoring configuration
   'risk-score-configuration': {
-    title: 'S&P Data Access Risk Score Overview',
+    title: 'Risk Score Configuration',
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
-        title: 'Set Risk Thresholds',
-        description: 'Define acceptable risk thresholds for fintech accreditation clearly and efficiently.',
-        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_1.png',
-        stepTitle: 'Risk Acceptance Level',
+        title: 'Risk Score Configuration',
+        description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
+        imagePath: '/assets/tutorials/risk-score/overview.svg',
+        stepTitle: 'Configuration Overview',
         bulletPoints: [
-          'Set precise risk thresholds that align with your bank\'s standards',
-          'Customize risk ranges for low, medium, and high risk levels',
-          'Easily save your configuration for consistent application across assessments'
+          'Tailor the S&P Data Access Risk Score to your organization\'s needs',
+          'Adjust weighting factors to reflect your specific risk priorities',
+          'Save multiple configuration profiles for different risk assessments'
         ]
       },
       {
-        title: 'Prioritize and Weight Dimensions',
-        description: 'Customize dimension prioritization and weighting to align risk assessment precisely with your bank\'s standards.',
-        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_2.png',
+        title: 'Risk Gauge',
+        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
+        imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        stepTitle: 'Risk Level Visualization',
+        bulletPoints: [
+          'Visualize your current risk score on the interactive gauge',
+          'Understand color-coded risk thresholds from low to critical',
+          'See real-time updates as you modify configuration settings'
+        ]
+      },
+      {
+        title: 'Risk Dimensions',
+        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
+        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
         stepTitle: 'Risk Dimension Weighting',
         bulletPoints: [
-          'Adjust priority weights for critical security dimensions',
-          'Fine-tune assessment criteria based on your specific industry requirements',
-          'Create a weighted scoring system that accurately reflects your risk priorities'
+          'Customize weights for key risk factors like Cyber Security and Public Sentiment',
+          'Adjust the impact of Dark Web Data and Financial Stability indicators',
+          'Fine-tune Data Access Scope importance for your industry context'
         ]
       },
       {
-        title: 'Evaluate and Compare Fintech Fit',
-        description: 'Compare fintech applicants against your custom risk thresholds to determine accreditation eligibility at a glance.',
-        imagePath: '/assets/tutorials/risk-score-configuration/modal_risk_3.png',
-        stepTitle: 'Eligibility Assessment',
+        title: 'Risk Acceptance Level',
+        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
+        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        stepTitle: 'Risk Tolerance Settings',
         bulletPoints: [
-          'Instantly visualize eligibility status based on your defined thresholds',
-          'Compare applicants side-by-side using consistent evaluation criteria',
-          'Make informed accreditation decisions with clear visual indicators'
+          'Set company-wide risk tolerance thresholds using the slider',
+          'Determine when alerts and notifications will be triggered',
+          'Configure different tolerance levels for various business units'
         ]
-      }
+      },
+      {
+        title: 'Comparative Analysis',
+        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
+        imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        stepTitle: 'Benchmarking Tools',
+        bulletPoints: [
+          'Compare your risk configuration with industry peers and competitors',
+          'Identify gaps in your risk assessment approach',
+          'Generate reports highlighting differences between configurations'
+        ]
+      },
+    ]
+  },
+  // Main Risk Score Dashboard - Shows the S&P DARS score and overview
+  'risk-score': {
+    title: 'S&P Data Access Risk Score',
+    description: 'Understand how to interpret and use your risk assessment dashboard',
+    steps: [
+      {
+        title: 'Risk Score Dashboard',
+        description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
+        imagePath: '/assets/tutorials/risk-score/overview.svg',
+        stepTitle: 'Risk Score Overview',
+        bulletPoints: [
+          'View your current risk score and trend over time',
+          'Explore detailed breakdown of contributing risk factors',
+          'Access risk mitigation recommendations based on your profile'
+        ]
+      },
+      {
+        title: 'Risk Gauge',
+        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
+        imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        stepTitle: 'Understanding the Risk Gauge',
+        bulletPoints: [
+          'Interpret color-coded risk levels from low to critical',
+          'See how your score compares to industry benchmarks',
+          'Track changes in your risk gauge with historical data'
+        ]
+      },
+      {
+        title: 'Risk Dimensions',
+        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
+        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        stepTitle: 'Managing Risk Dimensions',
+        bulletPoints: [
+          'Prioritize risk dimensions based on your business needs',
+          'Understand how each dimension affects your overall score',
+          'Create a custom weighting system for your industry context'
+        ]
+      },
+      {
+        title: 'Risk Acceptance Level',
+        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
+        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        stepTitle: 'Setting Risk Tolerance',
+        bulletPoints: [
+          'Define acceptable risk thresholds for your organization',
+          'Receive alerts when risks exceed your defined tolerance',
+          'Adjust your tolerance levels based on business requirements'
+        ]
+      },
+      {
+        title: 'Comparative Analysis',
+        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
+        imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        stepTitle: 'Risk Comparison Tools',
+        bulletPoints: [
+          'Compare your risk profile with industry peers',
+          'Identify areas where you outperform or underperform',
+          'Use benchmarking data to set realistic improvement goals'
+        ]
+      },
     ]
   },
   'insights': {
-    title: 'Insights Overview',
+    title: 'Insights Dashboard',
     description: 'Learn how to interpret and use business intelligence insights',
     steps: [
       {
-        title: 'Visualize Key Metrics',
-        description: 'Quickly visualize data like risk scores and accreditation status in easy-to-understand graphs and charts.',
-        imagePath: '/assets/tutorials/insights/modal_insights_1.png',
-        stepTitle: 'Visualize Key Metrics',
+        title: 'Insights Overview',
+        description: 'Welcome to the Insights Dashboard. This analytics center provides data-driven insights to help you make informed decisions.',
+        imagePath: '/assets/tutorials/insights/overview.svg',
+        stepTitle: 'Insights Overview',
         bulletPoints: [
-          'View comprehensive metrics in intuitive visualizations',
-          'Monitor risk scores and compliance status at a glance',
-          'Track changes over time with dynamic trend charts'
+          'Access comprehensive analytics on your business risk profile',
+          'View high-level KPIs and drill down into detailed metrics',
+          'Receive AI-powered recommendations based on your data'
         ]
       },
       {
-        title: 'Interactive Data Exploration',
-        description: 'Drill down into specific insights or trends by interacting with dynamic graphs to understand deeper data patterns.',
-        imagePath: '/assets/tutorials/insights/modal_insights_2.png',
-        stepTitle: 'Interactive Data Exploration',
+        title: 'Data Visualization',
+        description: 'These charts and graphs represent key metrics and trends. Hover over any element to see detailed information.',
+        imagePath: '/assets/tutorials/insights/visualization.svg',
+        stepTitle: 'Interactive Visualizations',
         bulletPoints: [
-          'Explore data in depth through interactive charts and graphs',
-          'Filter information to focus on specific time periods or metrics',
-          'Discover data patterns and correlations through direct interaction'
+          'Explore dynamic charts that respond to your interactions',
+          'Customize visualization types to best represent your data',
+          'Filter and segment data to uncover specific patterns'
         ]
       },
       {
-        title: 'Export Insights Easily',
-        description: 'Easily export any insights and visualizations for offline review or presentations.',
-        imagePath: '/assets/tutorials/insights/modal_insights_3.png',
-        stepTitle: 'Export Insights Easily',
+        title: 'Custom Reports',
+        description: 'Create customized reports based on your specific needs. Select metrics, time periods, and presentation formats.',
+        imagePath: '/assets/tutorials/insights/reports.svg',
+        stepTitle: 'Report Customization',
         bulletPoints: [
-          'Export data in multiple formats including PDF, CSV, and Excel',
-          'Create presentation-ready visualizations with a single click',
-          'Share insights with team members and stakeholders seamlessly'
+          'Build tailored reports focusing on metrics that matter to you',
+          'Schedule automated report generation and delivery',
+          'Save report templates for consistent analysis over time'
+        ]
+      },
+      {
+        title: 'Export Options',
+        description: 'Use these options to export insights as PDFs, spreadsheets, or presentations to share with stakeholders.',
+        imagePath: '/assets/tutorials/insights/export.svg',
+        stepTitle: 'Sharing & Exporting',
+        bulletPoints: [
+          'Export data in multiple formats including PDF, CSV, and PowerPoint',
+          'Share insights directly with team members via email or link',
+          'Create annotated snapshots to highlight important findings'
         ]
       }
     ]
@@ -181,34 +304,144 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'file-vault': {
-    title: 'File Vault Overview',
+    title: 'File Vault',
     description: 'Learn how to securely store and manage files',
     steps: [
       {
-        title: 'Centralized File Management',
-        description: 'Upload, download, and manage your important files from a single centralized location.',
-        imagePath: '/assets/tutorials/file-vault/modal_file_1.png',
-        stepTitle: 'Centralized File Management',
+        title: 'File Vault Overview',
+        description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
+        imagePath: '/assets/tutorials/file-vault/overview.svg',
+        stepTitle: 'File Vault Overview',
         bulletPoints: [
           'Access all your documents in one secure, centralized location',
-          'Easily upload files via drag-and-drop or file browser',
-          'Track document versions with built-in history and audit trail'
+          'Benefit from automatic versioning and audit trail features',
+          'Experience enterprise-grade security for sensitive information'
         ]
       },
       {
-        title: 'Generate System Files',
-        description: 'Generate necessary system documents directly from your file vault. Choose document type and customize your file generation.',
-        imagePath: '/assets/tutorials/file-vault/modal_file_2.png',
-        stepTitle: 'Generate System Files',
+        title: 'Document Categories',
+        description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
+        imagePath: '/assets/tutorials/file-vault/categories.svg',
+        stepTitle: 'Document Organization',
         bulletPoints: [
-          'Choose from various document types and templates',
-          'Customize generated files with your specific requirements',
-          'Export in multiple formats including PDF and CSV'
+          'Browse files organized by logical categories and subcategories',
+          'Use powerful search and filtering to quickly locate documents',
+          'Apply custom tags to improve document categorization and findability'
+        ]
+      },
+      {
+        title: 'Upload Process',
+        description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
+        imagePath: '/assets/tutorials/file-vault/upload.svg',
+        stepTitle: 'File Upload & Management',
+        bulletPoints: [
+          'Upload multiple files with drag-and-drop or file selection',
+          'Add metadata and tags to enhance document searchability',
+          'Set document expiration dates and automatic retention policies'
+        ]
+      },
+      {
+        title: 'Security Settings',
+        description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
+        imagePath: '/assets/tutorials/file-vault/security.svg',
+        stepTitle: 'Security Controls',
+        bulletPoints: [
+          'Set granular permissions for individuals or groups of users',
+          'Apply document-level encryption for highly sensitive files',
+          'Monitor file access logs and receive security alerts'
         ]
       }
     ]
   },
-
+  'company-profile': {
+    title: 'Company Profile',
+    description: 'Learn how to manage and update your company information',
+    steps: [
+      {
+        title: 'Profile Overview',
+        description: 'Welcome to your Company Profile. Here you can view and update all your organization\'s information and settings.',
+        imagePath: '/assets/tutorials/company-profile/overview.svg',
+        stepTitle: 'Company Profile Overview',
+        bulletPoints: [
+          'View and edit your company\'s core information in one place',
+          'Access historical profile changes and audit logs',
+          'Understand how your profile data influences risk assessments'
+        ]
+      },
+      {
+        title: 'Business Information',
+        description: 'This section contains your core business details. Keep this information up-to-date for accurate risk assessment.',
+        imagePath: '/assets/tutorials/company-profile/business-info.svg',
+        stepTitle: 'Business Details',
+        bulletPoints: [
+          'Update essential company information including address and contacts',
+          'Maintain industry classifications and business descriptions',
+          'Manage financial information and corporate structure details'
+        ]
+      },
+      {
+        title: 'Team Management',
+        description: 'Manage your team members, their roles, and permissions. You can add new users or update existing access levels.',
+        imagePath: '/assets/tutorials/company-profile/team.svg',
+        stepTitle: 'Team Management',
+        bulletPoints: [
+          'Add new team members and assign appropriate roles',
+          'Set granular permissions based on job responsibilities',
+          'Monitor user activity and access logs for security'
+        ]
+      },
+      {
+        title: 'Compliance Status',
+        description: 'Review your compliance status and certification levels. This section shows any outstanding requirements or upcoming renewals.',
+        imagePath: '/assets/tutorials/company-profile/compliance.svg',
+        stepTitle: 'Compliance Tracking',
+        bulletPoints: [
+          'Track compliance status across multiple regulatory frameworks',
+          'Receive alerts for upcoming certification expirations',
+          'Upload and manage compliance documentation securely'
+        ]
+      }
+    ]
+  },
+  'playground': {
+    title: 'Playground Environment',
+    description: 'Learn how to use the testing playground for risk simulations',
+    steps: [
+      {
+        title: 'Playground Overview',
+        description: 'Welcome to the Playground. This is a safe environment where you can test different scenarios without affecting your production data.',
+        imagePath: '/assets/tutorials/playground/overview.svg',
+        stepTitle: 'Simulation Environment',
+        bulletPoints: [
+          'Experiment with risk scenarios in a safe, isolated environment',
+          'Test configuration changes without affecting production settings',
+          'Use real company data with "what-if" analysis capabilities'
+        ]
+      },
+      {
+        title: 'Scenario Building',
+        description: 'Use these tools to create different test scenarios. You can simulate various risk events and see how they would impact your business.',
+        imagePath: '/assets/tutorials/playground/scenarios.svg',
+        stepTitle: 'Creating Risk Scenarios',
+        bulletPoints: [
+          'Build custom scenarios with multiple risk variables',
+          'Simulate market events and their impact on your risk profile',
+          'Save and share scenarios with your team for collaborative planning'
+        ]
+      },
+      {
+        title: 'Results Analysis',
+        description: 'After running a simulation, you can analyze the results here. Compare different scenarios to find optimal risk strategies.',
+        imagePath: '/assets/tutorials/playground/results.svg',
+        stepTitle: 'Analyzing Outcomes',
+        bulletPoints: [
+          'Compare simulation results side-by-side with detailed metrics',
+          'Visualize potential impacts through interactive charts',
+          'Export findings and recommendations for stakeholder review'
+        ]
+      }
+    ]
+  },
   'dashboard': {
     title: 'Dashboard Overview',
     description: 'Learn how to navigate and use the main dashboard',
@@ -274,14 +507,49 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   const [initializationError, setInitializationError] = useState<string | null>(null);
   
   /**
-   * Using the imported normalizeTabName function to ensure consistency across components
-   * We add logging here for better visibility in the TutorialManager context
+   * Normalize tab names to a consistent format
+   * 
+   * This function maps all known tab name variations to their canonical form.
+   * It's critical for ensuring we have a single source of truth for each tab's tutorial status.
+   * 
+   * @param inputTabName The tab name to normalize
+   * @returns The normalized (canonical) tab name
    */
-  const normalizeTabNameWithLogging = (inputTabName: string): string => {
+  const normalizeTabName = (inputTabName: string): string => {
+    // First, convert to lowercase and trim to handle case variations
+    const cleanedTabName = inputTabName.toLowerCase().trim();
+    
+    // Define canonical names for each tab
+    // This mapping ensures all variations of a tab name resolve to a single canonical name
+    const tabMappings: Record<string, string> = {
+      // Network tab variations
+      'network-view': 'network',
+      'network-visualization': 'network',
+      
+      // Claims tab variations
+      'claims-risk': 'claims',
+      'claims-risk-analysis': 'claims',
+      
+      // File vault tab variations
+      'file-manager': 'file-vault',
+      'filevault': 'file-vault',  // Handle PascalCase version
+      'file-vault-page': 'file-vault',
+      
+      // Dashboard variations
+      'dashboard-page': 'dashboard',
+      
+      // Company profile variations
+      'company-profile-page': 'company-profile',
+      
+      // Risk score variations - keep these separate for now
+      // 'risk-score-configuration': 'risk-score-configuration',
+      // 'risk-score': 'risk-score',
+    };
+    
     logger.info(`Normalizing tab name from '${inputTabName}' to canonical form`);
     
-    const cleanedTabName = inputTabName.toLowerCase().trim();
-    const canonicalName = normalizeTabName(inputTabName);
+    // Return the canonical version or the original cleaned name
+    const canonicalName = tabMappings[cleanedTabName] || cleanedTabName;
     
     if (canonicalName !== cleanedTabName) {
       logger.info(`Tab name normalized: '${cleanedTabName}' → '${canonicalName}'`);
@@ -293,27 +561,25 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   };
   
   // Get normalized tab name for consistency
-  const normalizedTabName = normalizeTabNameWithLogging(tabName);
-  
-  // Helper function to get the step count for a tab
-  const getStepCountForTab = (tabName: string): number => {
-    // Default step counts for each tab
-    const STEP_COUNTS: Record<string, number> = {
-      'dashboard': 3,
-      'risk-score-configuration': 3,
-      'network': 3,
-      'claims': 3,
-      'file-vault': 2,
-      'insights': 3,
-    };
-    
-    return STEP_COUNTS[tabName] || 3; // Default to 3 steps if not specified
-  };
+  const normalizedTabName = normalizeTabName(tabName);
   
   // Check if current location is a base route or a subpage
-  const isBaseRoute = useCallback((): boolean => {
+  const isBaseRoute = (): boolean => {
     // Extract the base path without query parameters
     const path = location.split('?')[0];
+    
+    // Map from tab name to expected base route
+    const baseRouteMap: Record<string, string> = {
+      'dashboard': '/',
+      'insights': '/insights',
+      'network': '/network',
+      'file-vault': '/file-vault',
+      'claims': '/claims',
+      'risk-score': '/risk-score',
+      'claims-risk': '/claims-risk',
+      'risk-score-configuration': '/risk-score-configuration',
+      'playground': '/playground'
+    };
     
     // Special handling for dashboard (both '/' and '/dashboard' are valid base routes)
     if (normalizedTabName === 'dashboard' && (path === '/' || path === '/dashboard')) {
@@ -321,8 +587,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       return true;
     }
     
-    // Get the expected route for this tab
-    const expectedBaseRoute = getTabBaseRoute(normalizedTabName);
+    // Get the expected base route for this tab
+    const expectedBaseRoute = baseRouteMap[normalizedTabName];
     
     // If no expected base route is defined, don't show the tutorial
     if (!expectedBaseRoute) {
@@ -331,12 +597,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     }
     
     // Check if current path is the base route
-    const isOnBaseRoute = path === expectedBaseRoute;
+    const isOnBaseRoute: boolean = path === expectedBaseRoute;
     
     logger.info(`Base route check: ${isOnBaseRoute ? 'true' : 'false'} for tab ${normalizedTabName} (path: ${path}, expected: ${expectedBaseRoute})`);
     
     return isOnBaseRoute;
-  }, [location, normalizedTabName]);
+  };
   
   // Get tutorial data from hooks
   const { 
@@ -357,8 +623,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // Simple flag for loading state
-  const [assetsLoading, setAssetsLoading] = useState(false);
+  // Get any custom assets for this tutorial
+  const { imageUrl, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
@@ -393,58 +659,6 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     setInitializationComplete(true);
   }, [normalizedTabName, tabName]);
   
-  // Function to attempt automatic tutorial initialization for new users
-  const attemptTutorialInitialization = useCallback(async () => {
-    // Only initialize tutorials on base routes that should have tutorials
-    if (!isBaseRoute() || !isTutorialEnabledForTab(normalizedTabName)) {
-      return false;
-    }
-    
-    logger.info(`Checking if tutorial should be initialized for ${normalizedTabName}`);
-    
-    try {
-      // Check if a tutorial entry already exists
-      const response = await fetch(`/api/user-tab-tutorials/${encodeURIComponent(normalizedTabName)}/status`);
-      const data = await response.json();
-      
-      // If no tutorial exists yet, create one automatically
-      if (!data.exists) {
-        logger.info(`No tutorial found for ${normalizedTabName} - initializing automatically`);
-        
-        // Create a new tutorial entry via API
-        const createResponse = await fetch('/api/user-tab-tutorials', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            tabName: normalizedTabName,
-            currentStep: 0, // Start at beginning
-            completed: false,
-            totalSteps: getStepCountForTab(normalizedTabName),
-          }),
-        });
-        
-        const result = await createResponse.json();
-        
-        if (result && result.success) {
-          logger.info(`Successfully initialized tutorial for ${normalizedTabName}`);
-          // Force query to refresh
-          queryClient.invalidateQueries({ queryKey: ['/api/user-tab-tutorials/status', normalizedTabName] });
-          return true;
-        } else {
-          logger.warn(`Failed to initialize tutorial for ${normalizedTabName}`);
-        }
-      } else {
-        logger.info(`Tutorial already exists for ${normalizedTabName} - no initialization needed`);
-      }
-    } catch (error) {
-      logger.error(`Error checking or initializing tutorial for ${normalizedTabName}:`, error);
-    }
-    
-    return false;
-  }, [normalizedTabName, isBaseRoute, queryClient]);
-
   // React to WebSocket updates
   useEffect(() => {
     if (tutorialUpdate !== null) {
@@ -456,94 +670,43 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       });
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
-  // We no longer need to get company data for the tutorial manager
-  // since we're using the dashboard's own skeleton loaders
   
-  // Get the loading state setter from the store
-  const setLoading = useTutorialLoadingStore(state => state.setLoading);
+  // If we're still loading, show a loading state
+  if (isLoading) {
+    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
+    return null;
+  }
   
-  // Update the global loading state when our loading state changes
-  useEffect(() => {
-    setLoading(isLoading, isLoading ? normalizedTabName : null);
+  // If we're not on a base route, don't show the tutorial
+  if (!isBaseRoute()) {
+    logger.info(`Tutorial not shown - not on base route for tab: ${normalizedTabName}, path: ${location}`);
+    return null;
+  }
+  
+  // If initialization is complete but tutorial is not enabled, don't render anything
+  if (initializationComplete && !tutorialEnabled) {
+    logger.info(`Tutorial not enabled for tab: ${normalizedTabName}`);
     
-    if (isLoading) {
-      logger.debug(`Tutorial data still loading (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
+    // Debug current tutorial state
+    logger.info('Current tutorial state', {
+      tabName,
+      normalizedTabName,
+      currentStep,
+      totalSteps, 
+      enabled: tutorialEnabled,
+      completed: isCompleted,
+      loading: isLoading
+    });
+    
+    return null;
+  }
+  
+  // Do not render if tutorial is completed
+  if (isCompleted) {
+    // Only log if we have data
+    if (initializationComplete) {
+      logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
     }
-    
-    // Cleanup when component unmounts
-    return () => {
-      setLoading(false, null);
-    };
-  }, [isLoading, normalizedTabName, setLoading, initializationComplete]);
-  
-  // Track initialization attempts
-  const [initAttempted, setInitAttempted] = useState(false);
-  
-  // Early return conditions - "don't show until we're sure we should" approach
-  // Check all reasons why we would NOT show a tutorial first
-  const shouldShowTutorial = useCallback(async () => {
-    // Don't render anything during loading
-    if (isLoading) {
-      logger.debug(`Tutorial not shown - still loading data for tab: ${normalizedTabName}`);
-      return false;
-    }
-    
-    // If we're not on a base route, don't show the tutorial
-    if (!isBaseRoute()) {
-      logger.info(`Tutorial not shown - not on base route for tab: ${normalizedTabName}, path: ${location}`);
-      return false;
-    }
-    
-    // If tutorial entries don't exist yet but should be enabled
-    // try to initialize them automatically
-    if (initializationComplete && !tutorialEnabled && !isCompleted && !initAttempted) {
-      const hasTutorial = await attemptTutorialInitialization();
-      setInitAttempted(true);
-      
-      if (hasTutorial) {
-        // If initialization succeeded, we'll wait for the query to refresh
-        return false;
-      }
-    }
-    
-    // If initialization is complete but tutorial is not enabled, don't render anything
-    if (initializationComplete && !tutorialEnabled) {
-      logger.info(`Tutorial not shown - not enabled for tab: ${normalizedTabName}`);
-      return false;
-    }
-    
-    // Do not render if tutorial is completed
-    if (isCompleted) {
-      // Only log if we have data
-      if (initializationComplete) {
-        logger.debug(`Tutorial not shown - already completed for tab: ${normalizedTabName}`);
-      }
-      return false;
-    }
-    
-    // If we've passed all conditions, we should show the tutorial
-    logger.info(`Tutorial will be shown for tab: ${normalizedTabName}`);
-    return true;
-  }, [isLoading, normalizedTabName, isBaseRoute, location, initializationComplete, 
-      tutorialEnabled, isCompleted, initAttempted, attemptTutorialInitialization]);
-  
-  // Check if we should show the tutorial and handle initialization
-  const [shouldShow, setShouldShow] = useState(false);
-  
-  // Run the async check when conditions change
-  useEffect(() => {
-    // Call the async function and update state
-    const checkTutorial = async () => {
-      const shouldShowResult = await shouldShowTutorial();
-      setShouldShow(shouldShowResult);
-    };
-    
-    // Run the check
-    checkTutorial();
-  }, [shouldShowTutorial]);
-  
-  // Return early if we shouldn't show the tutorial
-  if (!shouldShow) {
     return null;
   }
   
@@ -607,22 +770,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Simple image path calculation without hooks
-  const getImagePath = () => {
-    if (!tutorialContent || !tutorialContent.steps || !tutorialContent.steps[stepToUse]) {
-      return '';
-    }
-    
-    const step = tutorialContent.steps[stepToUse];
-    return step.imageUrl || step.imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`;
-  };
-  
-  // Use the TabTutorialModal with simplified props
-  return tutorialContent && tutorialContent.steps ? (
+  // Use the TabTutorialModal with the appropriate content
+  return (
     <TabTutorialModal
       title={modalTitle}
-      description={tutorialContent.steps[stepToUse]?.description || ''}
-      imageUrl={getImagePath()}
+      description={tutorialContent.steps[stepToUse].description}
+      imageUrl={tutorialContent.steps[stepToUse].imageUrl || tutorialContent.steps[stepToUse].imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`}
       isLoading={isLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
@@ -630,8 +783,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
       onBack={handleBack}
       onComplete={handleComplete}
       onClose={() => markTutorialSeen()}
-      stepTitle={tutorialContent.steps[stepToUse]?.title || ''}
-      bulletPoints={tutorialContent.steps[stepToUse]?.bulletPoints || []}
+      stepTitle={tutorialContent.steps[stepToUse].title}
+      bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
     />
-  ) : null;
+  );
 }

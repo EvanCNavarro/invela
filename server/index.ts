@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
+import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -115,44 +116,33 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Initialize a single WebSocket server for the entire application
-// using our unified implementation
-import { WebSocketServer } from 'ws';
+// Setup WebSocket server with error handling - using unified implementation
+// Initialize once and store the instance for all modules to access
+// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
+const wssInstance = setupWebSocketServer(server);
+logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+
+// Ensure old-style handlers can still access the WebSocket server
+// by importing functions from the utilities that need access
 import { registerWebSocketServer } from './utils/task-update';
 import { setWebSocketServer } from './utils/task-broadcast';
-import { getConnectedClientCount, initializeWebSocketServer } from './utils/unified-websocket';
 
-logger.info('[ServerStartup] Setting up a single WebSocket server instance');
+// Register WebSocket server with task-update utility for backward compatibility
+registerWebSocketServer(wssInstance);
+logger.info('[ServerStartup] WebSocket server registered with task-update utility');
 
-// Create a single WebSocket server instance through our unified implementation
-try {
-  // Initialize the WebSocket server with specific options
-  const wssInstance = initializeWebSocketServer(server, '/ws');
-  
-  if (wssInstance) {
-    // Log successful initialization
-    logger.info('[TaskWebSocket] WebSocket server registered with unified implementation');
-    
-    // Register the single WebSocket server with all modules that need it
-    registerWebSocketServer(wssInstance);
-    logger.info('[ServerStartup] WebSocket server registered with task-update utility');
-    
-    setWebSocketServer(wssInstance);
-    logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
-    
-    // Log the current state
-    setTimeout(() => {
-      logger.info(`[ServerStartup] WebSocket server active with ${getConnectedClientCount()} connected clients`);
-    }, 1000);
+// Set WebSocket server reference for task-broadcast utility
+setWebSocketServer(wssInstance);
+logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+
+// Log WebSocket server initialization details for debugging
+setTimeout(() => {
+  if (wssInstance && wssInstance.clients) {
+    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
   } else {
-    logger.error('[ServerStartup] Failed to initialize WebSocket server - null instance returned');
+    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
   }
-} catch (wsError) {
-  logger.error('[ServerStartup] Failed to initialize unified WebSocket server', {
-    error: wsError instanceof Error ? wsError.message : String(wsError),
-    stack: wsError instanceof Error ? wsError.stack : undefined
-  });
-}
+}, 1000);
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
@@ -215,7 +205,7 @@ process.env.NODE_ENV = isDeployment ? 'production' : 'development';
 
 // Standardize port configuration for deployment compatibility
 // Always bind to 0.0.0.0 for proper network access
-const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT || '', 10) || 5000);
+const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it

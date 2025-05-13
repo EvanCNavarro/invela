@@ -58,11 +58,10 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-2"
-      className="h-full flex flex-col"
     >
-      <div className="space-y-3 flex-grow overflow-y-auto scrollbar-hide">
+      <div className="space-y-4">
         {/* Company Banner */}
-        <Card className="p-3 border rounded-lg shadow-sm">
+        <Card className="p-4 border rounded-lg shadow-sm">
           <div className="flex flex-col items-center">
             {companyData?.logoId ? (
               <img
@@ -80,12 +79,12 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
                 </span>
               </div>
             )}
-            <span className="text-lg font-semibold text-black truncate max-w-full">{companyName}</span>
+            <span className="text-xl font-semibold text-black">{companyName}</span>
           </div>
         </Card>
         
         {/* Top Stats Row */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {/* Company Relationships Card */}
           <Card 
             className={cn(

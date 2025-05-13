@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast, unifiedToast } from "@/hooks/use-unified-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
 import type { FileStatus, FileItem } from "@/types/files";
@@ -462,16 +462,10 @@ export const FileVault: React.FC = () => {
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
     
-    // Create an upload toast with a unique ID that will auto-dismiss quickly
-    const toastRef = toast({
-      variant: "file-upload",
-      title: `Uploading '${file.name}'`,
-      description: "Please wait while we upload your file...",
-      duration: 2500, // Auto-dismiss after 2.5 seconds
-      id: `file-upload-${tempId}`
-    });
+    // Create an upload toast with a unique ID
+    const toastId = unifiedToast.fileUploadProgress(file.name);
     
-    console.log('[FileVault] Created upload toast with ID:', toastRef);
+    console.log('[FileVault] Created upload toast with ID:', toastId);
     
     try {
       // Perform the actual upload
@@ -486,23 +480,16 @@ export const FileVault: React.FC = () => {
         queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
-      // First explicitly dismiss the uploading toast using the ID
-      // Dismiss the previous toast by ID
-      toast({
-        id: `file-upload-${tempId}`,
-        open: false,
-      });
-      console.log('[FileVault] Successfully dismissed upload toast');
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Successfully dismissed upload toast');
+      }
       
       // Then after a brief delay, show the success toast
       setTimeout(() => {
-        // Use the direct toast API instead of unifiedToast
-        toast({
-          variant: "success",
-          title: "File uploaded successfully",
-          description: `${file.name} has been uploaded.`,
-          duration: 2500,
-        });
+        unifiedToast.fileUploadSuccess(file.name);
         console.log('[FileVault] Showed success toast for file:', file.name);
       }, 300);
       
@@ -522,24 +509,19 @@ export const FileVault: React.FC = () => {
         )
       );
 
-      // First explicitly dismiss the uploading toast using the ID
-      // Dismiss the previous toast by ID
-      toast({
-        id: `file-upload-${tempId}`,
-        open: false,
-      });
-      console.log('[FileVault] Dismissed error upload toast');
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Dismissed error upload toast');
+      }
       
       // Then show the error toast
       setTimeout(() => {
-        // Use the direct toast API instead of unifiedToast
-        toast({
-          variant: "error",
-          title: "Upload failed",
-          description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : "Please try again."}`,
-          duration: 2500,
-          id: `file-error-${tempId}`
-        });
+        unifiedToast.fileUploadError(
+          file.name, 
+          error instanceof Error ? error.message : "Upload failed"
+        );
         console.log('[FileVault] Showed error toast for file:', file.name);
       }, 300);
     }
@@ -649,19 +631,20 @@ export const FileVault: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            {/* Use FileUploadZone directly with handlers */}
-            <FileUploadZone
-              acceptedFormats={ACCEPTED_FORMATS}
-              disabled={isUploading}
-              onFilesAccepted={handleFileUpload}
-              onClick={(e: React.MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isUploading) {
-                  fileInputRef.current?.click();
-                }
-              }}
-            />
+            <DragDropProvider>
+              <FileUploadZone
+                acceptedFormats={ACCEPTED_FORMATS}
+                disabled={isUploading}
+                onFilesAccepted={handleFileUpload}
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isUploading) {
+                    fileInputRef.current?.click();
+                  }
+                }}
+              />
+            </DragDropProvider>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
               <div className="w-full sm:max-w-md">

@@ -7,8 +7,8 @@
 
 import { Router, Request, Response } from 'express';
 import { db } from '@db';
-import { tasks, files, companies } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { tasks, files } from '@db/schema';
+import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { submitFormWithTransaction } from '../services/transactional-form-handler';
 import * as WebSocketService from '../services/websocket';

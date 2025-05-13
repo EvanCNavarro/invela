@@ -11,7 +11,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
-import { useTutorialLoading } from "@/hooks/use-tutorial-loading";
 import {
   Settings,
   Check,
@@ -46,11 +45,7 @@ import { NetworkVisualization } from "@/components/network";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { 
   DashboardSkeleton, 
-  FinTechDashboardSkeleton,
-  SkeletonQuickActionsWidget,
-  SkeletonCompanySnapshotWidget,
-  SkeletonNetworkVisualizationWidget,
-  SkeletonRiskRadarWidget
+  FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
 
 // Create separate default widget sets based on company type
@@ -80,21 +75,14 @@ export default function DashboardPage() {
   });
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  
-  // Get the tutorial loading state
-  const { isLoading: tutorialLoading, currentTabName } = useTutorialLoading();
-  const isTutorialLoadingForDashboard = tutorialLoading && currentTabName === 'dashboard';
 
   // Use optimized query options for better performance
-  const { data: companyData, isLoading: dataLoading } = useQuery<Company>({
+  const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user,
     ...getOptimizedQueryOptions("/api/companies/current"),
     refetchInterval: false
   });
-  
-  // Combine data loading with tutorial loading
-  const isLoading = dataLoading || isTutorialLoadingForDashboard;
 
   type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar';
   
@@ -232,12 +220,8 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : isLoading ? (
-            // Show appropriate skeleton based on company type
-            companyData?.category === 'FinTech' ? (
-              <FinTechDashboardSkeleton />
-            ) : (
-              <DashboardSkeleton />
-            )
+            // Show appropriate skeleton based on current loading state
+            <DashboardSkeleton />
           ) : (
             <div className="grid grid-cols-3 gap-4 flex-1 pb-8">
               {/* Quick Actions - Full width at the top */}
@@ -313,10 +297,10 @@ export default function DashboardPage() {
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companySnapshot || visibleWidgets.riskRadar) && (
-                  <div className="grid grid-cols-4 gap-4 min-h-[450px]">
+                  <div className="grid grid-cols-4 gap-4 h-[450px]">
                     {/* Company Snapshot (1/4 width) for FinTech */}
                     {visibleWidgets.companySnapshot && companyData && (
-                      <div className="col-span-1 h-full">
+                      <div className="col-span-1">
                         <CompanySnapshot 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companySnapshot')}

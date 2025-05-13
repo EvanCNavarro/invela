@@ -1,48 +1,36 @@
 import React, { useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from '../TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
-import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
-import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { preloadTutorialImages } from '@/lib/image-cache';
-
-// Create dedicated logger for this component
-const logger = createTutorialLogger('RiskScoreTutorial');
+import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
+import { useTutorialWebSocket } from '@/services/websocket-service';
 
 // Tutorial steps for Risk Score Configuration tab
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    title: 'S&P Data Access Risk Score',
-    stepTitle: 'Analyze Risk Exposure',
+    title: 'Risk Score Configuration',
     description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
-    imageUrl: '/assets/tutorials/risk-score-configuration/modal_risk_1.png',
-    bulletPoints: [
-      'Configure your organization\'s risk assessment parameters',
-      'Visualize risk exposure across multiple dimensions',
-      'Compare your risk profile with industry benchmarks'
-    ]
+    imagePath: '/assets/tutorials/risk-score/overview.svg',
   },
   {
-    title: 'S&P Data Access Risk Score',
-    stepTitle: 'Customize Risk Dimensions',
-    description: 'Drag and drop dimension cards to prioritize different risk factors. The order and weight you assign affects how the overall risk score is calculated.',
-    imageUrl: '/assets/tutorials/risk-score-configuration/modal_risk_2.png',
-    bulletPoints: [
-      'Reorder dimensions by dragging cards up or down',
-      'Adjust weights using the sliders to reflect importance',
-      'See immediate impact on your overall risk profile'
-    ]
+    title: 'Risk Gauge',
+    description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
+    imagePath: '/assets/tutorials/risk-score/gauge.svg',
   },
   {
-    title: 'S&P Data Access Risk Score',
-    stepTitle: 'Set Risk Tolerance',
-    description: 'Define your organization\'s risk acceptance level. This threshold determines what risk levels are considered acceptable for your business context.',
-    imageUrl: '/assets/tutorials/risk-score-configuration/modal_risk_3.png',
-    bulletPoints: [
-      'Adjust the Risk Acceptance slider to set your tolerance',
-      'View how it impacts score interpretation',
-      'Get recommendations based on your specific settings'
-    ]
-  }
+    title: 'Risk Dimensions',
+    description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
+    imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+  },
+  {
+    title: 'Risk Acceptance Level',
+    description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
+    imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+  },
+  {
+    title: 'Comparative Analysis',
+    description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
+    imagePath: '/assets/tutorials/risk-score/comparative.svg',
+  },
 ];
 
 /**
@@ -50,7 +38,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
  * 
  * This tutorial guides users through the risk score configuration page,
  * explaining each section's purpose and how to interact with it.
- * It supports real-time updates via WebSockets and enhanced image caching.
+ * It supports real-time updates via WebSockets for multi-device synchronization.
  */
 export function RiskScoreTutorial() {
   const { 
@@ -62,39 +50,34 @@ export function RiskScoreTutorial() {
     handleNext, 
     handleComplete, 
     markTutorialSeen 
-  } = useTabTutorials('risk-score-configuration');
+  } = useTabTutorials('risk-score');
   
   // Connect to WebSocket for real-time updates
-  const { tutorialUpdate } = useTutorialWebSocket('risk-score-configuration');
+  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket('risk-score');
   
-  // Get current step information
-  const currentTutorialStep = TUTORIAL_STEPS[currentStep] || TUTORIAL_STEPS[0];
-  const currentImageUrl = currentTutorialStep?.imageUrl || '';
+  // Load tutorial assets
+  const { isLoading: assetLoading, imageUrl } = useTutorialAssets(
+    TUTORIAL_STEPS[currentStep]?.imagePath || TUTORIAL_STEPS[currentStep]?.imageUrl || '',
+    tutorialEnabled && !isCompleted
+  );
   
-  // Preload all tutorial images on component mount
-  useEffect(() => {
-    if (tutorialEnabled && !isCompleted) {
-      // Extract all image URLs from tutorial steps
-      const allImages = TUTORIAL_STEPS.map(step => step.imageUrl).filter(Boolean) as string[];
-      
-      // Preload all images with our enhanced cache system
-      if (allImages.length > 0) {
-        logger.debug(`Preloading all ${allImages.length} tutorial images`);
-        preloadTutorialImages('risk-score-configuration', currentStep, TUTORIAL_STEPS.length);
-      }
-    }
-  }, [tutorialEnabled, isCompleted, currentStep]);
+  // Combine loading states
+  const isLoading = tutorialLoading || assetLoading;
   
   // Handle WebSocket tutorial updates
   useEffect(() => {
-    if (tutorialUpdate) {
-      logger.debug(`Received tutorial update via WebSocket:`, tutorialUpdate);
-      
-      if (tutorialUpdate.completed) {
-        logger.info(`Tutorial marked as completed via WebSocket`);
-      }
+    if (tutorialCompleted) {
+      // If we received a completion notification via WebSocket, update our local state
+      // This effect will only run when the tutorial is completed by another client
+      console.log('[Tutorial] Received tutorial completion notification via WebSocket');
     }
-  }, [tutorialUpdate]);
+    
+    if (tutorialProgress && tutorialProgress.currentStep !== currentStep) {
+      // If we received a progress update via WebSocket and it differs from our current step,
+      // we could choose to update our local state to match
+      console.log('[Tutorial] Received tutorial progress update via WebSocket:', tutorialProgress);
+    }
+  }, [tutorialProgress, tutorialCompleted, currentStep]);
 
   // Don't render if tutorial is not enabled or completed
   if (!tutorialEnabled || isCompleted) {
@@ -103,17 +86,15 @@ export function RiskScoreTutorial() {
 
   return (
     <TabTutorialModal
-      title={currentTutorialStep.title || ''}
-      description={currentTutorialStep.description || ''}
-      imageUrl={currentImageUrl}
-      isLoading={tutorialLoading}
+      title={TUTORIAL_STEPS[currentStep]?.title || ''}
+      description={TUTORIAL_STEPS[currentStep]?.description || ''}
+      imageUrl={imageUrl}
+      isLoading={isLoading}
       currentStep={currentStep}
       totalSteps={totalSteps}
       onNext={handleNext}
       onComplete={handleComplete}
       onClose={() => markTutorialSeen()}
-      bulletPoints={currentTutorialStep.bulletPoints}
-      stepTitle={currentTutorialStep.stepTitle}
     />
   );
 }

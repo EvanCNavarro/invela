@@ -4,8 +4,8 @@ import type { ToastProps } from "@/components/ui/toast";
 import { FileItem } from "@/types/files";
 import { ToastAction } from "@/components/ui/toast";
 
-// Standard duration for all toasts (2.5 seconds as specified in requirements)
-const STANDARD_DURATION = 2500;
+// Standard duration for all toasts
+const STANDARD_DURATION = 3000;
 
 export function useUnifiedToast() {
   const { toast } = useToast();

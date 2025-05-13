@@ -11,7 +11,6 @@ import { Download, FileSpreadsheet, FileText, FileJson, AlertCircle, Loader2 } f
 import { useToast } from "@/hooks/use-toast";
 import FixMissingFileButton from './FixMissingFileButton';
 import getLogger from '@/utils/logger';
-import { shouldHideDownloadButtons } from '@/utils/hide-downloads';
 
 const logger = getLogger('TaskDownloadMenu');
 
@@ -35,11 +34,6 @@ export const TaskDownloadMenu: React.FC<TaskDownloadMenuProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentFormat, setCurrentFormat] = useState<'csv' | 'txt' | 'json' | null>(null);
   const { toast } = useToast();
-  
-  // Check if download buttons should be hidden
-  if (shouldHideDownloadButtons()) {
-    return null; // Don't render the component at all
-  }
   
   // Handle file regeneration
   const handleFileRegenerated = (newFileId: number) => {

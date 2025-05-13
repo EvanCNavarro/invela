@@ -62,23 +62,13 @@ export async function apiRequest<T>(
     // Generate a unique request ID
     const requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     
-    // Extract custom _headers if available
-    let customHeaders = {};
-    if (bodyData && typeof bodyData === 'object' && (bodyData as any)._headers) {
-      customHeaders = (bodyData as any)._headers;
-      // Remove _headers from the data to avoid sending it as part of the body
-      const { _headers, ...cleanData } = bodyData as any;
-      bodyData = cleanData;
-    }
-    
     // Ensure all requests are authenticated with proper headers
     const res = await fetch(url, {
       method,
       headers: {
         ...(bodyData ? { "Content-Type": "application/json" } : {}),
         "X-Request-ID": requestId, // Add request ID for tracing
-        "X-Client-Timestamp": new Date().toISOString(), // Add client timestamp
-        ...customHeaders // Add any custom headers from the data
+        "X-Client-Timestamp": new Date().toISOString() // Add client timestamp
       },
       body: bodyData ? JSON.stringify(bodyData) : undefined,
       credentials: "include", // Always include credentials for authentication

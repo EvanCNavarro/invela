@@ -124,13 +124,7 @@ export async function processKybSubmission(
           .where(eq(kybFields.field_key, 'annualRecurringRevenue'))
           .limit(1);
 
-        // Add safe null checking for the validation_rules
-        const validationRules = revenueTierField?.validation_rules || {};
-        const hasOptions = typeof validationRules === 'object' && 
-                          validationRules !== null && 
-                          'options' in validationRules;
-        
-        if (hasOptions) {
+        if (revenueTierField?.validation_rules?.options) {
           // Map ARR ranges to revenue tiers
           const tierMapping = {
             'Less than $1 million': 'small',
@@ -159,78 +153,22 @@ export async function processKybSubmission(
       }
       
       // 4.2 Update task status and metadata
-      // Use SQL's jsonb_merge_patch for reliable deep merging of JSON objects
-      // This prevents issues with nested objects being overwritten
-      const metadataUpdate = {
-        kybFormFile: fileCreationResult.fileId,
-        submissionDate: new Date().toISOString(),
-        formVersion: '1.0',
-        statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
-          .filter((v, i, a) => a.indexOf(v) === i),
-        explicitlySubmitted: true, // Flag to indicate this was a real submission
-        statusUpdateTimestamp: new Date().toISOString()
-      };
-      
-      logger.debug(`[KYB Transaction] Metadata update details`, {
-        transactionId,
-        taskId,
-        metadataUpdate
-      });
-      
-      // Enhanced metadata to ensure status is properly determined
-      const enhancedMetadataUpdate = {
-        ...metadataUpdate,
-        // Add these explicit flags to help with status determination
-        submitted: true, 
-        formSubmitted: true,
-        submissionComplete: true,
-        // Store an explicit full status to ensure consistency
-        status: TaskStatus.SUBMITTED
-      };
-        
-      // First try using direct SQL for more reliability
-      try {
-        // Use direct SQL update for most reliable metadata handling
-        await tx.execute(sql`
-          UPDATE tasks
-          SET 
-            status = ${TaskStatus.SUBMITTED}, 
-            progress = 100,
-            updated_at = NOW(),
-            metadata = CASE 
-              WHEN metadata IS NULL THEN ${JSON.stringify(enhancedMetadataUpdate)}::jsonb
-              ELSE metadata || ${JSON.stringify(enhancedMetadataUpdate)}::jsonb
-            END
-          WHERE id = ${taskId}
-        `);
-        
-        logger.info(`[KYB Transaction] Task status updated using direct SQL`, {
-          transactionId,
-          taskId,
-          status: TaskStatus.SUBMITTED,
-          timestamp: new Date().toISOString()
-        });
-      } catch (sqlError) {
-        // Fall back to ORM method if direct SQL fails
-        logger.warn(`[KYB Transaction] Direct SQL update failed, falling back to ORM method`, {
-          transactionId,
-          taskId,
-          error: sqlError instanceof Error ? sqlError.message : 'Unknown error'
-        });
-        
-        await tx.update(tasks)
-          .set({
-            status: TaskStatus.SUBMITTED, // Explicitly 'submitted', not 'ready_for_submission'
-            progress: 100,
-            updated_at: new Date(),
-            // Use SQL's jsonb concatenation operator (||) to properly merge JSON objects
-            metadata: sql`CASE 
-              WHEN ${tasks.metadata} IS NULL THEN ${JSON.stringify(enhancedMetadataUpdate)}::jsonb
-              ELSE ${tasks.metadata} || ${JSON.stringify(enhancedMetadataUpdate)}::jsonb
-            END`
-          })
-          .where(eq(tasks.id, taskId));
-      }
+      await tx.update(tasks)
+        .set({
+          status: TaskStatus.SUBMITTED, // Explicitly 'submitted', not 'ready_for_submission'
+          progress: 100,
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            kybFormFile: fileCreationResult.fileId,
+            submissionDate: new Date().toISOString(),
+            formVersion: '1.0',
+            statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+              .filter((v, i, a) => a.indexOf(v) === i),
+            explicitlySubmitted: true // Flag to indicate this was a real submission
+          }
+        })
+        .where(eq(tasks.id, taskId));
       
       logger.info(`[KYB Transaction] Task status updated in transaction`, {
         transactionId,
@@ -302,183 +240,48 @@ export async function processKybSubmission(
     // 5. Unlock security tasks
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, userId);
     
-    // 6. Verify task status was properly updated and implement retry logic
-    // Use a robust verification process with multiple retries and exponential backoff
-    let verificationAttempts = 0;
-    let verifiedTask = null;
-    const MAX_VERIFICATION_ATTEMPTS = 3;
-    let verificationSuccess = false;
-    
-    // Log original task details for debugging
-    logger.debug(`[KYB Transaction] Original task details before verification`, {
-      transactionId,
-      taskId,
-      status: task.status,
-      progress: task.progress,
-      metadata: task.metadata ? JSON.stringify(task.metadata).substring(0, 200) + '...' : null,
-      elapsedMs: performance.now() - startTime
-    });
-    
-    logger.info(`[KYB Transaction] Starting task status verification`, {
-      transactionId,
-      taskId,
-      maxAttempts: MAX_VERIFICATION_ATTEMPTS,
-      elapsedMs: performance.now() - startTime
-    });
-    
-    // Verification loop with exponential backoff
-    while (verificationAttempts < MAX_VERIFICATION_ATTEMPTS && !verificationSuccess) {
+    // 6. Verify task status was properly updated and fix if necessary
+    const [verifiedTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+    if (verifiedTask?.status !== TaskStatus.SUBMITTED) {
+      logger.warn(`[KYB Transaction] Task status verification failed - expected 'submitted' but found '${verifiedTask?.status}'`, {
+        transactionId,
+        taskId,
+        expectedStatus: TaskStatus.SUBMITTED,
+        actualStatus: verifiedTask?.status,
+        metadata: verifiedTask?.metadata
+      });
+      
+      // Perform a direct fix if the status is not set correctly
       try {
-        // Fetch the latest task state
-        [verifiedTask] = await db.select()
-          .from(tasks)
+        await db.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            updated_at: new Date()
+          })
           .where(eq(tasks.id, taskId));
           
-        logger.debug(`[KYB Transaction] Verification attempt ${verificationAttempts + 1} task details`, {
-          transactionId,
-          taskId,
-          status: verifiedTask?.status,
-          progress: verifiedTask?.progress,
-          metadata: verifiedTask?.metadata ? JSON.stringify(verifiedTask.metadata).substring(0, 200) + '...' : null,
-          elapsedMs: performance.now() - startTime
-        });
-        
-        if (verifiedTask?.status === TaskStatus.SUBMITTED) {
-          verificationSuccess = true;
-          logger.info(`[KYB Transaction] Task status verification successful on attempt ${verificationAttempts + 1}`, {
-            transactionId,
-            taskId,
-            status: verifiedTask.status,
-            attemptNum: verificationAttempts + 1,
-            elapsedMs: performance.now() - startTime
-          });
-          break;
-        }
-        
-        // Enhanced check: Some tasks may be saved with progress 100 but status still as 'ready_for_submission'
-        // This happens due to race conditions or transaction isolation levels
-        if (verifiedTask?.progress === 100 && (verifiedTask?.metadata?.submissionDate || verifiedTask?.metadata?.submitted)) {
-          logger.info(`[KYB Transaction] Task has 100% progress and submission metadata, forcing status fix`, {
-            transactionId,
-            taskId,
-            currentStatus: verifiedTask?.status,
-            hasSubmissionDate: !!verifiedTask?.metadata?.submissionDate,
-            hasSubmittedFlag: !!verifiedTask?.metadata?.submitted,
-            elapsedMs: performance.now() - startTime
-          });
-          
-          // Task has all the indicators of being submitted, but status wasn't updated correctly
-          verificationSuccess = true;
-          break;
-        }
-        
-        logger.warn(`[KYB Transaction] Task status verification failed (attempt ${verificationAttempts + 1}/${MAX_VERIFICATION_ATTEMPTS})`, {
-          transactionId,
-          taskId,
-          expectedStatus: TaskStatus.SUBMITTED,
-          actualStatus: verifiedTask?.status,
-          metadataKeys: verifiedTask?.metadata ? Object.keys(verifiedTask.metadata) : []
-        });
-        
-        // Apply direct fix with improved JSON handling and more reliable SQL
-        const metadataUpdate = {
-          kybFormFile: fileCreationResult.fileId,
-          submissionDate: new Date().toISOString(),
-          formVersion: '1.0',
-          statusFlow: [...(verifiedTask?.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
-            .filter((v, i, a) => a.indexOf(v) === i),
-          explicitlySubmitted: true,
-          verificationFix: true,
-          verificationAttempt: verificationAttempts + 1,
-          statusUpdateTimestamp: new Date().toISOString(),
-          // Add these explicit flags to help with status determination
-          submitted: true, 
-          formSubmitted: true,
-          submissionComplete: true
-        };
-        
-        // Apply a more direct SQL update for reliability
-        try {
-          // Use direct SQL for more control
-          await db.execute(sql`
-            UPDATE tasks
-            SET 
-              status = ${TaskStatus.SUBMITTED}, 
-              progress = 100,
-              updated_at = NOW(),
-              metadata = CASE 
-                WHEN metadata IS NULL THEN ${JSON.stringify(metadataUpdate)}::jsonb
-                ELSE metadata || ${JSON.stringify(metadataUpdate)}::jsonb
-              END
-            WHERE id = ${taskId}
-          `);
-          
-          logger.info(`[KYB Transaction] Applied SQL-based verification fix (attempt ${verificationAttempts + 1})`, {
-            transactionId,
-            taskId,
-            fixedStatus: TaskStatus.SUBMITTED,
-            timestamp: new Date().toISOString()
-          });
-        } catch (sqlError) {
-          // Try fallback using the drizzle ORM approach 
-          logger.warn(`[KYB Transaction] SQL update failed, trying ORM approach`, {
-            transactionId,
-            taskId,
-            error: sqlError instanceof Error ? sqlError.message : 'Unknown error',
-            timestamp: new Date().toISOString()
-          });
-          
-          await db.update(tasks)
-            .set({
-              status: TaskStatus.SUBMITTED,
-              progress: 100,
-              updated_at: new Date(),
-              // Use the same JSON merge strategy as in the transaction
-              metadata: sql`CASE 
-                WHEN ${tasks.metadata} IS NULL THEN ${JSON.stringify(metadataUpdate)}::jsonb
-                ELSE ${tasks.metadata} || ${JSON.stringify(metadataUpdate)}::jsonb
-              END`
-            })
-            .where(eq(tasks.id, taskId));
-        }
-          
-        logger.info(`[KYB Transaction] Applied verification fix (attempt ${verificationAttempts + 1})`, {
+        logger.info(`[KYB Transaction] Applied direct status fix to ensure task is properly marked as submitted`, {
           transactionId,
           taskId,
           fixedStatus: TaskStatus.SUBMITTED,
           elapsedMs: performance.now() - startTime
         });
       } catch (fixError) {
-        logger.error(`[KYB Transaction] Verification attempt ${verificationAttempts + 1} failed`, {
+        logger.error(`[KYB Transaction] Failed to apply direct status fix`, {
           transactionId,
           taskId,
           error: fixError instanceof Error ? fixError.message : 'Unknown error',
-          stack: fixError instanceof Error ? fixError.stack : undefined,
           elapsedMs: performance.now() - startTime
         });
       }
-      
-      verificationAttempts++;
-      
-      // Only wait if we're going to try again
-      if (verificationAttempts < MAX_VERIFICATION_ATTEMPTS && !verificationSuccess) {
-        const backoffMs = 500 * Math.pow(2, verificationAttempts);
-        logger.info(`[KYB Transaction] Waiting ${backoffMs}ms before next verification attempt`, {
-          transactionId,
-          taskId,
-          attempt: verificationAttempts,
-          backoffMs
-        });
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
-      }
-    }
-    
-    // Final verification status log
-    if (!verificationSuccess) {
-      logger.error(`[KYB Transaction] All verification attempts failed`, {
+    } else {
+      logger.info(`[KYB Transaction] Task status verification successful - confirmed status is 'submitted'`, {
         transactionId,
         taskId,
-        attempts: verificationAttempts,
+        status: verifiedTask.status,
         elapsedMs: performance.now() - startTime
       });
     }
@@ -487,7 +290,6 @@ export async function processKybSubmission(
     try {
       // Broadcast task update via WebSocket to ensure clients get immediate notification
       // This is critical for ensuring task status changes are reflected in the UI
-      // Send all information via the metadata field which is properly typed
       await broadcastFormSubmission({
         taskId,
         formType: 'kyb',
@@ -495,14 +297,14 @@ export async function processKybSubmission(
         companyId: task.company_id,
         fileId: fileCreationResult.fileId,
         progress: 100,
+        submissionDate: new Date().toISOString(),
+        source: 'transactional-kyb-handler',
         metadata: {
           transactionId,
-          source: 'transactional-kyb-handler',
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
           explicitlySubmitted: true,
-          verifiedStatus: verificationSuccess,
-          submissionDate: new Date().toISOString()
+          verifiedStatus: true // Flag to indicate status was verified
         }
       });
       
@@ -561,7 +363,7 @@ interface KybField {
   display_name?: string;
   label?: string;
   question?: string;
-  validation_rules?: Record<string, any> | any;
+  validation_rules?: Record<string, any>;
   order?: number;
 }
 

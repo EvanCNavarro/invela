@@ -150,46 +150,8 @@ export async function submitForm(
         unlockedTabs = await handleKybPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
         unlockedTabs = await handleKy3pPostSubmission(trx, taskId, companyId, formData, transactionId);
-      } else if (formType === 'open_banking' || formType === 'open_banking_survey') {
-        // Enhanced logging to track Open Banking submissions
-        logger.info(`🔔 OPEN BANKING POST-SUBMISSION BEING PROCESSED`, {
-          ...baseLogContext,
-          formType,
-          taskId,
-          companyId,
-          transactionId,
-          timestamp: new Date().toISOString()
-        });
-        
-        try {
-          // Execute Open Banking post-submission logic with improved error handling
-          unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, transactionId);
-          
-          logger.info(`✅ OPEN BANKING POST-SUBMISSION SUCCEEDED`, {
-            ...baseLogContext,
-            formType,
-            taskId,
-            companyId,
-            transactionId,
-            unlockedTabs,
-            timestamp: new Date().toISOString()
-          });
-        } catch (obError) {
-          logger.error(`❌ OPEN BANKING POST-SUBMISSION FAILED`, {
-            ...baseLogContext,
-            formType,
-            taskId,
-            companyId,
-            transactionId,
-            error: obError instanceof Error ? obError.message : String(obError),
-            stack: obError instanceof Error ? obError.stack : undefined,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Try once more outside of the try/catch to make sure the error is propagated
-          // if it fails again
-          unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, `retry-${transactionId}`);
-        }
+      } else if (formType === 'open_banking') {
+        unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else {
         logger.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`, {
         ...baseLogContext,
@@ -761,89 +723,6 @@ async function handleKy3pPostSubmission(
  * - Updates accreditation status
  */
 /**
- * Unlock tabs for a company within a transaction
- * 
- * This function adds the specified tabs to a company's available_tabs array
- * if they're not already present. It uses a transaction context to ensure 
- * atomic operations with form submissions.
- * 
- * @param trx Database transaction context
- * @param companyId Company ID to unlock tabs for
- * @param tabNames Array of tab names to unlock
- * @param transactionId Optional transaction ID for tracking
- */
-async function unlockTabsForCompany(
-  trx: any,
-  companyId: number,
-  tabNames: string[],
-  transactionId?: string
-): Promise<void> {
-  const startTime = performance.now();
-  const logContext = {
-    namespace: 'TabUnlock',
-    companyId,
-    tabNames,
-    transactionId,
-    timestamp: new Date().toISOString()
-  };
-  
-  logger.info('Unlocking tabs for company', logContext);
-  
-  if (!tabNames || !tabNames.length) {
-    logger.warn('No tabs to unlock', logContext);
-    return;
-  }
-  
-  try {
-    // First retrieve current available_tabs for the company
-    const company = await trx.select({
-      id: companies.id,
-      availableTabs: companies.available_tabs
-    })
-    .from(companies)
-    .where(eq(companies.id, companyId))
-    .limit(1);
-    
-    if (!company || !company.length) {
-      throw new Error(`Company with ID ${companyId} not found`);
-    }
-    
-    // Get current tabs or initialize as empty array
-    const currentTabs = company[0].availableTabs || [];
-    
-    // Add new tabs without duplicates
-    const updatedTabs = [...new Set([...currentTabs, ...tabNames])];
-    
-    // Update company available_tabs
-    await trx.update(companies)
-      .set({
-        available_tabs: updatedTabs,
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId));
-    
-    const endTime = performance.now();
-    logger.info('Successfully unlocked tabs', {
-      ...logContext,
-      newlyUnlockedTabs: tabNames,
-      allAvailableTabs: updatedTabs,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const endTime = performance.now();
-    logger.error('Failed to unlock tabs', {
-      ...logContext,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-      timestamp: new Date().toISOString()
-    });
-    throw error;
-  }
-}
-
-/**
  * Handle Open Banking post-submission processing
  * 
  * This function performs the following steps after an Open Banking form is submitted:
@@ -860,7 +739,7 @@ async function unlockTabsForCompany(
  * @param transactionId Optional transaction ID for tracking
  * @returns Array of unlocked tabs
  */
-export async function handleOpenBankingPostSubmission(
+async function handleOpenBankingPostSubmission(
   trx: any,
   taskId: number,
   companyId: number,
@@ -941,86 +820,23 @@ export async function handleOpenBankingPostSubmission(
     // This is crucial for the post-submission workflow
     try {
       console.log(`[OpenBankingPostSubmission] Step 2/5: Setting onboarding_company_completed to true for company ${companyId}`);
-      
-      // First try direct SQL for more reliability
-      try {
-        // Use direct SQL for better control and visibility
-        const directSqlResult = await trx.execute(sql`
-          UPDATE companies
-          SET 
-            onboarding_company_completed = true, 
-            updated_at = NOW(),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-              'onboardingCompletedAt', ${new Date().toISOString()},
-              'onboardingCompletedSource', 'open_banking_submission',
-              'onboardingCompletedTaskId', ${taskId},
-              'onboardingCompletedTransactionId', ${transactionId || 'system_update'}
-            )::jsonb
-          WHERE id = ${companyId}
-          RETURNING id, name, onboarding_company_completed
-        `);
-        
-        if (directSqlResult.rowCount) {
-          console.log(`[OpenBankingPostSubmission] ✅ Step 2/5 Complete: Used direct SQL to update onboarding status - affected ${directSqlResult.rowCount} rows`);
-          stepResults.onboardingCompleted = true;
-          
-          logger.info('Updated company onboarding status with direct SQL', { 
-            ...obPostLogContext,
-            step: 'update_onboarding_status',
-            column: 'onboarding_company_completed',
-            status: 'success',
-            method: 'direct_sql',
-            rowCount: directSqlResult.rowCount,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Skip ORM approach since direct SQL succeeded
-          return;
-        }
-        
-        // If we didn't update any rows, throw an error to try the ORM approach
-        throw new Error('Direct SQL update affected 0 rows');
-      } catch (directSqlError) {
-        console.warn(`[OpenBankingPostSubmission] Direct SQL update for onboarding failed, falling back to ORM method:`, 
-          directSqlError instanceof Error ? directSqlError.message : 'Unknown error');
-      }
-      
-      // Fall back to ORM approach if direct SQL fails
       const onboardingUpdateResult = await trx.update(companies)
         .set({
           onboarding_company_completed: true, // Correct column name
-          updated_at: new Date(),
-          // Also add metadata for tracking
-          metadata: sql`
-            CASE 
-              WHEN ${companies.metadata} IS NULL THEN ${JSON.stringify({
-                onboardingCompletedAt: new Date().toISOString(),
-                onboardingCompletedSource: 'open_banking_submission',
-                onboardingCompletedTaskId: taskId,
-                onboardingCompletedTransactionId: transactionId || 'system_update'
-              })}::jsonb
-              ELSE ${companies.metadata} || ${JSON.stringify({
-                onboardingCompletedAt: new Date().toISOString(),
-                onboardingCompletedSource: 'open_banking_submission',
-                onboardingCompletedTaskId: taskId,
-                onboardingCompletedTransactionId: transactionId || 'system_update'
-              })}::jsonb
-            END
-          `
+          updated_at: new Date()
         })
         .where(eq(companies.id, companyId))
         .returning({ id: companies.id });
       
       if (onboardingUpdateResult && onboardingUpdateResult.length > 0) {
-        console.log(`[OpenBankingPostSubmission] ✅ Step 2/5 Complete: Updated onboarding status to true for company ${companyId} using ORM`);
+        console.log(`[OpenBankingPostSubmission] ✅ Step 2/5 Complete: Updated onboarding status to true for company ${companyId}`);
         stepResults.onboardingCompleted = true;
         
-        logger.info('Updated company onboarding status with ORM', { 
+        logger.info('Updated company onboarding status', { 
           ...obPostLogContext,
           step: 'update_onboarding_status',
           column: 'onboarding_company_completed',
           status: 'success',
-          method: 'orm',
           timestamp: new Date().toISOString()
         });
       } else {
@@ -1096,88 +912,22 @@ export async function handleOpenBankingPostSubmission(
     // STEP 5: Update accreditation status to APPROVED, save risk score and clusters
     try {
       console.log(`[OpenBankingPostSubmission] Step 5/5: Setting accreditation status to APPROVED and saving risk scores`);
+      const riskUpdateResult = await trx.update(companies)
+        .set({
+          accreditation_status: 'APPROVED', // Must be APPROVED per requirements
+          risk_score: riskScore,
+          risk_clusters: riskClusters,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning({ 
+          id: companies.id,
+          risk_score: companies.risk_score,
+          accreditation_status: companies.accreditation_status 
+        });
       
-      let updateResult = null;
-      let updateSuccessful = false;
-      
-      // First try direct SQL for reliability
-      try {
-        const directUpdateResult = await trx.execute(sql`
-          UPDATE companies
-          SET 
-            accreditation_status = 'APPROVED',
-            risk_score = ${riskScore},
-            risk_clusters = ${JSON.stringify(riskClusters)}::jsonb,
-            updated_at = NOW(),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
-              'riskScoreUpdatedAt', ${new Date().toISOString()},
-              'accreditationUpdatedAt', ${new Date().toISOString()},
-              'openBankingPostSubmissionCompleted', true
-            )::jsonb
-          WHERE id = ${companyId}
-          RETURNING id, risk_score, accreditation_status
-        `);
-        
-        if (directUpdateResult && directUpdateResult.rowCount > 0) {
-          console.log(`[OpenBankingPostSubmission] ✅ Used direct SQL to update accreditation status - rows: ${directUpdateResult.rowCount}`);
-          updateResult = directUpdateResult;
-          updateSuccessful = true;
-        } else {
-          console.warn(`[OpenBankingPostSubmission] Direct SQL update affected 0 rows, will try ORM method`);
-        }
-      } catch (sqlError) {
-        console.warn(`[OpenBankingPostSubmission] Direct SQL update failed, falling back to ORM:`, 
-          sqlError instanceof Error ? sqlError.message : 'Unknown error');
-      }
-      
-      // Fall back to ORM approach if direct SQL didn't work
-      if (!updateSuccessful) {
-        try {
-          const ormUpdateResult = await trx.update(companies)
-            .set({
-              accreditation_status: 'APPROVED',
-              risk_score: riskScore,
-              risk_clusters: riskClusters,
-              updated_at: new Date(),
-              metadata: sql`
-                CASE 
-                  WHEN ${companies.metadata} IS NULL THEN ${JSON.stringify({
-                    riskScoreUpdatedAt: new Date().toISOString(),
-                    accreditationUpdatedAt: new Date().toISOString(),
-                    openBankingPostSubmissionCompleted: true
-                  })}::jsonb
-                  ELSE ${companies.metadata} || ${JSON.stringify({
-                    riskScoreUpdatedAt: new Date().toISOString(),
-                    accreditationUpdatedAt: new Date().toISOString(),
-                    openBankingPostSubmissionCompleted: true
-                  })}::jsonb
-                END
-              `
-            })
-            .where(eq(companies.id, companyId))
-            .returning({ 
-              id: companies.id,
-              risk_score: companies.risk_score,
-              accreditation_status: companies.accreditation_status 
-            });
-          
-          if (ormUpdateResult && ormUpdateResult.length > 0) {
-            console.log(`[OpenBankingPostSubmission] ✅ ORM update successful for company ${companyId}`);
-            updateResult = ormUpdateResult;
-            updateSuccessful = true;
-          } else {
-            console.warn(`[OpenBankingPostSubmission] ⚠️ ORM update affected 0 rows`);
-          }
-        } catch (ormError) {
-          console.error(`[OpenBankingPostSubmission] ❌ ORM update failed:`, 
-            ormError instanceof Error ? ormError.message : 'Unknown error');
-          throw ormError; // Re-throw to be caught by outer catch
-        }
-      }
-      
-      // Process results
-      if (updateSuccessful) {
-        console.log(`[OpenBankingPostSubmission] ✅ Step 5/5 Complete: Updated accreditation status to APPROVED and risk score`);
+      if (riskUpdateResult && riskUpdateResult.length > 0) {
+        console.log(`[OpenBankingPostSubmission] ✅ Step 5/5 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
         stepResults.accreditationUpdated = true;
         
         logger.info('Updated accreditation status and risk scores', { 
@@ -1185,6 +935,7 @@ export async function handleOpenBankingPostSubmission(
           step: 'update_accreditation_and_risk',
           accreditation_status: 'APPROVED',
           riskScore,
+          riskUpdateResult: riskUpdateResult || 'No result returned',
           status: 'success',
           timestamp: new Date().toISOString()
         });
@@ -1203,6 +954,7 @@ export async function handleOpenBankingPostSubmission(
         error: accreditationError instanceof Error ? accreditationError.message : String(accreditationError),
         status: 'failed'
       });
+      // At this point, we've tried all the main operations
     }
     
     // Final verification step - verify all updates were applied
@@ -1520,8 +1272,79 @@ async function generateRiskScore(
   }
 }
 
-// Using the previously defined unlockTabsForCompany function
-// This was a duplicate declaration that's been removed to fix compilation errors
+/**
+ * Unlock tabs for a company within a transaction
+ */
+async function unlockTabsForCompany(trx: any, companyId: number, tabNames: string[], transactionId?: string): Promise<void> {
+  const startTime = performance.now();
+  const tabsLogContext = { 
+    namespace: 'UnlockTabs', 
+    companyId,
+    transactionId 
+  };
+  
+  if (!tabNames || tabNames.length === 0) {
+    logger.info('No tabs to unlock', {
+      ...tabsLogContext,
+      timestamp: new Date().toISOString()
+    });
+    return;
+  }
+  
+  logger.info('Unlocking tabs for company', { 
+    ...tabsLogContext, 
+    tabNames,
+    timestamp: new Date().toISOString() 
+  });
+  
+  try {
+    // Get current company tabs from database
+    const [company] = await trx.select(companies.available_tabs)
+      .from(companies)
+      .where(eq(companies.id, companyId));
+    
+    if (!company) {
+      logger.error('Company not found when unlocking tabs', tabsLogContext);
+      throw new Error(`Company ${companyId} not found`);
+    }
+    
+    // Ensure available_tabs is an array
+    const currentTabs = Array.isArray(company.available_tabs) 
+      ? company.available_tabs 
+      : ['task-center'];
+    
+    // Add new tabs if not already present
+    const updatedTabs = [...new Set([...currentTabs, ...tabNames])];
+    
+    // Update company tabs
+    await trx.update(companies)
+      .set({ 
+        available_tabs: updatedTabs,
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, companyId));
+    
+    const endTime = performance.now();
+    logger.info('Successfully unlocked tabs', {
+      ...tabsLogContext,
+      unlockedTabs: tabNames,
+      allTabs: updatedTabs,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    const endTime = performance.now();
+    logger.error('Error unlocking tabs', {
+      ...tabsLogContext,
+      tabNames,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${(endTime - startTime).toFixed(2)}ms`,
+      timestamp: new Date().toISOString()
+    });
+    throw error; // Re-throw to trigger transaction rollback
+  }
+}
 
 /**
  * Broadcast form submission results to connected clients

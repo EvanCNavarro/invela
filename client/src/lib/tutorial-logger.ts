@@ -1,117 +1,76 @@
 /**
  * Tutorial Logger Utility
  * 
- * This module provides standardized logging functionality for the tutorial system
- * with consistent formatting, log levels, and optional module prefixing.
+ * This utility provides consistent, structured logging for tutorial components.
+ * It helps with debugging and diagnostics by categorizing logs and providing
+ * consistent formatting across components.
  */
 
-// Flag to enable or disable specific log levels
-const LOG_LEVELS = {
-  debug: true,   // Detailed debugging information
-  info: true,    // General information about normal operation
-  warn: true,    // Warnings about potential issues
-  error: true,   // Error conditions that should be addressed
-  render: true,  // Logging for component rendering cycles
-  init: true     // Logging for initialization processes
+// Define log levels for consistent categorization
+type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+// Base colors for different log types
+const LOG_COLORS = {
+  info: '#2196F3',   // Blue
+  warn: '#FF9800',   // Orange
+  error: '#F44336', // Red
+  debug: '#4CAF50', // Green
+  
+  // Component-specific colors
+  manager: '#9C27B0',   // Purple
+  modal: '#00BCD4',     // Cyan
+  websocket: '#FF5722', // Deep Orange
+  claims: '#3F51B5',    // Indigo
+  
+  // Action colors
+  init: '#8BC34A',       // Light Green
+  render: '#673AB7',     // Deep Purple
+  interaction: '#FFC107', // Amber
 };
 
-// Interface for a logger instance
-interface TutorialLogger {
-  debug: (message: string, data?: any) => void;
-  info: (message: string, data?: any) => void;
-  warn: (message: string, data?: any) => void;
-  error: (message: string, data?: any) => void;
-  render: (message: string, data?: any) => void;
-  init: (message: string, data?: any) => void;
-}
-
 /**
- * Create a tutorial logger instance for a specific module
+ * Create a logger for a specific tutorial component
  * 
- * @param moduleName The name of the module using this logger
- * @returns A logger object with various log methods
+ * @param component The component name (used as log prefix)
+ * @returns An object with logging methods
  */
-export function createTutorialLogger(moduleName: string): TutorialLogger {
-  // Helper to format log messages with module name and consistent styling
-  const formatMessage = (level: string, message: string): string => {
-    return `[Tutorial:${moduleName}] ${message}`;
-  };
-
-  // Helper to get the appropriate console styling for each log level
-  const getStyle = (level: string): string => {
-    switch (level) {
-      case 'debug': return 'color: #9E9E9E; font-weight: bold;';
-      case 'info': return 'color: #2196F3; font-weight: bold;';
-      case 'warn': return 'color: #FF9800; font-weight: bold;';
-      case 'error': return 'color: #F44336; font-weight: bold;';
-      case 'render': return 'color: #4CAF50; font-weight: bold;';
-      case 'init': return 'color: #9C27B0; font-weight: bold;';
-      default: return 'color: #212121;';
+export function createTutorialLogger(component: string) {
+  // Create the base log function with component name in prefix
+  const baseLog = (level: LogLevel, color: string, message: string, data?: any) => {
+    const prefix = `[Tutorial:${component}]`;
+    
+    if (data) {
+      console[level](`%c${prefix} ${message}`, `color: ${color}; font-weight: bold;`, data);
+    } else {
+      console[level](`%c${prefix} ${message}`, `color: ${color}; font-weight: bold;`);
     }
   };
-
+  
   return {
-    debug: (message: string, data?: any) => {
-      if (LOG_LEVELS.debug) {
-        if (data !== undefined) {
-          console.debug(`%c${formatMessage('debug', message)}`, getStyle('debug'), data);
-        } else {
-          console.debug(`%c${formatMessage('debug', message)}`, getStyle('debug'));
-        }
-      }
-    },
+    // Standard logging levels
+    info: (message: string, data?: any) => baseLog('info', LOG_COLORS.info, message, data),
+    warn: (message: string, data?: any) => baseLog('warn', LOG_COLORS.warn, message, data),
+    error: (message: string, data?: any) => baseLog('error', LOG_COLORS.error, message, data),
+    debug: (message: string, data?: any) => baseLog('info' as LogLevel, LOG_COLORS.debug, message, data),
     
-    info: (message: string, data?: any) => {
-      if (LOG_LEVELS.info) {
-        if (data !== undefined) {
-          console.log(`%c${formatMessage('info', message)}`, getStyle('info'), data);
-        } else {
-          console.log(`%c${formatMessage('info', message)}`, getStyle('info'));
-        }
-      }
-    },
+    // Specialized logs for specific events
+    init: (message: string, data?: any) => baseLog('info', LOG_COLORS.init, `🚀 ${message}`, data),
+    render: (message: string, data?: any) => baseLog('info', LOG_COLORS.render, `🎨 ${message}`, data),
+    interaction: (message: string, data?: any) => baseLog('info', LOG_COLORS.interaction, `👆 ${message}`, data),
     
-    warn: (message: string, data?: any) => {
-      if (LOG_LEVELS.warn) {
-        if (data !== undefined) {
-          console.warn(`%c${formatMessage('warn', message)}`, getStyle('warn'), data);
-        } else {
-          console.warn(`%c${formatMessage('warn', message)}`, getStyle('warn'));
-        }
-      }
+    // Log groups for related logs
+    group: (title: string) => {
+      console.group(`%c[Tutorial:${component}] ${title}`, `color: ${LOG_COLORS[component as keyof typeof LOG_COLORS] || LOG_COLORS.info}; font-weight: bold;`);
     },
+    groupEnd: () => console.groupEnd(),
     
-    error: (message: string, data?: any) => {
-      if (LOG_LEVELS.error) {
-        if (data !== undefined) {
-          console.error(`%c${formatMessage('error', message)}`, getStyle('error'), data);
-        } else {
-          console.error(`%c${formatMessage('error', message)}`, getStyle('error'));
-        }
-      }
-    },
-
-    render: (message: string, data?: any) => {
-      if (LOG_LEVELS.render) {
-        if (data !== undefined) {
-          console.log(`%c${formatMessage('render', message)}`, getStyle('render'), data);
-        } else {
-          console.log(`%c${formatMessage('render', message)}`, getStyle('render'));
-        }
-      }
-    },
-
-    init: (message: string, data?: any) => {
-      if (LOG_LEVELS.init) {
-        if (data !== undefined) {
-          console.log(`%c${formatMessage('init', message)}`, getStyle('init'), data);
-        } else {
-          console.log(`%c${formatMessage('init', message)}`, getStyle('init'));
-        }
-      }
+    // Table format for structured data
+    table: (data: any) => {
+      console.log(`%c[Tutorial:${component}] Data Table:`, `color: ${LOG_COLORS.info}; font-weight: bold;`);
+      console.table(data);
     }
   };
 }
 
-// Default export for easy importing
-export default createTutorialLogger;
+// Export a single instance for shared tutorial logging
+export const tutorialLogger = createTutorialLogger('System');

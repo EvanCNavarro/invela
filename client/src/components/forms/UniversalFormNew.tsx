@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { shouldHideDownloadButtons } from '@/utils/hide-downloads';
 
 // Define window property for tracking clear operations
 declare global {
@@ -256,53 +255,51 @@ const ReadOnlyFormView: React.FC<ReadOnlyFormViewProps> = ({
               )}
             </div>
             
-            {/* Download dropdown - Only shown when feature flag allows */}
-            {!shouldHideDownloadButtons() && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Form
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem 
-                    onClick={() => handleDownload('json')}
-                    className="cursor-pointer flex items-center py-2"
-                  >
-                    <FileJson className="mr-2 h-4 w-4 text-blue-500" />
-                    <div>
-                      <p className="font-medium">JSON Format</p>
-                      <p className="text-xs text-gray-500">For data processing</p>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => handleDownload('csv')}
-                    className="cursor-pointer flex items-center py-2"
-                  >
-                    <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-                    <div>
-                      <p className="font-medium">Excel/CSV Format</p>
-                      <p className="text-xs text-gray-500">For spreadsheet applications</p>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => handleDownload('txt')}
-                    className="cursor-pointer flex items-center py-2"
-                  >
-                    <FileText className="mr-2 h-4 w-4 text-gray-600" />
-                    <div>
-                      <p className="font-medium">Text Format</p>
-                      <p className="text-xs text-gray-500">Simple text document</p>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {/* Download dropdown - Now in line with header */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Form
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('json')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileJson className="mr-2 h-4 w-4 text-blue-500" />
+                  <div>
+                    <p className="font-medium">JSON Format</p>
+                    <p className="text-xs text-gray-500">For data processing</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('csv')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
+                  <div>
+                    <p className="font-medium">Excel/CSV Format</p>
+                    <p className="text-xs text-gray-500">For spreadsheet applications</p>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleDownload('txt')}
+                  className="cursor-pointer flex items-center py-2"
+                >
+                  <FileText className="mr-2 h-4 w-4 text-gray-600" />
+                  <div>
+                    <p className="font-medium">Text Format</p>
+                    <p className="text-xs text-gray-500">Simple text document</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div>

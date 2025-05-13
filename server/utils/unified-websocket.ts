@@ -144,6 +144,116 @@ type WebSocketPayload =
   | TutorialUpdateMessage;
 
 /**
+ * Initialize the WebSocket server
+ * 
+ * @param server HTTP server instance to attach WebSocket server to
+ * @param path Path for the WebSocket server
+ */
+export function initializeWebSocketServer(server: Server, path: string = '/ws'): void {
+  if (wss) {
+    wsLogger.warn('WebSocket server already initialized, skipping initialization');
+    return;
+  }
+
+  // Create WebSocket server
+  wss = new WebSocketServer({ server, path });
+  const serverId = Math.random().toString(36).substring(2, 8);
+
+  wsLogger.info('Unified WebSocket server initialized successfully', {
+    clients: clients.size,
+    path,
+    id: serverId,
+    timestamp: new Date().toISOString()
+  });
+
+  // Set up event handlers
+  wss.on('connection', (socket: WebSocket, request) => {
+    // Generate a unique client ID
+    const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Store client information
+    clients.set(clientId, {
+      socket,
+      clientId,
+      authenticated: false,
+      connectedAt: new Date()
+    });
+    
+    wsLogger.info('Client connected', { clientId, clients: clients.size });
+    
+    // Send connection established message
+    socket.send(JSON.stringify({
+      type: 'connection_established',
+      clientId,
+      timestamp: new Date().toISOString(),
+      message: 'Connection established'
+    }));
+    
+    // Handle messages from client
+    socket.on('message', (rawMessage: string) => {
+      try {
+        const message = JSON.parse(rawMessage.toString()) as WebSocketPayload;
+        
+        wsLogger.info(`Received message from client ${clientId}`, message);
+        
+        // Handle different message types
+        switch (message.type) {
+          case 'authenticate':
+            handleAuthentication(clientId, message as AuthMessage);
+            break;
+            
+          case 'ping':
+            // Simple ping-pong to keep connection alive
+            socket.send(JSON.stringify({
+              type: 'pong',
+              timestamp: new Date().toISOString(),
+              echo: message
+            }));
+            break;
+            
+          default:
+            wsLogger.warn(`Unknown message type: ${message.type} from ${clientId}`);
+        }
+      } catch (error) {
+        wsLogger.error('Error processing WebSocket message', {
+          error: error instanceof Error ? error.message : String(error),
+          clientId
+        });
+      }
+    });
+    
+    // Handle client disconnection
+    socket.on('close', (code: number, reason: string) => {
+      clients.delete(clientId);
+      
+      wsLogger.info('Client disconnected', {
+        clientId,
+        code,
+        reason: reason.toString(),
+        remainingClients: clients.size
+      });
+    });
+    
+    // Handle errors
+    socket.on('error', (error) => {
+      wsLogger.error('[error] [websocket] WebSocket error', {
+        errorEvent: error,
+        connectionId: clientId,
+        timestamp: new Date().toISOString()
+      });
+    });
+  });
+  
+  // Handle server errors
+  wss.on('error', (error) => {
+    wsLogger.error('WebSocket server error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  });
+}
+
+/**
  * Handle client authentication message
  * 
  * @param clientId Client ID
@@ -181,133 +291,6 @@ function handleAuthentication(clientId: string, message: AuthMessage): void {
 }
 
 /**
- * Initialize the WebSocket server
- * 
- * @param server HTTP server instance to attach WebSocket server to
- * @param path Path for the WebSocket server
- * @returns The initialized WebSocket server or null if initialization failed
- */
-export function initializeWebSocketServer(server: Server, path: string = '/ws'): WebSocketServer | null {
-  try {
-    if (wss) {
-      wsLogger.warn('WebSocket server already initialized, skipping initialization');
-      return wss;
-    }
-
-    // Create WebSocket server with explicit options
-    wss = new WebSocketServer({ 
-      server, 
-      path, 
-      noServer: false 
-    });
-    
-    const serverId = Math.random().toString(36).substring(2, 8);
-    
-    wsLogger.info('Unified WebSocket server initialized successfully', {
-      clients: clients.size,
-      path,
-      id: serverId,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Set up event handlers
-    wss.on('connection', (socket: WebSocket, request) => {
-      // Generate a unique client ID
-      const clientId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      
-      // Store client information
-      clients.set(clientId, {
-        socket,
-        clientId,
-        authenticated: false,
-        connectedAt: new Date()
-      });
-      
-      wsLogger.info('Client connected', { clientId, clients: clients.size });
-      
-      // Send connection established message
-      socket.send(JSON.stringify({
-        type: 'connection_established',
-        clientId,
-        timestamp: new Date().toISOString(),
-        message: 'Connection established'
-      }));
-      
-      // Handle messages from client
-      socket.on('message', (rawMessage: string) => {
-        try {
-          const message = JSON.parse(rawMessage.toString()) as WebSocketPayload;
-          
-          wsLogger.info(`Received message from client ${clientId}`, message);
-          
-          // Handle different message types
-          switch (message.type) {
-            case 'authenticate':
-              handleAuthentication(clientId, message as AuthMessage);
-              break;
-              
-            case 'ping':
-              // Simple ping-pong to keep connection alive
-              socket.send(JSON.stringify({
-                type: 'pong',
-                timestamp: new Date().toISOString(),
-                echo: message
-              }));
-              break;
-              
-            default:
-              wsLogger.warn(`Unknown message type: ${message.type} from ${clientId}`);
-          }
-        } catch (error) {
-          wsLogger.error('Error processing WebSocket message', {
-            error: error instanceof Error ? error.message : String(error),
-            clientId
-          });
-        }
-      });
-      
-      // Handle client disconnection
-      socket.on('close', (code: number, reason: string) => {
-        clients.delete(clientId);
-        
-        wsLogger.info('Client disconnected', {
-          clientId,
-          code,
-          reason: reason.toString(),
-          remainingClients: clients.size
-        });
-      });
-      
-      // Handle errors
-      socket.on('error', (error) => {
-        wsLogger.error('[error] [websocket] WebSocket error', {
-          errorEvent: error,
-          connectionId: clientId,
-          timestamp: new Date().toISOString()
-        });
-      });
-    });
-    
-    // Handle server errors
-    wss.on('error', (error) => {
-      wsLogger.error('WebSocket server error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    });
-    
-    return wss;
-  } catch (error) {
-    wsLogger.error('Failed to initialize WebSocket server', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      path
-    });
-    return null;
-  }
-}
-
-/**
  * Broadcast a message to all connected clients
  * 
  * @param type Message type
@@ -321,15 +304,6 @@ export function broadcast<T extends WebSocketPayload>(
 ): void {
   if (!wss) {
     wsLogger.warn('Cannot broadcast: WebSocket server not initialized');
-    
-    // Log the message we were trying to send for debugging
-    wsLogger.info('Would have broadcast message:', {
-      type,
-      ...payload,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Return without error to prevent crashes in calling code
     return;
   }
   
