@@ -18,7 +18,8 @@ import {
 } from '../utils/form-submission-notifications';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { db } from '@db';
-import { handleOpenBankingPostSubmission } from './unified-form-submission-service';
+// Import the handleOpenBankingPostSubmission function from unified-form-submission-service
+import * as UnifiedFormSubmissionService from './unified-form-submission-service';
 
 // Add namespace context to logs
 const logContext = { service: 'TransactionalFormHandler' };
@@ -335,6 +336,56 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
         formType,
         { broadcast: true }
       );
+      
+      // 5.5 Execute form-specific post-submission actions
+      // These are different from tab unlocking and perform form-type specific operations
+      let postSubmissionResult = {};
+      
+      if (formType === 'open_banking') {
+        try {
+          console.log(`[TransactionalFormHandler] 🚀 Executing Open Banking post-submission actions for task ${taskId}, company ${companyId}`);
+          
+          // Call the unified Open Banking post-submission handler with the transaction client
+          // This will update risk score, accreditation status, and onboarding completion flag
+          const openBankingResult = await UnifiedFormSubmissionService.handleOpenBankingPostSubmission(
+            client, // Pass transaction client to ensure all operations are part of the same transaction
+            taskId,
+            companyId,
+            formData,
+            transactionId
+          );
+          
+          console.log(`[TransactionalFormHandler] ✅ Open Banking post-submission actions completed successfully`, {
+            taskId,
+            companyId,
+            unlockedTabs: openBankingResult,
+            timestamp: new Date().toISOString()
+          });
+          
+          postSubmissionResult = { 
+            openBankingProcessed: true,
+            // The returned array contains the unlocked tabs
+            unlockedTabs: openBankingResult,
+            dashboardUnlocked: Array.isArray(openBankingResult) && openBankingResult.includes('dashboard'),
+            insightsUnlocked: Array.isArray(openBankingResult) && openBankingResult.includes('insights')
+          };
+        } catch (obError) {
+          console.error(`[TransactionalFormHandler] ❌ Error in Open Banking post-submission actions:`, {
+            error: obError instanceof Error ? obError.message : String(obError),
+            stack: obError instanceof Error ? obError.stack : undefined,
+            taskId,
+            companyId,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Don't rethrow - we don't want to fail the whole transaction if just the
+          // post-processing steps fail, as the form is already submitted
+          postSubmissionResult = { 
+            openBankingProcessed: false,
+            error: obError instanceof Error ? obError.message : String(obError)
+          };
+        }
+      }
       
       // 6. Broadcast form submission events with comprehensive information
       try {

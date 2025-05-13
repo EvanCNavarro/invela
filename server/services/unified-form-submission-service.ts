@@ -739,7 +739,7 @@ async function handleKy3pPostSubmission(
  * @param transactionId Optional transaction ID for tracking
  * @returns Array of unlocked tabs
  */
-async function handleOpenBankingPostSubmission(
+export async function handleOpenBankingPostSubmission(
   trx: any,
   taskId: number,
   companyId: number,
