@@ -375,7 +375,13 @@ export function WelcomeModal() {
     // Process all invitations in parallel
     try {
       // Track any failed invitations to report them
-      const failedInvitations = [];
+      interface FailedInvitation {
+        email: string;
+        role: string;
+        error: string;
+      }
+      
+      const failedInvitations: FailedInvitation[] = [];
       
       // Process each invitation and collect results
       await Promise.all(
@@ -751,6 +757,75 @@ export function WelcomeModal() {
    * Tracks whether we have pending company data changes that need to be submitted
    */
   const [pendingCompanyData, setPendingCompanyData] = useState<boolean>(false);
+
+  /**
+   * Submits the company updates to the server with robust error handling
+   * This function is called when the onboarding flow is completed and stored company
+   * information needs to be persisted on the server
+   * 
+   * @returns {Promise<boolean>} Promise that resolves to true if updates were saved successfully
+   * @throws {Error} If there's an unrecoverable issue with saving company data
+   */
+  const submitCompanyUpdates = async (): Promise<boolean> => {
+    // Dynamically import logger to use in this function
+    const { logger } = await import('@/lib/logger');
+    
+    // If no pending company data to submit, just return success
+    if (!pendingCompanyData || !employeeCount || !revenueTier) {
+      logger.debug('[WelcomeModal] No pending company data to submit');
+      return true;
+    }
+    
+    logger.info('[WelcomeModal] Submitting company updates', {
+      numEmployees: employeeCount,
+      revenueTier: revenueTier,
+      companyId: user?.company?.id
+    });
+    
+    try {
+      // Prepare data for the API call
+      const companyData = {
+        numEmployees: employeeCount.toString(),
+        revenueTier: revenueTier
+      };
+      
+      // Use mutateAsync to properly handle the promise
+      const result = await updateCompanyMutation.mutateAsync(companyData);
+      
+      logger.info('[WelcomeModal] Company updates submitted successfully', {
+        result,
+        companyId: result?.id
+      });
+      
+      // Show success toast
+      toast({
+        title: "Company information saved",
+        description: "Your company details have been updated successfully.",
+        variant: "success",
+        duration: 2500
+      });
+      
+      // Mark company data as submitted
+      setPendingCompanyData(false);
+      
+      return true;
+    } catch (error) {
+      logger.error('[WelcomeModal] Failed to submit company updates', { error });
+      
+      // Show error toast
+      toast({
+        title: "Error saving company information",
+        description: "There was a problem saving your company details. Please try again.",
+        variant: "destructive",
+        duration: 2500
+      });
+      
+      console.error('[ONBOARDING DEBUG] Error saving company information:', error);
+      
+      // Propagate the error to be handled by the caller
+      throw error;
+    }
+  };
   
   // Map revenue tier to readable string for display in review
   const getRevenueTierLabel = (tier: string): string => {
@@ -828,37 +903,25 @@ export function WelcomeModal() {
     if (currentSlide === 5 && pendingCompanyData) {
       setIsSubmitting(true);
       
-      // First, save the company data
+      // First, save the company data using our robust function
       try {
-        await updateCompanyMutation.mutateAsync({ 
-          numEmployees: employeeCount !== null ? String(employeeCount) : undefined,
-          revenueTier: revenueTier 
-        });
+        // Use the enhanced submit function with proper logging and error handling
+        await submitCompanyUpdates();
         
-        // Mark company data as submitted
-        setPendingCompanyData(false);
-        
-        // Show success toast
-        toast({
-          title: "Company information saved",
-          description: "Your company details have been updated successfully.",
-          variant: "success",
-          duration: 2500
-        });
-        
-        // Continue to the next slide
+        // Continue to the next slide after successful submission
         setCurrentSlide(prev => prev + 1);
         setIsSubmitting(false);
         return;
       } catch (error) {
+        // Error handling is already done in submitCompanyUpdates
         setIsSubmitting(false);
-        toast({
-          title: "Error saving company information",
-          description: "There was a problem saving your company details. Please try again.",
-          variant: "destructive", 
-          duration: 2500
+        
+        // Import logger to document the failure at this level
+        import('@/lib/logger').then(({ logger }) => {
+          logger.error('[WelcomeModal] Review page company data submission failed', { error });
         });
-        console.error('[ONBOARDING DEBUG] Error saving company information:', error);
+        
+        // We already showed a toast in the submitCompanyUpdates function
         return;
       }
     }
@@ -874,6 +937,7 @@ export function WelcomeModal() {
       import('@/lib/logger').then(async ({ logger }) => {
         logger.info('[WelcomeModal] Starting final onboarding completion process', {
           hasTeamInvites: !!(cfoName && cfoEmail) || !!(cisoName && cisoEmail),
+          hasPendingCompanyData: pendingCompanyData,
           userId: user?.id,
           email: user?.email
         });
@@ -881,7 +945,32 @@ export function WelcomeModal() {
         // Track overall operation success for proper modal closure
         let operationSucceeded = true;
         
-        // STEP 1: Process team invitations if needed
+        // STEP 1: Submit any pending company data if needed
+        try {
+          if (pendingCompanyData) {
+            logger.debug('[WelcomeModal] Processing pending company data updates');
+            await submitCompanyUpdates();
+            logger.info('[WelcomeModal] Company data updates processed successfully');
+            // Toast is already shown by submitCompanyUpdates function
+          } else {
+            logger.debug('[WelcomeModal] No pending company data to process');
+          }
+        } catch (error) {
+          logger.error('[WelcomeModal] Error submitting company data', { error });
+          // Toast is already shown by submitCompanyUpdates function
+          
+          // This is a critical error, so we'll mark the operation as failed
+          operationSucceeded = false;
+        }
+        
+        // If company data update failed, don't proceed with other operations
+        if (!operationSucceeded) {
+          logger.warn('[WelcomeModal] Company data update failed, aborting onboarding completion');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // STEP 2: Process team invitations if needed
         try {
           if ((cfoName && cfoEmail) || (cisoName && cisoEmail)) {
             logger.debug('[WelcomeModal] Processing team invitations');
@@ -914,12 +1003,12 @@ export function WelcomeModal() {
           // Users can send invitations later
         }
         
-        // STEP 2: Set local flags to prevent the modal from showing again
+        // STEP 3: Set local flags to prevent the modal from showing again
         if (user) {
           user.onboarding_user_completed = true;
         }
         
-        // STEP 3: Store completion in localStorage as a fail-safe backup
+        // STEP 4: Store completion in localStorage as a fail-safe backup
         try {
           localStorage.setItem('onboarding_completed', 'true');
           localStorage.setItem('onboarding_user_id', user?.id?.toString() || '');
@@ -930,7 +1019,7 @@ export function WelcomeModal() {
           // Continue despite localStorage errors - not critical
         }
         
-        // STEP 4: Make the API call to update the server
+        // STEP 5: Make the API call to update the server
         try {
           logger.debug('[WelcomeModal] Making API call to complete onboarding');
           
