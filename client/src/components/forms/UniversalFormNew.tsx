@@ -1877,8 +1877,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
     
-    // Set form into submitting state
-    setIsSubmitting(true);
+    // Set form into submitting state - only if external control is not provided
+    if (externalIsSubmitting === undefined) {
+      setInternalIsSubmitting(true);
+    }
     
     // Update task status to in_progress immediately for better user feedback
     if (task) {
@@ -1960,8 +1962,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
       
-      // Reset submitting state
-      setIsSubmitting(false);
+      // Reset submitting state - only if not externally controlled
+      if (externalIsSubmitting === undefined) {
+        setInternalIsSubmitting(false);
+      }
     }
   };
   
@@ -1972,8 +1976,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Always set the submission result with the latest data from the server
     setSubmissionResult(event);
     
-    // Reset submission state
-    setIsSubmitting(false);
+    // Reset submission state - only if not externally controlled
+    if (externalIsSubmitting === undefined) {
+      setInternalIsSubmitting(false);
+    }
     
     // Force task status update to ensure read-only view appears
     if (task && task.status !== 'submitted') {
