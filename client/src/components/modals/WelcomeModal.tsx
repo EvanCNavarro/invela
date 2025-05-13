@@ -611,7 +611,7 @@ export function WelcomeModal() {
     },
   });
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // For step 2 (index 1), check if both form fields are filled out
     if (currentSlide === 1) {
       if (!employeeCount || !revenueTier) {
