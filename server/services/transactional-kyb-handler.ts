@@ -392,6 +392,7 @@ export async function processKybSubmission(
     try {
       // Broadcast task update via WebSocket to ensure clients get immediate notification
       // This is critical for ensuring task status changes are reflected in the UI
+      // Send all information via the metadata field which is properly typed
       await broadcastFormSubmission({
         taskId,
         formType: 'kyb',
@@ -399,14 +400,14 @@ export async function processKybSubmission(
         companyId: task.company_id,
         fileId: fileCreationResult.fileId,
         progress: 100,
-        submissionDate: new Date().toISOString(),
-        source: 'transactional-kyb-handler',
         metadata: {
           transactionId,
+          source: 'transactional-kyb-handler',
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
           explicitlySubmitted: true,
-          verifiedStatus: verificationSuccess
+          verifiedStatus: verificationSuccess,
+          submissionDate: new Date().toISOString()
         }
       });
       
