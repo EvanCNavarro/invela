@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { enhancedKybServiceFactory } from "@/services/enhanced-kyb-service";
-import { directlyAddFileVaultTab, enableFileVault } from "@/services/fileVaultService";
+import { enableFileVault } from "@/services/fileVaultService";
 
 interface KYBTaskPageProps {
   params: {
@@ -28,6 +28,7 @@ interface Task {
     company_name?: string;
     [key: string]: any;
   } | null;
+  savedFormData?: any; // Added for form data compatibility
 }
 
 export default function KYBTaskPage({ params }: KYBTaskPageProps) {
@@ -187,8 +188,8 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 console.log('[KYB Form] Submission taking too long, forcing completion');
                 // Force the file vault tab to be unlocked even if API is slow
                 try {
-                  directlyAddFileVaultTab();
-                  enableFileVault().catch(e => console.error('[KYB Form] Emergency file vault enable failed:', e));
+                  // Use the server-side API call instead of the direct cache method
+                  enableFileVault(task.id).catch(e => console.error('[KYB Form] Emergency file vault enable failed:', e));
                 } catch (e) {
                   console.error('[KYB Form] Emergency file vault enable failed:', e);
                 }
@@ -268,13 +269,9 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 try {
                   console.log('[KYB Form] KYB form submitted successfully, updating file vault tab');
                   
-                  // First, immediately update the local cache for instant UI update
-                  const cacheResult = directlyAddFileVaultTab();
-                  console.log('[KYB Form] Direct cache update result:', cacheResult);
-                  
-                  // Next, make the API call to make the change persistent in the database
-                  // Use the directly imported function
-                  enableFileVault().then(apiResult => {
+                  // Make the API call to make the change persistent in the database
+                  // Use the directly imported function with the taskId
+                  enableFileVault(task.id).then(apiResult => {
                     console.log('[KYB Form] API file vault update result:', apiResult);
                   }).catch(apiError => {
                     console.error('[KYB Form] API file vault update failed:', apiError);
