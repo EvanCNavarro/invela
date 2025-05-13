@@ -7,7 +7,7 @@ import { Lock } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
-import { WelcomeModal } from "@/components/modals/WelcomeModal";
+import { WelcomeModal } from "@/components/modals/EmptyWelcomeModal";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { WebSocketEventBridge } from "@/components/websocket/WebSocketEventBridge";
 
