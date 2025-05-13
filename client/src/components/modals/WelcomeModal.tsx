@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Cross2Icon, PlusCircledIcon, PlusIcon, ReloadIcon, ArrowRight, InfoCircledIcon } from "@radix-ui/react-icons";
-import { useNavigate } from "wouter";
+import { Cross2Icon, PlusCircledIcon, PlusIcon, ReloadIcon, InfoCircledIcon } from "@radix-ui/react-icons";
+import { ArrowRight } from "lucide-react";
+import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useSteps } from "@/hooks/use-steps";
@@ -117,8 +118,8 @@ export function WelcomeModal() {
   // Track pending async operations for cleanup
   const pendingOperations = useRef<AbortController[]>([]);
   
-  // Navigate hook for redirecting after completion
-  const navigate = useNavigate();
+  // Location hook for redirecting after completion
+  const [_, setLocation] = useLocation();
   
   // Toast notification hooks
   const { toast } = useToast();
@@ -243,7 +244,7 @@ export function WelcomeModal() {
         setTimeout(() => {
           if (isMountedRef.current) {
             setShowModal(false);
-            navigate('/dashboard');
+            setLocation('/dashboard');
           }
         }, 500);
       } catch (error) {
@@ -788,7 +789,7 @@ export function WelcomeModal() {
       localStorage.setItem('hasSeenWelcome', 'true');
       
       // Navigate to the dashboard
-      navigate('/dashboard');
+      setLocation('/dashboard');
     }
   }, [isSubmitting, navigate]);
   
