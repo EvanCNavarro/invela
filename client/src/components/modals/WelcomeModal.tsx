@@ -65,6 +65,18 @@ interface CarouselItem {
   bulletPoints?: string[];
 }
 
+interface TeamMemberInvite {
+  role: string;
+  fullName: string;
+  email: string;
+  taskType: string;
+  // API fields
+  full_name?: string;
+  company_id?: number;
+  company_name?: string;
+  sender_name?: string;
+}
+
 // New carousel content with the expanded 7 steps
 const carouselContent: CarouselItem[] = [
   {
@@ -1204,13 +1216,17 @@ export function WelcomeModal() {
           // Show error toast for team invitations
           toast({
             title: "Team invitation failed",
-            description: "We couldn't send some team invitations. You can try again later from the team management page.",
+            description: "We couldn't send team invitations. Please try again.",
             variant: "destructive",
             duration: 2500
           });
           
-          // Don't fail the entire process for team invitation errors
-          // Users can send invitations later
+          // This is a critical error, so we'll mark the operation as failed
+          operationSucceeded = false;
+          
+          // Exit the onboarding completion process
+          setIsSubmitting(false);
+          return;
         }
         
         // STEP 3: Set local flags to prevent the modal from showing again
