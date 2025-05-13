@@ -28,7 +28,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import React, { useState, useMemo } from "react";
-import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
+// Playground functionality has been removed during cleanup
 import { cn } from "@/lib/utils";
 import { useCurrentCompany } from "@/hooks/use-current-company";
 import { usePreventFocus } from "@/hooks/use-prevent-focus";
@@ -37,7 +37,6 @@ export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const { company } = useCurrentCompany();
   const [location, setLocation] = useLocation();
-  const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   // Prevent any automatic focus when the component mounts or refreshes
@@ -94,14 +93,7 @@ export function TopNav() {
     console.log('Search query:', value);
   };
 
-  const handlePlaygroundToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (showPlayground && location === '/playground') {
-      setLocation('/');
-    }
-    togglePlayground();
-  };
+  // Playground toggle function removed during cleanup
 
   return (
     <div className="w-full h-full">
@@ -207,30 +199,7 @@ export function TopNav() {
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {user?.company_id === 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      handlePlaygroundToggle(event as unknown as React.MouseEvent);
-                    }}
-                    className="cursor-pointer"
-                  >
-                    {showPlayground ? (
-                      <>
-                        <EyeOffIcon className="mr-2 h-4 w-4" />
-                        <span>Hide Playground</span>
-                      </>
-                    ) : (
-                      <>
-                        <EyeIcon className="mr-2 h-4 w-4" />
-                        <span>Show Playground</span>
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </>
-              )}
+              {/* Playground toggle removed during cleanup */}
               <DropdownMenuSeparator className="sm:hidden" />
               <div className="sm:hidden px-2 py-1.5">
                 <Button variant="ghost" size="sm" className="w-full justify-start">
