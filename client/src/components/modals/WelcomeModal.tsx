@@ -1176,6 +1176,12 @@ export function WelcomeModal() {
                       transition={{ delay: 0.3 }}
                       style={{ willChange: 'opacity' }}
                     >
+                      {/* Simple title with relevant subtext */}
+                      <div className="mb-3">
+                        <h3 className="text-xl font-semibold text-gray-800">Company Profile Review</h3>
+                        <p className="text-sm text-gray-500">Confirm the information below that will be set for your company.</p>
+                      </div>
+                    
                       {/* Add structured logging using utility logger */}
                       {(() => {
                         // Use dynamic import to avoid bundling logger if not used
@@ -1206,7 +1212,7 @@ export function WelcomeModal() {
                       })()}
                       
                       {/* Horizontal review data layout with checkmarks */}
-                      <div className="mt-6">
+                      <div className="mt-3">
                         {/* Display in a horizontal flow layout */}
                         <div className="flex flex-wrap gap-2">
                           {/* Company information with checkmarks */}
