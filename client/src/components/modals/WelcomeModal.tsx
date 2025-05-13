@@ -796,14 +796,14 @@ export function WelcomeModal() {
 
                   {/* Bullet points section - special styling for step 3 */}
                   {carouselContent[currentSlide].bulletPoints && currentSlide !== 1 && (
-                    <div className={currentSlide === 2 ? "mt-6" : "mt-8"}>
+                    <div className={currentSlide === 2 ? "mt-2" : "mt-8"}>
                       {currentSlide === 2 ? (
                         // Special numbered list with neumorphic design for step 3
-                        <div className="space-y-4 mt-3">
+                        <div className="space-y-2 mt-1">
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                             <motion.div 
                               key={index} 
-                              className="flex p-5 bg-gray-50 rounded-xl border border-gray-100 shadow-lg transform-gpu"
+                              className="flex py-3 px-5 bg-gray-50 rounded-xl border border-gray-100 shadow-lg transform-gpu"
                               style={{
                                 boxShadow: '6px 6px 12px rgba(166, 180, 200, 0.1), -6px -6px 12px rgba(255, 255, 255, 0.8), inset 1px 1px 1px rgba(255, 255, 255, 0.4)'
                               }}
