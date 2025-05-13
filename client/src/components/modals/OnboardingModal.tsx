@@ -625,55 +625,55 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 2
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Company Information</h2>
-                <p className="text-base text-gray-700 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">Company Information</h2>
+                <p className="text-lg text-gray-700 mb-8">
                   Add basic details about {currentCompany?.name} to help us customize your experience.
                 </p>
                 
-                <div className="space-y-6">
+                <div className="space-y-7">
                   <div>
-                    <Label htmlFor="company-size" className="text-base font-medium block mb-2">
+                    <Label htmlFor="company-size" className="text-lg font-medium block mb-3">
                       Company Size <span className="text-red-500">*</span>
                     </Label>
                     <Select 
                       value={companyInfo.size} 
                       onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
                     >
-                      <SelectTrigger id="company-size" className="h-12">
+                      <SelectTrigger id="company-size" className="h-14 text-base">
                         <SelectValue placeholder="Select number of employees" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Micro (1-9 employees)">Micro (1-9 employees)</SelectItem>
-                        <SelectItem value="Small (10-49 employees)">Small (10-49 employees)</SelectItem>
-                        <SelectItem value="Medium (50-249 employees)">Medium (50-249 employees)</SelectItem>
-                        <SelectItem value="Large (250-999 employees)">Large (250-999 employees)</SelectItem>
-                        <SelectItem value="Enterprise (1000+ employees)">Enterprise (1000+ employees)</SelectItem>
+                        <SelectItem value="Micro (1-9 employees)" className="text-base py-2">Micro (1-9 employees)</SelectItem>
+                        <SelectItem value="Small (10-49 employees)" className="text-base py-2">Small (10-49 employees)</SelectItem>
+                        <SelectItem value="Medium (50-249 employees)" className="text-base py-2">Medium (50-249 employees)</SelectItem>
+                        <SelectItem value="Large (250-999 employees)" className="text-base py-2">Large (250-999 employees)</SelectItem>
+                        <SelectItem value="Enterprise (1000+ employees)" className="text-base py-2">Enterprise (1000+ employees)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div>
-                    <Label htmlFor="company-revenue" className="text-base font-medium block mb-2">
+                    <Label htmlFor="company-revenue" className="text-lg font-medium block mb-3">
                       Annual Revenue <span className="text-red-500">*</span>
                     </Label>
                     <Select 
                       value={companyInfo.revenue} 
                       onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
                     >
-                      <SelectTrigger id="company-revenue" className="h-12">
+                      <SelectTrigger id="company-revenue" className="h-14 text-base">
                         <SelectValue placeholder="Select annual revenue" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="$0–$10M">$0–$10M</SelectItem>
-                        <SelectItem value="$10M–$50M">$10M–$50M</SelectItem>
-                        <SelectItem value="$50M–$250M">$50M–$250M</SelectItem>
-                        <SelectItem value="$250M+">$250M+</SelectItem>
+                        <SelectItem value="$0–$10M" className="text-base py-2">$0–$10M</SelectItem>
+                        <SelectItem value="$10M–$50M" className="text-base py-2">$10M–$50M</SelectItem>
+                        <SelectItem value="$50M–$250M" className="text-base py-2">$50M–$250M</SelectItem>
+                        <SelectItem value="$250M+" className="text-base py-2">$250M+</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -710,23 +710,23 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 3
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">A Few Tasks Ahead</h2>
-                <p className="text-base text-gray-700 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">A Few Tasks Ahead</h2>
+                <p className="text-lg text-gray-700 mb-8">
                   To complete your accreditation application, you'll need to work through the following tasks:
                 </p>
                 
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">1</div>
+                <div className="mt-6 space-y-6">
+                  <div className="flex items-start gap-5">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">1</div>
                     <div>
-                      <h3 className="font-medium text-base text-gray-900">KYB Form</h3>
-                      <p className="text-sm text-gray-600">Basic verification of your business identity and structure</p>
+                      <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
+                      <p className="text-base text-gray-600">Basic verification of your business identity and structure</p>
                     </div>
                   </div>
                   
