@@ -1175,53 +1175,93 @@ export function WelcomeModal() {
                   {/* Review Information (step 6) */}
                   {currentSlide === 5 && (
                     <motion.div
-                      className="mt-3 space-y-4 transform-gpu overflow-y-auto max-h-[400px] pr-2"
+                      className="mt-3 space-y-5 transform-gpu overflow-y-auto max-h-[420px] pr-2"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
                       style={{ willChange: 'opacity' }}
                     >
-                      {/* Company Information Section */}
-                      <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100/80 space-y-3 shadow-sm">
+                      {/* Simple title with no subtext */}
+                      <div className="mb-2">
+                        <h3 className="text-lg font-semibold text-gray-800 text-center">Review Provided Information</h3>
+                        {/* Add console log for debugging */}
+                        {(() => {
+                          console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
+                            company, 
+                            employeeCount, 
+                            revenueTier, 
+                            pendingCompanyData,
+                            teamInvites: [
+                              cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
+                              cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
+                            ].filter(Boolean)
+                          });
+                          return null;
+                        })()}
+                      </div>
+                      
+                      {/* Company Information Section - with nicer visual styling */}
+                      <div className="bg-blue-50/70 rounded-lg p-4 border border-blue-100/90 space-y-3 shadow-sm">
                         <h3 className="text-base font-semibold text-gray-700 flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 8H20C21.1 8 22 8.9 22 10V20C22 21.1 21.1 22 20 22H4C2.9 22 2 21.1 2 20V10C2 8.9 2.9 8 4 8H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M15 6C15 3.79 13.21 2 11 2C8.79 2 7 3.79 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M11 10C12.1046 10 13 9.10457 13 8C13 6.89543 12.1046 6 11 6C9.89543 6 9 6.89543 9 8C9 9.10457 9.89543 10 11 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M11 22V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
+                          <DollarSign className="w-5 h-5 mr-2 text-primary" />
                           Company Information
                           {pendingCompanyData && (
-                            <span className="ml-2 text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Pending Update</span>
+                            <span className="ml-2 text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full flex items-center">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Pending Update
+                            </span>
                           )}
                         </h3>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
-                          {/* Company Name */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-gray-500">Company Name</p>
+                          {/* Company Name with icon */}
+                          <div className="space-y-1.5 bg-white/60 p-2 rounded-md border border-blue-50">
+                            <p className="text-xs font-medium text-gray-500 flex items-center">
+                              <svg className="w-3.5 h-3.5 mr-1.5 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M9 22V12H15V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Company Name
+                            </p>
                             <p className="text-sm font-semibold text-gray-800">{company?.name || "Not provided"}</p>
                           </div>
                           
-                          {/* Organization Size */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-gray-500">Organization Size</p>
+                          {/* Organization Size with icon */}
+                          <div className="space-y-1.5 bg-white/60 p-2 rounded-md border border-blue-50">
+                            <p className="text-xs font-medium text-gray-500 flex items-center">
+                              <svg className="w-3.5 h-3.5 mr-1.5 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Organization Size
+                            </p>
                             <p className="text-sm font-semibold text-gray-800">
                               {employeeCount ? getEmployeeCountLabel(employeeCount) : "Not provided"}
                             </p>
                           </div>
                           
-                          {/* Annual Revenue */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-gray-500">Annual Revenue</p>
+                          {/* Annual Revenue with icon */}
+                          <div className="space-y-1.5 bg-white/60 p-2 rounded-md border border-blue-50">
+                            <p className="text-xs font-medium text-gray-500 flex items-center">
+                              <DollarSign className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+                              Annual Revenue
+                            </p>
                             <p className="text-sm font-semibold text-gray-800">
                               {revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}
                             </p>
                           </div>
                           
-                          {/* Account Owner */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-gray-500">Account Owner</p>
+                          {/* Account Owner with icon */}
+                          <div className="space-y-1.5 bg-white/60 p-2 rounded-md border border-blue-50">
+                            <p className="text-xs font-medium text-gray-500 flex items-center">
+                              <svg className="w-3.5 h-3.5 mr-1.5 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              Account Owner
+                            </p>
                             <p className="text-sm font-semibold text-gray-800">{user?.full_name || user?.email || "Not provided"}</p>
                           </div>
                         </div>
@@ -1238,43 +1278,71 @@ export function WelcomeModal() {
                       
                       {/* Team Invitations Section - only show if invitations have been added */}
                       {(cfoName || cisoName) && (
-                        <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100/80 space-y-3 shadow-sm">
+                        <div className="bg-blue-50/70 rounded-lg p-4 border border-blue-100/90 space-y-3 shadow-sm">
                           <h3 className="text-base font-semibold text-gray-700 flex items-center">
-                            <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
+                            <Shield className="w-5 h-5 mr-2 text-primary" />
                             Team Invitations
                           </h3>
                           
                           <div className="space-y-3">
+                            {/* Add debugging for team invites */}
+                            {(() => {
+                              console.log('[ONBOARDING DEBUG] Rendering team invitations:', {
+                                cfoInvite: cfoName && cfoEmail ? { name: cfoName, email: cfoEmail } : null,
+                                cisoInvite: cisoName && cisoEmail ? { name: cisoName, email: cisoEmail } : null
+                              });
+                              return null;
+                            })()}
+                            
                             {/* CFO Invitation - only show if both fields are filled */}
                             {cfoName && cfoEmail && (
-                              <div className="bg-white/70 rounded-md p-3 border border-gray-100">
+                              <div className="bg-white/70 rounded-md p-3 border border-blue-50 hover:shadow-md transition-shadow duration-200">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center">
-                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded mr-2">CFO</span>
+                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-md mr-2 border border-gray-300/30 flex items-center">
+                                      <DollarSign className="w-3.5 h-3.5 mr-1" />
+                                      CFO
+                                    </span>
                                     <p className="text-sm font-semibold text-gray-800">{cfoName}</p>
                                   </div>
                                   <span className="text-xs font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">KYB Form</span>
                                 </div>
-                                <p className="text-xs text-gray-600">{cfoEmail}</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md">{cfoEmail}</p>
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <svg className="w-3.5 h-3.5 mr-1.5 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                    Financial reporting
+                                  </span>
+                                </div>
                               </div>
                             )}
                             
                             {/* CISO Invitation - only show if both fields are filled */}
                             {cisoName && cisoEmail && (
-                              <div className="bg-white/70 rounded-md p-3 border border-gray-100">
+                              <div className="bg-white/70 rounded-md p-3 border border-blue-50 hover:shadow-md transition-shadow duration-200">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center">
-                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded mr-2">CISO</span>
+                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-md mr-2 border border-gray-300/30 flex items-center">
+                                      <Shield className="w-3.5 h-3.5 mr-1" />
+                                      CISO
+                                    </span>
                                     <p className="text-sm font-semibold text-gray-800">{cisoName}</p>
                                   </div>
                                   <span className="text-xs font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">KY3P Assessment</span>
                                 </div>
-                                <p className="text-xs text-gray-600">{cisoEmail}</p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md">{cisoEmail}</p>
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <svg className="w-3.5 h-3.5 mr-1.5 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                    Security assessment
+                                  </span>
+                                </div>
                               </div>
                             )}
                             
@@ -1288,11 +1356,15 @@ export function WelcomeModal() {
                         </div>
                       )}
                       
-                      {/* Final confirmation message */}
-                      <div className="mt-4 bg-green-50 rounded-lg p-3 border border-green-100">
-                        <p className="text-sm text-gray-700">
-                          Please review the information above. When you're ready, click the "Next" button to complete 
-                          your onboarding process and submit your information.
+                      {/* Final confirmation message with better formatting */}
+                      <div className="mt-4 bg-green-50 rounded-lg p-4 border border-green-100/80 shadow-sm">
+                        <p className="text-sm text-gray-700 flex items-center font-medium">
+                          <svg className="w-4 h-4 mr-2 text-green-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Please review the information above. When you're ready, click the "Next" button to 
+                          complete your onboarding process and submit your information.
                         </p>
                       </div>
                     </motion.div>
