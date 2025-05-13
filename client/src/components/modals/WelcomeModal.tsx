@@ -209,7 +209,7 @@ export function WelcomeModal() {
   const [showModal, setShowModal] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   const [imageOpacity, setImageOpacity] = useState(0);
-  const [employeeCount, setEmployeeCount] = useState<string>("");
+  const [employeeCount, setEmployeeCount] = useState<number | null>(null);
   const [revenueTier, setRevenueTier] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -661,6 +661,25 @@ export function WelcomeModal() {
     return !hasValidationErrors;
   };
 
+  /**
+   * Stores company information locally to be submitted at the end of the flow
+   * Tracks whether we have pending company data changes that need to be submitted
+   */
+  const [pendingCompanyData, setPendingCompanyData] = useState<boolean>(false);
+  
+  // Map revenue tier to readable string for display in review
+  const getRevenueTierLabel = (tier: string): string => {
+    const found = REVENUE_TIERS.find(option => option.value === tier);
+    return found ? found.label : tier;
+  };
+  
+  // Map employee count to readable string for display in review
+  const getEmployeeCountLabel = (count: number | null): string => {
+    if (count === null) return "Not provided";
+    const found = EMPLOYEE_COUNTS.find(option => Number(option.value) === count);
+    return found ? found.label : count.toString();
+  };
+
   const handleNext = async () => {
     // For step 2 (index 1), check if both form fields are filled out
     if (currentSlide === 1) {
@@ -669,34 +688,27 @@ export function WelcomeModal() {
         toast({
           title: "Please complete all fields",
           description: "Both company size and annual revenue are required to continue.",
-          variant: "destructive"
+          variant: "destructive",
+          duration: 2500
         });
         return;
       }
       
-      // If form is valid, save the data
-      setIsSubmitting(true);
-      updateCompanyMutation.mutate(
-        { 
+      // Log the company information for debugging purposes
+      import('@/lib/logger').then(({ logger }) => {
+        logger.debug('[WelcomeModal] Storing company information locally', {
           numEmployees: employeeCount,
-          revenueTier: revenueTier 
-        },
-        {
-          onSuccess: () => {
-            setIsSubmitting(false);
-            setCurrentSlide(prev => prev + 1);
-          },
-          onError: (error) => {
-            setIsSubmitting(false);
-            toast({
-              title: "Error saving company information",
-              description: "There was a problem saving your company details. Please try again.",
-              variant: "destructive"
-            });
-            console.error('[ONBOARDING DEBUG] Error saving company information:', error);
-          }
-        }
-      );
+          revenueTier: revenueTier,
+          employeeLabel: getEmployeeCountLabel(employeeCount),
+          revenueLabel: getRevenueTierLabel(revenueTier)
+        });
+      });
+      
+      // Mark that we have pending company data to be submitted at the end
+      setPendingCompanyData(true);
+      
+      // Simply advance to the next slide without submitting to API yet
+      setCurrentSlide(prev => prev + 1);
       return;
     }
     
@@ -1099,6 +1111,120 @@ export function WelcomeModal() {
                             />
                           </div>
                         </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Review Information (step 6) */}
+                  {currentSlide === 5 && (
+                    <motion.div
+                      className="mt-3 space-y-4 transform-gpu overflow-y-auto max-h-[400px] pr-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      style={{ willChange: 'opacity' }}
+                    >
+                      {/* Company Information Section */}
+                      <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100/80 space-y-3 shadow-sm">
+                        <h3 className="text-base font-semibold text-gray-700 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 8H20C21.1 8 22 8.9 22 10V20C22 21.1 21.1 22 20 22H4C2.9 22 2 21.1 2 20V10C2 8.9 2.9 8 4 8H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M15 6C15 3.79 13.21 2 11 2C8.79 2 7 3.79 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M11 10C12.1046 10 13 9.10457 13 8C13 6.89543 12.1046 6 11 6C9.89543 6 9 6.89543 9 8C9 9.10457 9.89543 10 11 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M11 22V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Company Information
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+                          {/* Company Name */}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500">Company Name</p>
+                            <p className="text-sm font-semibold text-gray-800">{company?.name || "Not provided"}</p>
+                          </div>
+                          
+                          {/* Organization Size */}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500">Organization Size</p>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {employeeCount ? getEmployeeCountLabel(Number(employeeCount)) : "Not provided"}
+                            </p>
+                          </div>
+                          
+                          {/* Annual Revenue */}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500">Annual Revenue</p>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {revenueTier ? getRevenueTierLabel(revenueTier) : "Not provided"}
+                            </p>
+                          </div>
+                          
+                          {/* Account Owner */}
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-gray-500">Account Owner</p>
+                            <p className="text-sm font-semibold text-gray-800">{user?.full_name || user?.email || "Not provided"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Team Invitations Section - only show if invitations have been added */}
+                      {(cfoName || cisoName) && (
+                        <div className="bg-blue-50/60 rounded-lg p-4 border border-blue-100/80 space-y-3 shadow-sm">
+                          <h3 className="text-base font-semibold text-gray-700 flex items-center">
+                            <svg className="w-5 h-5 mr-2 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Team Invitations
+                          </h3>
+                          
+                          <div className="space-y-3">
+                            {/* CFO Invitation - only show if both fields are filled */}
+                            {cfoName && cfoEmail && (
+                              <div className="bg-white/70 rounded-md p-3 border border-gray-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center">
+                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded mr-2">CFO</span>
+                                    <p className="text-sm font-semibold text-gray-800">{cfoName}</p>
+                                  </div>
+                                  <span className="text-xs font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">KYB Form</span>
+                                </div>
+                                <p className="text-xs text-gray-600">{cfoEmail}</p>
+                              </div>
+                            )}
+                            
+                            {/* CISO Invitation - only show if both fields are filled */}
+                            {cisoName && cisoEmail && (
+                              <div className="bg-white/70 rounded-md p-3 border border-gray-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center">
+                                    <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded mr-2">CISO</span>
+                                    <p className="text-sm font-semibold text-gray-800">{cisoName}</p>
+                                  </div>
+                                  <span className="text-xs font-medium text-primary bg-primary/5 px-2 py-0.5 rounded-full">KY3P Assessment</span>
+                                </div>
+                                <p className="text-xs text-gray-600">{cisoEmail}</p>
+                              </div>
+                            )}
+                            
+                            {/* No invitations message if none were added */}
+                            {!cfoName && !cisoName && (
+                              <div className="text-center py-2">
+                                <p className="text-sm text-gray-500">No team members invited</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Final confirmation message */}
+                      <div className="mt-4 bg-green-50 rounded-lg p-3 border border-green-100">
+                        <p className="text-sm text-gray-700">
+                          Please review the information above. When you're ready, click the "Next" button to complete 
+                          your onboarding process and submit your information.
+                        </p>
                       </div>
                     </motion.div>
                   )}
