@@ -122,7 +122,7 @@ export default function ClaimDisputePage() {
 
   // Format currency
   const formatCurrency = (amount: number) => {
-    return `$${Math.round(amount).toLocaleString('en-US')}`;
+    return Math.round(amount).toLocaleString('en-US');
   };
 
   // Mock data structured from the screenshot
