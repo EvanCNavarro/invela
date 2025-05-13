@@ -857,19 +857,19 @@ export function OnboardingModal() {
                 <div className="space-y-5">
                   {teamMembers.map((member, index) => (
                     <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
-                      <CardContent className="pt-5 pb-5">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="bg-primary/10 text-primary py-1.5 px-4 rounded-full text-sm font-medium">
+                      <CardContent className="pt-6 pb-6">
+                        <div className="flex items-center gap-3 mb-5">
+                          <div className="bg-primary/10 text-primary py-2 px-4 rounded-full text-base font-medium">
                             {member.role}
                           </div>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-base text-gray-600">
                             {member.roleDescription} {member.formType}
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div>
-                            <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
+                            <Label htmlFor={`name-${index}`} className="mb-3 block text-base font-medium">
                               Full Name
                             </Label>
                             <Input
@@ -880,12 +880,12 @@ export function OnboardingModal() {
                                 newMembers[index].fullName = e.target.value;
                                 setTeamMembers(newMembers);
                               }}
-                              className={cn("h-11", member.fullName ? "border-green-500" : "")}
+                              className={cn("h-12 text-base", member.fullName ? "border-green-500" : "")}
                               placeholder="Jane Smith"
                             />
                           </div>
                           <div>
-                            <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
+                            <Label htmlFor={`email-${index}`} className="mb-3 block text-base font-medium">
                               Email Address
                             </Label>
                             <Input
@@ -897,7 +897,7 @@ export function OnboardingModal() {
                                 newMembers[index].email = e.target.value;
                                 setTeamMembers(newMembers);
                               }}
-                              className={cn("h-11", 
+                              className={cn("h-12 text-base", 
                                 member.email && member.email.includes('@') ? "border-green-500" : ""
                               )}
                               placeholder="jane.smith@company.com"
@@ -944,40 +944,40 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 6
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Review Provided Information</h2>
-                <p className="text-base text-gray-700 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">Review Provided Information</h2>
+                <p className="text-lg text-gray-700 mb-8">
                   Please confirm the information you've provided before completing the onboarding process.
                 </p>
                 
-                <div className="space-y-4 text-base mt-4 bg-gray-50 p-5 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-24">Company:</span>
-                    <span className="text-gray-900">{currentCompany?.name}</span>
+                <div className="space-y-5 text-base mt-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">Company:</span>
+                    <span className="text-gray-900 text-base">{currentCompany?.name}</span>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-24">Category:</span>
-                    <span className="text-gray-900">{currentCompany?.category}</span>
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">Category:</span>
+                    <span className="text-gray-900 text-base">{currentCompany?.category}</span>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-24">Size:</span>
-                    <span className="text-gray-900">{companyInfo.size || "Not specified"}</span>
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">Size:</span>
+                    <span className="text-gray-900 text-base">{companyInfo.size || "Not specified"}</span>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-24">Revenue:</span>
-                    <span className="text-gray-900">{companyInfo.revenue || "Not specified"}</span>
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">Revenue:</span>
+                    <span className="text-gray-900 text-base">{companyInfo.revenue || "Not specified"}</span>
                   </div>
                   
                   {teamMembers[0].fullName && (
