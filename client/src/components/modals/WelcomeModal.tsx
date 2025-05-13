@@ -958,9 +958,9 @@ export function WelcomeModal() {
                     >
                       {/* CFO Invitation */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2">
-                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">CFO</span>
-                          <Label className="text-base font-semibold block">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
+                        <div className="mb-2 flex items-center">
+                          <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CFO</span>
+                          <Label className="text-base font-semibold inline">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
@@ -993,9 +993,9 @@ export function WelcomeModal() {
                       
                       {/* CISO Invitation */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2">
-                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">CISO</span>
-                          <Label className="text-base font-semibold block">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
+                        <div className="mb-2 flex items-center">
+                          <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CISO</span>
+                          <Label className="text-base font-semibold inline">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
@@ -1028,9 +1028,9 @@ export function WelcomeModal() {
                       
                       {/* Legal Dept Invitation */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2">
-                          <span className="inline-block px-3 py-1 rounded-md bg-blue-100 text-blue-800 text-sm font-medium mb-2">Legal</span>
-                          <Label className="text-base font-semibold block">Regulatory Compliance for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">Open Banking Survey</span></Label>
+                        <div className="mb-2 flex items-center">
+                          <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">Legal</span>
+                          <Label className="text-base font-semibold inline">Regulatory Compliance for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">Open Banking Survey</span></Label>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
@@ -1060,11 +1060,6 @@ export function WelcomeModal() {
                           </div>
                         </div>
                       </div>
-                      
-                      <p className="text-sm text-gray-500 mt-1">
-                        <Info className="h-4 w-4 inline-block mr-1 text-blue-600" />
-                        Invites will be sent on the final step.
-                      </p>
                     </motion.div>
                   )}
                   
