@@ -554,41 +554,66 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-8">
-                Welcome to the<br />Invela Trust Network
-              </h2>
-              <ul className="space-y-6">
-                <li className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Welcome to the<br />Invela Trust Network
+                </h2>
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <p className="text-base text-gray-700">
+                      Your premier partner for secure and efficient accreditation
+                    </p>
                   </div>
-                  <span className="text-base">Your premier partner for secure and efficient accreditation</span>
-                </li>
-                <li className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <p className="text-base text-gray-700">
+                      Enterprise-grade risk assessment and management platform
+                    </p>
                   </div>
-                  <span className="text-base">Enterprise-grade risk assessment and management platform</span>
-                </li>
-                <li className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="mt-1 h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <p className="text-base text-gray-700">
+                      Streamlined compliance processes with advanced automation
+                    </p>
                   </div>
-                  <span className="text-base">Streamlined compliance processes with advanced automation</span>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_1.png" 
-                  alt="Welcome to Invela" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_1.png" 
+                      alt="Welcome to Invela" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -944,25 +969,25 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[650px] max-w-5xl">
+      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[600px] max-w-[860px]">
         <div className="p-6 pb-4">
-          <div className="text-base font-medium bg-blue-100 text-blue-600 py-2 px-5 rounded-full inline-block">
-            Onboarding Modal
+          <div className="text-sm font-medium bg-primary/10 text-primary py-2 px-5 rounded-full inline-block">
+            Onboarding
           </div>
         </div>
         
-        <div className="flex-grow overflow-y-auto">
+        <div className="flex-grow overflow-auto">
           {renderStepContent()}
         </div>
         
-        <div className="px-8 py-6 border-t flex justify-between items-center mt-auto">
+        <div className="p-5 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
           <div className="w-32">
             {currentStep > 0 ? (
               <Button
                 variant="outline"
                 size="lg"
                 onClick={handlePrevious}
-                className="flex items-center gap-2 h-11 px-5"
+                className="flex items-center gap-2 h-11 px-5 text-gray-700 border-gray-300 hover:bg-gray-50"
               >
                 <ArrowLeft className="h-5 w-5" />
                 Back
@@ -983,7 +1008,7 @@ export function OnboardingModal() {
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
               }
-              className="flex items-center gap-2 h-11 px-6"
+              className="flex items-center gap-2 h-11 px-6 min-w-[80px] shadow-sm"
             >
               {currentStep === 6 ? "Start" : "Next"}
               {currentStep !== 6 && <ChevronRight className="h-5 w-5" />}
