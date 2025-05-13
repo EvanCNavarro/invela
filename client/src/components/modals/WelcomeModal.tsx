@@ -843,12 +843,20 @@ export function WelcomeModal() {
    * Helper function to process a list of team invitations
    * This extracted function can be used with both normal and recovered user data
    * 
-   * @param {Array} invitations - List of invitation objects to process
-   * @param {Object} logger - Logger instance for consistent logging
-   * @returns {Promise<boolean>} Promise that resolves to true if invitations were processed
-   * @throws {Error} If there's an issue with sending the invitations that shouldn't be ignored
+   * @param invitations - List of invitation objects to process
+   * @param logger - Logger instance for consistent logging
+   * @returns Promise that resolves to true if invitations were processed
+   * @throws Error if there's an issue with sending the invitations that shouldn't be ignored
    */
-  const processInvitationsList = async (invitations, logger) => {
+  const processInvitationsList = async (
+    invitations: TeamMemberInvite[], 
+    logger: { 
+      info: (message: string, data?: any) => void;
+      debug: (message: string, data?: any) => void;
+      error: (message: string, data?: any) => void;
+      warn: (message: string, data?: any) => void;
+    }
+  ): Promise<boolean> => {
     if (!invitations || invitations.length === 0) {
       logger.debug('[WelcomeModal] No team invitations to process in helper');
       return false;
