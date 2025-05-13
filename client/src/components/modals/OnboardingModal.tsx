@@ -706,7 +706,7 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
@@ -774,7 +774,7 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
@@ -838,7 +838,7 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
@@ -940,7 +940,7 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
@@ -1028,7 +1028,7 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
               <div>
