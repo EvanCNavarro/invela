@@ -655,6 +655,7 @@ interface UniversalFormProps {
   companyName?: string; // Optional company name to display in the form title
   isReadOnly?: boolean; // Flag to force read-only mode (for completed/submitted forms)
   refreshData?: () => Promise<void>; // Function to refresh form data after clearing fields
+  isSubmitting?: boolean; // Flag to indicate the form is currently submitting - allows parent to control this state
 }
 
 /**
@@ -669,7 +670,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   onProgress,
   companyName,
   isReadOnly,
-  refreshData
+  refreshData,
+  isSubmitting: externalIsSubmitting // Parent component can control the submission state
 }) => {
   // Get user and company data for the consent section
   const { user } = useUser();
@@ -684,8 +686,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [fields, setFields] = useState<ServiceFormField[]>([]);
   const [forceRerender, setForceRerender] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [internalIsSubmitting, setInternalIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use external submission state if provided, otherwise use internal state
+  const isSubmitting = externalIsSubmitting !== undefined ? externalIsSubmitting : internalIsSubmitting;
   
   // State for WebSocket-based form submission
   const [showSuccessModal, setShowSuccessModal] = useState(false);
