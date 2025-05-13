@@ -663,39 +663,39 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-4">A Few Tasks Ahead</h2>
-              <p className="text-gray-600 text-sm mb-6">
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">A Few Tasks Ahead</h2>
+              <p className="text-base text-gray-600 mb-8">
                 To complete your accreditation application, you'll
                 need to work through the following tasks:
               </p>
               
-              <ol className="space-y-4 text-sm">
-                <li className="flex items-center gap-3">
-                  <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-medium">1</span>
-                  <span className="font-medium">KYB Form</span>
+              <ol className="space-y-6">
+                <li className="flex items-center gap-4">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">1</span>
+                  <span className="font-medium text-base">KYB Form</span>
                 </li>
-                <li className="flex items-center gap-3">
-                  <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-medium">2</span>
-                  <span className="font-medium">S&P KY3P Security Assessment</span>
+                <li className="flex items-center gap-4">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">2</span>
+                  <span className="font-medium text-base">S&P KY3P Security Assessment</span>
                 </li>
-                <li className="flex items-center gap-3">
-                  <span className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-500 text-white text-sm font-medium">3</span>
-                  <span className="font-medium">Open Banking Survey</span>
+                <li className="flex items-center gap-4">
+                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">3</span>
+                  <span className="font-medium text-base">Open Banking Survey</span>
                 </li>
               </ol>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_3.png" 
                   alt="Task Overview" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -703,16 +703,16 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-4">Streamline with Document Uploads</h2>
-              <p className="text-gray-600 text-sm mb-6">
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">Streamline with Document Uploads</h2>
+              <p className="text-base text-gray-600 mb-8">
                 Accelerate your accreditation by uploading critical
                 documents upfront. Our AI-driven system auto-fills
                 forms, saving you time.
               </p>
               
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {[
                   "SOC 2", 
                   "ISO 27001",
@@ -724,22 +724,22 @@ export function OnboardingModal() {
                   "Business Continuity Plan",
                   "Data Protection Policies"
                 ].map((doc, i) => (
-                  <div key={i} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  <div key={i} className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                     {doc}
                   </div>
                 ))}
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_4.png" 
                   alt="Document Upload" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -747,25 +747,25 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-5">Invite Your Team</h2>
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">Invite Your Team</h2>
               
               {teamMembers.map((member, index) => (
-                <Card key={index} className="mb-4 overflow-hidden border-gray-200">
-                  <CardContent className="pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="bg-blue-100 text-blue-700 py-1 px-3 rounded-full text-xs font-medium">
+                <Card key={index} className="mb-5 overflow-hidden border-gray-200 shadow-sm">
+                  <CardContent className="pt-5 pb-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-blue-100 text-blue-700 py-1.5 px-4 rounded-full text-sm font-medium">
                         {member.role}
                       </div>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-sm text-gray-600">
                         {member.roleDescription} {member.formType}
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`name-${index}`} className="mb-1 block text-xs font-medium">
+                        <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
                           Full Name
                         </Label>
                         <Input
@@ -776,11 +776,11 @@ export function OnboardingModal() {
                             newMembers[index].fullName = e.target.value;
                             setTeamMembers(newMembers);
                           }}
-                          className={cn("h-9", member.fullName ? "border-green-500" : "")}
+                          className={cn("h-11", member.fullName ? "border-green-500" : "")}
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`email-${index}`} className="mb-1 block text-xs font-medium">
+                        <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
                           Email Address
                         </Label>
                         <Input
@@ -792,7 +792,7 @@ export function OnboardingModal() {
                             newMembers[index].email = e.target.value;
                             setTeamMembers(newMembers);
                           }}
-                          className={cn("h-9", 
+                          className={cn("h-11", 
                             member.email && member.email.includes('@') ? "border-green-500" : ""
                           )}
                         />
@@ -807,15 +807,15 @@ export function OnboardingModal() {
               </p>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_5.png" 
                   alt="Team Invitation" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -823,38 +823,38 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-5">Review Provided Information</h2>
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">Review Provided Information</h2>
               
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <Check className="text-green-500 h-5 w-5" />
+              <div className="space-y-5 text-base">
+                <div className="flex items-center gap-3">
+                  <Check className="text-green-500 h-6 w-6" />
                   <span className="font-medium">Company:</span>
                   <span>{currentCompany?.name}</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Check className="text-green-500 h-5 w-5" />
+                <div className="flex items-center gap-3">
+                  <Check className="text-green-500 h-6 w-6" />
                   <span className="font-medium">Category:</span>
                   <span>{currentCompany?.category}</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Check className="text-green-500 h-5 w-5" />
+                <div className="flex items-center gap-3">
+                  <Check className="text-green-500 h-6 w-6" />
                   <span className="font-medium">Size:</span>
                   <span>{companyInfo.size || "Not specified"}</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Check className="text-green-500 h-5 w-5" />
+                <div className="flex items-center gap-3">
+                  <Check className="text-green-500 h-6 w-6" />
                   <span className="font-medium">Revenue:</span>
                   <span>{companyInfo.revenue || "Not specified"}</span>
                 </div>
                 
                 {teamMembers[0].fullName && (
-                  <div className="flex items-center gap-2">
-                    <Check className="text-green-500 h-5 w-5" />
+                  <div className="flex items-center gap-3">
+                    <Check className="text-green-500 h-6 w-6" />
                     <span className="font-medium">CFO:</span>
                     <span>
                       {teamMembers[0].fullName} ({teamMembers[0].email})
@@ -863,8 +863,8 @@ export function OnboardingModal() {
                 )}
                 
                 {teamMembers[1].fullName && (
-                  <div className="flex items-center gap-2">
-                    <Check className="text-green-500 h-5 w-5" />
+                  <div className="flex items-center gap-3">
+                    <Check className="text-green-500 h-6 w-6" />
                     <span className="font-medium">CISO:</span>
                     <span>
                       {teamMembers[1].fullName} ({teamMembers[1].email})
