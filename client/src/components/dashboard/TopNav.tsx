@@ -97,7 +97,7 @@ export function TopNav() {
 
   return (
     <div className="w-full h-full">
-      <div className="h-14 px-6 flex items-center w-full">
+      <div className="h-14 px-6 flex justify-between items-center w-full">
         <div className="min-w-0 w-auto">
           <SearchBar
             isGlobalSearch
@@ -107,7 +107,7 @@ export function TopNav() {
           />
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           <div className="hidden sm:flex items-center gap-2">
             {/* WebSocket functionality still maintained in the context provider */}
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
