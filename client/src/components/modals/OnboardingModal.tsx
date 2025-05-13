@@ -554,41 +554,41 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-6">
+              <h2 className="text-3xl font-bold text-blue-600 mb-8">
                 Welcome to the<br />Invela Trust Network
               </h2>
-              <ul className="space-y-4 text-sm">
-                <li className="flex gap-2 items-start">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-4 w-4 text-blue-500" />
+              <ul className="space-y-6">
+                <li className="flex gap-3 items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-5 w-5 text-blue-500" />
                   </div>
-                  <span>Your premier partner for secure and efficient accreditation</span>
+                  <span className="text-base">Your premier partner for secure and efficient accreditation</span>
                 </li>
-                <li className="flex gap-2 items-start">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                <li className="flex gap-3 items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-5 w-5 text-blue-500" />
                   </div>
-                  <span>Enterprise-grade risk assessment and management platform</span>
+                  <span className="text-base">Enterprise-grade risk assessment and management platform</span>
                 </li>
-                <li className="flex gap-2 items-start">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                <li className="flex gap-3 items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+                    <CheckCircle className="h-5 w-5 text-blue-500" />
                   </div>
-                  <span>Streamlined compliance processes with advanced automation</span>
+                  <span className="text-base">Streamlined compliance processes with advanced automation</span>
                 </li>
               </ul>
             </div>
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_1.png" 
                   alt="Welcome to Invela" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -596,23 +596,23 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <h2 className="text-2xl font-bold text-blue-600 mb-4">Company Information</h2>
-              <p className="text-gray-600 text-sm mb-6">
+              <h2 className="text-3xl font-bold text-blue-600 mb-6">Company Information</h2>
+              <p className="text-base text-gray-600 mb-8">
                 Add basic details about {currentCompany?.name}:
               </p>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <Label htmlFor="company-size" className="text-sm font-medium block mb-1.5">
+                  <Label htmlFor="company-size" className="text-base font-medium block mb-2">
                     Company Size <span className="text-red-500">*</span>
                   </Label>
                   <Select 
                     value={companyInfo.size} 
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
                   >
-                    <SelectTrigger id="company-size" className="h-9">
+                    <SelectTrigger id="company-size" className="h-12">
                       <SelectValue placeholder="Select number of employees" />
                     </SelectTrigger>
                     <SelectContent>
@@ -626,14 +626,14 @@ export function OnboardingModal() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="company-revenue" className="text-sm font-medium block mb-1.5">
+                  <Label htmlFor="company-revenue" className="text-base font-medium block mb-2">
                     Annual Revenue <span className="text-red-500">*</span>
                   </Label>
                   <Select 
                     value={companyInfo.revenue} 
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
                   >
-                    <SelectTrigger id="company-revenue" className="h-9">
+                    <SelectTrigger id="company-revenue" className="h-12">
                       <SelectValue placeholder="Select annual revenue" />
                     </SelectTrigger>
                     <SelectContent>
@@ -647,15 +647,15 @@ export function OnboardingModal() {
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_2.png" 
                   alt="Company Information" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -944,25 +944,25 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[600px]">
+      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[650px] max-w-5xl">
         <div className="p-6 pb-4">
-          <div className="text-sm font-medium bg-blue-100 text-blue-600 py-1 px-3 rounded-full inline-block">
+          <div className="text-sm font-medium bg-blue-100 text-blue-600 py-1.5 px-4 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
         
-        <div className="flex-grow overflow-y-auto px-4">
+        <div className="flex-grow overflow-y-auto">
           {renderStepContent()}
         </div>
         
-        <div className="px-6 py-4 border-t flex justify-between items-center mt-auto">
-          <div className="w-24">
+        <div className="px-8 py-5 border-t flex justify-between items-center mt-auto">
+          <div className="w-28">
             {currentStep > 0 ? (
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={handlePrevious}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1.5 h-10 px-4"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -974,19 +974,19 @@ export function OnboardingModal() {
           
           <ProgressDots />
           
-          <div className="w-24 flex justify-end">
+          <div className="w-28 flex justify-end">
             <Button
-              size="sm"
+              size="default"
               onClick={handleNext}
               disabled={
                 updateCompanyMutation.isPending || 
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
               }
-              className="flex items-center gap-1"
+              className="flex items-center gap-1.5 h-10 px-5"
             >
               {currentStep === 6 ? "Start" : "Next"}
-              {currentStep !== 6 && <ChevronRight className="h-4 w-4" />}
+              {currentStep !== 6 && <ChevronRight className="h-5 w-5" />}
             </Button>
           </div>
         </div>
