@@ -139,7 +139,7 @@ const carouselContent: CarouselItem[] = [
     src: "/attached_assets/welcome_7.png",
     alt: "Ready to Begin",
     title: "Ready to Begin",
-    subtitle: "Your information has been submitted successfully. You're now ready to start your onboarding journey within the Invela Trust Network."
+    subtitle: "Your company profile is now set up! To complete your accreditation process, you'll need to finish your assigned tasks, starting with the KYB Form."
   }
 ];
 
@@ -960,6 +960,41 @@ export function WelcomeModal() {
                     /* Skip showing default title for step 6 (review page) since it has its own title */
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
                       {/* Intentionally empty - no title for review page here */}
+                    </motion.div>
+                  ) : currentSlide === 6 ? (
+                    /* Custom treatment for final step (Ready to Begin) */
+                    <motion.div 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      transition={{ delay: 0.2 }}
+                      className="text-center mb-2"
+                    >
+                      <motion.div 
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                        className="mx-auto mt-1 mb-4 flex items-center justify-center"
+                      >
+                        <div className="h-16 w-16 rounded-full bg-green-100 border-4 border-green-200 flex items-center justify-center shadow-sm">
+                          <CheckCircle2 className="h-10 w-10 text-green-600" />
+                        </div>
+                      </motion.div>
+                      <motion.h2 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="text-2xl font-bold text-gray-900 mb-3"
+                      >
+                        {carouselContent[currentSlide].title}
+                      </motion.h2>
+                      <motion.p
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        className="text-base text-gray-600 max-w-md mx-auto"
+                      >
+                        {carouselContent[currentSlide].subtitle}
+                      </motion.p>
                     </motion.div>
                   ) : (
                     <>
