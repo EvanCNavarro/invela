@@ -14,7 +14,7 @@ import { EnhancedSkeleton } from "@/components/ui/enhanced-skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, CheckCircle, ChevronRight, ArrowLeft } from "lucide-react";
+import { Check, CheckCircle, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -539,7 +539,7 @@ export function OnboardingModal() {
         <div
           key={i}
           className={cn(
-            "h-3 w-3 rounded-full transition-colors duration-200",
+            "h-2.5 w-2.5 rounded-full transition-colors duration-200",
             i < currentStep ? "bg-blue-500" : 
             currentStep === i ? "bg-blue-600 ring-2 ring-blue-200" : 
             "bg-gray-200"
@@ -890,7 +890,7 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
               <div className="mx-auto mb-6">
                 <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -898,23 +898,40 @@ export function OnboardingModal() {
                 </div>
               </div>
               
-              <h2 className="text-2xl font-semibold text-center mb-4">Ready to Begin</h2>
-              <p className="text-center text-muted-foreground mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 text-center mb-4">Ready to Begin</h2>
+              <p className="text-center text-gray-600 text-sm mb-6">
                 Your company profile is now set up! To complete your
                 accreditation process, you'll need to finish your assigned
                 tasks, starting with the KYB Form.
               </p>
+              
+              <div className="space-y-3 text-sm mx-auto max-w-md">
+                <div className="flex items-center gap-2">
+                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+                  <span>Complete the KYB form to verify your business identity</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+                  <span>Upload compliance documents to fast-track your accreditation</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+                  <span>Answer security and compliance questions accurately</span>
+                </div>
+              </div>
             </div>
             
-            <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_7.png" 
                   alt="Ready to Begin" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
