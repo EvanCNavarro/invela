@@ -728,7 +728,7 @@ export function WelcomeModal() {
       // First, save the company data
       try {
         await updateCompanyMutation.mutateAsync({ 
-          numEmployees: employeeCount !== null ? employeeCount.toString() : undefined,
+          numEmployees: employeeCount !== null ? String(employeeCount) : undefined,
           revenueTier: revenueTier 
         });
         
