@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { LockIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ interface SidebarTabProps {
   showPulsingDot?: boolean;
   variant?: 'default' | 'invela';
   isPlayground?: boolean;
+  externalLink?: boolean;
   onClick?: () => void;
 }
 
@@ -28,13 +30,15 @@ export function SidebarTab({
   showPulsingDot = false,
   variant = 'default',
   isPlayground = false,
+  externalLink = false,
   onClick
 }: SidebarTabProps) {
   const content = (
     <div
+      data-menu-item={href.replace('/', '')}
       className={cn(
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-        "transition-all duration-200 relative",
+        "transition-all duration-75 relative", // Faster transition for immediate visual feedback
         !isExpanded && "justify-center",
         isActive && !isDisabled
           ? variant === 'invela'
@@ -42,7 +46,8 @@ export function SidebarTab({
             : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
           : isDisabled
             ? "opacity-50 cursor-not-allowed bg-muted/50"
-            : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
+            : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer",
+        /* no special styles for file-vault tab */
       )}
       onClick={(e) => {
         if (isPlayground) {
@@ -110,8 +115,79 @@ export function SidebarTab({
     return <div>{content}</div>;
   }
 
+  // Use regular anchor tag with target="_blank" for external links
+  if (externalLink && !isDisabled) {
+    return (
+      <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="no-underline"
+      >
+        {content}
+      </a>
+    );
+  }
+  
+  // Use Wouter Link for internal navigation
+  // The access control for tabs is now handled by the unified tab service on the server.
+  // The 'isDisabled' prop is derived from the 'availableTabs' array in the company record,
+  // which is the single source of truth for tab access control.
+  // 
+  // File Vault tab access is controlled by the server based on form submissions.
+  const isFileVaultTab = (label === "File Vault");
+  
+  // Use a ref to track previous state and only log on changes
+  const prevDisabledRef = useRef<boolean>(isDisabled);
+  
+  // Use effect to log only on state changes, not every render
+  useEffect(() => {
+    if (isFileVaultTab && prevDisabledRef.current !== isDisabled) {
+      // Import logger dynamically to avoid bundling it unnecessarily
+      import('@/lib/logger').then(({ logger }) => {
+        logger.info(`[SidebarTab] File Vault tab access changed`, { 
+          isLocked: isDisabled,
+          previousState: prevDisabledRef.current,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      // Update ref with current state for next comparison
+      prevDisabledRef.current = isDisabled;
+    }
+  }, [isDisabled, isFileVaultTab]);
+  
   return (
-    <Link href={isDisabled ? "#" : href}>
+    <Link 
+      href={href} 
+      onClick={(e) => {
+        // Log all sidebar tab clicks for debugging
+        console.log(`[SidebarTab] Clicked ${label} tab, href=${href}, isDisabled=${isDisabled}`);
+        
+        if (isDisabled) {
+          e.preventDefault();
+          console.log(`[SidebarTab] Tab "${label}" is locked. Redirecting to task-center.`);
+          // Don't use window.location.href as it causes full page refresh
+          // Use the wouter routing mechanism which preserves React state
+          window.history.pushState({}, '', '/task-center');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          return;
+        }
+        
+        // Simplified File Vault tab handling
+        // No special handling needed since access is controlled by the server
+        if (href === '/file-vault') {
+          console.log(`[SidebarTab] File Vault tab clicked - using standard navigation`);
+          
+          // We'll log the event for tracking purposes
+          try {
+            localStorage.setItem('file_vault_access_timestamp', new Date().toISOString());
+          } catch (error) {
+            console.error('[SidebarTab] Failed to update localStorage timestamp:', error);
+          }
+        }
+      }}
+    >
       {content}
     </Link>
   );

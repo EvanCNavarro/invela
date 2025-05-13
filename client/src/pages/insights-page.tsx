@@ -1,17 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
 } from "recharts";
 import {
   Select,
@@ -26,17 +18,29 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
-import { RiskFlowVisualization } from "@/components/insights/RiskFlowVisualization";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
-const visualizationTypes = [
+// Default visualization types
+const defaultVisualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
-  { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
-  { value: "risk_flow", label: "Risk Flow Visualization" },
+  { value: "risk_radar", label: "Risk Radar Chart" },
+];
+
+// FinTech-specific visualization types (only Risk Radar)
+const fintechVisualizationTypes = [
+  { value: "risk_radar", label: "Risk Radar Chart" },
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("network_visualization");
+  const [selectedVisualization, setSelectedVisualization] = useState("risk_radar");
+  const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
+  const [isFintech, setIsFintech] = useState(false);
+  
+  // Get current company data
+  const { data: currentCompany } = useQuery<any>({
+    queryKey: ["/api/companies/current"],
+  });
 
   const { data: companies = [] } = useQuery<any[]>({
     queryKey: ["/api/companies"],
@@ -46,10 +50,19 @@ export default function InsightsPage() {
     queryKey: ["/api/relationships"],
   });
 
-  // Company type distribution from API
-  const { data: companyTypeData = [] } = useQuery<{type: string, count: number, color: string}[]>({
-    queryKey: ['/api/company-type-distribution'],
-  });
+  // No longer need company type distribution API
+
+  // Determine if the current company is a FinTech
+  useEffect(() => {
+    if (currentCompany?.category === "FinTech") {
+      setIsFintech(true);
+      setVisualizationTypes(fintechVisualizationTypes);
+      setSelectedVisualization("risk_radar");
+    } else {
+      setIsFintech(false);
+      setVisualizationTypes(defaultVisualizationTypes);
+    }
+  }, [currentCompany]);
 
   const exportData = () => {
     // Implementation for PDF export would go here
@@ -58,7 +71,10 @@ export default function InsightsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      {/* Add tutorial manager for insights page */}
+      <TutorialManager tabName="insights" />
+      
+      <div className="space-y-6 flex flex-col overflow-y-auto pb-8">
         <div className="flex items-center justify-between">
           <PageHeader
             title="Insights"
@@ -70,56 +86,39 @@ export default function InsightsPage() {
           </Button>
         </div>
 
-        <div className="flex justify-between items-center">
-          <Select
-            value={selectedVisualization}
-            onValueChange={setSelectedVisualization}
-          >
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select visualization" />
-            </SelectTrigger>
-            <SelectContent>
-              {visualizationTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isFintech && (
+          <div className="flex justify-between items-center">
+            <Select
+              value={selectedVisualization}
+              onValueChange={setSelectedVisualization}
+            >
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select visualization" />
+              </SelectTrigger>
+              <SelectContent>
+                {visualizationTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-        <Widget title="" className="h-[700px]">
-          {selectedVisualization === "network_visualization" && (
+        <Widget title="" className="h-[600px] mb-12">
+          {selectedVisualization === "network_visualization" && !isFintech && (
             <NetworkInsightVisualization />
           )}
 
-          {selectedVisualization === "relationship_distribution" && (
-            <ResponsiveContainer width="100%" height={500}>
-              <BarChart data={companyTypeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="type"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <RechartsTooltip />
-                <Bar dataKey="count">
-                  {companyTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || 'hsl(var(--primary))'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          {/* Company Type Distribution visualization has been removed */}
 
-          {selectedVisualization === "accreditation_status" && (
+          {selectedVisualization === "accreditation_status" && !isFintech && (
             <AccreditationDotMatrix />
           )}
           
-          {selectedVisualization === "risk_flow" && (
-            <RiskFlowVisualization />
+          {(selectedVisualization === "risk_radar" || isFintech) && (
+            <RiskRadarChart className="bg-transparent shadow-none border-none" />
           )}
         </Widget>
       </div>

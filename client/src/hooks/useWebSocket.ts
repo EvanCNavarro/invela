@@ -1,159 +1,92 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { wsService } from '@/lib/websocket';
 
-interface UseWebSocketReturn {
-  socket: WebSocket | null;
-  connected: boolean;
-  error: Error | null;
+type MessageType = 'text' | 'connection_established' | 'ping' | 'pong';
+
+export interface WebSocketMessage {
+  type: MessageType;
+  data?: any;
+  sender?: string;
+  timestamp?: string;
+  content?: string;
 }
 
-const RECONNECT_DELAY = 2000;
-const MAX_RETRIES = 3;
-
-// Singleton instance to track global connection state
-let globalSocket: WebSocket | null = null;
-let connectionPromise: Promise<void> | null = null;
-let activeSubscribers = 0;
-
-export function useWebSocket(): UseWebSocketReturn {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const reconnectAttempt = useRef(0);
-  const queryClient = useQueryClient();
-  const mounted = useRef(true);
-
-  const connect = useCallback(() => {
-    if (!mounted.current) return;
-
-    // If we already have a connection promise, wait for it
-    if (connectionPromise) {
-      connectionPromise.then(() => {
-        if (mounted.current && globalSocket) {
-          setSocket(globalSocket);
-          setConnected(globalSocket.readyState === WebSocket.OPEN);
-        }
-      });
-      return;
-    }
-
-    // If we already have a global socket that's connected, use it
-    if (globalSocket?.readyState === WebSocket.OPEN) {
-      setSocket(globalSocket);
-      setConnected(true);
-      return;
-    }
-
-    // Create new connection
-    try {
-      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
-      console.log('[WebSocket] Creating new connection:', {
-        url: wsUrl,
-        activeSubscribers: activeSubscribers + 1,
-        timestamp: new Date().toISOString()
-      });
-
-      const ws = new WebSocket(wsUrl);
-      globalSocket = ws;
-
-      connectionPromise = new Promise((resolve) => {
-        ws.onopen = () => {
-          if (!mounted.current) {
-            ws.close();
-            return;
-          }
-          console.log('[WebSocket] Connected successfully');
-          setConnected(true);
-          setError(null);
-          reconnectAttempt.current = 0;
-          resolve();
-          connectionPromise = null;
-
-          // Send initial ping
-          ws.send(JSON.stringify({ type: 'ping' }));
-        };
-      });
-
-      ws.onclose = (event) => {
-        if (!mounted.current) return;
-
-        console.log('[WebSocket] Connection closed:', {
-          code: event.code,
-          reason: event.reason,
-          activeSubscribers,
-          timestamp: new Date().toISOString()
-        });
-
-        setConnected(false);
-        globalSocket = null;
-        connectionPromise = null;
-
-        if (event.code !== 1000 && event.code !== 1001 && reconnectAttempt.current < MAX_RETRIES) {
-          setTimeout(() => {
-            if (mounted.current) {
-              reconnectAttempt.current++;
-              connect();
-            }
-          }, RECONNECT_DELAY);
-        }
-      };
-
-      ws.onerror = (event) => {
-        if (!mounted.current) return;
-        console.error('[WebSocket] Connection error:', event);
-        setError(new Error('Connection error. Please check your internet connection.'));
-      };
-
-      ws.onmessage = (event) => {
-        if (!mounted.current) return;
-
-        try {
-          const data = JSON.parse(event.data);
-          console.log('[WebSocket] Received message:', data);
-
-          if (data.type === 'task_update') {
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          } else if (data.type === 'file_update') {
-            queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-          } else if (data.type === 'pong') {
-            console.log('[WebSocket] Received pong');
-          }
-        } catch (err) {
-          console.error('[WebSocket] Message parse error:', err);
-        }
-      };
-
-      setSocket(ws);
-      activeSubscribers++;
-
-    } catch (err) {
-      console.error('[WebSocket] Setup error:', err);
-      setError(err as Error);
-      connectionPromise = null;
-    }
-  }, [queryClient]);
-
+/**
+ * IMPORTANT: This hook is deprecated. Use the wsService from @/lib/websocket.ts instead. 
+ * This separate implementation causes duplicate WebSocket connections.
+ * 
+ * This exists for backward compatibility only and will be removed in the future.
+ */
+export const useWebSocket = () => {
+  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
+  const [connected, setConnected] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Use the singleton WebSocket service instead of creating a new connection
   useEffect(() => {
-    mounted.current = true;
-    connect();
-
-    return () => {
-      mounted.current = false;
-      activeSubscribers--;
-
-      console.log('[WebSocket] Component unmounting:', {
-        remainingSubscribers: activeSubscribers,
-        timestamp: new Date().toISOString()
-      });
-
-      // Only close the global socket if no subscribers remain
-      if (activeSubscribers === 0 && globalSocket) {
-        console.log('[WebSocket] Closing global connection - no active subscribers');
-        globalSocket.close();
-        globalSocket = null;
+    // Mark as using WebSocket services
+    let unsubscribeFunc: (() => void) | null = null;
+    
+    setConnected(true);
+    // Using a proper logger would be overkill for a deprecated hook
+    // Just leave a small debug message to indicate usage
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[Deprecated] Using shared WebSocket connection (compatibility mode)');
+    }
+    
+    // Subscribe to text messages through the shared service
+    const subscribeToMessages = async () => {
+      try {
+        unsubscribeFunc = await wsService.subscribe('text', (data) => {
+          setMessages((prevMessages) => [...prevMessages, {
+            type: 'text',
+            ...data,
+            timestamp: data.timestamp || new Date().toISOString()
+          }]);
+        });
+      } catch (err) {
+        // Keep simple error handling in deprecated hook
+        setError('Failed to connect to chat server');
       }
     };
-  }, [connect]);
+    
+    subscribeToMessages();
+    
+    // Clean up subscription on unmount
+    return () => {
+      if (unsubscribeFunc) {
+        unsubscribeFunc();
+      }
+    };
+  }, []);
 
-  return { socket, connected, error };
-}
+  // Send messages through the shared service - returns a promise for better error handling
+  const sendMessage = useCallback(async (content: string, sender: string) => {
+    try {
+      const message: WebSocketMessage = {
+        type: 'text',
+        content,
+        sender,
+        timestamp: new Date().toISOString()
+      };
+
+      // Use await to properly handle any errors from the send operation
+      await wsService.send('text', message);
+      
+      // Add the message to our local state immediately
+      setMessages((prevMessages) => [...prevMessages, message]);
+      return true;
+    } catch (err) {
+      // Still set error state but avoid console logging in deprecated hook
+      setError('Failed to send message');
+      return false;
+    }
+  }, []);
+
+  return {
+    messages,
+    connected,
+    error,
+    sendMessage
+  };
+};

@@ -2,6 +2,7 @@ import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
@@ -271,6 +272,9 @@ export default function NetworkPage() {
 
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for network page */}
+      <TutorialManager tabName="network" />
+      
       <PageTemplate
         showBreadcrumbs
       >
@@ -281,7 +285,7 @@ export default function NetworkPage() {
             actions={
               <InviteButton
                 variant="fintech"
-                pulse={true}
+                pulse={false}
                 onClick={() => setOpenFinTechModal(true)}
               />
             }
@@ -367,7 +371,7 @@ export default function NetworkPage() {
                       className="p-0 hover:bg-transparent text-right w-full justify-end"
                       onClick={() => handleSort("riskScore")}
                     >
-                      <span>Risk Score</span>
+                      <span>S&P Data Access Risk Score</span>
                       {getSortIcon("riskScore")}
                     </Button>
                   </TableHead>

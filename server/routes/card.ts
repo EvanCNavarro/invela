@@ -7,10 +7,55 @@ import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
 import { FileCreationService } from '../services/file-creation';
-import { Logger } from '../utils/logger';
+import { logger } from '../utils/logger';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
-const logger = new Logger('CardRoutes');
+// Add namespace context to logs
+const logContext = { service: 'CardRoutes' };
+
+// Helper function to convert responses to CSV for card form
+function convertResponsesToCSV(fields: any[], formData: any) {
+  try {
+    // Create headers row from field keys and labels
+    const headers = ['field_key', 'field_label', 'response_value', 'section', 'type'];
+    
+    // Create rows for each field
+    const rows = fields.map(field => {
+      const value = formData[field.field_key] || '';
+      return [
+        field.field_key,
+        field.label || field.field_key,
+        value,
+        field.section || '',
+        field.field_type || 'text'
+      ];
+    });
+    
+    // Combine headers and rows
+    const csvRows = [
+      headers,
+      ...rows
+    ];
+    
+    // Convert each row to CSV format
+    const csvContent = csvRows.map(row => 
+      row.map(cell => {
+        // Handle cells with commas, quotes, or newlines
+        if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
+          return `"${cell.replace(/"/g, '""')}"`;
+        }
+        return String(cell);
+      }).join(',')
+    ).join('\n');
+    
+    return csvContent;
+  } catch (error) {
+    logger.error('Error converting to CSV:', { error: error instanceof Error ? error.message : 'Unknown error', ...logContext });
+    return `Error generating CSV: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
 
 // Get CARD task by company name
 router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
@@ -18,7 +63,8 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
     logger.info('Fetching CARD task', {
       companyName: req.params.companyName,
       userId: req.user?.id,
-      companyId: req.user?.company_id
+      companyId: req.user?.company_id,
+      ...logContext
     });
 
     // Try multiple title formats for backward compatibility
@@ -53,7 +99,8 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
       if (task) {
         logger.info('Found CARD task using company ID fallback', {
           taskId: task.id,
-          companyId: req.user.company_id
+          companyId: req.user.company_id,
+          ...logContext
         });
       }
     }
@@ -444,6 +491,197 @@ async function processEmptyResponses(
       });
   }
 }
+
+// Save CARD form data with CSV generation
+router.post('/api/card/save', requireAuth, async (req, res) => {
+  try {
+    const { taskId, formData, fileName } = req.body;
+    
+    if (!taskId) {
+      return res.status(400).json({ error: 'Task ID is required' });
+    }
+    
+    if (!formData) {
+      return res.status(400).json({ error: 'Form data is required' });
+    }
+    
+    logger.info('Saving CARD form data', { taskId });
+    
+    // Get task data
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+
+    if (!task) {
+      logger.error('Task not found', { taskId });
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Validate that this is a CARD task
+    if (task.task_type !== 'company_card') {
+      logger.error('Invalid task type for CARD form', { taskId, taskType: task.task_type });
+      return res.status(400).json({ error: 'Invalid task type for CARD form' });
+    }
+
+    // Get all CARD fields
+    const fields = await db.select()
+      .from(cardFields)
+      .orderBy(cardFields.id);
+
+    // Convert form data to CSV
+    const csvData = convertResponsesToCSV(fields, formData);
+
+    // Validate user ID
+    const userId = req.user?.id || task.created_by;
+    if (!userId) {
+      logger.error('Unable to determine user ID for file creation', {
+        taskId,
+        userIdFromRequest: req.user?.id,
+        userIdFromTask: task.created_by,
+      });
+      return res.status(400).json({
+        error: 'User identification failed',
+        details: 'Could not determine a valid user ID for file creation'
+      });
+    }
+    
+    let fileId; 
+    const timestamp = new Date();
+
+    try {
+      // Use a transaction to ensure file creation and task updates are atomic
+      fileId = await db.transaction(async (tx) => {
+        // Create file record in the database first with actual CSV content
+        const [fileRecord] = await tx.insert(files)
+          .values({
+            name: fileName || `compliance_form_${taskId}_${timestamp.toISOString()}.csv`,
+            content: csvData, // Store the actual CSV content in the database
+            type: 'text/csv',
+            status: 'active',
+            path: `/uploads/card_${taskId}_${timestamp.getTime()}.csv`,
+            size: Buffer.from(csvData).length,
+            version: 1,
+            company_id: task.company_id,
+            user_id: userId,
+            created_by: userId,
+            created_at: timestamp,
+            updated_at: timestamp,
+            metadata: {
+              taskId,
+              taskType: 'card',
+              formVersion: '1.0',
+              submissionDate: timestamp.toISOString(),
+              fields: fields.map(f => f.field_key)
+            }
+          })
+          .returning({ id: files.id });
+          
+        if (!fileRecord) {
+          throw new Error('Failed to create file record');
+        }
+
+        // Update task status and metadata
+        await tx.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            updated_at: timestamp,
+            metadata: {
+              ...task.metadata,
+              cardFormFile: fileRecord.id,
+              submissionDate: timestamp.toISOString(),
+              formVersion: '1.0',
+              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+                .filter((v, i, a) => a.indexOf(v) === i)
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        // Return the file ID from the transaction
+        return fileRecord.id;
+      });
+      
+      logger.info('CARD form primary data submitted successfully', {
+        taskId,
+        fileId,
+        timestamp: timestamp.toISOString()
+      });
+
+      // Return success response with file ID
+      return res.json({
+        success: true,
+        fileId
+      });
+      
+    } catch (txError) {
+      // If the transaction fails, return detailed error
+      logger.error('Transaction failed during CARD submission', {
+        error: txError instanceof Error ? txError.message : 'Unknown error',
+        stack: txError instanceof Error ? txError.stack : undefined,
+        taskId
+      });
+      
+      return res.status(500).json({
+        error: 'Transaction failed',
+        details: txError instanceof Error ? txError.message : 'Failed to complete the submission process'
+      });
+    }
+    
+  } catch (error) {
+    // Enhanced detailed error logging for overall request failures
+    console.error('[CARD API Debug] Error in CARD form submission', {
+      errorType: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      requestHeaders: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookiePresent: !!req.headers.cookie
+      },
+      sessionID: req.sessionID,
+      authenticatedStatus: req.isAuthenticated?.() || false,
+      userPresent: !!req.user,
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.error('Failed during CARD form submission', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      taskId: req.body?.taskId
+    });
+    
+    // Provide more user-friendly error messages
+    let errorMessage = 'There was a problem submitting your compliance form.';
+    let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('user_id') || error.message.includes('created_by')) {
+        errorMessage = 'Authentication issue detected.';
+        errorDetails = 'Please try signing out and back in, then submit again.';
+      } else if (error.message.includes('database') || error.message.includes('connection')) {
+        errorMessage = 'Database connection issue.';
+        errorDetails = 'Our systems are experiencing temporary difficulties. Please try again in a few moments.';
+      } else if (error.message.includes('constraint') || error.message.includes('duplicate')) {
+        errorMessage = 'Data validation error.';
+        errorDetails = 'Some of your information could not be processed. Please review and try again.';
+      }
+    }
+    
+    // Set appropriate status code based on error type
+    const statusCode = 
+      error instanceof Error && error.message.includes('Unauthorized') ? 401 :
+      error instanceof Error && error.message.includes('not found') ? 404 : 
+      error instanceof Error && error.message.includes('duplicate key') ? 409 : 500;
+    
+    // Send more detailed error response
+    return res.status(statusCode).json({
+      error: errorMessage,
+      details: errorDetails,
+      statusCode,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 // Download assessment file
 router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {

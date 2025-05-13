@@ -1,6 +1,7 @@
 import express from 'express';
 import { updateTaskTitles } from '../../db/migrations/update_task_titles';
 import { requireAuth } from '../middleware/auth';
+import { updateClaimsAndRiskScoreTabs } from './update-tabs';
 
 const router = express.Router();
 
@@ -30,6 +31,31 @@ router.post('/update-task-titles', requireAuth, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to update task titles',
+      error: String(error)
+    });
+  }
+});
+
+// Admin-only route to update company tabs with new Claims and Risk Score tabs
+router.post('/update-tabs', requireAuth, async (req, res) => {
+  try {
+    // Check if user is an admin (company ID 1 is Invela admin)
+    if (!req.user || req.user.company_id !== 1) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+    
+    console.log(`[Admin API] User ${req.user.id} triggered company tabs update`);
+    
+    // Run the company tabs update
+    await updateClaimsAndRiskScoreTabs(req, res);
+  } catch (error) {
+    console.error('[Admin API] Error updating company tabs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update company tabs',
       error: String(error)
     });
   }

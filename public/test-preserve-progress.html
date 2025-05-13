@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KY3P Progress Preservation Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #2563eb;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    
+    .card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    
+    .button:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .button-secondary {
+      background-color: #6b7280;
+    }
+    
+    .button-secondary:hover {
+      background-color: #4b5563;
+    }
+    
+    .button-tertiary {
+      background-color: #059669;
+    }
+    
+    .button-tertiary:hover {
+      background-color: #047857;
+    }
+    
+    .log-area {
+      background-color: #f3f4f6;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
+    
+    .info {
+      color: #2563eb;
+    }
+    
+    .success {
+      color: #10b981;
+    }
+    
+    .error {
+      color: #ef4444;
+    }
+    
+    .warning {
+      color: #f59e0b;
+    }
+    
+    .debug {
+      color: #6b7280;
+    }
+    
+    .code {
+      background-color: #f3f4f6;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    .op-stats {
+      margin-top: 20px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+    
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>KY3P Form Clear Progress Preservation Test</h1>
+  
+  <div class="card">
+    <h2>Test Description</h2>
+    <p>This test verifies that the KY3P form clearing functionality correctly preserves progress when the <code class="code">preserveProgress</code> parameter is used.</p>
+    <p>When editing a KY3P form, clearing the fields should not reset the progress to 0% if the <code class="code">preserveProgress</code> parameter is set to true.</p>
+  </div>
+  
+  <div class="card">
+    <h2>Test Controls</h2>
+    <div>
+      <label for="taskId">Task ID:</label>
+      <input type="number" id="taskId" value="694" min="1" style="margin-bottom: 10px; padding: 5px;">
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+      <button id="check-button" class="button button-secondary">Check Current Progress</button>
+      <button id="preserve-button" class="button">Clear WITH Progress Preservation</button>
+      <button id="reset-button" class="button button-secondary">Clear WITHOUT Progress Preservation</button>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button id="operation-stats-button" class="button button-tertiary">Show Operation Statistics</button>
+      <button id="clear-log-button" class="button button-secondary">Clear Log</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Test Results</h2>
+    <div id="log" class="log-area">Test results will appear here...</div>
+  </div>
+  
+  <div id="operation-stats" class="op-stats" style="display: none;">
+    <h3>Operation Statistics</h3>
+    <div id="stats-content">
+      <p>No operations have been recorded yet.</p>
+    </div>
+  </div>
+  
+  <script>
+    /**
+     * SimpleLightweight Logger
+     */
+    class Logger {
+      constructor(module) {
+        this.module = module;
+        this.operationId = null;
+      }
+      
+      setOperationId(id) {
+        this.operationId = id;
+      }
+      
+      formatMessage(level, message) {
+        const prefix = this.operationId ? `[${this.module}][${this.operationId}]` : `[${this.module}]`;
+        return `${prefix} ${message}`;
+      }
+      
+      debug(message, ...data) {
+        log(this.formatMessage('DEBUG', message), 'debug');
+        if (data.length > 0) {
+          console.debug(this.formatMessage('DEBUG', message), ...data);
+        }
+      }
+      
+      info(message, ...data) {
+        log(this.formatMessage('INFO', message), 'info');
+        if (data.length > 0) {
+          console.info(this.formatMessage('INFO', message), ...data);
+        }
+      }
+      
+      warn(message, ...data) {
+        log(this.formatMessage('WARN', message), 'warning');
+        if (data.length > 0) {
+          console.warn(this.formatMessage('WARN', message), ...data);
+        }
+      }
+      
+      error(message, ...data) {
+        log(this.formatMessage('ERROR', message), 'error');
+        if (data.length > 0) {
+          console.error(this.formatMessage('ERROR', message), ...data);
+        }
+      }
+      
+      success(message, ...data) {
+        log(this.formatMessage('SUCCESS', message), 'success');
+        if (data.length > 0) {
+          console.info(this.formatMessage('SUCCESS', message), ...data);
+        }
+      }
+    }
+    
+    /**
+     * Operation Tracker
+     */
+    class OperationTracker {
+      constructor() {
+        this.operations = {};
+        this.operationCounter = 0;
+        this.logger = new Logger('OperationTracker');
+      }
+      
+      generateOperationId(prefix = 'op') {
+        const timestamp = Date.now();
+        const counter = ++this.operationCounter;
+        const random = Math.random().toString(36).substring(2, 7);
+        return `${prefix}_${timestamp}_${counter}_${random}`;
+      }
+      
+      startOperation(name, type, metadata = {}) {
+        const id = this.generateOperationId();
+        const startTime = Date.now();
+        
+        this.operations[id] = {
+          id,
+          name,
+          type,
+          startTime,
+          status: 'in_progress',
+          steps: [],
+          metadata: {
+            ...metadata,
+            startTime,
+            timestamp: new Date(startTime).toISOString()
+          },
+          taskId: metadata.taskId,
+          preserveProgress: metadata.preserveProgress
+        };
+        
+        this.logger.info(`Started operation: ${name} (${type})`, metadata);
+        return id;
+      }
+      
+      startStep(operationId, stepName, metadata = {}) {
+        if (!this.operations[operationId]) {
+          this.logger.warn(`Attempted to start step for unknown operation: ${operationId}`);
+          return;
+        }
+        
+        const step = {
+          name: stepName,
+          status: 'pending',
+          startTime: Date.now(),
+          metadata
+        };
+        
+        this.operations[operationId].steps.push(step);
+        this.logger.debug(`Started step: ${stepName}`, { operationId, stepName });
+      }
+      
+      completeStep(operationId, stepName, status, metadata = {}, error = null) {
+        if (!this.operations[operationId]) {
+          this.logger.warn(`Attempted to complete step for unknown operation: ${operationId}`);
+          return;
+        }
+        
+        // Find the step (most recent with that name)
+        const steps = this.operations[operationId].steps;
+        let stepIndex = -1;
+        
+        for (let i = steps.length - 1; i >= 0; i--) {
+          if (steps[i].name === stepName && steps[i].status === 'pending') {
+            stepIndex = i;
+            break;
+          }
+        }
+        
+        if (stepIndex === -1) {
+          this.logger.warn(`Step not found: ${stepName}`);
+          return;
+        }
+        
+        const step = steps[stepIndex];
+        const endTime = Date.now();
+        step.endTime = endTime;
+        step.status = status;
+        step.duration = endTime - step.startTime;
+        
+        if (metadata) {
+          step.metadata = { ...step.metadata, ...metadata };
+        }
+        
+        if (status === 'failed' && error) {
+          step.error = error;
+        }
+        
+        if (status === 'success') {
+          this.logger.debug(`Completed step: ${stepName} (${status})`, { 
+            duration: step.duration, 
+            ...metadata 
+          });
+        } else {
+          this.logger.warn(`Step failed: ${stepName}`, { 
+            duration: step.duration, 
+            error,
+            ...metadata 
+          });
+        }
+      }
+      
+      completeOperation(operationId, status, metadata = {}) {
+        if (!this.operations[operationId]) {
+          this.logger.warn(`Attempted to complete unknown operation: ${operationId}`);
+          return null;
+        }
+        
+        const operation = this.operations[operationId];
+        const endTime = Date.now();
+        operation.endTime = endTime;
+        operation.status = status;
+        operation.duration = endTime - operation.startTime;
+        
+        // Add final metadata
+        operation.metadata = {
+          ...operation.metadata,
+          ...metadata,
+          endTime,
+          duration: operation.duration,
+          completedSteps: operation.steps.filter(s => s.status !== 'pending').length,
+          totalSteps: operation.steps.length,
+          successSteps: operation.steps.filter(s => s.status === 'success').length,
+          failedSteps: operation.steps.filter(s => s.status === 'failed').length
+        };
+        
+        if (status === 'success') {
+          this.logger.info(`Completed operation: ${operation.name} successfully`, {
+            duration: operation.duration,
+            steps: operation.steps.length
+          });
+        } else {
+          this.logger.error(`Operation failed: ${operation.name}`, {
+            duration: operation.duration,
+            failedSteps: operation.steps.filter(s => s.status === 'failed').length
+          });
+        }
+        
+        return { ...operation };
+      }
+      
+      getOperation(id) {
+        return this.operations[id] ? { ...this.operations[id] } : null;
+      }
+      
+      getAllOperations() {
+        return Object.values(this.operations).map(op => ({ ...op }));
+      }
+      
+      getOperationsByType(type) {
+        return Object.values(this.operations)
+          .filter(op => op.type === type)
+          .map(op => ({ ...op }));
+      }
+    }
+    
+    // Create instances
+    const logger = new Logger('FormTest');
+    const operationTracker = new OperationTracker();
+    
+    // UI elements
+    const logEl = document.getElementById('log');
+    const opStatsEl = document.getElementById('operation-stats');
+    const statsContentEl = document.getElementById('stats-content');
+    
+    // Log output function
+    function log(message, type = 'info') {
+      const timestamp = new Date().toISOString().substring(11, 19);
+      const line = document.createElement('div');
+      line.className = type;
+      line.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    
+    /**
+     * Get task progress from API
+     */
+    async function getTaskProgress(taskId) {
+      const operationId = operationTracker.startOperation('Get Task Progress', 'api_call', {
+        taskId: parseInt(taskId)
+      });
+      
+      logger.setOperationId(operationId);
+      logger.info(`Getting current progress for task ${taskId}`);
+      
+      operationTracker.startStep(operationId, 'api_request');
+      
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        operationTracker.completeStep(operationId, 'api_request', 'success', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`Error getting task: ${response.status} - ${errorText}`);
+          
+          operationTracker.completeOperation(operationId, 'failed', {
+            error: errorText,
+            status: response.status
+          });
+          
+          return null;
+        }
+        
+        operationTracker.startStep(operationId, 'parse_response');
+        
+        const task = await response.json();
+        
+        operationTracker.completeStep(operationId, 'parse_response', 'success');
+        
+        logger.info(`Current task: ID=${task.id}, Type=${task.task_type}, Status=${task.status}, Progress=${task.progress}%`);
+        
+        operationTracker.completeOperation(operationId, 'success', {
+          taskId: task.id,
+          taskType: task.task_type,
+          progress: task.progress,
+          status: task.status
+        });
+        
+        return task;
+      } catch (error) {
+        logger.error(`Error getting task progress: ${error}`);
+        
+        operationTracker.completeStep(operationId, 'api_request', 'failed', {}, error);
+        operationTracker.completeOperation(operationId, 'failed', { error: String(error) });
+        
+        return null;
+      } finally {
+        logger.setOperationId(null);
+      }
+    }
+    
+    /**
+     * Clear with progress preservation
+     */
+    async function clearWithPreserveProgress(taskId) {
+      const operationId = operationTracker.startOperation('Clear With Preserve Progress', 'ky3p_clear', {
+        taskId: parseInt(taskId),
+        preserveProgress: true
+      });
+      
+      logger.setOperationId(operationId);
+      logger.info(`Testing progress preservation for KY3P task ${taskId}`);
+      
+      // Check initial task progress
+      operationTracker.startStep(operationId, 'get_initial_progress');
+      const initialTask = await getTaskProgress(taskId);
+      
+      if (!initialTask) {
+        operationTracker.completeStep(operationId, 'get_initial_progress', 'failed');
+        operationTracker.completeOperation(operationId, 'failed', { reason: 'Failed to get initial task' });
+        logger.setOperationId(null);
+        return;
+      }
+      
+      operationTracker.completeStep(operationId, 'get_initial_progress', 'success', {
+        initialProgress: initialTask.progress
+      });
+      
+      logger.info(`Initial task progress: ${initialTask.progress}%`);
+      
+      if (initialTask.progress === 0) {
+        logger.warn('Task already has 0% progress, this test may not show correct results');
+      }
+      
+      // Call the KY3P clear endpoint with preserveProgress=true parameter
+      logger.info('Calling KY3P clear endpoint with preserveProgress=true');
+      
+      operationTracker.startStep(operationId, 'clear_fields_request');
+      
+      try {
+        const response = await fetch(`/api/ky3p/clear-fields/${taskId}?preserveProgress=true&opId=${operationId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Operation-ID': operationId
+          },
+          body: JSON.stringify({ 
+            preserveProgress: true,
+            operationId
+          })
+        });
+        
+        operationTracker.completeStep(operationId, 'clear_fields_request', 'success', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`Error clearing KY3P fields: ${response.status} - ${errorText}`);
+          
+          operationTracker.completeOperation(operationId, 'failed', {
+            error: errorText,
+            status: response.status
+          });
+          
+          logger.setOperationId(null);
+          return;
+        }
+        
+        operationTracker.startStep(operationId, 'parse_clear_response');
+        
+        const result = await response.json();
+        
+        operationTracker.completeStep(operationId, 'parse_clear_response', 'success', {
+          responseData: result
+        });
+        
+        logger.info(`Clear operation result: ${JSON.stringify(result)}`);
+        
+        // Check task progress after clear
+        operationTracker.startStep(operationId, 'verify_progress');
+        
+        setTimeout(async () => {
+          const afterTask = await getTaskProgress(taskId);
+          
+          if (!afterTask) {
+            operationTracker.completeStep(operationId, 'verify_progress', 'failed', {
+              reason: 'Failed to get task after clear'
+            });
+            
+            operationTracker.completeOperation(operationId, 'failed', {
+              reason: 'Failed to verify progress'
+            });
+            
+            logger.setOperationId(null);
+            return;
+          }
+          
+          logger.info(`Task progress after clear with preserveProgress: ${afterTask.progress}%`);
+          
+          // Verify that progress is still the same as before
+          if (afterTask.progress === initialTask.progress) {
+            logger.success(`✅ SUCCESS: Progress was correctly preserved at ${afterTask.progress}%!`);
+            
+            operationTracker.completeStep(operationId, 'verify_progress', 'success', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              preserved: true
+            });
+            
+            operationTracker.completeOperation(operationId, 'success', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              preserveProgressWorked: true
+            });
+          } else {
+            logger.error(`❌ FAILURE: Progress changed from ${initialTask.progress}% to ${afterTask.progress}%`);
+            
+            operationTracker.completeStep(operationId, 'verify_progress', 'failed', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              preserved: false
+            });
+            
+            operationTracker.completeOperation(operationId, 'failed', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              preserveProgressWorked: false,
+              reason: 'Progress was not preserved'
+            });
+          }
+          
+          logger.setOperationId(null);
+          updateOperationStats();
+        }, 1000); // Wait a bit for progress update to propagate
+      } catch (error) {
+        logger.error(`Error in test: ${error}`);
+        
+        operationTracker.completeStep(operationId, 'clear_fields_request', 'failed', {}, error);
+        operationTracker.completeOperation(operationId, 'failed', {
+          error: String(error)
+        });
+        
+        logger.setOperationId(null);
+      }
+    }
+    
+    /**
+     * Clear without progress preservation
+     */
+    async function clearWithoutPreserveProgress(taskId) {
+      const operationId = operationTracker.startOperation('Clear Without Preserve Progress', 'ky3p_clear', {
+        taskId: parseInt(taskId),
+        preserveProgress: false
+      });
+      
+      logger.setOperationId(operationId);
+      logger.info(`Testing standard clear without progress preservation for KY3P task ${taskId}`);
+      
+      // Check initial task progress
+      operationTracker.startStep(operationId, 'get_initial_progress');
+      const initialTask = await getTaskProgress(taskId);
+      
+      if (!initialTask) {
+        operationTracker.completeStep(operationId, 'get_initial_progress', 'failed');
+        operationTracker.completeOperation(operationId, 'failed', { reason: 'Failed to get initial task' });
+        logger.setOperationId(null);
+        return;
+      }
+      
+      operationTracker.completeStep(operationId, 'get_initial_progress', 'success', {
+        initialProgress: initialTask.progress
+      });
+      
+      logger.info(`Initial task progress: ${initialTask.progress}%`);
+      
+      // Call the KY3P clear endpoint without preserveProgress parameter
+      logger.info('Calling KY3P clear endpoint without preserveProgress');
+      
+      operationTracker.startStep(operationId, 'clear_fields_request');
+      
+      try {
+        const response = await fetch(`/api/ky3p/clear-fields/${taskId}?opId=${operationId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Operation-ID': operationId
+          }
+        });
+        
+        operationTracker.completeStep(operationId, 'clear_fields_request', 'success', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`Error clearing KY3P fields: ${response.status} - ${errorText}`);
+          
+          operationTracker.completeOperation(operationId, 'failed', {
+            error: errorText,
+            status: response.status
+          });
+          
+          logger.setOperationId(null);
+          return;
+        }
+        
+        operationTracker.startStep(operationId, 'parse_clear_response');
+        
+        const result = await response.json();
+        
+        operationTracker.completeStep(operationId, 'parse_clear_response', 'success', {
+          responseData: result
+        });
+        
+        logger.info(`Clear operation result: ${JSON.stringify(result)}`);
+        
+        // Check task progress after clear
+        operationTracker.startStep(operationId, 'verify_progress');
+        
+        setTimeout(async () => {
+          const afterTask = await getTaskProgress(taskId);
+          
+          if (!afterTask) {
+            operationTracker.completeStep(operationId, 'verify_progress', 'failed', {
+              reason: 'Failed to get task after clear'
+            });
+            
+            operationTracker.completeOperation(operationId, 'failed', {
+              reason: 'Failed to verify progress'
+            });
+            
+            logger.setOperationId(null);
+            return;
+          }
+          
+          logger.info(`Task progress after standard clear: ${afterTask.progress}%`);
+          
+          // Verify that progress is reset to 0%
+          if (afterTask.progress === 0) {
+            logger.success(`✅ SUCCESS: Progress was correctly reset to 0%`);
+            
+            operationTracker.completeStep(operationId, 'verify_progress', 'success', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              reset: true
+            });
+            
+            operationTracker.completeOperation(operationId, 'success', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              resetWorked: true
+            });
+          } else {
+            logger.error(`❌ FAILURE: Progress was not reset to 0%, current: ${afterTask.progress}%`);
+            
+            operationTracker.completeStep(operationId, 'verify_progress', 'failed', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              reset: false
+            });
+            
+            operationTracker.completeOperation(operationId, 'failed', {
+              initialProgress: initialTask.progress,
+              finalProgress: afterTask.progress,
+              resetWorked: false,
+              reason: 'Progress was not reset to 0%'
+            });
+          }
+          
+          logger.setOperationId(null);
+          updateOperationStats();
+        }, 1000); // Wait a bit for progress update to propagate
+      } catch (error) {
+        logger.error(`Error in test: ${error}`);
+        
+        operationTracker.completeStep(operationId, 'clear_fields_request', 'failed', {}, error);
+        operationTracker.completeOperation(operationId, 'failed', {
+          error: String(error)
+        });
+        
+        logger.setOperationId(null);
+      }
+    }
+    
+    /**
+     * Update operation statistics display
+     */
+    function updateOperationStats() {
+      const operations = operationTracker.getAllOperations();
+      
+      if (operations.length === 0) {
+        statsContentEl.innerHTML = '<p>No operations have been recorded yet.</p>';
+        return;
+      }
+      
+      // Count by type and status
+      const typeStats = {};
+      const statusStats = { success: 0, failed: 0, in_progress: 0 };
+      const preserveProgressStats = { true: 0, false: 0 };
+      
+      operations.forEach(op => {
+        typeStats[op.type] = (typeStats[op.type] || 0) + 1;
+        statusStats[op.status] = (statusStats[op.status] || 0) + 1;
+        
+        if (op.preserveProgress !== undefined) {
+          preserveProgressStats[op.preserveProgress] = 
+            (preserveProgressStats[op.preserveProgress] || 0) + 1;
+        }
+      });
+      
+      // Create HTML table
+      let html = `
+        <div style="margin-bottom: 16px">
+          <div><strong>Total Operations:</strong> ${operations.length}</div>
+          <div><strong>Success:</strong> ${statusStats.success}, <strong>Failed:</strong> ${statusStats.failed}, <strong>In Progress:</strong> ${statusStats.in_progress}</div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Preserve Progress</th>
+              <th>Steps</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      operations.forEach(op => {
+        const statusColor = op.status === 'success' ? 'green' : 
+                           op.status === 'failed' ? 'red' : 'orange';
+        
+        html += `
+          <tr>
+            <td title="${op.id}">${op.id.substring(0, 10)}...</td>
+            <td>${op.name}</td>
+            <td>${op.type}</td>
+            <td style="color: ${statusColor}">${op.status}</td>
+            <td>${op.preserveProgress === undefined ? 'N/A' : op.preserveProgress ? 'Yes' : 'No'}</td>
+            <td>${op.steps.length} (${op.steps.filter(s => s.status === 'success').length} success)</td>
+            <td>${op.duration ? `${op.duration}ms` : 'In progress'}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table>';
+      
+      // Add detailed results for KY3P clear operations
+      const clearOperations = operationTracker.getOperationsByType('ky3p_clear');
+      
+      if (clearOperations.length > 0) {
+        html += `
+          <h4>KY3P Clear Operations</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Preserve Progress</th>
+                <th>Initial Progress</th>
+                <th>Final Progress</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        clearOperations.forEach(op => {
+          if (op.status === 'in_progress') return;
+          
+          const timestamp = new Date(op.startTime).toLocaleTimeString();
+          const initialProgress = op.metadata.initialProgress;
+          const finalProgress = op.metadata.finalProgress;
+          const result = op.status === 'success' ? 'Success' : 'Failed';
+          const resultColor = op.status === 'success' ? 'green' : 'red';
+          
+          html += `
+            <tr>
+              <td>${timestamp}</td>
+              <td>${op.preserveProgress ? 'Yes' : 'No'}</td>
+              <td>${initialProgress !== undefined ? `${initialProgress}%` : 'N/A'}</td>
+              <td>${finalProgress !== undefined ? `${finalProgress}%` : 'N/A'}</td>
+              <td style="color: ${resultColor}">${result}</td>
+            </tr>
+          `;
+        });
+        
+        html += '</tbody></table>';
+      }
+      
+      statsContentEl.innerHTML = html;
+    }
+    
+    // Set up event listeners
+    document.getElementById('check-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      getTaskProgress(taskId);
+    });
+    
+    document.getElementById('preserve-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      clearWithPreserveProgress(taskId);
+    });
+    
+    document.getElementById('reset-button').addEventListener('click', () => {
+      const taskId = document.getElementById('taskId').value;
+      clearWithoutPreserveProgress(taskId);
+    });
+    
+    document.getElementById('operation-stats-button').addEventListener('click', () => {
+      updateOperationStats();
+      opStatsEl.style.display = opStatsEl.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    document.getElementById('clear-log-button').addEventListener('click', () => {
+      logEl.innerHTML = '';
+      log('Log cleared', 'info');
+    });
+    
+    // Initial log message
+    log('Test page loaded. Use the buttons above to run tests.', 'info');
+  </script>
+</body>
+</html>

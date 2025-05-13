@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Animation Classes */
+.fade-out {
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+
+.auth-layout-container {
+  transition: max-width 350ms ease-out;
+}
+
+.registration-form-content {
+  transition: opacity 250ms ease-out;
+}
+
+.registration-form-content.fade-out {
+  opacity: 0;
+}
+
+.invitation-container {
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+
+.invitation-container.fade-out {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* We no longer need this class since we're handling width differently */
+/* .auth-layout-expand {
+  max-width: 1200px !important;
+  transition: max-width 250ms ease-out;
+} */
+
 @layer base {
   * {
     @apply border-border;
@@ -37,6 +71,12 @@
   /* Improved focus styles for better accessibility */
   *:focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+  
+  /* Prevent automatic focus on page load/refresh */
+  *[autofocus] {
+    outline: none;
+    @apply focus:outline-none focus:ring-0;
   }
 
   /* Smooth transitions for interactive elements */
@@ -90,14 +130,32 @@
     animation: pulse-subtle 2s infinite ease-in-out;
   }
   
-  /* Canvas confetti z-index adjustment */
-  canvas {
-    z-index: 5 !important;
+  /* Canvas confetti z-index adjustment - ensure confetti is behind everything */
+  .confetti-canvas {
+    z-index: 40 !important; /* Lower than dialog overlay (49) but higher than page content */
+    position: fixed;
+    pointer-events: none;
   }
   
   /* Ensure dialog content is on top of confetti */
   .dialog-content-above-confetti {
-    z-index: 50;
-    position: relative;
+    z-index: 50 !important;
+    position: relative; 
+    background-color: var(--background);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
+  
+  /* Ensure the dialog overlay is properly positioned */
+  [data-radix-dialog-overlay] {
+    z-index: 49 !important; /* Higher than confetti canvas but lower than dialog content */
+  }
+  
+  /* Ensure entire dialog portal is above all content */
+  [data-radix-dialog-portal] {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+  
+  /* Remove any special CSS rules that might cause flashing */
 }

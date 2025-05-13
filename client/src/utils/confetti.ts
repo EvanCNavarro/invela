@@ -1,47 +1,17 @@
 import confetti from 'canvas-confetti';
 
 // Enhanced confetti effect with larger explosion and blue colors
+// Disabled as per user request
 export const fireEnhancedConfetti = () => {
-  confetti({
-    particleCount: 300,
-    spread: 120,
-    origin: { y: 0.6 },
-    startVelocity: 45,
-    gravity: 1.2,
-    ticks: 400,
-    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#003399', '#1E3A8A']
-  });
+  // Confetti effect disabled
+  console.log("[Confetti] Confetti animation disabled as requested");
+  return;
 };
 
 // Super-sized confetti explosion specifically for modal celebrations
+// Disabled as per user request
 export const fireSuperConfetti = () => {
-  // First burst - large spread from center
-  confetti({
-    particleCount: 500,
-    spread: 180,
-    origin: { y: 0.6 },
-    startVelocity: 55,
-    gravity: 1.0,
-    ticks: 500,
-    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#003399', '#1E3A8A', '#101D42', '#172554']
-  });
-  
-  // Second burst - from sides with delay
-  setTimeout(() => {
-    confetti({
-      particleCount: 150,
-      angle: 60,
-      spread: 80,
-      origin: { x: 0, y: 0.7 },
-      colors: ['#00A3FF', '#4965EC', '#0040FF', '#1E3A8A']
-    });
-    
-    confetti({
-      particleCount: 150,
-      angle: 120,
-      spread: 80,
-      origin: { x: 1, y: 0.7 },
-      colors: ['#0068FF', '#4965EC', '#003399', '#0059FF']
-    });
-  }, 200);
+  // Confetti effect disabled
+  console.log("[Confetti] Super confetti animation disabled as requested");
+  return;
 };

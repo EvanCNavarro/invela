@@ -8,6 +8,8 @@ import { users, companies, registrationSchema, type SelectUser } from "@db/schem
 import { db, pool } from "@db";
 import { sql, eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
+import * as WebSocketService from "./services/websocket";
+import { invalidateCompanyCache } from "./routes";
 
 declare global {
   namespace Express {
@@ -88,11 +90,27 @@ async function getUserByEmail(email: string) {
 export function setupAuth(app: Express) {
   console.log('[Auth] Setting up authentication...');
 
-  const store = new PostgresSessionStore({
-    pool,
-    createTableIfMissing: true,
-    tableName: 'session'
-  });
+  // Create an in-memory session store as fallback when database session store fails
+  // This is useful for development and allows the application to function even when
+  // there are database connectivity issues
+  let store;
+  
+  try {
+    console.log('[Auth] Setting up PostgreSQL session store');
+    store = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+      tableName: 'session',
+      // Add error handling for session store
+      errorLog: (err) => console.error('[Session Store] Error:', err)
+    });
+    console.log('[Auth] PostgreSQL session store initialized successfully');
+  } catch (error) {
+    console.error('[Auth] Error setting up PostgreSQL session store, using in-memory store as fallback:', error);
+    // When Neon DB connectivity fails, use in-memory session store as fallback
+    // This allows the app to function even when the database is unavailable
+    store = new session.MemoryStore();
+  }
 
   const sessionSettings: session.SessionOptions = {
     store,
@@ -162,9 +180,52 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
+  /**
+   * Enhanced session cache with proper TTL and minimal database access
+   * 
+   * This implementation addresses excessive database queries by:
+   * 1. Implementing a proper TTL-based cache for user data
+   * 2. Using a request-based throttling mechanism to reduce deserializer calls
+   * 3. Completely eliminating logging for normal cache operations
+   * 4. Using a separate debugging flag for development troubleshooting
+   */
+  const userCache = new Map<number, { user: Express.User, timestamp: number }>();
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes - longer cache to reduce DB load
+  
+  // Request deduplication to prevent multiple deserializer calls in the same request cycle
+  // This is the key improvement: we track recently processed user IDs to avoid duplicate processing
+  const recentlyProcessed = new Set<number>();
+  const DEDUPE_TTL = 2000; // 2 seconds to prevent duplicate deserializer calls
+  
+  // Debug mode flag - set to false in production
+  const DEBUG_AUTH = process.env.NODE_ENV === 'development' && false; // disable even in dev by default
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log('[Auth] Deserializing user:', id);
+      // Skip deserializing if this user was just processed (deduplication)
+      if (recentlyProcessed.has(id)) {
+        // Silent fast-path - no logging at all for recently processed users
+        const cachedData = userCache.get(id);
+        if (cachedData) {
+          return done(null, cachedData.user);
+        }
+      }
+      
+      const now = Date.now();
+      const cachedData = userCache.get(id);
+      
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
+        // Add to recently processed set with automatic cleanup
+        recentlyProcessed.add(id);
+        setTimeout(() => recentlyProcessed.delete(id), DEDUPE_TTL);
+        
+        // No logging for normal cache hits
+        return done(null, cachedData.user);
+      }
+      
+      // Cache miss or expired - query the database
+      if (DEBUG_AUTH) console.log('[Auth] Cache miss - Deserializing user:', id);
       const [user] = await db
         .select()
         .from(users)
@@ -176,6 +237,9 @@ export function setupAuth(app: Express) {
         return done(null, false);
       }
 
+      // Update the cache
+      userCache.set(id, { user, timestamp: now });
+      
       done(null, user);
     } catch (error) {
       console.error('[Auth] Deserialization error:', error);
@@ -198,7 +262,17 @@ export function setupAuth(app: Express) {
       }
       if (!user) {
         console.log('[Auth] Login failed:', info?.message);
-        return res.status(401).json({ message: info?.message || 'Authentication failed' });
+        
+        // Provide a user-friendly error message
+        let userFriendlyMessage = "We couldn't sign you in. Please check your email and password and try again.";
+        
+        // Only use specific error messages for specific known errors
+        if (info?.message === "Invalid password format") {
+          userFriendlyMessage = "There was a problem with your account. Please contact support.";
+        }
+        
+        // Use plain text error response instead of JSON to avoid client-side JSON parsing issues
+        return res.status(401).send(userFriendlyMessage);
       }
       req.login(user, (loginErr) => {
         if (loginErr) {
@@ -214,13 +288,73 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     console.log('[Auth] Processing logout request');
     const userId = req.user?.id;
+    const companyId = req.user?.company_id;
+    
+    // Clear user from cache before logout
+    if (userId && userCache.has(userId)) {
+      console.log(`[Auth] Clearing user ${userId} from cache during logout`);
+      userCache.delete(userId);
+    }
+    
+    // Clear company from cache
+    try {
+      // Try to get companyCache from routes module or the global scope
+      // Since we now directly import invalidateCompanyCache, no need for complex logic
+      const clearCompanyCache = () => {
+        try {
+          if (companyId) {
+            // Clear the specific company
+            console.log(`[Auth] Clearing company ${companyId} from cache during logout`);
+            // Use the imported invalidate function
+            const invalidated = invalidateCompanyCache(companyId);
+            console.log(`[Auth] Cache invalidation result for company ${companyId}: ${invalidated}`);
+          }
+          return true;
+        } catch (error) {
+          console.warn('[Auth] Error invalidating company cache:', error);
+          return false;
+        }
+      };
+      
+      // Try to clear the cache, log result
+      const cleared = clearCompanyCache();
+      if (!cleared) {
+        console.log(`[Auth] No company cache found to clear during logout`);
+      }
+      
+      // Broadcast WebSocket event to inform clients of cache invalidation
+      try {
+        console.log(`[Auth] Broadcasting cache invalidation WebSocket message`);
+        WebSocketService.broadcastMessage('cache_invalidation', {
+          type: 'logout',
+          userId: userId,
+          companyId: companyId,
+          timestamp: new Date().toISOString(),
+          cache_invalidation: true
+        });
+      } catch (broadcastError) {
+        console.warn('[Auth] Error broadcasting cache invalidation:', broadcastError);
+      }
+    } catch (e) {
+      console.warn('[Auth] Error during company cache clearing:', e);
+    }
+    
     req.logout((err) => {
       if (err) {
         console.error('[Auth] Logout error:', err);
         return next(err);
       }
       console.log('[Auth] Logout successful for user:', userId);
-      res.sendStatus(200);
+      
+      // Completely destroy the session to ensure clean state
+      req.session.destroy((sessionErr) => {
+        if (sessionErr) {
+          console.error('[Auth] Session destruction error:', sessionErr);
+        } else {
+          console.log('[Auth] Session successfully destroyed');
+        }
+        res.sendStatus(200);
+      });
     });
   });
 
@@ -234,10 +368,8 @@ export function setupAuth(app: Express) {
 
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
-      return res.status(401).json({ 
-        error: 'Unauthorized',
-        message: 'User not authenticated'
-      });
+      // Use plain text error response for consistency
+      return res.status(401).send('Your session has expired. Please sign in again.');
     }
 
     console.log('[Auth] Returning user session data:', {
@@ -252,7 +384,8 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
-      return res.sendStatus(401);
+      // Use plain text error response for consistency
+      return res.status(401).send("Your session has expired. Please sign in again.");
     }
     console.log('[Auth] Returning user session data');
     res.json(req.user);

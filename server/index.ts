@@ -1,9 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
+import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
-import { setupWebSocket } from "./services/websocket";
+import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -63,8 +64,8 @@ app.use((req, res, next) => {
 
   // Debug request body for specific endpoints
   if (path === '/api/users/invite' && req.method === 'POST') {
-    log(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
-    log(`Request body (raw): ${JSON.stringify(req.body)}`, 'debug');
+    logger.debug(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`);
+    logger.debug(`Request body (raw): ${JSON.stringify(req.body)}`);
   }
 
   const originalResJson = res.json;
@@ -75,7 +76,7 @@ app.use((req, res, next) => {
 
   res.on('error', (error) => {
     errorCaptured = error;
-    log(`Response error: ${error.message}`, 'error');
+    logger.error(`Response error: ${error.message}`);
   });
 
   res.on("finish", () => {
@@ -99,7 +100,13 @@ app.use((req, res, next) => {
         }
       }
 
-      log(logLine, logLevel);
+      if (logLevel === 'error') {
+        logger.error(logLine);
+      } else if (logLevel === 'warn') {
+        logger.warn(logLine);
+      } else {
+        logger.info(logLine);
+      }
     }
   });
 
@@ -109,12 +116,37 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Setup WebSocket server with error handling
-setupWebSocket(server);
+// Setup WebSocket server with error handling - using unified implementation
+// Initialize once and store the instance for all modules to access
+// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
+const wssInstance = setupWebSocketServer(server);
+logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+
+// Ensure old-style handlers can still access the WebSocket server
+// by importing functions from the utilities that need access
+import { registerWebSocketServer } from './utils/task-update';
+import { setWebSocketServer } from './utils/task-broadcast';
+
+// Register WebSocket server with task-update utility for backward compatibility
+registerWebSocketServer(wssInstance);
+logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+
+// Set WebSocket server reference for task-broadcast utility
+setWebSocketServer(wssInstance);
+logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+
+// Log WebSocket server initialization details for debugging
+setTimeout(() => {
+  if (wssInstance && wssInstance.clients) {
+    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+  } else {
+    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+  }
+}, 1000);
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
-  log("Setting up Vite development server", "info");
+  logger.info("Setting up Vite development server");
   setupVite(app, server);
 } else {
   // Serve static files only in production, after API routes
@@ -158,7 +190,44 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-const PORT = Number(process.env.PORT) || 5000;
-server.listen(PORT, () => {
-  log(`Server running on port ${PORT}`);
+// Import deployment helpers for port and host configuration
+import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
+
+// Import task reconciliation system
+import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
+
+// Configure server for proper deployment
+// Always use port 8080 for Autoscale deployment, 5000 for local development
+const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
+
+// Set NODE_ENV based on deployment context
+process.env.NODE_ENV = isDeployment ? 'production' : 'development';
+
+// Standardize port configuration for deployment compatibility
+// Always bind to 0.0.0.0 for proper network access
+const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
+
+// Set environment variable for other components that might need it
+process.env.PORT = PORT.toString();
+process.env.HOST = HOST;
+
+// Log deployment configuration for debugging
+logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
+
+// Start the server with the standardized configuration
+server.listen(PORT, HOST, () => {
+  logger.info(`Server running on ${HOST}:${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV}`);
+  
+  // Log additional deployment information
+  logDeploymentInfo(PORT, HOST);
+  
+  // Start the periodic task reconciliation system
+  if (process.env.NODE_ENV !== 'test') {
+    logger.info('Starting periodic task reconciliation system...');
+    startPeriodicTaskReconciliation();
+    logger.info('Task reconciliation system initialized successfully');
+  }
 });

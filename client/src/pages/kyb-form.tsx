@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -176,10 +176,14 @@ export default function KYBForm({ params }: KYBFormProps) {
         )}
       </div>
 
-      <OnboardingKYBFormPlayground 
+      <UniversalForm 
         taskId={taskId}
+        taskType="kyb"
         onSubmit={(formData) => saveMutation.mutate(formData)}
-        companyName={task.metadata?.companyName}
+        initialData={task.savedFormData}
+        onProgress={(progress) => {
+          // Handle progress updates if needed
+        }}
       />
     </div>
   );

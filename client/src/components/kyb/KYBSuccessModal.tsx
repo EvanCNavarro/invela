@@ -2,6 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { CheckCircle, FileText, ArrowRight, Archive } from "lucide-react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface KYBSuccessModalProps {
   open: boolean;
@@ -11,6 +13,11 @@ interface KYBSuccessModalProps {
 
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  
+  // No longer handling client-side unlocking here - we rely entirely on the server
+  // to unlock the file-vault tab and send WebSocket notifications
+  // This component is only responsible for displaying the success message
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,7 +46,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
               <div>
                 <p className="font-medium text-gray-900">File Vault Tab Unlocked</p>
                 <p className="text-gray-600">
-                  <span className="font-medium text-blue-600">A new tab is now available in your navigation menu!</span> The File Vault stores all your uploaded and generated documents in one secure location.
+                  <span className="font-medium text-blue-600">File Vault tab is now available in your navigation menu!</span> The File Vault stores all your uploaded and generated documents in one secure location.
                 </p>
               </div>
             </div>
@@ -67,8 +74,9 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           <Button
             variant="outline"
             onClick={() => {
-              navigate('/file-vault');
+              // Simple approach: Close modal and navigate
               onOpenChange(false);
+              navigate('/file-vault');
             }}
             className="flex-1"
           >
@@ -76,8 +84,11 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           </Button>
           <Button
             onClick={() => {
-              navigate('/task-center');
+              // First close modal, then navigate with a slight delay for better UX
               onOpenChange(false);
+              setTimeout(() => {
+                navigate('/task-center');
+              }, 100);
             }}
             className="flex-1"
           >

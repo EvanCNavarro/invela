@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import CompanySearchPlayground from "@/components/playground/CompanySearchPlayground";
 import HeadlessCrawlerPlayground from "@/components/playground/HeadlessCrawlerPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -13,6 +14,7 @@ import DownloadButtonPlayground from "@/components/playground/DownloadButtonPlay
 import FileUploadPlayground from '@/components/playground/FileUploadPlayground';
 import TabsDemo from "@/components/playground/TabsDemo";
 import InvitePlayground from "@/components/playground/InvitePlayground";
+import WebSocketPlayground from "@/components/playground/WebSocketPlayground";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
 import FormPlayground from "@/components/playground/FormPlayground";
-import OnboardingKYBFormPlayground from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms";
 
 // Sample data for DataTable demo
 const sampleTableData = [
@@ -104,7 +106,7 @@ const components: PlaygroundComponent[] = [
   {
     id: "kyb-form",
     name: "KYB Form",
-    component: OnboardingKYBFormPlayground,
+    component: () => <UniversalForm taskType="kyb" onSubmit={(data) => console.log('Form submitted:', data)} />,
     description: "Interactive KYB form with company data suggestions"
   },
   {
@@ -160,6 +162,12 @@ const components: PlaygroundComponent[] = [
     name: "Unified Dropdown",
     component: DropdownPlayground,
     description: "Unified dropdown menu component"
+  },
+  {
+    id: "websocket",
+    name: "WebSocket Demo",
+    component: WebSocketPlayground,
+    description: "Real-time WebSocket communication demo"
   }
 ];
 
@@ -175,6 +183,9 @@ export default function PlaygroundPage() {
 
   return (
     <DashboardLayout>
+      {/* Add tutorial manager for playground page */}
+      <TutorialManager tabName="playground" />
+      
       <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <PageHeader

@@ -105,7 +105,7 @@ export function SearchBar({
   // Determine placeholder text
   const getPlaceholder = () => {
     if (isLoading) return "Loading..."
-    if (isGlobalSearch) return "Search Invela"
+    if (isGlobalSearch) return "Search Invela Trust Network..."
     if (contextualType) return `Search for ${contextualType}`
     return placeholder || "Search..."
   }
@@ -121,9 +121,15 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px]",
+          "pl-9 pr-[70px] text-sm text-ellipsis",
           className
         )}
+        style={{
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden'
+        }}
+        autoFocus={false}
         {...props}
       />
       <div className="absolute right-3 flex items-center gap-2">
@@ -144,8 +150,13 @@ export function SearchBar({
   )
 }
 
+// Define the types for Fuse matches
+interface FuseIndices {
+  indices: [number, number][];
+}
+
 // Utility function to highlight matched text
-export function highlightMatch(text: string, matches: Fuse.FuseResultMatch[]) {
+export function highlightMatch(text: string, matches: FuseIndices[]) {
   if (!matches?.length) return text
 
   const indices = matches.reduce<[number, number][]>((acc, match) => {

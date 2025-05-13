@@ -60,6 +60,8 @@ export const companySchema = z.object({
   certificationsCompliance: z.string().nullable(),
   risk_score: z.number().optional(), // Database column name
   riskScore: z.number().optional(), // Frontend property name
+  chosen_score: z.number().nullable().optional(), // Database column name
+  chosenScore: z.number().nullable().optional(), // Frontend property name
   accreditationStatus: z.enum([
     'AWAITING_INVITATION',
     'PENDING',
