@@ -164,25 +164,33 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Claim ID</TableHead>
-                <TableHead>Bank</TableHead>
-                <TableHead>FinTech</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[120px] pl-4">Claim ID</TableHead>
+                <TableHead className="w-[150px]">Bank</TableHead>
+                <TableHead className="w-[150px]">FinTech</TableHead>
+                <TableHead className="w-[120px]">Date</TableHead>
+                <TableHead className="w-[120px] text-right">Amount</TableHead>
+                <TableHead className="w-[150px]">Status</TableHead>
+                <TableHead className="w-[80px] text-right pr-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClaims.map((claim) => (
-                <TableRow key={claim.id}>
-                  <TableCell className="font-medium">{claim.claim_id}</TableCell>
+                <TableRow 
+                  key={claim.id} 
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={(e) => {
+                    // Prevent clicking on action buttons from triggering row click
+                    if ((e.target as HTMLElement).closest('.action-cell')) return;
+                    handleViewClaim(claim);
+                  }}
+                >
+                  <TableCell className="font-medium pl-4">{claim.claim_id}</TableCell>
                   <TableCell>{claim.bank_name}</TableCell>
                   <TableCell>{claim.fintech_name}</TableCell>
                   <TableCell>{formatDate(claim.claim_date)}</TableCell>
-                  <TableCell>{formatCurrency(claim.claim_amount)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(claim.claim_amount)}</TableCell>
                   <TableCell>{getStatusBadge(claim.status)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right pr-4 action-cell">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
