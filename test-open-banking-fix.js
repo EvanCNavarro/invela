@@ -31,7 +31,7 @@ const colors = {
 
 // Config
 const BASE_URL = 'http://localhost:5000';
-const USERNAME = 'test@example.com';
+const USERNAME = '35@e.com';  // Use a known existing account from logs
 const PASSWORD = 'password123';
 
 // Initialize PostgreSQL connection
@@ -56,7 +56,8 @@ async function login() {
     const response = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: USERNAME, password: PASSWORD })
+      body: JSON.stringify({ email: USERNAME, password: PASSWORD }),
+      credentials: 'include'
     });
     
     if (!response.ok) {
@@ -64,8 +65,28 @@ async function login() {
     }
     
     // Extract cookies from response
-    const cookies = response.headers.get('set-cookie');
+    const cookieHeader = response.headers.get('set-cookie');
     log('✅ Login successful', colors.green);
+    
+    // Node-fetch doesn't handle cookies automatically, so we need to parse them
+    let cookies = '';
+    if (cookieHeader) {
+      // This is a simple approach - in production you'd use a cookie parsing library
+      cookies = cookieHeader.split(',').map(cookie => cookie.split(';')[0]).join('; ');
+    }
+    
+    // Verify the session by calling a protected endpoint
+    const verifyResponse = await fetch(`${BASE_URL}/api/companies/current`, {
+      headers: {
+        Cookie: cookies
+      }
+    });
+    
+    if (!verifyResponse.ok) {
+      throw new Error(`Session verification failed with status ${verifyResponse.status}`);
+    }
+    
+    log('✅ Session verified successfully', colors.green);
     return cookies;
   } catch (error) {
     log(`❌ Login error: ${error.message}`, colors.red);
