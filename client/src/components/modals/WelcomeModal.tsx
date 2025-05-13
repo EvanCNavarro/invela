@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
-import { Info, AlertTriangle, DollarSign, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Info, AlertTriangle, DollarSign, Shield, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 
 // Constants for form selections with specific value mappings to appropriate database values
 // Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
@@ -973,10 +973,16 @@ export function WelcomeModal() {
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.4, duration: 0.5 }}
-                        className="mx-auto mt-1 mb-4 flex items-center justify-center"
+                        className="mx-auto mt-1 mb-6 flex items-center justify-center"
                       >
-                        <div className="h-16 w-16 rounded-full bg-green-100 border-4 border-green-200 flex items-center justify-center shadow-sm">
-                          <CheckCircle2 className="h-10 w-10 text-green-600" />
+                        <div className="relative">
+                          {/* Animated glow effect */}
+                          <div className="absolute inset-0 -mx-3 -my-3 rounded-full bg-green-400/20 animate-pulse blur-md"></div>
+                          
+                          {/* Success checkmark */}
+                          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-green-100 to-green-50 border-4 border-green-200 flex items-center justify-center shadow-md relative z-10">
+                            <CheckCircle2 className="h-12 w-12 text-green-600" strokeWidth={2.5} />
+                          </div>
                         </div>
                       </motion.div>
                       <motion.h2 
@@ -995,6 +1001,22 @@ export function WelcomeModal() {
                       >
                         {carouselContent[currentSlide].subtitle}
                       </motion.p>
+                      
+                      {/* Additional information about next steps */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.9 }}
+                        className="mt-6 mb-2 bg-blue-50 px-5 py-4 rounded-lg border border-blue-100 mx-auto max-w-md"
+                      >
+                        <h4 className="text-blue-700 font-medium text-sm mb-2 flex items-center">
+                          <Info className="h-4 w-4 mr-1.5" />
+                          Important Next Steps
+                        </h4>
+                        <p className="text-blue-600 text-sm">
+                          To complete your accreditation process and join the Invela Trust Network, you must now complete the <strong>KYB Form</strong> task in your Task Center.
+                        </p>
+                      </motion.div>
                     </motion.div>
                   ) : (
                     <>
@@ -1546,10 +1568,14 @@ export function WelcomeModal() {
                 disabled={isSubmitting || (Number(currentSlide) === 1 && (!employeeCount || !revenueTier))}
                 className={cn(
                   "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
-                  isLastSlide && "pulse-border-animation font-bold bg-blue-600 hover:bg-blue-700 px-8"
+                  isLastSlide && "pulse-border-animation font-bold bg-green-600 hover:bg-green-700 px-10 shadow-md"
                 )}
               >
-                {isSubmitting ? "Saving..." : isLastSlide ? "Start" : "Next"}
+                {isSubmitting ? "Saving..." : isLastSlide ? (
+                  <span className="flex items-center">
+                    Start <ArrowRight className="ml-2 h-4 w-4" />
+                  </span>
+                ) : "Next"}
               </Button>
             </motion.div>
           </div>
