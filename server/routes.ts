@@ -69,6 +69,8 @@ import debugRouter from './routes/debug';
 import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our new task broadcast router
 import taskBroadcastRouter from './routes/task-broadcast';
+// Import submitFormWithTransaction for direct form submission handler
+import { submitFormWithTransaction } from './services/transactional-form-handler';
 // Import our KY3P progress fix test route
 import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
 // Import our test submission state router for testing submission state preservation
@@ -505,7 +507,64 @@ export function registerRoutes(app: Express): Express {
     console.log('[Routes] Setting up transactional form submission router');
     const transactionalFormRouter = createTransactionalFormRouter();
     app.use('/api/forms-tx', transactionalFormRouter);
-    console.log('[Routes] Successfully registered transactional form submission router');
+    
+    // Add a route for backward compatibility with existing client code
+    // This fixes the Open Banking form submission issue where clients are posting to /api/transactional-form
+    app.post('/api/transactional-form', requireAuth, async (req, res) => {
+      console.log('[Routes] Received form submission at /api/transactional-form - redirecting to /api/forms-tx');
+      
+      // Extract the necessary parameters from the request body
+      const { taskId, formType, formData, companyId } = req.body;
+      
+      if (!taskId || !formType || !formData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required parameters: taskId, formType, or formData'
+        });
+      }
+      
+      // Forward the request to the proper endpoint
+      try {
+        // Use the unified form submission handler since it's already set up
+        const result = await submitFormWithTransaction({
+          taskId,
+          formData,
+          userId: req.user.id,
+          companyId: companyId || req.user.company_id, 
+          formType
+        });
+        
+        // Log the successful redirect
+        console.log(`[Routes] Successfully redirected form submission for task ${taskId}, type ${formType}`, {
+          success: result.success,
+          fileId: result.fileId,
+          unlockedTabs: result.unlockedTabs?.length
+        });
+        
+        // Return the response to client
+        return res.json({
+          success: result.success,
+          message: result.message || 'Form submitted successfully',
+          fileId: result.fileId,
+          fileName: result.fileName,
+          unlockedTabs: result.unlockedTabs,
+          completedActions: [
+            { type: 'form_submitted', description: `${formType} form submitted successfully` },
+            ...(result.fileId ? [{ type: 'file_generated', description: `File generated: ${result.fileName}` }] : []),
+            ...(result.unlockedTabs?.length ? [{ type: 'tabs_unlocked', description: `Unlocked tabs: ${result.unlockedTabs.join(', ')}` }] : [])
+          ]
+        });
+      } catch (error) {
+        console.error('[Routes] Error in transactional-form redirect handler:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Error processing form submission',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
+    
+    console.log('[Routes] Successfully registered transactional form submission router with legacy endpoint compatibility');
   } catch (error) {
     console.error('[Routes] Error setting up transactional form submission router:', error);
   }
