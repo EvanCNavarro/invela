@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useParams, Link } from 'wouter';
-import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
