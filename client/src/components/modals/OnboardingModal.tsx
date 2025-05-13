@@ -874,15 +874,15 @@ export function OnboardingModal() {
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_6.png" 
                   alt="Information Review" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -890,48 +890,48 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
             <div className="flex flex-col justify-center">
-              <div className="mx-auto mb-6">
-                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="h-8 w-8 text-green-600" />
+              <div className="mx-auto mb-8">
+                <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
+                  <Check className="h-10 w-10 text-green-600" />
                 </div>
               </div>
               
-              <h2 className="text-2xl font-bold text-blue-600 text-center mb-4">Ready to Begin</h2>
-              <p className="text-center text-gray-600 text-sm mb-6">
+              <h2 className="text-3xl font-bold text-blue-600 text-center mb-6">Ready to Begin</h2>
+              <p className="text-center text-base text-gray-600 mb-8">
                 Your company profile is now set up! To complete your
                 accreditation process, you'll need to finish your assigned
                 tasks, starting with the KYB Form.
               </p>
               
-              <div className="space-y-3 text-sm mx-auto max-w-md">
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+              <div className="space-y-4 text-base mx-auto max-w-md">
+                <div className="flex items-center gap-3">
+                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
                   <span>Complete the KYB form to verify your business identity</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
                   <span>Upload compliance documents to fast-track your accreditation</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="text-blue-600 h-5 w-5 flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
                   <span>Answer security and compliance questions accurately</span>
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_7.png" 
                   alt="Ready to Begin" 
-                  className="max-w-full h-[280px] rounded-lg object-contain"
+                  className="max-w-full h-[320px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
               )}
             </div>
           </div>
@@ -946,7 +946,7 @@ export function OnboardingModal() {
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
       <CustomDialogContent className="overflow-hidden flex flex-col min-h-[650px] max-w-5xl">
         <div className="p-6 pb-4">
-          <div className="text-sm font-medium bg-blue-100 text-blue-600 py-1.5 px-4 rounded-full inline-block">
+          <div className="text-base font-medium bg-blue-100 text-blue-600 py-2 px-5 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
@@ -955,16 +955,16 @@ export function OnboardingModal() {
           {renderStepContent()}
         </div>
         
-        <div className="px-8 py-5 border-t flex justify-between items-center mt-auto">
-          <div className="w-28">
+        <div className="px-8 py-6 border-t flex justify-between items-center mt-auto">
+          <div className="w-32">
             {currentStep > 0 ? (
               <Button
                 variant="outline"
-                size="default"
+                size="lg"
                 onClick={handlePrevious}
-                className="flex items-center gap-1.5 h-10 px-4"
+                className="flex items-center gap-2 h-11 px-5"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-5 w-5" />
                 Back
               </Button>
             ) : (
@@ -974,16 +974,16 @@ export function OnboardingModal() {
           
           <ProgressDots />
           
-          <div className="w-28 flex justify-end">
+          <div className="w-32 flex justify-end">
             <Button
-              size="default"
+              size="lg"
               onClick={handleNext}
               disabled={
                 updateCompanyMutation.isPending || 
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
               }
-              className="flex items-center gap-1.5 h-10 px-5"
+              className="flex items-center gap-2 h-11 px-6"
             >
               {currentStep === 6 ? "Start" : "Next"}
               {currentStep !== 6 && <ChevronRight className="h-5 w-5" />}
