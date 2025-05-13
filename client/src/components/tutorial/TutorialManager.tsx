@@ -265,14 +265,14 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'network': {
-    title: 'Partner Network',
+    title: 'Network Overview',
     description: 'Learn how to navigate and manage your partner relationships',
     steps: [
       {
-        title: 'Network Overview',
-        description: 'Welcome to the Partner Network. This tool helps you manage and visualize all your business relationships and connections.',
-        imagePath: '/assets/tutorials/network/overview.svg',
-        stepTitle: 'Network Overview',
+        title: 'Explore Your Network',
+        description: 'View and manage your network of business partners. Quickly identify who you work with and the status of each relationship.',
+        imagePath: '/assets/tutorials/network/modal_network_1.png',
+        stepTitle: 'Explore Your Network',
         bulletPoints: [
           'View your entire business network in an interactive visualization',
           'Identify key relationships and connection patterns at a glance',
@@ -280,36 +280,25 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Company Profiles',
-        description: 'Click on any company to view their profile, including risk information, contact details, and relationship history.',
-        imagePath: '/assets/tutorials/network/company-profile.svg',
-        stepTitle: 'Company Profiles',
+        title: 'Invite New Connections',
+        description: 'Easily invite new fintech companies or banks to join your network directly from this interface.',
+        imagePath: '/assets/tutorials/network/modal_network_2.png',
+        stepTitle: 'Invite New Connections',
         bulletPoints: [
-          'Access detailed information about any company in your network',
-          'Review risk scores and compliance status for each partner',
-          'Track relationship history and important milestones'
+          'Add new partners to your network with just a few clicks',
+          'Track pending invitations and onboarding status',
+          'Build a more comprehensive view of your business ecosystem'
         ]
       },
       {
-        title: 'Relationship Management',
-        description: 'Use these tools to manage your business relationships, track interactions, and monitor partnership health.',
-        imagePath: '/assets/tutorials/network/relationship.svg',
-        stepTitle: 'Relationship Management',
+        title: 'Detailed Company Profiles',
+        description: 'Access detailed profiles including accreditation status, key contacts, and more by clicking into company entries.',
+        imagePath: '/assets/tutorials/network/modal_network_3.png',
+        stepTitle: 'Detailed Company Profiles',
         bulletPoints: [
-          'Define and categorize different types of business relationships',
-          'Log important interactions and set follow-up reminders',
-          'Evaluate relationship health with customizable metrics'
-        ]
-      },
-      {
-        title: 'Network Insights',
-        description: 'The analytics section shows relationship metrics, risk exposure patterns, and network growth trends.',
-        imagePath: '/assets/tutorials/network/insights.svg',
-        stepTitle: 'Network Analytics',
-        bulletPoints: [
-          'Analyze your network for risk concentration or dependencies',
-          'Identify growth opportunities and potential new connections',
-          'Generate reports on network changes and relationship performance'
+          'Access comprehensive information about any company in your network',
+          'Review risk scores, compliance status, and accreditation details',
+          'Identify key contacts and important company metrics'
         ]
       }
     ]
