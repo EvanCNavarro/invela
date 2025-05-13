@@ -102,12 +102,20 @@ export function TabTutorialModal({
   const [imageLoadingState, setImageLoadingState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [imageOpacity, setImageOpacity] = useState(0);
   
-  // Handle skip action
+  // Handle skip action - only allow closing on last step
   const handleClose = () => {
-    setOpen(false);
-    // Restore body scrolling
-    document.body.style.overflow = 'auto';
-    onClose();
+    // Only allow closing via the Skip button if we're on the last step
+    // This ensures users complete the full tutorial flow
+    if (currentStep >= totalSteps - 1) {
+      setOpen(false);
+      // Restore body scrolling
+      document.body.style.overflow = 'auto';
+      onClose();
+    } else {
+      // If not on the last step, just advance to the final step
+      logger.info('Skipping to final step');
+      setCurrentStep(totalSteps - 1);
+    }
   };
   
   // Handle next step or completion
@@ -229,10 +237,10 @@ export function TabTutorialModal({
       >
         {/* Main content container */}
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Content container - side by side layout */}
+          {/* Content container - consistent side-by-side layout for all tabs */}
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
+            {/* Left side: Text content - Fixed to 55% width */}
+            <div className="px-8 py-8 md:w-[55%] flex flex-col justify-between overflow-auto">
               {/* Header with chip-style step title */}
               <AnimatePresence mode="wait">
                 <motion.div
@@ -328,8 +336,8 @@ export function TabTutorialModal({
               </AnimatePresence>
             </div>
             
-            {/* Right side: Image container - more square-shaped */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
+            {/* Right side: Image container - consistent width for all tabs */}
+            <div className="bg-blue-50/30 relative md:w-[45%] flex-shrink-0 border-l border-slate-100">
               {/* Enhanced image loading with smooth transitions */}
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* Always show skeleton during initial load */}
