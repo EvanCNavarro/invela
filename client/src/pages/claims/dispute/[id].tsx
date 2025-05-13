@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function ClaimDisputePage() {
   const params = useParams();
@@ -529,15 +530,15 @@ export default function ClaimDisputePage() {
   );
 }
 
+/**
+ * Standardized loading state using Invela loading spinner
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6">
-      <Skeleton className="w-full h-[200px]" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Skeleton className="w-full h-[300px]" />
-        <Skeleton className="w-full h-[300px]" />
-      </div>
-      <Skeleton className="w-full h-[150px]" />
+    <div className="flex flex-col items-center justify-center min-h-[500px] w-full">
+      <LoadingSpinner size="lg" />
+      <p className="mt-4 text-muted-foreground">Loading dispute details...</p>
     </div>
   );
 }
