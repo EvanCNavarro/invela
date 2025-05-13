@@ -218,8 +218,6 @@ export function WelcomeModal() {
   const [cfoEmail, setCfoEmail] = useState<string>("");
   const [cisoName, setCisoName] = useState<string>("");
   const [cisoEmail, setCisoEmail] = useState<string>("");
-  const [legalName, setLegalName] = useState<string>("");
-  const [legalEmail, setLegalEmail] = useState<string>("");
   const [teamInvites, setTeamInvites] = useState<TeamMemberInvite[]>([]);
   
   const { user } = useAuth();
@@ -345,17 +343,6 @@ export function WelcomeModal() {
       });
     }
     
-    // Process Legal invitation
-    if (legalName && legalEmail) {
-      invitations.push({
-        email: legalEmail,
-        full_name: legalName,
-        company_id: user.company.id,
-        company_name: user.company.name,
-        sender_name: user.full_name || user.email
-      });
-    }
-    
     if (invitations.length === 0) {
       return Promise.resolve(false);
     }
@@ -367,12 +354,10 @@ export function WelcomeModal() {
           .then(result => {
             // Add to tracked invites for review screen
             setTeamInvites(prev => [...prev, {
-              role: invite.email === cfoEmail ? "CFO" : 
-                    invite.email === cisoEmail ? "CISO" : "Legal",
+              role: invite.email === cfoEmail ? "CFO" : "CISO",
               fullName: invite.full_name,
               email: invite.email,
-              taskType: invite.email === cfoEmail ? "KYB Form" : 
-                      invite.email === cisoEmail ? "KY3P Security Assessment" : "Open Banking Survey"
+              taskType: invite.email === cfoEmail ? "KYB Form" : "KY3P Security Assessment"
             }]);
             return result;
           })
@@ -950,7 +935,7 @@ export function WelcomeModal() {
                   {/* Team member invitation form for step 5 */}
                   {currentSlide === 4 && (
                     <motion.div
-                      className="mt-4 space-y-4 transform-gpu"
+                      className="mt-2 space-y-4 transform-gpu"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
@@ -958,12 +943,12 @@ export function WelcomeModal() {
                     >
                       {/* CFO Invitation */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2 flex items-center">
+                        <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CFO</span>
                           <Label className="text-base font-semibold inline">Financial Data for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">KYB Form</span></Label>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
+                        <div className="grid grid-cols-5 gap-2">
+                          <div className="space-y-1 col-span-2">
                             <Label htmlFor="cfoName" className="text-sm">
                               Full Name
                             </Label>
@@ -975,7 +960,7 @@ export function WelcomeModal() {
                               className={`transition-all duration-200 ${cfoName ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
-                          <div className="space-y-1">
+                          <div className="space-y-1 col-span-3">
                             <Label htmlFor="cfoEmail" className="text-sm">
                               Email Address
                             </Label>
@@ -993,12 +978,12 @@ export function WelcomeModal() {
                       
                       {/* CISO Invitation */}
                       <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2 flex items-center">
+                        <div className="mb-1 flex items-center">
                           <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">CISO</span>
                           <Label className="text-base font-semibold inline">Compliance Info for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">S&P KY3P Security Assessment</span></Label>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
+                        <div className="grid grid-cols-5 gap-2">
+                          <div className="space-y-1 col-span-2">
                             <Label htmlFor="cisoName" className="text-sm">
                               Full Name
                             </Label>
@@ -1010,7 +995,7 @@ export function WelcomeModal() {
                               className={`transition-all duration-200 ${cisoName ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
-                          <div className="space-y-1">
+                          <div className="space-y-1 col-span-3">
                             <Label htmlFor="cisoEmail" className="text-sm">
                               Email Address
                             </Label>
@@ -1021,41 +1006,6 @@ export function WelcomeModal() {
                               value={cisoEmail}
                               onChange={(e) => setCisoEmail(e.target.value)}
                               className={`transition-all duration-200 ${cisoEmail ? "border-green-500 bg-green-50/30" : ""}`}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Legal Dept Invitation */}
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="mb-2 flex items-center">
-                          <span className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 text-sm font-medium mr-2">Legal</span>
-                          <Label className="text-base font-semibold inline">Regulatory Compliance for <span className="rounded-md px-2 py-0.5 bg-gray-100 text-gray-800 whitespace-nowrap">Open Banking Survey</span></Label>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <Label htmlFor="legalName" className="text-sm">
-                              Full Name
-                            </Label>
-                            <Input
-                              id="legalName"
-                              placeholder="Robert Johnson"
-                              value={legalName}
-                              onChange={(e) => setLegalName(e.target.value)}
-                              className={`transition-all duration-200 ${legalName ? "border-green-500 bg-green-50/30" : ""}`}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="legalEmail" className="text-sm">
-                              Email Address
-                            </Label>
-                            <Input
-                              id="legalEmail"
-                              placeholder="legal@company.com"
-                              type="email"
-                              value={legalEmail}
-                              onChange={(e) => setLegalEmail(e.target.value)}
-                              className={`transition-all duration-200 ${legalEmail ? "border-green-500 bg-green-50/30" : ""}`}
                             />
                           </div>
                         </div>
