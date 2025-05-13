@@ -83,12 +83,9 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     navigate(`/claims/${claim.id}/resolve`);
   };
 
-  // Format currency with 2 decimal places and dollar sign
+  // Format amount as a flat number without decimals
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return `$${Math.round(amount).toLocaleString('en-US')}`;
   };
 
   // Format date as MMM DD, YYYY

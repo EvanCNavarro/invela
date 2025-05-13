@@ -149,12 +149,9 @@ export default function ClaimDetailsPage() {
     }
   };
 
-  // Format currency
+  // Format amount as a flat number without decimals
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return `$${Math.round(amount).toLocaleString('en-US')}`;
   };
 
   return (
