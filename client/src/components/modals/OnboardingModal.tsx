@@ -554,9 +554,9 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col justify-between overflow-hidden">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">
                   Welcome to the<br />Invela Trust Network
@@ -621,9 +621,9 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -706,9 +706,9 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -774,9 +774,9 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -838,9 +838,9 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -940,9 +940,9 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -1028,9 +1028,9 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[540px]">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <div className="mb-5">
                   <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
@@ -1102,7 +1102,7 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col h-[700px] w-[860px]">
+      <CustomDialogContent className="overflow-hidden flex flex-col h-[600px] w-[860px]">
         <div className="p-6 pb-4">
           <div className="text-sm font-medium bg-primary/10 text-primary py-2 px-5 rounded-full inline-block">
             Onboarding
