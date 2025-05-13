@@ -20,10 +20,10 @@ import { Info } from "lucide-react";
 // Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
 // So for employee count, we use numerical values, and for revenue tiers we use the enum values
 const EMPLOYEE_COUNTS = [
-  { value: "25", label: "Small (1-49 employees)" },       // Approx. midpoint of 1-49
-  { value: "150", label: "Medium (50–249 employees)" },   // Approx. midpoint of 50-249
-  { value: "625", label: "Large (250–999 employees)" },   // Approx. midpoint of 250-999
-  { value: "5000", label: "X Large (1K+ employees)" },    // Representative value for 1000+
+  { value: 25, label: "Small (1-49 employees)" },       // Approx. midpoint of 1-49
+  { value: 150, label: "Medium (50–249 employees)" },   // Approx. midpoint of 50-249
+  { value: 625, label: "Large (250–999 employees)" },   // Approx. midpoint of 250-999
+  { value: 5000, label: "X Large (1K+ employees)" },    // Representative value for 1000+
 ];
 
 // For revenue tiers, we use the enum values from the database
@@ -956,8 +956,8 @@ export function WelcomeModal() {
                             Company Size <span className="text-red-500">*</span>
                           </Label>
                           <Select 
-                            value={employeeCount} 
-                            onValueChange={setEmployeeCount}
+                            value={employeeCount !== null ? employeeCount.toString() : undefined} 
+                            onValueChange={(value) => setEmployeeCount(Number(value))}
                             disabled={isSubmitting}
                           >
                             <SelectTrigger 
@@ -973,7 +973,7 @@ export function WelcomeModal() {
                               {EMPLOYEE_COUNTS.map(option => (
                                 <SelectItem 
                                   key={option.value} 
-                                  value={option.value}
+                                  value={option.value.toString()}
                                   className="hover:bg-gray-100 transition-colors duration-150"
                                 >
                                   {option.label}
