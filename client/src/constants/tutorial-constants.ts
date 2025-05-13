@@ -17,6 +17,7 @@ export const TAB_NAMES = {
 };
 
 // List of tabs that should have tutorials
+// Note: Task-center tab is intentionally excluded as requested
 export const TUTORIAL_ENABLED_TABS = [
   TAB_NAMES.DASHBOARD,
   TAB_NAMES.RISK_SCORE,
