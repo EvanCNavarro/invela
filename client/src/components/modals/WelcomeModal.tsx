@@ -320,12 +320,85 @@ export function WelcomeModal() {
     // Dynamically import logger to use in this function
     const { logger } = await import('@/lib/logger');
     
-    // Validate required data is available
-    if (!user || !user.company) {
+    // Enhanced validation with detailed logging to diagnose issues
+    const validationResults = {
+      hasUser: !!user,
+      userHasId: user?.id !== undefined,
+      userHasEmail: !!user?.email,
+      userHasFullName: !!user?.full_name,
+      userHasCompany: !!user?.company,
+      companyHasId: user?.company?.id !== undefined,
+      companyHasName: !!user?.company?.name
+    };
+    
+    logger.info('[WelcomeModal] Team invitation validation check', validationResults);
+    
+    // Validate required data is available with more detailed error
+    if (!user || !user.company || !user.company.id) {
       const errorMessage = 'Cannot invite team members without user or company data';
-      logger.error('[WelcomeModal] ' + errorMessage);
-      console.error('[ONBOARDING DEBUG] ' + errorMessage);
-      throw new Error(errorMessage);
+      const detailedError = `${errorMessage}. Missing: ${!user ? 'user' : !user.company ? 'company' : 'company.id'}`;
+      
+      logger.error('[WelcomeModal] ' + detailedError, validationResults);
+      console.error('[ONBOARDING DEBUG] ' + detailedError, validationResults);
+      
+      // Attempt to fetch fresh user data if available
+      try {
+        const currentUser = currentCompanyQueryData?.currentUser;
+        const currentCompany = currentCompanyQueryData?.company;
+        
+        logger.debug('[WelcomeModal] Attempted recovery with fresh data', {
+          freshUserAvailable: !!currentUser,
+          freshCompanyAvailable: !!currentCompany
+        });
+        
+        // If we can't recover, throw error
+        if (!currentUser || !currentCompany || !currentCompany.id) {
+          throw new Error(detailedError);
+        }
+        
+        // Use the fresh data for invitations
+        logger.info('[WelcomeModal] Recovered with fresh user/company data', {
+          userId: currentUser.id,
+          companyId: currentCompany.id
+        });
+        
+        // Continue with the recovered data (stored in closure variables)
+        const recoveredUser = currentUser;
+        const recoveredCompany = currentCompany;
+        
+        // Create invitations with recovered data
+        const invitations = [];
+        
+        // Process CFO invitation if both name and email are provided
+        if (cfoName && cfoEmail) {
+          invitations.push({
+            email: cfoEmail,
+            full_name: cfoName,
+            company_id: recoveredCompany.id,
+            company_name: recoveredCompany.name,
+            sender_name: recoveredUser.full_name || recoveredUser.email,
+            role: 'CFO'
+          });
+        }
+        
+        // Process CISO invitation if both name and email are provided
+        if (cisoName && cisoEmail) {
+          invitations.push({
+            email: cisoEmail,
+            full_name: cisoName,
+            company_id: recoveredCompany.id,
+            company_name: recoveredCompany.name,
+            sender_name: recoveredUser.full_name || recoveredUser.email,
+            role: 'CISO'
+          });
+        }
+        
+        // Return early with the new invitations
+        return processInvitationsList(invitations, logger);
+      } catch (recoveryError) {
+        // If recovery failed, throw the original error
+        throw new Error(detailedError);
+      }
     }
     
     logger.debug('[WelcomeModal] Starting team invitation process', {
@@ -750,6 +823,121 @@ export function WelcomeModal() {
     }
     
     return !hasValidationErrors;
+  };
+  
+  /**
+   * Helper function to process a list of team invitations
+   * This extracted function can be used with both normal and recovered user data
+   * 
+   * @param {Array} invitations - List of invitation objects to process
+   * @param {Object} logger - Logger instance for consistent logging
+   * @returns {Promise<boolean>} Promise that resolves to true if invitations were processed
+   * @throws {Error} If there's an issue with sending the invitations that shouldn't be ignored
+   */
+  const processInvitationsList = async (invitations, logger) => {
+    if (!invitations || invitations.length === 0) {
+      logger.debug('[WelcomeModal] No team invitations to process in helper');
+      return false;
+    }
+    
+    logger.info('[WelcomeModal] Processing team invitations in helper', { 
+      count: invitations.length,
+      emails: invitations.map(inv => inv.email)
+    });
+    
+    // Process all invitations in parallel
+    try {
+      // Track any failed invitations to report them
+      interface FailedInvitation {
+        email: string;
+        role: string;
+        error: string;
+      }
+      
+      const failedInvitations: FailedInvitation[] = [];
+      
+      // Process each invitation and collect results
+      await Promise.all(
+        invitations.map(async invite => {
+          try {
+            logger.debug('[WelcomeModal] Sending invitation', { 
+              email: invite.email, 
+              role: invite.role 
+            });
+            
+            // Make sure we have all required fields before making the API call
+            const requiredFields = ['email', 'full_name', 'company_id', 'company_name', 'sender_name'];
+            const missingFields = requiredFields.filter(field => !invite[field]);
+            
+            if (missingFields.length > 0) {
+              throw new Error(`Missing required fields for invitation: ${missingFields.join(', ')}`);
+            }
+            
+            // Send the invitation via API
+            const result = await inviteTeamMemberMutation.mutateAsync({
+              email: invite.email,
+              full_name: invite.full_name,
+              company_id: invite.company_id,
+              company_name: invite.company_name,
+              sender_name: invite.sender_name
+            });
+            
+            logger.debug('[WelcomeModal] Invitation sent successfully', { 
+              email: invite.email,
+              role: invite.role,
+              result 
+            });
+            
+            // Track this invitation in UI state for the review screen
+            setTeamInvites(prev => [...prev, {
+              role: invite.role,
+              fullName: invite.full_name,
+              email: invite.email,
+              taskType: invite.role === "CFO" ? "KYB Form" : "KY3P Security Assessment"
+            }]);
+            
+            return result;
+          } catch (error) {
+            logger.error('[WelcomeModal] Failed to send invitation', { 
+              email: invite.email,
+              role: invite.role,
+              error 
+            });
+            console.error('[ONBOARDING DEBUG] Failed to send invitation to', invite.email, error);
+            
+            // Track the failure but don't block other invitations
+            failedInvitations.push({
+              email: invite.email,
+              role: invite.role,
+              error: error instanceof Error ? error.message : String(error)
+            });
+            
+            return null;
+          }
+        })
+      );
+      
+      // If we had any failures, report them but continue
+      if (failedInvitations.length > 0) {
+        logger.warn('[WelcomeModal] Some team invitations failed', { 
+          failedCount: failedInvitations.length,
+          totalCount: invitations.length,
+          failures: failedInvitations
+        });
+        
+        // If ALL invitations failed, throw an error to trigger the error handling flow
+        if (failedInvitations.length === invitations.length) {
+          throw new Error(`All ${invitations.length} team invitations failed to send`);
+        }
+      }
+      
+      // Return true to indicate that invitations were processed
+      return true;
+    } catch (error) {
+      logger.error('[WelcomeModal] Error processing team invitations in helper', { error });
+      console.error('[ONBOARDING DEBUG] Error sending team invitations from helper:', error);
+      throw error;
+    }
   };
 
   /**
