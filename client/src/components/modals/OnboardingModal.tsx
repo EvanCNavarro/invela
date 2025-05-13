@@ -49,7 +49,7 @@ const CustomDialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
+        "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-3xl min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
         className
       )}
       {...props}
@@ -532,15 +532,17 @@ export function OnboardingModal() {
     return null;
   }
 
-  // Progress indicator dots component
+  // Progress indicator dots component - styled like tutorial modal
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex justify-center items-center gap-2.5 py-1.5">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
-            "h-2.5 w-2.5 rounded-full transition-colors duration-200",
-            currentStep === i ? "bg-blue-600" : "bg-gray-200"
+            "h-3 w-3 rounded-full transition-colors duration-200",
+            i < currentStep ? "bg-blue-500" : 
+            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200" : 
+            "bg-gray-200"
           )}
         />
       ))}
@@ -552,12 +554,12 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6">
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pt-2">
             <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">
+              <h2 className="text-2xl font-bold text-blue-600 mb-6">
                 Welcome to the<br />Invela Trust Network
               </h2>
-              <ul className="space-y-4">
+              <ul className="space-y-4 text-sm">
                 <li className="flex gap-2 items-start">
                   <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
                     <CheckCircle className="h-4 w-4 text-blue-500" />
@@ -578,15 +580,15 @@ export function OnboardingModal() {
                 </li>
               </ul>
             </div>
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-2">
               {isCurrentImageLoaded ? (
                 <img 
                   src="/assets/welcome_1.png" 
                   alt="Welcome to Invela" 
-                  className="max-w-full rounded-lg object-contain"
+                  className="max-w-full h-[280px] rounded-lg object-contain"
                 />
               ) : (
-                <EnhancedSkeleton className="w-full h-72 rounded-lg" />
+                <EnhancedSkeleton className="w-full h-[280px] rounded-lg" />
               )}
             </div>
           </div>
@@ -925,45 +927,51 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden max-w-4xl p-0">
-        <div className="p-6">
+      <CustomDialogContent className="overflow-hidden flex flex-col min-h-[600px]">
+        <div className="p-6 pb-4">
           <div className="text-sm font-medium bg-blue-100 text-blue-600 py-1 px-3 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
         
-        {renderStepContent()}
+        <div className="flex-grow overflow-y-auto px-4">
+          {renderStepContent()}
+        </div>
         
-        <div className="px-6 py-4 border-t flex justify-between items-center">
-          {currentStep > 0 ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrevious}
-              className="flex items-center gap-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          ) : (
-            <div></div> // Empty div to maintain flex spacing
-          )}
+        <div className="px-6 py-4 border-t flex justify-between items-center mt-auto">
+          <div className="w-24">
+            {currentStep > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevious}
+                className="flex items-center gap-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+            ) : (
+              <div></div> // Empty div to maintain flex spacing
+            )}
+          </div>
           
           <ProgressDots />
           
-          <Button
-            size="sm"
-            onClick={handleNext}
-            disabled={
-              updateCompanyMutation.isPending || 
-              inviteTeamMembersMutation.isPending || 
-              completeOnboardingMutation.isPending
-            }
-            className="flex items-center gap-1"
-          >
-            {currentStep === 6 ? "Start" : "Next"}
-            {currentStep !== 6 && <ChevronRight className="h-4 w-4" />}
-          </Button>
+          <div className="w-24 flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleNext}
+              disabled={
+                updateCompanyMutation.isPending || 
+                inviteTeamMembersMutation.isPending || 
+                completeOnboardingMutation.isPending
+              }
+              className="flex items-center gap-1"
+            >
+              {currentStep === 6 ? "Start" : "Next"}
+              {currentStep !== 6 && <ChevronRight className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </CustomDialogContent>
     </Dialog>
