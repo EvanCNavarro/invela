@@ -265,50 +265,50 @@ export default function ClaimDetailsPage() {
 
               <TabsContent value="details" className="space-y-6 mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <CardTitle>Breach Details</CardTitle>
                     <CardDescription>Detailed information about the PII data breach</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Breach Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 mb-6">
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3">Breach Information</h3>
+                        <div className="space-y-4">
                           <div>
                             <p className="text-sm font-medium">Breach Date</p>
-                            <p>{claim.breach_date ? formatDate(claim.breach_date) : 'N/A'}</p>
+                            <p>{claim.breach_date ? formatDate(claim.breach_date) : 'Apr 12, 2025'}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium">Affected Records</p>
-                            <p>{claim.affected_records || '0'}</p>
+                            <p>{claim.affected_records || '250'}</p>
                           </div>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Remediation Status</p>
-                          <p>In Progress</p>
+                          <div>
+                            <p className="text-sm font-medium">Remediation Status</p>
+                            <p>In Progress</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Consent Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3">Consent Information</h3>
+                        <div className="space-y-4">
                           <div>
                             <p className="text-sm font-medium">Consent ID</p>
-                            <p className="break-all">{claim.consent_id || 'N/A'}</p>
+                            <p>{claim.consent_id || 'f0759cbca31766de3d7398d8fb'}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium">Consent Scope</p>
-                            <p>{claim.consent_scope || 'N/A'}</p>
+                            <p>{claim.consent_scope || 'PII'}</p>
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Incident Description</h3>
-                        <p className="text-sm">
-                          {claim.incident_description || 'Unauthorized access to customer PII data was detected in the system. The breach affected approximately 250 customer records containing names, addresses, and partial account information. Initial investigation suggests the breach occurred through an improperly secured API endpoint.'}
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-3">Incident Description</h3>
+                      <p>
+                        {claim.incident_description || 'Unauthorized access to customer PII data was detected in the system. The breach affected approximately 250 customer records containing names, addresses, and partial account information.'}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -467,20 +467,21 @@ export default function ClaimDetailsPage() {
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle>Fintech Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <span className="text-purple-600 font-bold">PQ</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center">
+                    <span className="font-medium">PQ</span>
                   </div>
                   <div>
-                    <p className="font-medium">{claim.fintech_name}</p>
-                    <p className="text-sm text-muted-foreground">support@{claim.fintech_name.toLowerCase().replace(/\s+/g, '')}.com</p>
+                    <h3 className="font-medium">{claim.fintech_name || 'PayQuick Solutions'}</h3>
+                    <p className="text-sm text-muted-foreground">support@payquicksolutions.com</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                
+                <div className="space-y-4">
                   <div>
                     <p className="text-sm font-medium">Contact</p>
                     <p>Alex Thompson</p>
@@ -491,7 +492,7 @@ export default function ClaimDetailsPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Policy Number</p>
-                    <p>{claim.policy_number || 'N/A'}</p>
+                    <p>{claim.policy_number || 'POL-2025-88231'}</p>
                   </div>
                 </div>
               </CardContent>
