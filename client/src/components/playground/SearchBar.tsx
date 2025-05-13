@@ -111,9 +111,9 @@ export function SearchBar({
   }
 
   return (
-    <div className={cn("relative flex w-full items-center min-w-0", containerClassName)}>
+    <div className={cn("relative flex w-full items-center min-w-0 bg-white dark:bg-zinc-950 rounded-full border shadow-sm", containerClassName)}>
       <SearchIcon 
-        className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
+        className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none"
       />
       <Input
         type="text"
@@ -121,7 +121,7 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px] text-sm w-full",
+          "pl-10 pr-[70px] text-sm w-full h-10 rounded-full border-none bg-transparent shadow-none",
           className
         )}
         style={{
