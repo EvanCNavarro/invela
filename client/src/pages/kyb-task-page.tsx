@@ -99,6 +99,43 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
     );
   }
 
+  // Handle form submission state management
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reset submission state when task status changes to submitted
+  useEffect(() => {
+    if (task?.status === 'submitted' && isSubmitting) {
+      console.log('[KYB Task Page] Task status is now submitted, resetting submission state');
+      setIsSubmitting(false);
+      
+      // Show success toast when submission is detected via task status change
+      toast({
+        title: "KYB Form Submitted Successfully",
+        description: "Your form has been processed and the task status has been updated.",
+      });
+    }
+  }, [task?.status, isSubmitting, toast]);
+
+  // Special handler for WebSocket form submission events
+  // This provides a backup mechanism to reset the submission state
+  const handleFormSubmissionComplete = useCallback((event: any) => {
+    if (event.detail?.taskId === task?.id && isSubmitting) {
+      console.log('[KYB Task Page] Received form submission completed via WebSocket');
+      setIsSubmitting(false);
+    }
+  }, [task?.id, isSubmitting]);
+
+  // Set up event listeners for WebSocket form submission events
+  useEffect(() => {
+    document.addEventListener('form-submission-completed', handleFormSubmissionComplete);
+    document.addEventListener('form-submission-success', handleFormSubmissionComplete);
+    
+    return () => {
+      document.removeEventListener('form-submission-completed', handleFormSubmissionComplete);
+      document.removeEventListener('form-submission-success', handleFormSubmissionComplete);
+    };
+  }, [handleFormSubmissionComplete]);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -112,7 +149,10 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
             taskId={task.id}
             taskType="kyb"
             initialData={task.savedFormData}
+            isSubmitting={isSubmitting}
             onSubmit={(formData) => {
+              // Set submitting state to true when submission starts
+              setIsSubmitting(true);
               // Handle form submission
               console.log('[KYB Form] Starting form submission:', {
                 taskId: task.id,
