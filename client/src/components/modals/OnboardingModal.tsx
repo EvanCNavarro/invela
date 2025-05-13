@@ -49,7 +49,7 @@ const CustomDialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-3xl min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg overflow-hidden",
+        "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-[860px] min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-background p-0 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl overflow-hidden backdrop-blur-md",
         className
       )}
       {...props}
@@ -534,14 +534,14 @@ export function OnboardingModal() {
 
   // Progress indicator dots component - styled like tutorial modal
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-2.5 py-1.5">
+    <div className="flex justify-center items-center gap-3 py-2">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
-            "h-2.5 w-2.5 rounded-full transition-colors duration-200",
+            "h-3 w-3 rounded-full transition-colors duration-200",
             i < currentStep ? "bg-blue-500" : 
-            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200" : 
+            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200 ring-offset-1" : 
             "bg-gray-200"
           )}
         />
