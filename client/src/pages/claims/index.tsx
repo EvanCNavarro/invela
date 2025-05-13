@@ -15,7 +15,7 @@ import { PageTemplate } from '@/components/ui/page-template';
 import { ClaimsTutorial } from '@/components/tutorial/tabs/ClaimsTutorial';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ClaimsTableSkeleton } from '@/components/ui/skeleton-table';
+import { ClaimsTableLoadingSkeleton } from '@/components/claims/ClaimsTableSkeleton';
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
@@ -175,27 +175,7 @@ export default function ClaimsPage() {
  * Provides consistent loading experience across all pages
  */
 function LoadingSkeleton() {
-  return (
-    <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="animate-pulse rounded-md bg-muted h-5 w-[180px]" />
-        </div>
-        <div className="flex-shrink-0 animate-pulse rounded-md bg-muted h-10 w-[120px]" />
-      </div>
-      
-      <div className="relative w-full">
-        <div className="w-full animate-fade-in transition-opacity duration-500">
-          <ClaimsTableSkeleton />
-        </div>
-        
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center opacity-50">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-muted-foreground">Loading claims data...</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <ClaimsTableLoadingSkeleton />;
 }
 
 function ErrorCard({ message }: { message: string }) {

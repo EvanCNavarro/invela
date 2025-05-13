@@ -23,6 +23,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Clock, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { 
+  CardSkeleton, 
+  ProfileCardSkeleton, 
+  TabsContentSkeleton,
+  TwoColumnCardSkeleton
+} from '@/components/ui/skeleton-table';
 
 export default function ClaimDetailsPage() {
   const params = useParams();
