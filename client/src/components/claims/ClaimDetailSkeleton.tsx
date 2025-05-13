@@ -45,30 +45,30 @@ export function ClaimDetailSkeleton() {
               {/* Claim information card */}
               <Card>
                 <CardHeader className="pb-2">
-                  <Skeleton className="h-5 w-[150px] mb-1 animate-skeleton-pulse" />
-                  <Skeleton className="h-4 w-[250px] animate-skeleton-pulse" />
+                  <EnhancedSkeleton animation="wave" className="h-5 w-[150px] mb-1" />
+                  <EnhancedSkeleton animation="wave" className="h-4 w-[250px]" />
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                     <div>
-                      <Skeleton className="h-4 w-[130px] mb-4 animate-skeleton-pulse" />
+                      <EnhancedSkeleton animation="wave" className="h-4 w-[130px] mb-4" />
                       <div className="space-y-4">
                         {Array(3).fill(0).map((_, i) => (
                           <div key={`left-${i}`} className="space-y-2">
-                            <Skeleton className="h-4 w-[100px] mb-1 skeleton-shimmer" />
-                            <Skeleton className="h-4 w-[150px] skeleton-shimmer" />
+                            <EnhancedSkeleton animation="wave" className="h-4 w-[100px] mb-1" />
+                            <EnhancedSkeleton animation="wave" className="h-4 w-[150px]" />
                           </div>
                         ))}
                       </div>
                     </div>
                     
                     <div>
-                      <Skeleton className="h-4 w-[130px] mb-4 animate-skeleton-pulse" />
+                      <EnhancedSkeleton animation="wave" className="h-4 w-[130px] mb-4" />
                       <div className="space-y-4">
                         {Array(3).fill(0).map((_, i) => (
                           <div key={`right-${i}`} className="space-y-2">
-                            <Skeleton className="h-4 w-[100px] mb-1 skeleton-shimmer" />
-                            <Skeleton className="h-4 w-[150px] skeleton-shimmer" />
+                            <EnhancedSkeleton animation="wave" className="h-4 w-[100px] mb-1" />
+                            <EnhancedSkeleton animation="wave" className="h-4 w-[150px]" />
                           </div>
                         ))}
                       </div>
@@ -82,7 +82,7 @@ export function ClaimDetailSkeleton() {
                 <TabsList className="grid w-full grid-cols-3">
                   {Array(3).fill(0).map((_, i) => (
                     <TabsTrigger key={`tab-${i}`} value={`placeholder-${i}`} disabled>
-                      <Skeleton className="h-4 w-[80px] animate-skeleton-pulse" />
+                      <EnhancedSkeleton animation="pulse" className="h-4 w-[80px]" />
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -90,7 +90,7 @@ export function ClaimDetailSkeleton() {
                 <TabsContent value="placeholder" className="mt-4">
                   <Card>
                     <CardHeader>
-                      <Skeleton className="h-5 w-[150px] mb-1 animate-skeleton-pulse" />
+                      <EnhancedSkeleton animation="wave" className="h-5 w-[150px] mb-1" />
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -98,8 +98,9 @@ export function ClaimDetailSkeleton() {
                           <div key={`content-${i}`} className="grid grid-cols-4 p-3 border-b">
                             {Array(4).fill(0).map((_, j) => (
                               <div key={`cell-${i}-${j}`} className={j === 3 ? 'text-right' : ''}>
-                                <Skeleton 
-                                  className={`h-4 w-[${j === 3 ? 80 : 120}px] ${j === 3 ? 'ml-auto' : ''} skeleton-shimmer`}
+                                <EnhancedSkeleton 
+                                  animation="wave"
+                                  className={`h-4 w-[${j === 3 ? 80 : 120}px] ${j === 3 ? 'ml-auto' : ''}`}
                                 />
                               </div>
                             ))}
@@ -116,22 +117,22 @@ export function ClaimDetailSkeleton() {
               {/* Bank information card */}
               <Card>
                 <CardHeader className="pb-2">
-                  <Skeleton className="h-5 w-[130px] animate-skeleton-pulse" />
+                  <EnhancedSkeleton animation="wave" className="h-5 w-[130px]" />
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3 mb-6">
-                    <Skeleton className="h-10 w-10 rounded-full animate-skeleton-pulse" />
+                    <EnhancedSkeleton animation="wave" className="h-10 w-10 rounded-full" />
                     <div>
-                      <Skeleton className="h-5 w-[150px] skeleton-shimmer" />
-                      <Skeleton className="h-4 w-[180px] mt-1 skeleton-shimmer" />
+                      <EnhancedSkeleton animation="wave" className="h-5 w-[150px]" />
+                      <EnhancedSkeleton animation="wave" className="h-4 w-[180px] mt-1" />
                     </div>
                   </div>
                   
                   <div className="space-y-4">
                     {Array(3).fill(0).map((_, i) => (
                       <div key={`bank-${i}`} className="space-y-2">
-                        <Skeleton className="h-4 w-[80px] skeleton-shimmer" />
-                        <Skeleton className="h-4 w-[150px] skeleton-shimmer" />
+                        <EnhancedSkeleton animation="wave" className="h-4 w-[80px]" />
+                        <EnhancedSkeleton animation="wave" className="h-4 w-[150px]" />
                       </div>
                     ))}
                   </div>
@@ -141,22 +142,22 @@ export function ClaimDetailSkeleton() {
               {/* Fintech information card */}
               <Card>
                 <CardHeader className="pb-2">
-                  <Skeleton className="h-5 w-[150px] animate-skeleton-pulse" />
+                  <EnhancedSkeleton animation="wave" className="h-5 w-[150px]" />
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3 mb-6">
-                    <Skeleton className="h-10 w-10 rounded-full animate-skeleton-pulse" />
+                    <EnhancedSkeleton animation="wave" className="h-10 w-10 rounded-full" />
                     <div>
-                      <Skeleton className="h-5 w-[150px] skeleton-shimmer" />
-                      <Skeleton className="h-4 w-[180px] mt-1 skeleton-shimmer" />
+                      <EnhancedSkeleton animation="wave" className="h-5 w-[150px]" />
+                      <EnhancedSkeleton animation="wave" className="h-4 w-[180px] mt-1" />
                     </div>
                   </div>
                   
                   <div className="space-y-4">
                     {Array(3).fill(0).map((_, i) => (
                       <div key={`fintech-${i}`} className="space-y-2">
-                        <Skeleton className="h-4 w-[80px] skeleton-shimmer" />
-                        <Skeleton className="h-4 w-[150px] skeleton-shimmer" />
+                        <EnhancedSkeleton animation="wave" className="h-4 w-[80px]" />
+                        <EnhancedSkeleton animation="wave" className="h-4 w-[150px]" />
                       </div>
                     ))}
                   </div>
@@ -166,11 +167,11 @@ export function ClaimDetailSkeleton() {
               {/* Actions card */}
               <Card>
                 <CardHeader className="pb-2">
-                  <Skeleton className="h-5 w-[120px] animate-skeleton-pulse" />
+                  <EnhancedSkeleton animation="wave" className="h-5 w-[120px]" />
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {Array(4).fill(0).map((_, i) => (
-                    <Skeleton key={`action-${i}`} className="h-10 w-full skeleton-shimmer" />
+                    <EnhancedSkeleton key={`action-${i}`} animation="wave" className="h-10 w-full" />
                   ))}
                 </CardContent>
               </Card>
