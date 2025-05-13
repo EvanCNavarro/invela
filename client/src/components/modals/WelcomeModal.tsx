@@ -121,7 +121,7 @@ const carouselContent: CarouselItem[] = [
     src: "/attached_assets/welcome_5.png",
     alt: "Invite Your Team",
     title: "Invite Your Team",
-    subtitle: "Invite your colleagues to assist with specific tasks during onboarding. Ensure streamlined collaboration by assigning roles effectively.",
+    subtitle: "",
     bulletPoints: [
       "CFO for KYB Financials",
       "CISO for Security Assessments",
