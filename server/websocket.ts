@@ -7,7 +7,7 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server as HttpServer } from 'http';
-import { logger } from './logger';
+import { logger } from './utils/logger';
 
 // Define message types for WebSocket communication
 export type MessageType = 
@@ -17,7 +17,7 @@ export type MessageType =
   | 'authenticated'
   | 'task_updated'
   | 'tutorial_updated'
-  | 'company_tabs_updated'
+  | 'company_tabs_updated'  // Used for real-time tab updates in the UI
   | 'connection_established';
 
 // Structure for WebSocket messages
@@ -40,6 +40,14 @@ class WebSocketManager {
   private wss: WebSocketServer | null = null;
   private clients: ConnectedClient[] = [];
   private nextClientId = 1;
+  
+  /**
+   * Get the WebSocket server instance
+   * @returns The WebSocket server instance or null if not initialized
+   */
+  getServerInstance(): WebSocketServer | null {
+    return this.wss;
+  }
 
   /**
    * Initialize the WebSocket server
@@ -50,7 +58,15 @@ class WebSocketManager {
     // Create WebSocket server on a distinct path not to conflict with Vite HMR
     this.wss = new WebSocketServer({ 
       server,
-      path: '/ws'
+      path: '/ws',
+      verifyClient: (info: { req: { headers: { [key: string]: string | string[] | undefined } } }) => {
+        // Skip connections from Vite's HMR WebSocket
+        if (info.req.headers['sec-websocket-protocol'] === 'vite-hmr') {
+          logger.debug('[WebSocket] Ignoring Vite HMR WebSocket connection');
+          return false;
+        }
+        return true;
+      }
     });
 
     logger.info('[WebSocket] Initializing WebSocket server');

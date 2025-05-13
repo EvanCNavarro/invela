@@ -116,11 +116,14 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Setup WebSocket server with error handling - using unified implementation
-// Initialize once and store the instance for all modules to access
-// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
-const wssInstance = setupWebSocketServer(server);
+// Initialize our new WebSocket implementation for better type safety and maintainability
+import { websocketManager } from './websocket';
+websocketManager.initialize(server);
 logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+
+// Only use one WebSocket server to avoid conflicts
+// Use the legacy implementation for now to ensure backward compatibility
+const wssInstance = setupWebSocketServer(server);
 
 // Ensure old-style handlers can still access the WebSocket server
 // by importing functions from the utilities that need access
@@ -205,7 +208,7 @@ process.env.NODE_ENV = isDeployment ? 'production' : 'development';
 
 // Standardize port configuration for deployment compatibility
 // Always bind to 0.0.0.0 for proper network access
-const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT || '', 10) || 5000);
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
