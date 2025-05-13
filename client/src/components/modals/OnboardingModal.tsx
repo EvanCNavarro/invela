@@ -981,20 +981,20 @@ export function OnboardingModal() {
                   </div>
                   
                   {teamMembers[0].fullName && (
-                    <div className="flex items-center gap-3">
-                      <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                      <span className="font-medium text-gray-700 w-24">CFO:</span>
-                      <span className="text-gray-900">
+                    <div className="flex items-center gap-4">
+                      <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                      <span className="font-medium text-gray-700 w-28 text-base">CFO:</span>
+                      <span className="text-gray-900 text-base">
                         {teamMembers[0].fullName} ({teamMembers[0].email})
                       </span>
                     </div>
                   )}
                   
                   {teamMembers[1].fullName && (
-                    <div className="flex items-center gap-3">
-                      <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
-                      <span className="font-medium text-gray-700 w-24">CISO:</span>
-                      <span className="text-gray-900">
+                    <div className="flex items-center gap-4">
+                      <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                      <span className="font-medium text-gray-700 w-28 text-base">CISO:</span>
+                      <span className="text-gray-900 text-base">
                         {teamMembers[1].fullName} ({teamMembers[1].email})
                       </span>
                     </div>
@@ -1032,41 +1032,41 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 7
                   </div>
                 </div>
                 
-                <div className="text-center mb-8">
-                  <div className="mx-auto mb-6">
-                    <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                      <Check className="h-10 w-10 text-green-600" />
+                <div className="text-center mb-10">
+                  <div className="mx-auto mb-8">
+                    <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                      <Check className="h-12 w-12 text-green-600" />
                     </div>
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Begin</h2>
-                  <p className="text-base text-gray-700">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-5">Ready to Begin</h2>
+                  <p className="text-lg text-gray-700">
                     Your company profile is now set up! To complete your
                     accreditation process, you'll need to finish your assigned
                     tasks, starting with the KYB Form.
                   </p>
                 </div>
                 
-                <div className="space-y-5 text-base mt-8 max-w-md mx-auto">
-                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
-                    <span>Complete the KYB form to verify your business identity</span>
+                <div className="space-y-6 text-base mt-10 max-w-md mx-auto">
+                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                    <span className="text-base">Complete the KYB form to verify your business identity</span>
                   </div>
                   
-                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
-                    <span>Upload compliance documents to fast-track your accreditation</span>
+                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                    <span className="text-base">Upload compliance documents to fast-track your accreditation</span>
                   </div>
                   
-                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
-                    <span>Answer security and compliance questions accurately</span>
+                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                    <span className="text-base">Answer security and compliance questions accurately</span>
                   </div>
                 </div>
               </div>
