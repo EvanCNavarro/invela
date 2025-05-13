@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
-import { Info, AlertTriangle, DollarSign, Shield, AlertCircle } from "lucide-react";
+import { Info, AlertTriangle, DollarSign, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 
 // Constants for form selections with specific value mappings to appropriate database values
 // Database has 'num_employees' as INTEGER and 'revenue_tier' as ENUM('small','medium','large','xlarge')
@@ -1219,7 +1219,7 @@ export function WelcomeModal() {
                           <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
                             <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
                             <span className="text-xs font-medium text-gray-500 mr-1">Category:</span>
-                            <span className="text-sm font-medium text-gray-900">{company?.category || "Not provided"}</span>
+                            <span className="text-sm font-medium text-gray-900">{(company as any)?.category || "Not provided"}</span>
                           </div>
                           
                           <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
@@ -1249,7 +1249,7 @@ export function WelcomeModal() {
                               <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
                               <span className="text-xs font-medium text-gray-500 mr-1">CISO:</span>
                               <span className="text-sm font-medium text-gray-900">{cisoName}</span>
-                              <span className="text-xs text-gray-500 ml-1">({cfoEmail})</span>
+                              <span className="text-xs text-gray-500 ml-1">({cisoEmail})</span>
                             </div>
                           )}
                         </div>
