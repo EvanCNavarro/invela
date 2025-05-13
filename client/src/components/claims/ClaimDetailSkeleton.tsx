@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { EnhancedSkeleton } from '@/components/ui/enhanced-skeleton';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   Card,
@@ -26,15 +27,15 @@ export function ClaimDetailSkeleton() {
         {/* Breadcrumb and back button skeletons */}
         <div className="flex flex-col px-6 space-y-4 mb-6">
           <div className="flex items-center space-x-2 py-4">
-            <Skeleton className="h-4 w-[200px] skeleton-shimmer" />
+            <EnhancedSkeleton animation="wave" className="h-4 w-[200px]" />
           </div>
-          <Skeleton className="h-10 w-[150px] skeleton-shimmer" />
+          <EnhancedSkeleton animation="wave" className="h-10 w-[150px]" />
         </div>
         
         {/* Header Skeleton */}
         <div className="px-6 mb-6">
-          <Skeleton className="h-8 w-[350px] mb-1 skeleton-shimmer" />
-          <Skeleton className="h-5 w-[250px] skeleton-shimmer" />
+          <EnhancedSkeleton animation="wave" className="h-8 w-[350px] mb-1" />
+          <EnhancedSkeleton animation="wave" className="h-5 w-[250px]" />
         </div>
         
         {/* Main content skeleton */}
