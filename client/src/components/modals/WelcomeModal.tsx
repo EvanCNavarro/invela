@@ -349,8 +349,8 @@ export function WelcomeModal() {
       
       // Attempt to use data from our own component state
       try {
-        const companyId = company?.id || user?.company?.id;
-        const companyName = company?.name || user?.company?.name;
+        const companyId = companyData?.id || user?.company?.id;
+        const companyName = companyData?.name || user?.company?.name;
         const senderName = user?.full_name || user?.email || 'Invela User';
         
         logger.debug('[WelcomeModal] Attempted recovery with component state data', {
