@@ -899,9 +899,21 @@ export function WelcomeModal() {
               role: invite.role 
             });
             
+            // Create API payload from TeamMemberInvite model
+            // We need to handle both cases - either the fields are directly on the object
+            // or we need to use the UI fields (fullName) and map them to API fields (full_name)
+            const apiPayload = {
+              email: invite.email,
+              full_name: invite.full_name || invite.fullName,
+              company_id: invite.company_id || companyData?.id,
+              company_name: invite.company_name || companyData?.name,
+              sender_name: invite.sender_name || user?.full_name || user?.email,
+              role: invite.role
+            };
+            
             // Make sure we have all required fields before making the API call
             const requiredFields = ['email', 'full_name', 'company_id', 'company_name', 'sender_name'];
-            const missingFields = requiredFields.filter(field => !invite[field]);
+            const missingFields = requiredFields.filter(field => !apiPayload[field]);
             
             if (missingFields.length > 0) {
               throw new Error(`Missing required fields for invitation: ${missingFields.join(', ')}`);
