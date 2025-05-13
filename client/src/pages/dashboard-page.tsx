@@ -313,10 +313,10 @@ export default function DashboardPage() {
               <div className="col-span-3 grid gap-4">
                 {/* FinTech layout - 1:3 ratio grid */}
                 {companyData?.category === 'FinTech' && (visibleWidgets.companySnapshot || visibleWidgets.riskRadar) && (
-                  <div className="grid grid-cols-4 gap-4 h-[450px]">
+                  <div className="grid grid-cols-4 gap-4 min-h-[450px]">
                     {/* Company Snapshot (1/4 width) for FinTech */}
                     {visibleWidgets.companySnapshot && companyData && (
-                      <div className="col-span-1">
+                      <div className="col-span-1 h-full">
                         <CompanySnapshot 
                           companyData={companyData}
                           onToggle={() => toggleWidget('companySnapshot')}
