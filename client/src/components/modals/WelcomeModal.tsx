@@ -104,10 +104,15 @@ const carouselContent: CarouselItem[] = [
     title: "Streamline with Document Uploads",
     subtitle: "Accelerate your accreditation by uploading critical documents upfront. Our AI-driven system auto-fills forms, saving you time.",
     bulletPoints: [
-      "SOC 2, ISO 27001, Penetration Test Reports",
-      "API Security, OAuth Certification",
-      "GDPR/CCPA Compliance, FDX Certification",
-      "Business Continuity Plan, Data Protection Policies"
+      "SOC 2",
+      "ISO 27001",
+      "Penetration Test Reports",
+      "API Security",
+      "OAuth Certification",
+      "GDPR/CCPA Compliance",
+      "FDX Certification",
+      "Business Continuity Plan",
+      "Data Protection Policies"
     ]
   },
   {
