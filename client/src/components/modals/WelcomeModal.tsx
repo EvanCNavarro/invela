@@ -828,36 +828,55 @@ export function WelcomeModal() {
                           ))}
                         </div>
                       ) : (
-                        // Standard bullets for other slides
-                        <div className="space-y-5">
+                        // Custom styling for document list in step 4 or standard bullets for other slides
+                        <div className={currentSlide === 3 ? "grid grid-cols-2 gap-2 mt-3" : "space-y-5"}>
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
-                            <motion.div 
-                              key={index} 
-                              className="flex items-start space-x-3"
-                              initial={{ opacity: 0, x: 10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.4 + (index * 0.15) }}
-                            >
-                              {currentSlide === 0 ? (
-                                <div className="mt-1 h-7 w-7 text-primary flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 flex items-center justify-center shadow-sm border border-primary/10">
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </div>
-                              ) : (
-                                <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </div>
-                              )}
-                              <p className={cn(
-                                "text-lg font-medium",
-                                currentSlide === 0 ? "text-gray-800" : "text-gray-700"
-                              )}>
-                                {point}
-                              </p>
-                            </motion.div>
+                            currentSlide === 3 ? (
+                              // Document type rectangles for step 4
+                              <motion.div 
+                                key={index} 
+                                className="py-2 px-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm transform-gpu"
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 + (index * 0.07) }}
+                                style={{ 
+                                  boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)'
+                                }}
+                              >
+                                <p className="text-base font-medium text-gray-700 text-center">
+                                  {point}
+                                </p>
+                              </motion.div>
+                            ) : (
+                              // Standard bullets for other slides
+                              <motion.div 
+                                key={index} 
+                                className="flex items-start space-x-3"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 + (index * 0.15) }}
+                              >
+                                {currentSlide === 0 ? (
+                                  <div className="mt-1 h-7 w-7 text-primary flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-blue-400/20 flex items-center justify-center shadow-sm border border-primary/10">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </div>
+                                )}
+                                <p className={cn(
+                                  "text-lg font-medium",
+                                  currentSlide === 0 ? "text-gray-800" : "text-gray-700"
+                                )}>
+                                  {point}
+                                </p>
+                              </motion.div>
+                            )
                           ))}
                         </div>
                       )}
