@@ -267,6 +267,16 @@ export async function processKybSubmission(
     const MAX_VERIFICATION_ATTEMPTS = 3;
     let verificationSuccess = false;
     
+    // Log original task details for debugging
+    logger.debug(`[KYB Transaction] Original task details before verification`, {
+      transactionId,
+      taskId,
+      status: task.status,
+      progress: task.progress,
+      metadata: task.metadata ? JSON.stringify(task.metadata).substring(0, 200) + '...' : null,
+      elapsedMs: performance.now() - startTime
+    });
+    
     logger.info(`[KYB Transaction] Starting task status verification`, {
       transactionId,
       taskId,
@@ -282,6 +292,15 @@ export async function processKybSubmission(
           .from(tasks)
           .where(eq(tasks.id, taskId));
           
+        logger.debug(`[KYB Transaction] Verification attempt ${verificationAttempts + 1} task details`, {
+          transactionId,
+          taskId,
+          status: verifiedTask?.status,
+          progress: verifiedTask?.progress,
+          metadata: verifiedTask?.metadata ? JSON.stringify(verifiedTask.metadata).substring(0, 200) + '...' : null,
+          elapsedMs: performance.now() - startTime
+        });
+        
         if (verifiedTask?.status === TaskStatus.SUBMITTED) {
           verificationSuccess = true;
           logger.info(`[KYB Transaction] Task status verification successful on attempt ${verificationAttempts + 1}`, {
@@ -380,14 +399,14 @@ export async function processKybSubmission(
         companyId: task.company_id,
         fileId: fileCreationResult.fileId,
         progress: 100,
+        submissionDate: new Date().toISOString(),
         source: 'transactional-kyb-handler',
         metadata: {
           transactionId,
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
           explicitlySubmitted: true,
-          verifiedStatus: verificationSuccess,
-          submissionDate: new Date().toISOString()
+          verifiedStatus: verificationSuccess
         }
       });
       
