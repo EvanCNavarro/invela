@@ -1724,7 +1724,7 @@ export function WelcomeModal() {
                         // Use dynamic import to avoid bundling logger if not used
                         import('@/lib/logger').then(({ logger }) => {
                           logger.debug('[WelcomeModal] Rendering review page with data', {
-                            company, 
+                            company: companyData, 
                             employeeCount, 
                             revenueTier, 
                             pendingCompanyData,
@@ -1736,7 +1736,7 @@ export function WelcomeModal() {
                         });
                         // Also keep console log for immediate visibility during development
                         console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
-                          company, 
+                          company: companyData, 
                           employeeCount, 
                           revenueTier, 
                           pendingCompanyData,
@@ -1756,13 +1756,13 @@ export function WelcomeModal() {
                           <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
                             <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
                             <span className="text-xs font-medium text-gray-500 mr-1">Company:</span>
-                            <span className="text-sm font-medium text-gray-900">{company?.name || "Not provided"}</span>
+                            <span className="text-sm font-medium text-gray-900">{companyData?.name || "Not provided"}</span>
                           </div>
                           
                           <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
                             <CheckCircle2 className="w-4 h-4 text-green-500 mr-1.5 flex-shrink-0" />
                             <span className="text-xs font-medium text-gray-500 mr-1">Category:</span>
-                            <span className="text-sm font-medium text-gray-900">{(company as any)?.category || "Not provided"}</span>
+                            <span className="text-sm font-medium text-gray-900">{companyData?.category || "Not provided"}</span>
                           </div>
                           
                           <div className="bg-white py-2 px-3 rounded-md border border-blue-50 flex items-center">
