@@ -730,19 +730,19 @@ export function OnboardingModal() {
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">2</div>
+                  <div className="flex items-start gap-5">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">2</div>
                     <div>
-                      <h3 className="font-medium text-base text-gray-900">S&P KY3P Security Assessment</h3>
-                      <p className="text-sm text-gray-600">Comprehensive security and compliance verification</p>
+                      <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
+                      <p className="text-base text-gray-600">Comprehensive security and compliance verification</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">3</div>
+                  <div className="flex items-start gap-5">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">3</div>
                     <div>
-                      <h3 className="font-medium text-base text-gray-900">Open Banking Survey</h3>
-                      <p className="text-sm text-gray-600">Assessment of your open banking capabilities</p>
+                      <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
+                      <p className="text-base text-gray-600">Assessment of your open banking capabilities</p>
                     </div>
                   </div>
                 </div>
@@ -778,20 +778,20 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 4
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Streamline with Document Uploads</h2>
-                <p className="text-base text-gray-700 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">Streamline with Document Uploads</h2>
+                <p className="text-lg text-gray-700 mb-8">
                   Accelerate your accreditation by uploading critical documents upfront. 
                   Our AI-driven system auto-fills forms, saving you time.
                 </p>
                 
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Recommended Documents</h3>
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">Recommended Documents</h3>
                   <div className="flex flex-wrap gap-3">
                     {[
                       "SOC 2", 
@@ -804,7 +804,7 @@ export function OnboardingModal() {
                       "Business Continuity Plan",
                       "Data Protection Policies"
                     ].map((doc, i) => (
-                      <div key={i} className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                      <div key={i} className="px-4 py-2 bg-primary/10 text-primary rounded-full text-base font-medium">
                         {doc}
                       </div>
                     ))}
@@ -842,14 +842,14 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-5">
-                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                <div className="mb-6">
+                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
                     Step 5
                   </div>
                 </div>
                 
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Invite Your Team</h2>
-                <p className="text-base text-gray-700 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">Invite Your Team</h2>
+                <p className="text-lg text-gray-700 mb-8">
                   Streamline your accreditation process by inviting key team members to contribute 
                   directly to relevant sections.
                 </p>
