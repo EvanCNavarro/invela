@@ -621,66 +621,84 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">Company Information</h2>
-              <p className="text-base text-gray-600 mb-8">
-                Add basic details about {currentCompany?.name}:
-              </p>
-              
-              <div className="space-y-6">
-                <div>
-                  <Label htmlFor="company-size" className="text-base font-medium block mb-2">
-                    Company Size <span className="text-red-500">*</span>
-                  </Label>
-                  <Select 
-                    value={companyInfo.size} 
-                    onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
-                  >
-                    <SelectTrigger id="company-size" className="h-12">
-                      <SelectValue placeholder="Select number of employees" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Micro (1-9 employees)">Micro (1-9 employees)</SelectItem>
-                      <SelectItem value="Small (10-49 employees)">Small (10-49 employees)</SelectItem>
-                      <SelectItem value="Medium (50-249 employees)">Medium (50-249 employees)</SelectItem>
-                      <SelectItem value="Large (250-999 employees)">Large (250-999 employees)</SelectItem>
-                      <SelectItem value="Enterprise (1000+ employees)">Enterprise (1000+ employees)</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 2
+                  </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="company-revenue" className="text-base font-medium block mb-2">
-                    Annual Revenue <span className="text-red-500">*</span>
-                  </Label>
-                  <Select 
-                    value={companyInfo.revenue} 
-                    onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
-                  >
-                    <SelectTrigger id="company-revenue" className="h-12">
-                      <SelectValue placeholder="Select annual revenue" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="$0–$10M">$0–$10M</SelectItem>
-                      <SelectItem value="$10M–$50M">$10M–$50M</SelectItem>
-                      <SelectItem value="$50M–$250M">$50M–$250M</SelectItem>
-                      <SelectItem value="$250M+">$250M+</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Company Information</h2>
+                <p className="text-base text-gray-700 mb-6">
+                  Add basic details about {currentCompany?.name} to help us customize your experience.
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <Label htmlFor="company-size" className="text-base font-medium block mb-2">
+                      Company Size <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={companyInfo.size} 
+                      onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
+                    >
+                      <SelectTrigger id="company-size" className="h-12">
+                        <SelectValue placeholder="Select number of employees" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Micro (1-9 employees)">Micro (1-9 employees)</SelectItem>
+                        <SelectItem value="Small (10-49 employees)">Small (10-49 employees)</SelectItem>
+                        <SelectItem value="Medium (50-249 employees)">Medium (50-249 employees)</SelectItem>
+                        <SelectItem value="Large (250-999 employees)">Large (250-999 employees)</SelectItem>
+                        <SelectItem value="Enterprise (1000+ employees)">Enterprise (1000+ employees)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="company-revenue" className="text-base font-medium block mb-2">
+                      Annual Revenue <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={companyInfo.revenue} 
+                      onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
+                    >
+                      <SelectTrigger id="company-revenue" className="h-12">
+                        <SelectValue placeholder="Select annual revenue" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="$0–$10M">$0–$10M</SelectItem>
+                        <SelectItem value="$10M–$50M">$10M–$50M</SelectItem>
+                        <SelectItem value="$50M–$250M">$50M–$250M</SelectItem>
+                        <SelectItem value="$250M+">$250M+</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_2.png" 
-                  alt="Company Information" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_2.png" 
+                      alt="Company Information" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -688,39 +706,67 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">A Few Tasks Ahead</h2>
-              <p className="text-base text-gray-600 mb-8">
-                To complete your accreditation application, you'll
-                need to work through the following tasks:
-              </p>
-              
-              <ol className="space-y-6">
-                <li className="flex items-center gap-4">
-                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">1</span>
-                  <span className="font-medium text-base">KYB Form</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">2</span>
-                  <span className="font-medium text-base">S&P KY3P Security Assessment</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <span className="flex items-center justify-center h-7 w-7 rounded-full bg-blue-500 text-white text-base font-medium">3</span>
-                  <span className="font-medium text-base">Open Banking Survey</span>
-                </li>
-              </ol>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 3
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">A Few Tasks Ahead</h2>
+                <p className="text-base text-gray-700 mb-6">
+                  To complete your accreditation application, you'll need to work through the following tasks:
+                </p>
+                
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">1</div>
+                    <div>
+                      <h3 className="font-medium text-base text-gray-900">KYB Form</h3>
+                      <p className="text-sm text-gray-600">Basic verification of your business identity and structure</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">2</div>
+                    <div>
+                      <h3 className="font-medium text-base text-gray-900">S&P KY3P Security Assessment</h3>
+                      <p className="text-sm text-gray-600">Comprehensive security and compliance verification</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-white text-sm font-medium flex-shrink-0 mt-0.5">3</div>
+                    <div>
+                      <h3 className="font-medium text-base text-gray-900">Open Banking Survey</h3>
+                      <p className="text-sm text-gray-600">Assessment of your open banking capabilities</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_3.png" 
-                  alt="Task Overview" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_3.png" 
+                      alt="Task Overview" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -728,43 +774,63 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">Streamline with Document Uploads</h2>
-              <p className="text-base text-gray-600 mb-8">
-                Accelerate your accreditation by uploading critical
-                documents upfront. Our AI-driven system auto-fills
-                forms, saving you time.
-              </p>
-              
-              <div className="flex flex-wrap gap-3">
-                {[
-                  "SOC 2", 
-                  "ISO 27001",
-                  "Penetration Test Reports",
-                  "API Security",
-                  "OAuth Certification",
-                  "GDPR/CCPA Compliance",
-                  "FDX Certification",
-                  "Business Continuity Plan",
-                  "Data Protection Policies"
-                ].map((doc, i) => (
-                  <div key={i} className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-                    {doc}
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 4
                   </div>
-                ))}
+                </div>
+                
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Streamline with Document Uploads</h2>
+                <p className="text-base text-gray-700 mb-6">
+                  Accelerate your accreditation by uploading critical documents upfront. 
+                  Our AI-driven system auto-fills forms, saving you time.
+                </p>
+                
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Recommended Documents</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      "SOC 2", 
+                      "ISO 27001",
+                      "Penetration Test Reports",
+                      "API Security",
+                      "OAuth Certification",
+                      "GDPR/CCPA Compliance",
+                      "FDX Certification",
+                      "Business Continuity Plan",
+                      "Data Protection Policies"
+                    ].map((doc, i) => (
+                      <div key={i} className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                        {doc}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_4.png" 
-                  alt="Document Upload" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_4.png" 
+                      alt="Document Upload" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -772,75 +838,101 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">Invite Your Team</h2>
-              
-              {teamMembers.map((member, index) => (
-                <Card key={index} className="mb-5 overflow-hidden border-gray-200 shadow-sm">
-                  <CardContent className="pt-5 pb-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-blue-100 text-blue-700 py-1.5 px-4 rounded-full text-sm font-medium">
-                        {member.role}
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        {member.roleDescription} {member.formType}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
-                          Full Name
-                        </Label>
-                        <Input
-                          id={`name-${index}`}
-                          value={member.fullName}
-                          onChange={(e) => {
-                            const newMembers = [...teamMembers];
-                            newMembers[index].fullName = e.target.value;
-                            setTeamMembers(newMembers);
-                          }}
-                          className={cn("h-11", member.fullName ? "border-green-500" : "")}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
-                          Email Address
-                        </Label>
-                        <Input
-                          id={`email-${index}`}
-                          type="email"
-                          value={member.email}
-                          onChange={(e) => {
-                            const newMembers = [...teamMembers];
-                            newMembers[index].email = e.target.value;
-                            setTeamMembers(newMembers);
-                          }}
-                          className={cn("h-11", 
-                            member.email && member.email.includes('@') ? "border-green-500" : ""
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              <p className="text-xs text-gray-500 mt-2">
-                Team member invitations are optional - you can skip this step if needed
-              </p>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 5
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Invite Your Team</h2>
+                <p className="text-base text-gray-700 mb-6">
+                  Streamline your accreditation process by inviting key team members to contribute 
+                  directly to relevant sections.
+                </p>
+                
+                <div className="space-y-5">
+                  {teamMembers.map((member, index) => (
+                    <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
+                      <CardContent className="pt-5 pb-5">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="bg-primary/10 text-primary py-1.5 px-4 rounded-full text-sm font-medium">
+                            {member.role}
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {member.roleDescription} {member.formType}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
+                              Full Name
+                            </Label>
+                            <Input
+                              id={`name-${index}`}
+                              value={member.fullName}
+                              onChange={(e) => {
+                                const newMembers = [...teamMembers];
+                                newMembers[index].fullName = e.target.value;
+                                setTeamMembers(newMembers);
+                              }}
+                              className={cn("h-11", member.fullName ? "border-green-500" : "")}
+                              placeholder="Jane Smith"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
+                              Email Address
+                            </Label>
+                            <Input
+                              id={`email-${index}`}
+                              type="email"
+                              value={member.email}
+                              onChange={(e) => {
+                                const newMembers = [...teamMembers];
+                                newMembers[index].email = e.target.value;
+                                setTeamMembers(newMembers);
+                              }}
+                              className={cn("h-11", 
+                                member.email && member.email.includes('@') ? "border-green-500" : ""
+                              )}
+                              placeholder="jane.smith@company.com"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    Team member invitations are optional - you can skip this step if needed
+                  </p>
+                </div>
+              </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_5.png" 
-                  alt="Team Invitation" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_5.png" 
+                      alt="Team Invitations" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -848,66 +940,87 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-6">Review Provided Information</h2>
-              
-              <div className="space-y-5 text-base">
-                <div className="flex items-center gap-3">
-                  <Check className="text-green-500 h-6 w-6" />
-                  <span className="font-medium">Company:</span>
-                  <span>{currentCompany?.name}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Check className="text-green-500 h-6 w-6" />
-                  <span className="font-medium">Category:</span>
-                  <span>{currentCompany?.category}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Check className="text-green-500 h-6 w-6" />
-                  <span className="font-medium">Size:</span>
-                  <span>{companyInfo.size || "Not specified"}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Check className="text-green-500 h-6 w-6" />
-                  <span className="font-medium">Revenue:</span>
-                  <span>{companyInfo.revenue || "Not specified"}</span>
-                </div>
-                
-                {teamMembers[0].fullName && (
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-6 w-6" />
-                    <span className="font-medium">CFO:</span>
-                    <span>
-                      {teamMembers[0].fullName} ({teamMembers[0].email})
-                    </span>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 6
                   </div>
-                )}
+                </div>
                 
-                {teamMembers[1].fullName && (
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Review Provided Information</h2>
+                <p className="text-base text-gray-700 mb-6">
+                  Please confirm the information you've provided before completing the onboarding process.
+                </p>
+                
+                <div className="space-y-4 text-base mt-4 bg-gray-50 p-5 rounded-lg border border-gray-100">
                   <div className="flex items-center gap-3">
-                    <Check className="text-green-500 h-6 w-6" />
-                    <span className="font-medium">CISO:</span>
-                    <span>
-                      {teamMembers[1].fullName} ({teamMembers[1].email})
-                    </span>
+                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-24">Company:</span>
+                    <span className="text-gray-900">{currentCompany?.name}</span>
                   </div>
-                )}
+                  
+                  <div className="flex items-center gap-3">
+                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-24">Category:</span>
+                    <span className="text-gray-900">{currentCompany?.category}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-24">Size:</span>
+                    <span className="text-gray-900">{companyInfo.size || "Not specified"}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-24">Revenue:</span>
+                    <span className="text-gray-900">{companyInfo.revenue || "Not specified"}</span>
+                  </div>
+                  
+                  {teamMembers[0].fullName && (
+                    <div className="flex items-center gap-3">
+                      <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                      <span className="font-medium text-gray-700 w-24">CFO:</span>
+                      <span className="text-gray-900">
+                        {teamMembers[0].fullName} ({teamMembers[0].email})
+                      </span>
+                    </div>
+                  )}
+                  
+                  {teamMembers[1].fullName && (
+                    <div className="flex items-center gap-3">
+                      <Check className="text-green-500 h-5 w-5 flex-shrink-0" />
+                      <span className="font-medium text-gray-700 w-24">CISO:</span>
+                      <span className="text-gray-900">
+                        {teamMembers[1].fullName} ({teamMembers[1].email})
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_6.png" 
-                  alt="Information Review" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_6.png" 
+                      alt="Information Review" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
@@ -915,48 +1028,68 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 p-8 pt-4">
-            <div className="flex flex-col justify-center">
-              <div className="mx-auto mb-8">
-                <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="h-10 w-10 text-green-600" />
-                </div>
-              </div>
-              
-              <h2 className="text-3xl font-bold text-blue-600 text-center mb-6">Ready to Begin</h2>
-              <p className="text-center text-base text-gray-600 mb-8">
-                Your company profile is now set up! To complete your
-                accreditation process, you'll need to finish your assigned
-                tasks, starting with the KYB Form.
-              </p>
-              
-              <div className="space-y-4 text-base mx-auto max-w-md">
-                <div className="flex items-center gap-3">
-                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
-                  <span>Complete the KYB form to verify your business identity</span>
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+            {/* Left side: Text content */}
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-auto">
+              <div>
+                <div className="mb-5">
+                  <div className="inline-flex px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full">
+                    Step 7
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
-                  <span>Upload compliance documents to fast-track your accreditation</span>
+                <div className="text-center mb-8">
+                  <div className="mx-auto mb-6">
+                    <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                      <Check className="h-10 w-10 text-green-600" />
+                    </div>
+                  </div>
+                  
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Begin</h2>
+                  <p className="text-base text-gray-700">
+                    Your company profile is now set up! To complete your
+                    accreditation process, you'll need to finish your assigned
+                    tasks, starting with the KYB Form.
+                  </p>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <ArrowRight className="text-blue-600 h-6 w-6 flex-shrink-0" />
-                  <span>Answer security and compliance questions accurately</span>
+                <div className="space-y-5 text-base mt-8 max-w-md mx-auto">
+                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <span>Complete the KYB form to verify your business identity</span>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <span>Upload compliance documents to fast-track your accreditation</span>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
+                    <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <span>Answer security and compliance questions accurately</span>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-center items-center bg-blue-50/50 rounded-lg p-4">
+            {/* Right side: Image */}
+            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <img 
-                  src="/assets/welcome_7.png" 
-                  alt="Ready to Begin" 
-                  className="max-w-full h-[320px] rounded-lg object-contain"
-                />
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+                    <img 
+                      src="/assets/welcome_7.png" 
+                      alt="Ready to Begin" 
+                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                    />
+                  </div>
+                </div>
               ) : (
-                <EnhancedSkeleton className="w-full h-[320px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
+                </div>
               )}
             </div>
           </div>
