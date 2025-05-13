@@ -341,7 +341,17 @@ export async function submitFormWithTransaction(options: FormSubmissionOptions):
       // These are different from tab unlocking and perform form-type specific operations
       let postSubmissionResult = {};
       
-      if (formType === 'open_banking') {
+      // DEBUG: Extra logging to verify formType value
+      console.log(`[TransactionalFormHandler] 🔍 Form type check for post-submission actions: "${formType}"`, {
+        isOpenBanking: formType === 'open_banking',
+        isExactMatch: formType === 'open_banking',
+        formTypeComparison: `"${formType}" === "open_banking"`,
+        taskId,
+        companyId,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (formType === 'open_banking' || formType === 'open_banking_survey') {
         try {
           console.log(`[TransactionalFormHandler] 🚀 Executing Open Banking post-submission actions for task ${taskId}, company ${companyId}`);
           

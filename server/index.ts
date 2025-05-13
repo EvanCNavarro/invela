@@ -4,7 +4,6 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
-import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
@@ -116,84 +115,44 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Initialize our new WebSocket implementation for better type safety and maintainability
-// Initialize a proper WebSocket server the conventional way
-// to avoid duplicate initialization conflicts
+// Initialize a single WebSocket server for the entire application
+// using our unified implementation
 import { WebSocketServer } from 'ws';
-logger.info('[ServerStartup] Setting up a single WebSocket server instance');
-
-// Create a single WebSocket server instance with explicit path
-const wssInstance = new WebSocketServer({ 
-  server, 
-  path: '/ws',
-  // Skip Vite HMR connections to avoid conflicts
-  verifyClient: (info: { req: { headers: { [key: string]: string | string[] | undefined } } }) => {
-    if (info.req.headers['sec-websocket-protocol'] === 'vite-hmr') {
-      logger.debug('[WebSocket] Ignoring Vite HMR WebSocket connection');
-      return false;
-    }
-    return true;
-  }
-});
-
-// Use functions from the unified-websocket module to register the WebSocket server with various modules
 import { registerWebSocketServer } from './utils/task-update';
 import { setWebSocketServer } from './utils/task-broadcast';
-import { getConnectedClientCount, getWebSocketServer, initializeWebSocketServer } from './utils/unified-websocket';
+import { getConnectedClientCount, initializeWebSocketServer } from './utils/unified-websocket';
 
-// Register WebSocket server with task-update utility
-registerWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+logger.info('[ServerStartup] Setting up a single WebSocket server instance');
 
-// Set WebSocket server reference for task-broadcast utility
-setWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
-
-// Initialize the unified WebSocket implementation using our existing server and WebSocket instance
+// Create a single WebSocket server instance through our unified implementation
 try {
-  // Initialize the WebSocket server using the imported function from unified-websocket.ts
-  initializeWebSocketServer(server, '/ws');
-  logger.info('[ServerStartup] Unified WebSocket server initialized successfully', {
-    connectedClients: getConnectedClientCount(),
-    timestamp: new Date().toISOString()
-  });
+  // Initialize the WebSocket server with specific options
+  const wssInstance = initializeWebSocketServer(server, '/ws');
+  
+  if (wssInstance) {
+    // Log successful initialization
+    logger.info('[TaskWebSocket] WebSocket server registered with unified implementation');
+    
+    // Register the single WebSocket server with all modules that need it
+    registerWebSocketServer(wssInstance);
+    logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+    
+    setWebSocketServer(wssInstance);
+    logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+    
+    // Log the current state
+    setTimeout(() => {
+      logger.info(`[ServerStartup] WebSocket server active with ${getConnectedClientCount()} connected clients`);
+    }, 1000);
+  } else {
+    logger.error('[ServerStartup] Failed to initialize WebSocket server - null instance returned');
+  }
 } catch (wsError) {
   logger.error('[ServerStartup] Failed to initialize unified WebSocket server', {
     error: wsError instanceof Error ? wsError.message : String(wsError),
     stack: wsError instanceof Error ? wsError.stack : undefined
   });
 }
-
-// Listen for connections
-wssInstance.on('connection', (socket, req) => {
-  logger.info('[WebSocket] Client connected');
-  
-  socket.on('message', (data) => {
-    try {
-      const message = JSON.parse(data.toString());
-      logger.debug('[WebSocket] Received message:', message);
-      
-      // Handle different message types
-      if (message.type === 'ping') {
-        socket.send(JSON.stringify({
-          type: 'pong',
-          timestamp: new Date().toISOString()
-        }));
-      }
-    } catch (error) {
-      logger.error('[WebSocket] Error processing message:', error);
-    }
-  });
-  
-  socket.on('close', () => {
-    logger.info('[WebSocket] Client disconnected');
-  });
-});
-
-// Log current WebSocket server state
-setTimeout(() => {
-  logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
-}, 1000);
 
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
