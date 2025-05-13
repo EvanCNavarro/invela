@@ -130,15 +130,10 @@ const carouselContent: CarouselItem[] = [
   },
   {
     src: "/attached_assets/welcome_6.png",
-    alt: "Review Your Information",
-    title: "Review Your Information",
-    subtitle: "Review and confirm the details you provided before submission. Double-check for accuracy to ensure a seamless onboarding experience.",
-    bulletPoints: [
-      "Company Name",
-      "Organization Size",
-      "Annual Revenue",
-      "Team Members Invited (with assigned tasks)"
-    ]
+    alt: "Review Provided Information",
+    title: "Review Provided Information",
+    subtitle: "", // Removed subtitle as requested
+    bulletPoints: [] // Removed bullet points as requested
   },
   {
     src: "/attached_assets/welcome_7.png",
@@ -1184,8 +1179,22 @@ export function WelcomeModal() {
                       {/* Simple title with no subtext, as requested */}
                       <div className="mb-4">
                         <h3 className="text-xl font-semibold text-gray-800">Review Provided Information</h3>
-                        {/* Add console log for debugging */}
+                        {/* Add structured logging using utility logger */}
                         {(() => {
+                          // Use dynamic import to avoid bundling logger if not used
+                          import('@/lib/logger').then(({ logger }) => {
+                            logger.debug('[WelcomeModal] Rendering review page with data', {
+                              company, 
+                              employeeCount, 
+                              revenueTier, 
+                              pendingCompanyData,
+                              teamInvites: [
+                                cfoName && cfoEmail ? { role: 'CFO', name: cfoName, email: cfoEmail } : null,
+                                cisoName && cisoEmail ? { role: 'CISO', name: cisoName, email: cisoEmail } : null
+                              ].filter(Boolean)
+                            });
+                          });
+                          // Also keep console log for immediate visibility during development
                           console.log('[ONBOARDING DEBUG] Rendering review page with data:', {
                             company, 
                             employeeCount, 
@@ -1297,8 +1306,16 @@ export function WelcomeModal() {
                           </h3>
                           
                           <div className="space-y-3">
-                            {/* Add debugging for team invites */}
+                            {/* Add structured logging for team invites */}
                             {(() => {
+                              // Use dynamic import to avoid bundling logger if not used
+                              import('@/lib/logger').then(({ logger }) => {
+                                logger.debug('[WelcomeModal] Rendering team invitations', {
+                                  cfoInvite: cfoName && cfoEmail ? { name: cfoName, email: cfoEmail } : null,
+                                  cisoInvite: cisoName && cisoEmail ? { name: cisoName, email: cisoEmail } : null
+                                });
+                              });
+                              // Also keep console log for immediate visibility during development
                               console.log('[ONBOARDING DEBUG] Rendering team invitations:', {
                                 cfoInvite: cfoName && cfoEmail ? { name: cfoName, email: cfoEmail } : null,
                                 cisoInvite: cisoName && cisoEmail ? { name: cisoName, email: cisoEmail } : null
