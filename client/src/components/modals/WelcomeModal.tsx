@@ -710,7 +710,7 @@ export function WelcomeModal() {
                         transition={{ delay: 0.3 }}
                         className={cn(
                           "text-lg text-gray-700",
-                          currentSlide === 2 ? "mb-2" : "mb-3"
+                          currentSlide === 2 ? "mb-2" : currentSlide === 3 ? "mb-1" : "mb-3"
                         )}
                       >
                         {Number(currentSlide) === 1 ? (
@@ -829,13 +829,13 @@ export function WelcomeModal() {
                         </div>
                       ) : (
                         // Custom styling for document list in step 4 or standard bullets for other slides
-                        <div className={currentSlide === 3 ? "flex flex-wrap gap-2 mt-3" : "space-y-5"}>
+                        <div className={currentSlide === 3 ? "flex flex-wrap gap-2 mt-1" : "space-y-5"}>
                           {carouselContent[currentSlide].bulletPoints?.map((point, index) => (
                             currentSlide === 3 ? (
                               // Document type chips with soft rounded corners for step 4
                               <motion.div 
                                 key={index} 
-                                className="py-2 px-4 bg-gray-100 rounded-full border border-gray-200 transform-gpu"
+                                className="py-2 px-4 bg-gray-100 rounded-lg border border-gray-200 transform-gpu"
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 + (index * 0.05) }}
