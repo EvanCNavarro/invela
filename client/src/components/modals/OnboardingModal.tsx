@@ -18,7 +18,6 @@ import { Check, ChevronRight, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
@@ -151,7 +150,6 @@ export function OnboardingModal() {
   // Get authentication and toast utilities
   const { user } = useAuth();
   const { toast } = useToast();
-  const unifiedToast = useUnifiedToast();
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
 
