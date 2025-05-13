@@ -72,14 +72,26 @@ export default function ClaimDisputePage() {
     });
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'MMM dd, yyyy');
     } catch (error) {
+      console.error('Error formatting date:', error);
       return dateString;
     }
+  };
+  
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
+  const formatCurrency = (amount: number) => {
+    return Math.round(amount).toLocaleString('en-US');
   };
 
   if (isLoading) {
@@ -120,10 +132,7 @@ export default function ClaimDisputePage() {
     );
   }
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return Math.round(amount).toLocaleString('en-US');
-  };
+  // Using formatCurrency from above - standardized across all pages
 
   // Mock data structured from the screenshot
   const disputeData = {
