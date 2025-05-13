@@ -83,15 +83,26 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     navigate(`/claims/${claim.id}/resolve`);
   };
 
-  // Format amount as a flat number without currency symbol
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
   const formatCurrency = (amount: number) => {
     return Math.round(amount).toLocaleString('en-US');
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'MMM dd, yyyy');
+    try {
+      const date = new Date(dateString);
+      return format(date, 'MMM dd, yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
 
   const getStatusBadge = (status: ClaimStatus) => {
