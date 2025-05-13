@@ -30,6 +30,10 @@ export default function ClaimDetailsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const { toast } = useToast();
+  
+  // Debug logging for component rendering and params
+  console.log('[ClaimDetailsPage] Rendering with ID param:', id);
+  console.log('[ClaimDetailsPage] Full params:', params);
 
   // Fetch claim details
   const { data: claim, isLoading, isError } = useQuery<any>({
