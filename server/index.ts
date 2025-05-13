@@ -136,9 +136,10 @@ const wssInstance = new WebSocketServer({
   }
 });
 
-// Fix the import ordering issue - move these imports to the top
+// Use functions from the unified-websocket module to register the WebSocket server with various modules
 import { registerWebSocketServer } from './utils/task-update';
 import { setWebSocketServer } from './utils/task-broadcast';
+import { getConnectedClientCount, getWebSocketServer, initializeWebSocketServer } from './utils/unified-websocket';
 
 // Register WebSocket server with task-update utility
 registerWebSocketServer(wssInstance);
@@ -147,6 +148,21 @@ logger.info('[ServerStartup] WebSocket server registered with task-update utilit
 // Set WebSocket server reference for task-broadcast utility
 setWebSocketServer(wssInstance);
 logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+
+// Initialize the unified WebSocket implementation using our existing server and WebSocket instance
+try {
+  // Initialize the WebSocket server using the imported function from unified-websocket.ts
+  initializeWebSocketServer(server, '/ws');
+  logger.info('[ServerStartup] Unified WebSocket server initialized successfully', {
+    connectedClients: getConnectedClientCount(),
+    timestamp: new Date().toISOString()
+  });
+} catch (wsError) {
+  logger.error('[ServerStartup] Failed to initialize unified WebSocket server', {
+    error: wsError instanceof Error ? wsError.message : String(wsError),
+    stack: wsError instanceof Error ? wsError.stack : undefined
+  });
+}
 
 // Listen for connections
 wssInstance.on('connection', (socket, req) => {
