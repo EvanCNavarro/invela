@@ -774,12 +774,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 4
-                  </div>
-                </div>
-                
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Streamline with Document Uploads</h2>
                 <p className="text-lg text-gray-700 mb-8">
                   Accelerate your accreditation by uploading critical documents upfront. 
@@ -838,12 +832,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 5
-                  </div>
-                </div>
-                
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Invite Your Team</h2>
                 <p className="text-lg text-gray-700 mb-8">
                   Streamline your accreditation process by inviting key team members to contribute 
@@ -940,12 +928,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 6
-                  </div>
-                </div>
-                
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Review Provided Information</h2>
                 <p className="text-lg text-gray-700 mb-8">
                   Please confirm the information you've provided before completing the onboarding process.
@@ -1028,12 +1010,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 7
-                  </div>
-                </div>
-                
                 <div className="text-center mb-10">
                   <div className="mx-auto mb-8">
                     <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
