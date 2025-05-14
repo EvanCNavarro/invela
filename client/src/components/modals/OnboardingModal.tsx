@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { 
@@ -14,7 +14,7 @@ import { EnhancedSkeleton } from "@/components/ui/enhanced-skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, CheckCircle, ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
+import { Check, CheckCircle, ChevronRight, ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,6 +23,7 @@ import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Define types for company information
 interface CompanyInfo {
@@ -617,16 +618,32 @@ export function OnboardingModal() {
     imageSrc: string, 
     imageAlt: string 
   }) => (
-    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+    <motion.div 
+      className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible"
+      initial={{ opacity: 0, x: 10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -10 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+    >
       {/* Left side: Text content with fixed height and consistent padding */}
       <div className="md:w-[60%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <motion.h2 
+            className="text-3xl font-bold text-gray-900 mb-2"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+          >
             {title}
-          </h2>
-          <div className="flex-grow overflow-y-auto content-area">
+          </motion.h2>
+          <motion.div 
+            className="flex-grow overflow-y-auto content-area"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+          >
             {children}
-          </div>
+          </motion.div>
         </div>
       </div>
       
@@ -638,37 +655,71 @@ export function OnboardingModal() {
           isLoaded={imagesLoaded[imageSrc] === true} 
         />
       </RightImageContainer>
-    </div>
+    </motion.div>
   );
   
+  // We'll use refs to manage focus properly and prevent focus jumps
+  const formRefs = {
+    companySize: useRef<HTMLButtonElement>(null),
+    companyRevenue: useRef<HTMLButtonElement>(null),
+    teamMembers: [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
+  };
+
+  // Prevent auto-focus on dialog opening
+  const handleDialogOpenAutoFocus = useCallback((e: Event) => {
+    e.preventDefault();
+  }, []);
+
   // Render step content based on current step
   const renderStepContent = () => {
-    
-    switch (currentStep) {
-      case 0: // Welcome
-        return (
+    return (
+      <AnimatePresence mode="wait">
+        {currentStep === 0 && (
           <StepLayout
+            key="step-0"
             title="Welcome to the Invela Trust Network"
             imageSrc="/assets/welcome_1.png"
             imageAlt="Welcome to Invela"
           >
             <div className="mt-4 space-y-4">
-              <CheckListItem>
-                Your premier partner for secure and efficient accreditation
-              </CheckListItem>
-              <CheckListItem>
-                Enterprise-grade risk assessment and management platform
-              </CheckListItem>
-              <CheckListItem>
-                Streamlined compliance processes with advanced automation
-              </CheckListItem>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <CheckListItem>
+                  Your premier partner for secure and efficient accreditation
+                </CheckListItem>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <CheckListItem>
+                  Enterprise-grade risk assessment and management platform
+                </CheckListItem>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+              >
+                <CheckListItem>
+                  Streamlined compliance processes with advanced automation
+                </CheckListItem>
+              </motion.div>
             </div>
           </StepLayout>
-        );
-      
-      case 1: // Company Information
-        return (
+        )}
+        
+        {currentStep === 1 && (
           <StepLayout
+            key="step-1"
+            title="Company Information"
+            imageSrc="/assets/welcome_2.png"
+            imageAlt="Company Information"
+          >
             title="Company Information"
             imageSrc="/assets/welcome_2.png"
             imageAlt="Company Information"
