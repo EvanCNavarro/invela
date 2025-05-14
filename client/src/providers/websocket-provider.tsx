@@ -5,7 +5,7 @@
  * It uses React Context to share the WebSocket connection and manages reconnection logic.
  */
 
-import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import getLogger from '@/utils/standardized-logger';
 
 // Create a logger instance for WebSocket provider with appropriate context
@@ -67,8 +67,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectionHealthCheckRef = useRef<NodeJS.Timeout | null>(null);
   const connectAttempts = useRef(0);
   const alreadyInitialized = useRef(false);
+  const lastSuccessfulMessageTime = useRef<number>(0);
+  const connectionId = useRef<string>('');
   
   /**
    * Get WebSocket URL with improved reliability
@@ -240,7 +243,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       
       // OODA: Act - Create the WebSocket with the valid URL
       const ws = new WebSocket(wsUrl);
-      const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      connectionId.current = newConnectionId;
+      
+      // Set up connection health check
+      if (connectionHealthCheckRef.current) {
+        clearInterval(connectionHealthCheckRef.current);
+      }
+      
+      // Start health check after connection is established (10 second interval)
+      connectionHealthCheckRef.current = setInterval(checkConnectionHealth, 10000);
       
       // Set connection timeout - if it doesn't connect in 5 seconds, try again
       // This improved version checks connection state more thoroughly and
@@ -500,6 +512,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         try {
           const data = JSON.parse(event.data);
           
+          // Record successful message reception for health monitoring
+          lastSuccessfulMessageTime.current = Date.now();
+          
           // Don't log heartbeat messages to reduce console spam
           if (data.type !== 'ping' && data.type !== 'pong') {
             logger.info(`Received message of type: ${data.type}`);
@@ -636,12 +651,57 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   };
   
+  // Connection health check function - monitors connection and reconnects if needed
+  const checkConnectionHealth = useCallback(() => {
+    // If no socket exists, attempt to reconnect
+    if (!socket) {
+      logger.warn('Connection health check: No socket exists, attempting reconnect');
+      connect();
+      return;
+    }
+    
+    // If socket exists but is closed, attempt to reconnect
+    if (socket.readyState !== WebSocket.OPEN) {
+      logger.warn(`Connection health check: Socket in state ${socket.readyState}, attempting reconnect`);
+      connect();
+      return;
+    }
+    
+    // Check if we've received any messages recently (30 seconds timeout)
+    const messageTimeout = 30000; // 30 seconds
+    const timeSinceLastMessage = Date.now() - lastSuccessfulMessageTime.current;
+    
+    if (lastSuccessfulMessageTime.current > 0 && timeSinceLastMessage > messageTimeout) {
+      logger.warn('Connection health check: No messages received recently, reconnecting', 
+                  { lastMessageAge: timeSinceLastMessage, threshold: messageTimeout });
+      connect();
+      return;
+    }
+    
+    // If all checks pass, send a ping to keep the connection alive
+    try {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ 
+          type: 'ping', 
+          timestamp: new Date().toISOString(),
+          connectionId: connectionId.current
+        }));
+      }
+    } catch (error) {
+      logger.warn('Error sending ping during health check', error);
+      connect();
+    }
+  }, [socket]);
+
   // Connect on mount with delayed initial connection
   useEffect(() => {
     if (alreadyInitialized.current) return;
     
     alreadyInitialized.current = true;
     logger.info('WebSocket connection manager initialized');
+    
+    // Set initial lastSuccessfulMessageTime to avoid false positives
+    lastSuccessfulMessageTime.current = Date.now();
     
     // Intentionally delay initial connection attempt to give the application time to fully initialize
     // This allows location information to be properly populated before attempting connection
@@ -669,6 +729,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         reconnectTimeoutRef.current = null;
       }
       
+      // Cancel health check
+      if (connectionHealthCheckRef.current) {
+        clearInterval(connectionHealthCheckRef.current);
+        connectionHealthCheckRef.current = null;
+      }
+      
       // Close socket
       if (socket) {
         try {
@@ -678,8 +744,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
       }
       
-      // Reset state
+      // Reset all state
       alreadyInitialized.current = false;
+      lastSuccessfulMessageTime.current = 0;
+      connectionId.current = '';
     };
   }, []);
   
