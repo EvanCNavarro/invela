@@ -409,41 +409,56 @@ export function NewOnboardingModal() {
 
   // Update company info fields (now handled by handleCompanyInfoChangeWithLogging)
 
-  // Update team member fields with validation
-  const handleTeamMemberChange = (index: number, field: keyof TeamMember, value: string) => {
-    const updated = [...teamMembers];
-    updated[index] = { ...updated[index], [field]: value };
-    setTeamMembers(updated);
+  // Update team member fields with validation using useCallback to prevent re-renders
+  const handleTeamMemberChange = useCallback((index: number, field: keyof TeamMember, value: string) => {
+    logger.select.debug(`Team member ${index} ${field} changed to: ${value}`);
     
-    // Clear validation error for this field if it exists
-    if (teamMemberErrors[index] && teamMemberErrors[index][field]) {
-      const updatedErrors = { ...teamMemberErrors };
-      updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
-      setTeamMemberErrors(updatedErrors);
-    }
-  };
+    setTeamMembers(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+    
+    // Clear validation error for this field if it exists using functional update
+    setTeamMemberErrors(prev => {
+      if (prev[index] && prev[index][field]) {
+        const updatedErrors = { ...prev };
+        updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
+        return updatedErrors;
+      }
+      return prev;
+    });
+  }, []);
 
-  // Add a team member
-  const handleAddTeamMember = (role: 'CFO' | 'CISO', formType: string, roleDescription: string) => {
-    setTeamMembers([
-      ...teamMembers,
+  // Add a team member - memoized to prevent re-renders
+  const handleAddTeamMember = useCallback((role: 'CFO' | 'CISO', formType: string, roleDescription: string) => {
+    logger.component.debug(`Adding team member with role: ${role}`);
+    setTeamMembers(prev => [
+      ...prev,
       { role, fullName: '', email: '', formType, roleDescription }
     ]);
-  };
+  }, []);
 
-  // Remove a team member
-  const handleRemoveTeamMember = (index: number) => {
-    const updated = [...teamMembers];
-    updated.splice(index, 1);
-    setTeamMembers(updated);
+  // Remove a team member - memoized to prevent re-renders
+  const handleRemoveTeamMember = useCallback((index: number) => {
+    logger.component.debug(`Removing team member at index: ${index}`);
     
-    // Remove any errors for this index
-    if (teamMemberErrors[index]) {
-      const updatedErrors = { ...teamMemberErrors };
-      delete updatedErrors[index];
-      setTeamMemberErrors(updatedErrors);
-    }
-  };
+    setTeamMembers(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+    
+    // Remove any errors for this index using functional update
+    setTeamMemberErrors(prev => {
+      if (prev[index]) {
+        const updatedErrors = { ...prev };
+        delete updatedErrors[index];
+        return updatedErrors;
+      }
+      return prev;
+    });
+  }, []);
 
   // Step layout component with animations
   const StepLayout = memo(({ 
