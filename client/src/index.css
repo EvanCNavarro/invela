@@ -233,4 +233,9 @@
   }
   
   /* Remove any special CSS rules that might cause flashing */
+  
+  /* Hide the close button for onboarding modal */
+  .onboarding-modal button[aria-label="Close"] {
+    display: none !important;
+  }
 }

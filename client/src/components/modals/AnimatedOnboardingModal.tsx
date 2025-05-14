@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 // Mock functions for API calls and contexts
 // In a production environment, these would be actual API calls
@@ -845,10 +845,11 @@ export function AnimatedOnboardingModal({
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
-        className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col"
+        className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col onboarding-modal"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogTitle className="sr-only">Invela Onboarding Modal</DialogTitle>
+        <DialogDescription className="sr-only">Complete the onboarding process to get started with the Invela platform</DialogDescription>
         {/* Main content area */}
         <div className="flex-1 overflow-hidden">
           {/* Step content */}
