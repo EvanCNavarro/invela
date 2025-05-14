@@ -670,56 +670,128 @@ export function OnboardingModal() {
     e.preventDefault();
   }, []);
 
+  // Define custom input component with validation feedback
+  const FormInput = ({ 
+    label, 
+    value, 
+    onChange, 
+    placeholder, 
+    isValid = true, 
+    error = "", 
+    autoFocus = false,
+    inputRef = null
+  }) => (
+    <div className="space-y-1 mb-4">
+      <Label htmlFor={label.toLowerCase().replace(/\s/g, '-')}>{label}</Label>
+      <div className="relative">
+        <Input
+          id={label.toLowerCase().replace(/\s/g, '-')}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={cn(
+            "transition-colors",
+            !isValid && value 
+              ? "border-red-500 focus-visible:ring-red-500" 
+              : isValid && value 
+                ? "border-green-500 focus-visible:ring-green-500" 
+                : ""
+          )}
+          autoFocus={autoFocus}
+          ref={inputRef}
+        />
+        {value && (
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+            {isValid ? (
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-500" />
+            )}
+          </div>
+        )}
+      </div>
+      {!isValid && error && (
+        <p className="text-sm text-red-500">{error}</p>
+      )}
+    </div>
+  );
+
+  // We'll use refs to manage focus properly and prevent focus jumps
+  const formRefs = {
+    companySize: useRef<HTMLButtonElement>(null),
+    companyRevenue: useRef<HTMLButtonElement>(null),
+    teamMembers: [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
+  };
+
+  // Prevent auto-focus on dialog opening
+  const handleDialogOpenAutoFocus = useCallback((e: Event) => {
+    e.preventDefault();
+  }, []);
+
   // Render step content based on current step
   const renderStepContent = () => {
-    return (
-      <AnimatePresence mode="wait">
-        {currentStep === 0 && (
-          <StepLayout
+    switch (currentStep) {
+      case 0:
+        return (
+          <motion.div
             key="step-0"
-            title="Welcome to the Invela Trust Network"
-            imageSrc="/assets/welcome_1.png"
-            imageAlt="Welcome to Invela"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
           >
-            <div className="mt-4 space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <CheckListItem>
-                  Your premier partner for secure and efficient accreditation
-                </CheckListItem>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              >
-                <CheckListItem>
-                  Enterprise-grade risk assessment and management platform
-                </CheckListItem>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <CheckListItem>
-                  Streamlined compliance processes with advanced automation
-                </CheckListItem>
-              </motion.div>
-            </div>
-          </StepLayout>
-        )}
-        
-        {currentStep === 1 && (
-          <StepLayout
+            <StepLayout
+              title="Welcome to the Invela Trust Network"
+              imageSrc="/assets/welcome_1.png"
+              imageAlt="Welcome to Invela"
+            >
+              <div className="mt-4 space-y-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
+                  <CheckListItem>
+                    Your premier partner for secure and efficient accreditation
+                  </CheckListItem>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <CheckListItem>
+                    Enterprise-grade risk assessment and management platform
+                  </CheckListItem>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                >
+                  <CheckListItem>
+                    Streamlined compliance processes with advanced automation
+                  </CheckListItem>
+                </motion.div>
+              </div>
+            </StepLayout>
+          </motion.div>
+        );
+      
+      case 1:
+        return (
+          <motion.div
             key="step-1"
-            title="Company Information"
-            imageSrc="/assets/welcome_2.png"
-            imageAlt="Company Information"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
           >
+            <StepLayout
+              title="Company Information"
+              imageSrc="/assets/welcome_2.png"
+              imageAlt="Company Information"
+            >
             title="Company Information"
             imageSrc="/assets/welcome_2.png"
             imageAlt="Company Information"
