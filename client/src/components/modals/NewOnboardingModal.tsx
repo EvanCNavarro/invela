@@ -161,12 +161,25 @@ export function NewOnboardingModal() {
   };
 
   // We use the preventAutoFocus prop on MemoizedDialog instead of this handler
-  // Using the logger for debugging focus management
+  // Using the logger for debugging focus management and component optimization
   useEffect(() => {
     if (open) {
       logger.focus.debug('Onboarding modal opened, preventing auto-focus');
+      logger.modal.info('Using memoized components to prevent unnecessary re-renders');
     }
   }, [open]);
+  
+  // Handle company info changes
+  const handleCompanyInfoChange = useCallback((field: keyof CompanyInfo, value: string) => {
+    setCompanyInfo(prev => ({ ...prev, [field]: value }));
+    setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
+  }, []);
+  
+  // Add logging for select component changes
+  const handleCompanyInfoChangeWithLogging = useCallback((field: keyof CompanyInfo, value: string) => {
+    logger.select.debug(`Company ${field} select changed to: ${value}`);
+    handleCompanyInfoChange(field, value);
+  }, [handleCompanyInfoChange]);
 
   // Load company data from API
   const { data: company } = useQuery({ 
@@ -560,7 +573,7 @@ export function NewOnboardingModal() {
                   <MemoizedSelect
                     label="Company Size"
                     value={companyInfo.size}
-                    onChange={(value) => handleCompanyInfoChange('size', value)}
+                    onChange={(value) => handleCompanyInfoChangeWithLogging('size', value)}
                     options={[
                       { value: "1-10", label: "1-10 employees" },
                       { value: "11-50", label: "11-50 employees" },
@@ -932,67 +945,66 @@ export function NewOnboardingModal() {
       width="xl"
       className="p-0 overflow-hidden"
     >
-        <div className="sr-only" id="onboarding-description">Complete your onboarding process</div>
+      <div className="sr-only" id="onboarding-description">Complete your onboarding process</div>
+      
+      <div>
+        {/* Main Content Area */}
+        <div className="h-[400px]">
+          {renderStepContent()}
+        </div>
         
-        <div>
-          {/* Main Content Area */}
-          <div className="h-[400px]">
-            {renderStepContent()}
-          </div>
-          
-          {/* Step Indicators and Navigation Controls */}
-          <div className="border-t border-gray-200 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                {currentStep > 0 && (
-                  <Button
-                    variant="ghost"
-                    onClick={handlePreviousStep}
-                    className="flex items-center text-gray-600"
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: totalSteps }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "h-2 w-2 rounded-full transition-all",
-                      i === currentStep
-                        ? "bg-primary w-4"
-                        : i < currentStep
-                          ? "bg-primary opacity-70"
-                          : "bg-gray-300"
-                    )}
-                  />
-                ))}
-              </div>
-              
-              <div>
+        {/* Step Indicators and Navigation Controls */}
+        <div className="border-t border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              {currentStep > 0 && (
                 <Button
-                  onClick={handleNextStep}
-                  disabled={updateCompanyMutation.isPending}
-                  className="flex items-center"
+                  variant="ghost"
+                  onClick={handlePreviousStep}
+                  className="flex items-center text-gray-600"
                 >
-                  {currentStep === totalSteps - 1 ? (
-                    updateCompanyMutation.isPending ? "Completing..." : "Complete"
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
                 </Button>
-              </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "h-2 w-2 rounded-full transition-all",
+                    i === currentStep
+                      ? "bg-primary w-4"
+                      : i < currentStep
+                        ? "bg-primary opacity-70"
+                        : "bg-gray-300"
+                  )}
+                />
+              ))}
+            </div>
+            
+            <div>
+              <Button
+                onClick={handleNextStep}
+                disabled={updateCompanyMutation.isPending}
+                className="flex items-center"
+              >
+                {currentStep === totalSteps - 1 ? (
+                  updateCompanyMutation.isPending ? "Completing..." : "Complete"
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
-      </DialogContentWithoutCloseButton>
-    </Dialog>
+      </div>
+    </MemoizedDialog>
   );
 }
 
