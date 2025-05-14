@@ -268,6 +268,46 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
 }
 
 /**
+ * Handle onboarding completed message
+ * 
+ * @param clientId Client ID
+ * @param message Onboarding completed message
+ */
+function handleOnboardingCompleted(clientId: string, message: OnboardingCompletedMessage): void {
+  const client = clients.get(clientId);
+  
+  if (!client) {
+    wsLogger.warn(`Cannot process onboarding completion from unknown client: ${clientId}`);
+    return;
+  }
+  
+  wsLogger.info(`Received onboarding completion from client ${clientId}`, {
+    userId: message.userId,
+    companyId: message.companyId,
+    timestamp: message.timestamp
+  });
+  
+  // Broadcast to all clients
+  broadcastOnboardingCompleted({
+    userId: message.userId,
+    companyId: message.companyId,
+    metadata: message.metadata || {
+      source: 'client',
+      originalClientId: clientId
+    }
+  });
+  
+  // Send confirmation to the client
+  client.socket.send(JSON.stringify({
+    type: 'onboarding_completed_confirmed',
+    userId: message.userId,
+    companyId: message.companyId,
+    timestamp: new Date().toISOString(),
+    message: 'Onboarding completion processed successfully'
+  }));
+}
+
+/**
  * Handle client authentication message
  * 
  * @param clientId Client ID
