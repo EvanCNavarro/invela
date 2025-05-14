@@ -1,0 +1,81 @@
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-14T14:36:48.635Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-14T14:36:48.636Z] [App] Communication phase initializing 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-14T14:36:48.636Z] [App] Application ready for user interaction 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-14T14:36:48.636Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /task-center
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 200
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-14T14:36:48.845Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[OnboardingModal] WebSocket message listener registered
+[ONBOARDING DEBUG] User object in AuthProvider changed: 
+Object {userId: 348, onboardingCompleted: false, typeOfOnboardingFlag: "boolean", timestamp: "2025-05-14T14:36:48.846Z"}
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+
+If you want to hide the &#x60;DialogTitle&#x60;, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[2025-05-14T14:36:48.872Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[usePreventFocus] Removing focus from 
+<div role="dialog" id="radix-:r2:" aria-describedby="radix-:r4:" aria-labelledby="radix-:r3:" data-state="open" class="fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col" tabindex="-1" style="pointer-events: auto;">…</div>
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=295, path=/task-center, file-vault-unlocked=false
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=295, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 295
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747233409097-ordd418", timestamp: "2025-05-14T14:36:49.097Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-14T14:36:49.216Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747233409605-5cy5uuh", timestamp: "2025-05-14T14:36:49.605Z", message: "Connection established"}
+[2025-05-14T14:36:49.631Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747233410110-vuzyw4g", timestamp: "2025-05-14T14:36:50.110Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747233410607-mw1e00n", timestamp: "2025-05-14T14:36:50.607Z", message: "Connection established"}
+clientId: "client-1747233410607-mw1e00n"
+message: "Connection established"
+timestamp: "2025-05-14T14:36:50.607Z"
+type: "connection_established"
+[[Prototype]]: Object
