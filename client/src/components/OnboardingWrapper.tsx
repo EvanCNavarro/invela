@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { NewOnboardingModal } from "@/components/modals/NewOnboardingModal";
+import { OnboardingModal } from "@/components/modals/NewOnboardingModal";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -17,6 +17,18 @@ interface OnboardingWrapperProps {
 export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
 
+  // State for showing the onboarding modal
+  const [showModal, setShowModal] = React.useState(false);
+  // Mock current company for demo
+  const currentCompany = { id: 1, name: "Acme Corporation" };
+
+  // Show modal if user hasn't completed onboarding
+  React.useEffect(() => {
+    if (user && !user.onboarding_user_completed) {
+      setShowModal(true);
+    }
+  }, [user]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-1">
@@ -24,7 +36,12 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
       </div>
       
       {/* Include the onboarding modal for all pages */}
-      <NewOnboardingModal />
+      <OnboardingModal 
+        isOpen={showModal}
+        setShowModal={setShowModal}
+        user={user}
+        currentCompany={currentCompany}
+      />
     </div>
   );
 }
