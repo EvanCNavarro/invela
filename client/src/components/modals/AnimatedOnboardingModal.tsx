@@ -827,8 +827,8 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_7.png"
             imageAlt="Ready to Begin"
           >
-            <div className="mt-4 space-y-4 text-center">
-              <div className="mx-auto mb-6">
+            <div className="mt-0 space-y-4 text-center">
+              <div className="mx-auto mb-4">
                 <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto border-4 border-green-200">
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
