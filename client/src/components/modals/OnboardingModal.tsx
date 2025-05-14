@@ -87,6 +87,25 @@ const RightImageContainer = ({ children }: { children: React.ReactNode }) => {
 };
 
 /**
+ * A consistent check item component for onboarding steps
+ * Ensures proper alignment between check icons and text
+ */
+const CheckListItem = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <p className="text-lg font-medium text-gray-700">
+        {children}
+      </p>
+    </div>
+  );
+};
+
+/**
  * Image display component with decorative background elements
  * Creates a consistent style for all step images
  */
@@ -625,36 +644,15 @@ export function OnboardingModal() {
                   Welcome to the<br />Invela Trust Network
                 </h2>
                 <div className="mt-4 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <p className="text-lg font-medium text-gray-700 pt-0.5">
-                      Your premier partner for secure and efficient accreditation
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <p className="text-lg font-medium text-gray-700 pt-0.5">
-                      Enterprise-grade risk assessment and management platform
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <p className="text-lg font-medium text-gray-700 pt-0.5">
-                      Streamlined compliance processes with advanced automation
-                    </p>
-                  </div>
+                  <CheckListItem>
+                    Your premier partner for secure and efficient accreditation
+                  </CheckListItem>
+                  <CheckListItem>
+                    Enterprise-grade risk assessment and management platform
+                  </CheckListItem>
+                  <CheckListItem>
+                    Streamlined compliance processes with advanced automation
+                  </CheckListItem>
                 </div>
               </div>
             </div>
