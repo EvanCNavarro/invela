@@ -1,0 +1,100 @@
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.462Z", id: 859, status: "completed", progress: 100, …}
+[2025-05-14T14:24:18.481Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.462Z", id: 859, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.462Z", id: 859, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.640Z", taskId: 861, progress: 0, status: "not_started", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:18.663Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:18.663Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.640Z", taskId: 861, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.640Z", taskId: 861, progress: 0, status: "not_started", …}
+[2025-05-14T14:24:18.663Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.640Z", taskId: 861, progress: 0, status: "not_started", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:18.842Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:18.842Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.818Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.818Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.818Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:18.818Z", taskId: 862, progress: 0, status: "not_started", …}
+[2025-05-14T14:24:18.849Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-14T14:24:37.560Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-14T14:24:39.894Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-14T14:24:41.296Z", echo: {…}}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.561Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.561Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.541Z", taskId: 860, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.541Z", taskId: 860, progress: 0, status: "not_started", …}
+[2025-05-14T14:24:49.561Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.541Z", taskId: 860, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.541Z", taskId: 860, progress: 0, status: "not_started", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.599Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.600Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.581Z", id: 859, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.581Z", id: 859, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.581Z", id: 859, status: "completed", progress: 100, …}
+id: 859
+metadata: Object
+progress: 100
+status: "completed"
+timestamp: "2025-05-14T14:24:49.581Z"
+type: "task_updated"
+[[Prototype]]: Object
+[2025-05-14T14:24:49.603Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.581Z", id: 859, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.783Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.783Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.760Z", taskId: 861, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.760Z", taskId: 861, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.760Z", taskId: 861, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.760Z", taskId: 861, progress: 0, status: "not_started", …}
+[2025-05-14T14:24:49.784Z] [WebSocket] Received message of type: task_updated 
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.957Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-14T14:24:49.957Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.935Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.935Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.935Z", taskId: 862, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-14T14:24:49.935Z", taskId: 862, progress: 0, status: "not_started", …}
+[2025-05-14T14:24:49.958Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-14T14:25:07.563Z", echo: {…}}
