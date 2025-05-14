@@ -348,61 +348,6 @@ export async function updateCompany(
 }
 
 /**
- * Updates company onboarding status
- * Used when the onboarding flow is completed
- */
-export /**
- * Updates company onboarding status
- * 
- * @param companyId - ID of the company to update
- * @param status - New onboarding status (true = completed)
- * @param userId - Optional ID of the user who triggered the update
- * @returns Updated company object
- */
-async function updateCompanyOnboardingStatus(
-  companyId: number,
-  status: boolean = true,
-  userId?: number
-): Promise<typeof companies.$inferSelect> {
-  console.log('[Company Service] Updating company onboarding status:', {
-    companyId,
-    status,
-    userId: userId || 'not specified',
-    timestamp: new Date().toISOString()
-  });
-
-  try {
-    // Update company with completed onboarding status
-    const [updatedCompany] = await db.update(companies)
-      .set({
-        onboarding_company_completed: status,
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId))
-      .returning();
-
-    if (!updatedCompany) {
-      throw new Error(`Failed to update onboarding status for company ${companyId}`);
-    }
-
-    console.log('[Company Service] Company onboarding status updated:', {
-      companyId: updatedCompany.id,
-      onboardingCompleted: updatedCompany.onboarding_company_completed,
-      timestamp: new Date().toISOString()
-    });
-
-    return updatedCompany;
-  } catch (error) {
-    console.error('[Company Service] Error updating company onboarding status:', {
-      error,
-      companyId,
-      timestamp: new Date().toISOString()
-    });
-    throw error;
-  }
-}
-
-/**
  * Updates company onboarding status and available tabs after CARD completion
  */
 export async function updateCompanyAfterCardCompletion(
