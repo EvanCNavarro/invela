@@ -5,7 +5,7 @@
  * It uses React Context to share the WebSocket connection and manages reconnection logic.
  */
 
-import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
 import getLogger from '@/utils/standardized-logger';
 
 // Create a logger instance for WebSocket provider with appropriate context
@@ -67,11 +67,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const connectionHealthCheckRef = useRef<NodeJS.Timeout | null>(null);
   const connectAttempts = useRef(0);
   const alreadyInitialized = useRef(false);
-  const lastSuccessfulMessageTime = useRef<number>(0);
-  const connectionId = useRef<string>('');
   
   /**
    * Get WebSocket URL with improved reliability
@@ -243,16 +240,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       
       // OODA: Act - Create the WebSocket with the valid URL
       const ws = new WebSocket(wsUrl);
-      const newConnectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      connectionId.current = newConnectionId;
-      
-      // Set up connection health check
-      if (connectionHealthCheckRef.current) {
-        clearInterval(connectionHealthCheckRef.current);
-      }
-      
-      // Start health check after connection is established (10 second interval)
-      connectionHealthCheckRef.current = setInterval(checkConnectionHealth, 10000);
+      const connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Set connection timeout - if it doesn't connect in 5 seconds, try again
       // This improved version checks connection state more thoroughly and
@@ -512,26 +500,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         try {
           const data = JSON.parse(event.data);
           
-          // Record successful message reception for health monitoring
-          lastSuccessfulMessageTime.current = Date.now();
-          
-          // If this was a response to our ping (pong), log connection health stats and update tracking
-          if (data.type === 'pong') {
-            // Store last ping response time for zombie connection detection
-            localStorage.setItem('lastPingResponse', Date.now().toString());
-            
-            // Calculate and log detailed health metrics for our own pings
-            if (data.echo?.connectionId === connectionId.current) {
-              const healthStats = {
-                pingResponseTimeMs: Date.now() - new Date(data.echo.timestamp).getTime(),
-                timeSinceLastMessage: Date.now() - lastSuccessfulMessageTime.current,
-                connectionAge: Date.now() - new Date(data.timestamp).getTime(),
-                connectionId: connectionId.current
-              };
-              logger.debug('Connection health check stats:', healthStats);
-            }
-          }
-          
           // Don't log heartbeat messages to reduce console spam
           if (data.type !== 'ping' && data.type !== 'pong') {
             logger.info(`Received message of type: ${data.type}`);
@@ -587,30 +555,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
               logger.info('WebSocket authentication confirmed for client: ' + (data.clientId || data.payload?.clientId || 'unknown'));
             } else if (data.type === 'connection_established') {
               logger.info('WebSocket server connection confirmed with ID: ' + (data.clientId || data.payload?.clientId || 'unknown'));
-            } else if (data.type === 'onboarding_completed_confirmed') {
-              logger.info('Onboarding completion confirmation received', {
-                userId: data.userId,
-                companyId: data.companyId,
-                timestamp: data.timestamp
-              });
-              
-              // Emit a custom event that components can listen for
-              const event = new CustomEvent('websocket-message', {
-                detail: { data, messageType: 'onboarding_completed_confirmed' }
-              });
-              document.dispatchEvent(event);
-            } else if (data.type === 'onboarding_completed') {
-              logger.info('Onboarding completion notification received', {
-                userId: data.userId,
-                companyId: data.companyId,
-                timestamp: data.timestamp
-              });
-              
-              // Emit a custom event that components can listen for
-              const event = new CustomEvent('websocket-message', {
-                detail: { data, messageType: 'onboarding_completed' }
-              });
-              document.dispatchEvent(event);
             }
           }
           
@@ -668,118 +612,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
   };
   
-  // Connection health check function - monitors connection and reconnects if needed
-  const checkConnectionHealth = useCallback(() => {
-    // If no socket exists, attempt to reconnect
-    if (!socket) {
-      logger.warn('Connection health check: No socket exists, attempting reconnect');
-      connect();
-      return;
-    }
-    
-    // If socket exists but is closed, attempt to reconnect
-    if (socket.readyState !== WebSocket.OPEN) {
-      logger.warn(`Connection health check: Socket in state ${socket.readyState}, attempting reconnect`, {
-        readyState: socket.readyState, 
-        readyStateDesc: ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][socket.readyState] || 'UNKNOWN',
-        connectionId: connectionId.current
-      });
-      connect();
-      return;
-    }
-    
-    // Check if we've received any messages recently (30 seconds timeout)
-    const messageTimeout = 30000; // 30 seconds
-    const timeSinceLastMessage = Date.now() - lastSuccessfulMessageTime.current;
-    
-    if (lastSuccessfulMessageTime.current > 0 && timeSinceLastMessage > messageTimeout) {
-      logger.warn('Connection health check: No messages received recently, reconnecting', { 
-        lastMessageAge: timeSinceLastMessage, 
-        threshold: messageTimeout,
-        connectionId: connectionId.current,
-        attemptCount: connectAttempts.current
-      });
-      connect();
-      return;
-    }
-    
-    // Check for zombie connections - connections that appear open but don't respond
-    // This is a more aggressive check that will force reconnection if ping-pong round trip fails
-    const pingTimeout = 15000; // 15 seconds
-    const lastPingResponse = localStorage.getItem('lastPingResponse');
-    const now = Date.now();
-    
-    if (lastPingResponse && (now - parseInt(lastPingResponse, 10)) > pingTimeout) {
-      logger.warn('Connection health check: Zombie connection detected (ping timeout)', {
-        lastPingAge: now - parseInt(lastPingResponse, 10),
-        threshold: pingTimeout,
-        connectionId: connectionId.current
-      });
-      connect();
-      return;
-    }
-    
-    // If all checks pass, send a ping to keep the connection alive
-    try {
-      if (socket.readyState === WebSocket.OPEN) {
-        // Store ping timestamp for zombie connection detection
-        localStorage.setItem('lastPingSent', now.toString());
-        
-        socket.send(JSON.stringify({ 
-          type: 'ping', 
-          timestamp: new Date().toISOString(),
-          connectionId: connectionId.current
-        }));
-      }
-    } catch (error) {
-      logger.warn('Error sending ping during health check', error);
-      connect();
-    }
-  }, [socket]);
-
-  // Effect to log status changes with detailed connection information
-  useEffect(() => {
-    // Log connection status changes (but not initial status)
-    if (status !== 'connecting') {
-      const statusColors = {
-        'connected': '#4CAF50', // green
-        'disconnected': '#F44336', // red
-        'reconnecting': '#FF9800', // orange
-        'error': '#9C27B0' // purple
-      };
-      
-      const connectionInfo = {
-        status,
-        connectionId: connectionId.current,
-        attempts: connectAttempts.current,
-        lastMessageTime: lastSuccessfulMessageTime.current > 0 
-          ? new Date(lastSuccessfulMessageTime.current).toISOString() 
-          : 'none',
-        messageAge: lastSuccessfulMessageTime.current > 0 
-          ? (Date.now() - lastSuccessfulMessageTime.current) + 'ms'
-          : 'n/a'
-      };
-      
-      // Log with color coding for better visibility in browser console
-      console.log(
-        `%c[WebSocket] Connection status: ${status}`,
-        `color: ${statusColors[status] || '#2196F3'}; font-weight: bold;`,
-        connectionInfo
-      );
-      
-      logger.info(`WebSocket connection status changed to ${status}`, connectionInfo);
-    }
-  }, [status]);
-
   // Connect on mount with delayed initial connection
   useEffect(() => {
     if (alreadyInitialized.current) return;
     
     alreadyInitialized.current = true;
     logger.info('WebSocket connection manager initialized');
-    
-    // Set initial lastSuccessfulMessageTime to avoid false positives
-    lastSuccessfulMessageTime.current = Date.now();
     
     // Intentionally delay initial connection attempt to give the application time to fully initialize
     // This allows location information to be properly populated before attempting connection
@@ -807,12 +645,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         reconnectTimeoutRef.current = null;
       }
       
-      // Cancel health check
-      if (connectionHealthCheckRef.current) {
-        clearInterval(connectionHealthCheckRef.current);
-        connectionHealthCheckRef.current = null;
-      }
-      
       // Close socket
       if (socket) {
         try {
@@ -822,10 +654,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         }
       }
       
-      // Reset all state
+      // Reset state
       alreadyInitialized.current = false;
-      lastSuccessfulMessageTime.current = 0;
-      connectionId.current = '';
     };
   }, []);
   

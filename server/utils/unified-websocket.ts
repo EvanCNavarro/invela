@@ -43,8 +43,7 @@ type MessageType =
   | 'form_submission_completed'
   | 'tabs_updated'
   | 'notification'
-  | 'tutorial_updated'
-  | 'onboarding_completed';
+  | 'tutorial_updated';
 
 // Base message interface
 interface WebSocketMessage {
@@ -132,14 +131,6 @@ interface TutorialUpdateMessage extends WebSocketMessage {
   metadata?: Record<string, any>;
 }
 
-// Onboarding completion message
-interface OnboardingCompletedMessage extends WebSocketMessage {
-  type: 'onboarding_completed';
-  userId: number;
-  companyId: number;
-  metadata?: Record<string, any>;
-}
-
 // Union type of all message types
 type WebSocketPayload = 
   | AuthMessage
@@ -150,8 +141,7 @@ type WebSocketPayload =
   | FormSubmissionCompletedMessage
   | TabsUpdatedMessage
   | NotificationMessage
-  | TutorialUpdateMessage
-  | OnboardingCompletedMessage;
+  | TutorialUpdateMessage;
 
 /**
  * Initialize the WebSocket server
@@ -221,10 +211,6 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
             }));
             break;
             
-          case 'onboarding_completed':
-            handleOnboardingCompleted(clientId, message as OnboardingCompletedMessage);
-            break;
-            
           default:
             wsLogger.warn(`Unknown message type: ${message.type} from ${clientId}`);
         }
@@ -265,142 +251,6 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
       stack: error instanceof Error ? error.stack : undefined
     });
   });
-}
-
-/**
- * Handle onboarding completed message
- * 
- * @param clientId Client ID
- * @param message Onboarding completed message
- */
-function handleOnboardingCompleted(clientId: string, message: OnboardingCompletedMessage): void {
-  const client = clients.get(clientId);
-  
-  if (!client) {
-    wsLogger.warn(`Cannot process onboarding completion from unknown client: ${clientId}`);
-    return;
-  }
-  
-  wsLogger.info(`Received onboarding completion from client ${clientId}`, {
-    userId: message.userId,
-    companyId: message.companyId,
-    timestamp: message.timestamp
-  });
-  
-  // When we receive an onboarding completion message from a client,
-  // we will broadcast it to all clients and update the database
-  try {
-    // Check if we have the necessary data
-    if (message.companyId && message.userId) {
-      wsLogger.info(`Processing onboarding completion for company ${message.companyId} from client ${clientId}`);
-      
-      // Prepare metadata for the broadcast
-      const metadata = message.metadata || {
-        source: 'client',
-        originalClientId: clientId
-      };
-      
-      // Broadcast to all clients
-      broadcastOnboardingCompleted({
-        userId: message.userId,
-        companyId: message.companyId,
-        metadata: metadata
-      });
-      
-      // Send an immediate confirmation to the client with enhanced metadata
-      const confirmationMessage = {
-        type: 'onboarding_completed_confirmed',
-        userId: message.userId,
-        companyId: message.companyId,
-        timestamp: new Date().toISOString(),
-        status: 'success',
-        message: 'Onboarding completion request received',
-        metadata: {
-          source: 'server',
-          originalClientId: clientId,
-          originalMessageTimestamp: message.timestamp,
-          ...message.metadata
-        }
-      };
-      
-      wsLogger.info(`Sending onboarding completion confirmation to client ${clientId}`, {
-        userId: message.userId,
-        companyId: message.companyId,
-        messageType: 'onboarding_completed_confirmed'
-      });
-      
-      client.socket.send(JSON.stringify(confirmationMessage));
-      
-    } else {
-      wsLogger.warn(`Invalid onboarding completion message from client ${clientId}`, {
-        missingUserId: !message.userId,
-        missingCompanyId: !message.companyId
-      });
-      
-      // Send error confirmation with enhanced metadata
-      const errorMessage = {
-        type: 'onboarding_completed_confirmed',
-        timestamp: new Date().toISOString(),
-        status: 'error',
-        message: 'Invalid onboarding completion message',
-        metadata: {
-          source: 'server',
-          originalClientId: clientId,
-          originalMessageTimestamp: message.timestamp || new Date().toISOString(),
-          error: 'missing_required_fields',
-          missingUserId: !message.userId,
-          missingCompanyId: !message.companyId
-        }
-      };
-      
-      wsLogger.info(`Sending onboarding completion error to client ${clientId}`, {
-        error: 'missing_required_fields',
-        messageType: 'onboarding_completed_confirmed'
-      });
-      
-      client.socket.send(JSON.stringify(errorMessage));
-    }
-  } catch (error) {
-    wsLogger.error(`Error processing onboarding completion from client ${clientId}`, {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString(),
-      clientId,
-      errorType: error instanceof Error ? error.name : 'Unknown',
-      messageType: 'onboarding_completed'
-    });
-    
-    // Try to send error notification back to client if possible
-    try {
-      const client = clients.get(clientId);
-      if (client && client.socket.readyState === WebSocket.OPEN) {
-        // Send enhanced error confirmation with detailed metadata
-        const errorResponse = {
-          type: 'onboarding_completed_confirmed',
-          timestamp: new Date().toISOString(),
-          status: 'error',
-          message: 'Internal server error processing onboarding completion',
-          metadata: {
-            source: 'server',
-            error: 'server_error',
-            errorType: error instanceof Error ? error.name : 'Unknown'
-          }
-        };
-        
-        wsLogger.info(`Sending error response to client ${clientId}`, {
-          messageType: 'onboarding_completed_confirmed',
-          status: 'error'
-        });
-        
-        client.socket.send(JSON.stringify(errorResponse));
-      }
-    } catch (sendError) {
-      wsLogger.error(`Failed to send error response to client ${clientId}`, {
-        originalError: error instanceof Error ? error.message : String(error),
-        sendError: sendError instanceof Error ? sendError.message : String(sendError)
-      });
-    }
-  }
 }
 
 /**
@@ -565,48 +415,4 @@ export function broadcastTutorialUpdate(
   filter?: (client: ConnectedClient) => boolean
 ): void {
   broadcast<TutorialUpdateMessage>('tutorial_updated', payload, filter);
-}
-
-/**
- * Broadcast an onboarding completed message
- * 
- * @param payload Onboarding completed payload
- * @param filter Optional filter function to determine which clients receive the message
- */
-export function broadcastOnboardingCompleted(
-  payload: Omit<OnboardingCompletedMessage, 'type' | 'timestamp'>,
-  filter?: (client: ConnectedClient) => boolean
-): void {
-  wsLogger.info('[Onboarding] Broadcasting onboarding completion', payload);
-  broadcast<OnboardingCompletedMessage>('onboarding_completed', payload, filter);
-  
-  // Also update the company's onboarding status in the database
-  if (payload.companyId) {
-    try {
-      import('../services/company').then(companyService => {
-        // Use the updated function signature that accepts an optional userId
-        companyService.updateCompanyOnboardingStatus(payload.companyId, true, payload.userId)
-          .then(() => {
-            wsLogger.info('[Onboarding] Successfully updated company onboarding status', {
-              companyId: payload.companyId,
-              userId: payload.userId || 'not specified',
-              timestamp: new Date().toISOString()
-            });
-          })
-          .catch((error: Error | unknown) => {
-            wsLogger.error('[Onboarding] Failed to update company onboarding status', {
-              error: error instanceof Error ? error.message : String(error),
-              companyId: payload.companyId,
-              userId: payload.userId || 'not specified',
-              timestamp: new Date().toISOString()
-            });
-          });
-      });
-    } catch (error) {
-      wsLogger.error('[Onboarding] Error importing company service', {
-        error: String(error),
-        timestamp: new Date().toISOString()
-      });
-    }
-  }
 }

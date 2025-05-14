@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Check, CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWebSocketContext } from '@/providers/websocket-provider';
-import { apiRequest } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/use-auth';
 
 import {
   Card,
@@ -20,61 +17,29 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogContentWithoutCloseButton, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-// Real API function to update user onboarding status
+// Mock function for demo purposes - replace with actual API functions
 const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
-  try {
-    const response = await apiRequest(`/api/users/${userId}/onboarding`, {
-      method: 'PATCH',
-      body: JSON.stringify({ onboarding_user_completed: status }),
-    });
-    return response;
-  } catch (error) {
-    console.error('[API] Error updating user onboarding status:', error);
-    throw error;
-  }
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true };
 };
 
-// Real API function to update company details
+// Mock function for demo purposes - replace with actual API functions
 const updateCompanyDetails = async (companyId: number, details: any) => {
-  try {
-    const response = await apiRequest(`/api/companies/${companyId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(details),
-    });
-    return response;
-  } catch (error) {
-    console.error('[API] Error updating company details:', error);
-    throw error;
-  }
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true };
 };
 
-// Real API function to invite team members
+// Mock function for demo purposes - replace with actual API functions
 const inviteTeamMembers = async (companyId: number, members: any[]) => {
-  try {
-    const promises = members.map(member => 
-      apiRequest('/api/invitations', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: member.email,
-          name: member.fullName,
-          role: member.role,
-          company_id: companyId,
-          message: `You have been invited to complete the ${member.formType} as the ${member.roleDescription} ${companyId}.`
-        }),
-      })
-    );
-    
-    const results = await Promise.all(promises);
-    return results;
-  } catch (error) {
-    console.error('[API] Error inviting team members:', error);
-    throw error;
-  }
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true };
 };
-
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -166,7 +131,7 @@ const isValidEmail = (email: string): boolean => {
 export function OnboardingModal({
   isOpen,
   setShowModal,
-  user: userProp,
+  user,
   currentCompany,
 }: {
   isOpen: boolean,
@@ -174,8 +139,6 @@ export function OnboardingModal({
   user: any | null,
   currentCompany: any | null,
 }) {
-  // Use prop value for user to avoid conflicts with useAuth hook
-  const user = userProp;
   const [currentStep, setCurrentStep] = useState(0);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
@@ -311,106 +274,16 @@ export function OnboardingModal({
     setCurrentStep(prev => Math.max(0, prev - 1));
   };
   
-  // Access WebSocket context for broadcasting status updates
-  const { isConnected, sendMessage } = useWebSocketContext();
-  
-  // Handle WebSocket message listener for confirmation responses
-  const [completionConfirmed, setCompletionConfirmed] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const completionConfirmedRef = useRef(completionConfirmed);
-  
-  // Update ref when state changes
-  useEffect(() => {
-    completionConfirmedRef.current = completionConfirmed;
-  }, [completionConfirmed]);
-  
-  // Listen for WebSocket message events with enhanced error handling and logging
-  useEffect(() => {
-    // Create handler function that we can reference for both adding and removing
-    const messageHandler = (e: any) => {
-      try {
-        if (!e.detail) {
-          console.warn('[OnboardingModal] Received WebSocket event without detail:', e);
-          return;
-        }
-        
-        // Get the message data and type
-        const data = e.detail.data;
-        const messageType = e.detail.messageType;
-        
-        if (!data) {
-          console.warn('[OnboardingModal] Received WebSocket event without data:', e.detail);
-          return;
-        }
-        
-        console.log('[OnboardingModal] Received WebSocket event:', {
-          messageType,
-          dataType: data.type,
-          timestamp: new Date().toISOString(),
-          userId: data.userId,
-          companyId: data.companyId
-        });
-        
-        // Handle onboarding related messages
-        if (messageType === 'onboarding_completed_confirmed' || 
-            data.type === 'onboarding_completed_confirmed') {
-          console.log('[OnboardingModal] ✅ Received onboarding completion confirmation:', data);
-          setCompletionConfirmed(true);
-          
-          // Show success toast message
-          toastFn({
-            title: "Onboarding completed!",
-            description: "Your company onboarding has been successfully completed.",
-            variant: "success"
-          });
-          
-          // Close modal after a brief delay to show success state
-          setTimeout(() => {
-            setShowModal(false);
-          }, 1500);
-        } 
-        else if (messageType === 'onboarding_completed' || 
-                data.type === 'onboarding_completed') {
-          console.log('[OnboardingModal] Received onboarding completion message:', data);
-          // This is notification that someone completed onboarding (possibly another user/client)
-          // We could use this to update UI state if needed
-        }
-      } catch (error) {
-        console.error('[OnboardingModal] Error processing WebSocket message:', error);
-      }
-    };
-    
-    // Add event listeners to custom events the WebSocket provider emits
-    document.addEventListener('websocket-message', messageHandler);
-    
-    // Log that event listener was added
-    console.log('[OnboardingModal] WebSocket message listener registered');
-    
-    // Cleanup on unmount
-    return () => {
-      console.log('[OnboardingModal] WebSocket message listener removed');
-      document.removeEventListener('websocket-message', messageHandler);
-    };
-  }, [toastFn, setShowModal]);
-  
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
     try {
-      // Prevent multiple submissions
-      if (isSubmitting) return;
-      
-      setIsSubmitting(true);
-      console.log('[OnboardingModal] Starting onboarding completion process...');
-      
       // Update user onboarding status
       if (user && user.id) {
-        console.log('[OnboardingModal] Updating user onboarding status...');
         await updateUserOnboardingStatus(user.id, true);
       }
       
       // Update company details
       if (currentCompany && currentCompany.id) {
-        console.log('[OnboardingModal] Updating company details...');
         await updateCompanyDetails(currentCompany.id, companyInfo);
       }
       
@@ -421,68 +294,29 @@ export function OnboardingModal({
         );
         
         if (validMembers.length > 0) {
-          console.log('[OnboardingModal] Inviting team members:', validMembers.length);
           await inviteTeamMembers(currentCompany.id, validMembers);
         }
       }
       
-      // Broadcast updates via WebSocket (using the context for reliability)
-      if (isConnected) {
+      // Broadcast updates via WebSocket if available
+      if (typeof window !== 'undefined' && window.WebSocket) {
         try {
-          const timestamp = new Date().toISOString();
-          console.log('[OnboardingModal] WebSocket connected, sending onboarding completion...', {
-            userId: user?.id,
-            companyId: currentCompany?.id,
-            timestamp
-          });
+          const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+          const socket = new WebSocket(wsUrl);
           
-          // Send notification through existing WebSocket connection
-          const message = {
-            type: 'onboarding_completed',
-            userId: user?.id,
-            companyId: currentCompany?.id,
-            timestamp,
-            metadata: {
-              source: 'onboarding_modal',
-              userAgent: navigator.userAgent,
-              sentAt: timestamp
-            }
-          };
-          
-          sendMessage(message);
-          
-          console.log('[OnboardingModal] Sent onboarding completion WebSocket message:', message);
-          
-          // The completion will be handled by the event listener we set up earlier
-          // But we'll also set up a timeout as a fallback
-          const confirmTimeout = setTimeout(() => {
-            if (!completionConfirmedRef.current) {
-              console.warn('[OnboardingModal] WebSocket confirmation timeout, proceeding anyway');
-              
-              // Even without confirmation, we can still close the modal
-              setShowModal(false);
-              
-              // Show success toast as a fallback
-              toastFn({
-                title: "Onboarding completed!",
-                description: "Your company onboarding has been successfully completed.",
-                variant: "success"
-              });
-            }
-          }, 3000);
-          
-          // Return cleanup function
-          return () => {
-            clearTimeout(confirmTimeout);
-            setIsSubmitting(false);
+          socket.onopen = () => {
+            socket.send(JSON.stringify({
+              type: 'onboarding_completed',
+              userId: user?.id,
+              companyId: currentCompany?.id,
+              timestamp: new Date().toISOString()
+            }));
+            socket.close();
           };
         } catch (error) {
           console.error('[OnboardingModal] WebSocket send error:', error);
-          setIsSubmitting(false);
         }
-      } else {
-        console.warn('[OnboardingModal] WebSocket not connected, using fallback notification');
-        setIsSubmitting(false);
       }
 
       // Show success message
@@ -755,6 +589,10 @@ export function OnboardingModal({
             imageAlt="Team Invitations"
           >
             <div className="mt-4 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
+                Build your team by inviting key members to help complete assessment forms.
+              </p>
+              
               <div className="space-y-4 overflow-y-auto pr-2">
                 {teamMembers.map((member, index) => (
                   <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
@@ -808,6 +646,10 @@ export function OnboardingModal({
                     </CardContent>
                   </Card>
                 ))}
+                
+                <p className="text-xs text-gray-500 mt-2">
+                  Team member invitations are optional - you can skip this step if needed
+                </p>
               </div>
             </div>
           </StepLayout>
@@ -921,14 +763,11 @@ export function OnboardingModal({
   
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
-      <DialogContentWithoutCloseButton 
+      <DialogContent 
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
-        aria-describedby="onboarding-description"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        <DialogTitle className="sr-only">Company Onboarding</DialogTitle>
-        <div className="sr-only" id="onboarding-description">
-          Company onboarding process
-        </div>
         <div className="p-4 flex-1 flex flex-col overflow-hidden">
           {/* Step content */}
           {renderStepContent()}
@@ -972,7 +811,7 @@ export function OnboardingModal({
             </Button>
           </div>
         </DialogFooter>
-      </DialogContentWithoutCloseButton>
+      </DialogContent>
     </Dialog>
   );
 }
