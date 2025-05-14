@@ -55,7 +55,7 @@ const CustomDialogContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-[860px] min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-background p-0 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl overflow-hidden backdrop-blur-md",
+          "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-[860px] min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-background p-0 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl overflow-visible backdrop-blur-md",
           className
         )}
         onOpenAutoFocus={handleOpenAutoFocus}
@@ -667,7 +667,7 @@ export function OnboardingModal() {
                       <SelectTrigger id="company-size" className="h-14 text-base">
                         <SelectValue placeholder="Select number of employees" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" sideOffset={5} className="z-[2000]">
                         <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
                         <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
                         <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
@@ -687,7 +687,7 @@ export function OnboardingModal() {
                       <SelectTrigger id="company-revenue" className="h-14 text-base">
                         <SelectValue placeholder="Select annual revenue" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" sideOffset={5} className="z-[2000]">
                         <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
                         <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
                         <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
