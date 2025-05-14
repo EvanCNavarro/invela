@@ -287,23 +287,26 @@ function handleOnboardingCompleted(clientId: string, message: OnboardingComplete
     timestamp: message.timestamp
   });
   
-  // Broadcast to all clients
-  broadcastOnboardingCompleted({
-    userId: message.userId,
-    companyId: message.companyId,
-    metadata: message.metadata || {
-      source: 'client',
-      originalClientId: clientId
-    }
-  });
-  
-  // Send confirmation to the client
+  // When we receive an onboarding completion message from a client,
+  // we will broadcast it to all clients and update the database
   try {
     // Check if we have the necessary data
     if (message.companyId && message.userId) {
-      wsLogger.info(`Processing onboarding completion for company ${message.companyId}`);
+      wsLogger.info(`Processing onboarding completion for company ${message.companyId} from client ${clientId}`);
       
-      // The broadcastOnboardingCompleted function will also update the database
+      // Prepare metadata for the broadcast
+      const metadata = message.metadata || {
+        source: 'client',
+        originalClientId: clientId
+      };
+      
+      // Broadcast to all clients
+      broadcastOnboardingCompleted({
+        userId: message.userId,
+        companyId: message.companyId,
+        metadata: metadata
+      });
+      
       // Send an immediate confirmation to the client
       client.socket.send(JSON.stringify({
         type: 'onboarding_completed_confirmed',
@@ -525,24 +528,28 @@ export function broadcastOnboardingCompleted(
   if (payload.companyId) {
     try {
       import('../services/company').then(companyService => {
+        // Use the updated function signature that accepts an optional userId
         companyService.updateCompanyOnboardingStatus(payload.companyId, true, payload.userId)
           .then(() => {
             wsLogger.info('[Onboarding] Successfully updated company onboarding status', {
               companyId: payload.companyId,
-              userId: payload.userId
+              userId: payload.userId || 'not specified',
+              timestamp: new Date().toISOString()
             });
           })
           .catch((error: Error | unknown) => {
             wsLogger.error('[Onboarding] Failed to update company onboarding status', {
               error: error instanceof Error ? error.message : String(error),
               companyId: payload.companyId,
-              userId: payload.userId
+              userId: payload.userId || 'not specified',
+              timestamp: new Date().toISOString()
             });
           });
       });
     } catch (error) {
       wsLogger.error('[Onboarding] Error importing company service', {
-        error: String(error)
+        error: String(error),
+        timestamp: new Date().toISOString()
       });
     }
   }
