@@ -79,19 +79,26 @@ const ContentDialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean
   }
->(({ className, children, showCloseButton = false, ...props }, ref) => (
-  <ContentDialogPortal>
-    <ContentDialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed z-50 w-[600px] max-w-[90%] rounded-lg border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        // Center in the content area instead of the viewport
-        "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-        className
-      )}
-      {...props}
-    >
+>(({ className, children, showCloseButton = false, ...props }, ref) => {
+  // Create event handlers to prevent auto-focusing behavior
+  const handleOpenAutoFocus = (e: Event) => e.preventDefault();
+  const handleCloseAutoFocus = (e: Event) => e.preventDefault();
+  
+  return (
+    <ContentDialogPortal>
+      <ContentDialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed z-50 w-[600px] max-w-[90%] rounded-lg border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          // Center in the content area instead of the viewport
+          "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+          className
+        )}
+        onOpenAutoFocus={handleOpenAutoFocus}
+        onCloseAutoFocus={handleCloseAutoFocus}
+        {...props}
+      >
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
