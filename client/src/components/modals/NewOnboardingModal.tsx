@@ -169,17 +169,16 @@ export function NewOnboardingModal() {
     }
   }, [open]);
   
-  // Handle company info changes
-  const handleCompanyInfoChange = useCallback((field: keyof CompanyInfo, value: string) => {
-    setCompanyInfo(prev => ({ ...prev, [field]: value }));
-    setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
-  }, []);
-  
   // Add logging for select component changes
   const handleCompanyInfoChangeWithLogging = useCallback((field: keyof CompanyInfo, value: string) => {
     logger.select.debug(`Company ${field} select changed to: ${value}`);
-    handleCompanyInfoChange(field, value);
-  }, [handleCompanyInfoChange]);
+    setCompanyInfo(prev => ({ ...prev, [field]: value }));
+    
+    // Clear validation error for this field
+    if (companyInfoErrors[field]) {
+      setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  }, [companyInfoErrors]);
 
   // Load company data from API
   const { data: company } = useQuery({ 
@@ -405,15 +404,7 @@ export function NewOnboardingModal() {
     }
   };
 
-  // Update company info fields with validation
-  const handleCompanyInfoChange = (field: keyof CompanyInfo, value: string) => {
-    setCompanyInfo(prev => ({ ...prev, [field]: value }));
-    
-    // Clear validation error for this field
-    if (companyInfoErrors[field]) {
-      setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  // Update company info fields (now handled by handleCompanyInfoChangeWithLogging)
 
   // Update team member fields with validation
   const handleTeamMemberChange = (index: number, field: keyof TeamMember, value: string) => {
@@ -592,7 +583,7 @@ export function NewOnboardingModal() {
                   <MemoizedSelect
                     label="Annual Revenue"
                     value={companyInfo.revenue}
-                    onChange={(value) => handleCompanyInfoChange('revenue', value)}
+                    onChange={(value) => handleCompanyInfoChangeWithLogging('revenue', value)}
                     options={[
                       { value: "Under $1M", label: "Under $1M" },
                       { value: "$1M - $10M", label: "$1M - $10M" },
