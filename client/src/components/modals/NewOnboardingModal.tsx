@@ -1,7 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-// Select imports removed as we're using custom selection UI
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +17,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-// WebSocket dependency removed
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +35,117 @@ interface TeamMember {
   roleDescription: string;
   formType: string;
 }
+
+// Create a memoized stable component for the company info step to prevent blinking
+const StableMotionDiv = React.memo(({ companyInfo, companyInfoErrors, handleCompanyInfoChange, formRefs }: {
+  companyInfo: CompanyInfo;
+  companyInfoErrors: Record<string, string>;
+  handleCompanyInfoChange: (field: keyof CompanyInfo, value: string) => void;
+  formRefs: any; // Using any type to avoid TypeScript errors
+}) => {
+  return (
+    <motion.div
+      key="step-1"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.3 }}
+      className="w-full"
+    >
+      <div className="flex flex-col items-center text-center">
+        <h2 className="text-2xl font-semibold mb-2">Company Information</h2>
+        
+        <div className="relative w-64 h-48 mt-4 mb-6">
+          <img
+            src="/assets/welcome_2.png"
+            alt="Company Information"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        
+        <div className="mt-4 space-y-4 w-full text-left">
+          <p className="text-gray-700 mb-4">
+            Help us understand your company's profile to better customize your experience.
+          </p>
+          
+          <div>
+            <Label htmlFor="company-size">Company Size</Label>
+            <div className="relative">
+              <Select 
+                value={companyInfo.size} 
+                onValueChange={(value) => handleCompanyInfoChange('size', value)}
+              >
+                <SelectTrigger 
+                  id="company-size"
+                  className={cn(
+                    "w-full transition-colors",
+                    companyInfoErrors.size ? "border-red-500" : "",
+                    companyInfo.size ? "border-green-500" : ""
+                  )}
+                  ref={formRefs.companySize}
+                >
+                  <SelectValue placeholder="Select company size" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1-10">1-10 employees</SelectItem>
+                  <SelectItem value="11-50">11-50 employees</SelectItem>
+                  <SelectItem value="51-200">51-200 employees</SelectItem>
+                  <SelectItem value="201-500">201-500 employees</SelectItem>
+                  <SelectItem value="501+">501+ employees</SelectItem>
+                </SelectContent>
+              </Select>
+              {companyInfo.size && (
+                <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+            </div>
+            {companyInfoErrors.size && (
+              <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
+            )}
+          </div>
+          
+          <div className="mt-4">
+            <Label htmlFor="revenue-tier">Annual Revenue</Label>
+            <div className="relative">
+              <Select 
+                value={companyInfo.revenue} 
+                onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
+              >
+                <SelectTrigger 
+                  id="revenue-tier"
+                  className={cn(
+                    "w-full transition-colors",
+                    companyInfoErrors.revenue ? "border-red-500" : "",
+                    companyInfo.revenue ? "border-green-500" : ""
+                  )}
+                  ref={formRefs.companyRevenue}
+                >
+                  <SelectValue placeholder="Select revenue range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Under $1M">Under $1M</SelectItem>
+                  <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
+                  <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
+                  <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
+                  <SelectItem value="$100M+">$100M+</SelectItem>
+                </SelectContent>
+              </Select>
+              {companyInfo.revenue && (
+                <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+            </div>
+            {companyInfoErrors.revenue && (
+              <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
 
 // Validation schemas
 const companyInfoSchema = z.object({
@@ -533,105 +649,14 @@ export function NewOnboardingModal() {
         )}
         
         {currentStep === 1 && (
-          <motion.div
-            key="step-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
-            <StepLayout
-              title="Company Information"
-              imageSrc="/assets/welcome_2.png"
-              imageAlt="Company Information"
-            >
-              <div className="mt-4 space-y-4">
-                <p className="text-gray-700 mb-4">
-                  Help us understand your company's profile to better customize your experience.
-                </p>
-                
-                <div>
-                  <Label htmlFor="company-size" className="mb-2 block">Company Size</Label>
-                  <div className="space-y-2">
-                    {[
-                      { value: "1-10", label: "1-10 employees" },
-                      { value: "11-50", label: "11-50 employees" },
-                      { value: "51-200", label: "51-200 employees" },
-                      { value: "201-500", label: "201-500 employees" },
-                      { value: "501+", label: "501+ employees" },
-                    ].map((option) => (
-                      <div 
-                        key={option.value}
-                        className={cn(
-                          "flex items-center border p-2 rounded-md cursor-pointer transition-colors",
-                          companyInfo.size === option.value 
-                            ? "border-green-500 bg-green-50" 
-                            : "border-gray-200 hover:border-gray-300"
-                        )}
-                        onClick={() => handleCompanyInfoChange('size', option.value)}
-                      >
-                        <div className={cn(
-                          "w-4 h-4 rounded-full border mr-2",
-                          companyInfo.size === option.value 
-                            ? "border-green-500 bg-green-500" 
-                            : "border-gray-300"
-                        )}>
-                          {companyInfo.size === option.value && (
-                            <CheckCircle className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        <span>{option.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {companyInfoErrors.size && (
-                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
-                  )}
-                </div>
-                
-                <div className="mt-6">
-                  <Label htmlFor="revenue-tier" className="mb-2 block">Annual Revenue</Label>
-                  <div className="space-y-2">
-                    {[
-                      { value: "Under $1M", label: "Under $1M" },
-                      { value: "$1M - $10M", label: "$1M - $10M" },
-                      { value: "$10M - $50M", label: "$10M - $50M" },
-                      { value: "$50M - $100M", label: "$50M - $100M" },
-                      { value: "$100M+", label: "$100M+" },
-                    ].map((option) => (
-                      <div 
-                        key={option.value}
-                        className={cn(
-                          "flex items-center border p-2 rounded-md cursor-pointer transition-colors",
-                          companyInfo.revenue === option.value 
-                            ? "border-green-500 bg-green-50" 
-                            : "border-gray-200 hover:border-gray-300"
-                        )}
-                        onClick={() => handleCompanyInfoChange('revenue', option.value)}
-                      >
-                        <div className={cn(
-                          "w-4 h-4 rounded-full border mr-2",
-                          companyInfo.revenue === option.value 
-                            ? "border-green-500 bg-green-500" 
-                            : "border-gray-300"
-                        )}>
-                          {companyInfo.revenue === option.value && (
-                            <CheckCircle className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        <span>{option.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {companyInfoErrors.revenue && (
-                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
-                  )}
-                </div>
-              </div>
-            </StepLayout>
-          </motion.div>
+          <StableMotionDiv
+            companyInfo={companyInfo}
+            companyInfoErrors={companyInfoErrors}
+            handleCompanyInfoChange={handleCompanyInfoChange}
+            formRefs={formRefs}
+          />
         )}
+      
         
         {currentStep === 2 && (
           <motion.div
