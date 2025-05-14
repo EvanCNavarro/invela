@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { OnboardingModal } from "@/components/modals/OnboardingModal";
+import { OnboardingModal } from "@/components/modals/NewOnboardingModal";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
