@@ -270,10 +270,23 @@ export function OnboardingModal() {
       if (!currentCompany?.id) {
         throw new Error("Company ID not found");
       }
+      
+      // Map size values to num_employees field (middle value of range)
+      const employeeCountMap = {
+        'small': 25, // middle of 1-49
+        'medium': 150, // middle of 50-249
+        'large': 625, // middle of 250-999
+        'xlarge': 1500 // representative value for 1000+
+      };
 
+      // Both revenue and revenue_tier needs to be set
+      const revenueValue = companyInfo.revenue; // This will be "small", "medium", etc.
+      
       console.log('[ONBOARDING DEBUG] Updating company information', {
         companyId: currentCompany.id,
         size: companyInfo.size,
+        numEmployees: employeeCountMap[companyInfo.size as keyof typeof employeeCountMap],
+        revenueTier: companyInfo.revenue,
         revenue: companyInfo.revenue
       });
       
@@ -283,8 +296,10 @@ export function OnboardingModal() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          size: companyInfo.size,
-          revenue: companyInfo.revenue
+          // Set both the revenue and revenue_tier fields based on selection
+          revenue: companyInfo.revenue, // Will be "small", "medium", etc.
+          revenue_tier: companyInfo.revenue, // Same value for revenue_tier
+          num_employees: employeeCountMap[companyInfo.size as keyof typeof employeeCountMap]
         })
       });
       
@@ -1110,6 +1125,9 @@ export function OnboardingModal() {
               size="lg"
               onClick={handleNext}
               disabled={
+                // Disable button if required fields aren't filled in Step 2 (Company Info)
+                (currentStep === 1 && (!companyInfo.size || !companyInfo.revenue)) ||
+                // Disable during API operations
                 updateCompanyMutation.isPending || 
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
