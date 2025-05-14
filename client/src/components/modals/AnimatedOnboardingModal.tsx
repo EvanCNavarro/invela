@@ -18,7 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogPortal, DialogOverlay } from '@/components/ui/dialog';
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useToast } from '@/hooks/use-toast';
 // Mock functions for API calls and contexts
 // In a production environment, these would be actual API calls
@@ -847,7 +848,6 @@ export function AnimatedOnboardingModal({
       <DialogContent 
         className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
-        closeButtonClassName="hidden"
       >
         {/* Main content area */}
         <div className="flex-1 overflow-hidden">
@@ -888,7 +888,8 @@ export function AnimatedOnboardingModal({
             </Button>
           </div>
         </DialogFooter>
-      </DialogContent>
+      </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }
