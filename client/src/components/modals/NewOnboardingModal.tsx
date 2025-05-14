@@ -166,7 +166,7 @@ const isValidEmail = (email: string): boolean => {
 export function OnboardingModal({
   isOpen,
   setShowModal,
-  user,
+  user: userProp,
   currentCompany,
 }: {
   isOpen: boolean,
@@ -174,6 +174,8 @@ export function OnboardingModal({
   user: any | null,
   currentCompany: any | null,
 }) {
+  // Use prop value for user to avoid conflicts with useAuth hook
+  const user = userProp;
   const [currentStep, setCurrentStep] = useState(0);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
@@ -309,8 +311,44 @@ export function OnboardingModal({
     setCurrentStep(prev => Math.max(0, prev - 1));
   };
   
-  // Access WebSocket context
+  // Access WebSocket context for broadcasting status updates
   const { isConnected, sendMessage } = useWebSocketContext();
+  
+  // Handle WebSocket message listener for confirmation responses
+  const [completionConfirmed, setCompletionConfirmed] = useState(false);
+  const completionConfirmedRef = useRef(completionConfirmed);
+  
+  // Update ref when state changes
+  useEffect(() => {
+    completionConfirmedRef.current = completionConfirmed;
+  }, [completionConfirmed]);
+  
+  // Listen for WebSocket message events
+  useEffect(() => {
+    // Handle WebSocket messages directly from the WebSocket provider
+    const handleWebSocketMessageFromProvider = (data: any) => {
+      // Look for onboarding completion confirmation messages
+      if (data.type === 'onboarding_completed_confirmed') {
+        console.log('[OnboardingModal] Received onboarding completion confirmation:', data);
+        setCompletionConfirmed(true);
+      }
+    };
+    
+    // Create handler function that we can reference for both adding and removing
+    const messageHandler = (e: any) => {
+      if (e.detail && e.detail.data) {
+        handleWebSocketMessageFromProvider(e.detail.data);
+      }
+    };
+    
+    // Add event listeners to any custom events the WebSocket provider might emit
+    document.addEventListener('websocket-message', messageHandler);
+    
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('websocket-message', messageHandler);
+    };
+  }, []);
   
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
@@ -348,6 +386,16 @@ export function OnboardingModal({
           });
           
           console.log('[OnboardingModal] Sent onboarding completion WebSocket message');
+          
+          // Wait for confirmation (with timeout)
+          const confirmTimeout = setTimeout(() => {
+            if (!completionConfirmedRef.current) {
+              console.warn('[OnboardingModal] WebSocket confirmation timeout, proceeding anyway');
+            }
+          }, 2000);
+          
+          // Cleanup timeout if component unmounts
+          return () => clearTimeout(confirmTimeout);
         } catch (error) {
           console.error('[OnboardingModal] WebSocket send error:', error);
         }
