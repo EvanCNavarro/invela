@@ -515,6 +515,23 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           // Record successful message reception for health monitoring
           lastSuccessfulMessageTime.current = Date.now();
           
+          // If this was a response to our ping (pong), log connection health stats and update tracking
+          if (data.type === 'pong') {
+            // Store last ping response time for zombie connection detection
+            localStorage.setItem('lastPingResponse', Date.now().toString());
+            
+            // Calculate and log detailed health metrics for our own pings
+            if (data.echo?.connectionId === connectionId.current) {
+              const healthStats = {
+                pingResponseTimeMs: Date.now() - new Date(data.echo.timestamp).getTime(),
+                timeSinceLastMessage: Date.now() - lastSuccessfulMessageTime.current,
+                connectionAge: Date.now() - new Date(data.timestamp).getTime(),
+                connectionId: connectionId.current
+              };
+              logger.debug('Connection health check stats:', healthStats);
+            }
+          }
+          
           // Don't log heartbeat messages to reduce console spam
           if (data.type !== 'ping' && data.type !== 'pong') {
             logger.info(`Received message of type: ${data.type}`);
@@ -662,7 +679,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     
     // If socket exists but is closed, attempt to reconnect
     if (socket.readyState !== WebSocket.OPEN) {
-      logger.warn(`Connection health check: Socket in state ${socket.readyState}, attempting reconnect`);
+      logger.warn(`Connection health check: Socket in state ${socket.readyState}, attempting reconnect`, {
+        readyState: socket.readyState, 
+        readyStateDesc: ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][socket.readyState] || 'UNKNOWN',
+        connectionId: connectionId.current
+      });
       connect();
       return;
     }
@@ -672,8 +693,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const timeSinceLastMessage = Date.now() - lastSuccessfulMessageTime.current;
     
     if (lastSuccessfulMessageTime.current > 0 && timeSinceLastMessage > messageTimeout) {
-      logger.warn('Connection health check: No messages received recently, reconnecting', 
-                  { lastMessageAge: timeSinceLastMessage, threshold: messageTimeout });
+      logger.warn('Connection health check: No messages received recently, reconnecting', { 
+        lastMessageAge: timeSinceLastMessage, 
+        threshold: messageTimeout,
+        connectionId: connectionId.current,
+        attemptCount: connectAttempts.current
+      });
+      connect();
+      return;
+    }
+    
+    // Check for zombie connections - connections that appear open but don't respond
+    // This is a more aggressive check that will force reconnection if ping-pong round trip fails
+    const pingTimeout = 15000; // 15 seconds
+    const lastPingResponse = localStorage.getItem('lastPingResponse');
+    const now = Date.now();
+    
+    if (lastPingResponse && (now - parseInt(lastPingResponse, 10)) > pingTimeout) {
+      logger.warn('Connection health check: Zombie connection detected (ping timeout)', {
+        lastPingAge: now - parseInt(lastPingResponse, 10),
+        threshold: pingTimeout,
+        connectionId: connectionId.current
+      });
       connect();
       return;
     }
@@ -681,6 +722,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     // If all checks pass, send a ping to keep the connection alive
     try {
       if (socket.readyState === WebSocket.OPEN) {
+        // Store ping timestamp for zombie connection detection
+        localStorage.setItem('lastPingSent', now.toString());
+        
         socket.send(JSON.stringify({ 
           type: 'ping', 
           timestamp: new Date().toISOString(),
@@ -692,6 +736,40 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       connect();
     }
   }, [socket]);
+
+  // Effect to log status changes with detailed connection information
+  useEffect(() => {
+    // Log connection status changes (but not initial status)
+    if (status !== 'connecting') {
+      const statusColors = {
+        'connected': '#4CAF50', // green
+        'disconnected': '#F44336', // red
+        'reconnecting': '#FF9800', // orange
+        'error': '#9C27B0' // purple
+      };
+      
+      const connectionInfo = {
+        status,
+        connectionId: connectionId.current,
+        attempts: connectAttempts.current,
+        lastMessageTime: lastSuccessfulMessageTime.current > 0 
+          ? new Date(lastSuccessfulMessageTime.current).toISOString() 
+          : 'none',
+        messageAge: lastSuccessfulMessageTime.current > 0 
+          ? (Date.now() - lastSuccessfulMessageTime.current) + 'ms'
+          : 'n/a'
+      };
+      
+      // Log with color coding for better visibility in browser console
+      console.log(
+        `%c[WebSocket] Connection status: ${status}`,
+        `color: ${statusColors[status] || '#2196F3'}; font-weight: bold;`,
+        connectionInfo
+      );
+      
+      logger.info(`WebSocket connection status changed to ${status}`, connectionInfo);
+    }
+  }, [status]);
 
   // Connect on mount with delayed initial connection
   useEffect(() => {
