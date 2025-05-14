@@ -316,6 +316,7 @@ export function OnboardingModal({
   
   // Handle WebSocket message listener for confirmation responses
   const [completionConfirmed, setCompletionConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const completionConfirmedRef = useRef(completionConfirmed);
   
   // Update ref when state changes
@@ -325,41 +326,62 @@ export function OnboardingModal({
   
   // Listen for WebSocket message events
   useEffect(() => {
-    // Handle WebSocket messages directly from the WebSocket provider
-    const handleWebSocketMessageFromProvider = (data: any) => {
-      // Look for onboarding completion confirmation messages
-      if (data.type === 'onboarding_completed_confirmed') {
-        console.log('[OnboardingModal] Received onboarding completion confirmation:', data);
-        setCompletionConfirmed(true);
-      }
-    };
-    
     // Create handler function that we can reference for both adding and removing
     const messageHandler = (e: any) => {
       if (e.detail && e.detail.data) {
-        handleWebSocketMessageFromProvider(e.detail.data);
+        // Get the message data and type
+        const data = e.detail.data;
+        const messageType = e.detail.messageType;
+        
+        console.log('[OnboardingModal] Received WebSocket event:', messageType, data);
+        
+        // Look for onboarding completion confirmation messages
+        if (messageType === 'onboarding_completed_confirmed' || 
+            data.type === 'onboarding_completed_confirmed') {
+          console.log('[OnboardingModal] Received onboarding completion confirmation:', data);
+          setCompletionConfirmed(true);
+          
+          // Show success toast message
+          toastFn({
+            title: "Onboarding completed!",
+            description: "Your company onboarding has been successfully completed.",
+            variant: "success"
+          });
+        }
       }
     };
     
-    // Add event listeners to any custom events the WebSocket provider might emit
+    // Add event listeners to custom events the WebSocket provider emits
     document.addEventListener('websocket-message', messageHandler);
+    
+    // Log that event listener was added
+    console.log('[OnboardingModal] WebSocket message listener registered');
     
     // Cleanup on unmount
     return () => {
+      console.log('[OnboardingModal] WebSocket message listener removed');
       document.removeEventListener('websocket-message', messageHandler);
     };
-  }, []);
+  }, [toastFn]);
   
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
     try {
+      // Prevent multiple submissions
+      if (isSubmitting) return;
+      
+      setIsSubmitting(true);
+      console.log('[OnboardingModal] Starting onboarding completion process...');
+      
       // Update user onboarding status
       if (user && user.id) {
+        console.log('[OnboardingModal] Updating user onboarding status...');
         await updateUserOnboardingStatus(user.id, true);
       }
       
       // Update company details
       if (currentCompany && currentCompany.id) {
+        console.log('[OnboardingModal] Updating company details...');
         await updateCompanyDetails(currentCompany.id, companyInfo);
       }
       
@@ -370,6 +392,7 @@ export function OnboardingModal({
         );
         
         if (validMembers.length > 0) {
+          console.log('[OnboardingModal] Inviting team members:', validMembers.length);
           await inviteTeamMembers(currentCompany.id, validMembers);
         }
       }
@@ -377,6 +400,8 @@ export function OnboardingModal({
       // Broadcast updates via WebSocket (using the context for reliability)
       if (isConnected) {
         try {
+          console.log('[OnboardingModal] WebSocket connected, sending onboarding completion...');
+          
           // Send notification through existing WebSocket connection
           sendMessage({
             type: 'onboarding_completed',
@@ -387,20 +412,36 @@ export function OnboardingModal({
           
           console.log('[OnboardingModal] Sent onboarding completion WebSocket message');
           
-          // Wait for confirmation (with timeout)
+          // The completion will be handled by the event listener we set up earlier
+          // But we'll also set up a timeout as a fallback
           const confirmTimeout = setTimeout(() => {
             if (!completionConfirmedRef.current) {
               console.warn('[OnboardingModal] WebSocket confirmation timeout, proceeding anyway');
+              
+              // Even without confirmation, we can still close the modal
+              setShowModal(false);
+              
+              // Show success toast as a fallback
+              toastFn({
+                title: "Onboarding completed!",
+                description: "Your company onboarding has been successfully completed.",
+                variant: "success"
+              });
             }
-          }, 2000);
+          }, 3000);
           
-          // Cleanup timeout if component unmounts
-          return () => clearTimeout(confirmTimeout);
+          // Return cleanup function
+          return () => {
+            clearTimeout(confirmTimeout);
+            setIsSubmitting(false);
+          };
         } catch (error) {
           console.error('[OnboardingModal] WebSocket send error:', error);
+          setIsSubmitting(false);
         }
       } else {
         console.warn('[OnboardingModal] WebSocket not connected, using fallback notification');
+        setIsSubmitting(false);
       }
 
       // Show success message
