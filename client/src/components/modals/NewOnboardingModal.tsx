@@ -42,8 +42,12 @@ const inviteTeamMembers = async (companyId: number, members: any[]) => {
   return { success: true };
 };
 
-// Create a component logger for this component
-const componentLogger = createComponentLogger('OnboardingModal');
+// Simple logging function for debugging animations
+const logDebug = (message: string, data?: any) => {
+  if (import.meta.env.DEV) {
+    console.log(`[OnboardingModal] ${message}`, data || '');
+  }
+};
 
 /**
  * Step Transition Component
@@ -78,7 +82,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
     }),
   };
   
-  componentLogger.debug('Rendering step transition', { direction, isActive });
+  logDebug('Rendering step transition', { direction, isActive });
   
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -324,21 +328,60 @@ export function OnboardingModal({
     }
   }, [currentStep, companyInfo, teamMembers]);
   
-  // Handle next step button click
+  // Handle next step button click with animation
   const handleNextStep = () => {
+    // Prevent interaction during transition
+    if (isTransitioning) return;
+    
     // If we're on the last step, complete onboarding
     if (currentStep === 6) {
       handleCompleteOnboarding();
       return;
     }
     
-    // Otherwise go to the next step
-    setCurrentStep(prev => prev + 1);
+    // Set transition direction to 'next'
+    setTransitionDirection('next');
+    
+    // Start transition animation
+    setIsTransitioning(true);
+    logDebug('Starting next step animation', { currentStep });
+    
+    // Short delay to allow animation to complete
+    setTimeout(() => {
+      // Go to the next step
+      setCurrentStep(prev => prev + 1);
+      
+      // End transition after a short delay to ensure animation completes
+      setTimeout(() => {
+        setIsTransitioning(false);
+        logDebug('Next step animation completed', { newStep: currentStep + 1 });
+      }, 300);
+    }, 200);
   };
   
-  // Handle back button click
+  // Handle back button click with animation
   const handleBackStep = () => {
-    setCurrentStep(prev => Math.max(0, prev - 1));
+    // Prevent interaction during transition
+    if (isTransitioning) return;
+    
+    // Set transition direction to 'prev'
+    setTransitionDirection('prev');
+    
+    // Start transition animation
+    setIsTransitioning(true);
+    logDebug('Starting back step animation', { currentStep });
+    
+    // Short delay to allow animation to complete
+    setTimeout(() => {
+      // Go to the previous step
+      setCurrentStep(prev => Math.max(0, prev - 1));
+      
+      // End transition after a short delay to ensure animation completes
+      setTimeout(() => {
+        setIsTransitioning(false);
+        logDebug('Back step animation completed', { newStep: currentStep - 1 });
+      }, 300);
+    }, 200);
   };
   
   // Handle complete onboarding action
