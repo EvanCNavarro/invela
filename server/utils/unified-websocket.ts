@@ -298,13 +298,50 @@ function handleOnboardingCompleted(clientId: string, message: OnboardingComplete
   });
   
   // Send confirmation to the client
-  client.socket.send(JSON.stringify({
-    type: 'onboarding_completed_confirmed',
-    userId: message.userId,
-    companyId: message.companyId,
-    timestamp: new Date().toISOString(),
-    message: 'Onboarding completion processed successfully'
-  }));
+  try {
+    // Check if we have the necessary data
+    if (message.companyId && message.userId) {
+      wsLogger.info(`Processing onboarding completion for company ${message.companyId}`);
+      
+      // The broadcastOnboardingCompleted function will also update the database
+      // Send an immediate confirmation to the client
+      client.socket.send(JSON.stringify({
+        type: 'onboarding_completed_confirmed',
+        userId: message.userId,
+        companyId: message.companyId,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+        message: 'Onboarding completion request received'
+      }));
+      
+    } else {
+      wsLogger.warn(`Invalid onboarding completion message from client ${clientId}`, {
+        missingUserId: !message.userId,
+        missingCompanyId: !message.companyId
+      });
+      
+      // Send error confirmation
+      client.socket.send(JSON.stringify({
+        type: 'onboarding_completed_confirmed',
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        message: 'Invalid onboarding completion message'
+      }));
+    }
+  } catch (error) {
+    wsLogger.error(`Error processing onboarding completion from client ${clientId}`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Send error confirmation
+    client.socket.send(JSON.stringify({
+      type: 'onboarding_completed_confirmed',
+      timestamp: new Date().toISOString(),
+      status: 'error',
+      message: 'Internal server error processing onboarding completion'
+    }));
+  }
 }
 
 /**
@@ -488,16 +525,18 @@ export function broadcastOnboardingCompleted(
   if (payload.companyId) {
     try {
       import('../services/company').then(companyService => {
-        companyService.updateCompanyOnboardingStatus(payload.companyId, true)
+        companyService.updateCompanyOnboardingStatus(payload.companyId, true, payload.userId)
           .then(() => {
             wsLogger.info('[Onboarding] Successfully updated company onboarding status', {
-              companyId: payload.companyId
+              companyId: payload.companyId,
+              userId: payload.userId
             });
           })
-          .catch(error => {
+          .catch((error: Error | unknown) => {
             wsLogger.error('[Onboarding] Failed to update company onboarding status', {
-              error: String(error),
-              companyId: payload.companyId
+              error: error instanceof Error ? error.message : String(error),
+              companyId: payload.companyId,
+              userId: payload.userId
             });
           });
       });
