@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Check, CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,34 +20,42 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock function for demo purposes - replace with actual API functions
+// Mock functions for API calls and contexts
+// In a production environment, these would be actual API calls
 const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('Updating user onboarding status', { userId, status });
   return { success: true };
 };
 
-// Mock function for demo purposes - replace with actual API functions
 const updateCompanyDetails = async (companyId: number, details: any) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('Updating company details', { companyId, details });
   return { success: true };
 };
 
-// Mock function for demo purposes - replace with actual API functions
-const inviteTeamMembers = async (companyId: number, members: any[]) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
+const inviteTeamMember = async (companyId: number, member: any) => {
+  console.log('Inviting team member', { companyId, member });
   return { success: true };
 };
 
-// Simple logging function for debugging animations
+// Helper for logging debug information
 const logDebug = (message: string, data?: any) => {
-  if (import.meta.env.DEV) {
-    console.log(`[OnboardingModal] ${message}`, data || '');
-  }
+  console.log(`[AnimatedOnboardingModal] ${message}`, data);
 };
+
+// Define the interface for team members
+interface TeamMember {
+  role: 'CFO' | 'CISO';
+  fullName: string;
+  email: string;
+  roleDescription: string;
+  formType: string;
+}
+
+// Define the common interface for company information
+interface CompanyInfo {
+  size: string;
+  revenue: string;
+}
 
 /**
  * Step Transition Component
@@ -69,7 +77,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
   // Different animations based on direction
   const variants = {
     enter: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? 40 : -40,
+      x: direction === 'next' ? 100 : -100,
       opacity: 0,
     }),
     center: {
@@ -77,12 +85,10 @@ const StepTransition: React.FC<StepTransitionProps> = ({
       opacity: 1,
     },
     exit: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? -40 : 40,
+      x: direction === 'next' ? -100 : 100,
       opacity: 0,
     }),
   };
-  
-  logDebug('Rendering step transition', { direction, isActive });
   
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -128,45 +134,78 @@ const StepImage: React.FC<{
 }) => (
   <div className="w-[400px] h-[350px] relative flex items-start justify-center pt-4">
     {isLoaded ? (
-      <>
-        <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1 mt-4"></div>
-        <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1 mt-4"></div>
-        <img 
-          src={src} 
-          alt={alt} 
-          className="relative max-w-[95%] max-h-[330px] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-        />
-      </>
+      <img 
+        src={src} 
+        alt={alt}
+        className="w-full h-full object-contain"
+      />
     ) : (
-      <Skeleton className="w-full h-full rounded-lg" />
+      <div className="w-full h-full flex items-center justify-center">
+        <Skeleton className="w-[300px] h-[300px] rounded-md" />
+      </div>
     )}
   </div>
 );
 
-// Component for consistent checklist items
-const CheckListItem: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex items-start gap-3">
-    <div className="rounded-full bg-primary/10 text-primary p-1 mt-0.5">
-      <Check className="h-4 w-4" />
+// Independent component for step layout to avoid JSX nesting issues
+const StepLayout: React.FC<{ 
+  title: string, 
+  children: React.ReactNode, 
+  imageSrc: string, 
+  imageAlt: string 
+}> = ({ 
+  title, 
+  children, 
+  imageSrc, 
+  imageAlt 
+}) => {
+  // Track image loading status
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Preload image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.src = imageSrc;
+  }, [imageSrc]);
+  
+  return (
+    <div className="flex flex-col md:flex-row flex-1 h-[350px] overflow-visible">
+      {/* Left side: Text content with fixed height and consistent padding */}
+      <div className="md:w-[60%] px-6 py-4 flex flex-col">
+        <div className="flex flex-col h-full">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {title}
+          </h2>
+          <div className="flex-grow overflow-y-auto content-area">
+            {children}
+          </div>
+        </div>
+      </div>
+      
+      {/* Right side: Image with consistent container */}
+      <RightImageContainer>
+        <StepImage 
+          src={imageSrc} 
+          alt={imageAlt}
+          isLoaded={imageLoaded} 
+        />
+      </RightImageContainer>
     </div>
-    <span className="text-gray-800 text-lg font-medium">{children}</span>
+  );
+};
+
+// Component for rendering checklist items
+const CheckListItem: React.FC<{children: React.ReactNode}> = ({ children }) => (
+  <div className="flex items-start space-x-3 text-base">
+    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+    <div className="text-gray-700 text-lg font-medium">{children}</div>
   </div>
 );
-
-// Define the common interface for team members
-interface TeamMember {
-  role: 'CFO' | 'CISO';
-  fullName: string;
-  email: string;
-  roleDescription: string;
-  formType: string;
-}
-
-// Define the common interface for company information
-interface CompanyInfo {
-  size: string;
-  revenue: string;
-}
 
 // Helper functions to get readable labels
 const getSizeLabel = (size: string): string => {
@@ -194,7 +233,7 @@ const isValidEmail = (email: string): boolean => {
   return /\S+@\S+\.\S+/.test(email);
 };
 
-export function OnboardingModal({
+export function AnimatedOnboardingModal({
   isOpen,
   setShowModal,
   user,
@@ -206,8 +245,10 @@ export function OnboardingModal({
   currentCompany: any | null,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
+  
   // Track transition animation direction (next or previous)
   const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
+  
   // Track if transition is in progress
   const [isTransitioning, setIsTransitioning] = useState(false);
   
@@ -215,6 +256,7 @@ export function OnboardingModal({
     size: '',
     revenue: '',
   });
+  
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
       role: 'CFO',
@@ -232,51 +274,12 @@ export function OnboardingModal({
     },
   ]);
   
-  // Track loaded images to display loaders until images are ready
-  const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
-  
   // Get toast function
   const { toast: toastFn } = useToast();
   
-  // Preload all the step images on component mount
+  // Reset state when modal is opened
   useEffect(() => {
-    if (!isOpen) return;
-    
-    const imagePaths = [
-      '/assets/welcome_1.png',
-      '/assets/welcome_2.png',
-      '/assets/welcome_3.png',
-      '/assets/welcome_4.png',
-      '/assets/welcome_5.png',
-      '/assets/welcome_6.png',
-      '/assets/welcome_7.png',
-    ];
-    
-    // Mark all images as loaded initially to prevent loading spinners
-    // since we know the images are available in the attached assets
-    const initialLoadState = imagePaths.reduce((acc, path) => {
-      acc[path] = true;
-      return acc;
-    }, {} as Record<string, boolean>);
-    
-    setImagesLoaded(initialLoadState);
-    
-    // Still attempt to preload images for browser caching
-    imagePaths.forEach(path => {
-      const img = new Image();
-      img.src = path;
-    });
-  }, [isOpen]);
-  
-  // Is current step image loaded
-  const isCurrentImageLoaded = useMemo(() => {
-    const imagePath = `/assets/welcome_${currentStep + 1}.png`;
-    return imagesLoaded[imagePath] === true;
-  }, [currentStep, imagesLoaded]);
-  
-  // Reset state when modal is closed
-  useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
       setCurrentStep(0);
       setCompanyInfo({
         size: '',
@@ -310,17 +313,11 @@ export function OnboardingModal({
       case 1: // Company Information
         return companyInfo.size !== '' && companyInfo.revenue !== '';
         
-      case 2: // Tasks Overview - always can proceed
-      case 3: // Document Uploads - always can proceed
-        return true;
-        
-      case 4: // Team Invitations - no validation required, can be skipped
-        return true;
-        
-      case 5: // Review Information - always can proceed
-        return true;
-        
-      case 6: // Completion - this is the last step
+      case 2: // Tasks - always can proceed
+      case 3: // Documents - always can proceed
+      case 4: // Team Members - always can proceed (can skip inviting team)
+      case 5: // Review - always can proceed
+      case 6: // Complete - always can proceed
         return true;
         
       default:
@@ -403,29 +400,12 @@ export function OnboardingModal({
           member => member.fullName && isValidEmail(member.email)
         );
         
-        if (validMembers.length > 0) {
-          await inviteTeamMembers(currentCompany.id, validMembers);
-        }
-      }
-      
-      // Broadcast updates via WebSocket if available
-      if (typeof window !== 'undefined' && window.WebSocket) {
-        try {
-          const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-          const socket = new WebSocket(wsUrl);
-          
-          socket.onopen = () => {
-            socket.send(JSON.stringify({
-              type: 'onboarding_completed',
-              userId: user?.id,
-              companyId: currentCompany?.id,
-              timestamp: new Date().toISOString()
-            }));
-            socket.close();
-          };
-        } catch (error) {
-          console.error('[OnboardingModal] WebSocket send error:', error);
+        for (const member of validMembers) {
+          await inviteTeamMember(currentCompany.id, {
+            fullName: member.fullName,
+            email: member.email,
+            role: member.role,
+          });
         }
       }
 
@@ -462,87 +442,46 @@ export function OnboardingModal({
       'Documents',
       'Team',
       'Review',
-      'Complete',
+      'Complete'
     ];
     
     return (
-      <div className="mx-auto max-w-2xl mb-4">
-        <div className="grid grid-cols-7 gap-1">
-          {steps.map((step, index) => (
+      <div className="flex space-x-1.5 justify-center items-center">
+        {steps.map((step, idx) => (
+          <div 
+            key={idx} 
+            className="flex flex-col items-center space-y-1"
+          >
             <div 
-              key={index} 
-              className="flex flex-col items-center"
-              onClick={() => setCurrentStep(index)}
-            >
-              <div 
-                className={cn(
-                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mb-1 cursor-pointer transition-colors", 
-                  index === currentStep
-                    ? "bg-primary text-white"
-                    : index < currentStep
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                )}
-              >
-                {index < currentStep ? '✓' : index + 1}
-              </div>
-              <div className="text-[10px] text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[40px] text-center">
-                {step}
-              </div>
-            </div>
-          ))}
-        </div>
+              className={cn(
+                "h-2 w-2 rounded-full transition-colors", 
+                currentStep === idx 
+                  ? "bg-primary" 
+                  : idx < currentStep 
+                    ? "bg-green-300" 
+                    : "bg-gray-200"
+              )}
+            />
+            {idx < steps.length - 1 && (
+              <div className="h-[2px] w-4 bg-gray-200" />
+            )}
+          </div>
+        ))}
       </div>
     );
   };
-
-  // Independent component for step layout to avoid JSX nesting issues
-  const StepLayout = ({ 
-    title, 
-    children, 
-    imageSrc, 
-    imageAlt 
-  }: { 
-    title: string, 
-    children: React.ReactNode, 
-    imageSrc: string, 
-    imageAlt: string 
-  }) => (
-    <div className="flex flex-col md:flex-row flex-1 h-[350px] overflow-visible">
-      {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[60%] px-6 py-4 flex flex-col">
-        <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {title}
-          </h2>
-          <div className="flex-grow overflow-y-auto content-area">
-            {children}
-          </div>
-        </div>
-      </div>
-      
-      {/* Right side: Image with consistent sizing */}
-      <RightImageContainer>
-        <StepImage 
-          src={imageSrc} 
-          alt={imageAlt}
-          isLoaded={imagesLoaded[imageSrc] === true} 
-        />
-      </RightImageContainer>
-    </div>
-  );
   
   // Generate content for the current step
   const getCurrentStepContent = () => {
     // Return the appropriate content based on current step
     switch (currentStep) {
-              case 0: // Welcome
-                return (
-                  <StepLayout
-                    title="Welcome to the Invela Trust Network"
-                    imageSrc="/assets/welcome_1.png"
-                    imageAlt="Welcome to Invela"
-                  >
+      case 0: // Welcome
+        return (
+          <StepLayout
+            title="Welcome to the Invela Trust Network"
+            imageSrc="/assets/welcome_1.png"
+            imageAlt="Welcome to Invela"
+          >
             <div className="mt-4 space-y-4">
               <CheckListItem>
                 Your premier partner for secure and efficient accreditation
@@ -569,43 +508,43 @@ export function OnboardingModal({
                 Add basic details about {currentCompany?.name} to help us customize your experience.
               </p>
               
-              <div className="space-y-7">
-                <div>
-                  <Label htmlFor="company-size" className="text-lg font-medium block mb-3">
-                    Company Size <span className="text-red-500">*</span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="company-size" className="text-base">
+                    Company Size
                   </Label>
                   <Select 
-                    value={companyInfo.size} 
+                    value={companyInfo.size}
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
                   >
-                    <SelectTrigger id="company-size" className="h-14 text-base">
-                      <SelectValue placeholder="Select number of employees" />
+                    <SelectTrigger id="company-size" className={cn("h-10", companyInfo.size ? "border-green-500" : "")}>
+                      <SelectValue placeholder="Select company size" />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                      <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
-                      <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
-                      <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
-                      <SelectItem value="xlarge" className="text-base py-2">X Large (1K+ employees)</SelectItem>
+                    <SelectContent>
+                      <SelectItem value="small">Small (1-49 employees)</SelectItem>
+                      <SelectItem value="medium">Medium (50-249 employees)</SelectItem>
+                      <SelectItem value="large">Large (250-999 employees)</SelectItem>
+                      <SelectItem value="xlarge">X Large (1K+ employees)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div>
-                  <Label htmlFor="company-revenue" className="text-lg font-medium block mb-3">
-                    Annual Revenue <span className="text-red-500">*</span>
+                <div className="space-y-3">
+                  <Label htmlFor="company-revenue" className="text-base">
+                    Annual Revenue
                   </Label>
                   <Select 
-                    value={companyInfo.revenue} 
+                    value={companyInfo.revenue}
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
                   >
-                    <SelectTrigger id="company-revenue" className="h-14 text-base">
+                    <SelectTrigger id="company-revenue" className={cn("h-10", companyInfo.revenue ? "border-green-500" : "")}>
                       <SelectValue placeholder="Select annual revenue" />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                      <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
-                      <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
-                      <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
-                      <SelectItem value="xlarge" className="text-base py-2">$250M+</SelectItem>
+                    <SelectContent>
+                      <SelectItem value="small">$0–$10M</SelectItem>
+                      <SelectItem value="medium">$10M–$50M</SelectItem>
+                      <SelectItem value="large">$50M–$250M</SelectItem>
+                      <SelectItem value="xlarge">$250M+</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -614,89 +553,84 @@ export function OnboardingModal({
           </StepLayout>
         );
       
-      case 2: // Tasks Overview
+      case 2: // Tasks
         return (
           <StepLayout
-            title="Your Tasks"
+            title="Your Assessment Tasks"
             imageSrc="/assets/welcome_3.png"
-            imageAlt="Task List"
+            imageAlt="Assessment Tasks"
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                To receive your Accreditation, you'll need to finish the following assigned tasks:
+                Complete tasks in your dashboard to build your company's trust profile.
               </p>
               
-              <div className="space-y-4 mt-3">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
-                  <div>
-                    <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
-                    <p className="text-sm text-gray-600">Business identity verification</p>
-                  </div>
-                </div>
+              <div className="space-y-4">
+                <Card className="overflow-hidden">
+                  <CardContent className="p-4 flex items-start space-x-3">
+                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Know Your Business (KYB)</h3>
+                      <p className="text-sm text-gray-600">Verify your company's business information</p>
+                    </div>
+                  </CardContent>
+                </Card>
                 
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
-                  <div>
-                    <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
-                    <p className="text-sm text-gray-600">Security and compliance verification</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
-                  <div>
-                    <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
-                    <p className="text-sm text-gray-600">Open banking capabilities assessment</p>
-                  </div>
-                </div>
+                <Card className="overflow-hidden">
+                  <CardContent className="p-4 flex items-start space-x-3">
+                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">KY3P Assessment</h3>
+                      <p className="text-sm text-gray-600">Third-party risk assessment covering security practices</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </StepLayout>
         );
       
-      case 3: // Document Uploads
+      case 3: // Documents
         return (
           <StepLayout
-            title="Streamline with Document Uploads"
+            title="Document Uploads"
             imageSrc="/assets/welcome_4.png"
-            imageAlt="Document Upload"
+            imageAlt="Document Uploads"
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                Accelerate your accreditation by uploading critical documents upfront. 
-                Our AI-driven system auto-fills forms, saving you time.
+                You'll be asked to submit documents during the assessment process:
               </p>
               
-              <div>
-                <h3 className="text-lg font-medium text-gray-700 mb-4">Recommended Documents</h3>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "SOC 2", 
-                    "ISO 27001",
-                    "Penetration Test Reports",
-                    "API Security",
-                    "OAuth Certification",
-                    "GDPR/CCPA Compliance",
-                    "FDX Certification",
-                    "Business Continuity Plan"
-                  ].map((doc, i) => (
-                    <div key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                      {doc}
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-4">
+                <CheckListItem>
+                  All documents are securely stored in the File Vault
+                </CheckListItem>
+                <CheckListItem>
+                  Industry-standard security practices protect all uploads
+                </CheckListItem>
+                <CheckListItem>
+                  Granular permissions control who can access each document
+                </CheckListItem>
               </div>
             </div>
           </StepLayout>
         );
       
-      case 4: // Team Invitations
+      case 4: // Team
         return (
           <StepLayout
             title="Invite Your Team"
             imageSrc="/assets/welcome_5.png"
-            imageAlt="Team Invitations"
+            imageAlt="Invite Team"
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
@@ -774,66 +708,45 @@ export function OnboardingModal({
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                Please confirm the information you've provided before completing the onboarding process.
+                Please review the information you've provided:
               </p>
-                
-              <div className="space-y-5 text-base mt-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                <div className="flex items-center gap-4">
-                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                  <div>
-                    <div className="font-medium">Company Information</div>
-                    <div className="text-sm text-gray-600">
-                      Size: {getSizeLabel(companyInfo.size)}, Revenue: {getRevenueLabel(companyInfo.revenue)}
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Company Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Company Size:</span>
+                      <span className="text-sm font-medium">{getSizeLabel(companyInfo.size)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Annual Revenue:</span>
+                      <span className="text-sm font-medium">{getRevenueLabel(companyInfo.revenue)}</span>
                     </div>
                   </div>
                 </div>
                 
-                {teamMembers.some(m => m.fullName && m.email) && (
-                  <div className="flex items-center gap-4">
-                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium">Team Members</div>
-                      <div className="text-sm text-gray-600">
-                        {teamMembers.filter(m => m.fullName && m.email).length} team member(s) invited
-                      </div>
+                {teamMembers.some(m => m.fullName || m.email) && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Team Members to Invite</h3>
+                    <div className="space-y-2">
+                      {teamMembers.filter(m => m.fullName || m.email).map((m, i) => (
+                        <div key={i} className="flex justify-between">
+                          <span className="text-sm">{m.role}:</span>
+                          <span className="text-sm font-medium">
+                            {m.fullName} {m.email ? `(${m.email})` : ''}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-                
-                <div className="flex items-center gap-4">
-                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                  <div>
-                    <div className="font-medium">Tasks Ready</div>
-                    <div className="text-sm text-gray-600">
-                      3 compliance tasks prepared for your review
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <p className="text-sm text-gray-600">
-                  By completing onboarding, you'll unlock access to your compliance
-                  tasks, starting with the KYB Form.
-                </p>
-              </div>
-              
-              <div className="space-y-4 text-sm mt-6">
-                <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
-                  <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
-                  <span>Complete the KYB form to verify your business identity</span>
-                </div>
-                
-                <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
-                  <ArrowRight className="text-primary h-5 w-5 flex-shrink-0 mt-0.5" />
-                  <span>Upload compliance documents to fast-track your accreditation</span>
-                </div>
               </div>
             </div>
           </StepLayout>
         );
       
-      case 6: // Completion
+      case 6: // Complete
         return (
           <StepLayout
             title="Onboarding Complete"
@@ -876,7 +789,7 @@ export function OnboardingModal({
     // Get current step content
     const content = getCurrentStepContent();
     
-    // Wrap with animation component
+    // Return with animation wrapper
     return (
       <StepTransition
         direction={transitionDirection}
@@ -887,15 +800,15 @@ export function OnboardingModal({
       </StepTransition>
     );
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="p-4 flex-1 flex flex-col overflow-hidden">
+        {/* Main content area */}
+        <div className="flex-1 overflow-hidden">
           {/* Step content */}
           {renderStepContent()}
         </div>
@@ -908,6 +821,7 @@ export function OnboardingModal({
                 type="button"
                 variant="outline"
                 onClick={handleBackStep}
+                disabled={isTransitioning}
               >
                 Back
               </Button>
@@ -917,24 +831,18 @@ export function OnboardingModal({
           </div>
           
           {/* Step indicator in the footer - centered */}
-          <div className="flex-1 flex items-center justify-center gap-2">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full ${
-                  i === currentStep ? 'bg-primary' : 'bg-gray-300'
-                }`}
-              />
-            ))}
+          <div className="flex-1 flex justify-center">
+            {renderStepIndicator()}
           </div>
           
           <div className="flex-1 text-right">
             <Button 
               type="button"
-              disabled={!canProceed}
               onClick={handleNextStep}
+              disabled={!canProceed || isTransitioning}
             >
-              {currentStep === 6 ? 'Complete' : 'Next'}
+              {currentStep === 6 ? 'Complete' : 'Next'} 
+              {currentStep < 6 && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           </div>
         </DialogFooter>

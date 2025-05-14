@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { OnboardingModal } from "@/components/modals/NewOnboardingModal";
+import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -36,7 +36,7 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
       </div>
       
       {/* Include the onboarding modal for all pages */}
-      <OnboardingModal 
+      <AnimatedOnboardingModal 
         isOpen={showModal}
         setShowModal={setShowModal}
         user={user}
