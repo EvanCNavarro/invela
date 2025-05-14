@@ -836,17 +836,18 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">Invite Your Team</h2>
-                <p className="text-lg text-gray-700 mb-8">
-                  Streamline your accreditation process by inviting key team members to contribute 
-                  directly to relevant sections.
-                </p>
-                
-                <div className="space-y-5">
+          <StepLayout
+            title="Invite Your Team"
+            imageSrc="/assets/welcome_5.png"
+            imageAlt="Team Invitations"
+          >
+            <div className="mt-4 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
+                Streamline your accreditation process by inviting key team members to contribute 
+                directly to relevant sections.
+              </p>
+              
+              <div className="space-y-4 overflow-y-auto pr-2">
                   {teamMembers.map((member, index) => (
                     <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
                       <CardContent className="pt-6 pb-6">
@@ -927,7 +928,7 @@ export function OnboardingModal() {
                 </div>
               )}
             </div>
-          </div>
+          </StepLayout>
         );
       
       case 5: // Review Information
