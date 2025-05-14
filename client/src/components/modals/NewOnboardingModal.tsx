@@ -44,7 +44,7 @@ const inviteTeamMembers = async (companyId: number, members: any[]) => {
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="hidden md:block bg-blue-50/10 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
-    <div className="absolute inset-0 flex items-center justify-center p-4">
+    <div className="absolute inset-0 flex items-start justify-center p-4 pt-8">
       {children}
     </div>
   </div>
@@ -395,11 +395,11 @@ export function OnboardingModal({
     imageSrc: string, 
     imageAlt: string 
   }) => (
-    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+    <div className="flex flex-col md:flex-row flex-1 h-[350px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[60%] px-8 py-6 flex flex-col">
+      <div className="md:w-[60%] px-6 py-4 flex flex-col">
         <div className="flex flex-col h-full">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             {title}
           </h2>
           <div className="flex-grow overflow-y-auto content-area">
@@ -763,11 +763,11 @@ export function OnboardingModal({
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
-        className="max-w-[950px] p-0 overflow-hidden h-[600px] flex flex-col"
+        className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="p-6 flex-1 flex flex-col overflow-hidden">
+        <div className="p-4 flex-1 flex flex-col overflow-hidden">
           {/* Step content */}
           {renderStepContent()}
         </div>
