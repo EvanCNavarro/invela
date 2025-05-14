@@ -724,37 +724,37 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-auto">
             {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">A Few Tasks Ahead</h2>
-                <p className="text-lg text-gray-700 mb-8">
-                  To complete your accreditation application, you'll need to work through the following tasks:
+                <p className="text-lg text-gray-700 mb-6">
+                  To receive your Accreditation, you'll need to finish the following assigned tasks:
                 </p>
                 
-                <div className="mt-6 space-y-6">
-                  <div className="flex items-start gap-5">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">1</div>
+                <div className="space-y-7">
+                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">1</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
-                      <p className="text-base text-gray-600">Basic verification of your business identity and structure</p>
+                      <p className="text-sm text-gray-600">Business identity verification</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-5">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">2</div>
+                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">2</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
-                      <p className="text-base text-gray-600">Comprehensive security and compliance verification</p>
+                      <p className="text-sm text-gray-600">Security and compliance verification</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-5">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">3</div>
+                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">3</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
-                      <p className="text-base text-gray-600">Assessment of your open banking capabilities</p>
+                      <p className="text-sm text-gray-600">Open banking capabilities assessment</p>
                     </div>
                   </div>
                 </div>
