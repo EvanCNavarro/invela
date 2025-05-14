@@ -324,21 +324,37 @@ export function OnboardingModal({
     completionConfirmedRef.current = completionConfirmed;
   }, [completionConfirmed]);
   
-  // Listen for WebSocket message events
+  // Listen for WebSocket message events with enhanced error handling and logging
   useEffect(() => {
     // Create handler function that we can reference for both adding and removing
     const messageHandler = (e: any) => {
-      if (e.detail && e.detail.data) {
+      try {
+        if (!e.detail) {
+          console.warn('[OnboardingModal] Received WebSocket event without detail:', e);
+          return;
+        }
+        
         // Get the message data and type
         const data = e.detail.data;
         const messageType = e.detail.messageType;
         
-        console.log('[OnboardingModal] Received WebSocket event:', messageType, data);
+        if (!data) {
+          console.warn('[OnboardingModal] Received WebSocket event without data:', e.detail);
+          return;
+        }
         
-        // Look for onboarding completion confirmation messages
+        console.log('[OnboardingModal] Received WebSocket event:', {
+          messageType,
+          dataType: data.type,
+          timestamp: new Date().toISOString(),
+          userId: data.userId,
+          companyId: data.companyId
+        });
+        
+        // Handle onboarding related messages
         if (messageType === 'onboarding_completed_confirmed' || 
             data.type === 'onboarding_completed_confirmed') {
-          console.log('[OnboardingModal] Received onboarding completion confirmation:', data);
+          console.log('[OnboardingModal] ✅ Received onboarding completion confirmation:', data);
           setCompletionConfirmed(true);
           
           // Show success toast message
@@ -347,7 +363,20 @@ export function OnboardingModal({
             description: "Your company onboarding has been successfully completed.",
             variant: "success"
           });
+          
+          // Close modal after a brief delay to show success state
+          setTimeout(() => {
+            setShowModal(false);
+          }, 1500);
+        } 
+        else if (messageType === 'onboarding_completed' || 
+                data.type === 'onboarding_completed') {
+          console.log('[OnboardingModal] Received onboarding completion message:', data);
+          // This is notification that someone completed onboarding (possibly another user/client)
+          // We could use this to update UI state if needed
         }
+      } catch (error) {
+        console.error('[OnboardingModal] Error processing WebSocket message:', error);
       }
     };
     
@@ -362,7 +391,7 @@ export function OnboardingModal({
       console.log('[OnboardingModal] WebSocket message listener removed');
       document.removeEventListener('websocket-message', messageHandler);
     };
-  }, [toastFn]);
+  }, [toastFn, setShowModal]);
   
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
@@ -400,17 +429,29 @@ export function OnboardingModal({
       // Broadcast updates via WebSocket (using the context for reliability)
       if (isConnected) {
         try {
-          console.log('[OnboardingModal] WebSocket connected, sending onboarding completion...');
+          const timestamp = new Date().toISOString();
+          console.log('[OnboardingModal] WebSocket connected, sending onboarding completion...', {
+            userId: user?.id,
+            companyId: currentCompany?.id,
+            timestamp
+          });
           
           // Send notification through existing WebSocket connection
-          sendMessage({
+          const message = {
             type: 'onboarding_completed',
             userId: user?.id,
             companyId: currentCompany?.id,
-            timestamp: new Date().toISOString()
-          });
+            timestamp,
+            metadata: {
+              source: 'onboarding_modal',
+              userAgent: navigator.userAgent,
+              sentAt: timestamp
+            }
+          };
           
-          console.log('[OnboardingModal] Sent onboarding completion WebSocket message');
+          sendMessage(message);
+          
+          console.log('[OnboardingModal] Sent onboarding completion WebSocket message:', message);
           
           // The completion will be handled by the event listener we set up earlier
           // But we'll also set up a timeout as a fallback
