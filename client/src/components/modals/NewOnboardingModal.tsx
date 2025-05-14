@@ -1,13 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+// Select imports removed as we're using custom selection UI
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -558,75 +552,77 @@ export function NewOnboardingModal() {
                 </p>
                 
                 <div>
-                  <Label htmlFor="company-size">Company Size</Label>
-                  <div className="relative">
-                    <Select 
-                      value={companyInfo.size} 
-                      onValueChange={(value) => handleCompanyInfoChange('size', value)}
-                      defaultOpen={false}
-                    >
-                      <SelectTrigger 
-                        id="company-size"
+                  <Label htmlFor="company-size" className="mb-2 block">Company Size</Label>
+                  <div className="space-y-2">
+                    {[
+                      { value: "1-10", label: "1-10 employees" },
+                      { value: "11-50", label: "11-50 employees" },
+                      { value: "51-200", label: "51-200 employees" },
+                      { value: "201-500", label: "201-500 employees" },
+                      { value: "501+", label: "501+ employees" },
+                    ].map((option) => (
+                      <div 
+                        key={option.value}
                         className={cn(
-                          "focus:ring-0 focus:ring-offset-0 transition-colors",
-                          companyInfoErrors.size ? "border-red-500 focus-visible:ring-red-500" : "",
-                          companyInfo.size ? "border-green-500 focus-visible:ring-green-500" : ""
+                          "flex items-center border p-2 rounded-md cursor-pointer transition-colors",
+                          companyInfo.size === option.value 
+                            ? "border-green-500 bg-green-50" 
+                            : "border-gray-200 hover:border-gray-300"
                         )}
-                        ref={formRefs.companySize}
+                        onClick={() => handleCompanyInfoChange('size', option.value)}
                       >
-                        <SelectValue placeholder="Select company size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-10">1-10 employees</SelectItem>
-                        <SelectItem value="11-50">11-50 employees</SelectItem>
-                        <SelectItem value="51-200">51-200 employees</SelectItem>
-                        <SelectItem value="201-500">201-500 employees</SelectItem>
-                        <SelectItem value="501+">501+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {companyInfo.size && (
-                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <div className={cn(
+                          "w-4 h-4 rounded-full border mr-2",
+                          companyInfo.size === option.value 
+                            ? "border-green-500 bg-green-500" 
+                            : "border-gray-300"
+                        )}>
+                          {companyInfo.size === option.value && (
+                            <CheckCircle className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        <span>{option.label}</span>
                       </div>
-                    )}
+                    ))}
                   </div>
                   {companyInfoErrors.size && (
                     <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
                   )}
                 </div>
                 
-                <div className="mt-4">
-                  <Label htmlFor="revenue-tier">Annual Revenue</Label>
-                  <div className="relative">
-                    <Select 
-                      value={companyInfo.revenue} 
-                      onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
-                      defaultOpen={false}
-                    >
-                      <SelectTrigger 
-                        id="revenue-tier"
+                <div className="mt-6">
+                  <Label htmlFor="revenue-tier" className="mb-2 block">Annual Revenue</Label>
+                  <div className="space-y-2">
+                    {[
+                      { value: "Under $1M", label: "Under $1M" },
+                      { value: "$1M - $10M", label: "$1M - $10M" },
+                      { value: "$10M - $50M", label: "$10M - $50M" },
+                      { value: "$50M - $100M", label: "$50M - $100M" },
+                      { value: "$100M+", label: "$100M+" },
+                    ].map((option) => (
+                      <div 
+                        key={option.value}
                         className={cn(
-                          "focus:ring-0 focus:ring-offset-0 transition-colors",
-                          companyInfoErrors.revenue ? "border-red-500 focus-visible:ring-red-500" : "",
-                          companyInfo.revenue ? "border-green-500 focus-visible:ring-green-500" : ""
+                          "flex items-center border p-2 rounded-md cursor-pointer transition-colors",
+                          companyInfo.revenue === option.value 
+                            ? "border-green-500 bg-green-50" 
+                            : "border-gray-200 hover:border-gray-300"
                         )}
-                        ref={formRefs.companyRevenue}
+                        onClick={() => handleCompanyInfoChange('revenue', option.value)}
                       >
-                        <SelectValue placeholder="Select revenue range" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Under $1M">Under $1M</SelectItem>
-                        <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
-                        <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
-                        <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
-                        <SelectItem value="$100M+">$100M+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {companyInfo.revenue && (
-                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <div className={cn(
+                          "w-4 h-4 rounded-full border mr-2",
+                          companyInfo.revenue === option.value 
+                            ? "border-green-500 bg-green-500" 
+                            : "border-gray-300"
+                        )}>
+                          {companyInfo.revenue === option.value && (
+                            <CheckCircle className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        <span>{option.label}</span>
                       </div>
-                    )}
+                    ))}
                   </div>
                   {companyInfoErrors.revenue && (
                     <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
