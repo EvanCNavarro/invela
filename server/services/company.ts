@@ -351,13 +351,23 @@ export async function updateCompany(
  * Updates company onboarding status
  * Used when the onboarding flow is completed
  */
-export async function updateCompanyOnboardingStatus(
+export /**
+ * Updates company onboarding status
+ * 
+ * @param companyId - ID of the company to update
+ * @param status - New onboarding status (true = completed)
+ * @param userId - Optional ID of the user who triggered the update
+ * @returns Updated company object
+ */
+async function updateCompanyOnboardingStatus(
   companyId: number,
-  status: boolean = true
+  status: boolean = true,
+  userId?: number
 ): Promise<typeof companies.$inferSelect> {
   console.log('[Company Service] Updating company onboarding status:', {
     companyId,
     status,
+    userId: userId || 'not specified',
     timestamp: new Date().toISOString()
   });
 
