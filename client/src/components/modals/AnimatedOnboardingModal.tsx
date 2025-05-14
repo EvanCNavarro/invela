@@ -18,8 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogFooter, DialogPortal, DialogOverlay } from '@/components/ui/dialog';
-import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 // Mock functions for API calls and contexts
 // In a production environment, these would be actual API calls
@@ -849,6 +848,7 @@ export function AnimatedOnboardingModal({
         className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
+        <DialogTitle className="sr-only">Invela Onboarding Modal</DialogTitle>
         {/* Main content area */}
         <div className="flex-1 overflow-hidden">
           {/* Step content */}
@@ -888,8 +888,7 @@ export function AnimatedOnboardingModal({
             </Button>
           </div>
         </DialogFooter>
-      </DialogPrimitive.Content>
-      </DialogPortal>
+      </DialogContent>
     </Dialog>
   );
 }
