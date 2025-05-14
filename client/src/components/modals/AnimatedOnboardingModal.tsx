@@ -115,15 +115,15 @@ const StepTransition: React.FC<StepTransitionProps> = ({
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
-  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4 w-fit">
     Onboarding Modal
   </div>
 );
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-blue-50 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
-    <div className="absolute inset-0 flex items-start justify-center p-4 pt-8">
+  <div className="hidden md:block bg-blue-50/30 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+    <div className="absolute inset-0 flex items-center justify-center">
       {children}
     </div>
   </div>
@@ -139,16 +139,16 @@ const StepImage: React.FC<{
   alt,
   isLoaded
 }) => (
-  <div className="w-[400px] h-[350px] relative flex items-start justify-center pt-4">
+  <div className="w-[400px] h-[350px] relative flex items-center justify-center">
     {isLoaded ? (
       <img 
         src={src} 
         alt={alt}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-contain rounded-lg"
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-[300px] h-[300px] rounded-md" />
+        <Skeleton className="w-[300px] h-[300px] rounded-lg" />
       </div>
     )}
   </div>
@@ -180,15 +180,15 @@ const StepLayout: React.FC<{
   }, [imageSrc, title]);
   
   return (
-    <div className="flex flex-col md:flex-row flex-1 h-[350px] overflow-visible">
+    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[60%] px-8 py-6 flex flex-col">
+      <div className="md:w-[50%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
           {/* Header chip for consistent styling */}
           <HeaderChip />
           
           {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-blue-700 mb-4">
+          <h2 className="text-2xl font-bold text-blue-600 mb-4">
             {title}
           </h2>
           
@@ -213,9 +213,9 @@ const StepLayout: React.FC<{
 
 // Component for rendering checklist items with consistent styling
 const CheckListItem: React.FC<{children: React.ReactNode}> = ({ children }) => (
-  <div className="flex items-start space-x-3 mb-4">
-    <div className="h-6 w-6 text-blue-700 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <div className="flex items-start space-x-3 mb-5">
+    <div className="h-5 w-5 text-blue-600 flex-shrink-0 rounded-full bg-blue-50 flex items-center justify-center mt-0.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
