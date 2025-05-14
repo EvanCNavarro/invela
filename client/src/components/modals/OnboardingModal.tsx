@@ -72,13 +72,13 @@ CustomDialogContent.displayName = "CustomDialogContent";
 // Preload all images to ensure fast display
 /**
  * Centered Image Container for the right side of onboarding steps
- * Consistently positions images in the right panel
+ * Consistently positions images in the right panel with fixed dimensions
  */
 const RightImageContainer = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
+    <div className="hidden md:block bg-blue-50/30 relative md:w-[40%] flex-shrink-0 border-l border-slate-100">
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[85%] aspect-square flex items-center justify-center">
+        <div className="w-[80%] h-[80%] flex items-center justify-center">
           {children}
         </div>
       </div>
@@ -107,23 +107,23 @@ const CheckListItem = ({ children }: { children: React.ReactNode }) => {
 
 /**
  * Image display component with decorative background elements
- * Creates a consistent style for all step images
+ * Creates a consistent style for all step images with fixed dimensions
  */
 const StepImage = ({ src, alt, isLoaded }: { src: string; alt: string; isLoaded: boolean }) => {
   if (!isLoaded) {
-    return <EnhancedSkeleton className="w-full aspect-square rounded-lg" />;
+    return <EnhancedSkeleton className="w-[200px] h-[200px] rounded-lg" />;
   }
   
   return (
-    <>
+    <div className="relative w-[200px] h-[200px]">
       <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
       <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
       <img 
         src={src} 
         alt={alt} 
-        className="relative max-w-full max-h-full object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+        className="absolute inset-0 w-full h-full object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
       />
-    </>
+    </div>
   );
 };
 
@@ -614,17 +614,17 @@ export function OnboardingModal() {
 
   // Progress indicator dots component - styled like tutorial modal
   const ProgressDots = () => (
-    <div className="flex justify-center items-center gap-4 py-3 mx-2">
+    <div className="flex justify-center items-center gap-3 py-2 mx-2">
       {Array.from({ length: 7 }, (_, i) => (
         <div
           key={i}
           className={cn(
             "transition-all duration-200",
             i < currentStep 
-              ? "h-4 w-4 rounded-full bg-green-200" // Completed - soft gray-green 
+              ? "h-3 w-3 rounded-full bg-green-200" // Completed - soft gray-green 
               : currentStep === i 
-                ? "h-4 w-10 rounded-lg bg-blue-600 ring-2 ring-blue-200 ring-offset-1" // Current - wider shape 
-                : "h-4 w-4 rounded-full bg-gray-200" // Future - gray
+                ? "h-3 w-8 rounded-lg bg-blue-600 ring-1 ring-blue-200 ring-offset-1" // Current - wider shape 
+                : "h-3 w-3 rounded-full bg-gray-200" // Future - gray
           )}
         />
       ))}
@@ -636,7 +636,7 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 h-[380px] overflow-visible">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -1102,18 +1102,18 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col h-[570px] w-[860px]">
-        <div className="p-6 pb-4">
+      <CustomDialogContent className="overflow-hidden flex flex-col h-[550px] w-[860px]">
+        <div className="p-5 pb-3">
           <div className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
         
-        <div className="flex-grow px-8 pb-0">
+        <div className="flex-grow px-8 pb-0 overflow-visible">
           {renderStepContent()}
         </div>
         
-        <div className="py-3 px-8 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
+        <div className="py-3 px-8 border-t border-gray-100 bg-white/80 flex justify-between items-center">
           <div className="w-40">
             {currentStep > 0 ? (
               <Button
@@ -1144,10 +1144,10 @@ export function OnboardingModal() {
                 inviteTeamMembersMutation.isPending || 
                 completeOnboardingMutation.isPending
               }
-              className="flex items-center gap-3 h-12 px-7 min-w-[120px] shadow-sm text-base font-medium"
+              className="flex items-center gap-2 h-10 px-6 min-w-[100px] shadow-sm text-base font-medium"
             >
               {currentStep === 6 ? "Start" : "Next"}
-              {currentStep !== 6 && <ChevronRight className="h-5 w-5" />}
+              {currentStep !== 6 && <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>
         </div>
