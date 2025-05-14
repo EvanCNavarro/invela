@@ -40,41 +40,7 @@ interface TeamMember {
 }
 
 // Create a custom dialog content without close button
-const CustomDialogContent = forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
-  // Create custom event handlers to prevent focus trapping and automatic focusing
-  const handleOpenAutoFocus = (e: Event) => {
-    e.preventDefault();
-  };
-  
-  // Prevent automatic focus on dialog close
-  const handleCloseAutoFocus = (e: Event) => {
-    e.preventDefault();
-  };
-
-  return (
-    <DialogPortal>
-      <DialogOverlay className="bg-black/50 z-[1000]" />
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          "fixed left-[50%] top-[50%] z-[1001] grid w-full max-w-[860px] min-h-[600px] h-auto translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-background p-0 shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl overflow-visible backdrop-blur-md",
-          className
-        )}
-        onOpenAutoFocus={handleOpenAutoFocus}
-        onCloseAutoFocus={handleCloseAutoFocus}
-        onInteractOutside={(e) => e.preventDefault()}
-        {...props}
-      >
-        {children}
-        {/* No close button here - user must complete steps or click explicit buttons */}
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  );
-});
-CustomDialogContent.displayName = "CustomDialogContent";
+// We're now using DialogContentWithoutCloseButton from our dialog.tsx component
 
 // Preload all images to ensure fast display
 /**
@@ -1110,7 +1076,7 @@ export function OnboardingModal() {
             </Button>
           </div>
         </div>
-      </CustomDialogContent>
+      </DialogContentWithoutCloseButton>
     </Dialog>
   );
 }
