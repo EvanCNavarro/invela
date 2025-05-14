@@ -724,34 +724,34 @@ export function OnboardingModal() {
       
       case 2: // Tasks Overview
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-auto">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
-            <div className="flex-1 flex flex-col">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">A Few Tasks Ahead</h2>
                 <p className="text-lg text-gray-700 mb-6">
                   To receive your Accreditation, you'll need to finish the following assigned tasks:
                 </p>
                 
-                <div className="space-y-7">
-                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">1</div>
+                <div className="space-y-4 mt-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
                       <p className="text-sm text-gray-600">Business identity verification</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">2</div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
                       <p className="text-sm text-gray-600">Security and compliance verification</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-5 bg-gray-50/50 p-4 rounded-lg border border-gray-100">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0 mt-0.5">3</div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
                     <div>
                       <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
                       <p className="text-sm text-gray-600">Open banking capabilities assessment</p>
@@ -791,14 +791,14 @@ export function OnboardingModal() {
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Streamline with Document Uploads</h2>
-                <p className="text-lg text-gray-700 mb-8">
+                <p className="text-lg text-gray-700 mb-6">
                   Accelerate your accreditation by uploading critical documents upfront. 
                   Our AI-driven system auto-fills forms, saving you time.
                 </p>
                 
-                <div className="mt-8">
+                <div className="mt-4">
                   <h3 className="text-lg font-medium text-gray-700 mb-4">Recommended Documents</h3>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       "SOC 2", 
                       "ISO 27001",
@@ -810,7 +810,7 @@ export function OnboardingModal() {
                       "Business Continuity Plan",
                       "Data Protection Policies"
                     ].map((doc, i) => (
-                      <div key={i} className="px-4 py-2 bg-primary/10 text-primary rounded-full text-base font-medium">
+                      <div key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
                         {doc}
                       </div>
                     ))}
