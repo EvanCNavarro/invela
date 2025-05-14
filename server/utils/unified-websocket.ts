@@ -307,15 +307,29 @@ function handleOnboardingCompleted(clientId: string, message: OnboardingComplete
         metadata: metadata
       });
       
-      // Send an immediate confirmation to the client
-      client.socket.send(JSON.stringify({
+      // Send an immediate confirmation to the client with enhanced metadata
+      const confirmationMessage = {
         type: 'onboarding_completed_confirmed',
         userId: message.userId,
         companyId: message.companyId,
         timestamp: new Date().toISOString(),
         status: 'success',
-        message: 'Onboarding completion request received'
-      }));
+        message: 'Onboarding completion request received',
+        metadata: {
+          source: 'server',
+          originalClientId: clientId,
+          originalMessageTimestamp: message.timestamp,
+          ...message.metadata
+        }
+      };
+      
+      wsLogger.info(`Sending onboarding completion confirmation to client ${clientId}`, {
+        userId: message.userId,
+        companyId: message.companyId,
+        messageType: 'onboarding_completed_confirmed'
+      });
+      
+      client.socket.send(JSON.stringify(confirmationMessage));
       
     } else {
       wsLogger.warn(`Invalid onboarding completion message from client ${clientId}`, {
