@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 // WebSocket dependency removed
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-import { motion, AnimatePresence } from "framer-motion";
+// Removed animation imports
 
 // Define types for company information
 interface CompanyInfo {
@@ -503,26 +503,17 @@ export function NewOnboardingModal() {
   // Render step content based on current step
   const renderStepContent = () => {
     return (
-      <AnimatePresence mode="wait">
+      <div className="step-content">
         {currentStep === 0 && (
-          <motion.div
-            key="step-0"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, type: "tween" }}
-          >
+          <div key="step-0">
+          
             <StepLayout
               title="Welcome to the Invela Trust Network"
               imageSrc="/assets/welcome_1.png"
               imageAlt="Welcome to Invela"
             >
               <div className="mt-4 space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
+                <div>
                   <CheckListItem>
                     Your premier partner for secure and efficient accreditation
                   </CheckListItem>
@@ -547,16 +538,11 @@ export function NewOnboardingModal() {
                 </motion.div>
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 1 && (
-          <motion.div
-            key="step-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
+          <div key="step-1"
           >
             <StepLayout
               title="Company Information"
@@ -930,7 +916,7 @@ export function NewOnboardingModal() {
             </StepLayout>
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
     );
   };
 
