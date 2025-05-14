@@ -522,12 +522,12 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_2.png"
             imageAlt="Company Information"
           >
-            <div className="mt-4 space-y-4">
-              <p className="text-lg text-gray-700 mb-6">
+            <div className="mt-0 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
                 Add basic details about {currentCompany?.name} to help us customize your experience.
               </p>
               
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <Label htmlFor="company-size" className="text-base">
                     Company Size
@@ -591,12 +591,12 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_3.png"
             imageAlt="Assessment Tasks"
           >
-            <div className="mt-4 space-y-4">
+            <div className="mt-0 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
                 To complete your accreditation application, you'll need to work through the following tasks:
               </p>
               
-              <div className="space-y-5 mt-6">
+              <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
                   <div>
@@ -632,7 +632,7 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_4.png"
             imageAlt="Document Uploads"
           >
-            <div className="mt-4 space-y-4">
+            <div className="mt-0 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
                 You'll be asked to submit documents during the assessment process:
               </p>
@@ -659,7 +659,7 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_5.png"
             imageAlt="Invite Team"
           >
-            <div className="mt-6 space-y-6">
+            <div className="mt-0 space-y-4">
               <div className="bg-gray-50 p-6 rounded-lg">
                 <div className="flex items-center mb-3">
                   <div className="bg-gray-200 text-gray-700 py-1 px-3 rounded-md text-sm font-medium mr-2">
@@ -764,7 +764,7 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_6.png"
             imageAlt="Review Information"
           >
-            <div className="mt-4 space-y-6">
+            <div className="mt-0 space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-500" />
