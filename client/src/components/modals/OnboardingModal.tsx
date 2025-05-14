@@ -44,8 +44,13 @@ const CustomDialogContent = forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Create a custom event handler for onOpenAutoFocus to prevent focus trapping
+  // Create custom event handlers to prevent focus trapping and automatic focusing
   const handleOpenAutoFocus = (e: Event) => {
+    e.preventDefault();
+  };
+  
+  // Prevent automatic focus on dialog close
+  const handleCloseAutoFocus = (e: Event) => {
     e.preventDefault();
   };
 
@@ -59,6 +64,8 @@ const CustomDialogContent = forwardRef<
           className
         )}
         onOpenAutoFocus={handleOpenAutoFocus}
+        onCloseAutoFocus={handleCloseAutoFocus}
+        onInteractOutside={(e) => e.preventDefault()}
         {...props}
       >
         {children}
