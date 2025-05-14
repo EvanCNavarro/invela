@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Check, CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { logger } from '@/lib/logger';
 
 import {
   Card,
@@ -41,6 +40,67 @@ const inviteTeamMembers = async (companyId: number, members: any[]) => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true };
+};
+
+// Create a component logger for this component
+const componentLogger = createComponentLogger('OnboardingModal');
+
+/**
+ * Step Transition Component
+ * 
+ * Wraps step content with animation using framer-motion
+ * Provides smooth transitions between steps
+ */
+interface StepTransitionProps {
+  children: React.ReactNode;
+  direction: 'next' | 'prev';
+  isActive: boolean;
+}
+
+const StepTransition: React.FC<StepTransitionProps> = ({ 
+  children, 
+  direction, 
+  isActive 
+}) => {
+  // Different animations based on direction
+  const variants = {
+    enter: (direction: 'next' | 'prev') => ({
+      x: direction === 'next' ? 40 : -40,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: 'next' | 'prev') => ({
+      x: direction === 'next' ? -40 : 40,
+      opacity: 0,
+    }),
+  };
+  
+  componentLogger.debug('Rendering step transition', { direction, isActive });
+  
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      {isActive && (
+        <motion.div
+          key={`step-transition-${isActive ? 'active' : 'inactive'}`}
+          custom={direction}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: "spring", stiffness: 300, damping: 30 },
+            opacity: { duration: 0.2 }
+          }}
+          className="w-full"
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 // Component for consistent right side image container
@@ -142,6 +202,11 @@ export function OnboardingModal({
   currentCompany: any | null,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
+  // Track transition animation direction (next or previous)
+  const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
+  // Track if transition is in progress
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
     revenue: '',
