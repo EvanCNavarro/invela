@@ -190,8 +190,8 @@ export function NewOnboardingModal() {
         broadcastCompanyUpdate(data.id);
       }
       
-      // Complete onboarding
-      completeOnboarding();
+      // Update user onboarding status
+      updateUserOnboardingStatus();
     },
     onError: (error: Error) => {
       toast({
@@ -201,6 +201,89 @@ export function NewOnboardingModal() {
       });
     }
   });
+  
+  // Update user onboarding status
+  const updateUserMutation = useMutation({
+    mutationFn: async () => {
+      // Update user's onboarding_user_completed status
+      return await fetch('/api/users/current', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          onboarding_user_completed: true 
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to update user onboarding status');
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/current'] });
+      
+      // Now update the onboarding task status
+      updateOnboardingTaskStatus();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update onboarding status",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Update the onboarding task status
+  const updateTaskMutation = useMutation({
+    mutationFn: async () => {
+      // Find and update the onboarding task
+      const tasks = await fetch('/api/tasks').then(res => res.json());
+      const onboardingTask = tasks.find(task => 
+        task.task_type === 'user_onboarding' && 
+        task.user_email === user?.email
+      );
+      
+      if (!onboardingTask) {
+        throw new Error('Could not find onboarding task');
+      }
+      
+      // Update the task status
+      return await fetch(`/api/tasks/${onboardingTask.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'completed',
+          progress: 100
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to update task status');
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      // Invalidate tasks query
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      
+      // Complete onboarding
+      completeOnboarding();
+    },
+    onError: (error: Error) => {
+      // Still complete onboarding even if task update fails
+      completeOnboarding();
+      
+      // Just log the error
+      console.error('Failed to update task status:', error);
+    }
+  });
+  
+  // Update onboarding task status
+  const updateOnboardingTaskStatus = () => {
+    updateTaskMutation.mutate();
+  };
+  
+  // Update user onboarding status and complete the process
+  const updateUserOnboardingStatus = () => {
+    updateUserMutation.mutate();
+  };
 
   // Preload images for steps
   useEffect(() => {
@@ -222,10 +305,10 @@ export function NewOnboardingModal() {
 
   // Show modal if user exists and onboarding isn't completed
   useEffect(() => {
-    if (user && company && company.onboardingCompleted === false) {
+    if (user && !user.onboarding_user_completed) {
       setOpen(true);
     }
-  }, [user, company]);
+  }, [user]);
 
   // Complete the onboarding process
   const completeOnboarding = () => {
