@@ -659,72 +659,107 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_5.png"
             imageAlt="Invite Team"
           >
-            <div className="mt-4 space-y-4">
-              <p className="text-lg text-gray-700 mb-4">
-                Build your team by inviting key members to help complete assessment forms.
-              </p>
+            <div className="mt-4 space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="bg-gray-200 text-gray-700 py-1 px-2 rounded-md text-sm font-medium">
+                    CFO
+                  </div>
+                  <span className="text-sm">Financial Data for</span>
+                  <span className="text-sm font-medium">KYB Form</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="cfo-name" className="mb-1 block text-sm">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="cfo-name"
+                      value={teamMembers[0].fullName}
+                      onChange={(e) => {
+                        const newMembers = [...teamMembers];
+                        newMembers[0].fullName = e.target.value;
+                        setTeamMembers(newMembers);
+                      }}
+                      className={cn(
+                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                        teamMembers[0].fullName ? "border-green-500" : ""
+                      )}
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cfo-email" className="mb-1 block text-sm">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="cfo-email"
+                      type="email"
+                      value={teamMembers[0].email}
+                      onChange={(e) => {
+                        const newMembers = [...teamMembers];
+                        newMembers[0].email = e.target.value;
+                        setTeamMembers(newMembers);
+                      }}
+                      className={cn(
+                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                        teamMembers[0].email && isValidEmail(teamMembers[0].email) ? "border-green-500" : ""
+                      )}
+                      placeholder="jd@company.com"
+                    />
+                  </div>
+                </div>
+              </div>
               
-              <div className="space-y-4 overflow-y-auto pr-2">
-                {teamMembers.map((member, index) => (
-                  <Card key={index} className="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="bg-blue-100 text-blue-700 py-1.5 px-3 rounded-full text-sm font-medium">
-                          {member.role}
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {member.roleDescription} {member.formType}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
-                            Full Name
-                          </Label>
-                          <Input
-                            id={`name-${index}`}
-                            value={member.fullName}
-                            onChange={(e) => {
-                              const newMembers = [...teamMembers];
-                              newMembers[index].fullName = e.target.value;
-                              setTeamMembers(newMembers);
-                            }}
-                            className={cn(
-                              "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                              member.fullName ? "border-green-500 bg-green-50/30" : ""
-                            )}
-                            placeholder="Jane Smith"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
-                            Email Address
-                          </Label>
-                          <Input
-                            id={`email-${index}`}
-                            type="email"
-                            value={member.email}
-                            onChange={(e) => {
-                              const newMembers = [...teamMembers];
-                              newMembers[index].email = e.target.value;
-                              setTeamMembers(newMembers);
-                            }}
-                            className={cn(
-                              "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                              member.email && isValidEmail(member.email) ? "border-green-500 bg-green-50/30" : ""
-                            )}
-                            placeholder="jane.smith@company.com"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                <p className="text-xs text-gray-500 mt-2">
-                  Team member invitations are optional - you can skip this step if needed
-                </p>
+              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="bg-gray-200 text-gray-700 py-1 px-2 rounded-md text-sm font-medium">
+                    CISO
+                  </div>
+                  <span className="text-sm">Compliance Info for</span>
+                  <span className="text-sm font-medium">S&P KY3P Security Assessment</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="ciso-name" className="mb-1 block text-sm">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="ciso-name"
+                      value={teamMembers[1].fullName}
+                      onChange={(e) => {
+                        const newMembers = [...teamMembers];
+                        newMembers[1].fullName = e.target.value;
+                        setTeamMembers(newMembers);
+                      }}
+                      className={cn(
+                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                        teamMembers[1].fullName ? "border-green-500" : ""
+                      )}
+                      placeholder="Jane Smith"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ciso-email" className="mb-1 block text-sm">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="ciso-email"
+                      type="email"
+                      value={teamMembers[1].email}
+                      onChange={(e) => {
+                        const newMembers = [...teamMembers];
+                        newMembers[1].email = e.target.value;
+                        setTeamMembers(newMembers);
+                      }}
+                      className={cn(
+                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                        teamMembers[1].email && isValidEmail(teamMembers[1].email) ? "border-green-500" : ""
+                      )}
+                      placeholder="ciso@company.com"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </StepLayout>
@@ -737,44 +772,57 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_6.png"
             imageAlt="Review Information"
           >
-            <div className="mt-4 space-y-4">
-              <p className="text-lg text-gray-700 mb-4">
-                Please review the information you've provided:
-              </p>
-              
-              <div className="space-y-6">
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
-                  <h3 className="text-sm font-semibold text-blue-700 mb-3">Company Details</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
-                      <span className="text-sm text-gray-700">Company Size:</span>
-                      <span className="text-sm font-medium text-gray-900">{getSizeLabel(companyInfo.size)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-sm text-gray-700">Annual Revenue:</span>
-                      <span className="text-sm font-medium text-gray-900">{getRevenueLabel(companyInfo.revenue)}</span>
-                    </div>
+            <div className="mt-4 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">Company:</span>
+                    <span className="text-sm font-medium">FinTechNetwork</span>
                   </div>
                 </div>
                 
-                {teamMembers.some(m => m.fullName || m.email) && (
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <h3 className="text-sm font-semibold text-blue-700 mb-3">Team Members to Invite</h3>
-                    <div className="space-y-3">
-                      {teamMembers.filter(m => m.fullName || m.email).map((m, i) => (
-                        <div key={i} className={cn(
-                          "flex justify-between items-center py-1",
-                          i < teamMembers.length - 1 ? "border-b border-gray-100" : ""
-                        )}>
-                          <span className="text-sm text-gray-700">{m.role}:</span>
-                          <span className="text-sm font-medium text-gray-900">
-                            {m.fullName} {m.email ? `(${m.email})` : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">Category:</span>
+                    <span className="text-sm font-medium">FinTech</span>
                   </div>
-                )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">Size:</span>
+                    <span className="text-sm font-medium">Large (250–999 employees)</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">Revenue:</span>
+                    <span className="text-sm font-medium">$10M–$50M</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">CFO:</span>
+                    <span className="text-sm font-medium">John Doe</span>
+                    <span className="text-xs text-gray-400">(jd@company.com)</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5 text-green-500" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-gray-600">CISO:</span>
+                    <span className="text-sm font-medium">James Smith</span>
+                    <span className="text-xs text-gray-400">(js@company.com)</span>
+                  </div>
+                </div>
               </div>
             </div>
           </StepLayout>
@@ -783,35 +831,20 @@ export function AnimatedOnboardingModal({
       case 6: // Complete
         return (
           <StepLayout
-            title="Onboarding Complete"
+            title="Ready to Begin"
             imageSrc="/assets/welcome_7.png"
-            imageAlt="Onboarding Complete"
+            imageAlt="Ready to Begin"
           >
-            <div className="mt-4 space-y-4">
-              <div className="text-center mb-6">
-                <div className="mx-auto mb-6">
-                  <div className="h-24 w-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto shadow-md">
-                    <Check className="h-12 w-12 text-blue-600" />
-                  </div>
+            <div className="mt-4 space-y-4 text-center">
+              <div className="mx-auto mb-6">
+                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto border-4 border-green-200">
+                  <Check className="h-8 w-8 text-green-600" />
                 </div>
-                
-                <h3 className="text-2xl font-bold text-blue-700 mb-3">Welcome to Invela!</h3>
-                <p className="text-lg text-gray-700 mb-6 max-w-md mx-auto">
-                  Your onboarding is complete, and you now have full access to the platform.
-                </p>
               </div>
               
-              <div className="space-y-4 max-w-md mx-auto">
-                <div className="bg-blue-50 rounded-lg p-5 border border-blue-100 shadow-sm text-center">
-                  <div className="font-medium text-lg text-blue-700 mb-3">What's next?</div>
-                  <p className="text-gray-700">
-                    Head to your dashboard to check your progress and complete your pending tasks.
-                  </p>
-                </div>
-                <div className="flex items-center justify-center mt-2">
-                  <ArrowDown className="h-6 w-6 text-blue-500 animate-bounce" />
-                </div>
-              </div>
+              <p className="text-gray-700 mx-auto max-w-md">
+                Your company profile is now set up! To complete your accreditation process, you'll need to finish your assigned tasks, starting with the KYB Form.
+              </p>
             </div>
           </StepLayout>
         );
@@ -879,9 +912,10 @@ export function AnimatedOnboardingModal({
               type="button"
               onClick={handleNextStep}
               disabled={!canProceed || isTransitioning}
+              className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
             >
-              {currentStep === 6 ? 'Complete' : 'Next'} 
-              {currentStep < 6 && <ArrowRight className="ml-2 h-4 w-4" />}
+              {currentStep === 6 ? 'Start' : 'Next'} 
+              {currentStep < 6 ? <ArrowRight className="ml-2 h-4 w-4" /> : <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           </div>
         </DialogFooter>
