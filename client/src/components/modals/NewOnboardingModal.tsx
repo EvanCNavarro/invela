@@ -566,8 +566,7 @@ export function OnboardingModal({
                     "OAuth Certification",
                     "GDPR/CCPA Compliance",
                     "FDX Certification",
-                    "Business Continuity Plan",
-                    "Data Protection Policies"
+                    "Business Continuity Plan"
                   ].map((doc, i) => (
                     <div key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
                       {doc}
@@ -588,8 +587,7 @@ export function OnboardingModal({
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                Streamline your accreditation process by inviting key team members to contribute 
-                directly to relevant sections.
+                Build your team by inviting key members to help complete assessment forms.
               </p>
               
               <div className="space-y-4 overflow-y-auto pr-2">
