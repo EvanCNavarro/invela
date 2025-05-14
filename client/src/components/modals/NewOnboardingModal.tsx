@@ -60,15 +60,15 @@ const StepImage: React.FC<{
   alt,
   isLoaded
 }) => (
-  <div className="w-[400px] h-[400px] relative flex items-center justify-center">
+  <div className="w-[400px] h-[350px] relative flex items-start justify-center pt-4">
     {isLoaded ? (
       <>
-        <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-        <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+        <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1 mt-4"></div>
+        <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1 mt-4"></div>
         <img 
           src={src} 
           alt={alt} 
-          className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+          className="relative max-w-[95%] max-h-[330px] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
         />
       </>
     ) : (
@@ -83,7 +83,7 @@ const CheckListItem: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="rounded-full bg-primary/10 text-primary p-1 mt-0.5">
       <Check className="h-4 w-4" />
     </div>
-    <span className="text-gray-800">{children}</span>
+    <span className="text-gray-800 text-lg font-medium">{children}</span>
   </div>
 );
 
@@ -763,7 +763,7 @@ export function OnboardingModal({
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
-        className="max-w-[1000px] p-0 overflow-hidden h-[700px] flex flex-col"
+        className="max-w-[950px] p-0 overflow-hidden h-[600px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
@@ -773,38 +773,42 @@ export function OnboardingModal({
         </div>
         
         {/* Footer buttons */}
-        <DialogFooter className="p-4 border-t flex justify-between items-center">
-          {currentStep > 0 ? (
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={handleBackStep}
-            >
-              Back
-            </Button>
-          ) : (
-            <div></div> // Empty div to maintain spacing when back button is hidden
-          )}
+        <DialogFooter className="p-4 border-t flex items-center">
+          <div className="flex-1 text-left">
+            {currentStep > 0 ? (
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={handleBackStep}
+              >
+                Back
+              </Button>
+            ) : (
+              <div></div> // Empty div to maintain spacing when back button is hidden
+            )}
+          </div>
           
-          {/* Step indicator in the footer */}
-          <div className="flex items-center gap-2 justify-center">
+          {/* Step indicator in the footer - centered */}
+          <div className="flex-1 flex items-center justify-center gap-2">
             {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2.5 h-2.5 rounded-full ${
                   i === currentStep ? 'bg-primary' : 'bg-gray-300'
                 }`}
               />
             ))}
           </div>
           
-          <Button 
-            type="button"
-            disabled={!canProceed}
-            onClick={handleNextStep}
-          >
-            {currentStep === 6 ? 'Complete' : 'Next'}
-          </Button>
+          <div className="flex-1 text-right">
+            <Button 
+              type="button"
+              disabled={!canProceed}
+              onClick={handleNextStep}
+            >
+              {currentStep === 6 ? 'Complete' : 'Next'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
