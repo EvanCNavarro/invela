@@ -901,10 +901,6 @@ export function OnboardingModal() {
                     </CardContent>
                   </Card>
                 ))}
-                
-                <p className="text-xs text-gray-500 mt-2">
-                  Team member invitations are optional - you can skip this step if needed
-                </p>
               </div>
             </div>
           </StepLayout>
