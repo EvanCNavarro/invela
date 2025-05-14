@@ -639,49 +639,74 @@ export function OnboardingModal() {
   );
 
   // Render the appropriate step content
+  // Define a consistent layout template for all steps
   const renderStepContent = () => {
+    // Common layout with consistent height for the text content area
+    const StepLayout = ({ 
+      title, 
+      children, 
+      imageSrc, 
+      imageAlt 
+    }: { 
+      title: string, 
+      children: React.ReactNode, 
+      imageSrc: string, 
+      imageAlt: string 
+    }) => (
+      <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+        {/* Left side: Text content with fixed height and consistent padding */}
+        <div className="md:w-[60%] px-8 py-6 flex flex-col">
+          <div className="flex flex-col h-full">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              {title}
+            </h2>
+            <div className="flex-grow overflow-y-auto content-area">
+              {children}
+            </div>
+          </div>
+        </div>
+        
+        {/* Right side: Image with consistent sizing */}
+        <RightImageContainer>
+          <StepImage 
+            src={imageSrc} 
+            alt={imageAlt}
+            isLoaded={imagesLoaded[imageSrc] === true} 
+          />
+        </RightImageContainer>
+      </div>
+    );
+    
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[380px] overflow-visible">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  Welcome to the<br />Invela Trust Network
-                </h2>
-                <div className="mt-4 space-y-4">
-                  <CheckListItem>
-                    Your premier partner for secure and efficient accreditation
-                  </CheckListItem>
-                  <CheckListItem>
-                    Enterprise-grade risk assessment and management platform
-                  </CheckListItem>
-                  <CheckListItem>
-                    Streamlined compliance processes with advanced automation
-                  </CheckListItem>
-                </div>
-              </div>
+          <StepLayout
+            title="Welcome to the Invela Trust Network"
+            imageSrc="/assets/welcome_1.png"
+            imageAlt="Welcome to Invela"
+          >
+            <div className="mt-4 space-y-4">
+              <CheckListItem>
+                Your premier partner for secure and efficient accreditation
+              </CheckListItem>
+              <CheckListItem>
+                Enterprise-grade risk assessment and management platform
+              </CheckListItem>
+              <CheckListItem>
+                Streamlined compliance processes with advanced automation
+              </CheckListItem>
             </div>
-            
-            {/* Right side: Image */}
-            <RightImageContainer>
-              <StepImage 
-                src="/assets/welcome_1.png" 
-                alt="Welcome to Invela"
-                isLoaded={isCurrentImageLoaded} 
-              />
-            </RightImageContainer>
-          </div>
+          </StepLayout>
         );
       
       case 1: // Company Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">Company Information</h2>
+          <StepLayout
+            title="Company Information"
+            imageSrc="/assets/welcome_2.png"
+            imageAlt="Company Information"
+          >
+            <div className="mt-4 space-y-4">
                 <p className="text-lg text-gray-700 mb-6">
                   Add basic details about {currentCompany?.name} to help us customize your experience.
                 </p>
