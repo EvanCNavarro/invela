@@ -579,14 +579,14 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-auto">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
-            <div className="flex-1 flex flex-col justify-center">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">
                   Welcome to the<br />Invela Trust Network
                 </h2>
-                <div className="mt-4 space-y-5">
+                <div className="mt-6 space-y-5">
                   <div className="flex items-start gap-4">
                     <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -624,8 +624,8 @@ export function OnboardingModal() {
             {/* Right side: Image */}
             <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
               {isCurrentImageLoaded ? (
-                <div className="flex items-center justify-center h-full p-6">
-                  <div className="relative w-full h-auto max-h-[300px] flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <div className="relative w-full aspect-square flex items-center justify-center">
                     <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
                     <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
                     <img 
@@ -636,8 +636,8 @@ export function OnboardingModal() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full p-5">
-                  <EnhancedSkeleton className="w-[90%] h-[300px] rounded-lg" />
+                <div className="absolute inset-0 flex items-center justify-center p-5">
+                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
                 </div>
               )}
             </div>
