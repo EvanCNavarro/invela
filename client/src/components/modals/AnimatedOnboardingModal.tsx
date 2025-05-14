@@ -587,43 +587,39 @@ export function AnimatedOnboardingModal({
       case 2: // Tasks
         return (
           <StepLayout
-            title="Your Assessment Tasks"
+            title="A Few Tasks Ahead"
             imageSrc="/assets/welcome_3.png"
             imageAlt="Assessment Tasks"
           >
             <div className="mt-4 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                Complete tasks in your dashboard to build your company's trust profile.
+                To complete your accreditation application, you'll need to work through the following tasks:
               </p>
               
-              <div className="space-y-4">
-                <Card className="overflow-hidden">
-                  <CardContent className="p-4 flex items-start space-x-3">
-                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-medium">Know Your Business (KYB)</h3>
-                      <p className="text-sm text-gray-600">Verify your company's business information</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-5 mt-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
+                  <div>
+                    <h3 className="font-medium text-base text-gray-900">Know Your Business (KYB) Form</h3>
+                    <p className="text-xs text-gray-500">Verify your company's business information</p>
+                  </div>
+                </div>
                 
-                <Card className="overflow-hidden">
-                  <CardContent className="p-4 flex items-start space-x-3">
-                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-medium">KY3P Assessment</h3>
-                      <p className="text-sm text-gray-600">Third-party risk assessment covering security practices</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
+                  <div>
+                    <h3 className="font-medium text-base text-gray-900">S&P KY3P Security Assessment</h3>
+                    <p className="text-xs text-gray-500">Third-party risk assessment for security practices</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
+                  <div>
+                    <h3 className="font-medium text-base text-gray-900">Open Banking Survey</h3>
+                    <p className="text-xs text-gray-500">API access and data sharing assessment</p>
+                  </div>
+                </div>
               </div>
             </div>
           </StepLayout>
