@@ -337,27 +337,69 @@ function handleOnboardingCompleted(clientId: string, message: OnboardingComplete
         missingCompanyId: !message.companyId
       });
       
-      // Send error confirmation
-      client.socket.send(JSON.stringify({
+      // Send error confirmation with enhanced metadata
+      const errorMessage = {
         type: 'onboarding_completed_confirmed',
         timestamp: new Date().toISOString(),
         status: 'error',
-        message: 'Invalid onboarding completion message'
-      }));
+        message: 'Invalid onboarding completion message',
+        metadata: {
+          source: 'server',
+          originalClientId: clientId,
+          originalMessageTimestamp: message.timestamp || new Date().toISOString(),
+          error: 'missing_required_fields',
+          missingUserId: !message.userId,
+          missingCompanyId: !message.companyId
+        }
+      };
+      
+      wsLogger.info(`Sending onboarding completion error to client ${clientId}`, {
+        error: 'missing_required_fields',
+        messageType: 'onboarding_completed_confirmed'
+      });
+      
+      client.socket.send(JSON.stringify(errorMessage));
     }
   } catch (error) {
     wsLogger.error(`Error processing onboarding completion from client ${clientId}`, {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      clientId,
+      errorType: error instanceof Error ? error.name : 'Unknown',
+      messageType: 'onboarding_completed'
     });
     
-    // Send error confirmation
-    client.socket.send(JSON.stringify({
-      type: 'onboarding_completed_confirmed',
-      timestamp: new Date().toISOString(),
-      status: 'error',
-      message: 'Internal server error processing onboarding completion'
-    }));
+    // Try to send error notification back to client if possible
+    try {
+      const client = clients.get(clientId);
+      if (client && client.socket.readyState === WebSocket.OPEN) {
+        // Send enhanced error confirmation with detailed metadata
+        const errorResponse = {
+          type: 'onboarding_completed_confirmed',
+          timestamp: new Date().toISOString(),
+          status: 'error',
+          message: 'Internal server error processing onboarding completion',
+          metadata: {
+            source: 'server',
+            error: 'server_error',
+            errorType: error instanceof Error ? error.name : 'Unknown'
+          }
+        };
+        
+        wsLogger.info(`Sending error response to client ${clientId}`, {
+          messageType: 'onboarding_completed_confirmed',
+          status: 'error'
+        });
+        
+        client.socket.send(JSON.stringify(errorResponse));
+      }
+    } catch (sendError) {
+      wsLogger.error(`Failed to send error response to client ${clientId}`, {
+        originalError: error instanceof Error ? error.message : String(error),
+        sendError: sendError instanceof Error ? sendError.message : String(sendError)
+      });
+    }
   }
 }
 
