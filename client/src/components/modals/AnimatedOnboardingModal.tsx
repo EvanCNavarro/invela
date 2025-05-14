@@ -659,18 +659,19 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_5.png"
             imageAlt="Invite Team"
           >
-            <div className="mt-4 space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="bg-gray-200 text-gray-700 py-1 px-2 rounded-md text-sm font-medium">
+            <div className="mt-6 space-y-6">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="flex items-center mb-3">
+                  <div className="bg-gray-200 text-gray-700 py-1 px-3 rounded-md text-sm font-medium mr-2">
                     CFO
                   </div>
                   <span className="text-sm">Financial Data for</span>
-                  <span className="text-sm font-medium">KYB Form</span>
+                  <span className="text-sm font-medium ml-1">KYB Form</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="cfo-name" className="mb-1 block text-sm">
+                    <Label htmlFor="cfo-name" className="mb-2 block text-sm">
                       Full Name
                     </Label>
                     <Input
@@ -681,15 +682,12 @@ export function AnimatedOnboardingModal({
                         newMembers[0].fullName = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className={cn(
-                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                        teamMembers[0].fullName ? "border-green-500" : ""
-                      )}
+                      className="h-10 rounded-md"
                       placeholder="John Doe"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="cfo-email" className="mb-1 block text-sm">
+                    <Label htmlFor="cfo-email" className="mb-2 block text-sm">
                       Email Address
                     </Label>
                     <Input
@@ -701,27 +699,27 @@ export function AnimatedOnboardingModal({
                         newMembers[0].email = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className={cn(
-                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                        teamMembers[0].email && isValidEmail(teamMembers[0].email) ? "border-green-500" : ""
-                      )}
+                      className="h-10 rounded-md"
                       placeholder="jd@company.com"
                     />
                   </div>
                 </div>
               </div>
               
-              <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="bg-gray-200 text-gray-700 py-1 px-2 rounded-md text-sm font-medium">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="flex items-center mb-3">
+                  <div className="bg-gray-200 text-gray-700 py-1 px-3 rounded-md text-sm font-medium mr-2">
                     CISO
                   </div>
-                  <span className="text-sm">Compliance Info for</span>
-                  <span className="text-sm font-medium">S&P KY3P Security Assessment</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="ciso-name" className="mb-1 block text-sm">
+                    <span className="text-sm">Compliance Info for</span>
+                    <span className="text-sm block font-medium">S&P KY3P Security Assessment</span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ciso-name" className="mb-2 block text-sm">
                       Full Name
                     </Label>
                     <Input
@@ -732,15 +730,12 @@ export function AnimatedOnboardingModal({
                         newMembers[1].fullName = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className={cn(
-                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                        teamMembers[1].fullName ? "border-green-500" : ""
-                      )}
+                      className="h-10 rounded-md"
                       placeholder="Jane Smith"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="ciso-email" className="mb-1 block text-sm">
+                    <Label htmlFor="ciso-email" className="mb-2 block text-sm">
                       Email Address
                     </Label>
                     <Input
@@ -752,10 +747,7 @@ export function AnimatedOnboardingModal({
                         newMembers[1].email = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className={cn(
-                        "h-10 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
-                        teamMembers[1].email && isValidEmail(teamMembers[1].email) ? "border-green-500" : ""
-                      )}
+                      className="h-10 rounded-md"
                       placeholder="ciso@company.com"
                     />
                   </div>
