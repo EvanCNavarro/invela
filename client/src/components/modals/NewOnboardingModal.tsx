@@ -433,7 +433,7 @@ export function NewOnboardingModal() {
   };
 
   // Step layout component with animations
-  const StepLayout = ({ 
+  const StepLayout = memo(({ 
     title, 
     children, 
     imageSrc, 
@@ -443,40 +443,44 @@ export function NewOnboardingModal() {
     children: React.ReactNode, 
     imageSrc: string, 
     imageAlt: string 
-  }) => (
-    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
-      {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[60%] px-8 py-6 flex flex-col">
-        <div className="flex flex-col h-full">
-          <motion.h2 
-            className="text-3xl font-bold text-gray-900 mb-2"
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-          >
-            {title}
-          </motion.h2>
-          <motion.div 
-            className="flex-grow overflow-y-auto content-area"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-          >
-            {children}
-          </motion.div>
+  }) => {
+    logger.component.debug(`Rendering StepLayout: ${title}`);
+    
+    return (
+      <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+        {/* Left side: Text content with fixed height and consistent padding */}
+        <div className="md:w-[60%] px-8 py-6 flex flex-col">
+          <div className="flex flex-col h-full">
+            <motion.h2 
+              className="text-3xl font-bold text-gray-900 mb-2"
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+            >
+              {title}
+            </motion.h2>
+            <motion.div 
+              className="flex-grow overflow-y-auto content-area"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+            >
+              {children}
+            </motion.div>
+          </div>
         </div>
+        
+        {/* Right side: Image with consistent sizing */}
+        <RightImageContainer>
+          <StepImage 
+            src={imageSrc} 
+            alt={imageAlt}
+            isLoaded={imagesLoaded[imageSrc] === true} 
+          />
+        </RightImageContainer>
       </div>
-      
-      {/* Right side: Image with consistent sizing */}
-      <RightImageContainer>
-        <StepImage 
-          src={imageSrc} 
-          alt={imageAlt}
-          isLoaded={imagesLoaded[imageSrc] === true} 
-        />
-      </RightImageContainer>
-    </div>
-  );
+    );
+  });
 
   // Render step content based on current step
   const renderStepContent = () => {
