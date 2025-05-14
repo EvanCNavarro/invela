@@ -464,22 +464,12 @@ export function NewOnboardingModal() {
         {/* Left side: Text content with fixed height and consistent padding */}
         <div className="md:w-[60%] px-8 py-6 flex flex-col">
           <div className="flex flex-col h-full">
-            <motion.h2 
-              className="text-3xl font-bold text-gray-900 mb-2"
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.15 }}
-            >
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {title}
-            </motion.h2>
-            <motion.div 
-              className="flex-grow overflow-y-auto content-area"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-            >
+            </h2>
+            <div className="flex-grow overflow-y-auto content-area">
               {children}
-            </motion.div>
+            </div>
           </div>
         </div>
         
@@ -505,7 +495,7 @@ export function NewOnboardingModal() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, type: "tween" }}
           >
             <StepLayout
               title="Welcome to the Invela Trust Network"
