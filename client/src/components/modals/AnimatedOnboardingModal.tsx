@@ -662,7 +662,7 @@ export function AnimatedOnboardingModal({
             <div className="mt-0 space-y-4">
               <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
                 <div className="flex items-center mb-3">
-                  <div className="bg-blue-200/80 text-blue-700 py-1 px-3 rounded-md text-sm font-medium mr-2">
+                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
                     CFO
                   </div>
                   <span className="text-sm">Financial Data for</span>
@@ -699,7 +699,7 @@ export function AnimatedOnboardingModal({
                         newMembers[0].email = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className="h-10 rounded-md"
+                      className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
                       placeholder="jd@company.com"
                     />
                   </div>
@@ -708,7 +708,7 @@ export function AnimatedOnboardingModal({
               
               <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
                 <div className="flex items-center mb-3">
-                  <div className="bg-blue-200/80 text-blue-700 py-1 px-3 rounded-md text-sm font-medium mr-2">
+                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
                     CISO
                   </div>
                   <div>
@@ -730,7 +730,7 @@ export function AnimatedOnboardingModal({
                         newMembers[1].fullName = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className="h-10 rounded-md"
+                      className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
                       placeholder="Jane Smith"
                     />
                   </div>
@@ -747,7 +747,7 @@ export function AnimatedOnboardingModal({
                         newMembers[1].email = e.target.value;
                         setTeamMembers(newMembers);
                       }}
-                      className="h-10 rounded-md"
+                      className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
                       placeholder="ciso@company.com"
                     />
                   </div>
