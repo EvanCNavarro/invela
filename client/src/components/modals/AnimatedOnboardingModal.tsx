@@ -115,7 +115,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
-  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-3 w-fit">
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4 w-fit">
     Onboarding Modal
   </div>
 );
@@ -182,13 +182,13 @@ const StepLayout: React.FC<{
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[50%] px-8 py-6 flex flex-col space-y-3">
+      <div className="md:w-[50%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
           {/* Header chip for consistent styling */}
           <HeaderChip />
           
           {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-blue-600 mb-3">
+          <h2 className="text-2xl font-bold text-blue-600 mb-4">
             {title}
           </h2>
           
@@ -501,7 +501,7 @@ export function AnimatedOnboardingModal({
             imageSrc="/assets/welcome_1.png"
             imageAlt="Welcome to Invela"
           >
-            <div className="mt-4 space-y-4">
+            <div className="mt-0 space-y-4">
               <CheckListItem>
                 Your premier partner for secure and efficient accreditation
               </CheckListItem>
