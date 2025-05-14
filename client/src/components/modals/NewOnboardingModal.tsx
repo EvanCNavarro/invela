@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Check, CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWebSocketContext } from '@/providers/websocket-provider';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 import {
   Card,
@@ -20,26 +23,58 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock function for demo purposes - replace with actual API functions
+// Real API function to update user onboarding status
 const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true };
+  try {
+    const response = await apiRequest(`/api/users/${userId}/onboarding`, {
+      method: 'PATCH',
+      body: JSON.stringify({ onboarding_user_completed: status }),
+    });
+    return response;
+  } catch (error) {
+    console.error('[API] Error updating user onboarding status:', error);
+    throw error;
+  }
 };
 
-// Mock function for demo purposes - replace with actual API functions
+// Real API function to update company details
 const updateCompanyDetails = async (companyId: number, details: any) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true };
+  try {
+    const response = await apiRequest(`/api/companies/${companyId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(details),
+    });
+    return response;
+  } catch (error) {
+    console.error('[API] Error updating company details:', error);
+    throw error;
+  }
 };
 
-// Mock function for demo purposes - replace with actual API functions
+// Real API function to invite team members
 const inviteTeamMembers = async (companyId: number, members: any[]) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true };
+  try {
+    const promises = members.map(member => 
+      apiRequest('/api/invitations', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: member.email,
+          name: member.fullName,
+          role: member.role,
+          company_id: companyId,
+          message: `You have been invited to complete the ${member.formType} as the ${member.roleDescription} ${companyId}.`
+        }),
+      })
+    );
+    
+    const results = await Promise.all(promises);
+    return results;
+  } catch (error) {
+    console.error('[API] Error inviting team members:', error);
+    throw error;
+  }
 };
+
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -274,6 +309,9 @@ export function OnboardingModal({
     setCurrentStep(prev => Math.max(0, prev - 1));
   };
   
+  // Access WebSocket context
+  const { isConnected, sendMessage } = useWebSocketContext();
+  
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
     try {
@@ -298,25 +336,23 @@ export function OnboardingModal({
         }
       }
       
-      // Broadcast updates via WebSocket if available
-      if (typeof window !== 'undefined' && window.WebSocket) {
+      // Broadcast updates via WebSocket (using the context for reliability)
+      if (isConnected) {
         try {
-          const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-          const socket = new WebSocket(wsUrl);
+          // Send notification through existing WebSocket connection
+          sendMessage({
+            type: 'onboarding_completed',
+            userId: user?.id,
+            companyId: currentCompany?.id,
+            timestamp: new Date().toISOString()
+          });
           
-          socket.onopen = () => {
-            socket.send(JSON.stringify({
-              type: 'onboarding_completed',
-              userId: user?.id,
-              companyId: currentCompany?.id,
-              timestamp: new Date().toISOString()
-            }));
-            socket.close();
-          };
+          console.log('[OnboardingModal] Sent onboarding completion WebSocket message');
         } catch (error) {
           console.error('[OnboardingModal] WebSocket send error:', error);
         }
+      } else {
+        console.warn('[OnboardingModal] WebSocket not connected, using fallback notification');
       }
 
       // Show success message
@@ -763,7 +799,6 @@ export function OnboardingModal({
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
-        hideCloseButton={true}
       >
         <div className="p-4 flex-1 flex flex-col overflow-hidden">
           {/* Step content */}
