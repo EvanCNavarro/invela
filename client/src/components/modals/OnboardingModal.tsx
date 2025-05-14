@@ -786,7 +786,7 @@ export function OnboardingModal() {
       
       case 3: // Document Uploads
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -844,7 +844,7 @@ export function OnboardingModal() {
       
       case 4: // Team Invitations
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -940,7 +940,7 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -1022,7 +1022,7 @@ export function OnboardingModal() {
       
       case 6: // Completion
         return (
-          <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[440px]">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
