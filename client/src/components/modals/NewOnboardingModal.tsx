@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogContentWithoutCloseButton, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogContentWithoutCloseButton, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
 // Real API function to update user onboarding status
@@ -925,6 +925,7 @@ export function OnboardingModal({
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
         aria-describedby="onboarding-description"
       >
+        <DialogTitle className="sr-only">Company Onboarding</DialogTitle>
         <div className="sr-only" id="onboarding-description">
           Company onboarding process
         </div>
