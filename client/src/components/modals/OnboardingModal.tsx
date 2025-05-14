@@ -707,68 +707,62 @@ export function OnboardingModal() {
             imageAlt="Company Information"
           >
             <div className="mt-4 space-y-4">
-                <p className="text-lg text-gray-700 mb-6">
-                  Add basic details about {currentCompany?.name} to help us customize your experience.
-                </p>
+              <p className="text-lg text-gray-700 mb-6">
+                Add basic details about {currentCompany?.name} to help us customize your experience.
+              </p>
+              
+              <div className="space-y-7">
+                <div>
+                  <Label htmlFor="company-size" className="text-lg font-medium block mb-3">
+                    Company Size <span className="text-red-500">*</span>
+                  </Label>
+                  <Select 
+                    value={companyInfo.size} 
+                    onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
+                  >
+                    <SelectTrigger id="company-size" className="h-14 text-base">
+                      <SelectValue placeholder="Select number of employees" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={5} className="z-[2000]">
+                      <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
+                      <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
+                      <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
+                      <SelectItem value="xlarge" className="text-base py-2">X Large (1K+ employees)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <div className="space-y-7">
-                  <div>
-                    <Label htmlFor="company-size" className="text-lg font-medium block mb-3">
-                      Company Size <span className="text-red-500">*</span>
-                    </Label>
-                    <Select 
-                      value={companyInfo.size} 
-                      onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
-                    >
-                      <SelectTrigger id="company-size" className="h-14 text-base">
-                        <SelectValue placeholder="Select number of employees" />
-                      </SelectTrigger>
-                      <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                        <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
-                        <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
-                        <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
-                        <SelectItem value="xlarge" className="text-base py-2">X Large (1K+ employees)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="company-revenue" className="text-lg font-medium block mb-3">
-                      Annual Revenue <span className="text-red-500">*</span>
-                    </Label>
-                    <Select 
-                      value={companyInfo.revenue} 
-                      onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
-                    >
-                      <SelectTrigger id="company-revenue" className="h-14 text-base">
-                        <SelectValue placeholder="Select annual revenue" />
-                      </SelectTrigger>
-                      <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                        <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
-                        <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
-                        <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
-                        <SelectItem value="xlarge" className="text-base py-2">$250M+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label htmlFor="company-revenue" className="text-lg font-medium block mb-3">
+                    Annual Revenue <span className="text-red-500">*</span>
+                  </Label>
+                  <Select 
+                    value={companyInfo.revenue} 
+                    onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
+                  >
+                    <SelectTrigger id="company-revenue" className="h-14 text-base">
+                      <SelectValue placeholder="Select annual revenue" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={5} className="z-[2000]">
+                      <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
+                      <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
+                      <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
+                      <SelectItem value="xlarge" className="text-base py-2">$250M+</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
-            
-            {/* Right side: Image */}
-            <RightImageContainer>
-              <StepImage 
-                src="/assets/welcome_2.png" 
-                alt="Company Information"
-                isLoaded={isCurrentImageLoaded} 
-              />
-            </RightImageContainer>
-          </div>
+          </StepLayout>
         );
       
       case 2: // Tasks Overview
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
+          <StepLayout
+            title="Your Tasks"
+            imageSrc="/assets/welcome_3.png"
+            imageAlt="Task List"
+          >
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
