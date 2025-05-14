@@ -646,9 +646,9 @@ export function OnboardingModal() {
       
       case 1: // Company Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-auto">
+          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
             {/* Left side: Text content */}
-            <div className="flex-1 flex flex-col">
+            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Company Information</h2>
                 <p className="text-lg text-gray-700 mb-6">
