@@ -71,6 +71,44 @@ CustomDialogContent.displayName = "CustomDialogContent";
 
 // Preload all images to ensure fast display
 /**
+ * Centered Image Container for the right side of onboarding steps
+ * Consistently positions images in the right panel
+ */
+const RightImageContainer = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-[85%] aspect-square flex items-center justify-center">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Image display component with decorative background elements
+ * Creates a consistent style for all step images
+ */
+const StepImage = ({ src, alt, isLoaded }: { src: string; alt: string; isLoaded: boolean }) => {
+  if (!isLoaded) {
+    return <EnhancedSkeleton className="w-full aspect-square rounded-lg" />;
+  }
+  
+  return (
+    <>
+      <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
+      <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
+      <img 
+        src={src} 
+        alt={alt} 
+        className="relative max-w-full max-h-full object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+      />
+    </>
+  );
+};
+
+/**
  * Preload images for onboarding steps to ensure smooth transitions
  * Only preloads images if onboarding is not completed
  * 
@@ -583,37 +621,37 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
                   Welcome to the<br />Invela Trust Network
                 </h2>
-                <div className="mt-6 space-y-5">
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="mt-4 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-lg font-medium text-gray-700">
+                    <p className="text-lg font-medium text-gray-700 pt-0.5">
                       Your premier partner for secure and efficient accreditation
                     </p>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-lg font-medium text-gray-700">
+                    <p className="text-lg font-medium text-gray-700 pt-0.5">
                       Enterprise-grade risk assessment and management platform
                     </p>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
-                    <p className="text-lg font-medium text-gray-700">
+                    <p className="text-lg font-medium text-gray-700 pt-0.5">
                       Streamlined compliance processes with advanced automation
                     </p>
                   </div>
@@ -622,25 +660,13 @@ export function OnboardingModal() {
             </div>
             
             {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_1.png" 
-                      alt="Welcome to Invela" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
-            </div>
+            <RightImageContainer>
+              <StepImage 
+                src="/assets/welcome_1.png" 
+                alt="Welcome to Invela"
+                isLoaded={isCurrentImageLoaded} 
+              />
+            </RightImageContainer>
           </div>
         );
       
