@@ -667,10 +667,10 @@ export function AnimatedOnboardingModal({
               
               <div className="space-y-4 overflow-y-auto pr-2">
                 {teamMembers.map((member, index) => (
-                  <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
+                  <Card key={index} className="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
                     <CardContent className="pt-4 pb-4">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="bg-primary/10 text-primary py-1.5 px-3 rounded-full text-sm font-medium">
+                        <div className="bg-blue-100 text-blue-700 py-1.5 px-3 rounded-full text-sm font-medium">
                           {member.role}
                         </div>
                         <span className="text-sm text-gray-600">
@@ -691,7 +691,10 @@ export function AnimatedOnboardingModal({
                               newMembers[index].fullName = e.target.value;
                               setTeamMembers(newMembers);
                             }}
-                            className={cn("h-10 text-sm", member.fullName ? "border-green-500" : "")}
+                            className={cn(
+                              "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                              member.fullName ? "border-green-500 bg-green-50/30" : ""
+                            )}
                             placeholder="Jane Smith"
                           />
                         </div>
@@ -708,8 +711,9 @@ export function AnimatedOnboardingModal({
                               newMembers[index].email = e.target.value;
                               setTeamMembers(newMembers);
                             }}
-                            className={cn("h-10 text-sm", 
-                              member.email && isValidEmail(member.email) ? "border-green-500" : ""
+                            className={cn(
+                              "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm",
+                              member.email && isValidEmail(member.email) ? "border-green-500 bg-green-50/30" : ""
                             )}
                             placeholder="jane.smith@company.com"
                           />
@@ -740,28 +744,31 @@ export function AnimatedOnboardingModal({
               </p>
               
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Company Details</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">Company Size:</span>
-                      <span className="text-sm font-medium">{getSizeLabel(companyInfo.size)}</span>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
+                  <h3 className="text-sm font-semibold text-blue-700 mb-3">Company Details</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                      <span className="text-sm text-gray-700">Company Size:</span>
+                      <span className="text-sm font-medium text-gray-900">{getSizeLabel(companyInfo.size)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Annual Revenue:</span>
-                      <span className="text-sm font-medium">{getRevenueLabel(companyInfo.revenue)}</span>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-sm text-gray-700">Annual Revenue:</span>
+                      <span className="text-sm font-medium text-gray-900">{getRevenueLabel(companyInfo.revenue)}</span>
                     </div>
                   </div>
                 </div>
                 
                 {teamMembers.some(m => m.fullName || m.email) && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Team Members to Invite</h3>
-                    <div className="space-y-2">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-semibold text-blue-700 mb-3">Team Members to Invite</h3>
+                    <div className="space-y-3">
                       {teamMembers.filter(m => m.fullName || m.email).map((m, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="text-sm">{m.role}:</span>
-                          <span className="text-sm font-medium">
+                        <div key={i} className={cn(
+                          "flex justify-between items-center py-1",
+                          i < teamMembers.length - 1 ? "border-b border-gray-100" : ""
+                        )}>
+                          <span className="text-sm text-gray-700">{m.role}:</span>
+                          <span className="text-sm font-medium text-gray-900">
                             {m.fullName} {m.email ? `(${m.email})` : ''}
                           </span>
                         </div>
