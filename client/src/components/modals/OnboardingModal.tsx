@@ -636,7 +636,7 @@ export function OnboardingModal() {
     switch (currentStep) {
       case 0: // Welcome
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-hidden">
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -1102,18 +1102,18 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col h-[600px] w-[860px]">
+      <CustomDialogContent className="overflow-hidden flex flex-col h-[570px] w-[860px]">
         <div className="p-6 pb-4">
           <div className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
         
-        <div className="flex-grow px-8 pb-2">
+        <div className="flex-grow px-8 pb-0">
           {renderStepContent()}
         </div>
         
-        <div className="py-6 px-8 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
+        <div className="py-3 px-8 border-t border-gray-100 bg-white/80 flex justify-between items-center mt-auto">
           <div className="w-40">
             {currentStep > 0 ? (
               <Button
