@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, CheckCircle, ArrowRight } from 'lucide-react';
+import { Check, CheckCircle, ArrowRight, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -462,24 +462,27 @@ export function AnimatedOnboardingModal({
     ];
     
     return (
-      <div className="flex space-x-1.5 justify-center items-center">
+      <div className="flex space-x-2 justify-center items-center">
         {steps.map((step, idx) => (
           <div 
             key={idx} 
-            className="flex flex-col items-center space-y-1"
+            className="flex items-center"
           >
             <div 
               className={cn(
-                "h-2 w-2 rounded-full transition-colors", 
+                "h-2.5 w-2.5 rounded-full transition-colors", 
                 currentStep === idx 
-                  ? "bg-primary" 
+                  ? "bg-blue-600 ring-2 ring-blue-200" 
                   : idx < currentStep 
-                    ? "bg-green-300" 
+                    ? "bg-green-400" 
                     : "bg-gray-200"
               )}
             />
             {idx < steps.length - 1 && (
-              <div className="h-[2px] w-4 bg-gray-200" />
+              <div className={cn(
+                "h-[1px] w-4 mx-1",
+                idx < currentStep ? "bg-green-300" : "bg-gray-200"
+              )} />
             )}
           </div>
         ))}
@@ -789,25 +792,28 @@ export function AnimatedOnboardingModal({
             imageAlt="Onboarding Complete"
           >
             <div className="mt-4 space-y-4">
-              <div className="text-center mb-4">
+              <div className="text-center mb-6">
                 <div className="mx-auto mb-6">
-                  <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                    <Check className="h-10 w-10 text-green-600" />
+                  <div className="h-24 w-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto shadow-md">
+                    <Check className="h-12 w-12 text-blue-600" />
                   </div>
                 </div>
                 
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Invela!</h3>
-                <p className="text-lg text-gray-700 mb-6">
+                <h3 className="text-2xl font-bold text-blue-700 mb-3">Welcome to Invela!</h3>
+                <p className="text-lg text-gray-700 mb-6 max-w-md mx-auto">
                   Your onboarding is complete, and you now have full access to the platform.
                 </p>
               </div>
               
               <div className="space-y-4 max-w-md mx-auto">
-                <div className="bg-white rounded-lg p-4 border border-green-100 shadow-sm text-center">
-                  <div className="font-medium text-lg mb-2">What's next?</div>
-                  <p className="text-gray-600">
+                <div className="bg-blue-50 rounded-lg p-5 border border-blue-100 shadow-sm text-center">
+                  <div className="font-medium text-lg text-blue-700 mb-3">What's next?</div>
+                  <p className="text-gray-700">
                     Head to your dashboard to check your progress and complete your pending tasks.
                   </p>
+                </div>
+                <div className="flex items-center justify-center mt-2">
+                  <ArrowDown className="h-6 w-6 text-blue-500 animate-bounce" />
                 </div>
               </div>
             </div>
