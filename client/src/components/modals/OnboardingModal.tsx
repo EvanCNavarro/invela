@@ -1027,9 +1027,10 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <DialogContentWithoutCloseButton className="overflow-hidden flex flex-col h-[550px] w-[860px]">
+      <DialogContentWithoutCloseButton className="overflow-hidden flex flex-col h-[550px] w-[860px]" aria-describedby="onboarding-modal-description">
+        <DialogTitle className="sr-only">Company Onboarding</DialogTitle>
         <div className="p-5 pb-3">
-          <div className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
+          <div id="onboarding-modal-description" className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
             Onboarding Modal
           </div>
         </div>
