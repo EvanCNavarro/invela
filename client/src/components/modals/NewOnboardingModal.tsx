@@ -386,29 +386,39 @@ export function NewOnboardingModal() {
     }
   };
 
-  // Update company info fields with validation
-  const handleCompanyInfoChange = (field: keyof CompanyInfo, value: string) => {
+  // Update company info fields with validation - using useCallback to memoize the function
+  const handleCompanyInfoChange = useCallback((field: keyof CompanyInfo, value: string) => {
+    // Use functional updates to ensure we're working with the latest state
     setCompanyInfo(prev => ({ ...prev, [field]: value }));
     
     // Clear validation error for this field
-    if (companyInfoErrors[field]) {
-      setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+    setCompanyInfoErrors(prev => {
+      if (prev[field]) {
+        return { ...prev, [field]: '' };
+      }
+      return prev;
+    });
+  }, []);
 
   // Update team member fields with validation
-  const handleTeamMemberChange = (index: number, field: keyof TeamMember, value: string) => {
-    const updated = [...teamMembers];
-    updated[index] = { ...updated[index], [field]: value };
-    setTeamMembers(updated);
+  const handleTeamMemberChange = useCallback((index: number, field: keyof TeamMember, value: string) => {
+    // Use functional updates to ensure we're working with the latest state
+    setTeamMembers(prevMembers => {
+      const updated = [...prevMembers];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
     
     // Clear validation error for this field if it exists
-    if (teamMemberErrors[index] && teamMemberErrors[index][field]) {
-      const updatedErrors = { ...teamMemberErrors };
-      updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
-      setTeamMemberErrors(updatedErrors);
-    }
-  };
+    setTeamMemberErrors(prevErrors => {
+      if (prevErrors[index] && prevErrors[index][field]) {
+        const updatedErrors = { ...prevErrors };
+        updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
+        return updatedErrors;
+      }
+      return prevErrors;
+    });
+  }, []);
 
   // Add a team member
   const handleAddTeamMember = (role: 'CFO' | 'CISO', formType: string, roleDescription: string) => {
@@ -535,6 +545,7 @@ export function NewOnboardingModal() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
+            className="w-full"
           >
             <StepLayout
               title="Company Information"
@@ -548,28 +559,37 @@ export function NewOnboardingModal() {
                 
                 <div>
                   <Label htmlFor="company-size">Company Size</Label>
-                  <Select 
-                    value={companyInfo.size} 
-                    onValueChange={(value) => handleCompanyInfoChange('size', value)}
-                  >
-                    <SelectTrigger 
-                      id="company-size"
-                      className={cn(
-                        companyInfoErrors.size ? "border-red-500" : "",
-                        companyInfo.size ? "border-green-500" : ""
-                      )}
-                      ref={formRefs.companySize}
+                  <div className="relative">
+                    <Select 
+                      value={companyInfo.size} 
+                      onValueChange={(value) => handleCompanyInfoChange('size', value)}
+                      defaultOpen={false}
                     >
-                      <SelectValue placeholder="Select company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-10">1-10 employees</SelectItem>
-                      <SelectItem value="11-50">11-50 employees</SelectItem>
-                      <SelectItem value="51-200">51-200 employees</SelectItem>
-                      <SelectItem value="201-500">201-500 employees</SelectItem>
-                      <SelectItem value="501+">501+ employees</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger 
+                        id="company-size"
+                        className={cn(
+                          "focus:ring-0 focus:ring-offset-0 transition-colors",
+                          companyInfoErrors.size ? "border-red-500 focus-visible:ring-red-500" : "",
+                          companyInfo.size ? "border-green-500 focus-visible:ring-green-500" : ""
+                        )}
+                        ref={formRefs.companySize}
+                      >
+                        <SelectValue placeholder="Select company size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1-10 employees</SelectItem>
+                        <SelectItem value="11-50">11-50 employees</SelectItem>
+                        <SelectItem value="51-200">51-200 employees</SelectItem>
+                        <SelectItem value="201-500">201-500 employees</SelectItem>
+                        <SelectItem value="501+">501+ employees</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {companyInfo.size && (
+                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                   {companyInfoErrors.size && (
                     <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
                   )}
@@ -577,28 +597,37 @@ export function NewOnboardingModal() {
                 
                 <div className="mt-4">
                   <Label htmlFor="revenue-tier">Annual Revenue</Label>
-                  <Select 
-                    value={companyInfo.revenue} 
-                    onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
-                  >
-                    <SelectTrigger 
-                      id="revenue-tier"
-                      className={cn(
-                        companyInfoErrors.revenue ? "border-red-500" : "",
-                        companyInfo.revenue ? "border-green-500" : ""
-                      )}
-                      ref={formRefs.companyRevenue}
+                  <div className="relative">
+                    <Select 
+                      value={companyInfo.revenue} 
+                      onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
+                      defaultOpen={false}
                     >
-                      <SelectValue placeholder="Select revenue range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Under $1M">Under $1M</SelectItem>
-                      <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
-                      <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
-                      <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
-                      <SelectItem value="$100M+">$100M+</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger 
+                        id="revenue-tier"
+                        className={cn(
+                          "focus:ring-0 focus:ring-offset-0 transition-colors",
+                          companyInfoErrors.revenue ? "border-red-500 focus-visible:ring-red-500" : "",
+                          companyInfo.revenue ? "border-green-500 focus-visible:ring-green-500" : ""
+                        )}
+                        ref={formRefs.companyRevenue}
+                      >
+                        <SelectValue placeholder="Select revenue range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Under $1M">Under $1M</SelectItem>
+                        <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
+                        <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
+                        <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
+                        <SelectItem value="$100M+">$100M+</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {companyInfo.revenue && (
+                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                   {companyInfoErrors.revenue && (
                     <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
                   )}
