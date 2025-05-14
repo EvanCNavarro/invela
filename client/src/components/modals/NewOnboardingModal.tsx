@@ -532,17 +532,29 @@ export function OnboardingModal({
     </div>
   );
   
-  // Render step content based on current step
+  // Render step content based on current step with animation transition
   const renderStepContent = () => {
+    // Generate the current step content
+    const currentStepContent = useMemo(() => {
+      switch (currentStep) {
+    }, [currentStep, companyInfo, teamMembers, currentCompany]);
     
-    switch (currentStep) {
-      case 0: // Welcome
-        return (
-          <StepLayout
-            title="Welcome to the Invela Trust Network"
-            imageSrc="/assets/welcome_1.png"
-            imageAlt="Welcome to Invela"
-          >
+    // Wrap with AnimatePresence to handle animations between steps
+    return (
+      <AnimatePresence mode="wait" initial={false}>
+        <StepTransition
+          direction={transitionDirection}
+          isActive={true}
+          key={`step-${currentStep}`}
+        >
+          {currentStepContent}
+              case 0: // Welcome
+                return (
+                  <StepLayout
+                    title="Welcome to the Invela Trust Network"
+                    imageSrc="/assets/welcome_1.png"
+                    imageAlt="Welcome to Invela"
+                  >
             <div className="mt-4 space-y-4">
               <CheckListItem>
                 Your premier partner for secure and efficient accreditation
@@ -869,6 +881,10 @@ export function OnboardingModal({
       default:
         return null;
     }
+          }, [currentStep, companyInfo, teamMembers, currentCompany])}
+        </StepTransition>
+      </AnimatePresence>
+    );
   };
   
   return (
