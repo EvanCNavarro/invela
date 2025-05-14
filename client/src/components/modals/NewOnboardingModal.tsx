@@ -17,7 +17,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocketContext } from "@/providers/websocket-provider";
+// WebSocket dependency removed
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -134,10 +134,9 @@ const FormInput = ({
 );
 
 export function NewOnboardingModal() {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const { broadcastCompanyUpdate } = useWebSocketContext();
   
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = 7;
@@ -185,12 +184,7 @@ export function NewOnboardingModal() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
       
-      // Broadcast company update via WebSocket
-      if (broadcastCompanyUpdate) {
-        broadcastCompanyUpdate(data.id);
-      }
-      
-      // Update user onboarding status
+      // No need for WebSocket broadcast, just update user onboarding status
       updateUserOnboardingStatus();
     },
     onError: (error: Error) => {
