@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { 
@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+// WebSocket dependency removed
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,117 +36,6 @@ interface TeamMember {
   roleDescription: string;
   formType: string;
 }
-
-// Create a memoized stable component for the company info step to prevent blinking
-const StableMotionDiv = React.memo(({ companyInfo, companyInfoErrors, handleCompanyInfoChange, formRefs }: {
-  companyInfo: CompanyInfo;
-  companyInfoErrors: Record<string, string>;
-  handleCompanyInfoChange: (field: keyof CompanyInfo, value: string) => void;
-  formRefs: any; // Using any type to avoid TypeScript errors
-}) => {
-  return (
-    <motion.div
-      key="step-1"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="w-full"
-    >
-      <div className="flex flex-col items-center text-center">
-        <h2 className="text-2xl font-semibold mb-2">Company Information</h2>
-        
-        <div className="relative w-64 h-48 mt-4 mb-6">
-          <img
-            src="/assets/welcome_2.png"
-            alt="Company Information"
-            className="w-full h-full object-contain"
-          />
-        </div>
-        
-        <div className="mt-4 space-y-4 w-full text-left">
-          <p className="text-gray-700 mb-4">
-            Help us understand your company's profile to better customize your experience.
-          </p>
-          
-          <div>
-            <Label htmlFor="company-size">Company Size</Label>
-            <div className="relative">
-              <Select 
-                value={companyInfo.size} 
-                onValueChange={(value) => handleCompanyInfoChange('size', value)}
-              >
-                <SelectTrigger 
-                  id="company-size"
-                  className={cn(
-                    "w-full transition-colors",
-                    companyInfoErrors.size ? "border-red-500" : "",
-                    companyInfo.size ? "border-green-500" : ""
-                  )}
-                  ref={formRefs.companySize}
-                >
-                  <SelectValue placeholder="Select company size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1-10">1-10 employees</SelectItem>
-                  <SelectItem value="11-50">11-50 employees</SelectItem>
-                  <SelectItem value="51-200">51-200 employees</SelectItem>
-                  <SelectItem value="201-500">201-500 employees</SelectItem>
-                  <SelectItem value="501+">501+ employees</SelectItem>
-                </SelectContent>
-              </Select>
-              {companyInfo.size && (
-                <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                </div>
-              )}
-            </div>
-            {companyInfoErrors.size && (
-              <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
-            )}
-          </div>
-          
-          <div className="mt-4">
-            <Label htmlFor="revenue-tier">Annual Revenue</Label>
-            <div className="relative">
-              <Select 
-                value={companyInfo.revenue} 
-                onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
-              >
-                <SelectTrigger 
-                  id="revenue-tier"
-                  className={cn(
-                    "w-full transition-colors",
-                    companyInfoErrors.revenue ? "border-red-500" : "",
-                    companyInfo.revenue ? "border-green-500" : ""
-                  )}
-                  ref={formRefs.companyRevenue}
-                >
-                  <SelectValue placeholder="Select revenue range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Under $1M">Under $1M</SelectItem>
-                  <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
-                  <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
-                  <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
-                  <SelectItem value="$100M+">$100M+</SelectItem>
-                </SelectContent>
-              </Select>
-              {companyInfo.revenue && (
-                <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                </div>
-              )}
-            </div>
-            {companyInfoErrors.revenue && (
-              <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-});
 
 // Validation schemas
 const companyInfoSchema = z.object({
@@ -496,39 +386,29 @@ export function NewOnboardingModal() {
     }
   };
 
-  // Update company info fields with validation - using useCallback to memoize the function
-  const handleCompanyInfoChange = useCallback((field: keyof CompanyInfo, value: string) => {
-    // Use functional updates to ensure we're working with the latest state
+  // Update company info fields with validation
+  const handleCompanyInfoChange = (field: keyof CompanyInfo, value: string) => {
     setCompanyInfo(prev => ({ ...prev, [field]: value }));
     
     // Clear validation error for this field
-    setCompanyInfoErrors(prev => {
-      if (prev[field]) {
-        return { ...prev, [field]: '' };
-      }
-      return prev;
-    });
-  }, []);
+    if (companyInfoErrors[field]) {
+      setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
 
   // Update team member fields with validation
-  const handleTeamMemberChange = useCallback((index: number, field: keyof TeamMember, value: string) => {
-    // Use functional updates to ensure we're working with the latest state
-    setTeamMembers(prevMembers => {
-      const updated = [...prevMembers];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
+  const handleTeamMemberChange = (index: number, field: keyof TeamMember, value: string) => {
+    const updated = [...teamMembers];
+    updated[index] = { ...updated[index], [field]: value };
+    setTeamMembers(updated);
     
     // Clear validation error for this field if it exists
-    setTeamMemberErrors(prevErrors => {
-      if (prevErrors[index] && prevErrors[index][field]) {
-        const updatedErrors = { ...prevErrors };
-        updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
-        return updatedErrors;
-      }
-      return prevErrors;
-    });
-  }, []);
+    if (teamMemberErrors[index] && teamMemberErrors[index][field]) {
+      const updatedErrors = { ...teamMemberErrors };
+      updatedErrors[index] = { ...updatedErrors[index], [field]: '' };
+      setTeamMemberErrors(updatedErrors);
+    }
+  };
 
   // Add a team member
   const handleAddTeamMember = (role: 'CFO' | 'CISO', formType: string, roleDescription: string) => {
@@ -649,14 +529,84 @@ export function NewOnboardingModal() {
         )}
         
         {currentStep === 1 && (
-          <StableMotionDiv
-            companyInfo={companyInfo}
-            companyInfoErrors={companyInfoErrors}
-            handleCompanyInfoChange={handleCompanyInfoChange}
-            formRefs={formRefs}
-          />
+          <motion.div
+            key="step-1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <StepLayout
+              title="Company Information"
+              imageSrc="/assets/welcome_2.png"
+              imageAlt="Company Information"
+            >
+              <div className="mt-4 space-y-4">
+                <p className="text-gray-700 mb-4">
+                  Help us understand your company's profile to better customize your experience.
+                </p>
+                
+                <div>
+                  <Label htmlFor="company-size">Company Size</Label>
+                  <Select 
+                    value={companyInfo.size} 
+                    onValueChange={(value) => handleCompanyInfoChange('size', value)}
+                  >
+                    <SelectTrigger 
+                      id="company-size"
+                      className={cn(
+                        companyInfoErrors.size ? "border-red-500" : "",
+                        companyInfo.size ? "border-green-500" : ""
+                      )}
+                      ref={formRefs.companySize}
+                    >
+                      <SelectValue placeholder="Select company size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-10">1-10 employees</SelectItem>
+                      <SelectItem value="11-50">11-50 employees</SelectItem>
+                      <SelectItem value="51-200">51-200 employees</SelectItem>
+                      <SelectItem value="201-500">201-500 employees</SelectItem>
+                      <SelectItem value="501+">501+ employees</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {companyInfoErrors.size && (
+                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
+                  )}
+                </div>
+                
+                <div className="mt-4">
+                  <Label htmlFor="revenue-tier">Annual Revenue</Label>
+                  <Select 
+                    value={companyInfo.revenue} 
+                    onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
+                  >
+                    <SelectTrigger 
+                      id="revenue-tier"
+                      className={cn(
+                        companyInfoErrors.revenue ? "border-red-500" : "",
+                        companyInfo.revenue ? "border-green-500" : ""
+                      )}
+                      ref={formRefs.companyRevenue}
+                    >
+                      <SelectValue placeholder="Select revenue range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Under $1M">Under $1M</SelectItem>
+                      <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
+                      <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
+                      <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
+                      <SelectItem value="$100M+">$100M+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {companyInfoErrors.revenue && (
+                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
+                  )}
+                </div>
+              </div>
+            </StepLayout>
+          </motion.div>
         )}
-      
         
         {currentStep === 2 && (
           <motion.div
