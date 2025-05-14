@@ -113,9 +113,16 @@ const StepTransition: React.FC<StepTransitionProps> = ({
   );
 };
 
+// Component for the header chip with consistent pill shape
+const HeaderChip: React.FC = () => (
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+    Onboarding Modal
+  </div>
+);
+
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-blue-50/10 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+  <div className="hidden md:block bg-blue-50 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
     <div className="absolute inset-0 flex items-start justify-center p-4 pt-8">
       {children}
     </div>
@@ -167,17 +174,26 @@ const StepLayout: React.FC<{
     const img = new Image();
     img.onload = () => setImageLoaded(true);
     img.src = imageSrc;
-  }, [imageSrc]);
+    
+    // Log when image is loaded for debugging
+    logDebug(`Image loaded for step: ${title}`, { src: imageSrc });
+  }, [imageSrc, title]);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[350px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[60%] px-6 py-4 flex flex-col">
+      <div className="md:w-[60%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          {/* Header chip for consistent styling */}
+          <HeaderChip />
+          
+          {/* Page title with proper spacing */}
+          <h2 className="text-2xl font-bold text-blue-700 mb-4">
             {title}
           </h2>
-          <div className="flex-grow overflow-y-auto content-area">
+          
+          {/* Content area with fixed height and scrolling if needed */}
+          <div className="flex-grow overflow-y-auto content-area pr-2">
             {children}
           </div>
         </div>
@@ -195,15 +211,15 @@ const StepLayout: React.FC<{
   );
 };
 
-// Component for rendering checklist items
+// Component for rendering checklist items with consistent styling
 const CheckListItem: React.FC<{children: React.ReactNode}> = ({ children }) => (
-  <div className="flex items-start space-x-3 text-base">
-    <div className="h-6 w-6 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <div className="flex items-start space-x-3 mb-4">
+    <div className="h-6 w-6 text-blue-700 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
-    <div className="text-gray-700 text-lg font-medium">{children}</div>
+    <div className="text-gray-700 text-base font-medium leading-relaxed">{children}</div>
   </div>
 );
 
@@ -517,10 +533,16 @@ export function AnimatedOnboardingModal({
                     value={companyInfo.size}
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, size: value }))}
                   >
-                    <SelectTrigger id="company-size" className={cn("h-10", companyInfo.size ? "border-green-500" : "")}>
-                      <SelectValue placeholder="Select company size" />
+                    <SelectTrigger 
+                      id="company-size" 
+                      className={cn(
+                        "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
+                        companyInfo.size ? "border-green-500 bg-green-50/30" : ""
+                      )}
+                    >
+                      <SelectValue placeholder="Select number of employees" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white rounded-md shadow-md">
                       <SelectItem value="small">Small (1-49 employees)</SelectItem>
                       <SelectItem value="medium">Medium (50-249 employees)</SelectItem>
                       <SelectItem value="large">Large (250-999 employees)</SelectItem>
@@ -537,10 +559,16 @@ export function AnimatedOnboardingModal({
                     value={companyInfo.revenue}
                     onValueChange={(value) => setCompanyInfo(prev => ({ ...prev, revenue: value }))}
                   >
-                    <SelectTrigger id="company-revenue" className={cn("h-10", companyInfo.revenue ? "border-green-500" : "")}>
+                    <SelectTrigger 
+                      id="company-revenue" 
+                      className={cn(
+                        "h-11 rounded-md border-gray-300 focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
+                        companyInfo.revenue ? "border-green-500 bg-green-50/30" : ""
+                      )}
+                    >
                       <SelectValue placeholder="Select annual revenue" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white rounded-md shadow-md">
                       <SelectItem value="small">$0–$10M</SelectItem>
                       <SelectItem value="medium">$10M–$50M</SelectItem>
                       <SelectItem value="large">$50M–$250M</SelectItem>
