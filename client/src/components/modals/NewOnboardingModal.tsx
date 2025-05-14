@@ -160,10 +160,13 @@ export function NewOnboardingModal() {
     teamMembers: [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
   };
 
-  // Prevent auto-focus on dialog opening
-  const handleDialogOpenAutoFocus = useCallback((e: Event) => {
-    e.preventDefault();
-  }, []);
+  // We use the preventAutoFocus prop on MemoizedDialog instead of this handler
+  // Using the logger for debugging focus management
+  useEffect(() => {
+    if (open) {
+      logger.focus.debug('Onboarding modal opened, preventing auto-focus');
+    }
+  }, [open]);
 
   // Load company data from API
   const { data: company } = useQuery({ 
@@ -920,13 +923,16 @@ export function NewOnboardingModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContentWithoutCloseButton
-        className="max-w-3xl p-0 overflow-hidden"
-        onOpenAutoFocus={handleDialogOpenAutoFocus}
-        aria-describedby="onboarding-description"
-      >
-        <DialogTitle className="sr-only">Complete your onboarding</DialogTitle>
+    <MemoizedDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Complete your onboarding"
+      preventAutoFocus={true}
+      showCloseButton={false}
+      width="xl"
+      className="p-0 overflow-hidden"
+    >
+        <div className="sr-only" id="onboarding-description">Complete your onboarding process</div>
         
         <div>
           {/* Main Content Area */}
