@@ -20,10 +20,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-// WebSocket dependency removed
 import { cn } from "@/lib/utils";
 import { z } from "zod";
-// Removed animation imports
 
 // Define types for company information
 interface CompanyInfo {
@@ -40,53 +38,55 @@ interface TeamMember {
   formType: string;
 }
 
-// Validation schemas
-const companyInfoSchema = z.object({
-  size: z.string().min(1, "Please select a company size"),
-  revenue: z.string().min(1, "Please select a revenue range")
-});
-
-const emailSchema = z.string().email("Please enter a valid email address");
-
 /**
  * Image container for step layouts
  */
-const RightImageContainer = ({ children }) => (
-  <div className="hidden md:flex md:w-[40%] bg-primary-50 items-center justify-center">
-    <div className="relative h-[280px] w-[280px]">
+const ImageContainer = memo(({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="flex-shrink-0 flex items-center justify-center mb-6 w-full h-60">
       {children}
     </div>
-  </div>
-);
+  );
+});
 
 /**
  * Step image component that shows loading state until image is loaded
  */
-const StepImage = ({ src, alt, isLoaded }) => {
-  if (!isLoaded) {
-    return <div className="animate-pulse bg-gray-200 h-full w-full rounded-lg" />;
-  }
-  
+const StepImage = ({ src, alt, isLoaded = true }: { src: string; alt: string; isLoaded?: boolean }) => {
+  const [loaded, setLoaded] = useState(isLoaded);
   return (
-    <img 
-      src={src} 
-      alt={alt} 
-      className="h-full w-full object-contain"
-    />
+    <div className="relative w-full h-full flex items-center justify-center">
+      {!loaded && (
+        <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+          <span className="text-gray-500">Loading...</span>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={cn(
+          "max-w-full max-h-full object-contain rounded-lg transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0"
+        )}
+        onLoad={() => setLoaded(true)}
+      />
+    </div>
   );
 };
 
 /**
  * Consistent check item component for onboarding steps
  */
-const CheckListItem = ({ children }) => (
-  <div className="flex items-start gap-3">
-    <div className="bg-primary-50 p-2 rounded-full shrink-0 mt-0.5">
-      <Check className="h-4 w-4 text-primary" />
+const CheckListItem = memo(({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="mt-1 flex-shrink-0 bg-green-100 rounded-full p-0.5">
+        <Check className="h-3.5 w-3.5 text-green-600" />
+      </div>
+      <span className="text-gray-700">{children}</span>
     </div>
-    <p className="text-gray-700">{children}</p>
-  </div>
-);
+  );
+});
 
 /**
  * Form input with validation feedback
@@ -96,318 +96,249 @@ const FormInput = ({
   value, 
   onChange, 
   placeholder, 
-  isValid = true, 
-  error = "", 
-  autoFocus = false,
-  inputRef = null
-}) => (
-  <div className="space-y-1 mb-4">
-    <Label htmlFor={label.toLowerCase().replace(/\s/g, '-')}>{label}</Label>
-    <div className="relative">
+  error,
+  required = false
+}: { 
+  label: string; 
+  value: string; 
+  onChange: (value: string) => void; 
+  placeholder: string;
+  error?: string;
+  required?: boolean;
+}) => {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={label.toLowerCase().replace(/\s+/g, '-')}>
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
       <Input
-        id={label.toLowerCase().replace(/\s/g, '-')}
+        id={label.toLowerCase().replace(/\s+/g, '-')}
         value={value}
-        onChange={onChange}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={cn(
-          "transition-colors",
-          !isValid && value 
-            ? "border-red-500 focus-visible:ring-red-500" 
-            : isValid && value 
-              ? "border-green-500 focus-visible:ring-green-500" 
-              : ""
-        )}
-        autoFocus={autoFocus}
-        ref={inputRef}
+        className={error ? "border-red-500" : ""}
       />
-      {value && (
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-          {isValid ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          ) : (
-            <AlertCircle className="h-4 w-4 text-red-500" />
-          )}
+      {error && (
+        <div className="flex items-center text-red-500 text-sm mt-1">
+          <AlertCircle className="h-3.5 w-3.5 mr-1" />
+          <span>{error}</span>
         </div>
       )}
     </div>
-    {!isValid && error && (
-      <p className="text-sm text-red-500">{error}</p>
-    )}
-  </div>
-);
+  );
+};
 
+/**
+ * Main onboarding modal component
+ */
 export function NewOnboardingModal() {
+  // User authentication context
   const { user } = useAuth();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
   
+  // Modal state
+  const [open, setOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({ size: '', revenue: '' });
+  const [companyErrors, setCompanyErrors] = useState<Partial<Record<keyof CompanyInfo, string>>>({});
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMemberErrors, setTeamMemberErrors] = useState<Record<number, Partial<Record<keyof TeamMember, string>>>>({});
+  const [loaded, setLoaded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Form references
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const companyInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  // Total number of steps in the onboarding process
   const totalSteps = 7;
   
-  // Step-specific state
-  const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({ size: '', revenue: '' });
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [companyInfoErrors, setCompanyInfoErrors] = useState({ size: '', revenue: '' });
-  const [teamMemberErrors, setTeamMemberErrors] = useState<Record<number, { fullName: string, email: string }>>({});
-  
-  // Image preloading state
-  const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
-  
-  // Form refs to manage focus
-  const formRefs = {
-    companySize: useRef<HTMLButtonElement>(null),
-    companyRevenue: useRef<HTMLButtonElement>(null),
-    teamMembers: [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)]
-  };
-
-  // We use the preventAutoFocus prop on MemoizedDialog instead of this handler
-  // Using the logger for debugging focus management and component optimization
-  useEffect(() => {
-    if (open) {
-      logger.focus.debug('Onboarding modal opened, preventing auto-focus');
-      logger.modal.info('Using memoized components to prevent unnecessary re-renders');
-    }
-  }, [open]);
-  
-  // Add logging for select component changes
-  const handleCompanyInfoChangeWithLogging = useCallback((field: keyof CompanyInfo, value: string) => {
-    logger.select.debug(`Company ${field} select changed to: ${value}`);
-    setCompanyInfo(prev => ({ ...prev, [field]: value }));
-    
-    // Clear validation error for this field
-    if (companyInfoErrors[field]) {
-      setCompanyInfoErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  }, [companyInfoErrors]);
-
-  // Load company data from API
-  const { data: company } = useQuery({ 
-    queryKey: ['/api/companies/current'], 
-    enabled: open,
-    refetchInterval: false
-  });
-
-  // Update company mutation
-  const updateCompanyMutation = useMutation({
-    mutationFn: async (updatedCompanyData) => {
-      return await fetch('/api/companies/current', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedCompanyData),
-      }).then(res => {
-        if (!res.ok) throw new Error('Failed to update company');
-        return res.json();
-      });
-    },
+  // Get company info
+  const { data: company } = useQuery({
+    queryKey: ['/api/companies/current'],
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-      
-      // No need for WebSocket broadcast, just update user onboarding status
-      updateUserOnboardingStatus();
+      // Initialize loaded state after fetching company
+      setLoaded(true);
+      logger.component.debug("Company data loaded", data);
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update company information",
-        description: error.message,
-        variant: "destructive"
-      });
+    onError: (error) => {
+      logger.component.error("Error loading company data", error);
     }
   });
   
-  // Update user onboarding status
-  const updateUserMutation = useMutation({
-    mutationFn: async () => {
-      // Update user's onboarding_user_completed status
-      return await fetch('/api/users/current', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          onboarding_user_completed: true 
-        }),
-      }).then(res => {
-        if (!res.ok) throw new Error('Failed to update user onboarding status');
-        return res.json();
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users/current'] });
-      
-      // Now update the onboarding task status
-      updateOnboardingTaskStatus();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update onboarding status",
-        description: error.message,
-        variant: "destructive"
-      });
+  // Check onboarding completion status
+  useEffect(() => {
+    if (company?.onboardingCompleted) {
+      // If onboarding is completed, close the modal
+      setOpen(false);
     }
-  });
+  }, [company]);
   
-  // Update the onboarding task status
-  const updateTaskMutation = useMutation({
+  // Mutation for completing onboarding
+  const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      // Find and update the onboarding task
-      const tasks = await fetch('/api/tasks').then(res => res.json());
-      const onboardingTask = tasks.find(task => 
-        task.task_type === 'user_onboarding' && 
-        task.user_email === user?.email
-      );
-      
-      if (!onboardingTask) {
-        throw new Error('Could not find onboarding task');
-      }
-      
-      // Update the task status
-      return await fetch(`/api/tasks/${onboardingTask.id}/status`, {
-        method: 'PATCH',
+      // Simulate API call - we'll replace with actual backend call
+      const response = await fetch('/api/companies/complete-onboarding', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'completed',
-          progress: 100
-        }),
-      }).then(res => {
-        if (!res.ok) throw new Error('Failed to update task status');
-        return res.json();
+          companyInfo,
+          teamMembers
+        })
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to complete onboarding');
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
-      // Invalidate tasks query
+      // Invalidate queries to refresh company data
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       
-      // Log the success with our enhanced logger
-      logger.component.info('Onboarding task completed successfully via API');
+      // Close modal
+      setOpen(false);
       
-      // Complete onboarding
-      completeOnboarding();
+      // Show success toast
+      toast({
+        title: "Onboarding completed",
+        description: "Your account is now ready to use",
+        variant: "success"
+      });
     },
-    onError: (error: Error) => {
-      // Still complete onboarding even if task update fails
-      completeOnboarding();
-      
-      // Log the error with our enhanced logger
-      logger.component.error('Failed to update task status via API:', error.message);
+    onError: (error) => {
+      // Show error toast
+      toast({
+        title: "Error completing onboarding",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+      setSubmitting(false);
     }
   });
   
-  // Update onboarding task status
-  const updateOnboardingTaskStatus = () => {
-    updateTaskMutation.mutate();
-  };
-  
-  // Update user onboarding status and complete the process
-  const updateUserOnboardingStatus = () => {
-    updateUserMutation.mutate();
-  };
-
-  // Preload images for steps
-  useEffect(() => {
-    const imagePaths = [
-      '/assets/welcome_1.png',
-      '/assets/welcome_2.png',
-      '/assets/welcome_3.png',
-      '/assets/welcome_4.png'
-    ];
-    
-    imagePaths.forEach(path => {
-      const img = new Image();
-      img.onload = () => {
-        setImagesLoaded(prev => ({ ...prev, [path]: true }));
-      };
-      img.src = path;
-    });
-  }, []);
-
-  // Show modal if user exists and onboarding isn't completed
-  useEffect(() => {
-    if (user && !user.onboarding_user_completed) {
-      setOpen(true);
-    }
-  }, [user]);
-
-  // Complete the onboarding process
-  const completeOnboarding = () => {
-    setOpen(false);
-    toast({
-      title: "Onboarding completed!",
-      description: "Your account is now ready to use.",
-    });
-  };
-
-  // Validate current step and move to next if valid
-  const handleNextStep = () => {
-    let isValid = true;
-    
-    // Validate based on current step
-    if (currentStep === 1) {
-      try {
-        companyInfoSchema.parse(companyInfo);
-        setCompanyInfoErrors({ size: '', revenue: '' });
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          const errors = error.flatten().fieldErrors;
-          setCompanyInfoErrors({
-            size: errors.size?.[0] || '',
-            revenue: errors.revenue?.[0] || ''
-          });
-          isValid = false;
-        }
+  // Get user onboarding task if it exists
+  const { data: tasks } = useQuery({
+    queryKey: ['/api/tasks'],
+    onSuccess: (tasks) => {
+      logger.component.debug("Tasks loaded", tasks);
+      // Find user onboarding task
+      const onboardingTask = tasks.find(task => task.task_type === 'user_onboarding');
+      if (onboardingTask) {
+        logger.component.debug("Found onboarding task", onboardingTask);
       }
-    } else if (currentStep === 4) {
-      // Validate team members
-      const newErrors = {};
-      
-      teamMembers.forEach((member, index) => {
-        let nameError = '';
-        let emailError = '';
+    }
+  });
+  
+  // Reset onboarding state if modal is closed
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    setOpen(isOpen);
+    
+    // Only reset if closing and not submitted
+    if (!isOpen && !submitting) {
+      setCurrentStep(0);
+    }
+  }, [submitting]);
+  
+  // Validate form fields for a specific step
+  const validateStep = useCallback((step: number): boolean => {
+    switch (step) {
+      case 1: // Company Information
+        const companyErrors: Partial<Record<keyof CompanyInfo, string>> = {};
         
-        if (!member.fullName) {
-          nameError = "Name is required";
-          isValid = false;
+        if (!companyInfo.size) {
+          companyErrors.size = 'Please select your company size';
         }
         
-        if (member.email) {
-          try {
-            emailSchema.parse(member.email);
-          } catch (error) {
-            emailError = "Please enter a valid email address";
+        if (!companyInfo.revenue) {
+          companyErrors.revenue = 'Please select your revenue tier';
+        }
+        
+        setCompanyErrors(companyErrors);
+        return Object.keys(companyErrors).length === 0;
+        
+      case 4: // Team Members
+        const teamErrors: Record<number, Partial<Record<keyof TeamMember, string>>> = {};
+        let isValid = true;
+        
+        teamMembers.forEach((member, index) => {
+          const errors: Partial<Record<keyof TeamMember, string>> = {};
+          
+          if (!member.fullName) {
+            errors.fullName = 'Full name is required';
             isValid = false;
           }
-        }
+          
+          if (!member.email) {
+            errors.email = 'Email is required';
+            isValid = false;
+          } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) {
+            errors.email = 'Please enter a valid email';
+            isValid = false;
+          }
+          
+          if (Object.keys(errors).length > 0) {
+            teamErrors[index] = errors;
+          }
+        });
         
-        if (nameError || emailError) {
-          newErrors[index] = { fullName: nameError, email: emailError };
-        }
-      });
-      
-      setTeamMemberErrors(newErrors);
+        setTeamMemberErrors(teamErrors);
+        return isValid;
+        
+      default:
+        return true;
+    }
+  }, [companyInfo, teamMembers]);
+  
+  // Navigate to the next step
+  const handleNext = useCallback(() => {
+    // Validate current step
+    if (!validateStep(currentStep)) {
+      return;
     }
     
-    if (isValid) {
-      if (currentStep < totalSteps - 1) {
-        setCurrentStep((prev) => prev + 1);
-      } else {
-        // Final step - submit data
-        const updatedCompanyData = {
-          ...company,
-          size: companyInfo.size,
-          revenue_tier: companyInfo.revenue,
-          onboardingCompleted: true
-        };
-        
-        updateCompanyMutation.mutate(updatedCompanyData);
-      }
+    // If this is the last step, complete onboarding
+    if (currentStep === totalSteps - 1) {
+      setSubmitting(true);
+      completeOnboardingMutation.mutate();
+      return;
     }
-  };
-
-  // Go back to previous step
-  const handlePreviousStep = () => {
+    
+    // Move to next step
+    setCurrentStep(prev => prev + 1);
+    
+    // Log for debugging
+    logger.component.debug(`Moving to step ${currentStep + 1}`);
+  }, [currentStep, totalSteps, validateStep, completeOnboardingMutation]);
+  
+  // Navigate to the previous step
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
+      setCurrentStep(prev => prev - 1);
+      logger.component.debug(`Moving back to step ${currentStep - 1}`);
     }
-  };
-
-  // Update company info fields (now handled by handleCompanyInfoChangeWithLogging)
+  }, [currentStep]);
+  
+  // Handle company info changes with logging
+  const handleCompanyInfoChangeWithLogging = useCallback((field: keyof CompanyInfo, value: string) => {
+    logger.select.debug(`Company ${field} changed to: ${value}`);
+    
+    setCompanyInfo(prev => {
+      return { ...prev, [field]: value };
+    });
+    
+    // Clear validation error for this field if it exists
+    if (companyErrors[field]) {
+      setCompanyErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
+  }, [companyErrors]);
 
   // Update team member fields with validation using useCallback to prevent re-renders
   const handleTeamMemberChange = useCallback((index: number, field: keyof TeamMember, value: string) => {
@@ -463,42 +394,52 @@ export function NewOnboardingModal() {
   // Step layout component with animations
   const StepLayout = memo(({ 
     title, 
-    children, 
     imageSrc, 
-    imageAlt 
+    imageAlt, 
+    children,
+    contentClassName
   }: { 
-    title: string, 
-    children: React.ReactNode, 
-    imageSrc: string, 
-    imageAlt: string 
+    title: string; 
+    imageSrc?: string; 
+    imageAlt?: string; 
+    children: React.ReactNode;
+    contentClassName?: string;
   }) => {
-    logger.component.debug(`Rendering StepLayout: ${title}`);
-    
     return (
-      <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
-        {/* Left side: Text content with fixed height and consistent padding */}
-        <div className="md:w-[60%] px-8 py-6 flex flex-col">
-          <div className="flex flex-col h-full">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {title}
-            </h2>
-            <div className="flex-grow overflow-y-auto content-area">
-              {children}
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-col items-center mx-auto px-4 py-2 max-w-lg">
+        <h2 className="text-2xl font-semibold mb-6 text-center">{title}</h2>
         
-        {/* Right side: Image with consistent sizing */}
-        <RightImageContainer>
-          <StepImage 
-            src={imageSrc} 
-            alt={imageAlt}
-            isLoaded={imagesLoaded[imageSrc] === true} 
-          />
-        </RightImageContainer>
+        {imageSrc && (
+          <ImageContainer>
+            <StepImage src={imageSrc} alt={imageAlt || title} />
+          </ImageContainer>
+        )}
+        
+        <div className={cn("w-full", contentClassName)}>
+          {children}
+        </div>
       </div>
     );
   });
+
+  // Handle Enter key press in form fields
+  const handleEnterKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (nextButtonRef.current) {
+        nextButtonRef.current.click();
+      }
+    }
+  }, []);
+
+  // Handle dialog auto-focus
+  const handleDialogOpenAutoFocus = useCallback((e: Event) => {
+    e.preventDefault();
+    // We're preventing the autofocus to have better control
+    if (currentStep === 4 && emailInputRef.current) {
+      emailInputRef.current.focus();
+    }
+  }, [currentStep, emailInputRef]);
 
   // Render step content based on current step
   const renderStepContent = () => {
@@ -506,7 +447,6 @@ export function NewOnboardingModal() {
       <div className="step-content">
         {currentStep === 0 && (
           <div key="step-0">
-          
             <StepLayout
               title="Welcome to the Invela Trust Network"
               imageSrc="/assets/welcome_1.png"
@@ -517,388 +457,326 @@ export function NewOnboardingModal() {
                   <CheckListItem>
                     Your premier partner for secure and efficient accreditation
                   </CheckListItem>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
+                </div>
+                <div>
                   <CheckListItem>
-                    Enterprise-grade risk assessment and management platform
+                    Enterprise-grade risk assessment and management
                   </CheckListItem>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                >
+                </div>
+                <div>
                   <CheckListItem>
                     Streamlined compliance processes with advanced automation
                   </CheckListItem>
-                </motion.div>
+                </div>
               </div>
             </StepLayout>
           </div>
         )}
         
         {currentStep === 1 && (
-          <div key="step-1"
-          >
+          <div key="step-1">
             <StepLayout
               title="Company Information"
               imageSrc="/assets/welcome_2.png"
               imageAlt="Company Information"
             >
-              <div className="mt-4 space-y-4">
-                <p className="text-gray-700 mb-4">
-                  Help us understand your company's profile to better customize your experience.
-                </p>
-                
-                <div>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <Label htmlFor="company-size">
+                    Company Size <span className="text-red-500">*</span>
+                  </Label>
                   <MemoizedSelect
-                    label="Company Size"
                     value={companyInfo.size}
-                    onChange={(value) => handleCompanyInfoChangeWithLogging('size', value)}
-                    options={[
-                      { value: "1-10", label: "1-10 employees" },
-                      { value: "11-50", label: "11-50 employees" },
-                      { value: "51-200", label: "51-200 employees" },
-                      { value: "201-500", label: "201-500 employees" },
-                      { value: "501+", label: "501+ employees" }
-                    ]}
-                    error={companyInfoErrors.size}
-                    isValid={!companyInfoErrors.size}
-                    id="company-size"
-                    placeholder="Select company size"
-                  />
+                    onValueChange={(value) => handleCompanyInfoChangeWithLogging('size', value)}
+                    error={companyErrors.size}
+                  >
+                    <SelectTrigger id="company-size" className={companyErrors.size ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select company size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-50">1-50 employees</SelectItem>
+                      <SelectItem value="51-200">51-200 employees</SelectItem>
+                      <SelectItem value="201-500">201-500 employees</SelectItem>
+                      <SelectItem value="501-1000">501-1000 employees</SelectItem>
+                      <SelectItem value="1001+">1001+ employees</SelectItem>
+                    </SelectContent>
+                  </MemoizedSelect>
+                  {companyErrors.size && (
+                    <div className="flex items-center text-red-500 text-sm mt-1">
+                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                      <span>{companyErrors.size}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div className="mt-4">
+                <div className="space-y-4">
+                  <Label htmlFor="revenue-tier">
+                    Revenue Tier <span className="text-red-500">*</span>
+                  </Label>
                   <MemoizedSelect
-                    label="Annual Revenue"
                     value={companyInfo.revenue}
-                    onChange={(value) => handleCompanyInfoChangeWithLogging('revenue', value)}
-                    options={[
-                      { value: "Under $1M", label: "Under $1M" },
-                      { value: "$1M - $10M", label: "$1M - $10M" },
-                      { value: "$10M - $50M", label: "$10M - $50M" },
-                      { value: "$50M - $100M", label: "$50M - $100M" },
-                      { value: "$100M+", label: "$100M+" }
-                    ]}
-                    error={companyInfoErrors.revenue}
-                    isValid={!companyInfoErrors.revenue}
-                    id="revenue-tier"
-                    placeholder="Select revenue range"
-                  />
+                    onValueChange={(value) => handleCompanyInfoChangeWithLogging('revenue', value)}
+                    error={companyErrors.revenue}
+                  >
+                    <SelectTrigger id="revenue-tier" className={companyErrors.revenue ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select revenue tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under-1m">Under $1 million</SelectItem>
+                      <SelectItem value="1m-10m">$1 million - $10 million</SelectItem>
+                      <SelectItem value="10m-50m">$10 million - $50 million</SelectItem>
+                      <SelectItem value="50m-100m">$50 million - $100 million</SelectItem>
+                      <SelectItem value="100m+">Over $100 million</SelectItem>
+                    </SelectContent>
+                  </MemoizedSelect>
+                  {companyErrors.revenue && (
+                    <div className="flex items-center text-red-500 text-sm mt-1">
+                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                      <span>{companyErrors.revenue}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 2 && (
-          <motion.div
-            key="step-2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key="step-2">
             <StepLayout
-              title="Your Tasks"
-              imageSrc="/assets/welcome_3.png"
-              imageAlt="Task Management"
+              title="Tasks and Assessments"
+              imageSrc="/assets/welcome_4.png"
+              imageAlt="Tasks Overview"
             >
-              <div className="mt-4 space-y-4">
-                <p className="text-gray-700">
-                  Your custom task list is ready. Here's how it works:
+              <div className="space-y-6">
+                <p className="text-center text-gray-700">
+                  The Invela platform organizes your work through a structured task system:
                 </p>
                 
                 <div className="space-y-6 mt-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Complete KYB (Know Your Business) forms to verify your company
+                      Complete compliance tasks assigned to your company
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.3 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Fill out KY3P (Third-Party Risk) assessments for better risk insights
+                      Fill out standardized assessment forms with easy-to-use interfaces
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.4 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Track progress with automatic status updates and notifications
+                      Track progress and manage deadlines through your dashboard
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.5 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Collaborate with team members to complete compliance requirements
+                      Receive notifications for important task updates and deadlines
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 3 && (
-          <motion.div
-            key="step-3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key="step-3">
             <StepLayout
-              title="Document Management"
-              imageSrc="/assets/welcome_4.png"
-              imageAlt="Document Management"
+              title="Document Repository"
+              imageSrc="/assets/welcome_1.png"
+              imageAlt="Document Repository"
             >
-              <div className="mt-4 space-y-4">
-                <p className="text-gray-700">
-                  Securely manage all your compliance documents in one place:
+              <div className="space-y-6">
+                <p className="text-center text-gray-700">
+                  Securely store and manage all your compliance documentation:
                 </p>
                 
                 <div className="space-y-6 mt-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Upload documents directly to specific tasks
+                      Upload documents directly through intuitive forms
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.3 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Access your file vault for centralized document management
+                      Documents are securely stored with enterprise-grade encryption
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.4 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Secure encryption for all uploaded files
+                      Access a centralized repository of all submitted materials
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.5 }}
-                  >
+                  <div>
                     <CheckListItem>
-                      Automatic document categorization and organization
+                      Share documentation securely with authorized partners
                     </CheckListItem>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 4 && (
-          <motion.div
-            key="step-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key="step-4">
             <StepLayout
               title="Invite Team Members"
               imageSrc="/assets/welcome_2.png"
               imageAlt="Team Collaboration"
+              contentClassName="space-y-6"
             >
-              <div className="mt-2 space-y-4">
-                <p className="text-gray-700 mb-4">
-                  Invite key stakeholders to collaborate on compliance tasks.
-                </p>
+              <div className="space-y-6">
+                <div className="flex justify-center space-x-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleAddTeamMember('CFO', 'financial', 'Chief Financial Officer')}
+                    className="flex items-center"
+                  >
+                    <span className="mr-2">Add CFO</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => handleAddTeamMember('CISO', 'security', 'Chief Information Security Officer')}
+                    className="flex items-center"
+                  >
+                    <span className="mr-2">Add CISO</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
                 
                 <div className="space-y-4">
                   {teamMembers.map((member, index) => (
-                    <Card key={index} className="p-4 relative">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="absolute top-2 right-2 h-6 w-6"
-                        onClick={() => handleRemoveTeamMember(index)}
-                      >
-                        ×
-                      </Button>
-                      
-                      <div className="font-medium mb-2">{member.roleDescription}</div>
-                      
-                      <div className="space-y-3">
-                        <FormInput
-                          label="Full Name"
-                          value={member.fullName}
-                          onChange={(e) => handleTeamMemberChange(index, 'fullName', e.target.value)}
-                          placeholder="Enter full name"
-                          isValid={!teamMemberErrors[index]?.fullName}
-                          error={teamMemberErrors[index]?.fullName || ''}
-                          autoFocus={index === teamMembers.length - 1}
-                          inputRef={formRefs.teamMembers[index % 2]}
-                        />
-                        
-                        <FormInput
-                          label="Email Address"
-                          value={member.email}
-                          onChange={(e) => handleTeamMemberChange(index, 'email', e.target.value)}
-                          placeholder="Enter email address"
-                          isValid={!teamMemberErrors[index]?.email}
-                          error={teamMemberErrors[index]?.email || ''}
-                        />
-                      </div>
+                    <Card key={index} className="relative">
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-medium">{member.roleDescription}</h3>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleRemoveTeamMember(index)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                          
+                          <FormInput
+                            label="Full Name"
+                            value={member.fullName}
+                            onChange={(value) => handleTeamMemberChange(index, 'fullName', value)}
+                            placeholder="Enter full name"
+                            error={teamMemberErrors[index]?.fullName}
+                            required
+                          />
+                          
+                          <FormInput
+                            label="Email Address"
+                            value={member.email}
+                            onChange={(value) => handleTeamMemberChange(index, 'email', value)}
+                            placeholder="Enter email address"
+                            error={teamMemberErrors[index]?.email}
+                            required
+                          />
+                        </div>
+                      </CardContent>
                     </Card>
                   ))}
-                  
-                  {teamMembers.length === 0 && (
-                    <p className="text-gray-500 text-center italic my-4">
-                      No team members added yet.
-                    </p>
-                  )}
-                  
-                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddTeamMember('CFO', 'kyb', 'Chief Financial Officer')}
-                      className="flex-1"
-                    >
-                      <span className="flex items-center">
-                        Add CFO <Plus className="ml-2 h-4 w-4" />
-                      </span>
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddTeamMember('CISO', 'ky3p', 'Chief Information Security Officer')}
-                      className="flex-1"
-                    >
-                      <span className="flex items-center">
-                        Add CISO <Plus className="ml-2 h-4 w-4" />
-                      </span>
-                    </Button>
-                  </div>
                 </div>
+                
+                {teamMembers.length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    You can add team members now or invite them later
+                  </div>
+                )}
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 5 && (
-          <motion.div
-            key="step-5"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key="step-5">
             <StepLayout
               title="Review Information"
-              imageSrc="/assets/welcome_3.png"
+              imageSrc="/assets/welcome_4.png"
               imageAlt="Review Information"
             >
-              <div className="mt-4 space-y-6">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Company Details</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-sm text-gray-500">Company Name</p>
-                        <p className="font-medium">{company?.name || 'N/A'}</p>
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-4">Company Information</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Company Name:</span>
+                        <span className="font-medium">{company?.name || "Not provided"}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Size</p>
-                        <p className="font-medium">{companyInfo.size || 'Not specified'}</p>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Company Size:</span>
+                        <span className="font-medium">{companyInfo.size || "Not provided"}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Industry</p>
-                        <p className="font-medium">{company?.category || 'N/A'}</p>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Revenue Tier:</span>
+                        <span className="font-medium">{companyInfo.revenue || "Not provided"}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Revenue</p>
-                        <p className="font-medium">{companyInfo.revenue || 'Not specified'}</p>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Category:</span>
+                        <span className="font-medium">{company?.category || "Not provided"}</span>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
                 
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Team Members ({teamMembers.length})</h3>
-                  {teamMembers.length > 0 ? (
-                    <div className="space-y-2">
-                      {teamMembers.map((member, index) => (
-                        <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-medium">{member.fullName || 'Unnamed'}</p>
-                              <p className="text-sm text-gray-500">{member.roleDescription}</p>
+                {teamMembers.length > 0 && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <h3 className="font-semibold mb-4">Team Members</h3>
+                      <div className="space-y-4">
+                        {teamMembers.map((member, index) => (
+                          <div key={index} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Role:</span>
+                              <span className="font-medium">{member.roleDescription}</span>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-gray-500">Email</p>
-                              <p className="text-sm">{member.email || 'No email provided'}</p>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Name:</span>
+                              <span className="font-medium">{member.fullName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Email:</span>
+                              <span className="font-medium">{member.email}</span>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic">No team members added</p>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
         
         {currentStep === 6 && (
-          <motion.div
-            key="step-6"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div key="step-6">
             <StepLayout
-              title="Ready to Begin"
-              imageSrc="/assets/welcome_4.png"
-              imageAlt="Ready to Begin"
+              title="Setup Complete"
+              imageSrc="/assets/welcome_1.png"
+              imageAlt="Setup Complete"
             >
               <div className="mt-4 space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="bg-green-50 border border-green-100 rounded-lg p-6 flex flex-col items-center justify-center text-center"
-                >
+                <div className="bg-green-50 border border-green-100 rounded-lg p-6 flex flex-col items-center justify-center text-center">
                   <div className="bg-green-100 rounded-full p-3 mb-4">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
@@ -911,10 +789,10 @@ export function NewOnboardingModal() {
                   <p className="text-gray-600">
                     Click "Complete" to start using the Invela Trust Network.
                   </p>
-                </motion.div>
+                </div>
               </div>
             </StepLayout>
-          </motion.div>
+          </div>
         )}
       </div>
     );
@@ -923,80 +801,77 @@ export function NewOnboardingModal() {
   return (
     <MemoizedDialog
       open={open}
-      onOpenChange={setOpen}
-      title="Complete your onboarding"
-      preventAutoFocus={true}
-      showCloseButton={false}
-      width="xl"
-      className="p-0 overflow-hidden"
+      onOpenChange={handleOpenChange}
+      onOpenAutoFocus={handleDialogOpenAutoFocus}
     >
-      <div className="sr-only" id="onboarding-description">Complete your onboarding process</div>
-      
-      <div>
-        {/* Main Content Area */}
-        <div className="h-[400px]">
-          {renderStepContent()}
+      <DialogContentWithoutCloseButton
+        className="sm:max-w-[600px] p-0 gap-0"
+        onKeyDown={handleEnterKeyPress}
+      >
+        {/* Progress bar */}
+        <div className="relative h-2 w-full bg-gray-100">
+          <div 
+            className="absolute left-0 top-0 bottom-0 bg-green-500 transition-all duration-300 ease-in-out"
+            style={{ width: `${(currentStep / (totalSteps - 1)) * 100}%` }}
+          />
         </div>
         
-        {/* Step Indicators and Navigation Controls */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              {currentStep > 0 && (
-                <Button
-                  variant="ghost"
-                  onClick={handlePreviousStep}
-                  className="flex items-center text-gray-600"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
+        {/* Main content */}
+        <div className="p-6 flex flex-col min-h-[65vh]">
+          {/* Step content */}
+          <div className="flex-grow">
+            {loaded ? renderStepContent() : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-16 h-16 border-4 border-t-green-500 border-gray-200 rounded-full animate-spin" />
+                <p className="mt-4 text-gray-500">Loading...</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Navigation buttons */}
+          <div className="mt-8 flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0 || submitting}
+              className={currentStep === 0 ? "invisible" : ""}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            
+            <Button
+              ref={nextButtonRef}
+              type="button"
+              onClick={handleNext}
+              disabled={submitting}
+            >
+              {currentStep === totalSteps - 1 ? (
+                submitting ? "Completing..." : "Complete"
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
               )}
-            </div>
-            
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "h-2 w-2 rounded-full transition-all",
-                    i === currentStep
-                      ? "bg-primary w-4"
-                      : i < currentStep
-                        ? "bg-primary opacity-70"
-                        : "bg-gray-300"
-                  )}
-                />
-              ))}
-            </div>
-            
-            <div>
-              <Button
-                onClick={handleNextStep}
-                disabled={updateCompanyMutation.isPending}
-                className="flex items-center"
-              >
-                {currentStep === totalSteps - 1 ? (
-                  updateCompanyMutation.isPending ? "Completing..." : "Complete"
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+            </Button>
+          </div>
+          
+          {/* Step indicator */}
+          <div className="mt-4 flex justify-center gap-2">
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  index === currentStep ? "bg-green-500" : "bg-gray-200"
                 )}
-              </Button>
-            </div>
+              />
+            ))}
           </div>
         </div>
-      </div>
+      </DialogContentWithoutCloseButton>
     </MemoizedDialog>
   );
 }
-
-// Missing component definition
-const Plus = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-  </svg>
-);
