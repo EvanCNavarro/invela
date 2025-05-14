@@ -532,22 +532,18 @@ export function OnboardingModal({
     </div>
   );
   
-  // Render step content based on current step with animation transition
+  // Render step content based on current step with animation transitions
   const renderStepContent = () => {
-    // Generate the current step content
-    const currentStepContent = useMemo(() => {
-      switch (currentStep) {
-    }, [currentStep, companyInfo, teamMembers, currentCompany]);
-    
-    // Wrap with AnimatePresence to handle animations between steps
+    // Wrap the content with our transition component
     return (
-      <AnimatePresence mode="wait" initial={false}>
-        <StepTransition
-          direction={transitionDirection}
-          isActive={true}
-          key={`step-${currentStep}`}
-        >
-          {currentStepContent}
+      <StepTransition
+        direction={transitionDirection}
+        isActive={true}
+        key={`step-${currentStep}`}
+      >
+        {(() => {
+          // Inner switch statement to render the appropriate content
+          switch (currentStep) {
               case 0: // Welcome
                 return (
                   <StepLayout
