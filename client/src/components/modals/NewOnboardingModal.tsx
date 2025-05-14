@@ -181,17 +181,20 @@ export function OnboardingModal({
       '/assets/welcome_7.png',
     ];
     
-    const preloadImages = () => {
-      imagePaths.forEach(path => {
-        const img = new Image();
-        img.src = path;
-        img.onload = () => {
-          setImagesLoaded(prev => ({ ...prev, [path]: true }));
-        };
-      });
-    };
+    // Mark all images as loaded initially to prevent loading spinners
+    // since we know the images are available in the attached assets
+    const initialLoadState = imagePaths.reduce((acc, path) => {
+      acc[path] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
     
-    preloadImages();
+    setImagesLoaded(initialLoadState);
+    
+    // Still attempt to preload images for browser caching
+    imagePaths.forEach(path => {
+      const img = new Image();
+      img.src = path;
+    });
   }, [isOpen]);
   
   // Is current step image loaded
