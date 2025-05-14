@@ -275,6 +275,9 @@ export function NewOnboardingModal() {
       // Invalidate tasks query
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       
+      // Log the success with our enhanced logger
+      logger.component.info('Onboarding task completed successfully via API');
+      
       // Complete onboarding
       completeOnboarding();
     },
@@ -282,8 +285,8 @@ export function NewOnboardingModal() {
       // Still complete onboarding even if task update fails
       completeOnboarding();
       
-      // Just log the error
-      console.error('Failed to update task status:', error);
+      // Log the error with our enhanced logger
+      logger.component.error('Failed to update task status via API:', error.message);
     }
   });
   
