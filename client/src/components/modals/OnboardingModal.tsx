@@ -763,121 +763,75 @@ export function OnboardingModal() {
             imageSrc="/assets/welcome_3.png"
             imageAlt="Task List"
           >
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">A Few Tasks Ahead</h2>
-                <p className="text-lg text-gray-700 mb-6">
-                  To receive your Accreditation, you'll need to finish the following assigned tasks:
-                </p>
+            <div className="mt-4 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
+                To receive your Accreditation, you'll need to finish the following assigned tasks:
+              </p>
+              
+              <div className="space-y-4 mt-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
+                  <div>
+                    <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
+                    <p className="text-sm text-gray-600">Business identity verification</p>
+                  </div>
+                </div>
                 
-                <div className="space-y-4 mt-3">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
-                    <div>
-                      <h3 className="font-medium text-lg text-gray-900">KYB Form</h3>
-                      <p className="text-sm text-gray-600">Business identity verification</p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
+                  <div>
+                    <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
+                    <p className="text-sm text-gray-600">Security and compliance verification</p>
                   </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
-                    <div>
-                      <h3 className="font-medium text-lg text-gray-900">S&P KY3P Security Assessment</h3>
-                      <p className="text-sm text-gray-600">Security and compliance verification</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
-                    <div>
-                      <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
-                      <p className="text-sm text-gray-600">Open banking capabilities assessment</p>
-                    </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
+                  <div>
+                    <h3 className="font-medium text-lg text-gray-900">Open Banking Survey</h3>
+                    <p className="text-sm text-gray-600">Open banking capabilities assessment</p>
                   </div>
                 </div>
               </div>
             </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_3.png" 
-                      alt="Task Overview" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
-            </div>
-          </div>
+          </StepLayout>
         );
       
       case 3: // Document Uploads
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
+          <StepLayout
+            title="Streamline with Document Uploads"
+            imageSrc="/assets/welcome_4.png"
+            imageAlt="Document Upload"
+          >
+            <div className="mt-4 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
+                Accelerate your accreditation by uploading critical documents upfront. 
+                Our AI-driven system auto-fills forms, saving you time.
+              </p>
+              
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">Streamline with Document Uploads</h2>
-                <p className="text-lg text-gray-700 mb-6">
-                  Accelerate your accreditation by uploading critical documents upfront. 
-                  Our AI-driven system auto-fills forms, saving you time.
-                </p>
-                
-                <div className="mt-4">
-                  <h3 className="text-lg font-medium text-gray-700 mb-4">Recommended Documents</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      "SOC 2", 
-                      "ISO 27001",
-                      "Penetration Test Reports",
-                      "API Security",
-                      "OAuth Certification",
-                      "GDPR/CCPA Compliance",
-                      "FDX Certification",
-                      "Business Continuity Plan",
-                      "Data Protection Policies"
-                    ].map((doc, i) => (
-                      <div key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                        {doc}
-                      </div>
-                    ))}
-                  </div>
+                <h3 className="text-lg font-medium text-gray-700 mb-4">Recommended Documents</h3>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "SOC 2", 
+                    "ISO 27001",
+                    "Penetration Test Reports",
+                    "API Security",
+                    "OAuth Certification",
+                    "GDPR/CCPA Compliance",
+                    "FDX Certification",
+                    "Business Continuity Plan",
+                    "Data Protection Policies"
+                  ].map((doc, i) => (
+                    <div key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                      {doc}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_4.png" 
-                      alt="Document Upload" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
-            </div>
-          </div>
+          </StepLayout>
         );
       
       case 4: // Team Invitations
