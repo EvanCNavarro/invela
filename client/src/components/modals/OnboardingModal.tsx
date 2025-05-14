@@ -639,43 +639,44 @@ export function OnboardingModal() {
   );
 
   // Render the appropriate step content
-  // Define a consistent layout template for all steps
-  const renderStepContent = () => {
-    // Common layout with consistent height for the text content area
-    const StepLayout = ({ 
-      title, 
-      children, 
-      imageSrc, 
-      imageAlt 
-    }: { 
-      title: string, 
-      children: React.ReactNode, 
-      imageSrc: string, 
-      imageAlt: string 
-    }) => (
-      <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
-        {/* Left side: Text content with fixed height and consistent padding */}
-        <div className="md:w-[60%] px-8 py-6 flex flex-col">
-          <div className="flex flex-col h-full">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {title}
-            </h2>
-            <div className="flex-grow overflow-y-auto content-area">
-              {children}
-            </div>
+  // Independent component for step layout to avoid JSX nesting issues
+  const StepLayout = ({ 
+    title, 
+    children, 
+    imageSrc, 
+    imageAlt 
+  }: { 
+    title: string, 
+    children: React.ReactNode, 
+    imageSrc: string, 
+    imageAlt: string 
+  }) => (
+    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+      {/* Left side: Text content with fixed height and consistent padding */}
+      <div className="md:w-[60%] px-8 py-6 flex flex-col">
+        <div className="flex flex-col h-full">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {title}
+          </h2>
+          <div className="flex-grow overflow-y-auto content-area">
+            {children}
           </div>
         </div>
-        
-        {/* Right side: Image with consistent sizing */}
-        <RightImageContainer>
-          <StepImage 
-            src={imageSrc} 
-            alt={imageAlt}
-            isLoaded={imagesLoaded[imageSrc] === true} 
-          />
-        </RightImageContainer>
       </div>
-    );
+      
+      {/* Right side: Image with consistent sizing */}
+      <RightImageContainer>
+        <StepImage 
+          src={imageSrc} 
+          alt={imageAlt}
+          isLoaded={imagesLoaded[imageSrc] === true} 
+        />
+      </RightImageContainer>
+    </div>
+  );
+  
+  // Render step content based on current step
+  const renderStepContent = () => {
     
     switch (currentStep) {
       case 0: // Welcome
@@ -848,85 +849,63 @@ export function OnboardingModal() {
               </p>
               
               <div className="space-y-4 overflow-y-auto pr-2">
-                  {teamMembers.map((member, index) => (
-                    <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
-                      <CardContent className="pt-6 pb-6">
-                        <div className="flex items-center gap-3 mb-5">
-                          <div className="bg-primary/10 text-primary py-2 px-4 rounded-full text-base font-medium">
-                            {member.role}
-                          </div>
-                          <span className="text-base text-gray-600">
-                            {member.roleDescription} {member.formType}
-                          </span>
+                {teamMembers.map((member, index) => (
+                  <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="bg-primary/10 text-primary py-1.5 px-3 rounded-full text-sm font-medium">
+                          {member.role}
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div>
-                            <Label htmlFor={`name-${index}`} className="mb-3 block text-base font-medium">
-                              Full Name
-                            </Label>
-                            <Input
-                              id={`name-${index}`}
-                              value={member.fullName}
-                              onChange={(e) => {
-                                const newMembers = [...teamMembers];
-                                newMembers[index].fullName = e.target.value;
-                                setTeamMembers(newMembers);
-                              }}
-                              className={cn("h-12 text-base", member.fullName ? "border-green-500" : "")}
-                              placeholder="Jane Smith"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor={`email-${index}`} className="mb-3 block text-base font-medium">
-                              Email Address
-                            </Label>
-                            <Input
-                              id={`email-${index}`}
-                              type="email"
-                              value={member.email}
-                              onChange={(e) => {
-                                const newMembers = [...teamMembers];
-                                newMembers[index].email = e.target.value;
-                                setTeamMembers(newMembers);
-                              }}
-                              className={cn("h-12 text-base", 
-                                member.email && member.email.includes('@') ? "border-green-500" : ""
-                              )}
-                              placeholder="jane.smith@company.com"
-                            />
-                          </div>
+                        <span className="text-sm text-gray-600">
+                          {member.roleDescription} {member.formType}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`name-${index}`} className="mb-2 block text-sm font-medium">
+                            Full Name
+                          </Label>
+                          <Input
+                            id={`name-${index}`}
+                            value={member.fullName}
+                            onChange={(e) => {
+                              const newMembers = [...teamMembers];
+                              newMembers[index].fullName = e.target.value;
+                              setTeamMembers(newMembers);
+                            }}
+                            className={cn("h-10 text-sm", member.fullName ? "border-green-500" : "")}
+                            placeholder="Jane Smith"
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <p className="text-xs text-gray-500 mt-2">
-                    Team member invitations are optional - you can skip this step if needed
-                  </p>
-                </div>
+                        <div>
+                          <Label htmlFor={`email-${index}`} className="mb-2 block text-sm font-medium">
+                            Email Address
+                          </Label>
+                          <Input
+                            id={`email-${index}`}
+                            type="email"
+                            value={member.email}
+                            onChange={(e) => {
+                              const newMembers = [...teamMembers];
+                              newMembers[index].email = e.target.value;
+                              setTeamMembers(newMembers);
+                            }}
+                            className={cn("h-10 text-sm", 
+                              member.email && member.email.includes('@') ? "border-green-500" : ""
+                            )}
+                            placeholder="jane.smith@company.com"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                <p className="text-xs text-gray-500 mt-2">
+                  Team member invitations are optional - you can skip this step if needed
+                </p>
               </div>
-            </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_5.png" 
-                      alt="Team Invitations" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
             </div>
           </StepLayout>
         );
@@ -938,13 +917,10 @@ export function OnboardingModal() {
             imageSrc="/assets/welcome_6.png"
             imageAlt="Review Information"
           >
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-5">Review Provided Information</h2>
-                <p className="text-lg text-gray-700 mb-8">
-                  Please confirm the information you've provided before completing the onboarding process.
-                </p>
+            <div className="mt-4 space-y-4">
+              <p className="text-lg text-gray-700 mb-4">
+                Please confirm the information you've provided before completing the onboarding process.
+              </p>
                 
                 <div className="space-y-5 text-base mt-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
                   <div className="flex items-center gap-4">
@@ -1024,10 +1000,8 @@ export function OnboardingModal() {
             imageSrc="/assets/welcome_7.png"
             imageAlt="Onboarding Complete"
           >
-            {/* Left side: Text content */}
-            <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
-              <div>
-                <div className="text-center mb-10">
+            <div className="mt-4 space-y-4">
+              <div className="text-center mb-4">
                   <div className="mx-auto mb-8">
                     <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                       <Check className="h-12 w-12 text-green-600" />
