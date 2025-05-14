@@ -115,7 +115,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
-  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4 w-fit">
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-3 w-fit">
     Onboarding Modal
   </div>
 );
@@ -180,20 +180,20 @@ const StepLayout: React.FC<{
   }, [imageSrc, title]);
   
   return (
-    <div className="flex flex-col md:flex-row flex-1 h-[400px] overflow-visible">
+    <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
-      <div className="md:w-[50%] px-8 py-6 flex flex-col">
+      <div className="md:w-[50%] px-8 py-6 flex flex-col space-y-3">
         <div className="flex flex-col h-full">
           {/* Header chip for consistent styling */}
           <HeaderChip />
           
           {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">
+          <h2 className="text-2xl font-bold text-blue-600 mb-3">
             {title}
           </h2>
           
-          {/* Content area with fixed height and scrolling if needed */}
-          <div className="flex-grow overflow-y-auto content-area pr-2">
+          {/* Content area with fixed height and no scrolling */}
+          <div className="flex-grow content-area pr-2">
             {children}
           </div>
         </div>
@@ -847,6 +847,7 @@ export function AnimatedOnboardingModal({
       <DialogContent 
         className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        closeButtonClassName="hidden"
       >
         {/* Main content area */}
         <div className="flex-1 overflow-hidden">
