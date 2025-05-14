@@ -633,12 +633,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="flex-1 flex flex-col">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 2
-                  </div>
-                </div>
-                
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">Company Information</h2>
                 <p className="text-lg text-gray-700 mb-6">
                   Add basic details about {currentCompany?.name} to help us customize your experience.
@@ -718,12 +712,6 @@ export function OnboardingModal() {
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
-                <div className="mb-6">
-                  <div className="inline-flex px-4 py-1.5 text-base font-medium bg-primary/10 text-primary rounded-full">
-                    Step 3
-                  </div>
-                </div>
-                
                 <h2 className="text-3xl font-bold text-gray-900 mb-5">A Few Tasks Ahead</h2>
                 <p className="text-lg text-gray-700 mb-8">
                   To complete your accreditation application, you'll need to work through the following tasks:
@@ -1113,7 +1101,7 @@ export function OnboardingModal() {
       <CustomDialogContent className="overflow-hidden flex flex-col h-[600px] w-[860px]">
         <div className="p-6 pb-4">
           <div className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
-            Onboarding
+            Onboarding Modal
           </div>
         </div>
         
