@@ -555,6 +555,30 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
               logger.info('WebSocket authentication confirmed for client: ' + (data.clientId || data.payload?.clientId || 'unknown'));
             } else if (data.type === 'connection_established') {
               logger.info('WebSocket server connection confirmed with ID: ' + (data.clientId || data.payload?.clientId || 'unknown'));
+            } else if (data.type === 'onboarding_completed_confirmed') {
+              logger.info('Onboarding completion confirmation received', {
+                userId: data.userId,
+                companyId: data.companyId,
+                timestamp: data.timestamp
+              });
+              
+              // Emit a custom event that components can listen for
+              const event = new CustomEvent('websocket-message', {
+                detail: { data, messageType: 'onboarding_completed_confirmed' }
+              });
+              document.dispatchEvent(event);
+            } else if (data.type === 'onboarding_completed') {
+              logger.info('Onboarding completion notification received', {
+                userId: data.userId,
+                companyId: data.companyId,
+                timestamp: data.timestamp
+              });
+              
+              // Emit a custom event that components can listen for
+              const event = new CustomEvent('websocket-message', {
+                detail: { data, messageType: 'onboarding_completed' }
+              });
+              document.dispatchEvent(event);
             }
           }
           
