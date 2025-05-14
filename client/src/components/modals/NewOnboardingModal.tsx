@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DialogContent, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock function for demo purposes - replace with actual API functions
@@ -761,41 +761,43 @@ export function OnboardingModal({
   };
   
   return (
-    <DialogContent 
-      className="max-w-[1000px] p-0 overflow-hidden h-[550px] flex flex-col"
-      onOpenAutoFocus={(e) => e.preventDefault()}
-      onCloseAutoFocus={(e) => e.preventDefault()}
-    >
-      <div className="p-6 flex-1 flex flex-col overflow-hidden">
-        {/* Step indicator */}
-        {renderStepIndicator()}
+    <Dialog open={isOpen} onOpenChange={setShowModal}>
+      <DialogContent 
+        className="max-w-[1000px] p-0 overflow-hidden h-[550px] flex flex-col"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="p-6 flex-1 flex flex-col overflow-hidden">
+          {/* Step indicator */}
+          {renderStepIndicator()}
+          
+          {/* Step content */}
+          {renderStepContent()}
+        </div>
         
-        {/* Step content */}
-        {renderStepContent()}
-      </div>
-      
-      {/* Footer buttons */}
-      <DialogFooter className="p-4 border-t flex justify-between items-center">
-        {currentStep > 0 ? (
+        {/* Footer buttons */}
+        <DialogFooter className="p-4 border-t flex justify-between items-center">
+          {currentStep > 0 ? (
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={handleBackStep}
+            >
+              Back
+            </Button>
+          ) : (
+            <div></div> // Empty div to maintain spacing when back button is hidden
+          )}
+          
           <Button 
             type="button"
-            variant="outline"
-            onClick={handleBackStep}
+            disabled={!canProceed}
+            onClick={handleNextStep}
           >
-            Back
+            {currentStep === 6 ? 'Complete' : 'Next'}
           </Button>
-        ) : (
-          <div></div> // Empty div to maintain spacing when back button is hidden
-        )}
-        
-        <Button 
-          type="button"
-          disabled={!canProceed}
-          onClick={handleNextStep}
-        >
-          {currentStep === 6 ? 'Complete' : 'Next'}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
