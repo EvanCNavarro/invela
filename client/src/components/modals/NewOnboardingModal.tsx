@@ -589,10 +589,6 @@ export function OnboardingModal({
             imageAlt="Team Invitations"
           >
             <div className="mt-4 space-y-4">
-              <p className="text-lg text-gray-700 mb-4">
-                Build your team by inviting key members to help complete assessment forms.
-              </p>
-              
               <div className="space-y-4 overflow-y-auto pr-2">
                 {teamMembers.map((member, index) => (
                   <Card key={index} className="overflow-hidden border-gray-200 shadow-sm">
@@ -767,6 +763,7 @@ export function OnboardingModal({
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
+        hideCloseButton={true}
       >
         <div className="p-4 flex-1 flex flex-col overflow-hidden">
           {/* Step content */}
