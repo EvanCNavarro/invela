@@ -43,8 +43,8 @@ const inviteTeamMembers = async (companyId: number, members: any[]) => {
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-blue-50/10 relative md:w-[40%] flex-shrink-0 border-l border-slate-100">
-    <div className="absolute inset-0 flex items-center justify-center">
+  <div className="hidden md:block bg-blue-50/10 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+    <div className="absolute inset-0 flex items-center justify-center p-4">
       {children}
     </div>
   </div>
@@ -60,7 +60,7 @@ const StepImage: React.FC<{
   alt,
   isLoaded
 }) => (
-  <div className="w-[200px] h-[200px] relative flex items-center justify-center">
+  <div className="w-[400px] h-[400px] relative flex items-center justify-center">
     {isLoaded ? (
       <>
         <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
@@ -761,16 +761,13 @@ export function OnboardingModal({
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setShowModal}>
+    <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
-        className="max-w-[1000px] p-0 overflow-hidden h-[550px] flex flex-col"
+        className="max-w-[1000px] p-0 overflow-hidden h-[700px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <div className="p-6 flex-1 flex flex-col overflow-hidden">
-          {/* Step indicator */}
-          {renderStepIndicator()}
-          
           {/* Step content */}
           {renderStepContent()}
         </div>
@@ -788,6 +785,18 @@ export function OnboardingModal({
           ) : (
             <div></div> // Empty div to maintain spacing when back button is hidden
           )}
+          
+          {/* Step indicator in the footer */}
+          <div className="flex items-center gap-2 justify-center">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full ${
+                  i === currentStep ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
           
           <Button 
             type="button"
