@@ -884,73 +884,51 @@ export function OnboardingModal() {
                 Please confirm the information you've provided before completing the onboarding process.
               </p>
                 
-                <div className="space-y-5 text-base mt-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-28 text-base">Company:</span>
-                    <span className="text-gray-900 text-base">{currentCompany?.name}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-28 text-base">Category:</span>
-                    <span className="text-gray-900 text-base">{currentCompany?.category}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-28 text-base">Size:</span>
-                    <span className="text-gray-900 text-base">{companyInfo.size || "Not specified"}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                    <span className="font-medium text-gray-700 w-28 text-base">Revenue:</span>
-                    <span className="text-gray-900 text-base">{companyInfo.revenue || "Not specified"}</span>
-                  </div>
-                  
-                  {teamMembers[0].fullName && (
-                    <div className="flex items-center gap-4">
-                      <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                      <span className="font-medium text-gray-700 w-28 text-base">CFO:</span>
-                      <span className="text-gray-900 text-base">
-                        {teamMembers[0].fullName} ({teamMembers[0].email})
-                      </span>
-                    </div>
-                  )}
-                  
-                  {teamMembers[1].fullName && (
-                    <div className="flex items-center gap-4">
-                      <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
-                      <span className="font-medium text-gray-700 w-28 text-base">CISO:</span>
-                      <span className="text-gray-900 text-base">
-                        {teamMembers[1].fullName} ({teamMembers[1].email})
-                      </span>
-                    </div>
-                  )}
+              <div className="space-y-5 text-base mt-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 w-28 text-base">Company:</span>
+                  <span className="text-gray-900 text-base">{currentCompany?.name}</span>
                 </div>
+                
+                <div className="flex items-center gap-4">
+                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 w-28 text-base">Category:</span>
+                  <span className="text-gray-900 text-base">{currentCompany?.category}</span>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 w-28 text-base">Size:</span>
+                  <span className="text-gray-900 text-base">{companyInfo.size || "Not specified"}</span>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                  <span className="font-medium text-gray-700 w-28 text-base">Revenue:</span>
+                  <span className="text-gray-900 text-base">{companyInfo.revenue || "Not specified"}</span>
+                </div>
+                
+                {teamMembers[0].fullName && (
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">CFO:</span>
+                    <span className="text-gray-900 text-base">
+                      {teamMembers[0].fullName} ({teamMembers[0].email})
+                    </span>
+                  </div>
+                )}
+                
+                {teamMembers[1].fullName && (
+                  <div className="flex items-center gap-4">
+                    <Check className="text-green-500 h-6 w-6 flex-shrink-0" />
+                    <span className="font-medium text-gray-700 w-28 text-base">CISO:</span>
+                    <span className="text-gray-900 text-base">
+                      {teamMembers[1].fullName} ({teamMembers[1].email})
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_6.png" 
-                      alt="Information Review" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
             </div>
           </StepLayout>
         );
@@ -964,58 +942,36 @@ export function OnboardingModal() {
           >
             <div className="mt-4 space-y-4">
               <div className="text-center mb-4">
-                  <div className="mx-auto mb-8">
-                    <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                      <Check className="h-12 w-12 text-green-600" />
-                    </div>
+                <div className="mx-auto mb-8">
+                  <div className="h-24 w-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <Check className="h-12 w-12 text-green-600" />
                   </div>
-                  
-                  <h2 className="text-3xl font-bold text-gray-900 mb-5">Ready to Begin</h2>
-                  <p className="text-lg text-gray-700">
-                    Your company profile is now set up! To complete your
-                    accreditation process, you'll need to finish your assigned
-                    tasks, starting with the KYB Form.
-                  </p>
                 </div>
                 
-                <div className="space-y-6 text-base mt-10 max-w-md mx-auto">
-                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
-                    <span className="text-base">Complete the KYB form to verify your business identity</span>
-                  </div>
-                  
-                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
-                    <span className="text-base">Upload compliance documents to fast-track your accreditation</span>
-                  </div>
-                  
-                  <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
-                    <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
-                    <span className="text-base">Answer security and compliance questions accurately</span>
-                  </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-5">Ready to Begin</h2>
+                <p className="text-lg text-gray-700">
+                  Your company profile is now set up! To complete your
+                  accreditation process, you'll need to finish your assigned
+                  tasks, starting with the KYB Form.
+                </p>
+              </div>
+              
+              <div className="space-y-6 text-base mt-10 max-w-md mx-auto">
+                <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                  <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                  <span className="text-base">Complete the KYB form to verify your business identity</span>
+                </div>
+                
+                <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                  <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                  <span className="text-base">Upload compliance documents to fast-track your accreditation</span>
+                </div>
+                
+                <div className="flex items-start gap-4 bg-gray-50 p-5 rounded-lg shadow-sm">
+                  <ArrowRight className="text-primary h-6 w-6 flex-shrink-0 mt-0.5" />
+                  <span className="text-base">Answer security and compliance questions accurately</span>
                 </div>
               </div>
-            </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_7.png" 
-                      alt="Ready to Begin" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
             </div>
           </StepLayout>
         );
