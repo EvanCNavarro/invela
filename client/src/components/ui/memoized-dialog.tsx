@@ -85,7 +85,6 @@ const MemoizedDialogComponent = forwardRef<HTMLDivElement, MemoizedDialogProps>(
               e.preventDefault();
             }
           }}
-          showCloseButton={showCloseButton}
         >
           {(title || description) && (
             <DialogHeader>

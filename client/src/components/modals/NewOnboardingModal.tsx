@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton } from "@/components/ui/dialog";
+import { MemoizedDialog } from "@/components/ui/memoized-dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { 
   Select, 
@@ -8,6 +9,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { MemoizedSelect } from "@/components/ui/memoized-select";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -551,61 +554,41 @@ export function NewOnboardingModal() {
                 </p>
                 
                 <div>
-                  <Label htmlFor="company-size">Company Size</Label>
-                  <Select 
-                    value={companyInfo.size} 
-                    onValueChange={(value) => handleCompanyInfoChange('size', value)}
-                  >
-                    <SelectTrigger 
-                      id="company-size"
-                      className={cn(
-                        companyInfoErrors.size ? "border-red-500" : "",
-                        companyInfo.size ? "border-green-500" : ""
-                      )}
-                      ref={formRefs.companySize}
-                    >
-                      <SelectValue placeholder="Select company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-10">1-10 employees</SelectItem>
-                      <SelectItem value="11-50">11-50 employees</SelectItem>
-                      <SelectItem value="51-200">51-200 employees</SelectItem>
-                      <SelectItem value="201-500">201-500 employees</SelectItem>
-                      <SelectItem value="501+">501+ employees</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {companyInfoErrors.size && (
-                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.size}</p>
-                  )}
+                  <MemoizedSelect
+                    label="Company Size"
+                    value={companyInfo.size}
+                    onChange={(value) => handleCompanyInfoChange('size', value)}
+                    options={[
+                      { value: "1-10", label: "1-10 employees" },
+                      { value: "11-50", label: "11-50 employees" },
+                      { value: "51-200", label: "51-200 employees" },
+                      { value: "201-500", label: "201-500 employees" },
+                      { value: "501+", label: "501+ employees" }
+                    ]}
+                    error={companyInfoErrors.size}
+                    isValid={!companyInfoErrors.size}
+                    id="company-size"
+                    placeholder="Select company size"
+                  />
                 </div>
                 
                 <div className="mt-4">
-                  <Label htmlFor="revenue-tier">Annual Revenue</Label>
-                  <Select 
-                    value={companyInfo.revenue} 
-                    onValueChange={(value) => handleCompanyInfoChange('revenue', value)}
-                  >
-                    <SelectTrigger 
-                      id="revenue-tier"
-                      className={cn(
-                        companyInfoErrors.revenue ? "border-red-500" : "",
-                        companyInfo.revenue ? "border-green-500" : ""
-                      )}
-                      ref={formRefs.companyRevenue}
-                    >
-                      <SelectValue placeholder="Select revenue range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Under $1M">Under $1M</SelectItem>
-                      <SelectItem value="$1M - $10M">$1M - $10M</SelectItem>
-                      <SelectItem value="$10M - $50M">$10M - $50M</SelectItem>
-                      <SelectItem value="$50M - $100M">$50M - $100M</SelectItem>
-                      <SelectItem value="$100M+">$100M+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {companyInfoErrors.revenue && (
-                    <p className="text-sm text-red-500 mt-1">{companyInfoErrors.revenue}</p>
-                  )}
+                  <MemoizedSelect
+                    label="Annual Revenue"
+                    value={companyInfo.revenue}
+                    onChange={(value) => handleCompanyInfoChange('revenue', value)}
+                    options={[
+                      { value: "Under $1M", label: "Under $1M" },
+                      { value: "$1M - $10M", label: "$1M - $10M" },
+                      { value: "$10M - $50M", label: "$10M - $50M" },
+                      { value: "$50M - $100M", label: "$50M - $100M" },
+                      { value: "$100M+", label: "$100M+" }
+                    ]}
+                    error={companyInfoErrors.revenue}
+                    isValid={!companyInfoErrors.revenue}
+                    id="revenue-tier"
+                    placeholder="Select revenue range"
+                  />
                 </div>
               </div>
             </StepLayout>

@@ -89,7 +89,7 @@ const MemoizedSelectComponent = forwardRef<HTMLButtonElement, MemoizedSelectProp
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             
-            <SelectContent position="popper" sideOffset={5} portalled>
+            <SelectContent position="popper" sideOffset={5}>
               {options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
