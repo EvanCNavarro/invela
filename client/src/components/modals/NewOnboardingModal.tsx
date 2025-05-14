@@ -923,7 +923,11 @@ export function OnboardingModal({
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContentWithoutCloseButton 
         className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
+        aria-describedby="onboarding-description"
       >
+        <div className="sr-only" id="onboarding-description">
+          Company onboarding process
+        </div>
         <div className="p-4 flex-1 flex flex-col overflow-hidden">
           {/* Step content */}
           {renderStepContent()}
@@ -967,7 +971,7 @@ export function OnboardingModal({
             </Button>
           </div>
         </DialogFooter>
-      </DialogContent>
+      </DialogContentWithoutCloseButton>
     </Dialog>
   );
 }
