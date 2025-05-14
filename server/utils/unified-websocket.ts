@@ -43,7 +43,8 @@ type MessageType =
   | 'form_submission_completed'
   | 'tabs_updated'
   | 'notification'
-  | 'tutorial_updated';
+  | 'tutorial_updated'
+  | 'onboarding_completed';
 
 // Base message interface
 interface WebSocketMessage {
@@ -131,6 +132,14 @@ interface TutorialUpdateMessage extends WebSocketMessage {
   metadata?: Record<string, any>;
 }
 
+// Onboarding completion message
+interface OnboardingCompletedMessage extends WebSocketMessage {
+  type: 'onboarding_completed';
+  userId: number;
+  companyId: number;
+  metadata?: Record<string, any>;
+}
+
 // Union type of all message types
 type WebSocketPayload = 
   | AuthMessage
@@ -141,7 +150,8 @@ type WebSocketPayload =
   | FormSubmissionCompletedMessage
   | TabsUpdatedMessage
   | NotificationMessage
-  | TutorialUpdateMessage;
+  | TutorialUpdateMessage
+  | OnboardingCompletedMessage;
 
 /**
  * Initialize the WebSocket server
@@ -209,6 +219,10 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
               timestamp: new Date().toISOString(),
               echo: message
             }));
+            break;
+            
+          case 'onboarding_completed':
+            handleOnboardingCompleted(clientId, message as OnboardingCompletedMessage);
             break;
             
           default:
@@ -415,4 +429,42 @@ export function broadcastTutorialUpdate(
   filter?: (client: ConnectedClient) => boolean
 ): void {
   broadcast<TutorialUpdateMessage>('tutorial_updated', payload, filter);
+}
+
+/**
+ * Broadcast an onboarding completed message
+ * 
+ * @param payload Onboarding completed payload
+ * @param filter Optional filter function to determine which clients receive the message
+ */
+export function broadcastOnboardingCompleted(
+  payload: Omit<OnboardingCompletedMessage, 'type' | 'timestamp'>,
+  filter?: (client: ConnectedClient) => boolean
+): void {
+  wsLogger.info('[Onboarding] Broadcasting onboarding completion', payload);
+  broadcast<OnboardingCompletedMessage>('onboarding_completed', payload, filter);
+  
+  // Also update the company's onboarding status in the database
+  if (payload.companyId) {
+    try {
+      import('../services/company').then(companyService => {
+        companyService.updateCompanyOnboardingStatus(payload.companyId, true)
+          .then(() => {
+            wsLogger.info('[Onboarding] Successfully updated company onboarding status', {
+              companyId: payload.companyId
+            });
+          })
+          .catch(error => {
+            wsLogger.error('[Onboarding] Failed to update company onboarding status', {
+              error: String(error),
+              companyId: payload.companyId
+            });
+          });
+      });
+    } catch (error) {
+      wsLogger.error('[Onboarding] Error importing company service', {
+        error: String(error)
+      });
+    }
+  }
 }
