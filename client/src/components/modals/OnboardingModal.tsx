@@ -547,10 +547,12 @@ export function OnboardingModal() {
         <div
           key={i}
           className={cn(
-            "h-4 w-4 rounded-full transition-colors duration-200",
-            i < currentStep ? "bg-blue-500" : 
-            currentStep === i ? "bg-blue-600 ring-2 ring-blue-200 ring-offset-1" : 
-            "bg-gray-200"
+            "transition-all duration-200",
+            i < currentStep 
+              ? "h-4 w-4 rounded-full bg-green-200" // Completed - soft gray-green 
+              : currentStep === i 
+                ? "h-4 w-10 rounded-lg bg-blue-600 ring-2 ring-blue-200 ring-offset-1" // Current - wider shape 
+                : "h-4 w-4 rounded-full bg-gray-200" // Future - gray
           )}
         />
       ))}
@@ -651,11 +653,10 @@ export function OnboardingModal() {
                         <SelectValue placeholder="Select number of employees" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Micro (1-9 employees)" className="text-base py-2">Micro (1-9 employees)</SelectItem>
-                        <SelectItem value="Small (10-49 employees)" className="text-base py-2">Small (10-49 employees)</SelectItem>
-                        <SelectItem value="Medium (50-249 employees)" className="text-base py-2">Medium (50-249 employees)</SelectItem>
-                        <SelectItem value="Large (250-999 employees)" className="text-base py-2">Large (250-999 employees)</SelectItem>
-                        <SelectItem value="Enterprise (1000+ employees)" className="text-base py-2">Enterprise (1000+ employees)</SelectItem>
+                        <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
+                        <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
+                        <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
+                        <SelectItem value="xlarge" className="text-base py-2">X Large (1K+ employees)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -672,10 +673,10 @@ export function OnboardingModal() {
                         <SelectValue placeholder="Select annual revenue" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="$0–$10M" className="text-base py-2">$0–$10M</SelectItem>
-                        <SelectItem value="$10M–$50M" className="text-base py-2">$10M–$50M</SelectItem>
-                        <SelectItem value="$50M–$250M" className="text-base py-2">$50M–$250M</SelectItem>
-                        <SelectItem value="$250M+" className="text-base py-2">$250M+</SelectItem>
+                        <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
+                        <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
+                        <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
+                        <SelectItem value="xlarge" className="text-base py-2">$250M+</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
