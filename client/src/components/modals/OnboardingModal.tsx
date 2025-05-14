@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogTitle, DialogContent, DialogContentWithoutCloseButton, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { 
   Select, 
@@ -1061,7 +1061,7 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <CustomDialogContent className="overflow-hidden flex flex-col h-[550px] w-[860px]">
+      <DialogContentWithoutCloseButton className="overflow-hidden flex flex-col h-[550px] w-[860px]">
         <div className="p-5 pb-3">
           <div className="text-base font-medium bg-primary/10 text-primary py-2 px-6 rounded-full inline-block">
             Onboarding Modal
