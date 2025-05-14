@@ -845,7 +845,7 @@ export function AnimatedOnboardingModal({
   return (
     <Dialog open={isOpen} onOpenChange={() => {/* prevent closing */}}>
       <DialogContent 
-        className="max-w-[900px] p-0 overflow-hidden h-[550px] flex flex-col"
+        className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {/* Main content area */}
