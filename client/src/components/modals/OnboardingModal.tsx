@@ -933,7 +933,11 @@ export function OnboardingModal() {
       
       case 5: // Review Information
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
+          <StepLayout
+            title="Review Provided Information"
+            imageSrc="/assets/welcome_6.png"
+            imageAlt="Review Information"
+          >
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -1010,12 +1014,16 @@ export function OnboardingModal() {
                 </div>
               )}
             </div>
-          </div>
+          </StepLayout>
         );
       
       case 6: // Completion
         return (
-          <div className="flex flex-col md:flex-row flex-1 h-[440px] overflow-hidden">
+          <StepLayout
+            title="Onboarding Complete"
+            imageSrc="/assets/welcome_7.png"
+            imageAlt="Onboarding Complete"
+          >
             {/* Left side: Text content */}
             <div className="px-8 py-8 flex-1 flex flex-col overflow-hidden">
               <div>
@@ -1073,7 +1081,7 @@ export function OnboardingModal() {
                 </div>
               )}
             </div>
-          </div>
+          </StepLayout>
         );
       
       default:
