@@ -95,15 +95,16 @@ const updateCompanyDetails = async (companyId: number, details: any) => {
   });
   
   try {
-    const response = await fetch(`/api/companies/${companyId}`, {
+    // Using the service/company endpoint to update company details
+    const response = await fetch(`/api/companies/current`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // Set both the revenue and revenue_tier fields based on selection
-        revenue: details.revenue, // Will be "small", "medium", etc.
-        revenue_tier: details.revenue, // Same value for revenue_tier
+        // Set fields in the format expected by the server
+        revenue: details.revenue,
+        revenue_tier: details.revenue,
         num_employees: numEmployees
       })
     });
