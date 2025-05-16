@@ -38,6 +38,7 @@ import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
 import RiskScorePage from "@/pages/risk-score-page";
 import ClaimsRiskPage from "@/pages/claims-risk-page";
+import TaskFix from "@/pages/TaskFix";
 // Builder pages have been removed
 // Empty component definitions for type checking - these components are no longer used
 const BuilderPage = () => null;
@@ -312,6 +313,20 @@ function Router() {
         />
         
         {/* Debug routes removed */}
+
+        {/* Task Fix utility page for fixing task status/progress issues */}
+        <ProtectedRoute 
+          path="/task-fix" 
+          component={() => (
+            <ProtectedLayout>
+              <DashboardLayout>
+                <OnboardingWrapper>
+                  <TaskFix />
+                </OnboardingWrapper>
+              </DashboardLayout>
+            </ProtectedLayout>
+          )} 
+        />
 
         <Route component={NotFound} />
       </Switch>
