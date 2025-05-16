@@ -6,14 +6,16 @@ import * as timestampSchema from "./schema-timestamps";
 
 neonConfig.webSocketConstructor = ws;
 
-// Connection pooling optimization with extreme rate limiting considerations
-const MAX_CONNECTION_RETRIES = 5; // Increased max retries
-const INITIAL_RETRY_DELAY = 3000; // 3 seconds initial delay
-const POOL_SIZE = 1; // Minimal pool size to strictly prevent rate limits
-const IDLE_TIMEOUT = 300000; // Extended to 5 minutes to minimize connection cycling
-const MAX_USES = 10000; // Increased to reduce connection creation frequency
-const CONNECTION_TIMEOUT = 120000; // Extended to 2 minutes for slow connections
-const RATE_LIMIT_BACKOFF = 8000; // 8 second backoff for rate limit errors
+// Emergency connection settings to prevent rate limits on Neon PostgreSQL
+// These settings are aggressive but necessary for stability
+// Single connection with long timeouts and infrequent recycling
+const MAX_CONNECTION_RETRIES = 10; // Maximum retries for connection failures
+const INITIAL_RETRY_DELAY = 5000; // 5 seconds initial delay before retry
+const POOL_SIZE = 1; // Absolute minimum pool size - single connection only
+const IDLE_TIMEOUT = 600000; // 10 minutes idle timeout to prevent recycling
+const MAX_USES = 50000; // Very high use count before recycling
+const CONNECTION_TIMEOUT = 180000; // 3 minutes connection timeout
+const RATE_LIMIT_BACKOFF = 15000; // 15 second backoff for rate limit errors
 
 if (!process.env.DATABASE_URL) {
   throw new Error(

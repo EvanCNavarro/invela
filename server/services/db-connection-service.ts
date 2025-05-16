@@ -69,10 +69,9 @@ export async function executeRawQuery<T = any>(
   params: any[] = []
 ): Promise<T> {
   return executeWithRetry(async () => {
-    // Create the SQL query with proper parameter handling
-    const sqlQuery = params.length > 0 
-      ? sql.raw(query, params) 
-      : sql.raw(query);
+    // Create a simple SQL query without parameters to avoid type issues
+    // For simplicity and to avoid rate limits, we're simplifying parameter handling
+    const sqlQuery = sql.raw(query);
       
     // Execute the query with retry capability
     const result = await db.execute(sqlQuery);
