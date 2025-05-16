@@ -605,7 +605,25 @@ async function handleKy3pPostSubmission(
   userId?: number
 ): Promise<Partial<FormSubmissionResult>> {
   try {
-    // Update vendor risk score
+    // Ensure the task progress is set to 100%
+    await tx.update(tasks)
+      .set({
+        progress: 100,
+        status: 'submitted' as TaskStatus,
+        metadata: {
+          ...task.metadata,
+          completed: true,
+          submission_date: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, task.id));
+      
+    logger.info(`[KY3P Submission] Explicitly set task ${task.id} progress to 100% and status to submitted`, {
+      taskId: task.id,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Update vendor risk score if applicable
     if (task.metadata?.vendor_id) {
       // Vendor risk score calculation logic would go here
       await tx.update(tx.table('vendors'))
@@ -621,7 +639,7 @@ async function handleKy3pPostSubmission(
     
     return { riskScoreUpdated: false };
   } catch (error) {
-    logger.error('Error updating vendor risk score', {
+    logger.error('Error updating vendor risk score or setting task progress', {
       error: error instanceof Error ? error.message : 'Unknown error',
       taskId: task.id,
       vendorId: task.metadata?.vendor_id
