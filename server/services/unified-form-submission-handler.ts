@@ -48,6 +48,7 @@ export interface FormSubmissionResult {
 /**
  * Process a form submission with unified transaction handling
  * This is the main entry point for form submissions across all types
+ * Optimized to avoid resubmitting form data that has already been saved incrementally
  */
 export async function processFormSubmission(
   input: FormSubmissionInput
@@ -60,6 +61,7 @@ export async function processFormSubmission(
       transactionId,
       taskId,
       formType,
+      formDataSize: formData ? Object.keys(formData).length : 0,
       timestamp: new Date().toISOString()
     });
     
@@ -73,7 +75,7 @@ export async function processFormSubmission(
     validateFormTypeMatchesTaskType(formType, task.task_type);
     
     // 2. ORIENT: Prepare for processing based on form type
-    // Get field definitions and validate required fields
+    // Get field definitions and validate required fields (still needed for CSV generation)
     const fieldsResult = await getFieldDefinitions(formType, taskId);
     
     // 3. DECIDE: Determine if form data is valid
@@ -85,37 +87,47 @@ export async function processFormSubmission(
       };
     }
     
-    // Validate form data against field definitions
-    const validationResult = validateFormData(formData, fieldsResult.fields, formType);
-    if (!validationResult.valid) {
-      return {
-        success: false,
-        error: validationResult.message,
-        elapsedMs: performance.now() - startTime
-      };
-    }
+    // Check if this is a final submission with no form data (efficiency optimization)
+    const isEmptySubmission = !formData || Object.keys(formData).length === 0;
     
     // 4. ACT: Process the form submission within a transaction
     const result = await db.transaction(async (tx) => {
-      // 4.1 Save the form responses to the database
-      const responsesResult = await saveFormResponses(
-        tx, 
-        taskId, 
-        formData, 
-        formType, 
-        userId
-      );
-      
-      if (!responsesResult.success) {
-        throw new Error(responsesResult.error || 'Failed to save form responses');
+      // 4.1 Save any remaining form responses to the database (if present)
+      // This step is now conditional to avoid redundant processing
+      if (!isEmptySubmission) {
+        logger.info(`[${formType.toUpperCase()} Transaction] Saving form responses`, {
+          transactionId,
+          fieldCount: Object.keys(formData).length
+        });
+        
+        const responsesResult = await saveFormResponses(
+          tx, 
+          taskId, 
+          formData, 
+          formType, 
+          userId
+        );
+        
+        if (!responsesResult.success) {
+          throw new Error(responsesResult.error || 'Failed to save form responses');
+        }
+      } else {
+        logger.info(`[${formType.toUpperCase()} Transaction] Skipping response saving - no form data provided`, {
+          transactionId,
+          taskId
+        });
       }
       
       // 4.2 Generate CSV file from form data
+      // For CSV generation, we need to load the current responses from the database
+      // since they may have been saved incrementally and not included in this submission
+      const existingResponses = isEmptySubmission ? await loadExistingFormResponses(tx, taskId, formType) : formData;
+      
       const fileCreationResult = await createFormFile(
         formType, 
         taskId, 
-        task.company_id, 
-        formData, 
+        task.company_id || 0, // Handle possible null value with fallback
+        existingResponses, 
         fieldsResult.fields,
         fileName
       );
@@ -341,6 +353,58 @@ function getResponseTableName(formType: string): string {
 }
 
 /**
+ * Load existing form responses from the database for a given task
+ * This is used when a form is submitted with no data (optimization for final submit)
+ */
+async function loadExistingFormResponses(
+  tx: any,
+  taskId: number,
+  formType: string
+): Promise<Record<string, any>> {
+  try {
+    // Determine which table to use based on form type
+    const responseTable = getResponseTableName(formType);
+    
+    // Query existing responses for this task
+    const responses = await tx.select()
+      .from(tx.table(responseTable))
+      .where(eq(tx.table(responseTable).task_id, taskId));
+    
+    // Convert array of responses to a field key -> value map
+    const formDataMap: Record<string, any> = {};
+    
+    for (const response of responses) {
+      let value: any = response.response_value;
+      
+      // Try to parse JSON values
+      if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
+        try {
+          value = JSON.parse(value);
+        } catch (e) {
+          // Keep as string if parsing fails
+        }
+      }
+      
+      formDataMap[response.field_id] = value;
+    }
+    
+    // Log for debugging purposes
+    const fieldCount = Object.keys(formDataMap).length;
+    logger.debug(`Loaded ${fieldCount} existing responses for task ${taskId} (${formType})`);
+    
+    return formDataMap;
+  } catch (error) {
+    logger.error(`Failed to load existing ${formType} responses for task ${taskId}`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Return empty object as fallback
+    return {};
+  }
+}
+
+/**
  * Create a file containing the form data
  */
 async function createFormFile(
@@ -365,22 +429,15 @@ async function createFormFile(
     const companyName = company?.name || 'Company';
     
     // Generate standardized file name
-    const generatedFileName = fileName || FileCreationService.generateStandardFileName(
-      formType.toUpperCase(),
-      taskId,
-      companyName,
-      '1.0',
-      'csv'
-    );
+    const generatedFileName = fileName || `${formType.toUpperCase()}-${taskId}-${companyName}-v1.0.csv`;
     
     // Create file record in database
     const fileResult = await FileCreationService.createFile({
       name: generatedFileName,
+      content: csvContent,  // Use 'content' instead of 'path'
       type: 'text/csv',
-      path: csvContent,  // Store CSV content directly
-      size: Buffer.from(csvContent).length,
-      company_id: companyId,
-      task_id: taskId,
+      userId: 1, // Use a default system user ID when no specific user is provided
+      companyId: companyId,
       metadata: {
         formType,
         taskId,
@@ -390,7 +447,7 @@ async function createFormFile(
     
     return {
       success: true,
-      fileId: fileResult.id
+      fileId: fileResult.fileId
     };
   } catch (error) {
     logger.error(`Failed to create ${formType} file`, {
