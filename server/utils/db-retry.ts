@@ -1,101 +1,99 @@
 /**
  * Database Retry Utility
  * 
- * This utility provides a way to retry database operations when they fail
- * due to connection issues, with exponential backoff.
+ * This utility provides functions to handle database query retries,
+ * specifically targeting rate limiting issues with Neon PostgreSQL.
  */
 
-import { Logger } from '../services/logger';
+// Maximum number of retry attempts for queries
+const MAX_RETRY_ATTEMPTS = 3;
 
-const logger = new Logger('DBRetry');
+// Initial delay before first retry (ms)
+const INITIAL_RETRY_DELAY = 1000;
 
-interface RetryOptions {
-  maxRetries?: number;
-  baseDelay?: number;
-  operation?: string;
+// Additional delay for rate limit errors (ms)
+const RATE_LIMIT_DELAY = 3000;
+
+/**
+ * Checks if an error is related to database connection or rate limiting
+ * 
+ * @param error The error to check
+ * @returns True if the error is connection or rate limit related
+ */
+export function isConnectionError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('connection') ||
+      message.includes('timeout') ||
+      message.includes('rate limit') ||
+      message.includes('control plane')
+    );
+  }
+  return false;
 }
 
 /**
- * Execute a database operation with retry capabilities
+ * Checks if an error is specifically a rate limit error
  * 
- * @param operation Function to execute
- * @param options Retry options
- * @returns Result of the operation
+ * @param error The error to check
+ * @returns True if this is a rate limit error
+ */
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('rate limit') ||
+      message.includes('exceeded the rate limit')
+    );
+  }
+  return false;
+}
+
+/**
+ * Executes a database query with automatic retries
+ * 
+ * @param operation The database operation function to execute
+ * @param maxRetries Maximum number of retry attempts (default: MAX_RETRY_ATTEMPTS)
+ * @param initialDelay Initial delay in ms before retrying (default: INITIAL_RETRY_DELAY)
+ * @returns The result of the operation
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,
-  options: RetryOptions = {}
+  maxRetries: number = MAX_RETRY_ATTEMPTS,
+  initialDelay: number = INITIAL_RETRY_DELAY
 ): Promise<T> {
-  const {
-    maxRetries = 3,
-    baseDelay = 500,
-    operation: operationName = 'database operation'
-  } = options;
+  let lastError: unknown;
   
-  let retryCount = 0;
-  let lastError: Error | null = null;
-  
-  while (retryCount <= maxRetries) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await operation();
-      
-      if (retryCount > 0) {
-        // Log success after retries
-        logger.info(`Successfully completed ${operationName} after ${retryCount} retries`);
-      }
-      
-      return result;
+      return await operation();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      retryCount++;
+      lastError = error;
       
-      if (retryCount <= maxRetries) {
-        // Calculate backoff delay with jitter
-        const delay = Math.floor(
-          baseDelay * Math.pow(2, retryCount - 1) * (1 + Math.random() * 0.1)
-        );
-        
-        logger.warn(
-          `Retry attempt ${retryCount}/${maxRetries} for ${operationName} after ${delay}ms delay: ${lastError.message}`
-        );
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } else {
-        // Max retries reached
-        logger.error(
-          `Failed ${operationName} after ${maxRetries} retry attempts: ${lastError.message}`,
-          lastError
-        );
-        throw lastError;
+      // If this is the last attempt, don't retry
+      if (attempt >= maxRetries) {
+        break;
       }
+      
+      // Calculate delay with exponential backoff + jitter
+      let delay = initialDelay * Math.pow(2, attempt);
+      const jitter = Math.floor(Math.random() * 500); // Add up to 500ms of jitter
+      delay += jitter;
+      
+      // Add extra delay for rate limit errors
+      if (isRateLimitError(error)) {
+        delay += RATE_LIMIT_DELAY;
+        console.warn(`Rate limit error detected. Adding ${RATE_LIMIT_DELAY}ms extra delay.`);
+      }
+      
+      console.log(`Database operation failed. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      
+      // Wait before next attempt
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
-  // This should never happen, but TypeScript needs it
-  throw lastError || new Error(`Unknown error in ${operationName}`);
+  // If we get here, all attempts failed
+  throw lastError;
 }
-
-/**
- * Check if an error is a database connection error
- * 
- * @param error Error to check
- * @returns True if it's a connection error
- */
-export function isConnectionError(error: Error): boolean {
-  const message = error.message.toLowerCase();
-  
-  return (
-    message.includes('connection') ||
-    message.includes('timeout') ||
-    message.includes('network') ||
-    message.includes('econnrefused') ||
-    message.includes('socket') ||
-    message.includes('unreachable')
-  );
-}
-
-export default {
-  withRetry,
-  isConnectionError
-};

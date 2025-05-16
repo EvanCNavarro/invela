@@ -6,13 +6,14 @@ import * as timestampSchema from "./schema-timestamps";
 
 neonConfig.webSocketConstructor = ws;
 
-// Connection pooling optimization to reduce the number of connections
-const MAX_CONNECTION_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-const POOL_SIZE = 3; // Further reduced pool size to minimize connection messages
-const IDLE_TIMEOUT = 60000; // Extended to 60 seconds to significantly reduce connection churn
-const MAX_USES = 7500; // Increased to reduce connection reuse frequency
-const CONNECTION_TIMEOUT = 60000; // Increased connection timeout to avoid quick timeouts
+// Connection pooling optimization with rate limiting considerations
+const MAX_CONNECTION_RETRIES = 5; // Increased max retries
+const INITIAL_RETRY_DELAY = 2000; // 2 seconds initial delay
+const POOL_SIZE = 2; // Reduced pool size to stay below Neon rate limits
+const IDLE_TIMEOUT = 120000; // Extended to 2 minutes to reduce connection cycling
+const MAX_USES = 5000; // Reduced to create fewer new connections
+const CONNECTION_TIMEOUT = 90000; // Extended to 90 seconds for slow connections
+const RATE_LIMIT_BACKOFF = 5000; // 5 second backoff for rate limit errors
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -31,7 +32,7 @@ export const pool = new Pool({
 
 let retryCount = 0;
 
-// Enhanced error handling for the connection pool
+// Enhanced error handling for the connection pool with rate limit handling
 pool.on('error', (err, client) => {
   const timestamp = new Date().toISOString();
   console.error(`[${timestamp}] Database pool error:`, {
@@ -39,11 +40,31 @@ pool.on('error', (err, client) => {
     stack: err.stack,
   });
 
+  // Special handling for rate limit errors
+  if (err.message.includes('rate limit') || err.message.includes('exceeded the rate limit')) {
+    console.warn(`[${timestamp}] Rate limit exceeded. Backing off for ${RATE_LIMIT_BACKOFF}ms`);
+    // Use a longer backoff for rate limit errors
+    setTimeout(async () => {
+      try {
+        await client.connect();
+        console.log('Successfully reconnected after rate limit backoff');
+      } catch (error) {
+        const reconnectError = error as Error;
+        console.error('Failed to reconnect after rate limit backoff:', reconnectError.message);
+      }
+    }, RATE_LIMIT_BACKOFF);
+    return;
+  }
+
   // Attempt to reconnect if it's a connection error
   if (err.message.includes('connection') || err.message.includes('timeout')) {
     if (retryCount < MAX_CONNECTION_RETRIES) {
       retryCount++;
-      const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1);
+      // Use exponential backoff with jitter to avoid thundering herd issues
+      const basedelay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1);
+      const jitter = Math.floor(Math.random() * 1000); // Add up to 1s of jitter
+      const delay = basedelay + jitter;
+      
       console.log(`Attempting to reconnect in ${delay}ms (attempt ${retryCount}/${MAX_CONNECTION_RETRIES})`);
 
       setTimeout(async () => {
