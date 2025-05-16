@@ -97,8 +97,13 @@ export function setupAuth(app: Express) {
   
   try {
     console.log('[Auth] Setting up PostgreSQL session store');
+    // Use direct database connection string instead of pool object
+    // This avoids compatibility issues with connect-pg-simple
     store = new PostgresSessionStore({
-      pool,
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
+      },
       createTableIfMissing: true,
       tableName: 'session',
       // Add error handling for session store

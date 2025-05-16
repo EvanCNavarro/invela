@@ -1,13 +1,8 @@
-import { neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "./schema";
 import * as timestampSchema from "./schema-timestamps";
 import { logger } from '../server/utils/logger';
-import { neonConnection } from '../server/services/neon-connection-service';
-
-// Set up websocket constructor for Neon Serverless
-neonConfig.webSocketConstructor = ws;
 
 // Create a dedicated logger for database operations
 const dbLogger = logger.child({ module: 'Database' });
@@ -19,44 +14,67 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-dbLogger.info('Initializing database connection service with optimized settings');
+// Connection settings optimized for Neon PostgreSQL's serverless architecture
+// These settings are designed to handle the unique behavior of Neon
+// including control plane rate limiting and connection pooling
+const POOL_SIZE = 3; // Small but sufficient pool size to reduce connection overhead
+const IDLE_TIMEOUT = 600000; // 10 minutes idle timeout
+const CONNECTION_TIMEOUT = 180000; // 3 minutes connection timeout
 
-// Initialize the Neon Connection Service
-// This service will be used for all database operations, managing the
-// single persistent connection and handling rate limits intelligently
-(async () => {
-  try {
-    await neonConnection.initialize(process.env.DATABASE_URL);
-    dbLogger.info('Neon Connection Service initialized successfully');
-  } catch (error) {
-    dbLogger.error('Failed to initialize Neon Connection Service:', error);
+dbLogger.info('Initializing database connection with optimized settings for Neon PostgreSQL');
+
+// Configure the pool with optimized settings for Neon
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: POOL_SIZE,
+  idleTimeoutMillis: IDLE_TIMEOUT,
+  connectionTimeoutMillis: CONNECTION_TIMEOUT,
+  allowExitOnIdle: false
+});
+
+// Add connection events with proper error handling
+pool.on('error', (err) => {
+  // Log the error but don't try to reconnect immediately
+  // This prevents cascading failures with Neon's rate limits
+  dbLogger.error('Database pool error:', {
+    message: err.message,
+    code: (err as any).code,
+    stack: err.stack
+  });
+  
+  // Check if this is a rate limit error
+  if (err.message.includes('rate limit') || 
+      err.message.includes('too many connections') ||
+      err.message.includes('connection terminated')) {
+    dbLogger.warn('Detected rate limiting or connection issue with Neon PostgreSQL');
   }
-})();
+});
 
-// Create the drizzle db instance with the specialized Neon connection
-// Combine schema objects to include timestamp-related tables
+// Add connect event for monitoring
+pool.on('connect', (client) => {
+  dbLogger.info('New database connection established');
+  
+  // Add per-client error handler
+  client.on('error', (err) => {
+    dbLogger.error('Client-specific error:', {
+      message: err.message,
+      code: (err as any).code
+    });
+  });
+});
+
+// Combine schema objects to include all tables
 const combinedSchema = {
   ...schema,
   ...timestampSchema
 };
 
-// Create a lightweight wrapper around our specialized connection manager
-// that maintains the existing drizzle API interface while using our 
-// improved connection management under the hood
-export const db = drizzle(neonConnection as any, { schema: combinedSchema });
+// Create the drizzle ORM instance with our pool
+export const db = drizzle(pool, { schema: combinedSchema });
 
-// Re-export pool (for compatibility with code that uses it)
-// This is a "fake" pool that forwards to our connection service
-export const pool = {
-  connect: async () => neonConnection.getClient(),
-  end: async () => neonConnection.shutdown(),
-};
-
-// Migrations removed - database schema already established
-
-// Graceful shutdown handler with improved error handling
+// Graceful shutdown handler
 async function handleShutdown(signal: string) {
-  console.log(`Received ${signal}. Closing pool...`);
+  console.log(`Received ${signal}. Closing database pool...`);
   try {
     await pool.end();
     console.log('Database pool closed successfully');
@@ -76,11 +94,5 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Migrations are no longer automatically run on startup.
-// The database schema is already set up, so there's no need to run migrations each time.
-// 
-// If you need to run migrations manually, use:
-//   npm run migrations
-// 
-// Or import and call runMigrations() directly from another script.
+// Database migrations disabled - schema already established
 console.log('Database migrations disabled - schema already applied');
