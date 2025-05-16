@@ -757,10 +757,32 @@ export function registerRoutes(app: Express): Express {
       // Get allowed fields from request body
       const updateData: Partial<typeof companies.$inferInsert> = {};
       
-      // Extract only the fields we want to allow updating
-      if (req.body.revenue !== undefined) updateData.revenue = req.body.revenue;
-      if (req.body.revenue_tier !== undefined) updateData.revenue_tier = req.body.revenue_tier;
-      if (req.body.num_employees !== undefined) updateData.num_employees = req.body.num_employees;
+      // Process and validate revenue - ensure it's a number
+      if (req.body.revenue !== undefined) {
+        // If revenue is already a number, use it directly
+        if (typeof req.body.revenue === 'number') {
+          updateData.revenue = req.body.revenue;
+        } 
+        // Otherwise try to convert it to a number
+        else {
+          const numericRevenue = Number(req.body.revenue);
+          if (!isNaN(numericRevenue)) {
+            updateData.revenue = numericRevenue;
+          } else {
+            console.warn(`[Company API] Invalid revenue value: ${req.body.revenue}, not updating revenue field`);
+          }
+        }
+      }
+      
+      // Set revenue tier as string for display/categorization purposes
+      if (req.body.revenue_tier !== undefined) {
+        updateData.revenue_tier = req.body.revenue_tier;
+      }
+      
+      // Process employee count
+      if (req.body.num_employees !== undefined) {
+        updateData.num_employees = req.body.num_employees;
+      }
       
       console.log(`[Company API] Processed update data:`, updateData);
       

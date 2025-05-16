@@ -82,16 +82,30 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
  * @param details Object containing company details (size, revenue)
  * @returns Response data from the API
  */
+// Revenue mapping from text descriptions to numeric values (in dollars)
+const revenueValueMap: Record<string, number> = {
+  small: 1000000,     // $1 million
+  medium: 10000000,   // $10 million
+  large: 50000000,    // $50 million
+  xlarge: 100000000   // $100 million
+};
+
 const updateCompanyDetails = async (companyId: number, details: any) => {
   // Map size to employee count if available
   const numEmployees = details.size ? 
     employeeCountMap[details.size as keyof typeof employeeCountMap] : 
     undefined;
   
+  // Map revenue tier to numeric value
+  const revenueValue = details.revenue ? 
+    revenueValueMap[details.revenue as keyof typeof revenueValueMap] : 
+    undefined;
+  
   logDebug('Updating company details', { 
     companyId, 
     details,
-    mappedEmployeeCount: numEmployees 
+    mappedEmployeeCount: numEmployees,
+    mappedRevenueValue: revenueValue
   });
   
   try {
@@ -103,8 +117,8 @@ const updateCompanyDetails = async (companyId: number, details: any) => {
       },
       body: JSON.stringify({
         // Set fields in the format expected by the server
-        revenue: details.revenue,
-        revenue_tier: details.revenue,
+        revenue: revenueValue,            // Numeric value in dollars
+        revenue_tier: details.revenue,    // Keep the text description for display purposes
         num_employees: numEmployees
       })
     });
