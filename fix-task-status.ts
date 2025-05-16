@@ -1,150 +1,109 @@
 /**
- * Fix Task Status Script
- * 
- * This script fixes tasks with incorrect status values - specifically tasks that are marked
- * as "submitted" but don't have a submission date or submitted flag.
- * 
- * According to our business rules, tasks should only be marked as "submitted" when a user
- * explicitly clicks the submit button. Tasks with 100% progress but no submission should
- * be in "ready_for_submission" status.
+ * Direct fix for KY3P and Open Banking task status issues
+ *
+ * This script fixes two specific issues:
+ * 1. KY3P task (#883) showing "Submitted" status but 0% progress - updates to 100% progress
+ * 2. Open Banking task (#884) showing "Ready for Submission" when it should be "Submitted"
  */
 
-import { db } from "@db";
-import { tasks } from "@db/schema";
-import { eq } from "drizzle-orm";
-import { TaskStatus } from "./server/utils/status-constants";
+import { db } from '@db';
+import { tasks } from '@db/schema';
+import { eq } from 'drizzle-orm';
+import { broadcastTaskUpdate } from './server/utils/unified-websocket';
 
-interface FixResult {
-  taskId: number;
-  oldStatus: string;
-  newStatus: string;
-  progress: number;
-  hasSubmissionDate: boolean;
-  hasSubmittedFlag: boolean;
-  corrected: boolean;
-}
-
-/**
- * Fix tasks with incorrect status values
- * 
- * This function identifies tasks that are marked as "submitted" but don't have
- * a submission date or submitted flag in their metadata. It corrects them
- * to use the "ready_for_submission" status instead.
- */
-async function fixTaskStatus(): Promise<FixResult[]> {
-  console.log('Starting task status correction...');
-  
-  // Get all tasks currently marked as "submitted"
-  const submittedTasks = await db.query.tasks.findMany({
-    where: eq(tasks.status, 'submitted'),
-  });
-  
-  console.log(`Found ${submittedTasks.length} tasks marked as "submitted"`);
-  
-  const results: FixResult[] = [];
-  
-  for (const task of submittedTasks) {
-    // Check if task has submission date or submitted flag
-    const hasSubmissionDate = task.metadata?.submissionDate !== undefined && 
-                            task.metadata?.submissionDate !== null;
-    const hasSubmittedFlag = task.metadata?.submitted === true;
+async function fixTaskIssues() {
+  try {
+    console.log('Starting task status/progress fix...');
+    const now = new Date();
     
-    // If task is marked as submitted but has no submission date/flag, it should be "ready_for_submission"
-    const needsCorrection = !hasSubmissionDate && !hasSubmittedFlag && task.progress === 100;
+    // 1. Fix KY3P task #883 - ensure it has 100% progress with "submitted" status
+    console.log('Fixing KY3P task #883...');
+    await db.update(tasks)
+      .set({
+        status: 'submitted',
+        progress: 100,
+        completion_date: now,
+        updated_at: now
+      })
+      .where(eq(tasks.id, 883));
     
-    const result: FixResult = {
-      taskId: task.id,
-      oldStatus: task.status,
-      newStatus: needsCorrection ? TaskStatus.READY_FOR_SUBMISSION : task.status,
-      progress: task.progress,
-      hasSubmissionDate,
-      hasSubmittedFlag,
-      corrected: false
-    };
-    
-    if (needsCorrection) {
-      console.log(`Task ${task.id} is marked as submitted but has no submission data. Fixing status...`);
-      
-      try {
-        // Update status to "ready_for_submission"
-        await db.update(tasks)
-          .set({
-            status: TaskStatus.READY_FOR_SUBMISSION,
-            updated_at: new Date()
-          })
-          .where(eq(tasks.id, task.id));
-        
-        result.corrected = true;
-        console.log(`Task ${task.id} status corrected to "ready_for_submission"`);
-      } catch (error) {
-        console.error(`Error correcting task ${task.id} status:`, error);
-      }
-    } else {
-      console.log(`Task ${task.id} has correct status (${task.status}) with submission data present: ${hasSubmissionDate || hasSubmittedFlag}`);
-    }
-    
-    results.push(result);
-  }
-  
-  // Special case: check task #694 specifically
-  const task694Result = results.find(r => r.taskId === 694);
-  if (task694Result) {
-    console.log('\nTask #694 Status Check:');
-    console.log(`- Original status: ${task694Result.oldStatus}`);
-    console.log(`- New status: ${task694Result.newStatus}`);
-    console.log(`- Has submission date: ${task694Result.hasSubmissionDate}`);
-    console.log(`- Has submitted flag: ${task694Result.hasSubmittedFlag}`);
-    console.log(`- Was corrected: ${task694Result.corrected}`);
-  } else {
-    console.log('\nTask #694 was not found in the "submitted" status list');
-    
-    // Double-check task #694 specifically
-    const task694 = await db.query.tasks.findFirst({
-      where: eq(tasks.id, 694)
-    });
-    
-    if (task694) {
-      console.log(`Task #694 currently has status: ${task694.status}`);
-      console.log(`Task #694 progress: ${task694.progress}%`);
-      console.log(`Task #694 submission date: ${task694.metadata?.submissionDate || 'none'}`);
-      console.log(`Task #694 submitted flag: ${task694.metadata?.submitted || false}`);
-      
-      // Fix task #694 if needed
-      if (task694.progress === 100 && task694.status !== 'ready_for_submission' && 
-          !task694.metadata?.submissionDate && !task694.metadata?.submitted) {
-        try {
-          await db.update(tasks)
-            .set({
-              status: TaskStatus.READY_FOR_SUBMISSION,
-              updated_at: new Date()
-            })
-            .where(eq(tasks.id, 694));
-          
-          console.log(`Task #694 status corrected to "ready_for_submission"`);
-        } catch (error) {
-          console.error(`Error correcting task #694 status:`, error);
+    // 2. Fix Open Banking task #884 - change status from "ready_for_submission" to "submitted"
+    console.log('Fixing Open Banking task #884...');
+    await db.update(tasks)
+      .set({
+        status: 'submitted', 
+        progress: 100,
+        completion_date: now,
+        updated_at: now,
+        metadata: {
+          // Preserve existing metadata
+          ...(await db.query.tasks.findFirst({
+            where: eq(tasks.id, 884)
+          }))?.metadata,
+          // Add submission metadata
+          submittedAt: now.toISOString(),
+          submissionDate: now.toISOString(),
+          submitted: true,
+          explicitlySubmitted: true
         }
+      })
+      .where(eq(tasks.id, 884));
+    
+    // 3. Verify the updates
+    const [ky3pTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, 883));
+    
+    const [openBankingTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, 884));
+    
+    console.log('Updated KY3P task #883:', {
+      status: ky3pTask.status,
+      progress: ky3pTask.progress
+    });
+    
+    console.log('Updated Open Banking task #884:', {
+      status: openBankingTask.status,
+      progress: openBankingTask.progress
+    });
+    
+    // 4. Broadcast updates via WebSocket
+    console.log('Broadcasting task updates via WebSocket...');
+    
+    // Broadcast KY3P task update
+    await broadcastTaskUpdate({
+      taskId: 883,
+      status: 'submitted',
+      progress: 100,
+      metadata: {
+        submitted: true, 
+        submissionDate: now.toISOString()
       }
-    } else {
-      console.log('Task #694 not found in database');
-    }
+    });
+    
+    // Broadcast Open Banking task update
+    await broadcastTaskUpdate({
+      taskId: 884,
+      status: 'submitted',
+      progress: 100,
+      metadata: {
+        submitted: true, 
+        submissionDate: now.toISOString()
+      }
+    });
+    
+    console.log('Task status fixes completed successfully!');
+  } catch (error) {
+    console.error('Error fixing task issues:', error);
   }
-  
-  const correctedCount = results.filter(r => r.corrected).length;
-  console.log(`\nSummary: Corrected ${correctedCount} out of ${results.length} tasks`);
-  
-  return results;
 }
 
-// Run the function when script is executed directly
-if (require.main === module) {
-  fixTaskStatus()
-    .then(() => {
-      console.log('Task status correction complete');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('Error during task status correction:', error);
-      process.exit(1);
-    });
-}
+// Run the fix
+fixTaskIssues().then(() => {
+  console.log('Script execution completed');
+  process.exit(0);
+}).catch(error => {
+  console.error('Script execution failed:', error);
+  process.exit(1);
+});
