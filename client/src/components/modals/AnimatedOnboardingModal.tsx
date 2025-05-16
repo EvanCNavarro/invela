@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, CheckCircle, ArrowRight, ArrowDown } from 'lucide-react';
+import { 
+  AlertCircle, 
+  Check, 
+  CheckCircle, 
+  ArrowRight, 
+  ArrowDown, 
+  Loader2
+} from 'lucide-react';
+import { logDebug } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -293,6 +301,14 @@ export function AnimatedOnboardingModal({
   // Get toast function
   const { toast: toastFn } = useToast();
   
+  // Track loading state for operations
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [operationErrors, setOperationErrors] = useState<{
+    userStatus?: string;
+    companyDetails?: string;
+    teamInvites?: string[];
+  }>({});
+  
   // Reset state when modal is opened
   useEffect(() => {
     if (isOpen) {
@@ -399,53 +415,127 @@ export function AnimatedOnboardingModal({
   
   // Handle complete onboarding action
   const handleCompleteOnboarding = async () => {
+    // Don't proceed if already submitting
+    if (isSubmitting) return;
+    
+    // Reset previous errors
+    setOperationErrors({});
+    
+    // Start submission process
+    setIsSubmitting(true);
+    
+    // Track if any operation failed
+    let hasErrors = false;
+    
+    // Log the process for easier debugging
+    logDebug('Starting onboarding completion process', { 
+      hasUser: !!user, 
+      hasCompany: !!currentCompany,
+      companyInfo,
+      teamMembersCount: teamMembers.filter(m => m.fullName && isValidEmail(m.email)).length
+    });
+    
     try {
-      // Update user onboarding status
+      // 1. Update user onboarding status
       if (user && user.id) {
-        await updateUserOnboardingStatus(user.id, true);
+        try {
+          await updateUserOnboardingStatus(user.id, true);
+          logDebug('User onboarding status updated successfully', { userId: user.id });
+        } catch (error) {
+          logDebug('Failed to update user onboarding status', { error });
+          setOperationErrors(prev => ({ 
+            ...prev, 
+            userStatus: 'Failed to update user onboarding status. Please try again.' 
+          }));
+          hasErrors = true;
+        }
       }
       
-      // Update company details
+      // 2. Update company details
       if (currentCompany && currentCompany.id) {
-        await updateCompanyDetails(currentCompany.id, companyInfo);
+        try {
+          await updateCompanyDetails(currentCompany.id, companyInfo);
+          logDebug('Company details updated successfully', { companyId: currentCompany.id });
+        } catch (error) {
+          logDebug('Failed to update company details', { error });
+          setOperationErrors(prev => ({ 
+            ...prev, 
+            companyDetails: 'Failed to save company information. Please try again.' 
+          }));
+          hasErrors = true;
+        }
       }
       
-      // Invite team members (only those with valid entries)
+      // 3. Invite team members (only those with valid entries)
       if (currentCompany && currentCompany.id) {
         const validMembers = teamMembers.filter(
           member => member.fullName && isValidEmail(member.email)
         );
         
+        const inviteErrors: string[] = [];
+        
         for (const member of validMembers) {
-          await inviteTeamMember(currentCompany.id, {
-            fullName: member.fullName,
-            email: member.email,
-            role: member.role,
-          });
+          try {
+            await inviteTeamMember(currentCompany.id, {
+              fullName: member.fullName,
+              email: member.email,
+              role: member.role,
+            });
+            logDebug('Team member invited successfully', { 
+              email: member.email, 
+              role: member.role 
+            });
+          } catch (error) {
+            logDebug('Failed to invite team member', { 
+              member: member.email,
+              error 
+            });
+            inviteErrors.push(`Failed to invite ${member.email}. Please try again.`);
+            hasErrors = true;
+          }
+        }
+        
+        if (inviteErrors.length > 0) {
+          setOperationErrors(prev => ({ 
+            ...prev, 
+            teamInvites: inviteErrors 
+          }));
         }
       }
 
-      // Show success message
-      toastFn({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully.",
-        variant: "default"
-      });
-      
-      // Close modal
-      setShowModal(false);
+      // Check if we had any errors
+      if (hasErrors) {
+        // Show error message
+        toastFn({
+          title: "Onboarding incomplete",
+          description: "There were some issues completing your onboarding. Please review and try again.",
+          variant: "destructive"
+        });
+      } else {
+        // Show success message and close modal
+        toastFn({
+          title: "Welcome aboard!",
+          description: "Your onboarding has been completed successfully.",
+          variant: "default"
+        });
+        
+        // Only close the modal if everything was successful
+        setShowModal(false);
+      }
     } catch (error) {
-      console.error('[OnboardingModal] Error completing onboarding:', error);
+      // Handle any unexpected errors
+      logDebug('Unexpected error completing onboarding', { error });
       
-      // Still show success and close modal to prevent blocking user
       toastFn({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully.",
-        variant: "default"
+        title: "Onboarding incomplete",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
       });
       
-      // Close modal
-      setShowModal(false);
+      hasErrors = true;
+    } finally {
+      // Always set submitting to false when done
+      setIsSubmitting(false);
     }
   };
   
