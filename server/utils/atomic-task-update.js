@@ -1,8 +1,8 @@
 /**
  * Atomic Task Update Utility
  * 
- * This utility ensures that task status and progress are always updated
- * atomically to prevent inconsistencies in the system.
+ * This utility ensures that task status and progress are always updated atomically
+ * to prevent inconsistencies where one might be updated without the other.
  */
 
 const { db } = require('@db');
@@ -11,37 +11,77 @@ const { eq } = require('drizzle-orm');
 const { logger } = require('./logger');
 
 /**
- * Update a task's status and progress atomically
+ * Update a task's status and progress atomically in a single database operation
  * 
  * @param {number} taskId - The ID of the task to update
  * @param {string} status - The new status for the task
  * @param {number} progress - The new progress value (0-100)
- * @param {object} [metadata] - Optional metadata to include in the update
- * @returns {Promise<boolean>} - Success status of the update
+ * @param {object} [options] - Additional options
+ * @param {object} [options.metadata] - Optional metadata to include in the update
+ * @param {boolean} [options.enforceConsistency=true] - Enforce consistency between status and progress
+ * @param {boolean} [options.setCompletionDate=true] - Automatically set completion_date for submitted tasks
+ * @param {string} [options.source] - Source of the update for logging purposes
+ * @returns {Promise<{success: boolean, message?: string, updatedTask?: object}>}
  */
-async function updateTaskAtomically(taskId, status, progress, metadata = {}) {
+async function updateTaskStatusAndProgress(taskId, status, progress, options = {}) {
+  const {
+    metadata = {},
+    enforceConsistency = true,
+    setCompletionDate = true,
+    source = 'atomic-update-util'
+  } = options;
+  
+  logger.info('[AtomicUpdate] Starting atomic task update', {
+    taskId,
+    status,
+    progress,
+    source,
+    hasMetadata: Object.keys(metadata).length > 0
+  });
+  
   try {
     // Input validation
     if (!taskId || isNaN(taskId)) {
-      logger.error('[Atomic Update] Invalid task ID provided', { taskId });
-      return false;
+      logger.error('[AtomicUpdate] Invalid task ID', { taskId, source });
+      return { success: false, message: 'Invalid task ID' };
     }
     
-    // Enforce consistency rules
-    if (status === 'submitted' && progress !== 100) {
-      logger.warn('[Atomic Update] Auto-correcting progress to 100% for submitted status', {
-        taskId,
-        originalProgress: progress
-      });
-      progress = 100;
+    if (!status) {
+      logger.error('[AtomicUpdate] Missing status', { taskId, source });
+      return { success: false, message: 'Status is required' };
     }
     
-    if (progress === 100 && status !== 'submitted') {
-      logger.warn('[Atomic Update] Auto-correcting status to submitted for 100% progress', {
-        taskId,
-        originalStatus: status
-      });
-      status = 'submitted';
+    if (progress < 0 || progress > 100 || isNaN(progress)) {
+      logger.error('[AtomicUpdate] Invalid progress value', { taskId, progress, source });
+      return { success: false, message: 'Progress must be a number between 0 and 100' };
+    }
+    
+    // Enforce consistency rules if enabled
+    if (enforceConsistency) {
+      const originalStatus = status;
+      const originalProgress = progress;
+      
+      // Rule 1: 'submitted' status must have 100% progress
+      if (status === 'submitted' && progress !== 100) {
+        progress = 100;
+        logger.warn('[AtomicUpdate] Auto-corrected progress to 100% for submitted status', { 
+          taskId, 
+          originalProgress,
+          correctedProgress: progress,
+          source
+        });
+      }
+      
+      // Rule 2: 100% progress should use 'submitted' status
+      if (progress === 100 && status !== 'submitted') {
+        status = 'submitted';
+        logger.warn('[AtomicUpdate] Auto-corrected status to submitted for 100% progress', { 
+          taskId, 
+          originalStatus,
+          correctedStatus: status,
+          source
+        });
+      }
     }
     
     // Get current task to preserve existing data
@@ -50,11 +90,11 @@ async function updateTaskAtomically(taskId, status, progress, metadata = {}) {
       .where(eq(tasks.id, taskId));
     
     if (!currentTask) {
-      logger.error('[Atomic Update] Task not found', { taskId });
-      return false;
+      logger.error('[AtomicUpdate] Task not found', { taskId, source });
+      return { success: false, message: 'Task not found' };
     }
     
-    // Prepare update
+    // Prepare update data
     const now = new Date();
     const updateData = {
       status,
@@ -62,13 +102,13 @@ async function updateTaskAtomically(taskId, status, progress, metadata = {}) {
       updated_at: now
     };
     
-    // Set completion date for submitted tasks
-    if (status === 'submitted') {
+    // Set completion date for submitted tasks if enabled
+    if (setCompletionDate && status === 'submitted') {
       updateData.completion_date = now;
     }
     
     // Merge metadata if provided
-    if (metadata && Object.keys(metadata).length > 0) {
+    if (Object.keys(metadata).length > 0) {
       updateData.metadata = {
         ...(currentTask.metadata || {}),
         ...metadata,
@@ -84,136 +124,236 @@ async function updateTaskAtomically(taskId, status, progress, metadata = {}) {
       }
     }
     
-    // Perform the atomic update
+    // Log the update we're about to perform
+    logger.info('[AtomicUpdate] Performing atomic update', {
+      taskId,
+      status,
+      progress,
+      metadata: Object.keys(updateData.metadata || {}),
+      source
+    });
+    
+    // Perform the atomic update in a single database operation
     await db.update(tasks)
       .set(updateData)
       .where(eq(tasks.id, taskId));
     
-    // Verify update
-    const [updatedTask] = await db.select({
-      id: tasks.id,
-      status: tasks.status,
-      progress: tasks.progress
-    })
-    .from(tasks)
-    .where(eq(tasks.id, taskId));
+    // Verify the update
+    const [updatedTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
     
+    // Check if update was successful
     const success = 
       updatedTask.status === status && 
       updatedTask.progress === progress;
     
     if (!success) {
-      logger.error('[Atomic Update] Verification failed - task state not updated correctly', {
+      logger.error('[AtomicUpdate] Verification failed - task state not updated correctly', {
         taskId,
         expected: { status, progress },
-        actual: { status: updatedTask.status, progress: updatedTask.progress }
+        actual: { status: updatedTask.status, progress: updatedTask.progress },
+        source
       });
-      return false;
+      
+      return { 
+        success: false, 
+        message: 'Update verification failed',
+        updatedTask
+      };
     }
     
-    logger.info('[Atomic Update] Task successfully updated', {
+    logger.info('[AtomicUpdate] Task successfully updated', {
       taskId,
       status,
       progress,
       previousStatus: currentTask.status,
-      previousProgress: currentTask.progress
+      previousProgress: currentTask.progress,
+      source
     });
     
-    return true;
+    return { 
+      success: true, 
+      message: 'Task updated successfully',
+      updatedTask
+    };
   } catch (error) {
-    logger.error('[Atomic Update] Error updating task', {
+    logger.error('[AtomicUpdate] Error updating task', {
       taskId,
       status,
       progress,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      source
     });
-    return false;
+    
+    return { 
+      success: false, 
+      message: `Update failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
   }
 }
 
 /**
- * Mark a task as submitted
+ * Mark a task as submitted with 100% progress
  * 
  * @param {number} taskId - The ID of the task to mark as submitted
- * @param {object} [metadata] - Optional metadata to include in the update
- * @returns {Promise<boolean>} - Success status of the update
+ * @param {object} [options] - Additional options
+ * @param {object} [options.metadata] - Optional metadata to include
+ * @param {string} [options.source] - Source of the update for logging
+ * @returns {Promise<{success: boolean, message?: string, updatedTask?: object}>}
  */
-async function markTaskAsSubmitted(taskId, metadata = {}) {
-  return updateTaskAtomically(taskId, 'submitted', 100, {
+async function markTaskAsSubmitted(taskId, options = {}) {
+  const { metadata = {}, source = 'mark-as-submitted' } = options;
+  
+  // Always include submission-specific metadata
+  const submissionMetadata = {
     ...metadata,
     submitted: true,
     completed: true,
     submissionDate: new Date().toISOString(),
     submission_date: new Date().toISOString()
+  };
+  
+  return updateTaskStatusAndProgress(taskId, 'submitted', 100, {
+    metadata: submissionMetadata,
+    source
   });
 }
 
 /**
- * Fix task status and progress inconsistencies
+ * Check if a task has consistent status and progress
  * 
- * @param {number} taskId - The ID of the task to fix
- * @returns {Promise<boolean>} - Success status of the fix
+ * @param {number} taskId - The ID of the task to check
+ * @returns {Promise<{consistent: boolean, task?: object, issues?: string[]}>}
  */
-async function fixTaskConsistency(taskId) {
+async function checkTaskConsistency(taskId) {
   try {
-    // Get current task state
-    const [task] = await db.select({
-      id: tasks.id,
-      status: tasks.status,
-      progress: tasks.progress,
-      metadata: tasks.metadata
-    })
-    .from(tasks)
-    .where(eq(tasks.id, taskId));
+    // Get the task
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
     
     if (!task) {
-      logger.error('[Task Fix] Task not found', { taskId });
-      return false;
+      return { consistent: false, issues: ['Task not found'] };
     }
+    
+    const issues = [];
     
     // Check for inconsistencies
-    let needsFix = false;
-    let fixType = null;
-    
     if (task.status === 'submitted' && task.progress !== 100) {
-      needsFix = true;
-      fixType = 'submitted_with_partial_progress';
-    } else if (task.progress === 100 && task.status !== 'submitted') {
-      needsFix = true;
-      fixType = 'complete_progress_with_wrong_status';
+      issues.push(`Task has 'submitted' status but progress is ${task.progress}% (should be 100%)`);
     }
     
-    if (needsFix) {
-      logger.warn('[Task Fix] Found inconsistent task', {
-        taskId,
-        status: task.status,
-        progress: task.progress,
-        fixType
-      });
-      
-      // Apply fix
-      return await markTaskAsSubmitted(taskId, task.metadata);
+    if (task.progress === 100 && task.status !== 'submitted') {
+      issues.push(`Task has 100% progress but status is '${task.status}' (should be 'submitted')`);
     }
     
-    // No fix needed
-    logger.info('[Task Fix] Task is consistent', {
-      taskId,
-      status: task.status,
-      progress: task.progress
-    });
-    
-    return true;
+    return {
+      consistent: issues.length === 0,
+      task,
+      issues: issues.length > 0 ? issues : undefined
+    };
   } catch (error) {
-    logger.error('[Task Fix] Error checking task consistency', {
+    logger.error('[AtomicUpdate] Error checking task consistency', {
       taskId,
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-    return false;
+    
+    return { 
+      consistent: false, 
+      issues: [`Error checking consistency: ${error instanceof Error ? error.message : 'Unknown error'}`]
+    };
   }
 }
 
+/**
+ * Fix inconsistencies in a task's status and progress
+ * 
+ * @param {number} taskId - The ID of the task to fix
+ * @returns {Promise<{success: boolean, message?: string, fixed?: boolean}>}
+ */
+async function fixTaskConsistency(taskId) {
+  try {
+    logger.info('[AtomicUpdate] Starting task consistency check', { taskId });
+    
+    // Check if the task is consistent
+    const check = await checkTaskConsistency(taskId);
+    
+    if (!check.task) {
+      return { success: false, message: 'Task not found', fixed: false };
+    }
+    
+    if (check.consistent) {
+      logger.info('[AtomicUpdate] Task is already consistent', { 
+        taskId,
+        status: check.task.status,
+        progress: check.task.progress
+      });
+      
+      return { success: true, message: 'Task is already consistent', fixed: false };
+    }
+    
+    // Fix the inconsistency
+    logger.warn('[AtomicUpdate] Fixing inconsistent task', { 
+      taskId,
+      currentStatus: check.task.status,
+      currentProgress: check.task.progress,
+      issues: check.issues
+    });
+    
+    // Determine the correct status and progress
+    let targetStatus = check.task.status;
+    let targetProgress = check.task.progress;
+    
+    if (check.task.status === 'submitted') {
+      // Case 1: submitted but progress < 100
+      targetProgress = 100;
+    } else if (check.task.progress === 100) {
+      // Case 2: 100% progress but not submitted
+      targetStatus = 'submitted';
+    }
+    
+    // Apply the fix
+    const result = await updateTaskStatusAndProgress(taskId, targetStatus, targetProgress, {
+      metadata: check.task.metadata,
+      source: 'consistency-fix'
+    });
+    
+    if (result.success) {
+      logger.info('[AtomicUpdate] Successfully fixed task consistency', {
+        taskId,
+        newStatus: targetStatus,
+        newProgress: targetProgress
+      });
+      
+      return { success: true, message: 'Task consistency fixed', fixed: true };
+    } else {
+      logger.error('[AtomicUpdate] Failed to fix task consistency', {
+        taskId,
+        error: result.message
+      });
+      
+      return { success: false, message: result.message, fixed: false };
+    }
+  } catch (error) {
+    logger.error('[AtomicUpdate] Error fixing task consistency', {
+      taskId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    
+    return { 
+      success: false, 
+      message: `Error fixing consistency: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      fixed: false
+    };
+  }
+}
+
+// Export functions for use in other modules
 module.exports = {
-  updateTaskAtomically,
+  updateTaskStatusAndProgress,
   markTaskAsSubmitted,
+  checkTaskConsistency,
   fixTaskConsistency
 };
