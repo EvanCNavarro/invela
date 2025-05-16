@@ -1,202 +1,280 @@
 /**
- * Task Status Fix Route
+ * Task Status Fix Endpoint
  * 
- * This route provides a direct API endpoint to fix specific task status issues:
- * 1. KY3P task (#883) showing "Submitted" status but 0% progress - updates to 100% progress
- * 2. Open Banking task (#884) showing "Ready for Submission" when it should be "Submitted"
+ * This endpoint provides a unified way to fix inconsistent task status and progress.
+ * It ensures that tasks with status "submitted" always have progress = 100% and vice versa.
  */
 
-import { Router } from 'express';
+import { Request, Response } from 'express';
 import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { broadcast } from '../utils/unified-websocket';
-import { requireAuth } from '../middleware/auth';
-
-const router = Router();
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 /**
- * Apply fixes to specific task status/progress issues
+ * Fix task status and progress inconsistencies
+ * 
+ * This function ensures that if a task has:
+ * - status = "submitted" but progress < 100: update progress to 100%
+ * - progress = 100% but status != "submitted": update status to "submitted"
+ * 
+ * It also ensures the correct metadata is set in both cases.
  */
-router.post('/api/fix-task-status/:taskId', requireAuth, async (req, res) => {
-  try {
-    const { taskId } = req.params;
-    const parsedTaskId = parseInt(taskId);
-    
-    if (isNaN(parsedTaskId)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid task ID' 
-      });
-    }
-    
-    logger.info('Starting task status/progress fix...', { taskId: parsedTaskId });
-    const now = new Date();
-    
-    // Get current task information
-    const [currentTask] = await db.select().from(tasks).where(eq(tasks.id, parsedTaskId));
-    
-    if (!currentTask) {
-      return res.status(404).json({
-        success: false,
-        error: `Task with ID ${parsedTaskId} not found`
-      });
-    }
-    
-    logger.info('Found task to fix:', {
-      taskId: parsedTaskId,
-      taskType: currentTask.task_type,
-      currentStatus: currentTask.status,
-      currentProgress: currentTask.progress
-    });
-    
-    // Apply specific fixes based on task type
-    if (currentTask.task_type === 'ky3p' || currentTask.task_type === 'sp_ky3p_assessment') {
-      // Fix KY3P task - ensure it has 100% progress with "submitted" status
-      logger.info('Fixing KY3P task...', { taskId: parsedTaskId });
-      
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          progress: 100,
-          completion_date: now,
-          updated_at: now,
-          metadata: {
-            ...currentTask.metadata,
-            submittedAt: now.toISOString(),
-            submissionDate: now.toISOString(),
-            submitted: true,
-            completed: true
-          }
-        })
-        .where(eq(tasks.id, parsedTaskId));
-        
-      // Broadcast the update
-      broadcast('task_updated', {
-        id: parsedTaskId,
-        status: 'submitted',
-        progress: 100,
-        metadata: {
-          submitted: true,
-          submissionDate: now.toISOString()
-        }
-      });
-      
-      logger.info('Successfully fixed KY3P task status and progress', { 
-        taskId: parsedTaskId, 
-        newStatus: 'submitted', 
-        newProgress: 100 
-      });
-      
-      return res.json({
-        success: true,
-        message: `Fixed KY3P task #${parsedTaskId}: Status set to "submitted" and progress set to 100%`,
-        task: {
-          id: parsedTaskId,
-          status: 'submitted',
-          progress: 100
-        }
-      });
-    } 
-    else if (currentTask.task_type === 'open_banking') {
-      // Fix Open Banking task - change status from "ready_for_submission" to "submitted"
-      logger.info('Fixing Open Banking task...', { taskId: parsedTaskId });
-      
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          progress: 100,
-          completion_date: now,
-          updated_at: now,
-          metadata: {
-            ...currentTask.metadata,
-            submittedAt: now.toISOString(),
-            submissionDate: now.toISOString(),
-            submitted: true,
-            completed: true,
-            explicitlySubmitted: true
-          }
-        })
-        .where(eq(tasks.id, parsedTaskId));
-        
-      // Broadcast the update
-      broadcast('task_updated', {
-        id: parsedTaskId,
-        status: 'submitted',
-        progress: 100,
-        metadata: {
-          submitted: true,
-          submissionDate: now.toISOString()
-        }
-      });
-      
-      logger.info('Successfully fixed Open Banking task status', { 
-        taskId: parsedTaskId, 
-        newStatus: 'submitted', 
-        newProgress: 100 
-      });
-      
-      return res.json({
-        success: true,
-        message: `Fixed Open Banking task #${parsedTaskId}: Status changed to "submitted"`,
-        task: {
-          id: parsedTaskId,
-          status: 'submitted',
-          progress: 100
-        }
-      });
-    } 
-    else {
-      // Generic fix for any other task type
-      logger.info('Applying generic fix to task...', { 
-        taskId: parsedTaskId, 
-        taskType: currentTask.task_type 
-      });
-      
-      await db.update(tasks)
-        .set({
-          status: 'submitted',
-          progress: 100,
-          completion_date: now,
-          updated_at: now
-        })
-        .where(eq(tasks.id, parsedTaskId));
-        
-      // Broadcast the update
-      broadcast('task_updated', {
-        id: parsedTaskId,
-        status: 'submitted',
-        progress: 100
-      });
-      
-      logger.info('Applied generic fix to task', { 
-        taskId: parsedTaskId, 
-        newStatus: 'submitted', 
-        newProgress: 100 
-      });
-      
-      return res.json({
-        success: true,
-        message: `Applied generic fix to task #${parsedTaskId}: Status set to "submitted" and progress set to 100%`,
-        task: {
-          id: parsedTaskId,
-          status: 'submitted',
-          progress: 100
-        }
-      });
-    }
-  } catch (error) {
-    logger.error('Error fixing task issues:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    return res.status(500).json({
-      success: false,
-      error: 'Error fixing task issues: ' + (error instanceof Error ? error.message : 'Unknown error')
+export async function fixTaskStatus(req: Request, res: Response) {
+  const { taskId } = req.params;
+  
+  if (!taskId || isNaN(Number(taskId))) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid task ID' 
     });
   }
-});
 
-export default router;
+  const taskIdNum = Number(taskId);
+  const logContext = { taskId: taskIdNum };
+
+  try {
+    // 1. Get current task state
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskIdNum));
+    
+    if (!task) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `Task with ID ${taskId} not found` 
+      });
+    }
+
+    logger.info('Current task state', {
+      ...logContext,
+      status: task.status,
+      progress: task.progress,
+      metadata: task.metadata
+    });
+
+    // 2. Check for status/progress inconsistencies
+    let needsUpdate = false;
+    const now = new Date();
+    let updatedStatus = task.status;
+    let updatedProgress = task.progress;
+    let updatedMetadata = task.metadata || {};
+
+    // Check if task is submitted but progress is not 100%
+    if (task.status === 'submitted' && task.progress !== 100) {
+      updatedProgress = 100;
+      needsUpdate = true;
+      logger.info('Fixing submitted task with incorrect progress', {
+        ...logContext,
+        currentProgress: task.progress,
+        newProgress: 100
+      });
+    }
+
+    // Check if task is at 100% but not marked as submitted
+    if (task.progress === 100 && task.status !== 'submitted') {
+      updatedStatus = 'submitted';
+      needsUpdate = true;
+      logger.info('Fixing 100% progress task with incorrect status', {
+        ...logContext,
+        currentStatus: task.status,
+        newStatus: 'submitted'
+      });
+    }
+
+    // Update metadata if necessary
+    if (needsUpdate) {
+      // Ensure required metadata fields are set
+      updatedMetadata = {
+        ...updatedMetadata,
+        submissionDate: updatedMetadata.submissionDate || now.toISOString(),
+        submission_date: updatedMetadata.submission_date || now.toISOString(),
+        submitted: true,
+        completed: true,
+        lastUpdated: now.toISOString()
+      };
+
+      // 3. Update the task with consistent values
+      await db.update(tasks)
+        .set({
+          status: updatedStatus,
+          progress: updatedProgress,
+          completion_date: task.completion_date || now,
+          updated_at: now,
+          metadata: updatedMetadata
+        })
+        .where(eq(tasks.id, taskIdNum));
+
+      logger.info('Fixed task status/progress inconsistency', {
+        ...logContext,
+        status: updatedStatus,
+        progress: updatedProgress,
+        updatedAt: now.toISOString()
+      });
+
+      // 4. Broadcast update to connected clients
+      await broadcastTaskUpdate({
+        id: taskIdNum,
+        status: updatedStatus,
+        progress: updatedProgress,
+        metadata: {
+          ...updatedMetadata,
+          lastUpdated: now.toISOString()
+        }
+      });
+
+      logger.info('Broadcast task update to connected clients', logContext);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Task status and progress synchronized successfully',
+        task: {
+          id: taskIdNum,
+          status: updatedStatus,
+          progress: updatedProgress,
+          metadata: updatedMetadata
+        }
+      });
+    }
+
+    // No updates needed
+    return res.status(200).json({
+      success: true,
+      message: 'Task status and progress are already consistent',
+      task: {
+        id: taskIdNum,
+        status: task.status,
+        progress: task.progress,
+        metadata: task.metadata
+      }
+    });
+  } catch (error) {
+    logger.error('Error fixing task status', {
+      ...logContext,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: 'An error occurred while fixing the task status',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
+/**
+ * Batch fix tasks with status/progress inconsistencies
+ */
+export async function batchFixTasks(req: Request, res: Response) {
+  const { taskIds } = req.body;
+  
+  if (!Array.isArray(taskIds) || taskIds.length === 0) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Invalid or empty task IDs array' 
+    });
+  }
+
+  const results: { 
+    taskId: number; 
+    success: boolean; 
+    message?: string; 
+    error?: string 
+  }[] = [];
+
+  for (const taskId of taskIds) {
+    try {
+      // 1. Get current task state
+      const [task] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, taskId));
+      
+      if (!task) {
+        results.push({
+          taskId,
+          success: false,
+          error: `Task with ID ${taskId} not found`
+        });
+        continue;
+      }
+
+      // 2. Check for status/progress inconsistencies
+      let needsUpdate = false;
+      const now = new Date();
+      let updatedStatus = task.status;
+      let updatedProgress = task.progress;
+      let updatedMetadata = task.metadata || {};
+
+      // Check if task is submitted but progress is not 100%
+      if (task.status === 'submitted' && task.progress !== 100) {
+        updatedProgress = 100;
+        needsUpdate = true;
+      }
+
+      // Check if task is at 100% but not marked as submitted
+      if (task.progress === 100 && task.status !== 'submitted') {
+        updatedStatus = 'submitted';
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        // Ensure required metadata fields are set
+        updatedMetadata = {
+          ...updatedMetadata,
+          submissionDate: updatedMetadata.submissionDate || now.toISOString(),
+          submission_date: updatedMetadata.submission_date || now.toISOString(),
+          submitted: true,
+          completed: true,
+          lastUpdated: now.toISOString()
+        };
+
+        // 3. Update the task with consistent values
+        await db.update(tasks)
+          .set({
+            status: updatedStatus,
+            progress: updatedProgress,
+            completion_date: task.completion_date || now,
+            updated_at: now,
+            metadata: updatedMetadata
+          })
+          .where(eq(tasks.id, taskId));
+
+        // 4. Broadcast update to connected clients
+        await broadcastTaskUpdate({
+          id: taskId,
+          status: updatedStatus,
+          progress: updatedProgress,
+          metadata: {
+            ...updatedMetadata,
+            lastUpdated: now.toISOString()
+          }
+        });
+
+        results.push({
+          taskId,
+          success: true,
+          message: 'Task status and progress synchronized successfully'
+        });
+      } else {
+        results.push({
+          taskId,
+          success: true,
+          message: 'Task status and progress are already consistent'
+        });
+      }
+    } catch (error) {
+      results.push({
+        taskId,
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    results
+  });
+}

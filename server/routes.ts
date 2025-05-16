@@ -49,7 +49,7 @@ import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 // Import enhanced Open Banking routes with improved reliability
 import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 // Import the task fix route to correct status/progress issues
-import taskFixRouter from './routes/task-fix';
+import { fixTaskStatus, batchFixTasks } from './routes/task-fix';
 // Import manual KY3P fix route for direct recalculation of KY3P task progress
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
@@ -129,7 +129,6 @@ export function invalidateCompanyCache(companyId: number) {
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
-  app.use(taskFixRouter);
   
   // Register KYB progress route with status update support
   const kybProgressRouter = Router();
@@ -139,6 +138,10 @@ export function registerRoutes(app: Express): Express {
   // Register KYB timestamps route for field-level timestamp support
   app.use('/api/kyb/timestamps', kybTimestampRouter);
   
+  // Register task fix routes for fixing inconsistent task status/progress
+  app.get('/api/task-fix/:taskId', requireAuth, fixTaskStatus);
+  app.post('/api/task-fix/batch', requireAuth, batchFixTasks);
+
   // Critical fix: Add a redirect handler for KY3P tasks that are being queried 
   // through the KYB endpoint to resolve the form loading issue
   app.get('/api/kyb/progress/:taskId', requireAuth, async (req, res, next) => {
