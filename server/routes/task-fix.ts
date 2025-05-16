@@ -19,7 +19,7 @@ const router = Router();
 /**
  * Apply fixes to specific task status/progress issues
  */
-router.post('/fix-task-status/:taskId', requireAuth, async (req, res) => {
+router.post('/api/fix-task-status/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
     const parsedTaskId = parseInt(taskId);
