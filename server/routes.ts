@@ -129,6 +129,7 @@ export function invalidateCompanyCache(companyId: number) {
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
+  app.use(taskFixRouter);
   
   // Register KYB progress route with status update support
   const kybProgressRouter = Router();
