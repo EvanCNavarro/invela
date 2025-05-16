@@ -740,6 +740,65 @@ export function registerRoutes(app: Express): Express {
 
   // Use the company cache exported from the top-level of this file
   
+  // PATCH endpoint for updating the current company's details
+  app.patch("/api/companies/current", requireAuth, async (req, res) => {
+    try {
+      const companyId = req.user.company_id;
+      
+      if (!companyId) {
+        return res.status(400).json({ 
+          message: "User is not associated with a company",
+          code: "NO_COMPANY"
+        });
+      }
+      
+      console.log(`[Company API] Updating company ${companyId} with data:`, req.body);
+      
+      // Get allowed fields from request body
+      const updateData: Partial<typeof companies.$inferInsert> = {};
+      
+      // Extract only the fields we want to allow updating
+      if (req.body.revenue !== undefined) updateData.revenue = req.body.revenue;
+      if (req.body.revenue_tier !== undefined) updateData.revenue_tier = req.body.revenue_tier;
+      if (req.body.num_employees !== undefined) updateData.num_employees = req.body.num_employees;
+      
+      console.log(`[Company API] Processed update data:`, updateData);
+      
+      // Update company record
+      const [updatedCompany] = await db.update(companies)
+        .set({
+          ...updateData,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning();
+        
+      if (!updatedCompany) {
+        return res.status(404).json({
+          message: "Company not found or update failed",
+          code: "UPDATE_FAILED"
+        });
+      }
+      
+      // Invalidate the company cache to ensure fresh data
+      invalidateCompanyCache(companyId);
+      
+      console.log(`[Company API] Successfully updated company ${companyId}`);
+      
+      return res.json({
+        success: true,
+        message: "Company updated successfully",
+        data: updatedCompany
+      });
+    } catch (error) {
+      console.error('[Company API] Error updating company:', error);
+      return res.status(500).json({
+        message: "Failed to update company",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+  
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       const now = Date.now();
