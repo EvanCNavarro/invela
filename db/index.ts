@@ -6,14 +6,14 @@ import * as timestampSchema from "./schema-timestamps";
 
 neonConfig.webSocketConstructor = ws;
 
-// Connection pooling optimization with rate limiting considerations
+// Connection pooling optimization with extreme rate limiting considerations
 const MAX_CONNECTION_RETRIES = 5; // Increased max retries
-const INITIAL_RETRY_DELAY = 2000; // 2 seconds initial delay
-const POOL_SIZE = 2; // Reduced pool size to stay below Neon rate limits
-const IDLE_TIMEOUT = 120000; // Extended to 2 minutes to reduce connection cycling
-const MAX_USES = 5000; // Reduced to create fewer new connections
-const CONNECTION_TIMEOUT = 90000; // Extended to 90 seconds for slow connections
-const RATE_LIMIT_BACKOFF = 5000; // 5 second backoff for rate limit errors
+const INITIAL_RETRY_DELAY = 3000; // 3 seconds initial delay
+const POOL_SIZE = 1; // Minimal pool size to strictly prevent rate limits
+const IDLE_TIMEOUT = 300000; // Extended to 5 minutes to minimize connection cycling
+const MAX_USES = 10000; // Increased to reduce connection creation frequency
+const CONNECTION_TIMEOUT = 120000; // Extended to 2 minutes for slow connections
+const RATE_LIMIT_BACKOFF = 8000; // 8 second backoff for rate limit errors
 
 if (!process.env.DATABASE_URL) {
   throw new Error(

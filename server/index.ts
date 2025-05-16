@@ -227,21 +227,27 @@ server.listen(PORT, HOST, async () => {
   // Log additional deployment information
   logDeploymentInfo(PORT, HOST);
   
-  // Run startup health checks
-  logger.info('Running startup health checks...');
-  const healthChecksPassed = await runStartupChecks();
-  
-  if (healthChecksPassed) {
-    logger.info('All startup health checks passed successfully.');
-    
-    // Start the periodic task reconciliation system
-    if (process.env.NODE_ENV !== 'test') {
-      logger.info('Starting periodic task reconciliation system...');
-      startPeriodicTaskReconciliation();
-      logger.info('Task reconciliation system initialized successfully');
-    }
-  } else {
-    logger.warn('Some startup health checks failed. Application may not function correctly.');
-    logger.warn('The application will continue running but may encounter database errors.');
+  // Start the periodic task reconciliation system directly
+  // Don't wait for health checks to avoid creating more rate limit issues
+  if (process.env.NODE_ENV !== 'test') {
+    logger.info('Starting periodic task reconciliation system...');
+    startPeriodicTaskReconciliation();
+    logger.info('Task reconciliation system initialized successfully');
   }
+  
+  // Run startup health checks in the background but don't block application startup
+  setTimeout(async () => {
+    try {
+      logger.info('Running background health checks...');
+      const healthChecksPassed = await runStartupChecks();
+      
+      if (healthChecksPassed) {
+        logger.info('All background health checks passed successfully.');
+      } else {
+        logger.warn('Some background health checks failed. Application may encounter database errors.');
+      }
+    } catch (error) {
+      logger.error('Error running background health checks', error);
+    }
+  }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
 });
