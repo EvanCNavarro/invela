@@ -7,7 +7,6 @@ import {
   ArrowDown, 
   Loader2
 } from 'lucide-react';
-import { logDebug } from '@/lib/logger';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -933,20 +932,57 @@ export function AnimatedOnboardingModal({
       case 6: // Complete
         return (
           <StepLayout
-            title="Ready to Begin"
-            imageSrc="/assets/welcome_7.png"
-            imageAlt="Ready to Begin"
+            headerChip="Step 7"
+            title="You're Ready to Begin!"
+            description="Your company has been set up successfully. Click 'Start' to begin using Invela Risk."
+            rightImageSrc="/assets/welcome_7.png"
           >
-            <div className="mt-0 space-y-4 text-center">
-              <div className="mx-auto mb-4">
-                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto border-4 border-green-200">
-                  <Check className="h-8 w-8 text-green-600" />
+            <div className="space-y-6 mt-6">
+              <p className="text-gray-600">
+                We've prepared the following tasks for you to get started:
+              </p>
+              
+              <div className="space-y-4">
+                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-blue-800">Know Your Business (KYB) Form</div>
+                  <div className="text-xs text-gray-500 mt-1">Basic information about your business operations and structure</div>
+                </div>
+                
+                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-blue-800">S&P KY3P Security Assessment</div>
+                  <div className="text-xs text-gray-500 mt-1">Industry-standard security questionnaire</div>
+                </div>
+                
+                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-blue-800">Open Banking Survey</div>
+                  <div className="text-xs text-gray-500 mt-1">Data access and sharing practices assessment</div>
                 </div>
               </div>
               
-              <p className="text-gray-700 mx-auto max-w-md">
-                Your company profile is now set up! To complete your accreditation process, you'll need to finish your assigned tasks, starting with the KYB Form.
-              </p>
+              {/* Error messages section */}
+              {(operationErrors.userStatus || operationErrors.companyDetails || (operationErrors.teamInvites && operationErrors.teamInvites.length > 0)) && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">There were errors completing your onboarding</h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        <ul className="list-disc pl-5 space-y-1">
+                          {operationErrors.userStatus && (
+                            <li>{operationErrors.userStatus}</li>
+                          )}
+                          {operationErrors.companyDetails && (
+                            <li>{operationErrors.companyDetails}</li>
+                          )}
+                          {operationErrors.teamInvites && operationErrors.teamInvites.map((error, index) => (
+                            <li key={index}>{error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </StepLayout>
         );
@@ -1013,11 +1049,27 @@ export function AnimatedOnboardingModal({
             <Button 
               type="button"
               onClick={handleNextStep}
-              disabled={!canProceed || isTransitioning}
+              disabled={!canProceed || isTransitioning || (currentStep === 6 && isSubmitting)}
               className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
             >
-              {currentStep === 6 ? 'Start' : 'Next'} 
-              {currentStep < 6 ? <ArrowRight className="ml-2 h-4 w-4" /> : <ArrowRight className="ml-2 h-4 w-4" />}
+              {currentStep === 6 ? (
+                isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting up...
+                  </>
+                ) : (
+                  <>
+                    Start 
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
           </div>
         </DialogFooter>
