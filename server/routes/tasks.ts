@@ -1675,6 +1675,30 @@ router.post('/api/tasks/:taskId/ky3p-submit-standard', requireAuth, async (req, 
       fileName
     });
     
+    // CRITICAL FIX: Ensure KY3P task status is set to 'submitted' with 100% progress
+    try {
+      await db.update(tasks)
+        .set({
+          status: 'submitted', // Use string literal to ensure exact value
+          progress: 100,
+          completion_date: new Date(),
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+        
+      logger.info('[KY3P Submission] Applied direct status fix to ensure proper submission', {
+        taskId,
+        status: 'submitted',
+        progress: 100
+      });
+    } catch (statusFixError) {
+      logger.error('[KY3P Submission] Failed to apply status fix', {
+        error: statusFixError instanceof Error ? statusFixError.message : 'Unknown error',
+        taskId
+      });
+      // Continue with the response even if the fix fails
+    }
+    
     logger.info('KY3P form submission completed with synchronous task unlocking', {
       taskId,
       companyId: task.company_id,
