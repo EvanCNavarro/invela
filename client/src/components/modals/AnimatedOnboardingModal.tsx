@@ -165,26 +165,39 @@ const StepImage: React.FC<{
 const StepLayout: React.FC<{ 
   title: string, 
   children: React.ReactNode, 
-  imageSrc: string, 
-  imageAlt: string 
+  imageSrc?: string, 
+  imageAlt?: string,
+  headerChip?: string,
+  description?: string,
+  rightImageSrc?: string
 }> = ({ 
   title, 
   children, 
   imageSrc, 
-  imageAlt 
+  imageAlt,
+  headerChip,
+  description,
+  rightImageSrc
 }) => {
   // Track image loading status
   const [imageLoaded, setImageLoaded] = useState(false);
   
+  // Determine which image source to use
+  const imgSrc = rightImageSrc || imageSrc;
+  
   // Preload image
   useEffect(() => {
+    if (!imgSrc) {
+      return;
+    }
+    
     const img = new Image();
     img.onload = () => setImageLoaded(true);
-    img.src = imageSrc;
+    img.src = imgSrc;
     
     // Log when image is loaded for debugging
-    logDebug(`Image loaded for step: ${title}`, { src: imageSrc });
-  }, [imageSrc, title]);
+    console.log(`[AnimatedOnboardingModal] Image loaded for step: ${title}`, { src: imgSrc });
+  }, [imgSrc, title]);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
@@ -208,11 +221,13 @@ const StepLayout: React.FC<{
       
       {/* Right side: Image with consistent container */}
       <RightImageContainer>
-        <StepImage 
-          src={imageSrc} 
-          alt={imageAlt}
-          isLoaded={imageLoaded} 
-        />
+        {imgSrc && (
+          <StepImage 
+            src={imgSrc} 
+            alt={imageAlt || title}
+            isLoaded={imageLoaded} 
+          />
+        )}
       </RightImageContainer>
     </div>
   );
@@ -1014,6 +1029,7 @@ export function AnimatedOnboardingModal({
       <DialogContent 
         className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col onboarding-modal"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        hideCloseButton={true}
       >
         <DialogTitle className="sr-only">Invela Onboarding Modal</DialogTitle>
         <DialogDescription className="sr-only">Complete the onboarding process to get started with the Invela platform</DialogDescription>
