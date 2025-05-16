@@ -71,7 +71,7 @@ export async function executeRawQuery<T = any>(
   return executeWithRetry(async () => {
     // Create the SQL query with proper parameter handling
     const sqlQuery = params.length > 0 
-      ? sql.raw(`${query}`, ...params) 
+      ? sql.raw(query, params) 
       : sql.raw(query);
       
     // Execute the query with retry capability
