@@ -68,7 +68,17 @@ export async function executeRawQuery<T = any>(
   query: string,
   params: any[] = []
 ): Promise<T> {
-  return executeWithRetry(() => db.execute(sql.raw(query, params)) as Promise<T>);
+  return executeWithRetry(async () => {
+    // Create the SQL query with proper parameter handling
+    const sqlQuery = params.length > 0 
+      ? sql.raw(`${query}`, ...params) 
+      : sql.raw(query);
+      
+    // Execute the query with retry capability
+    const result = await db.execute(sqlQuery);
+    // Use proper type conversion for query results
+    return result as unknown as T;
+  });
 }
 
 /**
