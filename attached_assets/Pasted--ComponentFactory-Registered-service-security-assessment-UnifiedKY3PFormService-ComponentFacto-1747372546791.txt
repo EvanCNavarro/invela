@@ -1,0 +1,145 @@
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-16T04:51:00.545Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-16T04:51:00.545Z] [App] Communication phase initializing 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-16T04:51:00.545Z] [App] Application ready for user interaction 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-16T04:51:00.545Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /task-center
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 200
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-16T04:51:00.741Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[ONBOARDING DEBUG] User object in AuthProvider changed: 
+Object {userId: 350, onboardingCompleted: false, typeOfOnboardingFlag: "boolean", timestamp: "2025-05-16T04:51:00.741Z"}
+[AnimatedOnboardingModal] Image loaded for step: Welcome to the Invela Trust Network 
+Object {src: "/assets/welcome_1.png"}
+[2025-05-16T04:51:00.758Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=297, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 297
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747371061006-ik8vjbj", timestamp: "2025-05-16T04:51:01.006Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-16T04:51:01.124Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747371061505-x7m7i1y", timestamp: "2025-05-16T04:51:01.506Z", message: "Connection established"}
+[2025-05-16T04:51:01.543Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747371062014-dhxbq8u", timestamp: "2025-05-16T04:51:02.014Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747371062531-9ipe4oe", timestamp: "2025-05-16T04:51:02.531Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-16T04:51:03.529Z] [WebSocket] WebSocket connection established 
+[2025-05-16T04:51:03.529Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-16T04:51:03.530Z] [WebSocket] Received message of type: connection_established 
+[2025-05-16T04:51:03.530Z] [WebSocket] WebSocket server connection confirmed with ID: client-1747371063533-z6oi3cs 
+[2025-05-16T04:51:03.892Z] [WebSocket] Sending authentication message 
+Object {userId: 350, companyId: 297, connectionId: "ws_1747371061543_nxjcn4c66", hasUserData: true, hasCompanyData: true}
+[2025-05-16T04:51:04.018Z] [WebSocket] Received message of type: authenticated 
+[2025-05-16T04:51:04.018Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-16T04:51:16.269Z", id: 867, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-16T04:51:16.269Z", id: 867, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-16T04:51:16.269Z", id: 867, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-16T04:51:16.268Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-16T04:51:16.268Z"}
+Invela Trust Network
+Invela Trust Network
+Dashboard
+Task Center
+4
+File Vault
+Insights
+
+Search Invela Trust Network...
+
+
+
+Need help?
+John Doe
+
+DevTest39
+
+Task Center
+Manage and track your company's tasks and submissions.
+
+Create Task
+
+My Tasks
+4
+
+For Others
+
+
+Sort By ID
+
+All Statuses
+
+All Task Types
+
+All Assignee Types
+4 tasks found
+ID	Task	Status	Progress	
+867	
+New User Invitation: 39@e.com
+Completed	
+100%
+Open menu
+868	
+1. KYB Form: DevTest39
+Not Started	
+0%
+Open menu
+869	
+2. S&P KY3P Security Assessment: DevTest39
+Not Started	
+0%
+Open menu
+870	
+3. Open Banking Survey: DevTest39
+Not Started	
+0%
+Open menu
+Invela Onboarding ModalComplete the onboarding process to get started with the Invela platform
+Onboarding Modal
+You're Ready to Begin!
+We've prepared the following tasks for you to get started:
+
+Know Your Business (KYB) Form
+Basic information about your business operations and structure
+S&P KY3P Security Assessment
+Industry-standard security questionnaire
+Open Banking Survey
+Data access and sharing practices assessment
+There were errors completing your onboarding
+Failed to save company information. Please try again.
+You're Ready to Begin!
+Back
+Start
