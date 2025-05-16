@@ -138,19 +138,19 @@ const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children
 
 // Component for consistent step image with loading indicator
 const StepImage: React.FC<{ 
-  src: string; 
-  alt: string;
+  src: string | undefined; 
+  alt: string | undefined;
   isLoaded: boolean;
 }> = ({ 
   src, 
-  alt,
+  alt = 'Onboarding step image',
   isLoaded
 }) => (
   <div className="w-[400px] h-[350px] relative flex items-center justify-center">
     {isLoaded ? (
       <img 
-        src={src} 
-        alt={alt}
+        src={src || ''} 
+        alt={alt || 'Onboarding step image'}
         className="w-full h-full object-contain rounded-lg"
       />
     ) : (
@@ -1029,7 +1029,6 @@ export function AnimatedOnboardingModal({
       <DialogContent 
         className="max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col onboarding-modal"
         onOpenAutoFocus={(e) => e.preventDefault()}
-        hideCloseButton={true}
       >
         <DialogTitle className="sr-only">Invela Onboarding Modal</DialogTitle>
         <DialogDescription className="sr-only">Complete the onboarding process to get started with the Invela platform</DialogDescription>
