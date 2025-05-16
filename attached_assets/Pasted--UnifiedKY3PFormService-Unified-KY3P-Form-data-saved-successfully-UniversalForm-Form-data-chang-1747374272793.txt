@@ -1,0 +1,90 @@
+[UnifiedKY3PFormService] [Unified KY3P] Form data saved successfully
+[UniversalForm] Form data changed: 120 fields
+[UniversalForm] [SectionMapping] Form type: ky3p
+[UniversalForm] [SectionMapping] Fields total: 120
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[UnifiedKY3PFormService] [Unified KY3P] Saving form data for task 873
+[UnifiedKY3PFormService] [Unified KY3P] Bulk updating 123 fields for task 873
+[UnifiedKY3PFormService] [Unified KY3P] Loaded form data with 123 entries
+[UnifiedKY3PFormService] [Unified KY3P] Sending standardized batch update for 120 fields
+[UnifiedKY3PFormService] [Unified KY3P] Batch Update Payload: 
+Object {payloadType: "object", hasResponsesObject: true, responseKeysCount: 120, sampleKeys: Array(5)}
+[2025-05-16T05:43:39.245Z] [INFO] Cleaned up form fields listener for task 873 undefined
+[2025-05-16T05:43:39.245Z] [INFO] Setting up form fields listener for task 873 (ky3p) undefined
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Starting section status calculation 
+Object {timestamp: "2025-05-16T05:43:39.245Z", sectionCount: 4, hasValues: true, valueCount: 123}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Processing section "Development" 
+Object {sectionId: "Development", fieldCount: 31, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Section "Development" fields 
+Object {fieldCount: 31, fields: Array(31)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Processing section "Governance" 
+Object {sectionId: "Governance", fieldCount: 30, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Section "Governance" fields 
+Object {fieldCount: 30, fields: Array(30)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Processing section "Resilience" 
+Object {sectionId: "Resilience", fieldCount: 27, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Section "Resilience" fields 
+Object {fieldCount: 27, fields: Array(27)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Processing section "Security" 
+Object {sectionId: "Security", fieldCount: 32, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219245_sncd0] Section "Security" fields 
+Object {fieldCount: 32, fields: Array(32)}
+[TaskPage] Form progress updated: 100%
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 873 (ky3p) with fileId: none
+[UniversalForm] Form data changed: 120 fields
+[UniversalForm] [SectionMapping] Form type: ky3p
+[UniversalForm] [SectionMapping] Fields total: 120
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:43:39.252Z] [INFO] Cleaned up form fields listener for task 873 undefined
+[2025-05-16T05:43:39.252Z] [INFO] Setting up form fields listener for task 873 (ky3p) undefined
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Starting section status calculation 
+Object {timestamp: "2025-05-16T05:43:39.252Z", sectionCount: 4, hasValues: true, valueCount: 123}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Processing section "Development" 
+Object {sectionId: "Development", fieldCount: 31, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Section "Development" fields 
+Object {fieldCount: 31, fields: Array(31)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Processing section "Governance" 
+Object {sectionId: "Governance", fieldCount: 30, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Section "Governance" fields 
+Object {fieldCount: 30, fields: Array(30)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Processing section "Resilience" 
+Object {sectionId: "Resilience", fieldCount: 27, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Section "Resilience" fields 
+Object {fieldCount: 27, fields: Array(27)}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Processing section "Security" 
+Object {sectionId: "Security", fieldCount: 32, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747374219252_1j8xl] Section "Security" fields 
+Object {fieldCount: 32, fields: Array(32)}
+[TaskPage] Form progress updated: 100%
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 873 (ky3p) with fileId: none
+[UniversalForm] [SectionMapping] Form type: ky3p
+[UniversalForm] [SectionMapping] Fields total: 120
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:43:39.267Z] [INFO] Cleaned up form fields listener for task 873 undefined
+[2025-05-16T05:43:39.267Z] [INFO] Setting up form fields listener for task 873 (ky3p) undefined
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 873 (ky3p) with fileId: none
+[UniversalForm] [SectionMapping] Form type: ky3p
+[UniversalForm] [SectionMapping] Fields total: 120
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:43:39.844Z] [INFO] Cleaned up form fields listener for task 873 undefined
+[2025-05-16T05:43:39.844Z] [INFO] Setting up form fields listener for task 873 (ky3p) undefined
+[UniversalForm] Form data changed: 120 fields
+[UniversalForm] [SectionMapping] Form type: ky3p
+[UniversalForm] [SectionMapping] Fields total: 120
+[UniversalForm] [SectionMapping] Sections total: 4
