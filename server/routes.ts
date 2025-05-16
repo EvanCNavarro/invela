@@ -141,6 +141,9 @@ export function registerRoutes(app: Express): Express {
   // Register task fix routes for fixing inconsistent task status/progress
   app.get('/api/task-fix/:taskId', requireAuth, fixTaskStatus);
   app.post('/api/task-fix/batch', requireAuth, batchFixTasks);
+  
+  // Register task consistency check comment (implementation will be added later if needed)
+  console.log('[Routes] Task consistency is enforced in form-submission-handler.ts');
 
   // Critical fix: Add a redirect handler for KY3P tasks that are being queried 
   // through the KYB endpoint to resolve the form loading issue

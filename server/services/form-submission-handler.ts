@@ -88,12 +88,21 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       formType
     });
     
-    // ATOMIC UPDATE: Always ensure progress is set to 100% for submitted tasks
-    // This is the critical fix to prevent status/progress inconsistencies
+    // ATOMIC UPDATE: Always ensure status and progress are updated together
+    // This is the critical fix to prevent inconsistencies between status and progress
+    logger.info('[AtomicUpdate] Performing synchronized status/progress update', {
+      taskId,
+      status: 'submitted',
+      progress: 100,
+      timestamp: now.toISOString()
+    });
+    
+    // The key is that both status and progress are set in a single database operation
+    // so they can never get out of sync with each other
     await db.update(tasks)
       .set({
-        status: 'submitted',
-        progress: 100,           // Ensure progress is explicitly set to 100%
+        status: 'submitted',     // Always submitted when a form is completed
+        progress: 100,           // Always 100% when submitted for consistency
         metadata: updatedMetadata,
         completion_date: now,    // Set completion date for submitted tasks
         updated_at: now
@@ -121,7 +130,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     
     // Double-check if the update was successful and apply fix if needed
     if (verifiedTask.status !== 'submitted' || verifiedTask.progress !== 100) {
-      logger.warn('Task not properly updated after submission, applying direct fix', {
+      logger.warn('[AtomicUpdate] Task not properly updated after submission, applying direct fix', {
         taskId,
         formType,
         currentStatus: verifiedTask.status,
@@ -132,7 +141,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         }
       });
       
-      // Apply direct fix if needed
+      // Apply direct fix if needed - in a single atomic operation to prevent inconsistencies
       await db.update(tasks)
         .set({
           status: 'submitted',
@@ -142,17 +151,54 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         })
         .where(eq(tasks.id, taskId));
       
-      logger.info('Applied direct fix for task status/progress', { taskId, formType });
+      logger.info('[AtomicUpdate] Applied direct fix for task status/progress consistency', { 
+        taskId, 
+        formType, 
+        timestamp: new Date().toISOString() 
+      });
+      
+      // Perform a final verification
+      const [finalVerification] = await db.select({
+        id: tasks.id,
+        status: tasks.status,
+        progress: tasks.progress
+      })
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+      
+      if (finalVerification.status !== 'submitted' || finalVerification.progress !== 100) {
+        // This should never happen, but log it if it does
+        logger.error('[AtomicUpdate] Critical error: Task still inconsistent after fixes', {
+          taskId,
+          status: finalVerification.status,
+          progress: finalVerification.progress,
+          formType
+        });
+      } else {
+        logger.info('[AtomicUpdate] Task consistency verification passed', {
+          taskId,
+          status: finalVerification.status,
+          progress: finalVerification.progress
+        });
+      }
+    } else {
+      logger.info('[AtomicUpdate] Task initial consistency verification passed', {
+        taskId,
+        status: verifiedTask.status,
+        progress: verifiedTask.progress
+      });
     }
     
     // 3. Broadcast the task update via WebSocket with enhanced submission metadata
     try {
       logger.info('Sending WebSocket notification for task submission', { taskId });
       
+      // Broadcast task update with consistent status and progress
+      // This is critical for real-time UI updates to show correct task state
       await broadcastTaskUpdate({
         taskId,
-        status: 'submitted',
-        progress: 100,
+        status: 'submitted',  // Always submitted when completed
+        progress: 100,        // Always 100% when submitted 
         metadata: {
           lastUpdated: now.toISOString(),
           submittedAt: now.toISOString(),
@@ -160,7 +206,10 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
           submittedBy: userId,
           status: 'submitted',
           explicitlySubmitted: explicitSubmission,
-          locked: true
+          locked: true,
+          // Include additional metadata to track atomic updates
+          atomicUpdateApplied: true,
+          atomicUpdateTimestamp: now.toISOString()
         }
       });
       
