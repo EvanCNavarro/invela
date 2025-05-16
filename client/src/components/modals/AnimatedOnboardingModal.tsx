@@ -27,21 +27,163 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/no-close-dialog';
 import { useToast } from '@/hooks/use-toast';
-// Mock functions for API calls and contexts
-// In a production environment, these would be actual API calls
+// Map company size values to employee count
+const employeeCountMap = {
+  'small': 25, // middle of 1-49
+  'medium': 150, // middle of 50-249
+  'large': 625, // middle of 250-999
+  'xlarge': 1500 // representative value for 1000+
+};
+
+/**
+ * Update user onboarding status in the database
+ * Marks a user's onboarding as complete to prevent showing the modal again
+ * 
+ * @param userId The ID of the user to update
+ * @param status Boolean indicating if onboarding is complete (true) or not (false)
+ * @returns Response data from the API
+ */
 const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
-  console.log('Updating user onboarding status', { userId, status });
-  return { success: true };
+  logDebug('Updating user onboarding status', { userId, status });
+  
+  try {
+    const response = await fetch('/api/user/complete-onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      logDebug('Failed to update user onboarding status', { 
+        userId, 
+        status, 
+        errorData, 
+        statusCode: response.status 
+      });
+      throw new Error(errorData.message || 'Failed to update user onboarding status');
+    }
+    
+    const data = await response.json();
+    logDebug('Successfully updated user onboarding status', { userId, data });
+    return data;
+  } catch (error) {
+    logDebug('Error updating user onboarding status', { userId, error });
+    throw error;
+  }
 };
 
+/**
+ * Update company details in the database
+ * Saves company information collected during onboarding
+ * 
+ * @param companyId The ID of the company to update
+ * @param details Object containing company details (size, revenue)
+ * @returns Response data from the API
+ */
 const updateCompanyDetails = async (companyId: number, details: any) => {
-  console.log('Updating company details', { companyId, details });
-  return { success: true };
+  // Map size to employee count if available
+  const numEmployees = details.size ? 
+    employeeCountMap[details.size as keyof typeof employeeCountMap] : 
+    undefined;
+  
+  logDebug('Updating company details', { 
+    companyId, 
+    details,
+    mappedEmployeeCount: numEmployees 
+  });
+  
+  try {
+    const response = await fetch(`/api/companies/${companyId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        // Set both the revenue and revenue_tier fields based on selection
+        revenue: details.revenue, // Will be "small", "medium", etc.
+        revenue_tier: details.revenue, // Same value for revenue_tier
+        num_employees: numEmployees
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      logDebug('Failed to update company details', { 
+        companyId, 
+        details, 
+        errorData, 
+        statusCode: response.status 
+      });
+      throw new Error(errorData.message || 'Failed to update company details');
+    }
+    
+    const data = await response.json();
+    logDebug('Successfully updated company details', { companyId, data });
+    return data;
+  } catch (error) {
+    logDebug('Error updating company details', { companyId, details, error });
+    throw error;
+  }
 };
 
+/**
+ * Invite a team member to join the company
+ * Creates an invitation record in the database and sends an email
+ * 
+ * @param companyId The ID of the company
+ * @param member Object containing team member details (fullName, email, role)
+ * @returns Response data from the API
+ */
 const inviteTeamMember = async (companyId: number, member: any) => {
-  console.log('Inviting team member', { companyId, member });
-  return { success: true };
+  logDebug('Inviting team member', { companyId, member });
+  
+  try {
+    // Get the current user and company name for the invitation
+    const userResponse = await fetch('/api/user');
+    const companyResponse = await fetch('/api/companies/current');
+    
+    if (!userResponse.ok || !companyResponse.ok) {
+      throw new Error('Failed to get user or company information');
+    }
+    
+    const userData = await userResponse.json();
+    const companyData = await companyResponse.json();
+    
+    const response = await fetch('/api/users/invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: member.email,
+        full_name: member.fullName,
+        company_id: companyId,
+        company_name: companyData.name,
+        sender_name: userData.full_name || userData.email,
+        sender_company: companyData.name
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      logDebug('Failed to invite team member', { 
+        companyId, 
+        member, 
+        errorData, 
+        statusCode: response.status 
+      });
+      throw new Error(errorData.message || `Failed to invite ${member.email}`);
+    }
+    
+    const data = await response.json();
+    logDebug('Successfully invited team member', { companyId, member, data });
+    return data;
+  } catch (error) {
+    logDebug('Error inviting team member', { companyId, member, error });
+    throw error;
+  }
 };
 
 // Helper for logging debug information
