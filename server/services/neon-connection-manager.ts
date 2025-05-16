@@ -90,7 +90,7 @@ class NeonConnectionManager {
     }
     
     if (this.state === ConnectionState.CONNECTING) {
-      logger.warn('Connection already in progress');
+      connLogger.warn('Connection already in progress');
       return;
     }
     
