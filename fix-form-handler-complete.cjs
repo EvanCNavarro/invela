@@ -1,4 +1,20 @@
 /**
+ * Complete Fix for Form Submission Handler
+ * 
+ * This script completely rewrites the form-submission-handler.ts file to implement
+ * a permanent fix for the status/progress inconsistency issues.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const filePath = path.join(__dirname, 'server', 'services', 'form-submission-handler.ts');
+console.log(`Reading file at: ${filePath}`);
+
+// Read the file
+try {
+  // Create the entire new content for the file
+  const newContent = `/**
  * Enhanced Form Submission Handler
  * 
  * This service provides a standardized approach to handling form submissions
@@ -253,7 +269,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         }
         
         // Enhanced logging for form submission file creation
-        console.log(`[FormSubmissionHandler] Creating file for ${formType} form`, {
+        console.log(\`[FormSubmissionHandler] Creating file for \${formType} form\`, {
           taskId, 
           schemaTaskType,
           userId,
@@ -324,12 +340,12 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     }
     
     // 6. Return success response with appropriate message
-    let message = `Form submitted successfully.`;
+    let message = \`Form submitted successfully.\`;
     if (formType === 'kyb') {
-      message += ` File vault ${fileVaultUnlocked ? 'unlocked' : 'unchanged'}.`;
-      message += ` ${unlockedCount} dependent tasks unlocked.`;
+      message += \` File vault \${fileVaultUnlocked ? 'unlocked' : 'unchanged'}.\`;
+      message += \` \${unlockedCount} dependent tasks unlocked.\`;
     } else if (formType === 'open_banking') {
-      message += ` Dashboard and Insights tabs are now accessible.`;
+      message += \` Dashboard and Insights tabs are now accessible.\`;
     }
     
     // Include file ID in response if available
@@ -350,4 +366,14 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+}
+`;
+
+  // Write the fixed content to the file
+  fs.writeFileSync(filePath, newContent, 'utf8');
+  console.log('Successfully rewrote form submission handler with atomic update implementation');
+  
+} catch (error) {
+  console.error('Error fixing form submission handler:', error);
+  process.exit(1);
 }
