@@ -1971,25 +1971,86 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Add new endpoint after account setup endpoint
   app.post("/api/user/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[User Onboarding] Completing onboarding for user:', req.user.id);
-
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, req.user.id))
-        .returning();
-
-      console.log('[User Onboarding] Updated user onboarding status:', {
-        id: updatedUser.id,
-        onboarding_completed: updatedUser.onboarding_user_completed
+      if (!req.user || !req.user.id || !req.user.company_id) {
+        return res.status(400).json({ 
+          message: "Missing user information",
+          error: "User data is required for onboarding completion" 
+        });
+      }
+      
+      const userId = req.user.id;
+      const companyId = req.user.company_id;
+      const startTime = Date.now();
+      
+      console.log('[User Onboarding] Starting onboarding completion process', {
+        userId,
+        companyId,
+        timestamp: new Date().toISOString()
       });
 
-      res.json(updatedUser);
+      // Use a transaction to ensure both user and company updates succeed or fail together
+      const result = await db.transaction(async (tx) => {
+        // Step 1: Update user record
+        console.log('[User Onboarding] Updating user onboarding flag', { userId });
+        const [updatedUser] = await tx.update(users)
+          .set({
+            onboarding_user_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, userId))
+          .returning();
+
+        if (!updatedUser) {
+          console.error('[User Onboarding] Failed to update user:', userId);
+          throw new Error('Failed to update user record');
+        }
+
+        console.log('[User Onboarding] User record updated successfully', {
+          userId: updatedUser.id,
+          onboardingCompleted: updatedUser.onboarding_user_completed,
+          elapsedMs: Date.now() - startTime
+        });
+
+        // Step 2: Update company record
+        console.log('[User Onboarding] Updating company onboarding flag', { companyId });
+        const [updatedCompany] = await tx.update(companies)
+          .set({
+            onboarding_company_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId))
+          .returning();
+
+        if (!updatedCompany) {
+          console.error('[User Onboarding] Failed to update company:', companyId);
+          throw new Error('Failed to update company record');
+        }
+
+        console.log('[User Onboarding] Company record updated successfully', {
+          companyId: updatedCompany.id,
+          onboardingCompleted: updatedCompany.onboarding_company_completed,
+          elapsedMs: Date.now() - startTime
+        });
+
+        return { updatedUser, updatedCompany };
+      });
+
+      console.log('[User Onboarding] Onboarding completion successful', {
+        userId: result.updatedUser.id,
+        companyId: result.updatedCompany.id,
+        userOnboardingCompleted: result.updatedUser.onboarding_user_completed,
+        companyOnboardingCompleted: result.updatedCompany.onboarding_company_completed,
+        elapsedMs: Date.now() - startTime
+      });
+
+      // Return the updated user object to maintain backward compatibility with frontend
+      res.json(result.updatedUser);
     } catch (error) {
       console.error("[User Onboarding] Error updating onboarding status:", error);
-      res.status(500).json({ message: "Error updating onboarding status" });
+      res.status(500).json({ 
+        message: "Error updating onboarding status",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
