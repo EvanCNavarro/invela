@@ -657,20 +657,74 @@ async function handleOpenBankingPostSubmission(
   userId?: number
 ): Promise<Partial<FormSubmissionResult>> {
   try {
-    // Unlock dashboard features
+    // First update the task to ensure progress is set to 100%
+    await tx.update(tasks)
+      .set({
+        progress: 100,
+        status: 'submitted' as TaskStatus,
+        metadata: {
+          ...task.metadata,
+          completed: true,
+          submission_date: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, task.id));
+      
+    logger.info(`[Open Banking Submission] Explicitly set task ${task.id} progress to 100% and status to submitted`, {
+      taskId: task.id,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Unlock dashboard and insights tabs
     if (task.company_id) {
-      // Update company to enable dashboard features
+      const companyId = task.company_id;
+      
+      // Get current company data
+      const [company] = await tx.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+      
+      // Create a base metadata object if it doesn't exist
+      const currentMetadata = company?.metadata || {};
+      
+      // Update company to enable dashboard and insights features
       await tx.update(companies)
         .set({
           metadata: {
-            ...task.metadata,
+            ...currentMetadata,
             dashboard_unlocked: true,
+            insights_unlocked: true,
             dashboard_unlocked_at: new Date().toISOString(),
-            dashboard_unlocked_by: userId
+            insights_unlocked_at: new Date().toISOString(),
+            dashboard_unlocked_by: userId,
+            available_tabs: [
+              ...(currentMetadata.available_tabs || []),
+              'dashboard',
+              'insights'
+            ].filter((value, index, self) => self.indexOf(value) === index) // Deduplicate tabs
           },
           updated_at: new Date()
         })
-        .where(eq(companies.id, task.company_id));
+        .where(eq(companies.id, companyId));
+      
+      // Also update the available_tabs field directly to ensure tabs are unlocked
+      await tx.execute(sql`
+        UPDATE companies 
+        SET available_tabs = array_append(
+          CASE 
+            WHEN 'dashboard' = ANY(available_tabs) THEN available_tabs 
+            ELSE array_append(available_tabs, 'dashboard')
+          END,
+          'insights'
+        )
+        WHERE id = ${companyId} AND NOT ('insights' = ANY(available_tabs))
+      `);
+      
+      logger.info(`[Open Banking Submission] Unlocked dashboard and insights tabs for company ${companyId}`, {
+        companyId,
+        taskId: task.id,
+        timestamp: new Date().toISOString()
+      });
       
       return { dashboardUnlocked: true };
     }
