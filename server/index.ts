@@ -216,18 +216,32 @@ process.env.HOST = HOST;
 logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
 logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
 
-// Start the server with the standardized configuration
-server.listen(PORT, HOST, () => {
+// Import database health checks
+import { runStartupChecks } from './startup-checks';
+
+// Start the server with the standardized configuration and health checks
+server.listen(PORT, HOST, async () => {
   logger.info(`Server running on ${HOST}:${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
   
   // Log additional deployment information
   logDeploymentInfo(PORT, HOST);
   
-  // Start the periodic task reconciliation system
-  if (process.env.NODE_ENV !== 'test') {
-    logger.info('Starting periodic task reconciliation system...');
-    startPeriodicTaskReconciliation();
-    logger.info('Task reconciliation system initialized successfully');
+  // Run startup health checks
+  logger.info('Running startup health checks...');
+  const healthChecksPassed = await runStartupChecks();
+  
+  if (healthChecksPassed) {
+    logger.info('All startup health checks passed successfully.');
+    
+    // Start the periodic task reconciliation system
+    if (process.env.NODE_ENV !== 'test') {
+      logger.info('Starting periodic task reconciliation system...');
+      startPeriodicTaskReconciliation();
+      logger.info('Task reconciliation system initialized successfully');
+    }
+  } else {
+    logger.warn('Some startup health checks failed. Application may not function correctly.');
+    logger.warn('The application will continue running but may encounter database errors.');
   }
 });
