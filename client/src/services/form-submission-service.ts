@@ -8,6 +8,7 @@
  * 3. Form data submission
  * 4. Status tracking
  * 5. Success/error handling
+ * 6. Optimized final submission without redundant data transfer
  */
 
 import getLogger from '@/utils/logger';
@@ -25,6 +26,7 @@ export interface FormSubmissionOptions {
   onError?: (error: Error) => void;
   onInProgress?: () => void;
   showToasts?: boolean;
+  isFinalSubmit?: boolean; // Flag to indicate this is the final submission
 }
 
 export interface FormSubmissionResult {
@@ -53,10 +55,16 @@ export async function submitFormWithWebSocketUpdates(options: FormSubmissionOpti
     onSuccess, 
     onError, 
     onInProgress,
-    showToasts = true
+    showToasts = true,
+    isFinalSubmit = false
   } = options;
 
   try {
+    // Use streamlined submission path for final submit with no new data
+    if (isFinalSubmit) {
+      return await submitFormFinal(taskId, formType, companyId, onSuccess, onError, onInProgress, showToasts);
+    }
+    
     logger.info(`Starting form submission for task ${taskId} (${formType})`);
     
     // Show in-progress indication
@@ -100,6 +108,83 @@ export async function submitFormWithWebSocketUpdates(options: FormSubmissionOpti
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     logger.error(`Form submission failed for task ${taskId}:`, error);
+    
+    // Show error toast if needed
+    if (showToasts) {
+      toast({
+        title: "Form submission failed",
+        description: errorMessage,
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+    
+    // Call error callback if provided
+    if (onError && error instanceof Error) {
+      onError(error);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Optimized final form submission that doesn't resend existing data
+ * This is used when all data is already saved incrementally and we just need to finalize
+ */
+async function submitFormFinal(
+  taskId: number, 
+  formType: string, 
+  companyId?: number,
+  onSuccess?: (result: FormSubmissionResult) => void,
+  onError?: (error: Error) => void,
+  onInProgress?: () => void,
+  showToasts = true
+): Promise<FormSubmissionResult> {
+  try {
+    logger.info(`Starting optimized final submission for task ${taskId} (${formType})`);
+    
+    // Show in-progress indication
+    if (showToasts) {
+      toast({
+        title: "Finalizing submission...",
+        description: "Processing your completed form...",
+        variant: "default",
+        duration: 3000,
+      });
+    }
+    
+    // Call in-progress callback
+    if (onInProgress) {
+      onInProgress();
+    }
+    
+    // Use an empty object for formData to signal final submission
+    const result = await submitFormTransactional(taskId, formType, {}, companyId);
+    
+    logger.info(`Final submission completed successfully for task ${taskId}`, result);
+    
+    // Show success toast if needed
+    if (showToasts) {
+      toast({
+        title: "Form submitted successfully",
+        description: result.message || "Your form has been processed successfully.",
+        variant: "success",
+        duration: 5000,
+      });
+    }
+    
+    // Call success callback if provided
+    if (onSuccess) {
+      onSuccess(result);
+    }
+    
+    return result;
+    
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    logger.error(`Final form submission failed for task ${taskId}:`, error);
     
     // Show error toast if needed
     if (showToasts) {

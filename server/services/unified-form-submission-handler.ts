@@ -48,7 +48,7 @@ export interface FormSubmissionResult {
 /**
  * Process a form submission with unified transaction handling
  * This is the main entry point for form submissions across all types
- * Optimized to avoid resubmitting form data that has already been saved incrementally
+ * Streamlined to perform only necessary operations for final submission
  */
 export async function processFormSubmission(
   input: FormSubmissionInput
@@ -71,14 +71,28 @@ export async function processFormSubmission(
       throw new Error(`Task ${taskId} not found`);
     }
     
+    // Check if task is already submitted
+    if (task.status === 'submitted') {
+      logger.info(`[${formType.toUpperCase()} Transaction] Task ${taskId} already submitted, returning success`, {
+        transactionId,
+        taskId
+      });
+      
+      return {
+        success: true,
+        companyId: task.company_id,
+        elapsedMs: performance.now() - startTime
+      };
+    }
+    
     // Ensure the form type matches the task type
     validateFormTypeMatchesTaskType(formType, task.task_type);
     
     // 2. ORIENT: Prepare for processing based on form type
-    // Get field definitions and validate required fields (still needed for CSV generation)
+    // Get field definitions for CSV generation
     const fieldsResult = await getFieldDefinitions(formType, taskId);
     
-    // 3. DECIDE: Determine if form data is valid
+    // 3. DECIDE: Determine if field definitions are valid
     if (!fieldsResult.success) {
       return {
         success: false,
@@ -87,56 +101,26 @@ export async function processFormSubmission(
       };
     }
     
-    // Check if this is a final submission with no form data (efficiency optimization)
-    const isEmptySubmission = !formData || Object.keys(formData).length === 0;
-    
-    // 4. ACT: Process the form submission within a transaction
+    // 4. ACT: Process the form submission within a transaction - STREAMLINED VERSION
     const result = await db.transaction(async (tx) => {
-      // 4.1 Save any remaining form responses to the database (if present)
-      // This step is now conditional to avoid redundant processing
-      if (!isEmptySubmission) {
-        logger.info(`[${formType.toUpperCase()} Transaction] Saving form responses`, {
-          transactionId,
-          fieldCount: Object.keys(formData).length
-        });
-        
-        const responsesResult = await saveFormResponses(
-          tx, 
-          taskId, 
-          formData, 
-          formType, 
-          userId
-        );
-        
-        if (!responsesResult.success) {
-          throw new Error(responsesResult.error || 'Failed to save form responses');
-        }
-      } else {
-        logger.info(`[${formType.toUpperCase()} Transaction] Skipping response saving - no form data provided`, {
-          transactionId,
-          taskId
-        });
-      }
+      // Load existing responses for file creation
+      const existingResponses = await loadExistingFormResponses(tx, taskId, formType);
       
-      // 4.2 Generate CSV file from form data
-      // For CSV generation, we need to load the current responses from the database
-      // since they may have been saved incrementally and not included in this submission
-      const existingResponses = isEmptySubmission ? await loadExistingFormResponses(tx, taskId, formType) : formData;
-      
+      // Generate CSV file from existing responses
       const fileCreationResult = await createFormFile(
         formType, 
         taskId, 
-        task.company_id || 0, // Handle possible null value with fallback
+        task.company_id || 0,
         existingResponses, 
         fieldsResult.fields,
         fileName
       );
       
       if (!fileCreationResult.success) {
-        warnings.push(`Warning: ${fileCreationResult.error}`);
+        warnings.push(`Warning: ${fileCreationResult.error || 'Failed to create file'}`);
       }
       
-      // 4.3 Update task status to submitted
+      // Mark task as submitted
       await tx.update(tasks)
         .set({
           status: 'submitted' as TaskStatus,
@@ -147,7 +131,7 @@ export async function processFormSubmission(
         })
         .where(eq(tasks.id, taskId));
       
-      // 4.4 Execute form-specific post-submission actions
+      // Execute form-specific post-submission actions (unlock tabs, calculate risk, etc.)
       const postSubmissionResult = await executePostSubmissionActions(
         formType,
         task,
@@ -355,6 +339,7 @@ function getResponseTableName(formType: string): string {
 /**
  * Load existing form responses from the database for a given task
  * This is used when a form is submitted with no data (optimization for final submit)
+ * or to check if the responses have changed to avoid unnecessary database operations
  */
 async function loadExistingFormResponses(
   tx: any,
