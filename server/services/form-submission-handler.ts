@@ -81,6 +81,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       locked: true               // Lock the form upon submission
     };
     
+    // Log current task state before update for debugging
     logger.info('Current task state before submission update', {
       taskId,
       status: currentTask?.status,
@@ -88,36 +89,28 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       formType
     });
     
-    // ATOMIC UPDATE: Always ensure status and progress are updated together
-    // This is the critical fix to prevent inconsistencies between status and progress
-    logger.info('[AtomicUpdate] Performing synchronized status/progress update', {
-      taskId,
-      status: 'submitted',
-      progress: 100,
-      timestamp: now.toISOString()
-    });
-    
-    // The key is that both status and progress are set in a single database operation
-    // so they can never get out of sync with each other
+    // Update task with submitted status and enhanced metadata
+    // CRITICAL FIX: Always ensure progress is set to 100 regardless of form type
     await db.update(tasks)
       .set({
-        status: 'submitted',     // Always submitted when a form is completed
-        progress: 100,           // Always 100% when submitted for consistency
+        status: 'submitted',
+        progress: 100,           // Ensure progress is explicitly set to 100
         metadata: updatedMetadata,
-        completion_date: now,    // Set completion date for submitted tasks
         updated_at: now
       })
       .where(eq(tasks.id, taskId));
     
-    logger.info('Task status updated atomically - ensuring status and progress consistency', { 
+    logger.info('Enhanced task status update with submission protection', { 
       taskId, 
       status: 'submitted',
-      progress: 100,
+      progress: 100,             // Log the explicit progress value
       formType,
       metadataKeys: Object.keys(updatedMetadata)
     });
     
-    // Verification step - check if status and progress are both correctly set
+    logger.info('Task status updated to submitted', { taskId, formType });
+    
+    // 2. Double-verify the task was updated correctly (preventing KY3P/Open Banking issues)
     const [verifiedTask] = await db.select({
       id: tasks.id,
       status: tasks.status,
@@ -128,11 +121,16 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     .from(tasks)
     .where(eq(tasks.id, taskId));
     
-    // Double-check if the update was successful and apply fix if needed
+    // Check if task was properly updated - extra vigilant for KY3P forms
+    const isKy3pForm = formType === 'ky3p' || 
+                      verifiedTask.task_type === 'ky3p' || 
+                      verifiedTask.task_type === 'sp_ky3p_assessment';
+                      
     if (verifiedTask.status !== 'submitted' || verifiedTask.progress !== 100) {
-      logger.warn('[AtomicUpdate] Task not properly updated after submission, applying direct fix', {
+      logger.warn('Task not properly updated after submission, applying direct fix', {
         taskId,
         formType,
+        isKy3pForm,
         currentStatus: verifiedTask.status,
         currentProgress: verifiedTask.progress,
         expected: {
@@ -141,64 +139,47 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         }
       });
       
-      // Apply direct fix if needed - in a single atomic operation to prevent inconsistencies
+      // Direct SQL fix for the task to ensure proper status and progress
       await db.update(tasks)
         .set({
           status: 'submitted',
           progress: 100,
-          completion_date: now,
+          completion_date: now, // Ensure completion date is set
           updated_at: now
         })
         .where(eq(tasks.id, taskId));
-      
-      logger.info('[AtomicUpdate] Applied direct fix for task status/progress consistency', { 
-        taskId, 
-        formType, 
-        timestamp: new Date().toISOString() 
-      });
-      
-      // Perform a final verification
-      const [finalVerification] = await db.select({
-        id: tasks.id,
-        status: tasks.status,
-        progress: tasks.progress
-      })
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-      
-      if (finalVerification.status !== 'submitted' || finalVerification.progress !== 100) {
-        // This should never happen, but log it if it does
-        logger.error('[AtomicUpdate] Critical error: Task still inconsistent after fixes', {
-          taskId,
-          status: finalVerification.status,
-          progress: finalVerification.progress,
-          formType
-        });
-      } else {
-        logger.info('[AtomicUpdate] Task consistency verification passed', {
-          taskId,
-          status: finalVerification.status,
-          progress: finalVerification.progress
-        });
+        
+      logger.info('Applied direct fix for task status/progress', { taskId, formType });
+    } else if (isKy3pForm) {
+      // For KY3P forms, double-check completion_date is set
+      if (!verifiedTask.metadata?.submission_date && !verifiedTask.metadata?.submissionDate) {
+        logger.info('KY3P form missing submission date, updating metadata', { taskId });
+        
+        // Update metadata with submission date
+        await db.update(tasks)
+          .set({
+            metadata: {
+              ...verifiedTask.metadata,
+              submission_date: now.toISOString(),
+              submissionDate: now.toISOString(),
+              submitted: true,
+              completed: true
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info('Updated KY3P metadata with submission date', { taskId });
       }
-    } else {
-      logger.info('[AtomicUpdate] Task initial consistency verification passed', {
-        taskId,
-        status: verifiedTask.status,
-        progress: verifiedTask.progress
-      });
     }
     
     // 3. Broadcast the task update via WebSocket with enhanced submission metadata
     try {
       logger.info('Sending WebSocket notification for task submission', { taskId });
       
-      // Broadcast task update with consistent status and progress
-      // This is critical for real-time UI updates to show correct task state
       await broadcastTaskUpdate({
-        taskId,
-        status: 'submitted',  // Always submitted when completed
-        progress: 100,        // Always 100% when submitted 
+        id: taskId,
+        status: 'submitted',
+        progress: 100,
         metadata: {
           lastUpdated: now.toISOString(),
           submittedAt: now.toISOString(),
@@ -206,10 +187,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
           submittedBy: userId,
           status: 'submitted',
           explicitlySubmitted: explicitSubmission,
-          locked: true,
-          // Include additional metadata to track atomic updates
-          atomicUpdateApplied: true,
-          atomicUpdateTimestamp: now.toISOString()
+          locked: true
         }
       });
       
@@ -224,7 +202,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     
     logger.info('WebSocket notification sent for task update', { taskId });
     
-    // 4. Apply form-specific dependency rules
+    // 3. Apply form-specific dependency rules
     let unlockedCount = 0;
     let fileVaultUnlocked = false;
     
@@ -266,7 +244,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
     }
     // KY3P doesn't unlock anything by itself
     
-    // 5. Create form data file if needed
+    // 4. Create form data file if needed
     let fileId: number | undefined;
     
     // Get the company name for file creation
@@ -372,7 +350,7 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       // Continue with submission process even if file creation fails
     }
     
-    // 6. Return success response with appropriate message
+    // 5. Return success response with appropriate message
     let message = `Form submitted successfully.`;
     if (formType === 'kyb') {
       message += ` File vault ${fileVaultUnlocked ? 'unlocked' : 'unchanged'}.`;
