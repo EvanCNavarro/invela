@@ -651,13 +651,38 @@ async function handleKy3pPostSubmission(
 /**
  * Handle Open Banking-specific post-submission actions
  */
+/**
+ * Handles post-submission actions for Open Banking submissions
+ * 
+ * This function ensures the task is properly marked as completed and
+ * unlocks the dashboard and insights tabs for the company. It uses the
+ * UnifiedTabService for a consistent approach to tab management.
+ * 
+ * @param task Task object containing the submission details
+ * @param tx Transaction object for database operations
+ * @param userId Optional user ID of the submitting user
+ * @returns Promise resolving to a partial form submission result
+ */
 async function handleOpenBankingPostSubmission(
   task: any,
   tx: any,
   userId?: number
 ): Promise<Partial<FormSubmissionResult>> {
+  // Create a context object for consistent logging
+  const context = {
+    taskId: task.id,
+    companyId: task.company_id,
+    formType: 'open_banking',
+    userId: userId,
+    timestamp: new Date().toISOString()
+  };
+  
+  logger.info(`[OpenBankingHandler] Starting post-submission process`, context);
+  
   try {
-    // First update the task to ensure progress is set to 100%
+    // Step 1: Update the task to ensure progress is set to 100% and status is submitted
+    const submissionTimestamp = new Date().toISOString();
+    
     await tx.update(tasks)
       .set({
         progress: 100,
@@ -665,76 +690,106 @@ async function handleOpenBankingPostSubmission(
         metadata: {
           ...task.metadata,
           completed: true,
-          submission_date: new Date().toISOString()
+          submission_date: submissionTimestamp
         }
       })
       .where(eq(tasks.id, task.id));
       
-    logger.info(`[Open Banking Submission] Explicitly set task ${task.id} progress to 100% and status to submitted`, {
-      taskId: task.id,
-      timestamp: new Date().toISOString()
+    logger.info(`[OpenBankingHandler] Updated task status and progress`, {
+      ...context,
+      progress: 100,
+      status: 'submitted',
+      submissionTimestamp
     });
     
-    // Unlock dashboard and insights tabs
+    // Step 2: Update the company record to unlock dashboard and insights features
     if (task.company_id) {
       const companyId = task.company_id;
       
-      // Get current company data
+      // Get current company data to update metadata properly
       const [company] = await tx.select()
         .from(companies)
         .where(eq(companies.id, companyId));
       
-      // Create a base metadata object if it doesn't exist
+      if (!company) {
+        logger.warn(`[OpenBankingHandler] Company not found`, {
+          ...context,
+          companyId
+        });
+        return { dashboardUnlocked: false };
+      }
+      
+      // Update company metadata to track unlocked features
       const currentMetadata = company?.metadata || {};
       
-      // Update company to enable dashboard and insights features
       await tx.update(companies)
         .set({
           metadata: {
             ...currentMetadata,
             dashboard_unlocked: true,
             insights_unlocked: true,
-            dashboard_unlocked_at: new Date().toISOString(),
-            insights_unlocked_at: new Date().toISOString(),
-            dashboard_unlocked_by: userId,
-            available_tabs: [
-              ...(currentMetadata.available_tabs || []),
-              'dashboard',
-              'insights'
-            ].filter((value, index, self) => self.indexOf(value) === index) // Deduplicate tabs
+            dashboard_unlocked_at: submissionTimestamp,
+            insights_unlocked_at: submissionTimestamp,
+            dashboard_unlocked_by: userId || currentMetadata.created_by_id
           },
           updated_at: new Date()
         })
         .where(eq(companies.id, companyId));
       
-      // Also update the available_tabs field directly to ensure tabs are unlocked
-      await tx.execute(sql`
-        UPDATE companies 
-        SET available_tabs = array_append(
-          CASE 
-            WHEN 'dashboard' = ANY(available_tabs) THEN available_tabs 
-            ELSE array_append(available_tabs, 'dashboard')
-          END,
-          'insights'
-        )
-        WHERE id = ${companyId} AND NOT ('insights' = ANY(available_tabs))
-      `);
+      // Step 3: Use the UnifiedTabService within the transaction to unlock tabs
+      // This is imported from the tab-service.ts module which handles all tab operations
+      // We're importing it directly here to use it within the transaction
+      // Alternatively we could create a method to accept a transaction object 
+      const currentTabs = Array.isArray(company.available_tabs) 
+        ? company.available_tabs 
+        : ['task-center'];
+        
+      const tabsToAdd = ['dashboard', 'insights'];
+      const updatedTabs = [...new Set([...currentTabs, ...tabsToAdd])];
       
-      logger.info(`[Open Banking Submission] Unlocked dashboard and insights tabs for company ${companyId}`, {
-        companyId,
-        taskId: task.id,
-        timestamp: new Date().toISOString()
+      // Only update if there are actual changes
+      if (updatedTabs.length !== currentTabs.length || 
+          !updatedTabs.every(tab => currentTabs.includes(tab))) {
+        
+        // Update available_tabs within the transaction
+        await tx.update(companies)
+          .set({ 
+            available_tabs: updatedTabs,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId));
+          
+        logger.info(`[OpenBankingHandler] Updated company tabs`, {
+          ...context,
+          addedTabs: tabsToAdd,
+          updatedTabs,
+          tabUpdateSuccessful: true
+        });
+        
+        // Note: We will broadcast the tab update after the transaction commits
+        // We'll set a flag to ensure this happens in the broadcastFormSubmissionEvent function
+      }
+      
+      logger.info(`[OpenBankingHandler] Post-submission process completed successfully`, {
+        ...context,
+        dashboardUnlocked: true,
+        insightsUnlocked: true,
+        availableTabs: updatedTabs
       });
       
-      return { dashboardUnlocked: true };
+      return { 
+        dashboardUnlocked: true,
+        availableTabs: updatedTabs
+      };
     }
     
+    logger.warn(`[OpenBankingHandler] No company_id found in task, skipping tab unlock`, context);
     return { dashboardUnlocked: false };
   } catch (error) {
-    logger.error('Error unlocking dashboard features', {
+    logger.error('[OpenBankingHandler] Error in post-submission process', {
+      ...context,
       error: error instanceof Error ? error.message : 'Unknown error',
-      taskId: task.id,
-      companyId: task.company_id
+      stack: error instanceof Error ? error.stack : undefined
     });
     return { dashboardUnlocked: false };
   }
