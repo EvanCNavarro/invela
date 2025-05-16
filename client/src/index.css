@@ -235,7 +235,12 @@
   /* Remove any special CSS rules that might cause flashing */
   
   /* Hide the close button for onboarding modal */
-  .onboarding-modal button[aria-label="Close"] {
+  .onboarding-modal button[aria-label="Close"],
+  .onboarding-modal [data-radix-dialog-close],
+  .onboarding-modal [data-state="open"] > button:first-child {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 }
