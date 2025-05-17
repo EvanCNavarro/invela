@@ -7,12 +7,12 @@
  * 3. Verifying the files were added correctly
  */
 
-// Import the populate function
-const { populateCompanyFileVault, populateAllDemoCompanyFileVaults } = require('./populate-demo-file-vault.js');
-const { getAllDemoCompanies, isCompanyDemo } = require('./server/utils/demo-helpers.js');
-const { db } = require('./db/index.js');
-const { files, companies } = require('./db/schema.js');
-const { eq } = require('drizzle-orm');
+// Import the populate function (using ES module syntax)
+import { populateCompanyFileVault } from './populate-demo-file-vault.js';
+import { getAllDemoCompanies, isCompanyDemo } from './server/utils/demo-helpers.js';
+import { db } from './db/index.js';
+import { files, companies } from './db/schema.js';
+import { eq } from 'drizzle-orm';
 
 // Define the company ID to use for testing
 // If not specified, will find the first demo company or create one

@@ -10,18 +10,14 @@
  */
 
 // Import dependencies
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { db } from './db/index.ts';
-import { files, companies } from './db/schema.ts';
-import { eq } from 'drizzle-orm';
-import * as FileCreationService from './server/services/fileCreation.fixed.js';
-import { isCompanyDemo, isDemoCompanyName } from './server/utils/demo-helpers.js';
-
-// Get current directory name (equivalent to __dirname in CommonJS)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs');
+const path = require('path');
+const { db } = require('./db/index.js');
+const { files, companies } = require('./db/schema.js');
+const { eq } = require('drizzle-orm');
+const FileCreationService = require('./server/services/fileCreation.js');
+const { isCompanyDemo, isDemoCompanyName } = require('./server/utils/demo-helpers.js');
+const { logger } = require('./server/utils/logger.js');
 
 // Define constants
 const DEMO_FILE_PATHS = [
@@ -42,9 +38,23 @@ const SYSTEM_USER_ID = 1;
  */
 async function readFileContent(filePath) {
   try {
-    return fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8');
+    const resolvedPath = path.resolve(process.cwd(), filePath);
+    logger.info(`[Demo File Vault] Reading file content from ${resolvedPath}`);
+    
+    // Check if file exists
+    if (!fs.existsSync(resolvedPath)) {
+      throw new Error(`File not found: ${resolvedPath}`);
+    }
+    
+    return fs.readFileSync(resolvedPath, 'utf8');
   } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error);
+    logger.error(`[Demo File Vault] Error reading file ${filePath}:`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      resolvedPath: path.resolve(process.cwd(), filePath),
+      currentDir: process.cwd(),
+      exists: fs.existsSync(path.resolve(process.cwd(), filePath))
+    });
     throw error;
   }
 }
@@ -78,7 +88,7 @@ async function addDemoFileToVault(companyId, filePath, companyName) {
     const displayName = getDisplayNameFromPath(filePath);
     const fileName = `${displayName} - ${companyName}.csv`;
     
-    console.log(`[Demo File Vault] Adding file "${fileName}" to company ${companyId} (${companyName})`);
+    logger.info(`[Demo File Vault] Adding file "${fileName}" to company ${companyId} (${companyName})`);
     
     // Use the FileCreationService to create the file
     const result = await FileCreationService.createFile({
@@ -100,14 +110,14 @@ async function addDemoFileToVault(companyId, filePath, companyName) {
       throw new Error(`Failed to create file: ${result.error}`);
     }
     
-    console.log(`[Demo File Vault] Successfully added "${fileName}" to file vault for company ${companyId}`, {
+    logger.info(`[Demo File Vault] Successfully added "${fileName}" to file vault for company ${companyId}`, {
       fileId: result.fileId,
       fileName: result.fileName
     });
     
     return result;
   } catch (error) {
-    console.error(`[Demo File Vault] Error adding demo file to vault:`, {
+    logger.error(`[Demo File Vault] Error adding demo file to vault:`, {
       companyId,
       filePath,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -124,7 +134,7 @@ async function addDemoFileToVault(companyId, filePath, companyName) {
  */
 async function unlockFileVaultForCompany(companyId) {
   try {
-    console.log(`[Demo File Vault] Checking file vault status for company ${companyId}`);
+    logger.info(`[Demo File Vault] Checking file vault status for company ${companyId}`);
     
     // Get current company data to check if file vault is already unlocked
     const [company] = await db
@@ -133,7 +143,7 @@ async function unlockFileVaultForCompany(companyId) {
       .where(eq(companies.id, companyId));
       
     if (!company) {
-      console.error(`[Demo File Vault] Company ${companyId} not found`);
+      logger.error(`[Demo File Vault] Company ${companyId} not found`);
       return false;
     }
     
@@ -145,12 +155,12 @@ async function unlockFileVaultForCompany(companyId) {
       String(availableTabs).includes('file-vault');
     
     if (fileVaultIsUnlocked) {
-      console.log(`[Demo File Vault] File vault already unlocked for company ${companyId}`);
+      logger.info(`[Demo File Vault] File vault already unlocked for company ${companyId}`);
       return true;
     }
     
     // Unlock file vault by adding it to available tabs
-    console.log(`[Demo File Vault] Unlocking file vault for company ${companyId}`);
+    logger.info(`[Demo File Vault] Unlocking file vault for company ${companyId}`);
     
     const updatedTabs = Array.isArray(availableTabs) ? 
       [...availableTabs, 'file-vault'] : 
@@ -162,14 +172,14 @@ async function unlockFileVaultForCompany(companyId) {
       .set({ available_tabs: updatedTabs })
       .where(eq(companies.id, companyId));
       
-    console.log(`[Demo File Vault] File vault unlocked for company ${companyId}`, {
+    logger.info(`[Demo File Vault] File vault unlocked for company ${companyId}`, {
       result,
       updatedTabs
     });
     
     return true;
   } catch (error) {
-    console.error(`[Demo File Vault] Error unlocking file vault:`, {
+    logger.error(`[Demo File Vault] Error unlocking file vault:`, {
       companyId,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
@@ -185,14 +195,14 @@ async function unlockFileVaultForCompany(companyId) {
  * @returns {Promise<object>} - Result summary
  */
 async function populateCompanyFileVault(companyId) {
-  console.log(`[Demo File Vault] Starting file vault population for company ${companyId}`);
+  logger.info(`[Demo File Vault] Starting file vault population for company ${companyId}`);
   
   try {
     // Check if this is a demo company
     const isDemoCompany = await isCompanyDemo(companyId);
     
     if (!isDemoCompany) {
-      console.log(`[Demo File Vault] Company ${companyId} is not a demo company, skipping file vault population`);
+      logger.info(`[Demo File Vault] Company ${companyId} is not a demo company, skipping file vault population`);
       return {
         success: false,
         reason: 'Not a demo company'
@@ -221,7 +231,7 @@ async function populateCompanyFileVault(companyId) {
       .where(eq(files.company_id, companyId));
       
     if (existingFiles.length > 0) {
-      console.log(`[Demo File Vault] Company ${companyId} already has ${existingFiles.length} files, skipping file vault population`);
+      logger.info(`[Demo File Vault] Company ${companyId} already has ${existingFiles.length} files, skipping file vault population`);
       return {
         success: true,
         status: 'skipped',
@@ -238,7 +248,7 @@ async function populateCompanyFileVault(companyId) {
       results.push(result);
     }
     
-    console.log(`[Demo File Vault] Successfully populated file vault for company ${companyId}`, {
+    logger.info(`[Demo File Vault] Successfully populated file vault for company ${companyId}`, {
       companyName,
       fileCount: results.length,
       fileIds: results.map(r => r.fileId)
@@ -251,7 +261,7 @@ async function populateCompanyFileVault(companyId) {
       results
     };
   } catch (error) {
-    console.error(`[Demo File Vault] Error populating file vault:`, {
+    logger.error(`[Demo File Vault] Error populating file vault:`, {
       companyId,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
@@ -270,7 +280,7 @@ async function populateCompanyFileVault(companyId) {
  * @returns {Promise<object>} - Result summary
  */
 async function populateAllDemoCompanyFileVaults() {
-  console.log(`[Demo File Vault] Checking all demo companies for file vault population`);
+  logger.info(`[Demo File Vault] Checking all demo companies for file vault population`);
   
   try {
     // Get all companies with is_demo=true
@@ -279,7 +289,7 @@ async function populateAllDemoCompanyFileVaults() {
       .from(companies)
       .where(eq(companies.is_demo, true));
       
-    console.log(`[Demo File Vault] Found ${demoCompanies.length} companies with is_demo=true`);
+    logger.info(`[Demo File Vault] Found ${demoCompanies.length} companies with is_demo=true`);
     
     // Get all companies with demo in the name
     const allCompanies = await db
@@ -290,7 +300,7 @@ async function populateAllDemoCompanyFileVaults() {
       company => !company.is_demo && isDemoCompanyName(company.name)
     );
     
-    console.log(`[Demo File Vault] Found ${additionalDemoCompanies.length} additional companies with demo names`);
+    logger.info(`[Demo File Vault] Found ${additionalDemoCompanies.length} additional companies with demo names`);
     
     // Combine all demo companies, removing duplicates
     const allDemoCompanies = [
@@ -303,7 +313,7 @@ async function populateAllDemoCompanyFileVaults() {
       new Map(allDemoCompanies.map(c => [c.id, c])).values()
     );
     
-    console.log(`[Demo File Vault] Processing ${uniqueDemoCompanies.length} total demo companies`);
+    logger.info(`[Demo File Vault] Processing ${uniqueDemoCompanies.length} total demo companies`);
     
     // Populate file vaults for all demo companies
     const results = [];
@@ -319,7 +329,7 @@ async function populateAllDemoCompanyFileVaults() {
     
     const successCount = results.filter(r => r.success).length;
     
-    console.log(`[Demo File Vault] Completed population of ${successCount}/${results.length} demo company file vaults`);
+    logger.info(`[Demo File Vault] Completed population of ${successCount}/${results.length} demo company file vaults`);
     
     return {
       success: true,
@@ -328,7 +338,7 @@ async function populateAllDemoCompanyFileVaults() {
       results
     };
   } catch (error) {
-    console.error(`[Demo File Vault] Error in batch population:`, {
+    logger.error(`[Demo File Vault] Error in batch population:`, {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -341,37 +351,25 @@ async function populateAllDemoCompanyFileVaults() {
 }
 
 // Export functions for use in other modules
-export {
+module.exports = {
   populateCompanyFileVault,
   populateAllDemoCompanyFileVaults,
   unlockFileVaultForCompany
 };
 
 // If this script is run directly, populate all demo companies
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const companyId = process.argv[2] ? parseInt(process.argv[2], 10) : null;
-  
-  if (companyId) {
-    console.log(`[Demo File Vault] Populating file vault for specific company ID: ${companyId}`);
-    populateCompanyFileVault(companyId)
-      .then(result => {
-        console.log(`[Demo File Vault] Result:`, result);
-        process.exit(0);
-      })
-      .catch(error => {
-        console.error(`[Demo File Vault] Error:`, error);
-        process.exit(1);
+if (require.main === module) {
+  logger.info('[Demo File Vault] Running as standalone script to populate all demo company file vaults');
+  populateAllDemoCompanyFileVaults()
+    .then(result => {
+      logger.info('[Demo File Vault] Script execution complete', { result });
+      process.exit(0);
+    })
+    .catch(error => {
+      logger.error('[Demo File Vault] Script execution failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
       });
-  } else {
-    console.log(`[Demo File Vault] Populating file vaults for all demo companies`);
-    populateAllDemoCompanyFileVaults()
-      .then(result => {
-        console.log(`[Demo File Vault] Result:`, result);
-        process.exit(0);
-      })
-      .catch(error => {
-        console.error(`[Demo File Vault] Error:`, error);
-        process.exit(1);
-      });
-  }
+      process.exit(1);
+    });
 }
