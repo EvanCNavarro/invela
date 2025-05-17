@@ -1,0 +1,554 @@
+> rest-express@1.0.0 dev
+[2025-05-17T20:32:15.971Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-17T20:32:16.057Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Auth] Setting up authentication...
+[Auth] Setting up PostgreSQL session store
+[Auth] PostgreSQL session store initialized successfully
+[Auth] Authentication setup completed
+[Routes] Registered KY3P form submission fix routes
+[2025-05-17T20:32:16.160Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-17T20:32:16.160Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-17T20:32:16.161Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-17T20:32:16.161Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-17T20:32:16.162Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-17T20:32:16.164Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-17T20:32:16.164Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"uqnwep","timestamp":"2025-05-17T20:32:16.164Z"}
+[2025-05-17T20:32:16.164Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-17T20:32:16.164Z] [WARN] [App] [WebSocket] Form submission WebSocket initialization function not found 
+[2025-05-17T20:32:16.164Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-17T20:32:16.164Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-17T20:32:16.164Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-17T20:32:16.165Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-17T20:32:16.165Z] [INFO] [App] Setting up Vite development server 
+[2025-05-17T20:32:16.166Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (deployment mode: no) 
+[2025-05-17T20:32:16.166Z] [INFO] [App] [ENV] Environment=development (NODE_ENV explicitly set) 
+[2025-05-17T20:32:16.179Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-17T20:32:16.179Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-17T20:32:16.179Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-17T20:32:16.180Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-17T20:32:17.173Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-17T20:32:26.180Z] [INFO] [App] Running background health checks... 
+[2025-05-17T20:32:26.181Z] [StartupChecks] Running application startup health checks... 
+[2025-05-17T20:32:26.181Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-17T20:32:26.182Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-17T20:32:26.395Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-17T20:32:26.423Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-17T20:32:26.605Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-17T20:32:26.634Z] [DBConnectionService] Database connection check successful 
+[2025-05-17T20:32:26.635Z] [StartupChecks] Database health check passed 
+[2025-05-17T20:32:26.635Z] [StartupChecks] All startup health checks passed! 
+[2025-05-17T20:32:26.635Z] [INFO] [App] All background health checks passed successfully. 
+[Auth] Unauthenticated user session
+[2025-05-17T20:32:28.492Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747513948492-01wz0kl","clients":1}
+[2025-05-17T20:32:28.612Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-17T20:32:28.457Z"}}
+[2025-05-17T20:32:28.612Z] [INFO] [WebSocket] Authentication from client client-1747513948492-01wz0kl {"module":"WebSocket","hasToken":true}
+[2025-05-17T20:32:28.994Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747513948994-7rcq5ob","clients":2}
+[2025-05-17T20:32:29.501Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747513949501-k2qizn0","clients":3}
+[2025-05-17T20:32:29.982Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747513949982-aeg24jd","clients":4}
+[2025-05-17T20:32:30.486Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747513950486-ddlhhde","clients":5}
+[Auth] Unauthenticated user session
+[2025-05-17T20:32:30.756Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"authenticate","userId":"378","companyId":"314","clientId":"ws_1747513948945_yomcsymcq","timestamp":"2025-05-17T20:32:30.601Z"}
+[2025-05-17T20:32:30.756Z] [INFO] [WebSocket] Authentication from client client-1747513950486-ddlhhde {"module":"WebSocket","userId":"378","companyId":"314","hasToken":true}
+[PeriodicTaskReconciliation] Reconciling batch of 2 tasks: [ 978, 977 ]
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[2025-05-17T20:32:50.605Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:32:50.451Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:32:58.613Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:32:59.619Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:32:59.466Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:33:00.101Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:32:59.948Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:33:10.604Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:10.450Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:33:28.613Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:33:29.619Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:29.465Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:33:30.101Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:29.948Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:33:30.606Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:30.451Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:33:51.091Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:50.937Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:33:59.093Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:34:00.092Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:33:59.938Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:34:01.095Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:00.940Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:34:06.303Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-17T20:34:06.308Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-17T20:34:06.309Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["44.199.59.172:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":-1357194949,"secretKey":1575578881,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":12042,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-17T20:34:11.092Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:10.938Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:34:29.091Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:34:30.098Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:29.939Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:34:31.091Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:30.938Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:34:31.092Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:30.938Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:34:59.094Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:35:00.094Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:34:59.941Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:35:01.092Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:35:00.938Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:35:29.092Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:35:30.096Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:35:29.939Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:35:31.097Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:35:30.938Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:35:46.102Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:35:45.946Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:36:46.092Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:36:45.943Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:36:46.095Z] [INFO] [WebSocket] Received message from client client-1747513948492-01wz0kl {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:36:46.097Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:36:45.944Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:36:46.098Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:36:45.944Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:36:46.098Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747513948492-01wz0kl","code":1005,"reason":"","remainingClients":4}
+[2025-05-17T20:36:48.520Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747514208520-2ndsml6","clients":5}
+[2025-05-17T20:36:48.668Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-17T20:36:48.519Z"}}
+[2025-05-17T20:36:48.668Z] [INFO] [WebSocket] Authentication from client client-1747514208520-2ndsml6 {"module":"WebSocket","hasToken":true}
+[2025-05-17T20:37:16.687Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  964, 965, 963, 972,
+  969, 967, 968, 973,
+  971, 977
+]
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[2025-05-17T20:37:19.094Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:37:46.104Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:37:45.950Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:37:46.104Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:37:45.950Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:37:46.104Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:37:45.949Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:37:49.091Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:38:19.094Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:38:46.099Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:38:45.943Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:38:46.100Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:38:45.943Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:38:46.100Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:38:45.943Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:38:49.092Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:39:11.337Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-17T20:39:11.338Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-17T20:39:19.094Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:39:46.091Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:39:45.943Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:39:46.094Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:39:45.943Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:39:46.099Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:39:45.943Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:39:49.093Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:40:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:40:45.950Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:40:46.102Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:40:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:40:45.950Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:40:46.103Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:40:45.949Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:41:46.104Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:41:46.105Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:41:45.944Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:41:46.105Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:41:45.944Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:41:46.105Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:41:45.944Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:42:16.698Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  964, 965, 963, 969,
+  973, 967, 968, 972,
+  971, 977
+]
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[2025-05-17T20:42:46.101Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:42:46.101Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:42:45.953Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:42:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:42:45.953Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:42:46.102Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:42:45.953Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:43:41.324Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-17T20:43:41.325Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-17T20:43:46.101Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:43:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:43:45.950Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:43:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:43:45.950Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:43:46.103Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:43:45.950Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:44:46.105Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:44:45.953Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:44:46.106Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:44:45.953Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:44:46.106Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:44:46.106Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:44:45.953Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:45:46.107Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:45:45.954Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:45:46.107Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:45:45.953Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:45:46.108Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:45:46.109Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:45:45.953Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:46:46.102Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:46:46.102Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:46:45.952Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:46:46.102Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:46:45.952Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:46:46.103Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:46:45.952Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[PeriodicTaskReconciliation] Cleaned up 11 expired entries from cache
+[2025-05-17T20:47:18.692Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  963, 964, 965, 969,
+  967, 973, 972, 968,
+  971, 977
+]
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[2025-05-17T20:47:19.453Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:19.303Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:47:19.454Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:19.304Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:47:19.454Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:19.304Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:47:19.454Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[2025-05-17T20:47:29.622Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:29.474Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:47:30.103Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:29.956Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:47:30.607Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:30.460Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:47:48.673Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:47:50.606Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:50.458Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:47:59.622Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:59.474Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:48:00.106Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:47:59.956Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:48:10.611Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:10.459Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:48:18.672Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:48:29.622Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:29.474Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:48:30.104Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:29.956Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:48:30.611Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:30.460Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:48:45.151Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-17T20:48:45.152Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-17T20:48:48.672Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:48:50.607Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:50.459Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:48:59.624Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:59.474Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:49:00.103Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:48:59.955Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[Auth] Processing login request
+[Auth] Login request body: {
+  email: 'evan.navarro@invela.com',
+  hasPassword: true,
+  passwordLength: 11
+}
+[Auth] Login attempt for: evan.navarro@invela.com
+[Auth] Password received (first 4 chars): pass
+[Auth] Looking up user by email: evan.navarro@invela.com
+[2025-05-17T20:49:02.316Z] [INFO] [Database] New database connection established {"module":"Database"}
+[Auth] User lookup result: {
+  found: true,
+  userId: 8,
+  hasPassword: true,
+  passwordLength: 60,
+  passwordStart: '$2a$'
+}
+[Auth] Found user, checking password
+[Auth] Comparing passwords:
+[Auth] - Stored hash length: 60
+[Auth] - Stored hash format check: true
+[Auth] - Supplied password length: 11
+[Auth] - Stored hash: $2a$10$unOdtqMesInbTmdENGrZleCmx5Ckl6XTzhCRVIaPxXof0RFBTahii
+[Auth] - Supplied password (first 4 chars): pass
+[Auth] Starting to hash password
+[Auth] Password hashed successfully: { hashLength: 60, startsWithBcrypt: true, rounds: 10 }
+[Auth] - Test hash generated: $2b$10$wNsEWabU5E3cCXwtSLRfSeVLBR6i1bmok4CQWrrKXXDQ4D1aiyVI2
+[Auth] Password comparison result: true
+[Auth] Password validation result: true
+[Auth] Login successful for user: 8
+[Auth] Serializing user: 8
+[Auth] Login successful for user: 8
+[Current Company] Fetching company for user: { userId: 8, companyId: 1 }
+[Current Company] Found company: {
+  id: 1,
+  name: 'Invela',
+  onboardingCompleted: true,
+  riskScore: 0,
+  chosenScore: 86,
+  isDemo: null
+}
+[Current Company] Onboarding status check: {
+  userId: 8,
+  companyId: 1,
+  userOnboardingStatus: true,
+  freshFromDatabase: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-17T20:49:02.852Z'
+}
+[2025-05-17T20:49:02.883Z] [INFO] [App] GET /api/companies/current 304 in 117ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 8, company_id: 1, email: 'evan.navarro@invela.com' }
+[2025-05-17T20:49:03.034Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1,"userId":8}
+[2025-05-17T20:49:03.087Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1}
+[Tasks] Automatically unlocking all tasks for company { userId: 8, companyId: 1, requestedBy: 'automatic_task_unlock' }
+[2025-05-17T20:49:03.088Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1}
+[2025-05-17T20:49:03.119Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.119Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":168,"userEmail":"preston.mcfarland@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.119Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":858,"userEmail":"marcin.figiel@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":123,"userEmail":"dev.kurbur@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":338,"userEmail":"nathanael.coffing@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":720,"userEmail":"jim.wadsworth@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":124,"userEmail":"amar.karvir@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":188,"userEmail":"amin.swessi@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","currentStatus":"completed","currentProgress":100}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":1,"count":11,"taskIds":[121,168,858,123,338,720,124,122,251,188,172],"taskTypes":["user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-05-17T20:49:03.120Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","timestamp":"2025-05-17T20:49:03.120Z"}
+[2025-05-17T20:49:03.169Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.170Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 5 clients {"module":"WebSocket","messageType":"task_updated","recipients":5,"totalClients":5,"filtered":false}
+[2025-05-17T20:49:03.170Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":121,"status":"completed"}
+[2025-05-17T20:49:03.170Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":168,"userEmail":"preston.mcfarland@invela.com","timestamp":"2025-05-17T20:49:03.170Z"}
+[2025-05-17T20:49:03.182Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 8 
+[2025-05-17T20:49:03.182Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-17T20:49:03.182Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-17T20:49:03.182Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 8 
+[2025-05-17T20:49:03.192Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747514943192-5wftwni","clients":6}
+[2025-05-17T20:49:03.207Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.208Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.208Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":168,"status":"completed"}
+[2025-05-17T20:49:03.208Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":858,"userEmail":"marcin.figiel@invela.com","timestamp":"2025-05-17T20:49:03.208Z"}
+[2025-05-17T20:49:03.238Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.238Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.238Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":858,"status":"completed"}
+[2025-05-17T20:49:03.239Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":123,"userEmail":"dev.kurbur@invela.com","timestamp":"2025-05-17T20:49:03.239Z"}
+[2025-05-17T20:49:03.271Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.271Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.271Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":123,"status":"completed"}
+[2025-05-17T20:49:03.271Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":338,"userEmail":"nathanael.coffing@invela.com","timestamp":"2025-05-17T20:49:03.271Z"}
+[2025-05-17T20:49:03.301Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.301Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.301Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":338,"status":"completed"}
+[2025-05-17T20:49:03.301Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":720,"userEmail":"jim.wadsworth@invela.com","timestamp":"2025-05-17T20:49:03.301Z"}
+[2025-05-17T20:49:03.315Z] [INFO] [WebSocket] Received message from client client-1747514943192-5wftwni {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1747513947659_a6as7a6r0","timestamp":"2025-05-17T20:49:03.168Z"}
+[2025-05-17T20:49:03.315Z] [INFO] [WebSocket] Authentication from client client-1747514943192-5wftwni {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-17T20:49:03.331Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.332Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.332Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":720,"status":"completed"}
+[2025-05-17T20:49:03.332Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":124,"userEmail":"amar.karvir@invela.com","timestamp":"2025-05-17T20:49:03.332Z"}
+[2025-05-17T20:49:03.363Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.363Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.363Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":124,"status":"completed"}
+[2025-05-17T20:49:03.364Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","timestamp":"2025-05-17T20:49:03.364Z"}
+[2025-05-17T20:49:03.390Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-17T20:49:03.399Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.400Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.400Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":122,"status":"completed"}
+[2025-05-17T20:49:03.400Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","timestamp":"2025-05-17T20:49:03.400Z"}
+[2025-05-17T20:49:03.431Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.431Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.431Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":251,"status":"completed"}
+[2025-05-17T20:49:03.431Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":188,"userEmail":"amin.swessi@invela.com","timestamp":"2025-05-17T20:49:03.431Z"}
+[2025-05-17T20:49:03.461Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.461Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.461Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":188,"status":"completed"}
+[2025-05-17T20:49:03.461Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","timestamp":"2025-05-17T20:49:03.461Z"}
+[2025-05-17T20:49:03.485Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 8: completed=true, step=2 
+[2025-05-17T20:49:03.492Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:03.492Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:03.492Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":172,"status":"completed"}
+[2025-05-17T20:49:03.492Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":1,"count":11}
+[Tasks] Successfully unlocked all tasks for company: 1
+[2025-05-17T20:49:03.519Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 337ms :: {"exists":true,"completed":true,"currentStep":2,"lastSeenAt":"2025-05-17T20:1... 
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 8',
+    condition2: 'tasks.created_by = 8',
+    condition3: "tasks.company_id = 1 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('evan.navarro@invela.com')"
+  }
+}
+[Tasks] Tasks found: { count: 27 }
+[2025-05-17T20:49:03.624Z] [INFO] [App] GET /api/tasks 200 in 591ms :: [{"id":975,"title":"New User Invitation: 4@e.com","description":"Complete use... 
+[2025-05-17T20:49:05.455Z] [INFO] [App] GET /api/companies/current 304 in 34ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[Relationships] Fetching network for company: 1
+[Network Visualization] Fetching network data for company: 1
+[Relationships] Found network members: { count: 59 }
+[Network Visualization] Found network relationships: { count: 59 }
+[Network Visualization] Returning visualization data: { centerNode: 'Invela', nodeCount: 59 }
+[2025-05-17T20:49:05.749Z] [INFO] [App] GET /api/relationships 200 in 107ms :: [{"id":12,"companyId":1,"relatedCompanyId":33,"relationshipType":"network_mem... 
+[2025-05-17T20:49:05.778Z] [INFO] [App] GET /api/network/visualization 200 in 135ms :: {"center":{"id":1,"name":"Invela","riskScore":0,"riskBucket":"none","accredit... 
+[2025-05-17T20:49:08.677Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:10.609Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:49:10.459Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[2025-05-17T20:49:11.687Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:12.472Z] [WARN] [App] POST /api/fintech/check-company 409 in 70ms :: {"message":"A company with this name already exists","existingCompany":{"id":... 
+[2025-05-17T20:49:14.603Z] [WARN] [App] POST /api/fintech/check-company 409 in 67ms :: {"message":"A company with this name already exists","existingCompany":{"id":... 
+[2025-05-17T20:49:14.670Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:16.719Z] [INFO] [App] POST /api/fintech/check-company 200 in 69ms :: {"exists":false} 
+[2025-05-17T20:49:17.675Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:18.672Z] [INFO] [WebSocket] Received message from client client-1747514208520-2ndsml6 {"module":"WebSocket","type":"ping"}
+[2025-05-17T20:49:20.677Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:23.681Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[FinTech Invite] Starting invitation process with payload: {
+  email: '***@***.***',
+  full_name: 'John Doe7',
+  company_name: 'DemoTest7',
+  sender_name: 'Evan Navarro',
+  sender_company: 'Invela',
+  is_demo: true
+}
+[FinTech Invite] Found sender company: { name: 'Invela', duration: 32 }
+[FinTech Invite] Created company: { id: 329, is_demo: true, duration: 85 }
+[FinTech Invite] Populating file vault for demo company: { companyId: 329, companyName: 'DemoTest7' }
+[Demo File Vault] Starting file vault population for company 329 (DemoTest7)
+[FinTech Invite] Created user: { id: 387, duration: 177 }
+[FinTech Invite] Creating user onboarding task
+[FinTech Invite] Created onboarding task: { taskId: 979, status: 'email_sent', assignedTo: 387, duration: 210 }
+[FinTech Invite] Created invitation: { id: 394, code: 'A6C2A7', duration: 246 }
+[FinTech Invite] Creating company tasks with existing transaction
+[Company Service] Creating new company: DemoTest7 { hasExistingTransaction: true, timestamp: '2025-05-17T20:49:25.786Z' }
+[Company Service] Using existing transaction for company creation
+[Company Service] Using existing company record: { id: 329, name: 'DemoTest7' }
+[Company Service] Creating tasks with creator ID: 8
+[Company Service] Creating KYB task for company: 329
+[Company Service] Created KYB task: { taskId: 980, companyId: 329, duration: 30 }
+[Company Service] Creating S&P KY3P Security Assessment task for company: 329
+[Company Service] Created S&P KY3P Security Assessment task: { taskId: 981, companyId: 329, duration: 60 }
+[Company Service] Creating Open Banking Survey task for company: 329
+[Company Service] Created Open Banking Survey task: { taskId: 982, companyId: 329, duration: 91 }
+[Company Service] Creating relationship with Invela for company: 329
+[Company Service] Creating relationship with creator company: 1
+[Company Service] Created relationships: {
+  invelaRelationshipId: 432,
+  creatorRelationshipId: 433,
+  newCompanyId: 329,
+  duration: 153
+}
+[2025-05-17T20:49:25.940Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:25.941Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:25.941Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":980,"status":"not_started"}
+[2025-05-17T20:49:25.941Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:25.942Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:25.942Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":981,"status":"not_started"}
+[2025-05-17T20:49:25.942Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-17T20:49:25.942Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:25.942Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":982,"status":"not_started"}
+[Company Service] Checking if this is a demo company for file vault population
+[FinTech Invite] Tasks created successfully: {
+  companyId: 329,
+  tasks: { kyb: 980, security: 981, card: 982, onboarding: 979 },
+  duration: 404
+}
+[2025-05-17T20:49:25.943Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-17T20:49:25.944Z] [INFO] [App] [Demo Hooks] Processing new company: DemoTest7 (ID: 329) 
+[2025-05-17T20:49:25.944Z] [INFO] [App] [Demo Hooks] Applying demo enhancements for company 329 (DemoTest7) 
+[2025-05-17T20:49:25.944Z] [INFO] [App] [Demo Hooks] Populating file vault for company 329 (DemoTest7) 
+[FinTech Invite] Sending invitation email
+[EmailService] Starting to send template email
+[EmailService] Template type: fintech_invite
+[EmailService] Recipient: 7@e.com
+[EmailService] Template data (raw): {
+  "recipientName": "John Doe7",
+  "recipientEmail": "7@e.com",
+  "senderName": "Evan Navarro",
+  "senderCompany": "Invela",
+  "targetCompany": "DemoTest7",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com",
+  "code": "A6C2A7"
+}
+[EmailService] Starting email validation for: 7@e.com
+[EmailService] Checking MX records for domain: e.com
+[2025-05-17T20:49:25.978Z] [INFO] [App] [Demo File Vault] Reading file content from /home/runner/workspace/attached_assets/1_SOC_2_Questions.csv 
+[2025-05-17T20:49:25.978Z] [INFO] [App] [Demo File Vault] Adding file "SOC 2 Questions - DemoTest7.csv" to company 329 (DemoTest7) 
+[2025-05-17T20:49:25.979Z] [INFO] [App] Creating file: SOC 2 Questions - DemoTest7.csv {"companyId":329,"userId":1,"fileType":"text/csv","fileSize":4139}
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND e.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'e.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: 7@e.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientName": "John Doe7",
+  "recipientEmail": "7@e.com",
+  "senderName": "Evan Navarro",
+  "senderCompany": "Invela",
+  "targetCompany": "DemoTest7",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com",
+  "code": "A6C2A7"
+}
+[EmailService] Built invite URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com
+[EmailService] Transformed template data: {
+  "recipientName": "John Doe7",
+  "recipientEmail": "7@e.com",
+  "senderName": "Evan Navarro",
+  "senderCompany": "Invela",
+  "targetCompany": "DemoTest7",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com",
+  "code": "A6C2A7"
+}
+[EmailService] Getting email template: fintech_invite
+[EmailTemplate] Getting template: fintech_invite
+[EmailTemplate] Template data: {
+  "recipientName": "John Doe7",
+  "recipientEmail": "7@e.com",
+  "senderName": "Evan Navarro",
+  "senderCompany": "Invela",
+  "targetCompany": "DemoTest7",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com",
+  "code": "A6C2A7"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "John Doe7",
+  "recipientEmail": "7@e.com",
+  "senderName": "Evan Navarro",
+  "senderCompany": "Invela",
+  "targetCompany": "DemoTest7",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/register?code=A6C2A7&email=7%40e.com",
+  "code": "A6C2A7",
+  "inviteType": "fintech"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'EvanCNavarro@gmail.com',
+  to: '7@e.com',
+  subject: 'Invitation to join Invela',
+  textLength: 601,
+  htmlLength: 1673
+}
+[2025-05-17T20:49:26.019Z] [ERROR] [App] Error creating file {"error":"insert or update on table \"files\" violates foreign key constraint \"files_user_id_fkey\"","stack":"error: insert or update on table \"files\" violates foreign key constraint \"files_user_id_fkey\"\n    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)\n    at async createFile (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:151:20)\n    at async addDemoFileToVault (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:216:20)\n    at async populateFileVault (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:333:22)\n    at async processNewCompany (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:281:29)\n    at async Timeout._onTimeout (/home/runner/workspace/server/services/company.ts:319:30)","fileName":"SOC 2 Questions - DemoTest7.csv","companyId":329}
+[2025-05-17T20:49:26.019Z] [ERROR] [App] [Demo File Vault] Error adding demo file to vault: {"companyId":329,"filePath":"../../attached_assets/1_SOC_2_Questions.csv","error":"Failed to create file: insert or update on table \"files\" violates foreign key constraint \"files_user_id_fkey\""}
+[2025-05-17T20:49:26.019Z] [ERROR] [App] [Demo Hooks] Error populating file vault: {"companyId":329,"error":"Failed to create file: insert or update on table \"files\" violates foreign key constraint \"files_user_id_fkey\"","stack":"Error: Failed to create file: insert or update on table \"files\" violates foreign key constraint \"files_user_id_fkey\"\n    at addDemoFileToVault (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:232:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async populateFileVault (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:333:22)\n    at async processNewCompany (file:///home/runner/workspace/server/hooks/demo-company-hooks.js:281:29)\n    at async Timeout._onTimeout (/home/runner/workspace/server/services/company.ts:319:30)"}
+[Company Service] Demo company processing result: { companyId: 329, success: true, fileCount: 0 }
+[Demo File Vault] Added demo file: SOC 2 Questions for company 329
+[Demo File Vault] Added demo file: ISO 27001 Questions for company 329
+[Demo File Vault] Added demo file: Penetration Test Questions for company 329
+[2025-05-17T20:49:26.676Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[Demo File Vault] Added demo file: Business Continuity Plan Questions for company 329
+[Demo File Vault] Completed population for company 329: 4/4 files added
+[FinTech Invite] Demo file vault population complete: {
+  companyId: 329,
+  companyName: 'DemoTest7',
+  success: true,
+  fileCount: 4
+}
+[EmailService] Email sent successfully to: 7@e.com
+[FinTech Invite] Invitation email sent successfully
+[FinTech Invite] Process completed: {
+  companyId: 329,
+  userId: 387,
+  invitationId: 394,
+  onboardingTaskId: 979,
+  duration: 1399
+}
+[2025-05-17T20:49:26.910Z] [INFO] [App] POST /api/fintech/invite 201 in 1431ms :: {"message":"FinTech company invited successfully","company":{"id":329,"name":... 
+[2025-05-17T20:49:29.620Z] [INFO] [WebSocket] Received message from client client-1747513949501-k2qizn0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:49:29.473Z","connectionId":"ws_1747513949464_ncbqb3iuo"}
+[2025-05-17T20:49:29.671Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:30.112Z] [INFO] [WebSocket] Received message from client client-1747513949982-aeg24jd {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:49:29.956Z","connectionId":"ws_1747513948957_pkhn0p3pl"}
+[2025-05-17T20:49:30.607Z] [INFO] [WebSocket] Received message from client client-1747513950486-ddlhhde {"module":"WebSocket","type":"ping","timestamp":"2025-05-17T20:49:30.459Z","connectionId":"ws_1747513948945_yomcsymcq"}
+[Current Company] Using cached company data: 1
+[2025-05-17T20:49:32.676Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:35.686Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:38.674Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
+[2025-05-17T20:49:41.675Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":null,"revenue_tier":"sm... 
