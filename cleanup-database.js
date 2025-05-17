@@ -150,6 +150,103 @@ async function cleanupDatabase() {
     await client.query('TRUNCATE TABLE kyb_responses CASCADE');
     await client.query('TRUNCATE TABLE ky3p_responses CASCADE');
     await client.query('TRUNCATE TABLE open_banking_responses CASCADE');
+    
+    // Check if open_banking_field_timestamps table exists and truncate it
+    const fieldTimestampsTableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'open_banking_field_timestamps'
+      )
+    `);
+    
+    if (fieldTimestampsTableExists.rows[0]?.exists) {
+      log('Truncating open_banking_field_timestamps table...', colors.blue);
+      await client.query(`
+        DELETE FROM open_banking_field_timestamps 
+        WHERE task_id IN (
+          SELECT id FROM tasks 
+          WHERE company_id BETWEEN 252 AND 317
+          OR assigned_to IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+          OR created_by IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+        )
+      `);
+    }
+    
+    // Check if kyb_field_timestamps table exists and truncate it
+    const kybFieldTimestampsTableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'kyb_field_timestamps'
+      )
+    `);
+    
+    if (kybFieldTimestampsTableExists.rows[0]?.exists) {
+      log('Truncating kyb_field_timestamps table...', colors.blue);
+      await client.query(`
+        DELETE FROM kyb_field_timestamps 
+        WHERE task_id IN (
+          SELECT id FROM tasks 
+          WHERE company_id BETWEEN 252 AND 317
+          OR assigned_to IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+          OR created_by IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+        )
+      `);
+    }
+    
+    // Check if ky3p_field_timestamps table exists and truncate it
+    const ky3pFieldTimestampsTableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'ky3p_field_timestamps'
+      )
+    `);
+    
+    if (ky3pFieldTimestampsTableExists.rows[0]?.exists) {
+      log('Truncating ky3p_field_timestamps table...', colors.blue);
+      await client.query(`
+        DELETE FROM ky3p_field_timestamps 
+        WHERE task_id IN (
+          SELECT id FROM tasks 
+          WHERE company_id BETWEEN 252 AND 317
+          OR assigned_to IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+          OR created_by IN (
+            SELECT id FROM users WHERE 
+            (id BETWEEN 294 AND 304) OR 
+            (id BETWEEN 309 AND 346) OR 
+            (id BETWEEN 348 AND 381)
+          )
+        )
+      `);
+    }
+    
     log('Response tables truncated.', colors.green);
     
     // 2. Check for and delete from tables linking to companies or users
@@ -246,7 +343,30 @@ async function cleanupDatabase() {
       )
     `);
     
-    // 4. Delete tasks linked to the target companies and users
+    // 4. Delete invitations linked to target companies and tasks
+    log('\nDeleting invitations...', colors.blue);
+    await client.query(`
+      DELETE FROM invitations 
+      WHERE company_id BETWEEN 252 AND 317
+      OR task_id IN (
+        SELECT id FROM tasks 
+        WHERE company_id BETWEEN 252 AND 317
+        OR assigned_to IN (
+          SELECT id FROM users WHERE 
+          (id BETWEEN 294 AND 304) OR 
+          (id BETWEEN 309 AND 346) OR 
+          (id BETWEEN 348 AND 381)
+        )
+        OR created_by IN (
+          SELECT id FROM users WHERE 
+          (id BETWEEN 294 AND 304) OR 
+          (id BETWEEN 309 AND 346) OR 
+          (id BETWEEN 348 AND 381)
+        )
+      )
+    `);
+    
+    // 5. Delete tasks linked to the target companies and users
     log('\nDeleting tasks...', colors.blue);
     await client.query(`
       DELETE FROM tasks 
@@ -265,15 +385,15 @@ async function cleanupDatabase() {
       )
     `);
     
-    // 5. Delete invitations linked to target companies
-    log('\nDeleting invitations...', colors.blue);
+    // 6. Delete all users associated with target companies first
+    log('\nDeleting users associated with target companies...', colors.blue);
     await client.query(`
-      DELETE FROM invitations 
+      DELETE FROM users 
       WHERE company_id BETWEEN 252 AND 317
     `);
     
-    // 6. Delete users in the specified ID ranges
-    log('\nDeleting users...', colors.blue);
+    // 7. Then delete users in the specified ID ranges
+    log('\nDeleting users in specified ID ranges...', colors.blue);
     await client.query(`
       DELETE FROM users 
       WHERE (id BETWEEN 294 AND 304) 
@@ -281,7 +401,7 @@ async function cleanupDatabase() {
       OR (id BETWEEN 348 AND 381)
     `);
     
-    // 7. Finally, delete the companies
+    // 8. Finally, delete the companies
     log('\nDeleting companies...', colors.blue);
     await client.query(`
       DELETE FROM companies 
