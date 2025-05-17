@@ -47,7 +47,8 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
   logDebug('Updating user onboarding status', { userId, status });
   
   try {
-    const response = await fetch('/api/user/complete-onboarding', {
+    // Using the correct endpoint path with plural 'users'
+    const response = await fetch('/api/users/complete-onboarding', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -425,7 +425,8 @@ export function OnboardingModal() {
         email: user.email
       });
       
-      const response = await fetch('/api/user/complete-onboarding', {
+      // Using the correct endpoint path with plural 'users'
+      const response = await fetch('/api/users/complete-onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -488,15 +489,14 @@ export function OnboardingModal() {
     onError: (error: Error) => {
       console.error('[OnboardingModal] Error completing onboarding:', error);
       
-      // Still show success and close modal to prevent blocking user
+      // Show error message instead of success
       toastFn({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully.",
-        variant: "default"
+        title: "Onboarding Error",
+        description: "There was a problem completing your onboarding. Please try again.",
+        variant: "destructive"
       });
       
-      setShowModal(false);
-      
+      // Don't close the modal - let the user try again
       // Try to refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
