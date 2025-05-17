@@ -8,8 +8,8 @@
  */
 
 // Use CommonJS imports for compatibility
-const { db } = require('./db/index');
-const { companies, files } = require('./db/schema');
+const { db } = require('./db/index.ts');
+const { companies, files } = require('./db/schema.ts');
 const { eq } = require('drizzle-orm');
 const crypto = require('crypto');
 
