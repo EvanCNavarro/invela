@@ -5,8 +5,8 @@
  * by creating a new demo company and verifying that its file vault is populated.
  */
 
-import { db } from './db/index.js';
-import { companies, files } from './db/schema.js';
+import { db } from './db/index.ts';
+import { companies, files } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
 import { populateCompanyFileVault } from './populate-demo-file-vault.js';
 
