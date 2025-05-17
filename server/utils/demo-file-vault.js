@@ -7,9 +7,31 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { db } from '../../db/index.js';
-import { files } from '../../db/schema.js';
+// Use dynamic import for db access to avoid module compatibility issues
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
+import pg from 'pg';
+
+// Get required database objects without direct imports
+// This approach allows the code to work in both module systems
+let db, files;
+
+async function initDb() {
+  if (db && files) return { db, files };
+  
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+  
+  // Import schema dynamically to avoid module path issues
+  const schemaModule = await import('../../db/schema.ts');
+  files = schemaModule.files;
+  
+  // Create db instance
+  db = drizzle(pool, { schema: { files } });
+  
+  return { db, files };
+}
 
 /**
  * Check if company already has files in its vault
@@ -182,6 +204,4 @@ async function populateDemoFileVault(company) {
 }
 
 // Export the functionality
-module.exports = {
-  populateDemoFileVault
-};
+export { populateDemoFileVault };
