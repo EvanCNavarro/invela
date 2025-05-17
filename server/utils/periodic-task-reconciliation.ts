@@ -34,11 +34,11 @@ async function findTasksNeedingReconciliation(): Promise<number[]> {
     const minReconciliationTime = new Date(Date.now() - MIN_RECONCILIATION_INTERVAL);
     
     // Find active tasks not recently reconciled
-    const tasksToCheck = await db.select({ id: tasks.id, type: tasks.task_type })
+    const tasksToCheck = await db.select({ id: tasks.id, type: tasks.task_type, status: tasks.status, metadata: tasks.metadata })
       .from(tasks)
       .where(
         and(
-          // Only check active tasks
+          // Only check active tasks - NEVER include submitted/completed tasks
           or(
             eq(tasks.status, TaskStatus.IN_PROGRESS),
             eq(tasks.status, TaskStatus.NOT_STARTED),
@@ -54,6 +54,14 @@ async function findTasksNeedingReconciliation(): Promise<number[]> {
           or(
             sql`${tasks.metadata}->>'lastProgressReconciliation' IS NULL`,
             sql`(${tasks.metadata}->>'lastProgressReconciliation')::timestamp < ${minReconciliationTime}`
+          ),
+          // CRITICAL FIX: Explicitly exclude tasks with any submission indicators in metadata
+          // This ensures we never try to recalculate progress for submitted tasks
+          and(
+            sql`${tasks.metadata}->>'submissionDate' IS NULL`,
+            sql`${tasks.metadata}->>'submission_date' IS NULL`,
+            sql`${tasks.metadata}->>'submitted' IS NULL OR ${tasks.metadata}->>'submitted' = 'false'`,
+            sql`${tasks.metadata}->>'explicitlySubmitted' IS NULL OR ${tasks.metadata}->>'explicitlySubmitted' = 'false'`
           )
         )
       )
