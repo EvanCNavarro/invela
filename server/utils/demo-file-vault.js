@@ -11,7 +11,7 @@ import pg from 'pg';
 
 // Directly use database connection without importing schema
 // This avoids TypeScript import issues in ESM
-const Pool = pg.Pool;
+const { Pool } = pg;
 
 /**
  * Get a database client
@@ -33,20 +33,17 @@ async function getDbClient() {
  * @returns {Promise<number>} - Number of existing files
  */
 async function getExistingFileCount(companyId) {
+  let client;
   try {
-    // Initialize database connection
-    const { db, files } = await initDb();
-    
-    // Use count aggregate function
-    const count = await db
-      .select({ count: { count: files.id } })
-      .from(files)
-      .where(eq(files.company_id, companyId));
-    
-    return count[0]?.count || 0;
+    client = await getDbClient();
+    const query = 'SELECT COUNT(*) FROM files WHERE company_id = $1';
+    const result = await client.query(query, [companyId]);
+    return parseInt(result.rows[0].count) || 0;
   } catch (error) {
-    console.error('[Demo File Vault] Error counting existing files:', error);
+    console.error('[Demo File Vault] Error checking existing files:', error);
     return 0;
+  } finally {
+    if (client) client.release();
   }
 }
 
@@ -94,33 +91,45 @@ function getDisplayNameFromFilename(fileName) {
  * @returns {Promise<object>} - Result object with file details
  */
 async function addDemoFile(companyId, companyName, fileName) {
+  let client;
   try {
-    // Initialize database connection
-    const { db, files } = await initDb();
+    client = await getDbClient();
     
-    // Get file content
+    // Get file content (we'll store file info in metadata since there's no content column)
     const fileContent = await readDemoFile(fileName);
     
-    // Create file record in database
+    // Create file record in database using direct SQL
     const displayName = getDisplayNameFromFilename(fileName);
-    const [fileRecord] = await db.insert(files)
-      .values({
-        name: displayName,
-        original_name: fileName,
-        company_id: companyId,
-        user_id: 8, // Use existing user ID from Evan Navarro
-        type: 'csv',
-        size: fileContent.length,
-        content: fileContent,
-        path: `demo-files/${fileName}`, // Add required path
-        status: 'active',
-        metadata: {
-          source: 'demo_autofill',
-          created_for: companyName,
-          created_at: new Date().toISOString()
-        }
-      })
-      .returning();
+    const metadata = JSON.stringify({
+      source: 'demo_autofill',
+      created_for: companyName,
+      created_at: new Date().toISOString(),
+      file_name: fileName,
+      file_source: 'attached_assets'
+    });
+    
+    const insertQuery = `
+      INSERT INTO files (
+        name, company_id, user_id, type, 
+        size, path, status, metadata, created_at, updated_at
+      ) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      RETURNING id, name, type
+    `;
+    
+    const values = [
+      displayName,
+      companyId,
+      8,  // Use existing user ID from Evan Navarro
+      'csv',
+      fileContent.length,
+      `demo-files/${fileName}`,
+      'active',
+      metadata
+    ];
+    
+    const result = await client.query(insertQuery, values);
+    const fileRecord = result.rows[0];
       
     console.log(`[Demo File Vault] Added demo file: ${displayName} for company ${companyId}`);
     return {
@@ -136,6 +145,8 @@ async function addDemoFile(companyId, companyName, fileName) {
       success: false,
       error: error.message
     };
+  } finally {
+    if (client) client.release();
   }
 }
 
@@ -156,9 +167,6 @@ async function populateDemoFileVault(company) {
   
   try {
     console.log(`[Demo File Vault] Starting file vault population for company ${company.id} (${company.name})`);
-    
-    // Initialize database in this function too
-    await initDb();
     
     // Check if files already exist
     const existingCount = await getExistingFileCount(company.id);
