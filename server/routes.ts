@@ -2541,10 +2541,16 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const result = await db.transaction(async (tx) => {
         const txStartTime = Date.now();
         try {
+          // Validate user has a valid company_id
+          if (!req.user || !req.user.company_id) {
+            console.error('[FinTech Invite] User missing company_id:', { user: req.user });
+            throw new Error("User company ID not found");
+          }
+          
           // Get sender company
           const [userCompany] = await tx.select()
             .from(companies)
-            .where(eq(companies.id, req.user!.company_id));
+            .where(eq(companies.id, req.user.company_id));
 
           if (!userCompany) {
             throw new Error("Sender company not found");
