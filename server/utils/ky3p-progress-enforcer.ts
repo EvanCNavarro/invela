@@ -16,12 +16,13 @@ import { db } from '@db';
 import { logger } from './logger';
 import { sql, eq } from 'drizzle-orm';
 import { tasks } from '@db/schema';
-import { broadcast } from './unified-websocket';
+import { broadcastTaskUpdate } from './unified-websocket';
 import { validateProgress } from './progress-validator';
+import { TaskStatus } from '../types';
 
 // Constants for clearer code
 const PROGRESS_COMPLETE = 100;
-const SUBMITTED_STATUS = 'submitted';
+const SUBMITTED_STATUS = TaskStatus.SUBMITTED;
 
 /**
  * Ensures a KY3P task has the correct progress value (100%) when submitted
@@ -174,9 +175,9 @@ export async function enforceKy3pSubmittedProgress(taskId: number): Promise<{
 
     // Broadcast the update to connected clients
     try {
-      broadcast('task_update', {
+      broadcastTaskUpdate({
         taskId,
-        status: updatedTask.status,
+        status: updatedTask.status as TaskStatus,
         progress: updatedTask.progress,
         metadata: {
           ...metadata,
@@ -184,7 +185,7 @@ export async function enforceKy3pSubmittedProgress(taskId: number): Promise<{
           submitted: true,
           completed: true
         },
-        timestamp: new Date().toISOString()
+        message: 'KY3P form progress fixed to 100%'
       });
       
       logger.info(`[KY3P Progress Enforcer] Broadcasted task update for ${taskId}`, {
