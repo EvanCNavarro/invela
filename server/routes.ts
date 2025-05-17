@@ -2621,6 +2621,45 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             duration: Date.now() - txStartTime
           });
 
+          // Directly populate file vault for demo companies
+          if (newCompany.is_demo === true) {
+            try {
+              // Import here to avoid dependency issues with ES modules
+              const { populateDemoFileVault } = await import('./utils/demo-file-vault.js');
+              
+              console.log('[FinTech Invite] Populating file vault for demo company:', {
+                companyId: newCompany.id,
+                companyName: newCompany.name
+              });
+              
+              // Non-blocking file vault population
+              setTimeout(async () => {
+                try {
+                  const vaultResult = await populateDemoFileVault(newCompany);
+                  console.log('[FinTech Invite] Demo file vault population complete:', {
+                    companyId: newCompany.id,
+                    companyName: newCompany.name,
+                    success: vaultResult.success,
+                    fileCount: vaultResult.fileCount || 0
+                  });
+                } catch (vaultError) {
+                  console.error('[FinTech Invite] Error populating demo file vault:', {
+                    error: vaultError instanceof Error ? vaultError.message : String(vaultError),
+                    companyId: newCompany.id,
+                    companyName: newCompany.name
+                  });
+                  // Non-blocking - we don't want to fail company creation
+                }
+              }, 0);
+            } catch (importError) {
+              console.error('[FinTech Invite] Failed to import demo file vault utility:', {
+                error: importError instanceof Error ? importError.message : String(importError),
+                companyId: newCompany.id
+              });
+              // Continue with company creation
+            }
+          }
+
           // Create user account
           const hashedPassword = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
           const [newUser] = await tx.insert(users)
