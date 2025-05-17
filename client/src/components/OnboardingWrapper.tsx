@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -19,19 +21,53 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
 
   // State for showing the onboarding modal
   const [showModal, setShowModal] = React.useState(false);
-  // Mock current company for demo
-  const currentCompany = { id: 1, name: "Acme Corporation" };
+  // Fetch current company data to get accurate onboarding status
+  const { data: currentCompany } = useQuery({
+    queryKey: ['/api/companies/current'],
+    enabled: !!user,
+  });
 
-  // Show modal if user hasn't completed onboarding - ONLY check user status
+  // Debug logging for onboarding status
   React.useEffect(() => {
-    // Only check user's onboarding status, ignore company onboarding status
-    if (user && !user.onboarding_user_completed) {
+    if (user && currentCompany) {
+      console.log('[ONBOARDING DEBUG] Checking onboarding status in wrapper:', {
+        userId: user.id,
+        userOnboardingInSession: user.onboarding_user_completed,
+        companyOnboardingFromApi: currentCompany.onboardingCompleted,
+        shouldShowModal: !user.onboarding_user_completed && !currentCompany.onboardingCompleted,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [user, currentCompany]);
+
+  // Enhanced check for onboarding status - checks both user object and company data
+  React.useEffect(() => {
+    // Check both user session data AND company data from the API
+    // This ensures we show the modal only if BOTH indicate onboarding is incomplete
+    const userNeedsOnboarding = user && !user.onboarding_user_completed;
+    const companyDataSaysNotOnboarded = currentCompany && !currentCompany.onboardingCompleted;
+    
+    // If we have company data and it contradicts user session data, refresh user data
+    if (user && currentCompany && !user.onboarding_user_completed && currentCompany.onboardingCompleted) {
+      console.log('[ONBOARDING DEBUG] Detected onboarding status mismatch, refreshing user data', {
+        userSessionStatus: user.onboarding_user_completed,
+        companyApiStatus: currentCompany.onboardingCompleted
+      });
+      
+      // Refresh user data to get the latest onboarding status
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Only refresh user data, return early to avoid showing modal
+      return;
+    }
+    
+    // Only show modal if user needs onboarding according to ALL data sources
+    if (userNeedsOnboarding && companyDataSaysNotOnboarded) {
       setShowModal(true);
     } else {
       // Ensure modal is closed if user is onboarded
       setShowModal(false);
     }
-  }, [user]);
+  }, [user, currentCompany]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -44,7 +80,7 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
         isOpen={showModal}
         setShowModal={setShowModal}
         user={user}
-        currentCompany={currentCompany}
+        currentCompany={currentCompany || { id: 1, name: "Your Company" }}
       />
     </div>
   );
