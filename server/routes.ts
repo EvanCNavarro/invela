@@ -890,14 +890,47 @@ export function registerRoutes(app: Express): Express {
         isDemo: company.is_demo
       });
 
-      // Get user's onboarding status to ensure consistent state across company and user
-      const userOnboardingStatus = req.user?.onboarding_user_completed || false;
+      // Get user's onboarding status directly from the database to ensure we have the latest value
+      // This is the critical fix - we're no longer relying on the possibly outdated session data
+      let userOnboardingStatus = req.user?.onboarding_user_completed || false;
+      
+      // Fetch fresh user data from the database to ensure we have the latest onboarding status
+      if (req.user && req.user.id) {
+        try {
+          const [freshUserData] = await db.select({
+            id: users.id,
+            onboarding_user_completed: users.onboarding_user_completed
+          })
+          .from(users)
+          .where(eq(users.id, req.user.id))
+          .limit(1);
+          
+          if (freshUserData) {
+            // Use the fresh database value instead of the session value
+            userOnboardingStatus = freshUserData.onboarding_user_completed || false;
+            
+            // Log if there's a discrepancy between session and database values
+            if (userOnboardingStatus !== (req.user.onboarding_user_completed || false)) {
+              console.log('[Current Company] User onboarding status discrepancy detected:', {
+                userId: req.user.id,
+                sessionValue: req.user.onboarding_user_completed || false,
+                databaseValue: userOnboardingStatus,
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[Current Company] Error fetching fresh user data:', error);
+          // Fall back to session data if database query fails
+        }
+      }
       
       // Log detailed onboarding status for debugging
       console.log('[Current Company] Onboarding status check:', {
         userId: req.user?.id,
         companyId: companyId,
         userOnboardingStatus: userOnboardingStatus,
+        freshFromDatabase: true, // Flag to indicate we're using fresh data
         companyOnboardingStatus: company.onboarding_company_completed,
         timestamp: new Date().toISOString()
       });
