@@ -16,6 +16,18 @@ import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { normalizeTaskStatus, getSubmittedStatus } from '../utils/task-status';
+// Define this to make TypeScript happy with the validation_rules.options access
+type KybField = {
+  id: number;
+  field_key: string;
+  field_type?: string;
+  group?: string;
+  display_name?: string;
+  label?: string;
+  question?: string;
+  validation_rules?: Record<string, any>;
+  order?: number;
+};
 
 export interface KybSubmissionInput {
   taskId: number;
@@ -174,7 +186,7 @@ export async function processKybSubmission(
       logger.info(`[KYB Transaction] Task status updated in transaction`, {
         transactionId,
         taskId,
-        status: TaskStatus.SUBMITTED,
+        status: getSubmittedStatus(),
         elapsedMs: performance.now() - startTime
       });
 
@@ -245,12 +257,14 @@ export async function processKybSubmission(
     const [verifiedTask] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
+    
+    const expectedStatus = getSubmittedStatus();
       
-    if (verifiedTask?.status !== TaskStatus.SUBMITTED) {
+    if (verifiedTask?.status !== expectedStatus) {
       logger.warn(`[KYB Transaction] Task status verification failed - expected 'submitted' but found '${verifiedTask?.status}'`, {
         transactionId,
         taskId,
-        expectedStatus: TaskStatus.SUBMITTED,
+        expectedStatus: expectedStatus,
         actualStatus: verifiedTask?.status,
         metadata: verifiedTask?.metadata
       });
@@ -259,7 +273,7 @@ export async function processKybSubmission(
       try {
         await db.update(tasks)
           .set({
-            status: TaskStatus.SUBMITTED,
+            status: expectedStatus, // Use consistent string literal status
             updated_at: new Date()
           })
           .where(eq(tasks.id, taskId));
@@ -267,7 +281,7 @@ export async function processKybSubmission(
         logger.info(`[KYB Transaction] Applied direct status fix to ensure task is properly marked as submitted`, {
           transactionId,
           taskId,
-          fixedStatus: TaskStatus.SUBMITTED,
+          fixedStatus: expectedStatus,
           elapsedMs: performance.now() - startTime
         });
       } catch (fixError) {
