@@ -2094,11 +2094,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           success: true,
           message: "Onboarding completed successfully, but task status update failed",
           user: updatedUserData,
-          company: {
+          company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
             id: updatedCompanyData.id,
             name: updatedCompanyData.name,
             onboardingCompleted: true
-          },
+          } : null,
           elapsedMs: Date.now() - startTime
         });
       }
