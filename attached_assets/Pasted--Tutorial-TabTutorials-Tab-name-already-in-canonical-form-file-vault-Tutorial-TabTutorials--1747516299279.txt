@@ -1,0 +1,51 @@
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 3, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[Tutorial:TabTutorials] Updating local state for file-vault: 
+Object {exists: true, completed: true, currentStep: 3, lastSeenAt: "2025-05-17T21:11:23.906Z", completedAt: "2025-05-17T21:11:23.906Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=3, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 3, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 3, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1007", name: "kyb_984_330_v1.0_20250517211031.csv", size: 4088, status: "uploaded", createdAt: "2025-05-17T21:10:31.184Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1006", name: "Business Continuity Plan Questions", size: 5215, status: "active", createdAt: "2025-05-17T21:09:37.795Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1005", name: "Penetration Test Questions", size: 4421, status: "active", createdAt: "2025-05-17T21:09:37.576Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1004", name: "ISO 27001 Questions", size: 4405, status: "active", createdAt: "2025-05-17T21:09:37.353Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1003", name: "SOC 2 Questions", size: 4139, status: "active", createdAt: "2025-05-17T21:09:37.128Z", …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T21:11:35.034Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T21:11:37.203Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T21:11:37.203Z", echo: {…}}
