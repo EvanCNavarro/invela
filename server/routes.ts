@@ -2811,7 +2811,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  // Add this endpoint to handle user onboarding completion
+  // Primary endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
     try {
       if (!req.user || !req.user.id) {
@@ -2830,6 +2830,26 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         companyId: companyId,
         timestamp: new Date().toISOString()
       });
+      
+      // Check if user has already completed onboarding to prevent redundant updates
+      const [existingUser] = await db.select()
+        .from(users)
+        .where(eq(users.id, userId));
+        
+      if (existingUser?.onboarding_user_completed) {
+        console.log('[Complete Onboarding] Onboarding already completed for user:', {
+          userId: userId,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Return success even though no change was made
+        return res.json({
+          message: "Onboarding already completed",
+          success: true,
+          user: existingUser,
+          elapsedMs: Date.now() - startTime
+        });
+      }
       
       // Variable to store updated user data
       let updatedUserData = null;
@@ -2868,6 +2888,24 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         taskId: updatedTask?.id,
         elapsedMs: Date.now() - startTime
       });
+      
+      // Broadcast this update via WebSocket so any connected clients can update immediately
+      try {
+        if (typeof webSocketService?.broadcastToUser === 'function') {
+          webSocketService.broadcastToUser(userId, {
+            type: 'onboarding_update',
+            data: {
+              userId: userId,
+              onboardingCompleted: true,
+              timestamp: new Date().toISOString()
+            }
+          });
+          console.log('[Complete Onboarding] Broadcast update via WebSocket for user:', userId);
+        }
+      } catch (wsError) {
+        // Non-blocking - just log the error
+        console.error('[Complete Onboarding] Failed to broadcast via WebSocket:', wsError);
+      }
       
       // Invalidate company cache to ensure fresh data is returned
       if (companyId) {

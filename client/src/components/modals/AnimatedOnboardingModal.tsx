@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   Card,
@@ -747,19 +748,16 @@ export function AnimatedOnboardingModal({
       
       // Ensure we invalidate cached data to reflect the onboarding completion
       try {
-        // Fetch the window object
-        if (typeof window !== 'undefined') {
-          // Check if TanStack Query is available
-          if (window.__REACT_QUERY_DEVTOOLS_GLOBAL_HOOK__) {
-            // Attempt to invalidate relevant queries
-            logDebug('Invalidating relevant queries after onboarding completion');
-            
-            // This will trigger fetching fresh data in the app
-            if (typeof window.queryClient?.invalidateQueries === 'function') {
-              window.queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-              window.queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-            }
-          }
+        // Get the QueryClient instance from the hook
+        const queryClient = useQueryClient();
+        
+        if (queryClient) {
+          logDebug('Invalidating relevant queries after onboarding completion');
+          
+          // This will trigger fetching fresh data in the app
+          // Using the proper React Query V5 object syntax
+          queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
         }
       } catch (err) {
         // Non-blocking - just log the error
