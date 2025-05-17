@@ -2019,10 +2019,10 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       let updatedUserData = null;
       let updatedCompanyData = null;
       
-      // Create transaction to update both user and company records
-      // This ensures both records are consistent
+      // Create transaction to update the user record only
+      // We no longer update company onboarding status here to avoid premature company onboarding completion
       await db.transaction(async (tx) => {
-        // 1. Update the user record to mark onboarding as completed
+        // Update only the user record to mark onboarding as completed
         const [updatedUser] = await tx.update(users)
           .set({
             onboarding_user_completed: true,
@@ -2038,28 +2038,23 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         // Save for use outside the transaction
         updatedUserData = updatedUser;
         
-        // 2. Also update the company record for redundancy
-        // This ensures both flags are consistent
-        const [updatedCompany] = await tx.update(companies)
-          .set({
-            onboarding_company_completed: true,
-            updated_at: new Date()
-          })
-          .where(eq(companies.id, companyId))
-          .returning();
+        // Get current company data without modifying it
+        const [company] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, companyId));
           
-        if (!updatedCompany) {
-          throw new Error(`Failed to update company ${companyId} onboarding status`);
+        if (!company) {
+          throw new Error(`Company ${companyId} not found`);
         }
         
-        // Save for use outside the transaction
-        updatedCompanyData = updatedCompany;
+        // Save for use outside the transaction without modifying onboarding status
+        updatedCompanyData = company;
         
-        console.log('[User Onboarding] Successfully updated both user and company records:', {
+        console.log('[User Onboarding] Successfully updated user onboarding status:', {
           userId: updatedUser.id,
-          companyId: updatedCompany.id,
+          companyId: company.id,
           userOnboardingStatus: updatedUser.onboarding_user_completed,
-          companyOnboardingStatus: updatedCompany.onboarding_company_completed,
+          companyOnboardingStatus: company.onboarding_company_completed, // Unchanged
           elapsedMs: Date.now() - startTime
         });
       });
