@@ -2892,7 +2892,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       // Broadcast this update via WebSocket so any connected clients can update immediately
       try {
         // Use the WebSocketService module import directly instead of potentially undefined reference
-        const WebSocketService = require('../services/websocket-service');
+        const { default: WebSocketService } = require('../services/websocket-service');
         
         if (typeof WebSocketService.broadcast === 'function') {
           // Broadcast to all clients - filtering will happen on the client side based on userId
