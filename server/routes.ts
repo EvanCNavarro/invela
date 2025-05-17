@@ -394,6 +394,8 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pFieldsRouter);
   // Register KY3P progress router for saved form data
   app.use(ky3pProgressRouter);
+  // Register enhanced KY3P submission router with fixed progress handling
+  app.use(enhancedKy3pSubmissionRouter);
   // Register KY3P progress test route
   app.use(testKy3pProgressRouter);
   // Register KY3P progress fix test route
