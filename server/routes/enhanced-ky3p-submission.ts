@@ -239,7 +239,7 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
     
     // Broadcast the update to connected clients
     try {
-      broadcast('task_update', {
+      broadcastTaskUpdate({
         taskId: taskIdNum,
         status: SUBMITTED_STATUS,
         progress: PROGRESS_COMPLETE,
@@ -247,7 +247,7 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
           ...updatedMetadata,
           timestamp: submissionTimestamp
         },
-        timestamp: submissionTimestamp
+        message: 'KY3P form submitted successfully'
       });
       
       logger.info(`[Enhanced KY3P Submission] Broadcasted task update for ${taskIdNum}`, {
