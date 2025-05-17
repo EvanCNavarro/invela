@@ -10,8 +10,8 @@
 // Import the populate function (using ES module syntax)
 import { populateCompanyFileVault } from './populate-demo-file-vault.js';
 import { getAllDemoCompanies, isCompanyDemo } from './server/utils/demo-helpers.js';
-import { db } from './db/index.js';
-import { files, companies } from './db/schema.js';
+import { db } from './db/index.ts';
+import { files, companies } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
 
 // Define the company ID to use for testing
