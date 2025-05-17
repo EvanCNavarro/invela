@@ -51,10 +51,11 @@ export const ensureTaskSubmitted = (taskIdParam: string = 'taskId') => {
       if (hasSubmissionDate && task.status !== 'submitted') {
         console.log(`[TaskStatusMiddleware] Fixing task status: Task ${taskId} has submission date but status is ${task.status}`);
         
-        // Update task status to "submitted"
+        // Update task status to "submitted" and ensure progress is 100%
         await db.update(tasks)
           .set({ 
             status: 'submitted',
+            progress: 100, // Ensure progress is 100% when submitted
             metadata: {
               ...task.metadata,
               submitted: true
@@ -106,10 +107,11 @@ export async function fixTaskSubmittedStatus(taskId: number): Promise<boolean> {
     
     console.log(`[TaskStatusMiddleware] Fixing task status: Task ${taskId} has submission date but status is ${task.status}`);
     
-    // Update task status to "submitted"
+    // Update task status to "submitted" and set progress to 100%
     await db.update(tasks)
       .set({ 
         status: 'submitted',
+        progress: 100, // Always set progress to 100% for submitted tasks
         metadata: {
           ...task.metadata,
           submitted: true
