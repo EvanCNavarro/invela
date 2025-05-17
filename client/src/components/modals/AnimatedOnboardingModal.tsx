@@ -486,6 +486,9 @@ export function AnimatedOnboardingModal({
   // Get toast function
   const { toast: toastFn } = useToast();
   
+  // Get query client for invalidating queries after completing onboarding
+  const queryClient = useQueryClient();
+  
   // Track loading state for operations
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [operationErrors, setOperationErrors] = useState<{
@@ -748,9 +751,7 @@ export function AnimatedOnboardingModal({
       
       // Ensure we invalidate cached data to reflect the onboarding completion
       try {
-        // Get the QueryClient instance from the hook
-        const queryClient = useQueryClient();
-        
+        // Use the already initialized queryClient 
         if (queryClient) {
           logDebug('Invalidating relevant queries after onboarding completion');
           
@@ -758,6 +759,8 @@ export function AnimatedOnboardingModal({
           // Using the proper React Query V5 object syntax
           queryClient.invalidateQueries({ queryKey: ['/api/user'] });
           queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+          
+          logDebug('Successfully invalidated user and company data queries');
         }
       } catch (err) {
         // Non-blocking - just log the error
