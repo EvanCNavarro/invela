@@ -175,6 +175,9 @@ export async function processKybSubmission(
             ...task.metadata,
             kybFormFile: fileCreationResult.fileId,
             submissionDate: new Date().toISOString(),
+            submission_date: new Date().toISOString(), // Add both formats for compatibility
+            submitted: true, // Explicit flag for progress calculator
+            completed: true, // Consistent with other task types
             formVersion: '1.0',
             statusFlow: [...(task.metadata?.statusFlow || []), getSubmittedStatus()]
               .filter((v, i, a) => a.indexOf(v) === i),
@@ -250,8 +253,34 @@ export async function processKybSubmission(
       elapsedMs: performance.now() - startTime
     });
     
-    // 5. Unlock security tasks
+    // 5. Unlock security tasks and update company onboarding status
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, userId);
+    
+    // Update company onboarding status to mark onboarding as complete
+    try {
+      await db.update(companies)
+        .set({
+          onboardingCompleted: true,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, task.company_id));
+        
+      logger.info(`[KYB Transaction] Updated company onboarding status to complete`, {
+        transactionId,
+        companyId: task.company_id,
+        taskId,
+        elapsedMs: performance.now() - startTime
+      });
+    } catch (companyUpdateError) {
+      logger.warn(`[KYB Transaction] Failed to update company onboarding status`, {
+        transactionId,
+        companyId: task.company_id,
+        taskId,
+        error: companyUpdateError instanceof Error ? companyUpdateError.message : 'Unknown error',
+        elapsedMs: performance.now() - startTime
+      });
+      // Continue despite company update error (non-critical)
+    }
     
     // 6. Verify task status was properly updated and fix if necessary
     const [verifiedTask] = await db.select()
@@ -271,10 +300,20 @@ export async function processKybSubmission(
       
       // Perform a direct fix if the status is not set correctly
       try {
+        // Ensure all necessary metadata is set consistently for proper status
         await db.update(tasks)
           .set({
             status: expectedStatus, // Use consistent string literal status
-            updated_at: new Date()
+            progress: 100, // Ensure progress matches the completed status
+            updated_at: new Date(),
+            metadata: {
+              ...verifiedTask?.metadata,
+              submission_date: verifiedTask?.metadata?.submissionDate || new Date().toISOString(),
+              submissionDate: verifiedTask?.metadata?.submissionDate || new Date().toISOString(),
+              submitted: true,
+              completed: true,
+              explicitlySubmitted: true
+            }
           })
           .where(eq(tasks.id, taskId));
           
@@ -312,14 +351,17 @@ export async function processKybSubmission(
         companyId: task.company_id,
         fileId: fileCreationResult.fileId,
         progress: 100,
-        submissionDate: new Date().toISOString(),
+        submission_date: new Date().toISOString(), // Use proper field name
         source: 'transactional-kyb-handler',
         metadata: {
           transactionId,
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
           explicitlySubmitted: true,
-          verifiedStatus: true // Flag to indicate status was verified
+          submitted: true,
+          completed: true,
+          verifiedStatus: true, // Flag to indicate status was verified
+          submissionDate: new Date().toISOString(), // Include legacy field for compatibility
         }
       });
       
