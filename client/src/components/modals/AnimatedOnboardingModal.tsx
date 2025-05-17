@@ -36,8 +36,8 @@ const employeeCountMap = {
 };
 
 /**
- * Update user onboarding status in the database
- * Marks a user's onboarding as complete to prevent showing the modal again
+ * Update user onboarding status in the database and localStorage
+ * This function handles both database update and localStorage update for consistency
  * 
  * @param userId The ID of the user to update
  * @param status Boolean indicating if onboarding is complete (true) or not (false)
@@ -46,6 +46,18 @@ const employeeCountMap = {
 const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
   logDebug('Updating user onboarding status', { userId, status });
   
+  // First, update localStorage immediately for better user experience
+  try {
+    // Use consistent localStorage key format for all onboarding status checks
+    const localStorageKey = `onboarding_completed_${userId}`;
+    localStorage.setItem(localStorageKey, status.toString());
+    logDebug('Successfully updated localStorage onboarding status', { userId, localStorageKey });
+  } catch (err) {
+    // Non-blocking - just log the error
+    logDebug('Failed to update localStorage for onboarding status', { userId, error: err });
+  }
+  
+  // Then update the database for persistence across sessions/devices
   try {
     // Using the correct endpoint path with plural 'users'
     const response = await fetch('/api/users/complete-onboarding', {
@@ -57,7 +69,7 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      logDebug('Failed to update user onboarding status', { 
+      logDebug('Failed to update user onboarding status in database', { 
         userId, 
         status, 
         errorData, 
@@ -67,10 +79,10 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
     }
     
     const data = await response.json();
-    logDebug('Successfully updated user onboarding status', { userId, data });
+    logDebug('Successfully updated user onboarding status in database', { userId, data });
     return data;
   } catch (error) {
-    logDebug('Error updating user onboarding status', { userId, error });
+    logDebug('Error updating user onboarding status in database', { userId, error });
     throw error;
   }
 };
@@ -608,13 +620,24 @@ export function AnimatedOnboardingModal({
     });
     
     try {
-      // 1. Update user onboarding status
+      // 1. Update localStorage immediately for better UX
+      // This ensures the modal won't show up if there are errors with the API call
       if (user && user.id) {
         try {
+          const localStorageKey = `onboarding_completed_${user.id}`;
+          localStorage.setItem(localStorageKey, 'true');
+          logDebug('Successfully set localStorage onboarding status', { key: localStorageKey });
+        } catch (err) {
+          // Non-blocking error - just log it
+          logDebug('Failed to update localStorage for onboarding', { error: err });
+        }
+        
+        // 2. Update user onboarding status in database
+        try {
           await updateUserOnboardingStatus(user.id, true);
-          logDebug('User onboarding status updated successfully', { userId: user.id });
+          logDebug('User onboarding status updated successfully in database', { userId: user.id });
         } catch (error) {
-          logDebug('Failed to update user onboarding status', { error });
+          logDebug('Failed to update user onboarding status in database', { error });
           setOperationErrors(prev => ({ 
             ...prev, 
             userStatus: 'Failed to update user onboarding status. Please try again.' 
@@ -675,39 +698,73 @@ export function AnimatedOnboardingModal({
         }
       }
 
-      // Check if we had any errors
+      // Check if we had any errors with company details or team member invites
+      // Note: User onboarding errors are less critical since localStorage is already updated
       if (hasErrors) {
-        // Show error message
+        // Still show success message even with errors
+        // This prevents the user from getting stuck in the onboarding flow
         toastFn({
-          title: "Onboarding incomplete",
-          description: "There were some issues completing your onboarding. Please review and try again.",
-          variant: "destructive"
+          title: "Onboarding completed",
+          description: "Your onboarding is complete, but some optional details could not be saved. You can update them later.",
+          variant: "default"
+        });
+        
+        // Log detailed information about errors for debugging
+        logDebug('Onboarding completed with some errors', { 
+          operationErrors,
+          hasErrors
         });
       } else {
-        // Show success message and close modal
+        // Show success message for complete success
         toastFn({
           title: "Welcome aboard!",
           description: "Your onboarding has been completed successfully.",
           variant: "default"
         });
-        
-        // Only close the modal if everything was successful
-        setShowModal(false);
       }
+      
+      // Close the modal regardless of company/team errors
+      // The localStorage flag will ensure the modal doesn't show again
+      setShowModal(false);
     } catch (error) {
       // Handle any unexpected errors
       logDebug('Unexpected error completing onboarding', { error });
       
+      // Still show success to prevent user from getting stuck
+      // The localStorage is already updated, so the modal won't show again
       toastFn({
-        title: "Onboarding incomplete",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
+        title: "Welcome aboard!",
+        description: "Your onboarding has been completed, but some details could not be saved.",
+        variant: "default"
       });
       
-      hasErrors = true;
+      // Close the modal even with unexpected errors
+      // User can update details later if needed
+      setShowModal(false);
     } finally {
       // Always set submitting to false when done
       setIsSubmitting(false);
+      
+      // Ensure we invalidate cached data to reflect the onboarding completion
+      try {
+        // Fetch the window object
+        if (typeof window !== 'undefined') {
+          // Check if TanStack Query is available
+          if (window.__REACT_QUERY_DEVTOOLS_GLOBAL_HOOK__) {
+            // Attempt to invalidate relevant queries
+            logDebug('Invalidating relevant queries after onboarding completion');
+            
+            // This will trigger fetching fresh data in the app
+            if (typeof window.queryClient?.invalidateQueries === 'function') {
+              window.queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+              window.queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+            }
+          }
+        }
+      } catch (err) {
+        // Non-blocking - just log the error
+        logDebug('Error invalidating queries', { error: err });
+      }
     }
   };
   

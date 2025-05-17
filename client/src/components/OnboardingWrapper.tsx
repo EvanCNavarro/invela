@@ -26,47 +26,75 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
     enabled: !!user && showModal, // Only fetch if we need to show the modal
   });
   
-  // Simpler approach: Check localStorage first on initial render
-  // This prevents the modal from showing if the user has completed onboarding
-  // in this browser before - even if the session data hasn't been updated
+  // Simplified approach with consistent localStorage key and better logging
   React.useEffect(() => {
     if (!user) return;
     
     try {
-      // Get completed status from localStorage
-      const hasCompletedOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`) === 'true';
+      // Use a single consistent localStorage key format for all onboarding status checks
+      const localStorageKey = `onboarding_completed_${user.id}`;
+      const hasCompletedOnboardingLocal = localStorage.getItem(localStorageKey) === 'true';
       
-      if (hasCompletedOnboarding) {
-        console.log('[ONBOARDING DEBUG] User already completed onboarding according to localStorage');
-        // If localStorage says onboarding is complete, never show the modal
-        setShowModal(false);
-      } else if (!user.onboarding_user_completed) {
-        // Only show if user object says onboarding is incomplete AND localStorage doesn't override
-        console.log('[ONBOARDING DEBUG] Showing onboarding modal - not completed according to user object and localStorage');
-        setShowModal(true);
-      }
+      // Log detailed information about the onboarding status check
+      console.log('[OnboardingWrapper] Checking onboarding status', {
+        userId: user.id,
+        databaseStatus: user.onboarding_user_completed ? 'completed' : 'not completed',
+        localStorageStatus: hasCompletedOnboardingLocal ? 'completed' : 'not stored or not completed',
+        showModal: !user.onboarding_user_completed && !hasCompletedOnboardingLocal
+      });
+      
+      // Clear decision logic: 
+      // 1. If user is marked as onboarded in database, never show modal
+      // 2. If user has completed onboarding according to localStorage, never show modal
+      // 3. Otherwise, show the modal
+      const shouldShowModal = !user.onboarding_user_completed && !hasCompletedOnboardingLocal;
+      setShowModal(shouldShowModal);
     } catch (err) {
-      console.error('[ONBOARDING DEBUG] Error checking localStorage:', err);
-      // Fallback to user object if localStorage fails
+      console.error('[OnboardingWrapper] Error checking localStorage:', err);
+      // Fallback to just the database flag if localStorage access fails
       setShowModal(!user.onboarding_user_completed);
     }
   }, [user]);
   
   // Function to manually mark onboarding as completed via form submission
-  // This will be exposed for external use (e.g. from KYB form completion)
-  const markOnboardingCompleted = React.useCallback(() => {
+  // This function can be called from other components, forms, or exposed to window
+  const markOnboardingCompleted = React.useCallback(async () => {
     if (!user) return;
     
-    console.log('[ONBOARDING DEBUG] Manually marking onboarding as completed');
+    console.log('[OnboardingWrapper] Manually marking onboarding as completed', {
+      userId: user.id,
+      method: 'manual',
+    });
     
-    // Update localStorage to prevent future modal displays
+    // First update localStorage with our standard key format
     try {
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      const localStorageKey = `onboarding_completed_${user.id}`;
+      localStorage.setItem(localStorageKey, 'true');
+      console.log('[OnboardingWrapper] Successfully updated localStorage onboarding status');
     } catch (err) {
-      console.error('[ONBOARDING DEBUG] Failed to update localStorage:', err);
+      console.error('[OnboardingWrapper] Failed to update localStorage:', err);
     }
     
-    // Close modal immediately
+    // Also call the API endpoint to ensure database is updated
+    // This is important for cross-device consistency
+    try {
+      const response = await fetch('/api/users/complete-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        console.log('[OnboardingWrapper] Successfully updated onboarding status in database');
+      } else {
+        console.error('[OnboardingWrapper] API call to complete onboarding failed:', 
+          await response.text());
+      }
+    } catch (err) {
+      console.error('[OnboardingWrapper] Error calling complete-onboarding API:', err);
+    }
+    
+    // Close modal immediately regardless of API call result
+    // The localStorage flag will prevent showing the modal on next load
     setShowModal(false);
   }, [user]);
   
