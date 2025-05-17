@@ -2662,10 +2662,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           }
 
           // Create user account
-          try {
-          }
-
-          // Create user account
           const hashedPassword = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
           const [newUser] = await tx.insert(users)
             .values({
