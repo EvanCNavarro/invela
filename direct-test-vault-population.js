@@ -145,10 +145,12 @@ async function addDemoFile(companyId, companyName, fileName) {
         name: displayName,
         original_name: fileName,
         company_id: companyId,
-        user_id: null, // System generated
+        user_id: 8, // Use existing user ID from Evan Navarro
         type: 'csv',
         size: fileContent.length,
         content: fileContent,
+        path: `demo-files/${fileName}`, // Add required path
+        status: 'active',
         metadata: {
           source: 'demo_autofill',
           created_for: companyName,
