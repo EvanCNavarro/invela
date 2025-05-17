@@ -5,11 +5,11 @@
  * when a demo company is created. It uses absolute paths to ensure reliable file access.
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const { db } = require('../../db/index');
-const { files } = require('../../db/schema');
-const { eq } = require('drizzle-orm');
+import fs from 'fs/promises';
+import path from 'path';
+import { db } from '../../db/index.js';
+import { files } from '../../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 /**
  * Check if company already has files in its vault

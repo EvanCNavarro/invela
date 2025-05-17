@@ -2625,36 +2625,59 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           // Directly populate file vault for demo companies
           if (newCompany.is_demo === true) {
             try {
-              // Import here to avoid dependency issues with ES modules
-              const { populateDemoFileVault } = await import('./utils/demo-file-vault.js');
-              
               console.log('[FinTech Invite] Populating file vault for demo company:', {
                 companyId: newCompany.id,
                 companyName: newCompany.name
               });
               
-              // Non-blocking file vault population
-              setTimeout(async () => {
-                try {
-                  const vaultResult = await populateDemoFileVault(newCompany);
-                  console.log('[FinTech Invite] Demo file vault population complete:', {
-                    companyId: newCompany.id,
-                    companyName: newCompany.name,
-                    success: vaultResult.success,
-                    fileCount: vaultResult.fileCount || 0
+              // Non-blocking file vault population - don't wait for it to complete
+              setTimeout(() => {
+                // This is executed in a separate async context to avoid blocking the main flow
+                (async () => {
+                  try {
+                    // Dynamically import the demo file vault module
+                    const demoFileVaultModule = await import('./utils/demo-file-vault.js')
+                      .catch(e => {
+                        console.error('[FinTech Invite] Dynamic import failed:', e.message);
+                        return null;
+                      });
+                    
+                    if (!demoFileVaultModule) {
+                      console.error('[FinTech Invite] Could not load demo file vault module');
+                      return;
+                    }
+                    
+                    const { populateDemoFileVault } = demoFileVaultModule;
+                    if (typeof populateDemoFileVault !== 'function') {
+                      console.error('[FinTech Invite] populateDemoFileVault is not a function');
+                      return;
+                    }
+                    
+                    const vaultResult = await populateDemoFileVault(newCompany);
+                    console.log('[FinTech Invite] Demo file vault population complete:', {
+                      companyId: newCompany.id,
+                      companyName: newCompany.name,
+                      success: vaultResult.success,
+                      fileCount: vaultResult.fileCount || 0
+                    });
+                  } catch (vaultError) {
+                    console.error('[FinTech Invite] Error populating demo file vault:', {
+                      error: vaultError instanceof Error ? vaultError.message : String(vaultError),
+                      companyId: newCompany.id,
+                      companyName: newCompany.name
+                    });
+                    // Non-blocking - we don't want to fail company creation
+                  }
+                })().catch(error => {
+                  console.error('[FinTech Invite] Unhandled promise rejection in file vault population:', {
+                    error: error instanceof Error ? error.message : String(error),
+                    companyId: newCompany.id
                   });
-                } catch (vaultError) {
-                  console.error('[FinTech Invite] Error populating demo file vault:', {
-                    error: vaultError instanceof Error ? vaultError.message : String(vaultError),
-                    companyId: newCompany.id,
-                    companyName: newCompany.name
-                  });
-                  // Non-blocking - we don't want to fail company creation
-                }
+                });
               }, 0);
-            } catch (importError) {
-              console.error('[FinTech Invite] Failed to import demo file vault utility:', {
-                error: importError instanceof Error ? importError.message : String(importError),
+            } catch (error) {
+              console.error('[FinTech Invite] Error setting up file vault population:', {
+                error: error instanceof Error ? error.message : String(error),
                 companyId: newCompany.id
               });
               // Continue with company creation
