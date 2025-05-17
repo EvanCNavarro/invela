@@ -4,7 +4,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
 import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -18,56 +17,72 @@ interface OnboardingWrapperProps {
  */
 export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
-
-  // State for showing the onboarding modal
+  
+  // State for showing the onboarding modal - with localStorage backup
   const [showModal, setShowModal] = React.useState(false);
-  // Fetch current company data to get accurate onboarding status
+  // Fetch current company data only for display purposes
   const { data: currentCompany } = useQuery({
     queryKey: ['/api/companies/current'],
-    enabled: !!user,
+    enabled: !!user && showModal, // Only fetch if we need to show the modal
   });
-
-  // Debug logging for onboarding status
+  
+  // Simpler approach: Check localStorage first on initial render
+  // This prevents the modal from showing if the user has completed onboarding
+  // in this browser before - even if the session data hasn't been updated
   React.useEffect(() => {
-    if (user && currentCompany) {
-      console.log('[ONBOARDING DEBUG] Checking onboarding status in wrapper:', {
-        userId: user.id,
-        userOnboardingInSession: user.onboarding_user_completed,
-        companyOnboardingFromApi: currentCompany.onboardingCompleted,
-        shouldShowModal: !user.onboarding_user_completed && !currentCompany.onboardingCompleted,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [user, currentCompany]);
-
-  // Enhanced check for onboarding status - checks both user object and company data
-  React.useEffect(() => {
-    // Check both user session data AND company data from the API
-    // This ensures we show the modal only if BOTH indicate onboarding is incomplete
-    const userNeedsOnboarding = user && !user.onboarding_user_completed;
-    const companyDataSaysNotOnboarded = currentCompany && !currentCompany.onboardingCompleted;
+    if (!user) return;
     
-    // If we have company data and it contradicts user session data, refresh user data
-    if (user && currentCompany && !user.onboarding_user_completed && currentCompany.onboardingCompleted) {
-      console.log('[ONBOARDING DEBUG] Detected onboarding status mismatch, refreshing user data', {
-        userSessionStatus: user.onboarding_user_completed,
-        companyApiStatus: currentCompany.onboardingCompleted
-      });
+    try {
+      // Get completed status from localStorage
+      const hasCompletedOnboarding = localStorage.getItem(`onboarding_completed_${user.id}`) === 'true';
       
-      // Refresh user data to get the latest onboarding status
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      // Only refresh user data, return early to avoid showing modal
-      return;
+      if (hasCompletedOnboarding) {
+        console.log('[ONBOARDING DEBUG] User already completed onboarding according to localStorage');
+        // If localStorage says onboarding is complete, never show the modal
+        setShowModal(false);
+      } else if (!user.onboarding_user_completed) {
+        // Only show if user object says onboarding is incomplete AND localStorage doesn't override
+        console.log('[ONBOARDING DEBUG] Showing onboarding modal - not completed according to user object and localStorage');
+        setShowModal(true);
+      }
+    } catch (err) {
+      console.error('[ONBOARDING DEBUG] Error checking localStorage:', err);
+      // Fallback to user object if localStorage fails
+      setShowModal(!user.onboarding_user_completed);
+    }
+  }, [user]);
+  
+  // Function to manually mark onboarding as completed via form submission
+  // This will be exposed for external use (e.g. from KYB form completion)
+  const markOnboardingCompleted = React.useCallback(() => {
+    if (!user) return;
+    
+    console.log('[ONBOARDING DEBUG] Manually marking onboarding as completed');
+    
+    // Update localStorage to prevent future modal displays
+    try {
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+    } catch (err) {
+      console.error('[ONBOARDING DEBUG] Failed to update localStorage:', err);
     }
     
-    // Only show modal if user needs onboarding according to ALL data sources
-    if (userNeedsOnboarding && companyDataSaysNotOnboarded) {
-      setShowModal(true);
-    } else {
-      // Ensure modal is closed if user is onboarded
-      setShowModal(false);
+    // Close modal immediately
+    setShowModal(false);
+  }, [user]);
+  
+  // Expose the markOnboardingCompleted function via window for form callbacks
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).markOnboardingCompleted = markOnboardingCompleted;
     }
-  }, [user, currentCompany]);
+    
+    return () => {
+      // Cleanup
+      if (typeof window !== 'undefined') {
+        delete (window as any).markOnboardingCompleted;
+      }
+    };
+  }, [markOnboardingCompleted]);
 
   return (
     <div className="flex flex-col min-h-screen">
