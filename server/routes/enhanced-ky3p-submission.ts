@@ -237,12 +237,30 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
       return updatedTask;
     });
     
-    // Broadcast the update to connected clients
+    // Broadcast the update to connected clients using both task update and form submission
     try {
+      // Send a task update for compatibility with existing code
       broadcastTaskUpdate({
         taskId: taskIdNum,
         status: SUBMITTED_STATUS,
         progress: PROGRESS_COMPLETE,
+        metadata: {
+          ...updatedMetadata,
+          timestamp: submissionTimestamp,
+          submitted: true,
+          submission_date: submissionTimestamp
+        },
+        message: 'KY3P form submitted successfully'
+      });
+      
+      // Also send a form submission completed event for new clients
+      broadcastFormSubmission({
+        taskId: taskIdNum,
+        formType: 'ky3p',
+        status: SUBMITTED_STATUS,
+        progress: PROGRESS_COMPLETE,
+        companyId: existingTask.company_id,
+        fileId: fileId,
         metadata: {
           ...updatedMetadata,
           timestamp: submissionTimestamp
@@ -250,11 +268,12 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
         message: 'KY3P form submitted successfully'
       });
       
-      logger.info(`[Enhanced KY3P Submission] Broadcasted task update for ${taskIdNum}`, {
-        transactionId
+      logger.info(`[Enhanced KY3P Submission] Broadcasted updates for ${taskIdNum}`, {
+        transactionId,
+        submissionTimestamp
       });
     } catch (broadcastError) {
-      logger.error(`[Enhanced KY3P Submission] Error broadcasting task update`, {
+      logger.error(`[Enhanced KY3P Submission] Error broadcasting updates`, {
         error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError),
         transactionId
       });
