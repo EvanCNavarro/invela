@@ -13,12 +13,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { db } from './db/index.js';
-import { files, companies } from './db/schema.js';
+import { db } from './db/index.ts';
+import { files, companies } from './db/schema.ts';
 import { eq } from 'drizzle-orm';
 import * as FileCreationService from './server/services/fileCreation.js';
 import { isCompanyDemo, isDemoCompanyName } from './server/utils/demo-helpers.js';
-import { logger } from './server/utils/logger.js';
+import { logger } from './server/utils/logger.ts';
 
 // Get current directory name (equivalent to __dirname in CommonJS)
 const __filename = fileURLToPath(import.meta.url);
