@@ -913,8 +913,9 @@ export function registerRoutes(app: Express): Express {
         chosenScore: company.chosen_score,              // Add camelCase version for frontend
         isDemo: company.is_demo,                        // Add camelCase version for frontend
         onboarding_company_completed: company.onboarding_company_completed, // Original DB field
-        // CRITICAL FIX: Ensure onboardingCompleted is true if user has completed onboarding
-        onboardingCompleted: userOnboardingStatus || company.onboarding_company_completed
+        // CRITICAL FIX: Only use user's onboarding status, not company's
+        // This ensures onboarding modal only appears when the current user hasn't completed onboarding
+        onboardingCompleted: userOnboardingStatus
       };
       
       // Update the cache with the transformed data
