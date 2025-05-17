@@ -21,10 +21,18 @@ import { logger } from '../utils/logger';
 import { validateProgress } from '../utils/progress-validator';
 import { enforceKy3pSubmittedProgress } from '../utils/ky3p-progress-enforcer';
 import { broadcast } from '../utils/unified-websocket';
+import { MessageType, TaskStatus } from '../types';
 
 // Constants for consistent values
 const PROGRESS_COMPLETE = 100;
-const SUBMITTED_STATUS = 'submitted';
+const SUBMITTED_STATUS = TaskStatus.SUBMITTED;
+
+// Define status constants for safer type handling
+const COMPLETE_STATUS = 'COMPLETE';
+const EMPTY_STATUS = 'EMPTY';
+const INCOMPLETE_STATUS = 'INCOMPLETE';
+const INVALID_STATUS = 'INVALID';
+const FILE_STATUS_PROCESSED = 'processed';
 
 // Create router
 const router = Router();
@@ -135,12 +143,12 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
         // Create a file record
         const fileInsertResult = await db.insert(files)
           .values({
-            file_name: fileName,
-            file_type: 'application/pdf', // Assume PDF for KY3P forms
-            file_path: `ky3p/${taskIdNum}/${fileName}`,
+            name: fileName,
+            type: 'application/pdf', // Assume PDF for KY3P forms
+            path: `ky3p/${taskIdNum}/${fileName}`,
             uploaded_by: req.user?.id || existingTask.created_by,
             task_id: taskIdNum,
-            status: 'processed',
+            status: FILE_STATUS_PROCESSED,
             metadata: {
               sourceType: 'ky3p_form',
               generatedAt: submissionTimestamp
@@ -201,7 +209,7 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
                 task_id: taskIdNum,
                 field_key: fieldKey,
                 response_value: value ? String(value) : null,
-                status: 'complete',
+                status: COMPLETE_STATUS,
                 created_at: new Date(),
                 updated_at: new Date(),
                 version: 1
