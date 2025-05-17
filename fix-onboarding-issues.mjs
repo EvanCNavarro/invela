@@ -1,127 +1,306 @@
+#!/usr/bin/env node
+
 /**
- * Direct Fix for Onboarding Issues
+ * Fix Onboarding Issues Script
  * 
- * This script directly patches the complete-onboarding endpoint in server/routes.ts
- * to fix two issues:
+ * This script automatically fixes the following issues:
+ * 1. Company onboarding status incorrectly shown as TRUE when users complete their individual onboarding
+ * 2. User invitations created during onboarding are assigned company_id "1" instead of the inviting user's company_id
  * 
- * 1. Company onboarding status incorrectly showing as "completed" when users complete
- *    their individual onboarding by using actual database value instead of hardcoded true
+ * Usage:
+ *   node fix-onboarding-issues.mjs [--dry-run]
  * 
- * 2. Adds additional validation for the user invitation endpoint to ensure
- *    the correct company ID is always used
- * 
- * Note: This is a direct file-changing script that should be run carefully
+ * Options:
+ *   --dry-run   Check for issues without making any changes
  */
 
+import pg from 'pg';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
-// Files to patch
-const routesPath = './server/routes.ts';
-const usersRoutesPath = './server/routes/users.ts';
+// Load environment variables
+dotenv.config();
 
-// Fix the company onboarding status issue
-function fixCompanyOnboardingStatus() {
-  console.log('Fixing company onboarding status issue...');
+// ANSI color codes for prettier output
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
+  bold: '\x1b[1m',
+};
+
+// Logger utility
+function log(message, color = colors.reset) {
+  console.log(`${color}${message}${colors.reset}`);
+}
+
+// Constants
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DB_URL = process.env.DATABASE_URL;
+const DRY_RUN = process.argv.includes('--dry-run');
+
+// Initialize database connection
+const client = new pg.Client({
+  connectionString: DB_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+/**
+ * Fix issue #1: Company onboarding status incorrectly shown
+ * 
+ * Check if the API routes are returning the correct company onboarding status
+ */
+async function fixCompanyOnboardingStatusIssue() {
+  log(`\n${colors.cyan}${colors.bold}Checking for company onboarding status issue...${colors.reset}`);
   
-  try {
-    // Read the routes.ts file
-    let routesContent = fs.readFileSync(routesPath, 'utf8');
+  // Check routes.ts file
+  const routesPath = path.join(__dirname, 'server', 'routes.ts');
+  
+  if (!fs.existsSync(routesPath)) {
+    log(`${colors.red}Could not find routes.ts file at ${routesPath}${colors.reset}`);
+    return false;
+  }
+  
+  const routesContent = fs.readFileSync(routesPath, 'utf8');
+  
+  // Look for hardcoded onboardingCompleted values
+  const hardcodedPattern = /onboardingCompleted:\s*true/g;
+  const matches = routesContent.match(hardcodedPattern);
+  
+  if (matches && matches.length > 0) {
+    log(`${colors.yellow}Found ${matches.length} instances of hardcoded onboardingCompleted: true${colors.reset}`);
     
-    // Create a backup before making changes
-    fs.writeFileSync(routesPath + '.bak', routesContent, 'utf8');
-    console.log('Created backup of routes.ts');
-    
-    // Fix the onboarding status in both response objects
-    // This is safer than direct string replacement
-    let fixedContent = routesContent
-      .replace(
-        /onboardingCompleted: true/g, 
-        'onboardingCompleted: updatedCompanyData.onboarding_company_completed'
+    if (!DRY_RUN) {
+      // Fix the issue by replacing hardcoded true with database value
+      const fixedContent = routesContent.replace(
+        /onboardingCompleted:\s*true/g, 
+        'onboardingCompleted: company.onboarding_company_completed'
       );
-    
-    // Write the fixed content back to the file
-    fs.writeFileSync(routesPath, fixedContent, 'utf8');
-    console.log('Fixed company onboarding status in routes.ts');
-    
-    // Verify the changes
-    const afterContent = fs.readFileSync(routesPath, 'utf8');
-    if (afterContent !== routesContent) {
-      console.log('Successfully updated routes.ts');
+      
+      fs.writeFileSync(routesPath, fixedContent, 'utf8');
+      log(`${colors.green}Fixed company onboarding status issue in routes.ts${colors.reset}`);
     } else {
-      console.error('Failed to update routes.ts - no changes were made');
+      log(`${colors.yellow}[DRY RUN] Would fix company onboarding status issue in routes.ts${colors.reset}`);
     }
-  } catch (error) {
-    console.error('Error fixing company onboarding status:', error);
+    
+    return true;
+  } else {
+    log(`${colors.green}No hardcoded onboardingCompleted values found in routes.ts${colors.reset}`);
+    return false;
   }
 }
 
-// Fix the user invitation company ID issue
-function fixInvitationCompanyID() {
-  console.log('\nFixing user invitation company ID issue...');
+/**
+ * Fix issue #2: User invitations assigned wrong company_id
+ * 
+ * Add validation to ensure invitations use the correct company_id
+ */
+async function fixUserInvitationCompanyIdIssue() {
+  log(`\n${colors.cyan}${colors.bold}Checking for user invitation company_id issue...${colors.reset}`);
   
-  try {
-    // Read the users.ts file
-    let usersContent = fs.readFileSync(usersRoutesPath, 'utf8');
-    
-    // Create a backup before making changes
-    fs.writeFileSync(usersRoutesPath + '.bak', usersContent, 'utf8');
-    console.log('Created backup of users.ts');
-    
-    // Find the position where we need to add additional validation
-    // This is after the existing company ID fallback logic
-    const insertPoint = usersContent.indexOf('req.body.company_id = req.user.company_id;');
-    
-    if (insertPoint === -1) {
-      console.error('Failed to find insertion point in users.ts');
-      return;
+  let filesFixed = 0;
+  const routesPath = path.join(__dirname, 'server', 'routes.ts');
+  const usersRoutesPath = path.join(__dirname, 'server', 'routes', 'users.ts');
+  
+  // Check both files that might contain the invitation endpoint
+  for (const filePath of [routesPath, usersRoutesPath]) {
+    if (!fs.existsSync(filePath)) {
+      log(`${colors.yellow}Could not find file at ${filePath}${colors.reset}`);
+      continue;
     }
     
-    // Find the end of the line
-    const lineEnd = usersContent.indexOf('\n', insertPoint);
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const fileName = path.basename(filePath);
     
-    // Prepare the additional validation code
-    const additionalValidation = `
+    // Look for invitation endpoint without proper validation
+    if (fileContent.includes('/api/users/invite') && 
+        fileContent.includes('app.post("/api/users/invite"')) {
+      
+      log(`${colors.blue}Found invitation endpoint in ${fileName}${colors.reset}`);
+      
+      // Check if validation is already present
+      if (fileContent.includes('req.body.company_id === 1') && 
+          fileContent.includes('Using authenticated user company ID as fallback')) {
+        log(`${colors.green}Validation already exists in ${fileName}${colors.reset}`);
+        continue;
+      }
+      
+      // Find the location to insert the validation code
+      const validationPoint = fileContent.indexOf('company_id: req.body.company_id');
+      
+      if (validationPoint === -1) {
+        log(`${colors.yellow}Could not find insertion point in ${fileName}${colors.reset}`);
+        continue;
+      }
+      
+      // Find the surrounding context to properly patch the file
+      let startSearchIndex = Math.max(0, validationPoint - 500);
+      const contextBefore = fileContent.substring(startSearchIndex, validationPoint);
+      const validationBlockStartIndex = contextBefore.lastIndexOf('const inviteData =');
+      
+      if (validationBlockStartIndex === -1) {
+        log(`${colors.yellow}Could not find inviteData block in ${fileName}${colors.reset}`);
+        continue;
+      }
+      
+      const fullStartIndex = startSearchIndex + validationBlockStartIndex;
+      const blockEndIndex = fileContent.indexOf('};', fullStartIndex) + 2;
+      
+      const inviteDataBlock = fileContent.substring(fullStartIndex, blockEndIndex);
+      
+      // Create the fixed block with validation
+      const fixedBlock = inviteDataBlock.replace(
+        /const inviteData = {([\s\S]*?)};/,
+        `// Ensure we have a company ID
+      // If req.body.company_id is missing or invalid, use the authenticated user's company_id
+      if (!req.body.company_id || typeof req.body.company_id !== 'number') {
+        console.warn('[Invite] Using authenticated user company ID as fallback:', req.user.company_id);
+        req.body.company_id = req.user.company_id;
+      }
+      
       // Additional safety check to prevent company_id = 1 unless explicitly intended
+      // This check should run in all cases
       if (req.body.company_id === 1) {
         console.warn('[Invite] Detected company_id = 1, this is likely incorrect. Using authenticated user company ID:', req.user.company_id);
         req.body.company_id = req.user.company_id;
-      }`;
-    
-    // Insert the additional validation after the existing fallback
-    const updatedContent = 
-      usersContent.substring(0, lineEnd + 1) + 
-      additionalValidation + 
-      usersContent.substring(lineEnd + 1);
-    
-    // Write the fixed content back to the file
-    fs.writeFileSync(usersRoutesPath, updatedContent, 'utf8');
-    console.log('Added company ID validation in users.ts');
-    
-    // Verify the changes
-    const afterContent = fs.readFileSync(usersRoutesPath, 'utf8');
-    if (afterContent !== usersContent) {
-      console.log('Successfully updated users.ts');
+      }
+
+      const inviteData = {$1};`
+      );
+      
+      if (!DRY_RUN) {
+        // Apply the fix
+        const fixedContent = fileContent.replace(inviteDataBlock, fixedBlock);
+        fs.writeFileSync(filePath, fixedContent, 'utf8');
+        log(`${colors.green}Fixed invitation company_id issue in ${fileName}${colors.reset}`);
+        filesFixed++;
+      } else {
+        log(`${colors.yellow}[DRY RUN] Would fix invitation company_id issue in ${fileName}${colors.reset}`);
+        filesFixed++;
+      }
     } else {
-      console.error('Failed to update users.ts - no changes were made');
+      log(`${colors.yellow}No invitation endpoint found in ${fileName}${colors.reset}`);
     }
+  }
+  
+  return filesFixed > 0;
+}
+
+/**
+ * Check database for existing issues
+ */
+async function checkDatabase() {
+  log(`\n${colors.cyan}${colors.bold}Checking database for existing issues...${colors.reset}`);
+  
+  try {
+    await client.connect();
+    log(`${colors.green}Connected to database${colors.reset}`);
+    
+    // Check for users with company_id = 1 that might be incorrect
+    const suspiciousUsersQuery = `
+      SELECT u.id, u.email, u.company_id, c.name as company_name
+      FROM users u
+      JOIN companies c ON u.company_id = c.id
+      WHERE u.company_id = 1 AND u.created_via = 'invitation'
+      ORDER BY u.created_at DESC
+      LIMIT 10;
+    `;
+    
+    const { rows: suspiciousUsers } = await client.query(suspiciousUsersQuery);
+    
+    if (suspiciousUsers.length > 0) {
+      log(`${colors.yellow}Found ${suspiciousUsers.length} suspicious users with company_id = 1:${colors.reset}`);
+      
+      for (const user of suspiciousUsers) {
+        log(`  ${colors.yellow}User ID: ${user.id}, Email: ${user.email}, Company: ${user.company_name}${colors.reset}`);
+      }
+      
+      log(`${colors.yellow}These users might have incorrect company_id assignments.${colors.reset}`);
+      log(`${colors.yellow}The code fix will prevent this from happening in the future.${colors.reset}`);
+      log(`${colors.yellow}To fix existing data, you may need to manually update their company_id values.${colors.reset}`);
+    } else {
+      log(`${colors.green}No suspicious users with company_id = 1 found.${colors.reset}`);
+    }
+    
+    // Check for recent invitation codes assigned to company_id = 1
+    const invitationCodesQuery = `
+      SELECT id, email, company_id, created_at
+      FROM invitation_codes
+      WHERE company_id = 1 AND created_at > NOW() - INTERVAL '30 days'
+      ORDER BY created_at DESC
+      LIMIT 10;
+    `;
+    
+    const { rows: invitationCodes } = await client.query(invitationCodesQuery);
+    
+    if (invitationCodes.length > 0) {
+      log(`${colors.yellow}Found ${invitationCodes.length} recent invitation codes with company_id = 1:${colors.reset}`);
+      
+      for (const code of invitationCodes) {
+        log(`  ${colors.yellow}ID: ${code.id}, Email: ${code.email}, Created: ${code.created_at}${colors.reset}`);
+      }
+      
+      log(`${colors.yellow}These invitation codes might have incorrect company_id assignments.${colors.reset}`);
+    } else {
+      log(`${colors.green}No recent invitation codes with company_id = 1 found.${colors.reset}`);
+    }
+    
   } catch (error) {
-    console.error('Error fixing invitation company ID:', error);
+    log(`${colors.red}Database error: ${error.message}${colors.reset}`);
+  } finally {
+    await client.end();
   }
 }
 
-// Run both fixes
-function main() {
-  console.log('Starting onboarding issues fix...');
+/**
+ * Main function to run the fixes
+ */
+async function main() {
+  log(`${colors.bold}${colors.cyan}====== Onboarding Issues Fix Tool ======${colors.reset}`);
   
-  // Fix the company onboarding status issue
-  fixCompanyOnboardingStatus();
+  if (DRY_RUN) {
+    log(`${colors.yellow}Running in DRY RUN mode - no changes will be made${colors.reset}`);
+  }
   
-  // Fix the user invitation company ID issue
-  fixInvitationCompanyID();
+  // Fix company onboarding status issue
+  const companyIssueFixed = await fixCompanyOnboardingStatusIssue();
   
-  console.log('\nAll fixes applied. Please restart the server for changes to take effect.');
+  // Fix user invitation company_id issue
+  const invitationIssueFixed = await fixUserInvitationCompanyIdIssue();
+  
+  // Check database for existing issues
+  await checkDatabase();
+  
+  // Summary
+  log(`\n${colors.bold}${colors.cyan}====== Summary ======${colors.reset}`);
+  
+  if (companyIssueFixed) {
+    log(`${colors.green}✅ Company onboarding status issue ${DRY_RUN ? 'would be' : 'has been'} fixed${colors.reset}`);
+  } else {
+    log(`${colors.blue}ℹ️ No company onboarding status issue found or fix not required${colors.reset}`);
+  }
+  
+  if (invitationIssueFixed) {
+    log(`${colors.green}✅ User invitation company_id issue ${DRY_RUN ? 'would be' : 'has been'} fixed${colors.reset}`);
+  } else {
+    log(`${colors.blue}ℹ️ No user invitation company_id issue found or fix not required${colors.reset}`);
+  }
+  
+  log(`\n${colors.bold}To apply these fixes to other environments, run this script there as well.${colors.reset}`);
+  log(`${colors.bold}Use --dry-run to check for issues without making changes.${colors.reset}`);
 }
 
-// Execute the main function
-main();
+// Run the script
+main().catch(error => {
+  log(`${colors.red}Error: ${error.message}${colors.reset}`);
+  process.exit(1);
+});
