@@ -272,17 +272,17 @@ async function addDemoFile(companyId, companyName, fileName) {
  */
 async function populateDemoFileVault(company) {
   if (!company || !company.id) {
-    console.error('[Demo File Vault] Invalid company provided:', company);
+    log(`Invalid company provided`, 'error', company);
     return { success: false, error: 'Invalid company' };
   }
   
   try {
-    console.log(`[Demo File Vault] Starting file vault population for company ${company.id} (${company.name})`);
+    log(`Starting file vault population for company ${company.id} (${company.name})`);
     
     // Check if files already exist
     const existingCount = await getExistingFileCount(company.id);
     if (existingCount > 0) {
-      console.log(`[Demo File Vault] Company ${company.id} already has ${existingCount} files. Skipping population.`);
+      log(`Company ${company.id} already has ${existingCount} files. Skipping population.`);
       return { success: true, fileCount: existingCount, alreadyPopulated: true };
     }
     
@@ -294,23 +294,23 @@ async function populateDemoFileVault(company) {
       '4_Business_Continuity_Plan_Questions.csv'
     ];
     
-    console.log(`[Demo File Vault] Will attempt to add ${demoFiles.length} files to company ${company.id}`);
+    log(`Will attempt to add ${demoFiles.length} files to company ${company.id}`);
     
     // Add each demo file
     const results = [];
     for (const fileName of demoFiles) {
       try {
-        console.log(`[Demo File Vault] Processing file ${fileName} for company ${company.id}...`);
+        log(`Processing file ${fileName} for company ${company.id}...`);
         const result = await addDemoFile(company.id, company.name, fileName);
         results.push(result);
         
         if (result.success) {
-          console.log(`[Demo File Vault] Successfully added file ${fileName} (ID: ${result.id})`);
+          log(`Successfully added file ${fileName} (ID: ${result.id})`);
         } else {
-          console.error(`[Demo File Vault] Failed to add file ${fileName}: ${result.error || 'Unknown error'}`);
+          log(`Failed to add file ${fileName}: ${result.error || 'Unknown error'}`, 'error');
         }
       } catch (fileError) {
-        console.error(`[Demo File Vault] Error adding file ${fileName}:`, fileError);
+        log(`Error adding file ${fileName}`, 'error', fileError);
         results.push({ fileName, success: false, error: fileError.message });
       }
     }
@@ -319,20 +319,20 @@ async function populateDemoFileVault(company) {
     const successCount = results.filter(r => r.success).length;
     
     // Log file information for verification
-    console.log(`[Demo File Vault] Completed population for company ${company.id}: ${successCount}/${demoFiles.length} files added`);
+    log(`Completed population for company ${company.id}: ${successCount}/${demoFiles.length} files added`);
     
     // Log details about each file for easier debugging
     if (successCount > 0) {
-      console.log(`[Demo File Vault] Successfully added files:`);
+      log(`Successfully added files:`);
       results.filter(r => r.success).forEach(file => {
-        console.log(`  - ${file.name} (ID: ${file.id}, Type: ${file.type}, Path: ${file.path || 'N/A'})`);
+        log(`  - ${file.name} (ID: ${file.id}, Type: ${file.type}, Path: ${file.path || 'N/A'}`);
       });
     }
     
     if (successCount < demoFiles.length) {
-      console.log(`[Demo File Vault] Failed to add ${demoFiles.length - successCount} files:`);
+      log(`Failed to add ${demoFiles.length - successCount} files:`, 'warn');
       results.filter(r => !r.success).forEach(file => {
-        console.log(`  - ${file.fileName || 'Unknown file'}: ${file.error || 'Unknown error'}`);
+        log(`  - ${file.fileName || 'Unknown file'}: ${file.error || 'Unknown error'}`, 'warn');
       });
     }
     
@@ -343,7 +343,7 @@ async function populateDemoFileVault(company) {
       results
     };
   } catch (error) {
-    console.error(`[Demo File Vault] Error populating file vault for company ${company.id}:`, error);
+    log(`Error populating file vault for company ${company.id}`, 'error', error);
     return {
       success: false,
       error: error.message
