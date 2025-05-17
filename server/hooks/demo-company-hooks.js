@@ -5,9 +5,9 @@
  * to enhance the demo experience, including populating the file vault with sample files.
  */
 
-const { populateCompanyFileVault, unlockFileVaultForCompany } = require('../../populate-demo-file-vault');
-const { isDemoCompanyName } = require('../utils/demo-helpers');
-const { logger } = require('../utils/logger');
+import { populateCompanyFileVault, unlockFileVaultForCompany } from '../../populate-demo-file-vault.js';
+import { isDemoCompanyName } from '../utils/demo-helpers.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Process a newly created company and apply demo-specific enhancements if needed
