@@ -95,8 +95,45 @@ async function addDemoFile(companyId, companyName, fileName) {
   try {
     client = await getDbClient();
     
-    // Get file content (we'll store file info in metadata since there's no content column)
+    // Get file content from attached_assets
     const fileContent = await readDemoFile(fileName);
+    
+    // Generate a unique filename with timestamp to avoid collisions
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const uniqueFileName = `demo_${companyId}_${timestamp}_${fileName}`;
+    
+    // Create directory for storing demo files if it doesn't exist
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const demoFilesDir = path.join(uploadsDir, 'documents', 'demo-files');
+    
+    try {
+      // Ensure uploads directory exists
+      await fs.mkdir(uploadsDir, { recursive: true });
+      
+      // Ensure documents directory exists
+      await fs.mkdir(path.join(uploadsDir, 'documents'), { recursive: true });
+      
+      // Ensure demo-files directory exists
+      await fs.mkdir(demoFilesDir, { recursive: true });
+      
+      console.log(`[Demo File Vault] Directory structure created: ${demoFilesDir}`);
+    } catch (dirError) {
+      console.error(`[Demo File Vault] Error creating directories:`, dirError);
+      // Continue execution even if directory creation fails
+      // It might already exist or have different permissions
+    }
+    
+    // Save file to disk
+    const filePath = path.join(demoFilesDir, uniqueFileName);
+    const relativePath = path.join('documents', 'demo-files', uniqueFileName);
+    
+    try {
+      await fs.writeFile(filePath, fileContent, 'utf-8');
+      console.log(`[Demo File Vault] File written to disk: ${filePath}`);
+    } catch (writeError) {
+      console.error(`[Demo File Vault] Error writing file to disk:`, writeError);
+      throw new Error(`Failed to write file to disk: ${writeError.message}`);
+    }
     
     // Create file record in database using direct SQL
     const displayName = getDisplayNameFromFilename(fileName);
@@ -105,7 +142,8 @@ async function addDemoFile(companyId, companyName, fileName) {
       created_for: companyName,
       created_at: new Date().toISOString(),
       file_name: fileName,
-      file_source: 'attached_assets'
+      file_source: 'attached_assets',
+      original_file: fileName
     });
     
     const insertQuery = `
@@ -123,7 +161,7 @@ async function addDemoFile(companyId, companyName, fileName) {
       8,  // Use existing user ID from Evan Navarro
       'csv',
       fileContent.length,
-      `demo-files/${fileName}`,
+      relativePath,  // Use the relative path to the actual file
       'active',
       metadata
     ];
@@ -136,6 +174,7 @@ async function addDemoFile(companyId, companyName, fileName) {
       id: fileRecord.id,
       name: fileRecord.name,
       type: fileRecord.type,
+      path: relativePath,
       success: true
     };
   } catch (error) {
@@ -183,12 +222,21 @@ async function populateDemoFileVault(company) {
       '4_Business_Continuity_Plan_Questions.csv'
     ];
     
+    console.log(`[Demo File Vault] Will attempt to add ${demoFiles.length} files to company ${company.id}`);
+    
     // Add each demo file
     const results = [];
     for (const fileName of demoFiles) {
       try {
+        console.log(`[Demo File Vault] Processing file ${fileName} for company ${company.id}...`);
         const result = await addDemoFile(company.id, company.name, fileName);
         results.push(result);
+        
+        if (result.success) {
+          console.log(`[Demo File Vault] Successfully added file ${fileName} (ID: ${result.id})`);
+        } else {
+          console.error(`[Demo File Vault] Failed to add file ${fileName}: ${result.error || 'Unknown error'}`);
+        }
       } catch (fileError) {
         console.error(`[Demo File Vault] Error adding file ${fileName}:`, fileError);
         results.push({ fileName, success: false, error: fileError.message });
@@ -198,7 +246,24 @@ async function populateDemoFileVault(company) {
     // Count successful files
     const successCount = results.filter(r => r.success).length;
     
+    // Log file information for verification
     console.log(`[Demo File Vault] Completed population for company ${company.id}: ${successCount}/${demoFiles.length} files added`);
+    
+    // Log details about each file for easier debugging
+    if (successCount > 0) {
+      console.log(`[Demo File Vault] Successfully added files:`);
+      results.filter(r => r.success).forEach(file => {
+        console.log(`  - ${file.name} (ID: ${file.id}, Type: ${file.type}, Path: ${file.path || 'N/A'})`);
+      });
+    }
+    
+    if (successCount < demoFiles.length) {
+      console.log(`[Demo File Vault] Failed to add ${demoFiles.length - successCount} files:`);
+      results.filter(r => !r.success).forEach(file => {
+        console.log(`  - ${file.fileName || 'Unknown file'}: ${file.error || 'Unknown error'}`);
+      });
+    }
+    
     return {
       success: successCount > 0,
       fileCount: successCount,
