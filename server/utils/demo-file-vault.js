@@ -2,7 +2,15 @@
  * Demo File Vault Population Utility
  * 
  * This utility directly populates a company's file vault with standard demo files
- * when a demo company is created. It uses absolute paths to ensure reliable file access.
+ * when a demo company is created. It uses standardized path handling to ensure
+ * files are both stored on disk properly and accessible through the application's
+ * file viewing mechanisms.
+ * 
+ * The utility follows these conventions:
+ * 1. Physical files are stored at: uploads/documents/demo-files/[filename]
+ * 2. Database paths are stored as: demo-files/[filename] 
+ *    (relative to uploads/documents - this matches app's file access patterns)
+ * 3. File download handlers will prepend 'uploads/documents/' to the DB path
  */
 
 import fs from 'fs/promises';
@@ -12,6 +20,31 @@ import pg from 'pg';
 // Directly use database connection without importing schema
 // This avoids TypeScript import issues in ESM
 const { Pool } = pg;
+
+// Module-level logger prefix for consistent logging
+const LOG_PREFIX = '[Demo File Vault]';
+
+/**
+ * Standardized logging function
+ * 
+ * @param {string} message - Log message
+ * @param {string} level - Log level (info, error, warn)
+ * @param {Object} [data] - Optional data to log
+ */
+function log(message, level = 'info', data) {
+  const timestamp = new Date().toISOString();
+  
+  switch (level) {
+    case 'error':
+      console.error(`${LOG_PREFIX} [${timestamp}] ${message}`, data || '');
+      break;
+    case 'warn':
+      console.warn(`${LOG_PREFIX} [${timestamp}] ${message}`, data || '');
+      break;
+    default:
+      console.log(`${LOG_PREFIX} [${timestamp}] ${message}`, data || '');
+  }
+}
 
 /**
  * Get a database client
@@ -23,6 +56,7 @@ async function getDbClient() {
     connectionString: process.env.DATABASE_URL
   });
   
+  log('Creating new database connection');
   return await pool.connect();
 }
 
@@ -38,9 +72,12 @@ async function getExistingFileCount(companyId) {
     client = await getDbClient();
     const query = 'SELECT COUNT(*) FROM files WHERE company_id = $1';
     const result = await client.query(query, [companyId]);
-    return parseInt(result.rows[0].count) || 0;
+    const count = parseInt(result.rows[0].count) || 0;
+    
+    log(`Found ${count} existing files for company ${companyId}`);
+    return count;
   } catch (error) {
-    console.error('[Demo File Vault] Error checking existing files:', error);
+    log(`Error checking existing files for company ${companyId}`, 'error', error);
     return 0;
   } finally {
     if (client) client.release();
@@ -56,11 +93,14 @@ async function getExistingFileCount(companyId) {
 async function readDemoFile(fileName) {
   try {
     const filePath = path.join(process.cwd(), 'attached_assets', fileName);
+    log(`Reading demo file from: ${filePath}`);
+    
     const fileContent = await fs.readFile(filePath, 'utf-8');
+    log(`Successfully read file: ${fileName} (${fileContent.length} bytes)`);
     return fileContent;
   } catch (error) {
-    console.error(`[Demo File Vault] Error reading demo file ${fileName}:`, error);
-    throw new Error(`Failed to read demo file ${fileName}`);
+    log(`Error reading demo file ${fileName}`, 'error', error);
+    throw new Error(`Failed to read demo file ${fileName}: ${error.message}`);
   }
 }
 
@@ -102,36 +142,54 @@ async function addDemoFile(companyId, companyName, fileName) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const uniqueFileName = `demo_${companyId}_${timestamp}_${fileName}`;
     
+    log(`Adding file '${fileName}' for company ${companyId} as '${uniqueFileName}'`);
+    
     // Create directory for storing demo files if it doesn't exist
     const uploadsDir = path.join(process.cwd(), 'uploads');
-    const demoFilesDir = path.join(uploadsDir, 'documents', 'demo-files');
+    const documentsDir = path.join(uploadsDir, 'documents');
+    const demoFilesDir = path.join(documentsDir, 'demo-files');
     
     try {
       // Ensure uploads directory exists
       await fs.mkdir(uploadsDir, { recursive: true });
+      log(`Ensured uploads directory exists: ${uploadsDir}`);
       
       // Ensure documents directory exists
-      await fs.mkdir(path.join(uploadsDir, 'documents'), { recursive: true });
+      await fs.mkdir(documentsDir, { recursive: true });
+      log(`Ensured documents directory exists: ${documentsDir}`);
       
       // Ensure demo-files directory exists
       await fs.mkdir(demoFilesDir, { recursive: true });
-      
-      console.log(`[Demo File Vault] Directory structure created: ${demoFilesDir}`);
+      log(`Ensured demo-files directory exists: ${demoFilesDir}`);
     } catch (dirError) {
-      console.error(`[Demo File Vault] Error creating directories:`, dirError);
+      log(`Error creating directories`, 'error', dirError);
       // Continue execution even if directory creation fails
       // It might already exist or have different permissions
     }
     
-    // Save file to disk
+    // Save file to disk - using the correct paths pattern
+    // Store the file in uploads/documents/demo-files/
     const filePath = path.join(demoFilesDir, uniqueFileName);
-    const relativePath = path.join('documents', 'demo-files', uniqueFileName);
+    
+    // But in the DB, only store the path RELATIVE to uploads/documents/
+    // This follows the application's convention where 
+    // DB path = relative path that will be joined with uploads/documents/
+    // when file is accessed
+    const relativePath = path.join('demo-files', uniqueFileName);
     
     try {
       await fs.writeFile(filePath, fileContent, 'utf-8');
-      console.log(`[Demo File Vault] File written to disk: ${filePath}`);
+      
+      // Check if file was written correctly
+      const stats = await fs.stat(filePath);
+      log(`File written to disk: ${filePath} (${stats.size} bytes)`);
+      log(`Relative path stored in DB: ${relativePath}`);
+      
+      // Debug path info
+      log(`Full path debug info: File will be stored at: ${filePath}`);
+      log(`Full path debug info: File will be accessed via: ${path.join(process.cwd(), 'uploads', 'documents', relativePath)}`);
     } catch (writeError) {
-      console.error(`[Demo File Vault] Error writing file to disk:`, writeError);
+      log(`Error writing file to disk`, 'error', writeError);
       throw new Error(`Failed to write file to disk: ${writeError.message}`);
     }
     
@@ -145,6 +203,8 @@ async function addDemoFile(companyId, companyName, fileName) {
       file_source: 'attached_assets',
       original_file: fileName
     });
+    
+    log(`Creating database record for file: ${displayName}`);
     
     const insertQuery = `
       INSERT INTO files (
@@ -161,15 +221,24 @@ async function addDemoFile(companyId, companyName, fileName) {
       8,  // Use existing user ID from Evan Navarro
       'csv',
       fileContent.length,
-      relativePath,  // Use the relative path to the actual file
+      relativePath,  // Store the relative path (without uploads/documents prefix)
       'active',
       metadata
     ];
     
+    log(`Executing SQL query with values: ${JSON.stringify({
+      name: displayName,
+      company_id: companyId,
+      type: 'csv',
+      size: fileContent.length,
+      path: relativePath,
+      status: 'active'
+    })}`);
+    
     const result = await client.query(insertQuery, values);
     const fileRecord = result.rows[0];
       
-    console.log(`[Demo File Vault] Added demo file: ${displayName} for company ${companyId}`);
+    log(`Added demo file: ${displayName} for company ${companyId} (ID: ${fileRecord.id})`);
     return {
       id: fileRecord.id,
       name: fileRecord.name,
@@ -178,14 +247,17 @@ async function addDemoFile(companyId, companyName, fileName) {
       success: true
     };
   } catch (error) {
-    console.error(`[Demo File Vault] Error adding demo file ${fileName}:`, error);
+    log(`Error adding demo file ${fileName}`, 'error', error);
     return {
       fileName,
       success: false,
       error: error.message
     };
   } finally {
-    if (client) client.release();
+    if (client) {
+      log(`Releasing database connection`);
+      client.release();
+    }
   }
 }
 
