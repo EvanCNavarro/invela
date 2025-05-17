@@ -22,10 +22,14 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   // Mock current company for demo
   const currentCompany = { id: 1, name: "Acme Corporation" };
 
-  // Show modal if user hasn't completed onboarding
+  // Show modal if user hasn't completed onboarding - ONLY check user status
   React.useEffect(() => {
+    // Only check user's onboarding status, ignore company onboarding status
     if (user && !user.onboarding_user_completed) {
       setShowModal(true);
+    } else {
+      // Ensure modal is closed if user is onboarded
+      setShowModal(false);
     }
   }, [user]);
 
