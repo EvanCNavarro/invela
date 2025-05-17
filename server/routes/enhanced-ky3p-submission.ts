@@ -20,8 +20,8 @@ import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateProgress } from '../utils/progress-validator';
 import { enforceKy3pSubmittedProgress } from '../utils/ky3p-progress-enforcer';
-import { broadcast } from '../utils/unified-websocket';
 import { MessageType, TaskStatus } from '../types';
+import { broadcastTaskUpdate, broadcastFormSubmission } from '../utils/unified-websocket';
 
 // Constants for consistent values
 const PROGRESS_COMPLETE = 100;
@@ -218,7 +218,7 @@ router.post('/api/ky3p/enhanced-submit/:taskId', requireAuth, async (req, res) =
                 target: [ky3pResponses.task_id, ky3pResponses.field_key],
                 set: {
                   response_value: value ? String(value) : null,
-                  status: 'complete',
+                  status: COMPLETE_STATUS,
                   updated_at: new Date(),
                   version: sql`${ky3pResponses.version} + 1`
                 }
