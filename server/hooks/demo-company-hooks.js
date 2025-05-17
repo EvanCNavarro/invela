@@ -88,6 +88,6 @@ async function processNewCompany(company) {
   }
 }
 
-module.exports = {
+export {
   processNewCompany
 };
