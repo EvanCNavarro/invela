@@ -5,9 +5,9 @@
  * It's a JavaScript-compatible version of the TypeScript service.
  */
 
-const { db } = require('../../db/index.js');
-const { files } = require('../../db/schema.js');
-const { logger } = require('../utils/logger.js');
+import { db } from '../../db/index.js';
+import { files } from '../../db/schema.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Create a file in the database
@@ -22,7 +22,7 @@ const { logger } = require('../utils/logger.js');
  * @param {string} [options.status] - File status (default: 'uploaded')
  * @returns {Promise<Object>} - File creation result
  */
-async function createFile(options) {
+export async function createFile(options) {
   try {
     logger.info(`Creating file: ${options.name}`, {
       companyId: options.companyId,
@@ -86,7 +86,3 @@ async function createFile(options) {
     };
   }
 }
-
-module.exports = {
-  createFile
-};
