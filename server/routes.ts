@@ -2790,19 +2790,18 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const companyId = req.user.company_id;
       const startTime = Date.now();
       
-      console.log('[Complete Onboarding] Processing request for user and company:', {
+      console.log('[Complete Onboarding] Processing request for user:', {
         userId: userId,
         companyId: companyId,
         timestamp: new Date().toISOString()
       });
       
-      // Variable to store updated user and company data
+      // Variable to store updated user data
       let updatedUserData = null;
-      let updatedCompanyData = null;
       
-      // Use transaction to update both user and company records for consistency
+      // Use transaction to update the user record
       await db.transaction(async (tx) => {
-        // 1. Update the user record to mark onboarding as completed
+        // Update the user record to mark onboarding as completed
         const [updatedUser] = await tx.update(users)
           .set({
             onboarding_user_completed: true,
@@ -2818,28 +2817,10 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         // Save for use outside the transaction
         updatedUserData = updatedUser;
         
-        // 2. Also update the company record for redundancy
-        // This ensures both flags are consistent
-        const [updatedCompany] = await tx.update(companies)
-          .set({
-            onboarding_company_completed: true,
-            updated_at: new Date()
-          })
-          .where(eq(companies.id, companyId))
-          .returning();
-          
-        if (!updatedCompany) {
-          throw new Error(`Failed to update company ${companyId} onboarding status`);
-        }
-        
-        // Save for use outside the transaction
-        updatedCompanyData = updatedCompany;
-        
-        console.log('[Complete Onboarding] Successfully updated both user and company records:', {
+        console.log('[Complete Onboarding] Successfully updated user record:', {
           userId: updatedUser.id,
-          companyId: updatedCompany.id,
+          companyId: companyId,
           userOnboardingStatus: updatedUser.onboarding_user_completed,
-          companyOnboardingStatus: updatedCompany.onboarding_company_completed,
           elapsedMs: Date.now() - startTime
         });
       });
@@ -2858,14 +2839,20 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         invalidateCompanyCache(companyId);
       }
 
+      // Get current company information for response
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
       res.json({
         message: "Onboarding completed successfully",
         success: true,
         user: updatedUserData,
-        company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
-          id: updatedCompanyData.id,
-          name: updatedCompanyData.name,
-          onboardingCompleted: true
+        company: company ? {
+          id: company.id,
+          name: company.name,
+          // Only return the user's onboarding status, not company's
+          onboardingCompleted: updatedUserData.onboarding_user_completed
         } : null,
         elapsedMs: Date.now() - startTime
       });
