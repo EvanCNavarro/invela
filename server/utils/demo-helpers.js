@@ -4,142 +4,105 @@
  * This module provides helper functions for identifying and working with demo companies.
  */
 
-const { db } = require('../../db/index.js');
-const { companies } = require('../../db/schema.js');
-const { eq, or, like } = require('drizzle-orm');
-const { logger } = require('./logger.js');
+import { db } from '../../db/index.js';
+import { companies } from '../../db/schema.js';
+import { eq, or, and, like } from 'drizzle-orm';
+import { logger } from './logger.js';
 
 /**
- * Check if a company name indicates this is a demo company
- * 
- * @param {string} companyName - Company name to check
- * @returns {boolean} - True if the name indicates this is a demo company
- */
-function isDemoCompanyName(companyName) {
-  if (!companyName) return false;
-  
-  // Normalize company name for consistent checking
-  const normalizedName = companyName.toLowerCase().trim();
-  
-  // Keywords indicating demo status
-  const demoKeywords = [
-    'demo',
-    'devtest',
-    'developmenttesting',
-    'test company',
-    'sample company',
-    'example company'
-  ];
-  
-  // Check if any keyword is in the company name
-  return demoKeywords.some(keyword => normalizedName.includes(keyword));
-}
-
-/**
- * Check if a company is marked as a demo company in the database
+ * Check if a company is marked as a demo in the database
  * 
  * @param {number} companyId - Company ID to check
- * @returns {Promise<boolean>} - True if this is a demo company
+ * @returns {Promise<boolean>} - True if company is demo, false otherwise
  */
-async function isCompanyDemo(companyId) {
+export async function isCompanyDemo(companyId) {
   try {
-    logger.info(`[Demo Helpers] Checking if company ${companyId} is a demo company`);
-    
-    // Get company record from database
     const [company] = await db
       .select()
       .from(companies)
       .where(eq(companies.id, companyId));
       
     if (!company) {
-      logger.warn(`[Demo Helpers] Company ${companyId} not found in database`);
       return false;
     }
     
-    // Check is_demo flag (explicit marking)
-    if (company.is_demo === true) {
-      logger.info(`[Demo Helpers] Company ${companyId} is explicitly marked as a demo company`);
-      return true;
-    }
-    
-    // Check company name (implicit detection)
-    if (isDemoCompanyName(company.name)) {
-      logger.info(`[Demo Helpers] Company ${companyId} is implicitly a demo company based on name pattern`);
-      return true;
-    }
-    
-    // Not a demo company
-    logger.info(`[Demo Helpers] Company ${companyId} is not a demo company`);
-    return false;
+    // Check if is_demo is true or if company name indicates a demo
+    return company.is_demo === true || isDemoCompanyName(company.name);
   } catch (error) {
-    logger.error(`[Demo Helpers] Error checking if company is demo:`, {
+    logger.error(`Error checking if company ${companyId} is demo:`, {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      companyId
+      stack: error instanceof Error ? error.stack : undefined
     });
     return false;
   }
 }
 
 /**
+ * Check if a company name indicates this is a demo company
+ * 
+ * @param {string} companyName - Company name to check
+ * @returns {boolean} - True if name indicates a demo company
+ */
+export function isDemoCompanyName(companyName) {
+  if (!companyName) {
+    return false;
+  }
+  
+  const lowerName = companyName.toLowerCase();
+  const demoIndicators = [
+    'demo',
+    'test',
+    'sample',
+    'example'
+  ];
+  
+  return demoIndicators.some(indicator => 
+    lowerName.includes(indicator) || 
+    // Check specific formats like 'DemoBank', 'TestCompany', etc.
+    new RegExp(`^${indicator}[A-Z]`, 'i').test(companyName)
+  );
+}
+
+/**
  * Get all demo companies from the database
  * 
- * @returns {Promise<Array>} - Array of demo company objects
+ * @returns {Promise<Array>} - Array of demo companies
  */
-async function getAllDemoCompanies() {
+export async function getAllDemoCompanies() {
   try {
-    logger.info('[Demo Helpers] Getting all demo companies');
-    
-    // Get all companies marked as demo
-    const demoCompanies = await db
+    // Get all companies with is_demo=true
+    const explicitDemoCompanies = await db
       .select()
       .from(companies)
       .where(eq(companies.is_demo, true));
       
-    logger.info(`[Demo Helpers] Found ${demoCompanies.length} companies explicitly marked as demo`);
-    
-    // Get companies with demo-like names
+    // Get companies with demo-indicating names
     const demoNameCompanies = await db
       .select()
       .from(companies)
       .where(
         or(
           like(companies.name, '%demo%'),
-          like(companies.name, '%devtest%'),
-          like(companies.name, '%developmenttesting%'),
-          like(companies.name, '%test company%'),
-          like(companies.name, '%sample company%'),
-          like(companies.name, '%example company%')
+          like(companies.name, '%test%'),
+          like(companies.name, '%sample%'),
+          like(companies.name, '%example%')
         )
       );
       
-    logger.info(`[Demo Helpers] Found ${demoNameCompanies.length} companies with demo-like names`);
-    
-    // Combine and deduplicate
+    // Combine results and remove duplicates by ID
     const allDemoCompanies = [
-      ...demoCompanies,
+      ...explicitDemoCompanies,
       ...demoNameCompanies
     ];
     
-    // Remove duplicates by ID
-    const uniqueDemoCompanies = Array.from(
+    return Array.from(
       new Map(allDemoCompanies.map(c => [c.id, c])).values()
     );
-    
-    logger.info(`[Demo Helpers] Found ${uniqueDemoCompanies.length} total unique demo companies`);
-    
-    return uniqueDemoCompanies;
   } catch (error) {
-    logger.error('[Demo Helpers] Error getting demo companies:', {
+    logger.error('Error getting all demo companies:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
     return [];
   }
 }
-
-module.exports = {
-  isDemoCompanyName,
-  isCompanyDemo,
-  getAllDemoCompanies
-};

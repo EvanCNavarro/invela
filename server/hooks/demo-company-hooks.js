@@ -5,9 +5,9 @@
  * to enhance the demo experience, including populating the file vault with sample files.
  */
 
-const { populateCompanyFileVault, unlockFileVaultForCompany } = require('../../populate-demo-file-vault.js');
-const { isDemoCompanyName } = require('../utils/demo-helpers.js');
-const { logger } = require('../utils/logger.js');
+import { isCompanyDemo } from '../utils/demo-helpers.js';
+import { populateCompanyFileVault } from '../../populate-demo-file-vault.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Process a newly created company and apply demo-specific enhancements if needed
@@ -18,67 +18,73 @@ const { logger } = require('../utils/logger.js');
  * @param {boolean} company.is_demo - Whether this is a demo company
  * @returns {Promise<Object>} - Result of processing
  */
-async function processNewCompany(company) {
-  try {
-    if (!company || !company.id) {
-      logger.warn('[DemoCompanyHooks] Invalid company object provided', { company });
-      return { success: false, reason: 'Invalid company data' };
-    }
+export async function processNewCompany(company) {
+  // Verify this is a demo company before proceeding
+  if (!company || !company.id) {
+    logger.warn('[Demo Hooks] Invalid company object provided to processNewCompany');
+    return { success: false, reason: 'Invalid company object' };
+  }
 
-    const companyId = company.id;
-    const companyName = company.name || '';
-    const isExplicitlyDemo = company.is_demo === true;
-    const isImplicitlyDemo = isDemoCompanyName(companyName);
+  logger.info(`[Demo Hooks] Processing new company: ${company.name} (ID: ${company.id})`);
+  
+  try {
+    // Check if this is a demo company
+    const isDemoCompany = company.is_demo === true || await isCompanyDemo(company.id);
     
-    // Determine if this is a demo company by either flag or name
-    if (!isExplicitlyDemo && !isImplicitlyDemo) {
-      logger.info('[DemoCompanyHooks] Company is not a demo company, skipping hooks', { 
-        companyId, 
-        companyName,
-        isExplicitlyDemo,
-        isImplicitlyDemo 
-      });
-      return { success: true, status: 'skipped', reason: 'Not a demo company' };
+    if (!isDemoCompany) {
+      logger.info(`[Demo Hooks] Company ${company.id} is not a demo company, skipping demo hooks`);
+      return { success: true, skipped: true, reason: 'Not a demo company' };
     }
     
-    logger.info('[DemoCompanyHooks] Processing new demo company', { 
-      companyId, 
-      companyName, 
-      isDemoReason: isExplicitlyDemo ? 'explicit flag' : 'name pattern' 
-    });
+    logger.info(`[Demo Hooks] Applying demo enhancements for company ${company.id} (${company.name})`);
     
-    // Step 1: Ensure file vault is unlocked for this company
-    const fileVaultUnlocked = await unlockFileVaultForCompany(companyId);
+    // Enhancement 1: Populate file vault with sample files
+    const fileVaultResult = await populateFileVault(company);
     
-    if (!fileVaultUnlocked) {
-      logger.warn('[DemoCompanyHooks] Failed to unlock file vault', { companyId });
-      // Continue anyway to try populating files
-    }
-    
-    // Step 2: Populate file vault with demo files
-    const populationResult = await populateCompanyFileVault(companyId);
-    
-    logger.info('[DemoCompanyHooks] Demo company processing complete', {
-      companyId,
-      companyName,
-      fileVaultUnlocked,
-      filesPopulated: populationResult.success,
-      fileCount: populationResult.fileCount || 0
-    });
+    // Add more demo enhancements here as needed
     
     return {
       success: true,
-      companyId,
-      companyName,
-      fileVaultUnlocked,
-      fileVaultPopulated: populationResult.success,
-      fileCount: populationResult.fileCount || 0
+      company: { id: company.id, name: company.name },
+      fileVault: fileVaultResult
     };
   } catch (error) {
-    logger.error('[DemoCompanyHooks] Error processing demo company', {
+    logger.error(`[Demo Hooks] Error applying demo enhancements for company ${company.id}:`, {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      company
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Populate the file vault of a demo company with sample files
+ * 
+ * @param {Object} company - The company object
+ * @returns {Promise<Object>} - Result of file vault population
+ */
+async function populateFileVault(company) {
+  logger.info(`[Demo Hooks] Populating file vault for company ${company.id} (${company.name})`);
+  
+  try {
+    // Use the populate-demo-file-vault module to add sample files
+    const result = await populateCompanyFileVault(company.id);
+    
+    logger.info(`[Demo Hooks] File vault population result for company ${company.id}:`, {
+      success: result.success,
+      fileCount: result.fileCount || 0,
+      status: result.status || 'completed'
+    });
+    
+    return result;
+  } catch (error) {
+    logger.error(`[Demo Hooks] Error populating file vault for company ${company.id}:`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     });
     
     return {
@@ -87,7 +93,3 @@ async function processNewCompany(company) {
     };
   }
 }
-
-module.exports = {
-  processNewCompany
-};

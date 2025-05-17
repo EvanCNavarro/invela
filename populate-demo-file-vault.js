@@ -9,15 +9,20 @@
  * this script will populate its file vault with standardized CSV files.
  */
 
-// Import dependencies
-const fs = require('fs');
-const path = require('path');
-const { db } = require('./db/index.js');
-const { files, companies } = require('./db/schema.js');
-const { eq } = require('drizzle-orm');
-const FileCreationService = require('./server/services/fileCreation.js');
-const { isCompanyDemo, isDemoCompanyName } = require('./server/utils/demo-helpers.js');
-const { logger } = require('./server/utils/logger.js');
+// Import dependencies using ES module syntax
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { db } from './db/index.js';
+import { files, companies } from './db/schema.js';
+import { eq } from 'drizzle-orm';
+import * as FileCreationService from './server/services/fileCreation.js';
+import { isCompanyDemo, isDemoCompanyName } from './server/utils/demo-helpers.js';
+import { logger } from './server/utils/logger.js';
+
+// Get current directory name (equivalent to __dirname in CommonJS)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define constants
 const DEMO_FILE_PATHS = [
@@ -351,14 +356,14 @@ async function populateAllDemoCompanyFileVaults() {
 }
 
 // Export functions for use in other modules
-module.exports = {
+export {
   populateCompanyFileVault,
   populateAllDemoCompanyFileVaults,
   unlockFileVaultForCompany
 };
 
 // If this script is run directly, populate all demo companies
-if (require.main === module) {
+if (import.meta.url === import.meta.url) {
   logger.info('[Demo File Vault] Running as standalone script to populate all demo company file vaults');
   populateAllDemoCompanyFileVaults()
     .then(result => {
