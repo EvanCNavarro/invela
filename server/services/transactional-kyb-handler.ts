@@ -15,6 +15,7 @@ import { TaskStatus } from '@db/schema';
 import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { normalizeTaskStatus, getSubmittedStatus } from '../utils/task-status';
 
 export interface KybSubmissionInput {
   taskId: number;
@@ -155,7 +156,7 @@ export async function processKybSubmission(
       // 4.2 Update task status and metadata
       await tx.update(tasks)
         .set({
-          status: TaskStatus.SUBMITTED, // Explicitly 'submitted', not 'ready_for_submission'
+          status: getSubmittedStatus(), // Use standardized 'submitted' string literal
           progress: 100,
           updated_at: new Date(),
           metadata: {
@@ -163,7 +164,7 @@ export async function processKybSubmission(
             kybFormFile: fileCreationResult.fileId,
             submissionDate: new Date().toISOString(),
             formVersion: '1.0',
-            statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+            statusFlow: [...(task.metadata?.statusFlow || []), getSubmittedStatus()]
               .filter((v, i, a) => a.indexOf(v) === i),
             explicitlySubmitted: true // Flag to indicate this was a real submission
           }
