@@ -2618,9 +2618,10 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
           console.log('[FinTech Invite] Created company:', {
             id: newCompany.id,
+            is_demo: newCompany.is_demo,
             duration: Date.now() - txStartTime
           });
-
+          
           // Directly populate file vault for demo companies
           if (newCompany.is_demo === true) {
             try {
@@ -2658,6 +2659,10 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
               });
               // Continue with company creation
             }
+          }
+
+          // Create user account
+          try {
           }
 
           // Create user account
