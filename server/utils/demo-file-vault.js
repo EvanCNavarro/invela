@@ -7,30 +7,23 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-// Use dynamic import for db access to avoid module compatibility issues
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
 import pg from 'pg';
 
-// Get required database objects without direct imports
-// This approach allows the code to work in both module systems
-let db, files;
+// Directly use database connection without importing schema
+// This avoids TypeScript import issues in ESM
+const Pool = pg.Pool;
 
-async function initDb() {
-  if (db && files) return { db, files };
-  
-  const pool = new pg.Pool({
+/**
+ * Get a database client
+ * 
+ * @returns {Promise<import('pg').PoolClient>} Database client
+ */
+async function getDbClient() {
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL
   });
   
-  // Import schema dynamically to avoid module path issues
-  const schemaModule = await import('../../db/schema.ts');
-  files = schemaModule.files;
-  
-  // Create db instance
-  db = drizzle(pool, { schema: { files } });
-  
-  return { db, files };
+  return await pool.connect();
 }
 
 /**
@@ -41,6 +34,10 @@ async function initDb() {
  */
 async function getExistingFileCount(companyId) {
   try {
+    // Initialize database connection
+    const { db, files } = await initDb();
+    
+    // Use count aggregate function
     const count = await db
       .select({ count: { count: files.id } })
       .from(files)
@@ -98,6 +95,9 @@ function getDisplayNameFromFilename(fileName) {
  */
 async function addDemoFile(companyId, companyName, fileName) {
   try {
+    // Initialize database connection
+    const { db, files } = await initDb();
+    
     // Get file content
     const fileContent = await readDemoFile(fileName);
     
@@ -156,6 +156,9 @@ async function populateDemoFileVault(company) {
   
   try {
     console.log(`[Demo File Vault] Starting file vault population for company ${company.id} (${company.name})`);
+    
+    // Initialize database in this function too
+    await initDb();
     
     // Check if files already exist
     const existingCount = await getExistingFileCount(company.id);
