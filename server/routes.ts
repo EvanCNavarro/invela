@@ -2079,11 +2079,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           success: true,
           message: "Onboarding completed successfully",
           user: updatedUserData,
-          company: {
+          company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
             id: updatedCompanyData.id,
             name: updatedCompanyData.name,
             onboardingCompleted: true
-          },
+          } : null,
           elapsedMs: Date.now() - startTime
         });
       } catch (taskError) {
@@ -2775,34 +2775,95 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Add this endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[Complete Onboarding] Processing request for user:', req.user.id);
-
-      // Update user's onboarding status
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, req.user.id))
-        .returning();
-
-      if (!updatedUser) {
-        console.error('[Complete Onboarding] Failed to update user:', req.user.id);
-        return res.status(500).json({ message: "Failed to update user" });
+      if (!req.user || !req.user.id) {
+        return res.status(400).json({ 
+          message: "Missing user information",
+          error: "User data is required for onboarding completion" 
+        });
       }
+      
+      const userId = req.user.id;
+      const companyId = req.user.company_id;
+      const startTime = Date.now();
+      
+      console.log('[Complete Onboarding] Processing request for user and company:', {
+        userId: userId,
+        companyId: companyId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Variable to store updated user and company data
+      let updatedUserData = null;
+      let updatedCompanyData = null;
+      
+      // Use transaction to update both user and company records for consistency
+      await db.transaction(async (tx) => {
+        // 1. Update the user record to mark onboarding as completed
+        const [updatedUser] = await tx.update(users)
+          .set({
+            onboarding_user_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, userId))
+          .returning();
+          
+        if (!updatedUser) {
+          throw new Error(`Failed to update user ${userId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedUserData = updatedUser;
+        
+        // 2. Also update the company record for redundancy
+        // This ensures both flags are consistent
+        const [updatedCompany] = await tx.update(companies)
+          .set({
+            onboarding_company_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId))
+          .returning();
+          
+        if (!updatedCompany) {
+          throw new Error(`Failed to update company ${companyId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedCompanyData = updatedCompany;
+        
+        console.log('[Complete Onboarding] Successfully updated both user and company records:', {
+          userId: updatedUser.id,
+          companyId: updatedCompany.id,
+          userOnboardingStatus: updatedUser.onboarding_user_completed,
+          companyOnboardingStatus: updatedCompany.onboarding_company_completed,
+          elapsedMs: Date.now() - startTime
+        });
+      });
 
-      // Try to update the onboarding task status
-      const updatedTask = await updateOnboardingTaskStatus(req.user.id);
+      // After successful transaction, try to update the onboarding task as well
+      const updatedTask = await updateOnboardingTaskStatus(userId);
 
       console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
-        userId: updatedUser.id,
-        taskId: updatedTask?.id
+        userId: updatedUserData.id,
+        taskId: updatedTask?.id,
+        elapsedMs: Date.now() - startTime
       });
+      
+      // Invalidate company cache to ensure fresh data is returned
+      if (companyId) {
+        invalidateCompanyCache(companyId);
+      }
 
       res.json({
         message: "Onboarding completed successfully",
-        user: updatedUser,
-        task: updatedTask
+        success: true,
+        user: updatedUserData,
+        company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
+          id: updatedCompanyData.id,
+          name: updatedCompanyData.name,
+          onboardingCompleted: true
+        } : null,
+        elapsedMs: Date.now() - startTime
       });
 
     } catch (error) {
