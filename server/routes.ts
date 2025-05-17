@@ -886,15 +886,31 @@ export function registerRoutes(app: Express): Express {
         isDemo: company.is_demo
       });
 
+      // Get user's onboarding status to ensure consistent state across company and user
+      const userOnboardingStatus = req.user?.onboarding_user_completed || false;
+      
+      // Log detailed onboarding status for debugging
+      console.log('[Current Company] Onboarding status check:', {
+        userId: req.user?.id,
+        companyId: companyId,
+        userOnboardingStatus: userOnboardingStatus,
+        companyOnboardingStatus: company.onboarding_company_completed,
+        timestamp: new Date().toISOString()
+      });
+      
       // Transform response to include both risk_score and riskScore consistently
       // Also include isDemo for frontend usage (camelCase)
+      // And onboardingCompleted for the modal check
       const transformedCompany = {
         ...company,
-        risk_score: company.risk_score,       // Keep the original property
-        riskScore: company.risk_score,        // Add the frontend expected property name
-        chosen_score: company.chosen_score,   // Keep the original property
-        chosenScore: company.chosen_score,    // Add camelCase version for frontend
-        isDemo: company.is_demo               // Add camelCase version for frontend
+        risk_score: company.risk_score,                 // Keep the original property
+        riskScore: company.risk_score,                  // Add the frontend expected property name
+        chosen_score: company.chosen_score,             // Keep the original property
+        chosenScore: company.chosen_score,              // Add camelCase version for frontend
+        isDemo: company.is_demo,                        // Add camelCase version for frontend
+        onboarding_company_completed: company.onboarding_company_completed, // Original DB field
+        // CRITICAL FIX: Ensure onboardingCompleted is true if user has completed onboarding
+        onboardingCompleted: userOnboardingStatus || company.onboarding_company_completed
       };
       
       // Update the cache with the transformed data
@@ -1985,36 +2001,119 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
       
       const userId = req.user.id;
+      const companyId = req.user.company_id;
       const startTime = Date.now();
       
-      console.log('[User Onboarding] Completing onboarding for user:', userId);
-
-      // Update only the user record to mark onboarding as completed
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, userId))
-        .returning();
-
-      if (!updatedUser) {
-        console.error('[User Onboarding] Failed to update user:', userId);
-        return res.status(500).json({ 
-          message: "Error updating onboarding status",
-          error: "Failed to update user record" 
-        });
-      }
-
-      console.log('[User Onboarding] Updated user onboarding status:', {
-        id: updatedUser.id,
-        onboarding_completed: updatedUser.onboarding_user_completed,
-        elapsedMs: Date.now() - startTime
+      console.log('[User Onboarding] Completing onboarding for user and company:', {
+        userId: userId,
+        companyId: companyId,
+        timestamp: new Date().toISOString()
       });
 
-      res.json(updatedUser);
+      // Variable to store updated user and company data
+      let updatedUserData = null;
+      let updatedCompanyData = null;
+      
+      // Create transaction to update both user and company records
+      // This ensures both records are consistent
+      await db.transaction(async (tx) => {
+        // 1. Update the user record to mark onboarding as completed
+        const [updatedUser] = await tx.update(users)
+          .set({
+            onboarding_user_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, userId))
+          .returning();
+          
+        if (!updatedUser) {
+          throw new Error(`Failed to update user ${userId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedUserData = updatedUser;
+        
+        // 2. Also update the company record for redundancy
+        // This ensures both flags are consistent
+        const [updatedCompany] = await tx.update(companies)
+          .set({
+            onboarding_company_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId))
+          .returning();
+          
+        if (!updatedCompany) {
+          throw new Error(`Failed to update company ${companyId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedCompanyData = updatedCompany;
+        
+        console.log('[User Onboarding] Successfully updated both user and company records:', {
+          userId: updatedUser.id,
+          companyId: updatedCompany.id,
+          userOnboardingStatus: updatedUser.onboarding_user_completed,
+          companyOnboardingStatus: updatedCompany.onboarding_company_completed,
+          elapsedMs: Date.now() - startTime
+        });
+      });
+
+      // After successful transaction, now try to update the onboarding task as well
+      try {
+        // Also update the onboarding task to mark it as completed
+        const updatedTask = await updateOnboardingTaskStatus(userId);
+        
+        console.log('[User Onboarding] Updated task status:', {
+          userId: userId,
+          taskUpdated: !!updatedTask,
+          taskId: updatedTask?.id,
+          elapsedMs: Date.now() - startTime
+        });
+        
+        // Invalidate company cache to ensure fresh data is returned
+        invalidateCompanyCache(companyId);
+        
+        // Return success response with appropriate details
+        return res.json({
+          success: true,
+          message: "Onboarding completed successfully",
+          user: updatedUserData,
+          company: {
+            id: updatedCompanyData.id,
+            name: updatedCompanyData.name,
+            onboardingCompleted: true
+          },
+          elapsedMs: Date.now() - startTime
+        });
+      } catch (taskError) {
+        console.error('[User Onboarding] Error updating task status:', taskError);
+        
+        // Still return success since the main transaction succeeded
+        return res.json({
+          success: true,
+          message: "Onboarding completed successfully, but task status update failed",
+          user: updatedUserData,
+          company: {
+            id: updatedCompanyData.id,
+            name: updatedCompanyData.name,
+            onboardingCompleted: true
+          },
+          elapsedMs: Date.now() - startTime
+        });
+      }
     } catch (error) {
       console.error("[User Onboarding] Error updating onboarding status:", error);
+      
+      // Invalidate company cache to trigger a fresh fetch of data next time
+      try {
+        if (req.user && req.user.company_id) {
+          invalidateCompanyCache(req.user.company_id);
+        }
+      } catch (cacheError) {
+        console.error("[User Onboarding] Error invalidating cache:", cacheError);
+      }
+      
       res.status(500).json({ 
         message: "Error updating onboarding status",
         error: error instanceof Error ? error.message : 'Unknown error'
