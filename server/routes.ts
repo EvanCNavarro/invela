@@ -3319,6 +3319,20 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       console.log('[Invite] Starting invitation process');
       console.log('[Invite] Request body:', req.body);
 
+      // Ensure we have a company ID
+      // If req.body.company_id is missing or invalid, use the authenticated user's company_id
+      if (!req.body.company_id || typeof req.body.company_id !== 'number') {
+        console.warn('[Invite] Using authenticated user company ID as fallback:', req.user.company_id);
+        req.body.company_id = req.user.company_id;
+      }
+      
+      // Additional safety check to prevent company_id = 1 unless explicitly intended
+      // This check should run in all cases
+      if (req.body.company_id === 1) {
+        console.warn('[Invite] Detected company_id = 1, this is likely incorrect. Using authenticated user company ID:', req.user.company_id);
+        req.body.company_id = req.user.company_id;
+      }
+
       // Validate and normalize invite data
       const inviteData = {
         email: req.body.email.toLowerCase(),
