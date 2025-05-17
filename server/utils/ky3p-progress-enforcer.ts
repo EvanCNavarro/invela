@@ -24,6 +24,9 @@ import { TaskStatus } from '../types';
 const PROGRESS_COMPLETE = 100;
 const SUBMITTED_STATUS = TaskStatus.SUBMITTED;
 
+// Allowed message types for broadcasts (to ensure type safety)
+type AllowedBroadcastType = 'task_updated' | 'form_submission_completed';
+
 /**
  * Ensures a KY3P task has the correct progress value (100%) when submitted
  * 
