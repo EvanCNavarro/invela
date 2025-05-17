@@ -5,23 +5,11 @@
  * when a demo company is created. It uses absolute paths to ensure reliable file access.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { db } from '../../db/index.js';
-import { files } from '../../db/schema.js';
-import { eq } from 'drizzle-orm';
-import { logger } from './logger.js';
-
-// Define constants
-const DEMO_FILE_PATHS = [
-  '1_SOC_2_Questions.csv',
-  '2_ISO_27001_Questions.csv',
-  '3_Penetration_Test_Questions.csv',
-  '4_Business_Continuity_Plan_Questions.csv'
-];
-
-// Define a system user ID for file creation (typically an admin user)
-const SYSTEM_USER_ID = 1;
+const fs = require('fs').promises;
+const path = require('path');
+const { db } = require('../../db/index');
+const { files } = require('../../db/schema');
+const { eq } = require('drizzle-orm');
 
 /**
  * Check if company already has files in its vault
@@ -31,16 +19,14 @@ const SYSTEM_USER_ID = 1;
  */
 async function getExistingFileCount(companyId) {
   try {
-    const existingFiles = await db
-      .select({ id: files.id })
+    const count = await db
+      .select({ count: { count: files.id } })
       .from(files)
       .where(eq(files.company_id, companyId));
-      
-    return existingFiles.length;
+    
+    return count[0]?.count || 0;
   } catch (error) {
-    logger.error(`[Demo File Vault] Error checking existing files for company ${companyId}:`, {
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    console.error('[Demo File Vault] Error counting existing files:', error);
     return 0;
   }
 }
@@ -53,24 +39,12 @@ async function getExistingFileCount(companyId) {
  */
 async function readDemoFile(fileName) {
   try {
-    // Use absolute path from project root to avoid path resolution issues
-    const filePath = path.resolve(process.cwd(), 'attached_assets', fileName);
-    logger.info(`[Demo File Vault] Reading file from ${filePath}`);
-    
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Demo file not found: ${filePath}`);
-    }
-    
-    return fs.readFileSync(filePath, 'utf8');
+    const filePath = path.join(process.cwd(), 'attached_assets', fileName);
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    return fileContent;
   } catch (error) {
-    logger.error(`[Demo File Vault] Error reading demo file ${fileName}:`, {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      filePath: path.resolve(process.cwd(), 'attached_assets', fileName),
-      currentDir: process.cwd(),
-      exists: fs.existsSync(path.resolve(process.cwd(), 'attached_assets', fileName))
-    });
-    throw error;
+    console.error(`[Demo File Vault] Error reading demo file ${fileName}:`, error);
+    throw new Error(`Failed to read demo file ${fileName}`);
   }
 }
 
@@ -81,12 +55,15 @@ async function readDemoFile(fileName) {
  * @returns {string} - Formatted display name
  */
 function getDisplayNameFromFilename(fileName) {
-  // Extract the base filename without the numeric prefix and extension
-  const baseName = path.basename(fileName, '.csv');
-  const nameWithoutPrefix = baseName.replace(/^\d+_/, '');
+  // Remove file extension and any leading numbers/underscores
+  const baseName = fileName.replace(/^\d+_/, '').replace(/\.csv$/, '');
   
-  // Replace underscores with spaces and format
-  return nameWithoutPrefix.replace(/_/g, ' ');
+  // Replace underscores with spaces and title case
+  return baseName
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /**
@@ -99,60 +76,43 @@ function getDisplayNameFromFilename(fileName) {
  */
 async function addDemoFile(companyId, companyName, fileName) {
   try {
+    // Get file content
     const fileContent = await readDemoFile(fileName);
+    
+    // Create file record in database
     const displayName = getDisplayNameFromFilename(fileName);
-    const finalName = `${displayName} - ${companyName}.csv`;
-    
-    logger.info(`[Demo File Vault] Adding file "${finalName}" to company ${companyId}`);
-    
-    // Insert file record in database
-    const result = await db.insert(files)
+    const [fileRecord] = await db.insert(files)
       .values({
-        name: finalName,
-        path: fileContent, // Store content directly in path field
-        type: 'text/csv',
-        status: 'uploaded',
+        name: displayName,
+        original_name: fileName,
         company_id: companyId,
-        user_id: SYSTEM_USER_ID,
-        created_at: new Date(),
-        updated_at: new Date(),
-        size: Buffer.from(fileContent).length,
-        version: 1,
+        user_id: null, // System generated
+        type: 'csv',
+        size: fileContent.length,
+        content: fileContent,
+        path: `demo-files/${fileName}`, // Add required path
+        status: 'active',
         metadata: {
-          isDemo: true,
-          sourceFile: fileName,
-          createdAt: new Date().toISOString(),
-          companyName: companyName
+          source: 'demo_autofill',
+          created_for: companyName,
+          created_at: new Date().toISOString()
         }
       })
-      .returning({ id: files.id });
-    
-    if (!result || result.length === 0) {
-      throw new Error('Failed to insert file record');
-    }
-    
-    const fileId = result[0].id;
-    
-    logger.info(`[Demo File Vault] Successfully added "${finalName}" to file vault for company ${companyId}`, {
-      fileId,
-      fileName: finalName
-    });
-    
+      .returning();
+      
+    console.log(`[Demo File Vault] Added demo file: ${displayName} for company ${companyId}`);
     return {
-      success: true,
-      fileId,
-      fileName: finalName
+      id: fileRecord.id,
+      name: fileRecord.name,
+      type: fileRecord.type,
+      success: true
     };
   } catch (error) {
-    logger.error(`[Demo File Vault] Error adding demo file to vault:`, {
-      companyId,
-      fileName,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-    
+    console.error(`[Demo File Vault] Error adding demo file ${fileName}:`, error);
     return {
+      fileName,
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error.message
     };
   }
 }
@@ -166,63 +126,62 @@ async function addDemoFile(companyId, companyName, fileName) {
  * @param {Object} company - Company object with id and name
  * @returns {Promise<Object>} - Result with success status and file count
  */
-export async function populateDemoFileVault(company) {
+async function populateDemoFileVault(company) {
   if (!company || !company.id) {
-    logger.warn('[Demo File Vault] Invalid company object provided to populateDemoFileVault');
-    return { 
-      success: false, 
-      reason: 'Invalid company object'
-    };
+    console.error('[Demo File Vault] Invalid company provided:', company);
+    return { success: false, error: 'Invalid company' };
   }
   
-  logger.info(`[Demo File Vault] Starting file vault population for company ${company.id} (${company.name})`);
-  
   try {
-    // Skip if company already has files
-    const existingFileCount = await getExistingFileCount(company.id);
+    console.log(`[Demo File Vault] Starting file vault population for company ${company.id} (${company.name})`);
     
-    if (existingFileCount > 0) {
-      logger.info(`[Demo File Vault] Company ${company.id} already has ${existingFileCount} files, skipping population`);
-      return {
-        success: true,
-        status: 'skipped',
-        reason: 'Files already exist',
-        fileCount: existingFileCount
-      };
+    // Check if files already exist
+    const existingCount = await getExistingFileCount(company.id);
+    if (existingCount > 0) {
+      console.log(`[Demo File Vault] Company ${company.id} already has ${existingCount} files. Skipping population.`);
+      return { success: true, fileCount: existingCount, alreadyPopulated: true };
     }
     
-    // Add each demo file to the vault
+    // List of demo files to add
+    const demoFiles = [
+      '1_SOC_2_Questions.csv',
+      '2_ISO_27001_Questions.csv',
+      '3_Penetration_Test_Questions.csv', 
+      '4_Business_Continuity_Plan_Questions.csv'
+    ];
+    
+    // Add each demo file
     const results = [];
-    
-    for (const fileName of DEMO_FILE_PATHS) {
-      const result = await addDemoFile(company.id, company.name, fileName);
-      results.push(result);
+    for (const fileName of demoFiles) {
+      try {
+        const result = await addDemoFile(company.id, company.name, fileName);
+        results.push(result);
+      } catch (fileError) {
+        console.error(`[Demo File Vault] Error adding file ${fileName}:`, fileError);
+        results.push({ fileName, success: false, error: fileError.message });
+      }
     }
     
+    // Count successful files
     const successCount = results.filter(r => r.success).length;
     
-    logger.info(`[Demo File Vault] Completed file vault population for company ${company.id}`, {
-      companyName: company.name,
-      totalFiles: DEMO_FILE_PATHS.length,
-      successfulFiles: successCount,
-      fileIds: results.filter(r => r.success).map(r => r.fileId)
-    });
-    
+    console.log(`[Demo File Vault] Completed population for company ${company.id}: ${successCount}/${demoFiles.length} files added`);
     return {
-      success: true,
+      success: successCount > 0,
       fileCount: successCount,
-      companyName: company.name
+      totalAttempted: demoFiles.length,
+      results
     };
   } catch (error) {
-    logger.error(`[Demo File Vault] Error in file vault population:`, {
-      companyId: company.id,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
+    console.error(`[Demo File Vault] Error populating file vault for company ${company.id}:`, error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error.message
     };
   }
 }
+
+// Export the functionality
+module.exports = {
+  populateDemoFileVault
+};
