@@ -124,44 +124,145 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    const result = insertUserSchema.safeParse(req.body);
-    if (!result.success) {
-      const error = fromZodError(result.error);
-      return res.status(400).send(error.toString());
+    try {
+      // Log registration attempt (without sensitive data)
+      console.log('[Auth] Registration attempt for email:', req.body.email);
+      
+      // Validate the incoming request body against our schema
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        const error = fromZodError(result.error);
+        console.warn('[Auth] Registration validation failed:', error.toString());
+        return res.status(400).send(error.toString());
+      }
+
+      // Check if user already exists
+      const [existingUser] = await getUserByEmail(result.data.email);
+      if (existingUser) {
+        console.warn('[Auth] Registration failed - email already exists:', result.data.email);
+        return res.status(400).send("Email already exists");
+      }
+
+      // Hash the password and create the user
+      const hashedPassword = await hashPassword(result.data.password);
+      
+      // Insert user into database
+      const [user] = await db
+        .insert(users)
+        .values({
+          ...result.data,
+          password: hashedPassword,
+        })
+        .returning();
+
+      console.log('[Auth] User registered successfully:', user.id);
+
+      // Log the user in automatically
+      req.login(user, (err) => {
+        if (err) {
+          console.error('[Auth] Error logging in after registration:', err);
+          return next(err);
+        }
+        
+        // Respond with the user data (excluding password)
+        const { password, ...userData } = user;
+        res.status(201).json(userData);
+      });
+    } catch (error) {
+      console.error('[Auth] Registration error:', error);
+      res.status(500).send('An error occurred during registration. Please try again.');
     }
-
-    const [existingUser] = await getUserByEmail(result.data.email);
-    if (existingUser) {
-      return res.status(400).send("Email already exists");
-    }
-
-    const [user] = await db
-      .insert(users)
-      .values({
-        ...result.data,
-        password: await hashPassword(result.data.password),
-      })
-      .returning();
-
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req, res, next) => {
+    // Log login attempt (without password)
+    console.log('[Auth] Login attempt for email:', req.body.email);
+    
+    passport.authenticate('local', (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
+      if (err) {
+        console.error('[Auth] Login error:', err);
+        return next(err);
+      }
+      
+      if (!user) {
+        console.warn('[Auth] Login failed for email:', req.body.email);
+        return res.status(401).send('Invalid email or password');
+      }
+      
+      // Log the user in
+      req.login(user, (loginErr: Error | null) => {
+        if (loginErr) {
+          console.error('[Auth] Session creation error:', loginErr);
+          return next(loginErr);
+        }
+        
+        console.log('[Auth] Login successful for user:', user.id);
+        
+        // Return the user object (excluding password)
+        const { password, ...userData } = user as (Express.User & { password: string });
+        res.status(200).json(userData);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(401).send('Not logged in');
+    }
+    
+    // Log logout attempt
+    const userId = req.user?.id;
+    console.log('[Auth] Logout attempt for user:', userId);
+    
+    req.logout((err: Error | null) => {
+      if (err) {
+        console.error('[Auth] Logout error:', err);
+        return next(err);
+      }
+      
+      // Clear the session
+      req.session.destroy((sessionErr: Error | null) => {
+        if (sessionErr) {
+          console.error('[Auth] Session destruction error:', sessionErr);
+          // Continue anyway, as the authentication is already cleared
+        }
+        
+        console.log('[Auth] User logged out successfully:', userId);
+        res.sendStatus(200);
+      });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        console.log('[Auth] Unauthenticated request to /api/user');
+        return res.sendStatus(401);
+      }
+      
+      // Return user data without the password
+      const user = req.user;
+      if (!user) {
+        console.error('[Auth] No user data found for authenticated session');
+        return res.status(500).send('Session error');
+      }
+      
+      // Remove sensitive data before sending the response
+      const { password, ...userData } = user as (Express.User & { password: string });
+      
+      console.log('[Auth] User data requested for user:', user.id);
+      res.json(userData);
+    } catch (error: unknown) {
+      // Safely log error details
+      if (error instanceof Error) {
+        console.error('[Auth] Error in /api/user route:', error.message);
+      } else {
+        console.error('[Auth] Unknown error in /api/user route:', error);
+      }
+      
+      res.status(500).send('An error occurred');
+    }
   });
 }
