@@ -910,23 +910,30 @@ export default function CompanyProfilePage() {
   
   const renderRiskTab = () => (
     <div className="space-y-6">
-      {/* Risk Summary Section - Simplified design */}
+      {/* Risk Factors Summary Card - Combined with risk score and accreditation status */}
       <Card className="border border-gray-200 shadow-none">
-        <CardContent className="p-4">
-          <div className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] gap-4">
+        <CardHeader className="pb-2">
+          <div className="flex items-center">
+            <FileText className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+            <CardTitle className="text-base font-medium text-gray-800">Risk Overview</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 gap-4">
+            {/* Top row with Risk Score and Accreditation Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Risk Score */}
-              <div className="bg-gray-50 rounded p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-4 w-4 text-gray-500" />
-                  <div className="text-sm font-medium text-gray-700">Risk Score</div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Risk Score</div>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-3xl font-medium text-gray-800 mb-1">
+                    <div className="text-2xl font-medium text-gray-800">
                       {company.riskScore || company.risk_score || 0}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                       No Risk
                     </div>
                   </div>
@@ -939,14 +946,34 @@ export default function CompanyProfilePage() {
               </div>
               
               {/* Accreditation Status */}
-              <div className="bg-gray-50 rounded p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <BadgeCheck className="h-4 w-4 text-gray-500" />
-                  <div className="text-sm font-medium text-gray-700">Accreditation Status</div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <BadgeCheck className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Accreditation Status</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
                 </div>
+              </div>
+            </div>
+            
+            {/* Risk Factors Rows */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Company Age</div>
+                <div className="text-sm text-gray-800">{companyAge ? `${companyAge} years` : 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Market Presence</div>
+                <div className="text-sm text-gray-800">{company.category || 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Employee Count</div>
+                <div className="text-sm text-gray-800">{company.numEmployees || 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Legal Structure</div>
+                <div className="text-sm text-gray-800">{company.legalStructure || 'Not available'}</div>
               </div>
             </div>
           </div>
@@ -962,46 +989,22 @@ export default function CompanyProfilePage() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(riskClusters).slice(0, 3).map(([key, value]) => (
-                  <div key={key} className="bg-gray-50 rounded p-3">
-                    <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${
-                        value > 66 ? 'bg-red-500' : 
-                        value > 33 ? 'bg-yellow-500' : 
-                        'bg-green-500'
-                      }`}></div>
-                      <span className="text-sm text-gray-800">{value}/100</span>
-                    </div>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {Object.entries(riskClusters).map(([key, value]) => (
+              <div key={key} className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-2 h-2 rounded-full ${
+                    value > 66 ? 'bg-red-500' : 
+                    value > 33 ? 'bg-yellow-500' : 
+                    'bg-green-500'
+                  }`}></div>
+                  <span className="text-sm text-gray-800">{value}/100</span>
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(riskClusters).slice(3, 6).map(([key, value]) => (
-                  <div key={key} className="bg-gray-50 rounded p-3">
-                    <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${
-                        value > 66 ? 'bg-red-500' : 
-                        value > 33 ? 'bg-yellow-500' : 
-                        'bg-green-500'
-                      }`}></div>
-                      <span className="text-sm text-gray-800">{value}/100</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -1014,47 +1017,19 @@ export default function CompanyProfilePage() {
             <CardTitle className="text-base font-medium text-gray-800">Risk Radar Visualization</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 h-[300px]">
+        <CardContent className="pt-0 h-[400px]">
           {company.id ? (
-            <RiskRadarChart 
-              companyId={company.id}
-              showDropdown={false}
-            />
+            <div className="w-full h-full max-w-[800px] mx-auto">
+              <RiskRadarChart 
+                companyId={company.id}
+                showDropdown={false}
+              />
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-sm text-gray-500">No data available</div>
             </div>
           )}
-        </CardContent>
-      </Card>
-      
-      {/* Risk Factors Card */}
-      <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-2">
-          <div className="flex items-center">
-            <FileText className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-            <CardTitle className="text-base font-medium text-gray-800">Risk Factors</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="bg-gray-50 rounded p-3">
-              <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Company Age</div>
-              <div className="text-sm text-gray-800">{companyAge ? `${companyAge} years` : 'Not available'}</div>
-            </div>
-            <div className="bg-gray-50 rounded p-3">
-              <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Market Presence</div>
-              <div className="text-sm text-gray-800">{company.category || 'Not available'}</div>
-            </div>
-            <div className="bg-gray-50 rounded p-3">
-              <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Employee Count</div>
-              <div className="text-sm text-gray-800">{company.numEmployees || 'Not available'}</div>
-            </div>
-            <div className="bg-gray-50 rounded p-3">
-              <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Legal Structure</div>
-              <div className="text-sm text-gray-800">{company.legalStructure || 'Not available'}</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
