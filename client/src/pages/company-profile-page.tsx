@@ -639,109 +639,111 @@ export default function CompanyProfilePage() {
         </Card>
 
         {/* Leadership and Investment */}
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-2 border-b bg-slate-50/80">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-slate-500" />
-              Leadership & Investment
-            </CardTitle>
+        <Card className="border border-gray-200 shadow-none">
+          <CardHeader className="pb-3 space-y-1">
+            <div className="flex items-center">
+              <Users className="h-4 w-4 text-gray-500 mr-2" />
+              <CardTitle className="text-base font-medium text-gray-800">Leadership & Investment</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
+          <CardContent className="pt-0">
+            <dl className="space-y-3">
               {/* Leadership Team - Only show if available */}
               {(company.foundersAndLeadership || company.founders_and_leadership) && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Leadership Team</div>
-                  <p className="text-sm leading-relaxed">
+                <div className="flex flex-col">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Leadership Team</dt>
+                  <dd className="text-sm text-gray-800 leading-relaxed">
                     {company.foundersAndLeadership || company.founders_and_leadership || ''}
-                  </p>
+                  </dd>
                 </div>
               )}
               
               {/* Funding Stage */}
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
-                {company.fundingStage ? (
-                  <UiBadge variant="outline" className="font-normal bg-slate-50">
-                    {company.fundingStage}
-                  </UiBadge>
-                ) : (
-                  <span className="text-muted-foreground italic text-sm">Not available</span>
-                )}
+              <div className="flex flex-col">
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Funding Stage</dt>
+                <dd>
+                  {company.fundingStage ? (
+                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                      {company.fundingStage}
+                    </UiBadge>
+                  ) : (
+                    <span className="text-sm text-gray-500 italic">Not available</span>
+                  )}
+                </dd>
               </div>
               
               {/* Investors */}
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
-                <p className="text-sm">
+              <div className="flex flex-col">
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Investors</dt>
+                <dd className="text-sm text-gray-800">
                   {formatValue(company.investors)}
-                </p>
+                </dd>
               </div>
-            </div>
+            </dl>
           </CardContent>
         </Card>
       </div>
 
       {/* Additional Data - Products & Partners */}
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-2 border-b bg-slate-50/80">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Layers className="h-4 w-4 text-slate-500" />
-            Products & Partnerships
-          </CardTitle>
+      <Card className="border border-gray-200 shadow-none">
+        <CardHeader className="pb-3 space-y-1">
+          <div className="flex items-center">
+            <Layers className="h-4 w-4 text-gray-500 mr-2" />
+            <CardTitle className="text-base font-medium text-gray-800">Products & Partnerships</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Products & Services */}
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Products & Services</div>
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Products & Services</div>
               <div className="flex flex-wrap gap-2">
                 {company.productsServices ? (
                   typeof company.productsServices === 'string' ? (
-                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                       {company.productsServices}
                     </UiBadge>
                   ) : isArrayOfStrings(company.productsServices) ? (
                     company.productsServices.map((product, idx) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                         {product}
                       </UiBadge>
                     ))
                   ) : (
-                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                       {String(company.productsServices)}
                     </UiBadge>
                   )
                 ) : (
-                  <span className="text-muted-foreground italic text-sm">Not available</span>
+                  <span className="text-sm text-gray-500 italic">Not available</span>
                 )}
               </div>
             </div>
             
             {/* Key Clients & Partners */}
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Key Clients & Partners</div>
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Key Clients & Partners</div>
               <div className="flex flex-wrap gap-2">
                 {company.keyClientsPartners ? (
                   typeof company.keyClientsPartners === 'string' ? (
                     company.keyClientsPartners.split(',').map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                         {partner.trim()}
                       </UiBadge>
                     ))
                   ) : isArrayOfStrings(company.keyClientsPartners) ? (
                     company.keyClientsPartners.map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                         {partner}
                       </UiBadge>
                     ))
                   ) : (
-                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                       {String(company.keyClientsPartners)}
                     </UiBadge>
                   )
                 ) : (
-                  <span className="text-muted-foreground italic text-sm">Not available</span>
+                  <span className="text-sm text-gray-500 italic">Not available</span>
                 )}
               </div>
             </div>
