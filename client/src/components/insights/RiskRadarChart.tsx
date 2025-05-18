@@ -765,8 +765,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 type="radar" 
                 height="500"
                 width="100%"
-                onMount={(chart: any) => {
+                // Use the onMount callback to capture the chart instance for direct updates
+                onMount={(chart) => {
+                  // Store the chart instance in state for animations
                   setChartInstance(chart);
+                  setChartComponentLoaded(true);
                   logChartUpdate('Chart instance mounted', { available: true });
                 }}
               />
