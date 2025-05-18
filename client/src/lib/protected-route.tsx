@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Redirect, Route } from "wouter";
+import { useEffect } from "react";
 
 export function ProtectedRoute({
   path,
@@ -9,7 +10,14 @@ export function ProtectedRoute({
   path: string;
   component: (...args: any[]) => React.JSX.Element;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
+
+  // Log authentication issues for debugging
+  useEffect(() => {
+    if (error) {
+      console.error('[ProtectedRoute] Authentication error:', error.message);
+    }
+  }, [error]);
 
   if (isLoading) {
     return (
@@ -22,9 +30,11 @@ export function ProtectedRoute({
   }
 
   if (!user) {
+    // Redirect to auth page if not authenticated
+    console.log('[ProtectedRoute] User not authenticated, redirecting to /auth');
     return (
       <Route path={path}>
-        <Redirect to="/login" />
+        <Redirect to="/auth" />
       </Route>
     );
   }
