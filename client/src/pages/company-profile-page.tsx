@@ -183,8 +183,6 @@ const getAccreditationStatusLabel = (status: string | null | undefined): React.R
       return 'Suspended';
     case 'EXPIRED':
       return 'Expired';
-    case 'AWAITING_INVITATION':
-      return 'Awaiting Invitation';
     default:
       // Format any other values by replacing underscores with spaces and capitalizing
       return normalizedStatus
