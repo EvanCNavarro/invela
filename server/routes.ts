@@ -3896,11 +3896,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         `
       );
       
-      // Define status types and colors - Updated to use standardized statuses
+      // Define status types and colors - Updated to use standardized statuses with distinct colors
       const statusMap: Record<string, { color: string; label: string }> = {
         'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
         'UNDER_REVIEW': { color: '#FFC300', label: 'Under Review' }, // Yellow
-        'IN_PROCESS': { color: '#FFC300', label: 'In Process' }, // Yellow
+        'IN_PROCESS': { color: '#F59E0B', label: 'In Process' }, // Amber/Orange (distinct from Under Review)
         'REVOKED': { color: '#EF4444', label: 'Revoked' }, // Red
         
         // Legacy status mappings (for backward compatibility with existing data)
@@ -3932,8 +3932,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       });
       
       // Count companies by status using our standardized status categories
-      // Initialize with our standard statuses set to 0
-      const standardStatusKeys = ['APPROVED', 'UNDER_REVIEW', 'IN_PROCESS', 'REVOKED'];
+      // Initialize with our standard statuses set to 0 (in display order)
+      const standardStatusKeys = ['APPROVED', 'IN_PROCESS', 'UNDER_REVIEW', 'REVOKED'];
       const statusCounts = standardStatusKeys.reduce((acc, status) => {
         acc[status] = 0;
         return acc;
