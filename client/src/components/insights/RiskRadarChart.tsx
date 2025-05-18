@@ -421,13 +421,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <CardHeader className={className?.includes("border-none") ? "p-2" : "bg-slate-50 rounded-t-lg pb-3"}>
         {/* Company selector for Bank/Invela users - moved outside the conditional rendering to ensure it's always considered */}
         {showDropdown && isBankOrInvela && (
-          <div className="flex flex-row w-full items-center justify-between mb-2 bg-blue-100 p-2 rounded-md">
-            <div>
+          <div className="flex flex-row items-center justify-between mb-2 bg-blue-100 p-2 rounded-md">
+            <div className="mr-4">
               <h3 className="text-sm font-semibold text-blue-700">Select a company to view</h3>
               <p className="text-xs text-blue-600">Found {networkCompanies?.length || 0} network members</p>
             </div>
             
-            <div className="min-w-[200px]">
+            <div className="w-[250px]">
               <Select 
                 value={selectedCompanyId?.toString()} 
                 onValueChange={(value) => {
@@ -454,17 +454,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           </div>
         )}
 
-        {/* Only show title/description for non-widget views or after the company selector */}
-        {!className?.includes("border-none") && (
-          <div>
-            <CardTitle className="text-slate-800">
-              Risk Dimension Analysis
-            </CardTitle>
-            <CardDescription className="text-slate-500">
-              Breakdown of risk across six key dimensions for {displayCompany?.name || 'this company'}
-            </CardDescription>
-          </div>
-        )}
+        {/* Title and description hidden as requested */}
       </CardHeader>
       <CardContent className="p-4">
         <div className="w-full" style={{ height: '450px' }}>
