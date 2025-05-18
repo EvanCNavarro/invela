@@ -242,62 +242,46 @@ const RiskTable: React.FC<{
 
   return (
     <div className="border rounded-md relative">
-      {/* Table container with fixed header */}
+      {/* Single scrollable container with sticky header */}
       <div className="overflow-auto max-h-[500px]">
-        {/* Fixed header that stays visible during scroll */}
-        <div className="sticky top-0 z-20 bg-white border-b">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer select-none bg-white"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center">
-                    Company Name {renderSortIndicator('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer select-none bg-white"
-                  onClick={() => handleSort('currentScore')}
-                >
-                  <div className="flex items-center justify-end">
-                    Current DARS {renderSortIndicator('currentScore')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="text-right cursor-pointer select-none bg-white"
-                  onClick={() => handleSort('scoreChange')}
-                >
-                  <div className="flex items-center justify-end">
-                    Score Change {renderSortIndicator('scoreChange')}
-                  </div>
-                </TableHead>
-                <TableHead className="text-center bg-white">Trend</TableHead>
-                <TableHead 
-                  className="cursor-pointer select-none bg-white"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center">
-                    Status {renderSortIndicator('status')}
-                  </div>
-                </TableHead>
-                <TableHead className="w-[50px] bg-white"></TableHead>
-              </TableRow>
-            </TableHeader>
-          </Table>
-        </div>
-        
-        {/* Scrollable table body */}
         <Table>
-          <TableHeader className="opacity-0 h-0">
+          {/* Sticky header that remains visible during scroll */}
+          <TableHeader className="sticky top-0 z-20 bg-white border-b">
             <TableRow>
-              <TableHead className="h-0 py-0"></TableHead>
-              <TableHead className="h-0 py-0"></TableHead>
-              <TableHead className="h-0 py-0"></TableHead>
-              <TableHead className="h-0 py-0"></TableHead>
-              <TableHead className="h-0 py-0"></TableHead>
-              <TableHead className="h-0 py-0"></TableHead>
+              <TableHead 
+                className="cursor-pointer select-none bg-white"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Company Name {renderSortIndicator('name')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none bg-white"
+                onClick={() => handleSort('currentScore')}
+              >
+                <div className="flex items-center justify-end">
+                  Current DARS {renderSortIndicator('currentScore')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none bg-white"
+                onClick={() => handleSort('scoreChange')}
+              >
+                <div className="flex items-center justify-end">
+                  Score Change {renderSortIndicator('scoreChange')}
+                </div>
+              </TableHead>
+              <TableHead className="text-center bg-white">Trend</TableHead>
+              <TableHead 
+                className="cursor-pointer select-none bg-white"
+                onClick={() => handleSort('status')}
+              >
+                <div className="flex items-center">
+                  Status {renderSortIndicator('status')}
+                </div>
+              </TableHead>
+              <TableHead className="w-[50px] bg-white"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
