@@ -15,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { TrendingDown, TrendingUp, Minus, ArrowRight } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, ArrowRight, ArrowDown, ArrowUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 
 // Define the types for our data
@@ -146,12 +146,82 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
 };
 
 /**
+ * Sort types for the columns
+ */
+type SortField = 'name' | 'currentScore' | 'scoreChange' | 'status' | null;
+type SortDirection = 'asc' | 'desc';
+
+/**
  * Internal table component that displays the company data
  */
 const RiskTable: React.FC<{
   companies: (CompanyRiskData & { scoreChange: number; status: string })[];
   onCompanyClick?: (companyId: number) => void;
 }> = ({ companies, onCompanyClick }) => {
+  // Add sorting state
+  const [sortConfig, setSortConfig] = useState<{field: SortField, direction: SortDirection}>({
+    field: 'scoreChange',
+    direction: 'desc'
+  });
+
+  // Handle column sort
+  const handleSort = (field: SortField) => {
+    setSortConfig(prevConfig => {
+      // If clicking the same field, toggle direction
+      if (prevConfig.field === field) {
+        return {
+          field,
+          direction: prevConfig.direction === 'asc' ? 'desc' : 'asc'
+        };
+      }
+      // If clicking a new field, default to descending
+      return {
+        field,
+        direction: 'desc'
+      };
+    });
+
+    // Log the sorting change
+    logTable('Sorting changed', { field, direction: sortConfig.direction });
+  };
+
+  // Sort companies based on current sort configuration
+  const sortedCompanies = useMemo(() => {
+    if (!sortConfig.field) return companies;
+
+    return [...companies].sort((a, b) => {
+      if (sortConfig.field === 'name') {
+        return sortConfig.direction === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      }
+      
+      if (sortConfig.field === 'currentScore') {
+        return sortConfig.direction === 'asc'
+          ? a.currentScore - b.currentScore
+          : b.currentScore - a.currentScore;
+      }
+      
+      if (sortConfig.field === 'scoreChange') {
+        return sortConfig.direction === 'asc'
+          ? a.scoreChange - b.scoreChange
+          : b.scoreChange - a.scoreChange;
+      }
+      
+      if (sortConfig.field === 'status') {
+        const statusOrder = { 'Blocked': 0, 'Approaching Block': 1, 'Monitoring': 2, 'Stable': 3 };
+        const aOrder = statusOrder[a.status as keyof typeof statusOrder];
+        const bOrder = statusOrder[b.status as keyof typeof statusOrder];
+        
+        return sortConfig.direction === 'asc'
+          ? aOrder - bOrder
+          : bOrder - aOrder;
+      }
+      
+      return 0;
+    });
+  }, [companies, sortConfig]);
+
   if (companies.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground">
@@ -160,21 +230,59 @@ const RiskTable: React.FC<{
     );
   }
 
+  // Helper to render the sort indicator
+  const renderSortIndicator = (field: SortField) => {
+    if (sortConfig.field !== field) {
+      return <ChevronDown className="inline-block ml-1 h-4 w-4 text-muted-foreground opacity-30" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="inline-block ml-1 h-4 w-4 text-primary" />
+      : <ChevronDown className="inline-block ml-1 h-4 w-4 text-primary" />;
+  };
+
   return (
     <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Company Name</TableHead>
-            <TableHead className="text-right">Current DARS</TableHead>
-            <TableHead className="text-right">Score Change</TableHead>
+            <TableHead 
+              className="cursor-pointer select-none"
+              onClick={() => handleSort('name')}
+            >
+              <div className="flex items-center">
+                Company Name {renderSortIndicator('name')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none"
+              onClick={() => handleSort('currentScore')}
+            >
+              <div className="flex items-center justify-end">
+                Current DARS {renderSortIndicator('currentScore')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none"
+              onClick={() => handleSort('scoreChange')}
+            >
+              <div className="flex items-center justify-end">
+                Score Change {renderSortIndicator('scoreChange')}
+              </div>
+            </TableHead>
             <TableHead className="text-center">Trend</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead 
+              className="cursor-pointer select-none"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center">
+                Status {renderSortIndicator('status')}
+              </div>
+            </TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {companies.map((company) => (
+          {sortedCompanies.map((company) => (
             <TableRow 
               key={company.id}
               className={cn(
