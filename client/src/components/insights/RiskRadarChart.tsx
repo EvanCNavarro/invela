@@ -117,14 +117,23 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
     queryKey: ['/api/companies'],
     // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown,
+    enabled: isBankOrInvela && !!company?.id && showDropdown
   });
   
   // 2. Get network visualization data which may contain additional companies
   const { data: networkVisualizationData, isLoading: isNetworkVisualizationLoading } = useQuery<any>({
     queryKey: ['/api/network/visualization'],
     // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown, 
+    enabled: isBankOrInvela && !!company?.id && showDropdown,
+    onSuccess: (data) => {
+      console.log('[RiskRadarChart] Network visualization data loaded:', {
+        nodesCount: data?.nodes?.length || 0,
+        edgesCount: data?.edges?.length || 0
+      });
+    },
+    onError: (error) => {
+      console.error('[RiskRadarChart] Error loading network visualization:', error);
+    }
   });
   
   // 3. Also keep the existing relationships query for backward compatibility
@@ -483,7 +492,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           <div className="flex flex-row items-center justify-between mb-2 bg-blue-100 p-2 rounded-md">
             <div className="mr-4">
               <h3 className="text-sm font-semibold text-blue-700">Select a company to view</h3>
-              <p className="text-xs text-blue-600">Found {networkCompanies?.length || 0} network members</p>
+              {isAllCompaniesLoading || isNetworkVisualizationLoading || isNetworkLoading ? (
+                <p className="text-xs text-blue-600">Loading company data...</p>
+              ) : (
+                <p className="text-xs text-blue-600">
+                  {networkCompanies?.length > 0 
+                    ? `Found ${networkCompanies.length} companies in your network` 
+                    : "No companies found in your network"}
+                </p>
+              )}
             </div>
             
             <div className="w-[250px]">
@@ -499,14 +516,27 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                   <SelectValue placeholder="Select a company" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Always show the current company first with "(You)" designation */}
                   <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
-                  {Array.isArray(networkCompanies) && networkCompanies
-                    // Show all network companies except the current one
-                    .filter(c => c.id !== (company?.id || 0))
-                    .map(c => (
-                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                    ))
-                  }
+                  
+                  {/* Show all combined network companies alphabetically (excluding current company) */}
+                  {Array.isArray(networkCompanies) && networkCompanies.length > 0 ? (
+                    networkCompanies
+                      // Show all network companies except the current one
+                      .filter(c => c.id !== (company?.id || 0))
+                      .map(c => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name}
+                        </SelectItem>
+                      ))
+                  ) : (
+                    // Show a loading state or "no companies" message
+                    <SelectItem value="loading" disabled>
+                      {isAllCompaniesLoading || isNetworkVisualizationLoading || isNetworkLoading 
+                        ? "Loading companies..." 
+                        : "No other companies found"}
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
