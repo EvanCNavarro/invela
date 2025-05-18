@@ -135,9 +135,9 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
             // Safely handle the accreditation status display with special case for legacy values
             if (!company.accreditationStatus) return 'N/A';
             
-            // Convert any AWAITING_INVITATION to IN_PROCESS
+            // Convert any AWAITING_INVITATION to Pending
             const statusValue = String(company.accreditationStatus);
-            if (statusValue === 'AWAITING_INVITATION') return 'In Process';
+            if (statusValue === 'AWAITING_INVITATION') return 'Pending';
             
             // Format other statuses nicely
             return statusValue.replace(/_/g, ' ').split(' ')
