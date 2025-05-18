@@ -1,93 +1,37 @@
 /**
- * Logger utility for consistent logging across the application
- * Provides namespaced log messages with color coding for better debugging
+ * Simple logger utility for the client application
  */
 
-type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-
-interface LoggerOptions {
-  /** Enable or disable all logging */
-  enabled?: boolean;
-  /** Enable or disable specific log levels */
-  levels?: {
-    info?: boolean;
-    warn?: boolean;
-    error?: boolean;
-    debug?: boolean;
-  };
+interface Logger {
+  info: (message: string, ...args: any[]) => void;
+  warn: (message: string, ...args: any[]) => void;
+  error: (message: string, ...args: any[]) => void;
+  debug: (message: string, ...args: any[]) => void;
 }
-
-const defaultOptions: LoggerOptions = {
-  enabled: process.env.NODE_ENV !== 'production',
-  levels: {
-    info: true,
-    warn: true,
-    error: true,
-    debug: process.env.NODE_ENV !== 'production'
-  }
-};
-
-// Color styles for different log levels
-const styles = {
-  info: 'color: #2196F3; font-weight: bold;',
-  warn: 'color: #FF9800; font-weight: bold;',
-  error: 'color: #F44336; font-weight: bold;',
-  debug: 'color: #9C27B0; font-weight: bold;',
-  reset: 'color: inherit'
-};
 
 /**
- * Creates a namespaced logger for a specific component or module
- * 
- * @param namespace The name of the component or module
- * @param options Configuration options for the logger
- * @returns A logger object with methods for different log levels
+ * Creates a logger with the specified namespace
+ * @param namespace The namespace for the logger
+ * @returns A logger object
  */
-export function createLogger(namespace: string, options: LoggerOptions = {}) {
-  const mergedOptions = {
-    ...defaultOptions,
-    ...options,
-    levels: {
-      ...defaultOptions.levels,
-      ...options.levels
-    }
-  };
-
+export function createLogger(namespace: string): Logger {
   return {
-    /**
-     * Log informational messages
-     */
-    info: (...args: any[]) => {
-      if (mergedOptions.enabled && mergedOptions.levels?.info) {
-        console.log(`%c[${namespace}]%c`, styles.info, styles.reset, ...args);
-      }
+    info: (message: string, ...args: any[]) => {
+      console.log(`[${namespace}]`, message, ...args);
     },
-
-    /**
-     * Log warning messages
-     */
-    warn: (...args: any[]) => {
-      if (mergedOptions.enabled && mergedOptions.levels?.warn) {
-        console.warn(`%c[${namespace}]%c`, styles.warn, styles.reset, ...args);
-      }
+    warn: (message: string, ...args: any[]) => {
+      console.warn(`[${namespace}]`, message, ...args);
     },
-
-    /**
-     * Log error messages
-     */
-    error: (...args: any[]) => {
-      if (mergedOptions.enabled && mergedOptions.levels?.error) {
-        console.error(`%c[${namespace}]%c`, styles.error, styles.reset, ...args);
-      }
+    error: (message: string, ...args: any[]) => {
+      console.error(`[${namespace}]`, message, ...args);
     },
-
-    /**
-     * Log debug messages (disabled in production)
-     */
-    debug: (...args: any[]) => {
-      if (mergedOptions.enabled && mergedOptions.levels?.debug) {
-        console.log(`%c[${namespace}:debug]%c`, styles.debug, styles.reset, ...args);
+    debug: (message: string, ...args: any[]) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[${namespace}:debug]`, message, ...args);
       }
     }
   };
 }
+
+// Default logger instance
+export const logger = createLogger('App');
