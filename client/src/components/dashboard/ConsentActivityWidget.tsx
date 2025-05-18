@@ -38,7 +38,8 @@ export function ConsentActivityWidget({
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       className="h-full flex flex-col"
-      headerAction={
+    >
+      <div className="flex items-center justify-end mb-2">
         <ToggleGroup
           type="single"
           value={timeframe}
@@ -56,8 +57,8 @@ export function ConsentActivityWidget({
             1Y
           </ToggleGroupItem>
         </ToggleGroup>
-      }
-    >
+      </div>
+      
       <div className="flex-grow">
         <ConsentActivityChart
           companyId={companyId}

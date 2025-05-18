@@ -19,17 +19,20 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
 
 // Default visualization types
 const defaultVisualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
+  { value: "consent_activity", label: "Consent Activity" },
 ];
 
-// FinTech-specific visualization types (only Risk Radar)
+// FinTech-specific visualization types
 const fintechVisualizationTypes = [
   { value: "risk_radar", label: "Risk Radar Chart" },
+  { value: "consent_activity", label: "Consent Activity" },
 ];
 
 export default function InsightsPage() {
@@ -117,8 +120,12 @@ export default function InsightsPage() {
             <AccreditationDotMatrix />
           )}
           
-          {(selectedVisualization === "risk_radar" || isFintech) && (
+          {selectedVisualization === "risk_radar" && (
             <RiskRadarChart className="bg-transparent shadow-none border-none" />
+          )}
+          
+          {selectedVisualization === "consent_activity" && (
+            <ConsentActivityInsight className="bg-transparent shadow-none border-none" />
           )}
         </Widget>
       </div>
