@@ -128,16 +128,11 @@ export default function InsightsPage() {
           
           {selectedVisualization === "risk_radar" && (
             <div className="w-full h-full p-4">
-              {/* Explicitly set showDropdown to true and add debug info */}
+              {/* Explicitly set showDropdown to true */}
               <RiskRadarChart 
                 showDropdown={true} 
                 className="bg-white rounded-md shadow-sm border" 
               />
-              {currentCompany?.category === 'Invela' && (
-                <div className="mt-4 text-sm text-blue-500">
-                  Invela user detected - Company selection enabled
-                </div>
-              )}
             </div>
           )}
           
