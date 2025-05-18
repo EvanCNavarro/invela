@@ -313,14 +313,10 @@ export default function NetworkPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="AWAITING_INVITATION">Awaiting Invitation</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="IN_REVIEW">In Review</SelectItem>
-                <SelectItem value="PROVISIONALLY_APPROVED">Provisionally Approved</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                <SelectItem value="IN_PROCESS">In Process</SelectItem>
                 <SelectItem value="REVOKED">Revoked</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
               </SelectContent>
             </Select>
 
