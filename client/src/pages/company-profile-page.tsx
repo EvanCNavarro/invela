@@ -21,6 +21,7 @@ import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CompanyProfileData {
   id: number;
@@ -241,7 +242,7 @@ export default function CompanyProfilePage() {
 
   const { 
     data: company, 
-    isLoading, 
+    isLoading: companyLoading, 
     error 
   } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies", companyId],
@@ -266,50 +267,108 @@ export default function CompanyProfilePage() {
     refetchOnWindowFocus: false
   });
 
-  const { data: users = [] } = useQuery<CompanyUser[]>({
+  const { 
+    data: users = [], 
+    isLoading: usersLoading, 
+    error: usersError 
+  } = useQuery<CompanyUser[]>({
     queryKey: ["/api/companies", companyId, "users"],
     queryFn: async () => {
       // Only show users associated with this company
-      const response = await fetch(`/api/companies/${companyId}/users`);
-      if (!response.ok) {
-        throw new Error("Error fetching company users");
+      try {
+        const response = await fetch(`/api/companies/${companyId}/users`);
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Authentication required");
+          }
+          throw new Error("Error fetching company users");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        throw error;
       }
-      return response.json();
     },
-    enabled: activeTab === "users"
+    enabled: activeTab === "users" && !authLoading,
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 
-  const { data: files = [] } = useQuery<CompanyFile[]>({
+  const { 
+    data: files = [], 
+    isLoading: filesLoading, 
+    error: filesError 
+  } = useQuery<CompanyFile[]>({
     queryKey: ["/api/companies", companyId, "files"],
     queryFn: async () => {
       // Only show files uploaded by users of this company
-      const response = await fetch(`/api/companies/${companyId}/files`);
-      if (!response.ok) {
-        throw new Error("Error fetching company files");
+      try {
+        const response = await fetch(`/api/companies/${companyId}/files`);
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Authentication required");
+          }
+          throw new Error("Error fetching company files");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching files:", error);
+        throw error;
       }
-      return response.json();
     },
-    enabled: activeTab === "files"
+    enabled: activeTab === "files" && !authLoading,
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 
+  // Add variables to track different states
+  const isAuthError = error?.message === "Authentication required" || 
+                      usersError?.message === "Authentication required" || 
+                      filesError?.message === "Authentication required";
+  
+  const isLoadingData = authLoading || (isLoading && !error);
+  const hasError = error || usersError || filesError;
+  
   if (isLoading) {
     return (
       <DashboardLayout>
         <PageTemplate>
           <div className="flex items-center justify-center h-64">
-            <LoadingSpinner />
+            <LoadingSpinner size="lg" />
           </div>
         </PageTemplate>
       </DashboardLayout>
     );
   }
 
-  if (error || !company) {
+  if (isAuthError) {
     return (
       <DashboardLayout>
         <PageTemplate>
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <h2 className="text-2xl font-semibold">Error Loading Company</h2>
+          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-10 h-10 text-gray-500" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800">Authentication Required</h2>
+            <p className="text-gray-600 max-w-md">Your session may have expired. Please log in again to view this company profile.</p>
+            <Button variant="outline" className="mt-4" asChild>
+              <Link href="/login">Sign In</Link>
+            </Button>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  if (hasError || !company) {
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-gray-500" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800">Error Loading Company</h2>
             <p className="text-muted-foreground">
               {error instanceof Error ? error.message : "Failed to load company data"}
             </p>
