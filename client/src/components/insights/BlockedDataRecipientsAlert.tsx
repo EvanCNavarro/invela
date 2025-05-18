@@ -62,7 +62,7 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
             {count} {count === 1 ? 'Data Recipient is' : 'Data Recipients are'} blocked
           </p>
           <p className="text-sm text-red-600">
-            These companies have been automatically blocked due to a DARS below the minimum risk threshold.
+            DARS below minimum risk threshold.
           </p>
         </div>
       </div>
