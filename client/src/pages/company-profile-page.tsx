@@ -149,11 +149,48 @@ const getAccreditationTextStyle = (status: string | null | undefined): React.CSS
   }
 };
 
-// Helper function to get the appropriate label based on the status
+/**
+ * Helper function to get a user-friendly label for the accreditation status
+ * 
+ * Converts the raw accreditation status to a formatted display label,
+ * handling both new status values and legacy status values
+ */
 const getAccreditationStatusLabel = (status: string | null | undefined): React.ReactNode => {
-  // Display the normalized status category (VALID, PENDING, INVALID)
-  const normalizedStatus = getAccreditationStatus(status);
-  return normalizedStatus;
+  if (!status) return 'Not Available';
+  
+  // Convert to uppercase for case-insensitive comparison
+  const normalizedStatus = status.toUpperCase();
+  
+  // Handle new status formats with proper formatting
+  switch (normalizedStatus) {
+    case 'APPROVED':
+      return 'Approved';
+    case 'UNDER_REVIEW':
+      return 'Under Review';
+    case 'IN_PROCESS':
+      return 'In Process';
+    case 'REVOKED':
+      return 'Revoked';
+      
+    // Legacy status values with proper formatting
+    case 'PROVISIONALLY_APPROVED':
+      return 'Provisionally Approved'; 
+    case 'IN_REVIEW':
+      return 'Under Review';
+    case 'PENDING':
+      return 'In Process';
+    case 'SUSPENDED':
+      return 'Suspended';
+    case 'EXPIRED':
+      return 'Expired';
+    case 'AWAITING_INVITATION':
+      return 'Awaiting Invitation';
+    default:
+      // Format any other values by replacing underscores with spaces and capitalizing
+      return normalizedStatus
+        .replace(/_/g, ' ')
+        .replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  }
 };
 
 export default function CompanyProfilePage() {
@@ -695,14 +732,14 @@ export default function CompanyProfilePage() {
                     </div>
                   </div>
                   <div className="text-3xl font-bold text-gray-900 mt-1 py-1">
-                    {company.riskScore || company.risk_score || 0}
+                    {company.riskScore || 0}
                   </div>
                 </div>
                 
                 {/* Accreditation status with color-coded background */}
                 <div 
                   className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
-                  style={getAccreditationBoxStyle(company.accreditation_status)}
+                  style={getAccreditationBoxStyle(company.accreditationStatus)}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <BadgeCheck className="h-5 w-5 text-black" />
@@ -712,9 +749,9 @@ export default function CompanyProfilePage() {
                   </div>
                   <div 
                     className="text-lg font-semibold py-2"
-                    style={getAccreditationTextStyle(company.accreditation_status)}
+                    style={getAccreditationTextStyle(company.accreditationStatus)}
                   >
-                    {getAccreditationStatusLabel(company.accreditation_status)}
+                    {getAccreditationStatusLabel(company.accreditationStatus)}
                   </div>
                 </div>
               </div>
