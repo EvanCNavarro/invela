@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BlockedDataRecipientsAlert from './BlockedDataRecipientsAlert';
 import DeterioratingRiskTable, { CompanyRiskData } from './DeterioratingRiskTable';
 import { cn } from '@/lib/utils';
@@ -165,14 +166,26 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Show alert only if there are blocked companies */}
-      {blockedCompanies.length > 0 && (
-        <BlockedDataRecipientsAlert
-          count={blockedCompanies.length}
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-        />
-      )}
+      {/* Header row with warning and timeframe toggle */}
+      <div className="mb-4">
+        {/* Warning message at the top */}
+        {blockedCompanies.length > 0 && (
+          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
+        )}
+      </div>
+
+      {/* Timeframe toggle positioned separately */}
+      <div className="flex justify-end mb-4">
+        <Tabs 
+          value={timeframe} 
+          onValueChange={(val: string) => setTimeframe(val as '7day' | '30day')}
+        >
+          <TabsList>
+            <TabsTrigger value="7day">7-Day Change</TabsTrigger>
+            <TabsTrigger value="30day">30-Day Change</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
       
       {/* Show table with appropriate size based on isWidget */}
       <DeterioratingRiskTable
