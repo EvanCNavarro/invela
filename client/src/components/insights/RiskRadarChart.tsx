@@ -377,10 +377,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <CardTitle className="text-slate-800">
-                S&P Business Data Access Risk Breakdown
+                Risk Dimension Analysis
               </CardTitle>
               <CardDescription className="text-slate-500">
-                Detailed breakdown of risk factors for {displayCompany?.name || 'this company'}
+                Breakdown of risk across six key dimensions for {displayCompany?.name || 'this company'}
               </CardDescription>
             </div>
 
