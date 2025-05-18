@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Card,
   CardContent,
@@ -15,11 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCurrentCompany, type Company } from '@/hooks/use-current-company';
+import { useCurrentCompany } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { apiRequest } from '@/lib/queryClient';
-import { Shield } from 'lucide-react';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -70,7 +68,6 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
-  const queryClient = useQueryClient();
 
   // Load ApexCharts components only on client side
   useEffect(() => {
@@ -129,15 +126,12 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         risk_clusters: relationship.relatedCompanyRiskClusters
       } as CompanyWithRiskClusters));
       
-      console.log('[RiskRadarChart] Fetched network companies:', {
-        count: transformedCompanies.length,
-        companies: transformedCompanies.map(c => ({ id: c.id, name: c.name, category: c.category }))
-      });
+      console.log('[RiskRadarChart] Fetched network companies:', transformedCompanies.length);
       
       return { companies: transformedCompanies };
     },
     // Only fetch network companies for Bank and Invela users (data providers and admins)
-    enabled: isBankOrInvela && !!company?.id && !isFintech,
+    enabled: isBankOrInvela && !!company?.id,
   });
   
   // Extract the companies array from the response
@@ -159,8 +153,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       console.log('[RiskRadarChart] Display company updated:', {
         id: displayCompany.id,
         name: displayCompany.name,
-        category: displayCompany.category,
-        hasRiskClusters: 'risk_clusters' in displayCompany && !!displayCompany.risk_clusters
+        category: displayCompany.category
       });
     }
   }, [displayCompany]);
@@ -399,10 +392,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       <Card className={cn("w-full h-full", className)}>
         <CardHeader className={className ? "bg-transparent" : "bg-slate-50 rounded-t-lg pb-3"}>
           <CardTitle className="text-slate-800">
-            S&P Business Data Access Risk Breakdown
+            Risk Dimension Analysis
           </CardTitle>
           <CardDescription className="text-slate-500">
-            Detailed breakdown of risk factors for this company
+            Breakdown of risk across six key dimensions
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center p-4 h-full">
