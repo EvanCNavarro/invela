@@ -38,7 +38,9 @@ interface CompanyProfileData {
   risk_score?: number;
   chosenScore?: number;
   chosen_score?: number;
+  // Support both naming conventions for accreditation status
   accreditationStatus?: string;
+  accreditation_status?: string;
   revenueTier?: string;
   risk_clusters?: {
     financial: number;
@@ -66,6 +68,28 @@ interface CompanyFile {
   uploadedAt: string;
   uploadedBy: string;
 }
+
+/**
+ * Helper function to get the accreditation status from a company object
+ * regardless of which property naming convention is used
+ * 
+ * @param company The company data object
+ * @returns The accreditation status string or undefined if not found
+ */
+const getCompanyAccreditationStatus = (company: any): string | undefined => {
+  // First check for the camelCase version (standardized)
+  if (company.accreditationStatus) {
+    return company.accreditationStatus;
+  }
+  
+  // Then check for the snake_case version (legacy API format)
+  if ((company as any).accreditation_status) {
+    return (company as any).accreditation_status;
+  }
+  
+  // Return undefined if neither property exists
+  return undefined;
+};
 
 /**
  * Helper function to determine the display category based on accreditation status
@@ -737,7 +761,7 @@ export default function CompanyProfilePage() {
                 {/* Accreditation status with color-coded background */}
                 <div 
                   className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
-                  style={getAccreditationBoxStyle(company.accreditationStatus)}
+                  style={getAccreditationBoxStyle(getCompanyAccreditationStatus(company))}
                 >
                   <div className="flex items-center justify-center gap-1.5 mb-1">
                     <BadgeCheck className="h-5 w-5 text-black" />
@@ -747,9 +771,9 @@ export default function CompanyProfilePage() {
                   </div>
                   <div 
                     className="text-lg font-semibold py-2"
-                    style={getAccreditationTextStyle(company.accreditationStatus)}
+                    style={getAccreditationTextStyle(getCompanyAccreditationStatus(company))}
                   >
-                    {getAccreditationStatusLabel(company.accreditationStatus)}
+                    {getAccreditationStatusLabel(getCompanyAccreditationStatus(company))}
                   </div>
                 </div>
               </div>
