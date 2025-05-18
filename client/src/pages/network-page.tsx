@@ -131,11 +131,19 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           )}
         >
           {/* Format the status value for display */}
-          {company.accreditationStatus
-            ? company.accreditationStatus.replace(/_/g, ' ').split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(' ')
-            : 'N/A'}
+          {(() => {
+            // Safely handle the accreditation status display with special case for legacy values
+            if (!company.accreditationStatus) return 'N/A';
+            
+            // Convert any AWAITING_INVITATION to IN_PROCESS
+            const statusValue = String(company.accreditationStatus);
+            if (statusValue === 'AWAITING_INVITATION') return 'In Process';
+            
+            // Format other statuses nicely
+            return statusValue.replace(/_/g, ' ').split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+          })()}
         </Badge>
       </TableCell>
       <TableCell className="text-center">
