@@ -5,10 +5,32 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import bcrypt from "bcrypt";
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
 import { eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
+
+/**
+ * Authentication system logging utility
+ * Helps with debugging auth-related issues
+ */
+const authLogger = {
+  info: (message: string, meta?: any) => {
+    console.log(`[AuthService] ${message}`, meta || '');
+  },
+  warn: (message: string, meta?: any) => {
+    console.warn(`[AuthService] ${message}`, meta || '');
+  },
+  error: (message: string, meta?: any) => {
+    console.error(`[AuthService] ${message}`, meta || '');
+  },
+  debug: (message: string, meta?: any) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[AuthService:DEBUG] ${message}`, meta || '');
+    }
+  }
+};
 
 declare global {
   namespace Express {
@@ -19,43 +41,84 @@ declare global {
 const scryptAsync = promisify(scrypt);
 const PostgresSessionStore = connectPg(session);
 
+/**
+ * Hash a password using the application's current preferred method (bcrypt)
+ * 
+ * @param password - The plaintext password to hash
+ * @returns The hashed password
+ */
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  // Use bcrypt for new passwords since it's what the application is using elsewhere
+  authLogger.debug('Hashing password with bcrypt');
+  return bcrypt.hash(password, 10); // Standard rounds for bcrypt
+}
+
+/**
+ * Determines the format of a stored password hash
+ * 
+ * @param hash - The password hash to check
+ * @returns The identified hash format
+ */
+function identifyPasswordFormat(hash: string): 'bcrypt' | 'scrypt' | 'unknown' {
+  // Bcrypt hashes always start with $2a$, $2b$, or $2y$
+  if (hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$')) {
+    return 'bcrypt';
+  }
+  
+  // Scrypt hashes in our format contain a period separating hash and salt
+  if (hash.includes('.')) {
+    return 'scrypt';
+  }
+  
+  // Unknown format
+  return 'unknown';
 }
 
 /**
  * Securely compares a supplied password with a stored password hash
- * Uses a constant-time comparison to prevent timing attacks
+ * Supports multiple hash formats for backward compatibility
  * 
  * @param supplied - The password provided by the user during login
- * @param stored - The hashed password stored in the database (format: "hash.salt")
+ * @param stored - The hashed password stored in the database
  * @returns boolean indicating if passwords match
  */
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    // Split the stored password into hash and salt components
-    const [hashed, salt] = stored.split(".");
+    // Identify the password hash format
+    const hashFormat = identifyPasswordFormat(stored);
+    authLogger.debug(`Password format identified as: ${hashFormat}`);
     
-    if (!hashed || !salt) {
-      console.warn("Password comparison failed: Invalid password format", { 
-        hasHash: !!hashed, 
-        hasSalt: !!salt 
-      });
-      return false;
+    // Handle based on the hash format
+    switch (hashFormat) {
+      case 'bcrypt':
+        // Use bcrypt's built-in compare function
+        return await bcrypt.compare(supplied, stored);
+        
+      case 'scrypt':
+        // Handle scrypt format (our custom implementation)
+        const [hashed, salt] = stored.split(".");
+        
+        if (!hashed || !salt) {
+          authLogger.warn("Invalid scrypt format", { hasHash: !!hashed, hasSalt: !!salt });
+          return false;
+        }
+        
+        // Convert stored hash to buffer
+        const hashedBuf = Buffer.from(hashed, "hex");
+        
+        // Hash the supplied password with the same salt
+        const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+        
+        // Use constant-time comparison to prevent timing attacks
+        return timingSafeEqual(hashedBuf, suppliedBuf);
+        
+      default:
+        // Unknown format, fail securely
+        authLogger.warn("Unknown password hash format", { format: hashFormat });
+        return false;
     }
-    
-    // Convert stored hash to buffer
-    const hashedBuf = Buffer.from(hashed, "hex");
-    
-    // Hash the supplied password with the same salt
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    
-    // Use constant-time comparison to prevent timing attacks
-    return timingSafeEqual(hashedBuf, suppliedBuf);
   } catch (error) {
-    console.error("Password comparison error:", error);
+    authLogger.error("Password comparison error", { error });
     return false;
   }
 }
