@@ -260,21 +260,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       dashArray: 0,
     },
     markers: {
-      size: className?.includes("border-none") ? 5 : 7, // Smaller markers for compact view
+      size: className?.includes("border-none") ? 5 : 8, // Larger markers for better visibility
       colors: ['#ffffff'],
       strokeColors: '#4965EC',
       strokeWidth: className?.includes("border-none") ? 2 : 3,
       hover: {
-        size: className?.includes("border-none") ? 7 : 9, // Smaller hover for compact view
+        size: className?.includes("border-none") ? 7 : 10, // Larger hover for better visibility
       }
     },
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 40,
-        bottom: 40,
-        left: 40, 
-        right: 40
+        top: 50,
+        bottom: 50,
+        left: 50, 
+        right: 50
       }
     },
     yaxis: {
@@ -456,20 +456,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
 
         {/* Title and description hidden as requested */}
       </CardHeader>
-      <CardContent className="p-2">
-        <div className="w-full" style={{ height: '400px' }}>
+      <CardContent className="p-6">
+        <div className="w-full" style={{ height: '500px' }}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="400"
+              height="500"
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[400px] rounded-md" />
+              <Skeleton className="w-full h-[500px] rounded-md" />
             </div>
           )}
         </div>
