@@ -345,13 +345,6 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {/* Risk Monitoring Widget for Bank/Invela */}
-                    {visibleWidgets.riskMonitoring && (
-                      <div>
-                        <RiskMonitoringWidget />
-                      </div>
-                    )}
-
                     {/* Network Visualization for Bank/Invela */}
                     {visibleWidgets.networkVisualization && (
                       <div className="h-[600px]">
@@ -362,6 +355,13 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Risk Monitoring Widget for Bank/Invela - Full width */}
+                  {visibleWidgets.riskMonitoring && companyData?.category !== 'FinTech' && (
+                    <div className="col-span-2 mt-4">
+                      <RiskMonitoringWidget />
+                    </div>
+                  )}
                 )}
               </div>
               
