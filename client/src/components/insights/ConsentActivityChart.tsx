@@ -477,16 +477,17 @@ export function ConsentActivityChart({
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="h-[550px]">
-            {ReactApexChart && (
-              <ReactApexChart
-                ref={chartRef}
-                options={chartOptions}
-                series={chartSeries}
-                type="area"
-                height="100%"
-              />
-            )}
+          <div className="h-[550px] flex flex-col justify-center px-4">
+            <div className="h-[90%] w-[96%] mx-auto">
+              {ReactApexChart && (
+                <ReactApexChart
+                  options={chartOptions}
+                  series={chartSeries}
+                  type="area"
+                  height="100%"
+                />
+              )}
+            </div>
           </div>
         )}
       </CardContent>
