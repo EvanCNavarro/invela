@@ -242,8 +242,8 @@ const RiskTable: React.FC<{
 
   return (
     <div className="border rounded-md relative">
-      {/* Single scrollable container with sticky header */}
-      <div className="overflow-auto max-h-[500px]">
+      {/* Table with automatic height based on content */}
+      <div className="overflow-visible">
         <Table>
           {/* Sticky header that remains visible during scroll */}
           <TableHeader className="sticky top-0 z-20 bg-white border-b">
