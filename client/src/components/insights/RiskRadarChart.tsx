@@ -26,12 +26,12 @@ let ReactApexChart: any = null;
 
 // Define the risk cluster data type
 interface RiskClusters {
-  'PII Data': number;
-  'Account Data': number;
-  'Data Transfers': number;
-  'Certifications Risk': number;
-  'Security Risk': number;
-  'Financial Risk': number;
+  'Cyber Security': number;
+  'Financial Stability': number;
+  'Potential Liability': number;
+  'Dark Web Data': number;
+  'Public Sentiment': number;
+  'Data Access Scope': number;
 }
 
 // Define the company type to extend the existing Company type from hooks
@@ -145,29 +145,29 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       // Convert to all uppercase to match the reference design
       const uppercaseCategory = category.toUpperCase();
       
-      // Handle special cases
-      if (uppercaseCategory.includes("DATA TRANSFERS")) {
-        return "DATA\nTRANSFERS";
+      // Handle the new dimension names with appropriate formatting
+      if (uppercaseCategory.includes("CYBER SECURITY")) {
+        return "CYBER\nSECURITY";
       }
       
-      if (uppercaseCategory.includes("PII DATA")) {
-        return "PII DATA";
+      if (uppercaseCategory.includes("FINANCIAL STABILITY")) {
+        return "FINANCIAL\nSTABILITY";
       }
       
-      if (uppercaseCategory.includes("ACCOUNT DATA")) {
-        return "ACCOUNT\nDATA";
+      if (uppercaseCategory.includes("POTENTIAL LIABILITY")) {
+        return "POTENTIAL\nLIABILITY";
       }
       
-      if (uppercaseCategory.includes("SECURITY RISK")) {
-        return "SECURITY\nRISK";
+      if (uppercaseCategory.includes("DARK WEB DATA")) {
+        return "DARK WEB\nDATA";
       }
       
-      if (uppercaseCategory.includes("FINANCIAL RISK")) {
-        return "FINANCIAL\nRISK";
+      if (uppercaseCategory.includes("PUBLIC SENTIMENT")) {
+        return "PUBLIC\nSENTIMENT";
       }
       
-      if (uppercaseCategory.includes("CERTIFICATIONS RISK")) {
-        return "CERTIFICATIONS\nRISK";
+      if (uppercaseCategory.includes("DATA ACCESS SCOPE")) {
+        return "DATA ACCESS\nSCOPE";
       }
       
       // Fallback for any other categories
