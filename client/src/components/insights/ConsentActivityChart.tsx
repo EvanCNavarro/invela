@@ -295,7 +295,7 @@ export function ConsentActivityChart({
   const chartOptions = {
     chart: {
       type: 'area',
-      height: 500,
+      height: 450,
       fontFamily: 'inherit',
       toolbar: {
         show: false,
@@ -315,11 +315,6 @@ export function ConsentActivityChart({
         }
       },
       parentHeightOffset: 0,
-    },
-    // Add extra margins for the chart
-    margin: {
-      top: 30,
-      bottom: 20
     },
     colors: ['#4965EC', '#6EE7B7'], // Primary blue for active, green for newly granted
     fill: {
@@ -371,7 +366,9 @@ export function ConsentActivityChart({
           day: 'dd MMM',
           hour: timeframe === '1day' ? 'HH:mm' : undefined,
         },
-        offsetY: 5, // Add offset to move labels down slightly
+        offsetY: 8,
+        rotate: 0,
+        trim: false,
       },
       tooltip: {
         enabled: false
@@ -381,9 +378,26 @@ export function ConsentActivityChart({
       },
       axisTicks: {
         show: false
+      }
+    },
+    grid: {
+      strokeDashArray: 4,
+      borderColor: '#E9E9EF',
+      xaxis: {
+        lines: {
+          show: true
+        }
+      },
+      yaxis: {
+        lines: {
+          show: true
+        }
       },
       padding: {
-        bottom: 10 // Add padding at the bottom
+        top: 10,
+        right: 10,
+        bottom: 20,
+        left: 10
       }
     },
     yaxis: {
@@ -463,7 +477,7 @@ export function ConsentActivityChart({
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[550px]">
+      <div className="flex items-center justify-center h-[450px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -471,7 +485,7 @@ export function ConsentActivityChart({
   
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[550px] space-y-2">
+      <div className="flex flex-col items-center justify-center h-[450px] space-y-2">
         <div className="text-destructive font-medium">Failed to load data</div>
         <div className="text-xs text-muted-foreground max-w-md">
           {error instanceof Error ? error.message : 'Check console for details'}
@@ -484,21 +498,20 @@ export function ConsentActivityChart({
     <Card className={`${className}`}>
       <CardContent className="p-6">
         {!chartComponentLoaded ? (
-          <div className="flex items-center justify-center h-[550px]">
+          <div className="flex items-center justify-center h-[450px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="h-[550px] flex flex-col justify-center px-4">
-            <div className="h-[90%] w-[96%] mx-auto">
-              {ReactApexChart && (
-                <ReactApexChart
-                  options={chartOptions}
-                  series={chartSeries}
-                  type="area"
-                  height="100%"
-                />
-              )}
-            </div>
+          <div className="h-[450px] w-full">
+            {ReactApexChart && (
+              <ReactApexChart
+                options={chartOptions}
+                series={chartSeries}
+                type="area"
+                height="450"
+                width="100%"
+              />
+            )}
           </div>
         )}
       </CardContent>
