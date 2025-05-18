@@ -1017,16 +1017,16 @@ export default function CompanyProfilePage() {
             <CardTitle className="text-base font-medium text-gray-800">Risk Radar Visualization</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 h-[400px]">
+        <CardContent className="pt-0 pb-8">
           {company.id ? (
-            <div className="w-full h-full max-w-[800px] mx-auto">
+            <div className="w-full aspect-[3/1.8] max-w-[1000px] mx-auto">
               <RiskRadarChart 
                 companyId={company.id}
                 showDropdown={false}
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-[300px]">
               <div className="text-sm text-gray-500">No data available</div>
             </div>
           )}
