@@ -124,7 +124,8 @@ const useRegisterMutation = () => {
         body: JSON.stringify({
           email: data.email,
           password: data.password,
-          full_name: data.fullName
+          full_name: data.fullName,
+          company_id: 1 // Using default company ID for now
         }),
         credentials: "include"
       });
