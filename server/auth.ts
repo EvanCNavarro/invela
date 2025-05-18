@@ -36,6 +36,11 @@ async function getUserByEmail(email: string) {
   return db.select().from(users).where(eq(users.email, email)).limit(1);
 }
 
+// Function to get user by username - for passport
+async function getUserByUsername(username: string) {
+  return db.select().from(users).where(eq(users.email, username)).limit(1);
+}
+
 export function setupAuth(app: Express) {
   const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
   const sessionSettings: session.SessionOptions = {
@@ -55,8 +60,11 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      const [user] = await getUserByUsername(username);
+    new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    }, async (email, password, done) => {
+      const [user] = await getUserByEmail(email);
       if (!user || !(await comparePasswords(password, user.password))) {
         return done(null, false);
       } else {
@@ -83,9 +91,9 @@ export function setupAuth(app: Express) {
       return res.status(400).send(error.toString());
     }
 
-    const [existingUser] = await getUserByUsername(result.data.username);
+    const [existingUser] = await getUserByEmail(result.data.email);
     if (existingUser) {
-      return res.status(400).send("Username already exists");
+      return res.status(400).send("Email already exists");
     }
 
     const [user] = await db

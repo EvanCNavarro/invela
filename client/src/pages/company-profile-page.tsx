@@ -1035,7 +1035,9 @@ export default function CompanyProfilePage() {
       </Card>
     </div>
   );
+}
 
+export default function CompanyProfilePage() {
   return (
     <DashboardLayout>
       {/* Add tutorial manager for company profile page */}
