@@ -3900,7 +3900,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const statusMap: Record<string, { color: string; label: string }> = {
         'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
         'UNDER_REVIEW': { color: '#FFC300', label: 'Under Review' }, // Yellow
-        'IN_PROCESS': { color: '#F59E0B', label: 'In Process' }, // Amber/Orange (distinct from Under Review)
+        'IN_PROCESS': { color: '#9C27B0', label: 'In Process' }, // Purple (matching demo-autofill color)
         'REVOKED': { color: '#EF4444', label: 'Revoked' }, // Red
         
         // Legacy status mappings (for backward compatibility with existing data)
