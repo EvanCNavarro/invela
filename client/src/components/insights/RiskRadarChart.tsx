@@ -15,9 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { Shield, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -603,7 +606,50 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       </CardHeader>
       <CardContent className="p-6">
         <div className="w-full" style={{ height: '500px' }}>
-          {chartComponentLoaded && ReactApexChart && (
+          {isLoading ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
+                <p className="text-sm text-muted-foreground">Loading risk data...</p>
+              </div>
+            </div>
+          ) : !displayCompany ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                <Shield className="h-14 w-14 text-muted-foreground opacity-20 mb-3" />
+                <p className="text-sm text-muted-foreground">No company selected</p>
+              </div>
+            </div>
+          ) : !chartComponentLoaded ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <Skeleton className="w-full h-[500px] rounded-md" />
+            </div>
+          ) : !riskClusters ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <div className="flex flex-col items-center text-center max-w-md">
+                <AlertTriangle className="h-12 w-12 text-amber-500 mb-3" />
+                <h3 className="text-lg font-medium mb-2">Risk dimensions unavailable</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Detailed risk breakdown is not available for {displayCompany.name}.
+                  {displayCompany.risk_score || displayCompany.chosen_score ? 
+                    ` However, the company has an overall risk score of ${displayCompany.chosen_score || displayCompany.risk_score}.` : ''}
+                </p>
+                {selectedCompanyId && selectedCompanyId !== company?.id && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      console.log('[RiskRadarChart] Returning to current company');
+                      setSelectedCompanyId(company?.id || null);
+                    }}
+                    className="mt-2"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Return to current company
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
@@ -611,11 +657,6 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               height="500"
               width="100%"
             />
-          )}
-          {!chartComponentLoaded && (
-            <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[500px] rounded-md" />
-            </div>
           )}
         </div>
       </CardContent>
