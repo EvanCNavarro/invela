@@ -690,31 +690,31 @@ export default function CompanyProfilePage() {
 
       {/* Additional Data - Products & Partners */}
       <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-3 space-y-1">
+        <CardHeader className="pb-2">
           <div className="flex items-center">
-            <Layers className="h-4 w-4 text-gray-500 mr-2" />
+            <Layers className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
             <CardTitle className="text-base font-medium text-gray-800">Products & Partnerships</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Products & Services */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Products & Services</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {company.productsServices ? (
                   typeof company.productsServices === 'string' ? (
-                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                       {company.productsServices}
                     </UiBadge>
                   ) : isArrayOfStrings(company.productsServices) ? (
                     company.productsServices.map((product, idx) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                         {product}
                       </UiBadge>
                     ))
                   ) : (
-                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                       {String(company.productsServices)}
                     </UiBadge>
                   )
@@ -725,24 +725,24 @@ export default function CompanyProfilePage() {
             </div>
             
             {/* Key Clients & Partners */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Key Clients & Partners</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {company.keyClientsPartners ? (
                   typeof company.keyClientsPartners === 'string' ? (
                     company.keyClientsPartners.split(',').map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                         {partner.trim()}
                       </UiBadge>
                     ))
                   ) : isArrayOfStrings(company.keyClientsPartners) ? (
                     company.keyClientsPartners.map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                         {partner}
                       </UiBadge>
                     ))
                   ) : (
-                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
+                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
                       {String(company.keyClientsPartners)}
                     </UiBadge>
                   )
