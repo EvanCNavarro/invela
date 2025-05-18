@@ -1,0 +1,121 @@
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-18T18:21:35.406Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-18T18:21:35.406Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-18T18:21:35.406Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-18T18:21:35.407Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-05-18T18:21:35.407Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-18T18:21:35.407Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-05-18T18:21:35.407Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-18T18:21:35.407Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-18T18:21:35.407Z] [App] Communication phase initializing 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-18T18:21:35.407Z] [App] Application ready for user interaction 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-18T18:21:35.407Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 401
+[TanStack Query] 401 Unauthorized for /api/user, returning null as configured
+[Router] Current location: /login
+[2025-05-18T18:21:35.554Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747592495916-9r3o2zf", timestamp: "2025-05-18T18:21:35.916Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-18T18:21:36.041Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747592496410-qmtq3p7", timestamp: "2025-05-18T18:21:36.410Z", message: "Connection established"}
+[2025-05-18T18:21:36.403Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747592496920-5h91p9n", timestamp: "2025-05-18T18:21:36.920Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747592497412-tfi5ysi", timestamp: "2025-05-18T18:21:37.412Z", message: "Connection established"}
+[2025-05-18T18:21:37.865Z] [WebSocket] WebSocket connection established 
+[2025-05-18T18:21:37.865Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-18T18:21:37.866Z] [WebSocket] Received message of type: connection_established 
+[2025-05-18T18:21:37.866Z] [WebSocket] WebSocket server connection confirmed with ID: client-1747592497907-tynxcay 
+[2025-05-18T18:21:37.992Z] [WebSocket] Sending authentication message 
+Object {userId: "8", companyId: "1", connectionId: "ws_1747592496403_xxtshm3zp", hasUserData: false, hasCompanyData: false}
+[2025-05-18T18:21:38.112Z] [WebSocket] Received message of type: authenticated 
+[2025-05-18T18:21:38.112Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:06.042Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:07.039Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:07.533Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:36.045Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:37.040Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T18:22:37.532Z", echo: {…}}
+[Login] Email field changed: e
+[Login] Email field changed: ev
+[Login] Email field changed: eva
+[Login] Email field changed: evan
+[Login] Email field changed: evan.
+[Login] Email field changed: evan.n
+[Login] Email field changed: evan.na
+[Login] Email field changed: evan.nav
+[Login] Email field changed: evan.nava
+[Login] Email field changed: evan.navar
+[Login] Email field changed: evan.navarr
+[Login] Email field changed: evan.navarro
+[Login] Email field changed: evan.navarro@
+[Login] Email field changed: evan.navarro@i
+[Login] Email field changed: evan.navarro@in
+[Login] Email field changed: evan.navarro@inv
+[Login] Email field changed: evan.navarro@inve
+[Login] Email field changed: evan.navarro@invel
+[Login] Email field changed: evan.navarro@invela
+[Login] Email field changed: evan.navarro@invela.
+[Login] Email field changed: evan.navarro@invela.c
+[Login] Email field changed: evan.navarro@invela.co
+[Login] Email field changed: evan.navarro@invela.com
+[Login] Password field changed, length: 1
+[Login] Password field changed, length: 2
+[Login] Password field changed, length: 3
+[Login] Password field changed, length: 4
+[Login] Password field changed, length: 5
+[Login] Password field changed, length: 6
+[Login] Password field changed, length: 7
+[Login] Password field changed, length: 8
+[Login] Password field changed, length: 9
+[Login] Password field changed, length: 10
