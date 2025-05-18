@@ -1,15 +1,15 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -18,7 +18,9 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { companyTypeColors } from "@/components/network/types";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 interface CompanyProfileData {
   id: number;
@@ -231,21 +233,37 @@ export default function CompanyProfilePage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [openUserModal, setOpenUserModal] = useState(false);
+  const { user, isLoading: authLoading } = useAuth();
 
   const handleBackClick = () => {
     window.history.back();
   };
 
-  const { data: company, isLoading, error } = useQuery<CompanyProfileData>({
+  const { 
+    data: company, 
+    isLoading, 
+    error 
+  } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies", companyId],
     queryFn: async () => {
       if (!companyId) throw new Error("No company ID provided");
-      const response = await fetch(`/api/companies/${companyId}`);
-      if (!response.ok) {
-        throw new Error("Error fetching company details");
+      try {
+        const response = await fetch(`/api/companies/${companyId}`);
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Authentication required");
+          }
+          throw new Error("Error fetching company details");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching company:", error);
+        throw error;
       }
-      return response.json();
-    }
+    },
+    retry: 1,
+    enabled: !authLoading,
+    refetchOnWindowFocus: false
   });
 
   const { data: users = [] } = useQuery<CompanyUser[]>({
