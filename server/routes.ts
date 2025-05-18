@@ -831,6 +831,47 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
+  // Get users for a specific company
+  app.get("/api/companies/:companyId/users", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ error: 'Invalid company ID' });
+      }
+      
+      // Verify the company exists
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name
+      })
+      .from(companies)
+      .where(eq(companies.id, companyId));
+      
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      // Query users associated with this company
+      const companyUsers = await db.select({
+        id: users.id,
+        name: users.full_name,
+        email: users.email,
+        role: users.role,
+        joinedAt: users.created_at
+      })
+      .from(users)
+      .where(eq(users.company_id, companyId));
+      
+      console.log(`[Companies] Found ${companyUsers.length} users for company ${companyId}`);
+      
+      return res.json(companyUsers);
+    } catch (error) {
+      console.error('[Companies] Error fetching company users:', error);
+      return res.status(500).json({ error: 'Failed to fetch company users' });
+    }
+  });
+
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       const now = Date.now();
