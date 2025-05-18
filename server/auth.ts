@@ -32,8 +32,8 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-async function getUserByUsername(username: string) {
-  return db.select().from(users).where(eq(users.username, username)).limit(1);
+async function getUserByEmail(email: string) {
+  return db.select().from(users).where(eq(users.email, email)).limit(1);
 }
 
 export function setupAuth(app: Express) {
