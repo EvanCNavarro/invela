@@ -20,6 +20,7 @@ import { NetworkInsightVisualization } from "@/components/insights/NetworkInsigh
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
+import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 
 // Default visualization types
 const defaultVisualizationTypes = [
@@ -89,6 +90,9 @@ export default function InsightsPage() {
           </Button>
         </div>
 
+        {/* Risk Monitoring Insights - Always visible at the top for Banks and Invela companies */}
+        <RiskMonitoringInsight className="mb-6" />
+        
         {!isFintech && (
           <div className="flex justify-between items-center">
             <Select
