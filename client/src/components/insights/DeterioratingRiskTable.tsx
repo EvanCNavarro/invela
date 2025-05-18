@@ -143,8 +143,7 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
         onValueChange={(value) => setTimeframe(value as '7day' | '30day')}
         className="w-full"
       >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">DARS Risk Deterioration</h3>
+        <div className="flex justify-end items-center mb-4">
           <TabsList>
             <TabsTrigger value="7day">7-Day Change</TabsTrigger>
             <TabsTrigger value="30day">30-Day Change</TabsTrigger>
