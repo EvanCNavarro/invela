@@ -76,20 +76,22 @@ interface CompanyFile {
  * @param company The company data object
  * @returns The accreditation status string or undefined if not found
  */
-const getCompanyAccreditationStatus = (company: any): string | undefined => {
-  // First check for the camelCase version (standardized)
+// Extracts accreditation status from company data regardless of property naming convention
+function getCompanyAccreditationStatus(company: CompanyProfileData | any): string | undefined {
+  // First check for camelCase version (standardized)
   if (company.accreditationStatus) {
     return company.accreditationStatus;
   }
   
-  // Then check for the snake_case version (legacy API format)
-  if ((company as any).accreditation_status) {
-    return (company as any).accreditation_status;
+  // Then check for snake_case version (legacy API format)
+  // Using bracket notation to avoid TypeScript errors with dynamic properties
+  if (company['accreditation_status']) {
+    return company['accreditation_status'];
   }
   
   // Return undefined if neither property exists
   return undefined;
-};
+}
 
 /**
  * Helper function to determine the display category based on accreditation status
@@ -769,12 +771,18 @@ export default function CompanyProfilePage() {
                       ACCREDITATION
                     </div>
                   </div>
-                  <div 
-                    className="text-lg font-semibold py-2"
-                    style={getAccreditationTextStyle(getCompanyAccreditationStatus(company))}
-                  >
-                    {getAccreditationStatusLabel(getCompanyAccreditationStatus(company))}
-                  </div>
+                  {/* Extract status once to avoid multiple function calls */}
+                  {(() => {
+                    const status = getCompanyAccreditationStatus(company);
+                    return (
+                      <div 
+                        className="text-lg font-semibold py-2"
+                        style={getAccreditationTextStyle(status)}
+                      >
+                        {getAccreditationStatusLabel(status)}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
