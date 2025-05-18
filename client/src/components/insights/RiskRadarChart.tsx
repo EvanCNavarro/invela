@@ -421,7 +421,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             </div>
 
             {/* Company selector is shown only for Bank or Invela users */}
-            {showDropdown && isBankOrInvela && !isFintech && networkCompanies && networkCompanies.length > 0 && (
+            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
               <div className="min-w-[220px]">
                 <Select 
                   value={selectedCompanyId?.toString()} 
