@@ -2,10 +2,6 @@ export type RegisterData = {
   email: string;
   password: string;
   fullName: string;
-  firstName: string;
-  lastName: string;
-  invitationCode: string;
-  company: string;
 };
 
 export type LoginData = {

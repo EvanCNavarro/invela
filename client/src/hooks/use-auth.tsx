@@ -118,10 +118,14 @@ const useRegisterMutation = () => {
   return useMutation({
     mutationFn: async (data: RegisterData) => {
       // Use fetch directly to handle raw response
-      const res = await fetch("/api/account/setup", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          full_name: data.fullName
+        }),
         credentials: "include"
       });
       
