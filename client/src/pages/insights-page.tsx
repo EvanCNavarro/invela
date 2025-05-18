@@ -38,7 +38,7 @@ const fintechVisualizationTypes = [
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("risk_monitoring");
+  const [selectedVisualization, setSelectedVisualization] = useState("consent_activity");
   const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
   const [isFintech, setIsFintech] = useState(false);
   
