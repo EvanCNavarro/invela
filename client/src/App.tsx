@@ -39,6 +39,7 @@ import DiagnosticPage from "@/pages/diagnostic-page";
 import RiskScorePage from "@/pages/risk-score-page";
 import ClaimsRiskPage from "@/pages/claims-risk-page";
 import TaskFix from "@/pages/TaskFix";
+import WebSocketDemoPage from "@/pages/websocket-demo-page";
 // Builder pages have been removed
 // Empty component definitions for type checking - these components are no longer used
 const BuilderPage = () => null;
