@@ -14,8 +14,11 @@
  * 6. Data Access Scope
  */
 
-const { Client } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+import dotenv from 'dotenv';
+
+const { Client } = pg;
+dotenv.config();
 
 // Define ANSI color codes for better console output
 const colors = {
@@ -222,30 +225,36 @@ async function updateAllCompaniesRiskClusters(dryRun = false) {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
-// If --company-id is specified, update only that company
-const companyIdArg = args.find(arg => arg.startsWith('--company-id='));
-if (companyIdArg) {
-  const companyId = parseInt(companyIdArg.split('=')[1], 10);
-  if (isNaN(companyId)) {
-    log('Invalid company ID provided', colors.red);
+// Main function to handle execution flow
+async function main() {
+  try {
+    // If --company-id is specified, update only that company
+    const companyIdArg = args.find(arg => arg.startsWith('--company-id='));
+    if (companyIdArg) {
+      const companyId = parseInt(companyIdArg.split('=')[1], 10);
+      if (isNaN(companyId)) {
+        log('Invalid company ID provided', colors.red);
+        process.exit(1);
+      }
+      
+      log(`Updating risk clusters for company ID ${companyId} only`, colors.blue);
+      await client.connect();
+      try {
+        await updateCompanyRiskClusters(companyId, dryRun);
+      } finally {
+        await client.end();
+      }
+    } else {
+      // Update all companies
+      await updateAllCompaniesRiskClusters(dryRun);
+    }
+    
+    log('Script completed successfully', colors.green);
+  } catch (err) {
+    log(`Error: ${err.message}`, colors.red);
     process.exit(1);
   }
-  
-  log(`Updating risk clusters for company ID ${companyId} only`, colors.blue);
-  client.connect()
-    .then(() => updateCompanyRiskClusters(companyId, dryRun))
-    .then(() => client.end())
-    .catch(err => {
-      log(`Error: ${err.message}`, colors.red);
-      client.end();
-    });
-} else {
-  // Update all companies
-  updateAllCompaniesRiskClusters(dryRun)
-    .then(() => {
-      log('Script completed successfully', colors.green);
-    })
-    .catch(err => {
-      log(`Error: ${err.message}`, colors.red);
-    });
 }
+
+// Execute the main function
+main();
