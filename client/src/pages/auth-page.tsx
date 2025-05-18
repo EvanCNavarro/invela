@@ -13,13 +13,13 @@ import { Loader2 } from "lucide-react";
 
 // Login schema
 const loginSchema = z.object({
-  username: z.string().min(1, { message: "Username is required" }),
+  email: z.string().email({ message: "Please enter a valid email" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
 
 // Registration schema
 const registerSchema = z.object({
-  username: z.string().min(3, { message: "Username must be at least 3 characters" }),
+  email: z.string().email({ message: "Please enter a valid email" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
   fullName: z.string().min(1, { message: "Full name is required" }),
 });
@@ -127,7 +127,7 @@ function LoginForm() {
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
