@@ -3896,19 +3896,30 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         `
       );
       
-      // Define status types and colors
+      // Define status types and colors - Updated to use standardized statuses
       const statusMap: Record<string, { color: string; label: string }> = {
         'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
-        'PENDING': { color: '#FFC300', label: 'Pending' },   // Yellow
-        'AWAITING_INVITATION': { color: '#9CA3AF', label: 'Awaiting Invitation' }, // Pale Gray
-        'REVOKED': { color: '#EF4444', label: 'Revoked' }    // Red
+        'UNDER_REVIEW': { color: '#FFC300', label: 'Under Review' }, // Yellow
+        'IN_PROCESS': { color: '#FFC300', label: 'In Process' }, // Yellow
+        'REVOKED': { color: '#EF4444', label: 'Revoked' }, // Red
+        
+        // Legacy status mappings (for backward compatibility with existing data)
+        'PENDING': { color: '#FFC300', label: 'Under Review' }, // Map old 'PENDING' to 'Under Review'
+        'PROVISIONALLY_APPROVED': { color: '#209C5A', label: 'Approved' }, // Map to 'Approved'
+        'IN_REVIEW': { color: '#FFC300', label: 'Under Review' } // Map to 'Under Review'
       };
       
-      // Transform the data for the dot matrix visualization
+      // Transform the data for the dot matrix visualization with standardized statuses
       const companies = companiesResult.rows.map((row: any) => {
-        // Default to AWAITING_INVITATION if status is null or not recognized
-        const status = row.accreditation_status || 'AWAITING_INVITATION';
-        const statusInfo = statusMap[status] || statusMap['AWAITING_INVITATION'];
+        // Default to IN_PROCESS if status is null or not recognized (replacing AWAITING_INVITATION)
+        const status = row.accreditation_status || 'IN_PROCESS';
+        // Get status info or default to IN_PROCESS if not found in the map
+        const statusInfo = statusMap[status] || statusMap['IN_PROCESS'];
+        
+        // Add detailed logging for debugging status mapping
+        if (!statusMap[status]) {
+          console.log(`[AccreditationStatus] Mapping unrecognized status '${status}' to 'IN_PROCESS' for company ${row.id} (${row.name})`);
+        }
         
         return {
           id: row.id,
@@ -3920,20 +3931,42 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         };
       });
       
-      // Count companies by status
-      const statusCounts = Object.keys(statusMap).reduce((acc, status) => {
-        acc[status] = companies.filter(c => c.status === status).length;
+      // Count companies by status using our standardized status categories
+      // Initialize with our standard statuses set to 0
+      const standardStatusKeys = ['APPROVED', 'UNDER_REVIEW', 'IN_PROCESS', 'REVOKED'];
+      const statusCounts = standardStatusKeys.reduce((acc, status) => {
+        acc[status] = 0;
         return acc;
       }, {} as Record<string, number>);
       
-      // Format the response
+      // Count companies and map legacy status codes to standard ones
+      companies.forEach(company => {
+        const status = company.status;
+        // Map legacy statuses to standardized ones for counting
+        if (status === 'PENDING') {
+          statusCounts['UNDER_REVIEW'] += 1;
+        } else if (status === 'AWAITING_INVITATION') {
+          statusCounts['IN_PROCESS'] += 1;
+        } else if (standardStatusKeys.includes(status)) {
+          statusCounts[status] += 1;
+        } else {
+          // For any unrecognized status, count as IN_PROCESS
+          statusCounts['IN_PROCESS'] += 1;
+          console.log(`[AccreditationStatus] Counted unrecognized status '${status}' as 'IN_PROCESS'`);
+        }
+      });
+      
+      console.log('[AccreditationStatus] Calculated status counts:', statusCounts);
+      
+      // Format the response with only our standardized statuses
       const response = {
         companies,
         statusCounts,
-        statusMap: Object.entries(statusMap).map(([key, value]) => ({
-          id: key,
-          ...value,
-          count: statusCounts[key] || 0
+        // Only include the standardized statuses in the response (not legacy mappings)
+        statusMap: standardStatusKeys.map(statusKey => ({
+          id: statusKey,
+          ...statusMap[statusKey],
+          count: statusCounts[statusKey] || 0
         }))
       };
       
