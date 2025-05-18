@@ -454,55 +454,55 @@ export default function CompanyProfilePage() {
   const renderOverviewTab = () => (
     <div className="space-y-8">
       {/* Company Summary Section - Monochromatic design */}
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg text-gray-800 font-medium">Company Profile</CardTitle>
-          <CardDescription className="text-gray-500">Overview and key details</CardDescription>
+      <Card className="border border-gray-200 shadow-none">
+        <CardHeader className="pb-3 space-y-1">
+          <CardTitle className="text-lg font-medium text-gray-800">Company Profile</CardTitle>
+          <CardDescription className="text-sm text-gray-500">Overview and key details</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start">
-            <div className="space-y-6">
+        <CardContent className="pt-0">
+          <div className="grid md:grid-cols-[1fr_280px] gap-6 items-start">
+            <div className="space-y-5">
               {/* Company description */}
               {company.description && (
-                <div className="text-md text-gray-700 leading-relaxed max-w-3xl pb-4 border-b border-gray-100">
+                <div className="text-sm text-gray-700 leading-relaxed pb-4 border-b border-gray-100">
                   {company.description}
                 </div>
               )}
               
               {/* Key Facts Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Headquarters</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-gray-50 rounded p-4">
+                  <div className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Headquarters</div>
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-800">{formatValue(company.hqAddress)}</span>
+                    <Building2 className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-800">{formatValue(company.hqAddress)}</span>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Category</div>
+                <div className="bg-gray-50 rounded p-4">
+                  <div className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Category</div>
                   <div className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-800">{formatValue(company.category)}</span>
+                    <Tag className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-800">{formatValue(company.category)}</span>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="text-sm font-medium text-gray-600 mb-1">Website</div>
+                <div className="bg-gray-50 rounded p-4">
+                  <div className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Website</div>
                   <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-gray-500" />
+                    <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     {company.websiteUrl ? (
                       <a
                         href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-700 hover:underline flex items-center gap-1"
+                        className="text-sm text-gray-800 hover:underline flex items-center gap-1"
                       >
                         {company.websiteUrl}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : (
-                      <span className="text-gray-500 italic text-sm">Not available</span>
+                      <span className="text-sm text-gray-500 italic">Not available</span>
                     )}
                   </div>
                 </div>
@@ -510,10 +510,10 @@ export default function CompanyProfilePage() {
             </div>
             
             {/* Risk Score Card - Positioned to the right with monochromatic design */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-5 min-w-[260px]">
-              <div className="text-sm font-medium mb-3 flex items-center text-gray-700">
-                <Shield className="h-4 w-4 text-gray-500 mr-2" />
-                Risk Assessment Score
+            <div className="bg-gray-50 rounded p-5">
+              <div className="flex items-center mb-3">
+                <Shield className="h-4 w-4 text-gray-400 mr-2" />
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Risk Assessment Score</div>
               </div>
               <RiskMeter 
                 score={company.riskScore || company.risk_score || 0}
@@ -524,34 +524,34 @@ export default function CompanyProfilePage() {
               
               {/* Accreditation Status */}
               {(company.accreditationStatus || company.accreditation_status) && (
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                  <div className="text-sm font-medium text-gray-600 mb-2">Accreditation Status</div>
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Accreditation Status</div>
                   <div className="flex items-center">
                     {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
                   </div>
                 </div>
               )}
               
-              {/* Risk Clusters - New section */}
+              {/* Risk Dimensions - New section */}
               {company.risk_clusters && (
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                  <div className="text-sm font-medium text-gray-600 mb-2">Risk Dimensions</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-white rounded p-2">
-                      <div className="text-gray-500">Cybersecurity</div>
-                      <div className="font-medium">{company.risk_clusters.cybersecurity || 0}/100</div>
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Risk Dimensions</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded p-2.5 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Cybersecurity</div>
+                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.cybersecurity || 0}/100</div>
                     </div>
-                    <div className="bg-white rounded p-2">
-                      <div className="text-gray-500">Financial</div>
-                      <div className="font-medium">{company.risk_clusters.financial || 0}/100</div>
+                    <div className="bg-white rounded p-2.5 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Financial</div>
+                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.financial || 0}/100</div>
                     </div>
-                    <div className="bg-white rounded p-2">
-                      <div className="text-gray-500">Compliance</div>
-                      <div className="font-medium">{company.risk_clusters.compliance || 0}/100</div>
+                    <div className="bg-white rounded p-2.5 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Compliance</div>
+                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.compliance || 0}/100</div>
                     </div>
-                    <div className="bg-white rounded p-2">
-                      <div className="text-gray-500">Operational</div>
-                      <div className="font-medium">{company.risk_clusters.operational || 0}/100</div>
+                    <div className="bg-white rounded p-2.5 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Operational</div>
+                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.operational || 0}/100</div>
                     </div>
                   </div>
                 </div>
@@ -564,77 +564,77 @@ export default function CompanyProfilePage() {
       {/* Main Data Grid - 2 columns responsive */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Business Information */}
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-2 border-b bg-slate-50/80">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-slate-500" />
-              Business Information
-            </CardTitle>
+        <Card className="border border-gray-200 shadow-none">
+          <CardHeader className="pb-3 space-y-1">
+            <div className="flex items-center">
+              <Briefcase className="h-4 w-4 text-gray-500 mr-2" />
+              <CardTitle className="text-base font-medium text-gray-800">Business Information</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
+          <CardContent className="pt-0">
+            <dl className="space-y-3">
               {/* Legal Structure */}
-              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                <div className="text-sm font-medium text-muted-foreground">Legal Entity</div>
-                <div>{formatValue(company.legalStructure)}</div>
+              <div className="flex flex-col">
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Legal Entity</dt>
+                <dd className="text-sm text-gray-800">{formatValue(company.legalStructure)}</dd>
               </div>
               
               {/* Employee Count */}
-              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                <div className="text-sm font-medium text-muted-foreground">Employees</div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-slate-500" />
+              <div className="flex flex-col">
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Employees</dt>
+                <dd className="text-sm text-gray-800 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   {formatValue(company.numEmployees)}
-                </div>
+                </dd>
               </div>
               
               {/* Founded Year / Company Age */}
               {company.incorporationYear && (
-                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                  <div className="text-sm font-medium text-muted-foreground">Founded</div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-slate-500" />
+                <div className="flex flex-col">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Founded</dt>
+                  <dd className="text-sm text-gray-800 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     <span>
                       {company.incorporationYear} 
                       {companyAge !== null && ` (${companyAge} ${companyAge === 1 ? 'year' : 'years'} ago)`}
                     </span>
-                  </div>
+                  </dd>
                 </div>
               )}
               
               {/* Revenue Tier */}
-              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                <div className="text-sm font-medium text-muted-foreground">Revenue Tier</div>
-                <div>
+              <div className="flex flex-col">
+                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Revenue Tier</dt>
+                <dd className="text-sm text-gray-800">
                   {company.revenueTier ? (
-                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                    <UiBadge variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                       {company.revenueTier === 'sm' ? 'Small' : 
                       company.revenueTier === 'md' ? 'Medium' : 
                       company.revenueTier === 'lg' ? 'Large' : 
                       company.revenueTier}
                     </UiBadge>
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not available</span>
+                    <span className="text-gray-500 italic">Not available</span>
                   )}
-                </div>
+                </dd>
               </div>
               
               {/* Certifications - Only show if available */}
               {company.certifications_compliance && (
-                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                  <div className="text-sm font-medium text-muted-foreground">Certifications</div>
-                  <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Certifications</dt>
+                  <dd className="flex flex-wrap gap-2">
                     {typeof company.certifications_compliance === 'string' && 
                       company.certifications_compliance.split(',').map((cert: string, idx: number) => (
-                        <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                        <UiBadge key={idx} variant="outline" className="font-normal bg-gray-50 text-gray-700 border-gray-200">
                           {cert.trim()}
                         </UiBadge>
                       ))
                     }
-                  </div>
+                  </dd>
                 </div>
               )}
-            </div>
+            </dl>
           </CardContent>
         </Card>
 
