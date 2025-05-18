@@ -136,13 +136,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     return showOnlyBlocked ? blockedCompanies : companyRiskData;
   }, [showOnlyBlocked, blockedCompanies, companyRiskData]);
 
-  // Handle the blocked alert click to toggle filtering
-  const handleBlockedAlertClick = () => {
-    logInsight('Blocked alert clicked, toggling filter', { 
-      currentFilter: showOnlyBlocked 
-    });
-    setShowOnlyBlocked(!showOnlyBlocked);
-  };
+  // Filter state is now controlled only by table interactions
 
   // Handle clicking on a company in the table
   const handleCompanyClick = (companyId: number) => {
@@ -172,7 +166,6 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       {blockedCompanies.length > 0 && (
         <BlockedDataRecipientsAlert
           count={blockedCompanies.length}
-          onClick={handleBlockedAlertClick}
         />
       )}
       
