@@ -1,0 +1,82 @@
+🧠 Context & Purpose
+
+The Consent Activity Insights Graph in the Invela Replit app provides a visual breakdown of data-sharing activity over time, specifically:
+	•	Active Consents – total live, ongoing consents
+	•	Newly Granted Consents – consents issued within a given time window
+
+Users can filter the data by:
+	•	Timeframe (1 Day, 30 Days, 1 Year)
+	•	Company (dropdown with smart logic based on user type)
+
+🧭 Dropdown Filtering Logic – Company Type Behavior
+
+The company selector dropdown is dynamically filtered based on the type of user’s company:
+
+If user belongs to a Fintech (Data Recipient):
+	•	Show only their own company (no dropdown interaction required)
+	•	Do not show dropdown UI at all — the graph is locked to their own activity
+	•	This prevents confusion or access to irrelevant entities
+
+If user belongs to a Bank or Invela (Data Provider or Admin):
+	•	Show dropdown chevron button
+	•	Opens a searchable, alphabetically sorted list of all companies in their network (i.e., companies they can view)
+	•	Enables fuzzy search (by name, partial keyword, etc.) to quickly find and select a company
+
+🔘 UI Layout Summary
+
+Company Dropdown (left) — Timeframe Toggle: 1 Day | 30 Days | 1 Year (right)
+→ Consent Activity Graph
+
+Company Dropdown:
+	•	Appears only for Banks and Invela Admins
+	•	Label: “Select Company” (placeholder when nothing selected)
+	•	Chevron icon to indicate dropdown action
+	•	Opens scrollable list with search input at top
+	•	Supports:
+	•	Fuzzy text search
+	•	Alphabetical ordering
+	•	Highlighting of active selection
+
+🧩 Why Fallback Defaults Are Needed
+
+New or recently onboarded companies may not yet have any consent activity data in the system. Without fallback data, this graph could appear empty, broken, or non-functional — which may:
+	•	Confuse the user
+	•	Undermine confidence in the system
+	•	Prevent users from understanding what the feature is meant to show
+
+To solve this, we provide realistic, proportional default values that:
+	•	Keep the graph visually consistent
+	•	Help users understand expected usage patterns
+	•	Reflect healthy, believable engagement
+	•	Respect the underlying 17:1 ratio between Active and New Consents
+
+🔍 Ratio Logic: 17 to 1
+
+From real data in the platform (based on screenshots showing millions of consents and hundreds of thousands of denials), we’ve seen consistent ratios of 30–35:1 for total consents to denials. To simplify and soften these for default display, we use a 17:1 ratio for Active vs. Newly Granted Consents.
+
+This keeps things visually expressive, while:
+	•	Aligning with actual usage dynamics
+	•	Feeling appropriate for early-stage or growth-stage companies
+	•	Preventing the default state from appearing artificially high or overly sparse
+
+📊 Default Graph Values (No Company Data Present)
+
+If the selected company has no activity, use the following placeholder data in the graph:
+
+1 Day
+	•	Newly Granted Consents: 1,000
+	•	Active Consents: 17,000
+
+30 Days
+	•	Newly Granted Consents: 25,000
+	•	Active Consents: 425,000
+
+1 Year
+	•	Newly Granted Consents: 300,000
+	•	Active Consents: 5,100,000
+
+✅ Why These Values Work
+	•	1,000 new consents per day is modest but active — appropriate for companies just ramping up
+	•	25,000 over 30 days indicates strong momentum and supports narrative of platform adoption
+	•	300,000 in a year with 5.1M active feels reasonable when benchmarked against your actual data (which showed 22M–41M active consents for mature clients)
+	•	Maintains visual integrity of the graph while avoiding dead or zero states
