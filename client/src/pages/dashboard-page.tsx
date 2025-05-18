@@ -5,6 +5,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
+import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -60,7 +61,8 @@ const OTHER_DEFAULT_WIDGETS = {
   quickActions: true,
   companySnapshot: true,
   networkVisualization: true,
-  riskRadar: false
+  riskRadar: false,
+  riskMonitoring: true
 };
 
 export default function DashboardPage() {
@@ -71,7 +73,8 @@ export default function DashboardPage() {
     quickActions: true,
     companySnapshot: true,
     networkVisualization: false,
-    riskRadar: false
+    riskRadar: false,
+    riskMonitoring: false
   });
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -84,7 +87,7 @@ export default function DashboardPage() {
     refetchInterval: false
   });
 
-  type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar';
+  type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar' | 'riskMonitoring';
   
   const toggleWidget = (widgetId: WidgetKey) => {
     setVisibleWidgets(prev => ({
@@ -103,14 +106,16 @@ export default function DashboardPage() {
       setVisibleWidgets(prev => ({
         ...prev,
         networkVisualization: false,
-        riskRadar: true
+        riskRadar: true,
+        riskMonitoring: false
       }));
     } else {
       // For non-FinTech companies (Bank, Invela)
       setVisibleWidgets(prev => ({
         ...prev,
         networkVisualization: true,
-        riskRadar: false
+        riskRadar: false,
+        riskMonitoring: true
       }));
     }
   }, [companyData?.category]);
@@ -148,6 +153,10 @@ export default function DashboardPage() {
                     }
                     if (key === 'networkVisualization') {
                       // Hide Network Visualization for FinTech
+                      return companyData?.category !== 'FinTech';
+                    }
+                    if (key === 'riskMonitoring') {
+                      // Only show Risk Monitoring for Bank and Invela
                       return companyData?.category !== 'FinTech';
                     }
                     return true;
@@ -333,6 +342,13 @@ export default function DashboardPage() {
                           onToggle={() => toggleWidget('companySnapshot')}
                           isVisible={visibleWidgets.companySnapshot}
                         />
+                      </div>
+                    )}
+
+                    {/* Risk Monitoring Widget for Bank/Invela */}
+                    {visibleWidgets.riskMonitoring && (
+                      <div>
+                        <RiskMonitoringWidget />
                       </div>
                     )}
 
