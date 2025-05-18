@@ -444,7 +444,6 @@ export default function CompanyProfilePage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
                 <TableHead>Joined</TableHead>
               </TableRow>
             </TableHeader>
@@ -453,7 +452,6 @@ export default function CompanyProfilePage() {
                 <TableRow key={user.id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
                   <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
