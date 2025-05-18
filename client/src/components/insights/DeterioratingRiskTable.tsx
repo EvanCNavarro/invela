@@ -246,91 +246,92 @@ const RiskTable: React.FC<{
         <Table>
           <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
             <TableRow>
-            <TableHead 
-              className="cursor-pointer select-none"
-              onClick={() => handleSort('name')}
-            >
-              <div className="flex items-center">
-                Company Name {renderSortIndicator('name')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="text-right cursor-pointer select-none"
-              onClick={() => handleSort('currentScore')}
-            >
-              <div className="flex items-center justify-end">
-                Current DARS {renderSortIndicator('currentScore')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="text-right cursor-pointer select-none"
-              onClick={() => handleSort('scoreChange')}
-            >
-              <div className="flex items-center justify-end">
-                Score Change {renderSortIndicator('scoreChange')}
-              </div>
-            </TableHead>
-            <TableHead className="text-center">Trend</TableHead>
-            <TableHead 
-              className="cursor-pointer select-none"
-              onClick={() => handleSort('status')}
-            >
-              <div className="flex items-center">
-                Status {renderSortIndicator('status')}
-              </div>
-            </TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedCompanies.map((company) => (
-            <TableRow 
-              key={company.id}
-              className={cn(
-                onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : "",
-                company.status === 'Blocked' ? "bg-gradient-to-r from-red-50/70 to-red-50/30" : 
-                company.status === 'Approaching Block' ? "bg-gradient-to-r from-amber-50/60 to-amber-50/20" :
-                company.status === 'Monitoring' ? "bg-gradient-to-r from-blue-50/40 to-blue-50/10" : ""
-              )}
-              onClick={() => onCompanyClick && onCompanyClick(company.id)}
-            >
-              <TableCell className="font-medium">{company.name}</TableCell>
-              <TableCell className="text-right">{company.currentScore}</TableCell>
-              <TableCell className={cn(
-                "text-right font-medium",
-                company.scoreChange > 0 ? "text-red-600" : 
-                company.scoreChange < 0 ? "text-green-600" : ""
-              )}>
-                {company.scoreChange > 0 ? `-${company.scoreChange.toFixed(1)}` : 
-                 company.scoreChange < 0 ? `+${Math.abs(company.scoreChange).toFixed(1)}` : 
-                 '0.0'}
-              </TableCell>
-              <TableCell className="text-center">
-                {company.scoreChange > 0 ? (
-                  <TrendingDown className="h-5 w-5 mx-auto text-red-500" />
-                ) : company.scoreChange < 0 ? (
-                  <TrendingUp className="h-5 w-5 mx-auto text-green-500" />
-                ) : (
-                  <Minus className="h-5 w-5 mx-auto text-muted-foreground" />
-                )}
-              </TableCell>
-              <TableCell>
-                <span className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-medium",
-                  getStatusColor(company.status)
-                )}>
-                  {company.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                {onCompanyClick && (
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                )}
-              </TableCell>
+              <TableHead 
+                className="cursor-pointer select-none"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Company Name {renderSortIndicator('name')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none"
+                onClick={() => handleSort('currentScore')}
+              >
+                <div className="flex items-center justify-end">
+                  Current DARS {renderSortIndicator('currentScore')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none"
+                onClick={() => handleSort('scoreChange')}
+              >
+                <div className="flex items-center justify-end">
+                  Score Change {renderSortIndicator('scoreChange')}
+                </div>
+              </TableHead>
+              <TableHead className="text-center">Trend</TableHead>
+              <TableHead 
+                className="cursor-pointer select-none"
+                onClick={() => handleSort('status')}
+              >
+                <div className="flex items-center">
+                  Status {renderSortIndicator('status')}
+                </div>
+              </TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {sortedCompanies.map((company) => (
+              <TableRow 
+                key={company.id}
+                className={cn(
+                  onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : "",
+                  company.status === 'Blocked' ? "bg-gradient-to-r from-red-50/70 to-red-50/30" : 
+                  company.status === 'Approaching Block' ? "bg-gradient-to-r from-amber-50/60 to-amber-50/20" :
+                  company.status === 'Monitoring' ? "bg-gradient-to-r from-blue-50/40 to-blue-50/10" : ""
+                )}
+                onClick={() => onCompanyClick && onCompanyClick(company.id)}
+              >
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell className="text-right">{company.currentScore}</TableCell>
+                <TableCell className={cn(
+                  "text-right font-medium",
+                  company.scoreChange > 0 ? "text-red-600" : 
+                  company.scoreChange < 0 ? "text-green-600" : ""
+                )}>
+                  {company.scoreChange > 0 ? `-${company.scoreChange.toFixed(1)}` : 
+                   company.scoreChange < 0 ? `+${Math.abs(company.scoreChange).toFixed(1)}` : 
+                   '0.0'}
+                </TableCell>
+                <TableCell className="text-center">
+                  {company.scoreChange > 0 ? (
+                    <TrendingDown className="h-5 w-5 mx-auto text-red-500" />
+                  ) : company.scoreChange < 0 ? (
+                    <TrendingUp className="h-5 w-5 mx-auto text-green-500" />
+                  ) : (
+                    <Minus className="h-5 w-5 mx-auto text-muted-foreground" />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <span className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium",
+                    getStatusColor(company.status)
+                  )}>
+                    {company.status}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {onCompanyClick && (
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
