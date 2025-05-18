@@ -295,10 +295,10 @@ export default function CompanyProfilePage() {
   });
 
   const { 
-    data: files = [], 
+    data: filesResponse, 
     isLoading: filesLoading, 
     error: filesError 
-  } = useQuery<CompanyFile[]>({
+  } = useQuery<{data: CompanyFile[]}>({
     queryKey: ["/api/companies", companyId, "files"],
     queryFn: async () => {
       // Only show files uploaded by users of this company
@@ -320,6 +320,9 @@ export default function CompanyProfilePage() {
     retry: 1,
     refetchOnWindowFocus: false
   });
+  
+  // Extract the actual files array from the response, falling back to an empty array
+  const files = filesResponse?.data || [];
 
   // Add variables to track different states
   const isAuthError = error?.message === "Authentication required" || 
