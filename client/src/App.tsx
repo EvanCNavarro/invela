@@ -278,6 +278,13 @@ function Router() {
         <Route path="/diagnostic">
           <DiagnosticPage />
         </Route>
+
+        {/* WebSocket Demo Page */}
+        <Route path="/websocket-demo">
+          <ProtectedLayout>
+            <WebSocketDemoPage />
+          </ProtectedLayout>
+        </Route>
         
         {/* Removed test route */}
         
