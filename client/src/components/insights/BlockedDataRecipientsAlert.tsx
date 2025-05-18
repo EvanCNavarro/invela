@@ -49,7 +49,7 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4 flex items-center justify-between",
+        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4",
         className
       )}
     >
@@ -66,19 +66,6 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
           </p>
         </div>
       </div>
-      
-      {onTimeframeChange && (
-        <Tabs 
-          value={timeframe} 
-          onValueChange={(value) => onTimeframeChange(value as '7day' | '30day')}
-          className="mr-2"
-        >
-          <TabsList>
-            <TabsTrigger value="7day">7-Day Change</TabsTrigger>
-            <TabsTrigger value="30day">30-Day Change</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
     </div>
   );
 };
