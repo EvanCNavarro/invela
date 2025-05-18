@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { Shield } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -66,6 +67,9 @@ interface RiskRadarChartProps {
   showDropdown?: boolean;
 }
 
+// Initialize logger for RiskRadarChart component
+const logger = createLogger('RiskRadarChart');
+
 export function RiskRadarChart({ className, companyId, showDropdown = true }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
@@ -87,14 +91,24 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Set the selected company ID once the current company is loaded or if a specific companyId is provided
   useEffect(() => {
     if (companyId) {
+      logger.info('Setting selected company ID from companyId prop:', companyId);
       setSelectedCompanyId(companyId);
     } else if (company && !selectedCompanyId) {
+      logger.info('Setting selected company ID from current company:', company.id);
       setSelectedCompanyId(company.id);
     }
   }, [company, selectedCompanyId, companyId]);
 
-  // Fetch network companies if the current company is a Bank or Invela
+  // Determine company type for conditional rendering
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
+  const isFintech = company?.category === 'FinTech';
+  
+  logger.debug('Company category check:', { 
+    category: company?.category,
+    isBankOrInvela,
+    isFintech,
+    showDropdownProp: showDropdown
+  });
   
   // Use a more specific return type to fix TypeScript errors
   interface CompanyNetworkResponse {
@@ -114,9 +128,15 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         risk_clusters: relationship.relatedCompanyRiskClusters
       } as CompanyWithRiskClusters));
       
+      logger.info('Fetched network companies:', {
+        count: transformedCompanies.length,
+        companies: transformedCompanies.map(c => ({ id: c.id, name: c.name, category: c.category }))
+      });
+      
       return { companies: transformedCompanies };
     },
-    enabled: isBankOrInvela && !!company?.id,
+    // Only fetch network companies for Bank and Invela users (data providers and admins)
+    enabled: isBankOrInvela && !!company?.id && !isFintech,
   });
   
   // Extract the companies array from the response
@@ -132,10 +152,32 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const displayCompany = selectedCompanyId === company?.id ? company : selectedCompany;
   const isLoading = isCompanyLoading || (isSelectedCompanyLoading && selectedCompanyId !== company?.id);
 
+  // Log the current display company for debugging
+  useEffect(() => {
+    if (displayCompany) {
+      logger.info('Display company updated:', {
+        id: displayCompany.id,
+        name: displayCompany.name,
+        category: displayCompany.category,
+        hasRiskClusters: 'risk_clusters' in displayCompany && !!displayCompany.risk_clusters
+      });
+    }
+  }, [displayCompany]);
+
   // Extract risk clusters data - ensuring we handle both Company and CompanyWithRiskClusters types
   const riskClusters = displayCompany ? 
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
+    
+  // Log when risk clusters data is missing
+  useEffect(() => {
+    if (displayCompany && !riskClusters) {
+      logger.warn('Risk clusters data missing for company:', {
+        id: displayCompany.id,
+        name: displayCompany.name
+      });
+    }
+  }, [displayCompany, riskClusters]);
 
   // Format all category names to match the reference design
   const formatCategoryNames = (categories: string[]): string[] => {
@@ -384,12 +426,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               </CardDescription>
             </div>
 
-            {/* Only show company selector for Bank or Invela users and when dropdown is enabled */}
-            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
+            {/* Company selector is shown only for Bank or Invela users */}
+            {showDropdown && isBankOrInvela && !isFintech && networkCompanies && networkCompanies.length > 0 && (
               <div className="min-w-[220px]">
                 <Select 
                   value={selectedCompanyId?.toString()} 
-                  onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                  onValueChange={(value) => {
+                    const newCompanyId = parseInt(value);
+                    logger.info('Company selected from dropdown:', newCompanyId);
+                    setSelectedCompanyId(newCompanyId);
+                  }}
                 >
                   <SelectTrigger className="bg-white border-slate-300">
                     <SelectValue placeholder="Select a company" />
@@ -397,8 +443,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                   <SelectContent>
                     <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
                     {Array.isArray(networkCompanies) && networkCompanies
-                      // Filter out FinTech companies and current company
-                      .filter(c => c.id !== (company?.id || 0) && c.category !== 'FinTech')
+                      // Show all network companies except the current one
+                      .filter(c => c.id !== (company?.id || 0))
                       .map(c => (
                         <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                       ))
