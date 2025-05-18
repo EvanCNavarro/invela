@@ -103,17 +103,41 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           variant="outline"
           className={cn(
             "capitalize",
-            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+            // Using imported AccreditationStatus enum values
+            // In Process and Under Review - yellow styling
+            (company.accreditationStatus === AccreditationStatus.IN_PROCESS || 
+             company.accreditationStatus === AccreditationStatus.UNDER_REVIEW) && 
+              "bg-yellow-100 text-yellow-800",
+              
+            // Approved - green styling
+            company.accreditationStatus === AccreditationStatus.APPROVED && 
+              "bg-green-100 text-green-800",
+              
+            // Revoked - red styling
+            company.accreditationStatus === AccreditationStatus.REVOKED && 
+              "bg-red-100 text-red-800",
+              
+            // Legacy status mappings for backward compatibility
+            company.accreditationStatus === AccreditationStatus.PENDING && 
+              "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === AccreditationStatus.IN_REVIEW && 
+              "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === AccreditationStatus.PROVISIONALLY_APPROVED && 
+              "bg-green-100 text-green-800",
+            company.accreditationStatus === AccreditationStatus.SUSPENDED && 
+              "bg-gray-100 text-gray-800",
+            company.accreditationStatus === AccreditationStatus.EXPIRED && 
+              "bg-red-100 text-red-800",
+            company.accreditationStatus === AccreditationStatus.AWAITING_INVITATION && 
+              "bg-gray-100 text-gray-800"
           )}
         >
-          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+          {/* Format the status value for display */}
+          {company.accreditationStatus
+            ? company.accreditationStatus.replace(/_/g, ' ').split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ')
+            : 'N/A'}
         </Badge>
       </TableCell>
       <TableCell className="text-center">

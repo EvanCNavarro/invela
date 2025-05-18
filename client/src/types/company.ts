@@ -11,16 +11,34 @@ export type CompanyCategory = typeof CompanyCategory[keyof typeof CompanyCategor
 /**
  * Accreditation status values for companies
  * 
+ * Primary status values (current standard):
  * APPROVED - Companies with full accreditation
  * UNDER_REVIEW - Companies currently being evaluated (replacing IN_REVIEW)
  * IN_PROCESS - Companies with submissions in progress (replacing PENDING)
  * REVOKED - Companies whose accreditation has been taken away
+ * 
+ * Legacy status values (supported for backward compatibility):
+ * PROVISIONALLY_APPROVED - Old approval status
+ * IN_REVIEW - Old review status
+ * PENDING - Old in-process status
+ * SUSPENDED - Company with temporarily revoked access
+ * EXPIRED - Company with lapsed accreditation
+ * AWAITING_INVITATION - Company not yet onboarded
  */
 export const AccreditationStatus = {
+  // Primary status values
   APPROVED: 'APPROVED',
   UNDER_REVIEW: 'UNDER_REVIEW',
   IN_PROCESS: 'IN_PROCESS',
-  REVOKED: 'REVOKED'
+  REVOKED: 'REVOKED',
+  
+  // Legacy status values (for backward compatibility)
+  PROVISIONALLY_APPROVED: 'PROVISIONALLY_APPROVED',
+  IN_REVIEW: 'IN_REVIEW',
+  PENDING: 'PENDING',
+  SUSPENDED: 'SUSPENDED',
+  EXPIRED: 'EXPIRED',
+  AWAITING_INVITATION: 'AWAITING_INVITATION'
 } as const;
 
 export type AccreditationStatus = typeof AccreditationStatus[keyof typeof AccreditationStatus];
