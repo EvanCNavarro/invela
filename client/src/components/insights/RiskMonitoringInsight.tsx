@@ -169,6 +169,8 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       {blockedCompanies.length > 0 && (
         <BlockedDataRecipientsAlert
           count={blockedCompanies.length}
+          timeframe={timeframe}
+          onTimeframeChange={setTimeframe}
         />
       )}
       
@@ -177,6 +179,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         companies={displayCompanies}
         blockThreshold={riskThreshold}
         onCompanyClick={handleCompanyClick}
+        timeframe={timeframe}
         className={isWidget ? "max-h-96 overflow-auto" : ""}
       />
       
