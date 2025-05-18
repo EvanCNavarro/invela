@@ -421,8 +421,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
             </div>
 
             {/* Company selector is shown only for Bank or Invela users */}
-            {showDropdown && isBankOrInvela && networkCompanies && networkCompanies.length > 0 && (
-              <div className="min-w-[220px]">
+            {showDropdown && isBankOrInvela && (
+              <div className="min-w-[220px] border-2 border-blue-500">
+                {/* Debug info to understand what's happening */}
+                <div className="text-xs text-blue-500 mb-1">
+                  Dropdown conditions met: {networkCompanies?.length || 0} companies
+                </div>
+                
                 <Select 
                   value={selectedCompanyId?.toString()} 
                   onValueChange={(value) => {
