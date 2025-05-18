@@ -459,16 +459,36 @@ export default function CompanyProfilePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users
-                .filter(user => {
+              {(() => {
+                const filteredUsers = users.filter(user => {
                   if (!userSearchQuery) return true;
                   const query = userSearchQuery.toLowerCase();
                   return (
                     (user.name?.toLowerCase().includes(query)) ||
                     (user.email?.toLowerCase().includes(query))
                   );
-                })
-                .map((user) => {
+                });
+                
+                if (filteredUsers.length === 0 && userSearchQuery) {
+                  return (
+                    <TableRow>
+                      <TableCell colSpan={3} className="h-24 text-center">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <Search className="h-8 w-8 mb-2" />
+                          <p className="text-sm">No matching users found</p>
+                          <button 
+                            onClick={() => setUserSearchQuery("")}
+                            className="mt-2 text-xs text-primary hover:underline"
+                          >
+                            Clear search
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+                
+                return filteredUsers.map((user) => {
                   // Highlight matching text if there's a search query
                   const highlightMatch = (text: string) => {
                     if (!userSearchQuery) return text;
@@ -488,7 +508,8 @@ export default function CompanyProfilePage() {
                       <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
                     </TableRow>
                   );
-                })}
+                });
+              })()}
             </TableBody>
           </Table>
         </CardContent>
