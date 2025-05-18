@@ -218,8 +218,8 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
-          <div className="text-blue-500">
+        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="text-gray-500">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -229,15 +229,10 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
             </svg>
           </div>
         </div>
-        <h3 className="text-xl font-semibold mb-2">All Caught Up!</h3>
-        <p className="text-muted-foreground text-center max-w-md mb-6">
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">All Caught Up!</h3>
+        <p className="text-muted-foreground text-center max-w-md">
           You have no tasks that match your current filters. Try adjusting your filters or create a new task to get started.
         </p>
-        <Link href="/task-center">
-          <Button variant="outline" className="mr-2">
-            Clear Filters
-          </Button>
-        </Link>
       </div>
     );
   }
