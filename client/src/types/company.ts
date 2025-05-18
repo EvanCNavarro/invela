@@ -8,15 +8,19 @@ export const CompanyCategory = {
 
 export type CompanyCategory = typeof CompanyCategory[keyof typeof CompanyCategory];
 
+/**
+ * Accreditation status values for companies
+ * 
+ * APPROVED - Companies with full accreditation
+ * UNDER_REVIEW - Companies currently being evaluated (replacing IN_REVIEW)
+ * IN_PROCESS - Companies with submissions in progress (replacing PENDING)
+ * REVOKED - Companies whose accreditation has been taken away
+ */
 export const AccreditationStatus = {
-  AWAITING_INVITATION: 'AWAITING_INVITATION',
-  PENDING: 'PENDING',
-  IN_REVIEW: 'IN_REVIEW',
   APPROVED: 'APPROVED',
-  PROVISIONALLY_APPROVED: 'PROVISIONALLY_APPROVED',
-  SUSPENDED: 'SUSPENDED',
-  REVOKED: 'REVOKED',
-  EXPIRED: 'EXPIRED'
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  IN_PROCESS: 'IN_PROCESS',
+  REVOKED: 'REVOKED'
 } as const;
 
 export type AccreditationStatus = typeof AccreditationStatus[keyof typeof AccreditationStatus];
@@ -63,15 +67,11 @@ export const companySchema = z.object({
   chosen_score: z.number().nullable().optional(), // Database column name
   chosenScore: z.number().nullable().optional(), // Frontend property name
   accreditationStatus: z.enum([
-    'AWAITING_INVITATION',
-    'PENDING',
-    'IN_REVIEW',
     'APPROVED',
-    'PROVISIONALLY_APPROVED',
-    'SUSPENDED',
-    'REVOKED',
-    'EXPIRED'
-  ]).default('AWAITING_INVITATION'),
+    'UNDER_REVIEW',
+    'IN_PROCESS',
+    'REVOKED'
+  ]).default('IN_PROCESS'),
   available_tabs: z.array(z.string()).default(['task-center']),
   documents: z.array(documentSchema).optional(),
   logoId: z.string().optional(),
