@@ -509,11 +509,11 @@ export default function CompanyProfilePage() {
               </div>
             </div>
             
-            {/* Risk Score Card - Positioned to the right */}
-            <div className="bg-white rounded-lg border p-4 shadow-sm min-w-[240px]">
-              <div className="text-sm font-medium mb-2 flex items-center">
-                <Shield className="h-4 w-4 text-slate-500 mr-2" />
-                S&P Data Access Risk Score
+            {/* Risk Score Card - Positioned to the right with monochromatic design */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-5 min-w-[260px]">
+              <div className="text-sm font-medium mb-3 flex items-center text-gray-700">
+                <Shield className="h-4 w-4 text-gray-500 mr-2" />
+                Risk Assessment Score
               </div>
               <RiskMeter 
                 score={company.riskScore || company.risk_score || 0}
@@ -524,10 +524,35 @@ export default function CompanyProfilePage() {
               
               {/* Accreditation Status */}
               {(company.accreditationStatus || company.accreditation_status) && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Accreditation Status</div>
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-sm font-medium text-gray-600 mb-2">Accreditation Status</div>
                   <div className="flex items-center">
                     {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
+                  </div>
+                </div>
+              )}
+              
+              {/* Risk Clusters - New section */}
+              {company.risk_clusters && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-sm font-medium text-gray-600 mb-2">Risk Dimensions</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white rounded p-2">
+                      <div className="text-gray-500">Cybersecurity</div>
+                      <div className="font-medium">{company.risk_clusters.cybersecurity || 0}/100</div>
+                    </div>
+                    <div className="bg-white rounded p-2">
+                      <div className="text-gray-500">Financial</div>
+                      <div className="font-medium">{company.risk_clusters.financial || 0}/100</div>
+                    </div>
+                    <div className="bg-white rounded p-2">
+                      <div className="text-gray-500">Compliance</div>
+                      <div className="font-medium">{company.risk_clusters.compliance || 0}/100</div>
+                    </div>
+                    <div className="bg-white rounded p-2">
+                      <div className="text-gray-500">Operational</div>
+                      <div className="font-medium">{company.risk_clusters.operational || 0}/100</div>
+                    </div>
                   </div>
                 </div>
               )}
