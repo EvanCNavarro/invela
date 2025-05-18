@@ -43,8 +43,9 @@ async function getUserByUsername(username: string) {
 
 export function setupAuth(app: Express) {
   const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
-  // Make sure we have a valid session secret
-  const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
+  
+  // Use a hardcoded fallback secret to ensure we always have a value
+  const sessionSecret = 'development_session_secret_for_testing_purposes_only';
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
