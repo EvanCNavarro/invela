@@ -102,22 +102,14 @@ function Router() {
         <Route path="/landing/legal/compliance" component={CompliancePage} />
         <Route path="/landing/site-map" component={SiteMapPage} />
 
-        {/* Authentication routes */}
-        <Route path="/login">
-          <Redirect to="/auth" />
-        </Route>
-        <Route path="/register">
-          <Redirect to="/auth" />
-        </Route>
+        {/* Public routes */}
+        <Route path="/login" component={LoginPage} />
+        <Route path="/register" component={RegisterPage} />
         <Route path="/auth">
           {(params) => {
-            // Import the AuthPage component which handles both login and registration
-            const AuthPage = React.lazy(() => import("@/pages/auth-page"));
-            return (
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-                <AuthPage />
-              </Suspense>
-            );
+            const searchParams = new URLSearchParams(window.location.search);
+            const code = searchParams.get('code');
+            return <Redirect to={`/register${code ? `?code=${code}` : ''}`} />;
           }}
         </Route>
 
