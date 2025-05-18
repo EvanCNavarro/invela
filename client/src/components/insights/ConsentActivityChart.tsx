@@ -313,7 +313,12 @@ export function ConsentActivityChart({
           enabled: true,
           speed: 350
         }
-      }
+      },
+      parentHeightOffset: 0,
+    },
+    // Add extra top margin for the chart
+    margin: {
+      top: 30
     },
     colors: ['#4965EC', '#6EE7B7'], // Primary blue for active, green for newly granted
     fill: {
@@ -396,7 +401,7 @@ export function ConsentActivityChart({
     legend: {
       position: 'top',
       horizontalAlign: 'right',
-      offsetY: -10,
+      offsetY: 15,
       labels: {
         colors: '#334155'
       },
@@ -407,7 +412,8 @@ export function ConsentActivityChart({
         offsetX: -3
       },
       itemMargin: {
-        horizontal: 15
+        horizontal: 15,
+        vertical: 8
       }
     },
     tooltip: {
