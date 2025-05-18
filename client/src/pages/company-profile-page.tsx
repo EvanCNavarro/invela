@@ -1017,9 +1017,9 @@ export default function CompanyProfilePage() {
             <CardTitle className="text-base font-medium text-gray-800">Risk Radar Visualization</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="pt-2">
+        <CardContent className="pt-0">
           {company.id ? (
-            <div className="w-full aspect-[2.8/1.6] max-w-[900px] mx-auto mt-4">
+            <div className="w-full h-[350px] max-w-[900px] mx-auto">
               <RiskRadarChart 
                 companyId={company.id}
                 showDropdown={false}
