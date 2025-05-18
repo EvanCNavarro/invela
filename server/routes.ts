@@ -876,15 +876,19 @@ export function registerRoutes(app: Express): Express {
       // Query users associated with this company
       let companyUsers;
       try {
+        // Select only fields that exist in the schema
+        // Removed 'role' field as it doesn't exist in the schema
         companyUsers = await db.select({
           id: users.id,
           name: users.full_name,
           email: users.email,
-          role: users.role,
           joinedAt: users.created_at
         })
         .from(users)
         .where(eq(users.company_id, companyId));
+        
+        // Log database schema for debugging
+        console.log(`[Companies] Successfully queried users table schema for company ${companyId}`);
       } catch (dbError) {
         console.error('[Companies] Database error fetching company users:', dbError);
         return res.status(500).json({ 
