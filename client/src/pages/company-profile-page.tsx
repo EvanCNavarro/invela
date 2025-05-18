@@ -1019,10 +1019,11 @@ export default function CompanyProfilePage() {
         </CardHeader>
         <CardContent className="pt-0 pb-8">
           {company.id ? (
-            <div className="w-full aspect-[3/1.8] max-w-[1000px] mx-auto">
+            <div className="w-full aspect-[2.5/1.5] max-w-[900px] mx-auto">
               <RiskRadarChart 
                 companyId={company.id}
                 showDropdown={false}
+                className="shadow-none border-none"
               />
             </div>
           ) : (
