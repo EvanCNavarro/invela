@@ -347,8 +347,10 @@ export function ConsentActivityChart({
         }
       },
       padding: {
-        left: 10,
-        right: 10
+        top: 10,
+        right: 10,
+        bottom: 20,
+        left: 10
       }
     },
     xaxis: {
@@ -378,26 +380,6 @@ export function ConsentActivityChart({
       },
       axisTicks: {
         show: false
-      }
-    },
-    grid: {
-      strokeDashArray: 4,
-      borderColor: '#E9E9EF',
-      xaxis: {
-        lines: {
-          show: true
-        }
-      },
-      yaxis: {
-        lines: {
-          show: true
-        }
-      },
-      padding: {
-        top: 10,
-        right: 10,
-        bottom: 20,
-        left: 10
       }
     },
     yaxis: {
