@@ -745,7 +745,12 @@ export const registrationSchema = z.object({
   invitation_code: z.string().min(1),
 });
 
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email(),
+  password: z.string().min(8),
+  full_name: z.string().min(1),
+  company_id: z.number()
+});
 export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
