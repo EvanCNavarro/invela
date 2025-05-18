@@ -84,7 +84,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         </Card>
         
         {/* Top Stats Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Company Relationships Card */}
           <Card 
             className={cn(
@@ -123,7 +123,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         </div>
         
         {/* Bottom Stats Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* S&P Business Data Risk Score Card */}
           <Card className={cn(
             cardClassName,
