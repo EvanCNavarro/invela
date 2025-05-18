@@ -1,0 +1,42 @@
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/35
+[Tutorial:TabTutorials] Updating local state for company-profile: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-05-18T16:13:39.773Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=5
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/35
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/35
+[CurrentCompany] Setting company context: 1
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-18T16:14:39.696Z", echo: {…}}

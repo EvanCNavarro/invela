@@ -834,34 +834,64 @@ export function registerRoutes(app: Express): Express {
   // Get users for a specific company
   app.get("/api/companies/:companyId/users", requireAuth, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ 
+          error: 'Unauthorized', 
+          message: 'Authentication required' 
+        });
+      }
+      
       const companyId = parseInt(req.params.companyId);
       
       if (isNaN(companyId)) {
         return res.status(400).json({ error: 'Invalid company ID' });
       }
       
+      console.log(`[Companies] Fetching users for company ${companyId}, requested by user ${req.user.id}`);
+      
       // Verify the company exists
-      const [company] = await db.select({
-        id: companies.id,
-        name: companies.name
-      })
-      .from(companies)
-      .where(eq(companies.id, companyId));
+      let company;
+      try {
+        const results = await db.select({
+          id: companies.id,
+          name: companies.name
+        })
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
+        company = results[0];
+      } catch (dbError) {
+        console.error('[Companies] Database error fetching company:', dbError);
+        return res.status(500).json({ 
+          error: 'Database error', 
+          message: 'Failed to verify company exists' 
+        });
+      }
       
       if (!company) {
+        console.log(`[Companies] Company ${companyId} not found`);
         return res.status(404).json({ error: 'Company not found' });
       }
       
       // Query users associated with this company
-      const companyUsers = await db.select({
-        id: users.id,
-        name: users.full_name,
-        email: users.email,
-        role: users.role,
-        joinedAt: users.created_at
-      })
-      .from(users)
-      .where(eq(users.company_id, companyId));
+      let companyUsers;
+      try {
+        companyUsers = await db.select({
+          id: users.id,
+          name: users.full_name,
+          email: users.email,
+          role: users.role,
+          joinedAt: users.created_at
+        })
+        .from(users)
+        .where(eq(users.company_id, companyId));
+      } catch (dbError) {
+        console.error('[Companies] Database error fetching company users:', dbError);
+        return res.status(500).json({ 
+          error: 'Database error', 
+          message: 'Failed to retrieve users for company' 
+        });
+      }
       
       console.log(`[Companies] Found ${companyUsers.length} users for company ${companyId}`);
       
