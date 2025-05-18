@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -28,8 +28,8 @@ interface CompanyProfileData {
   numEmployees: string | null;
   incorporationYear: number | null;
   category: string;
-  productsServices: string[];
-  keyClientsPartners: string[];
+  productsServices: string[] | string;
+  keyClientsPartners: string[] | string;
   investors: string;
   fundingStage: string | null;
   legalStructure: string;
@@ -42,6 +42,7 @@ interface CompanyProfileData {
   accreditationStatus?: string;
   accreditation_status?: string;
   revenueTier?: string;
+  revenue_tier?: string;
   risk_clusters?: {
     financial: number;
     operational: number;
@@ -50,6 +51,12 @@ interface CompanyProfileData {
     reputational: number;
     cybersecurity: number;
   };
+  // Additional fields that may be in the data
+  certifications_compliance?: string;
+  foundersAndLeadership?: string;
+  founders_and_leadership?: string;
+  // Any other fields
+  [key: string]: any;
 }
 
 interface CompanyUser {
@@ -336,6 +343,11 @@ export default function CompanyProfilePage() {
       </UiBadge>
     );
   };
+  
+  // Type guard for array checking
+  const isArrayOfStrings = (value: any): value is string[] => {
+    return Array.isArray(value) && value.every(item => typeof item === 'string');
+  };
 
   const renderOverviewTab = () => (
     <div className="space-y-8">
@@ -481,11 +493,13 @@ export default function CompanyProfilePage() {
                 <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
                   <div className="text-sm font-medium text-muted-foreground">Certifications</div>
                   <div className="flex flex-wrap gap-2">
-                    {company.certifications_compliance.split(',').map((cert, idx) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
-                        {cert.trim()}
-                      </UiBadge>
-                    ))}
+                    {typeof company.certifications_compliance === 'string' && 
+                      company.certifications_compliance.split(',').map((cert: string, idx: number) => (
+                        <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                          {cert.trim()}
+                        </UiBadge>
+                      ))
+                    }
                   </div>
                 </div>
               )}
@@ -504,10 +518,12 @@ export default function CompanyProfilePage() {
           <CardContent className="pt-4">
             <div className="space-y-4">
               {/* Leadership Team - Only show if available */}
-              {company.foundersAndLeadership && (
+              {(company.foundersAndLeadership || company.founders_and_leadership) && (
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-1">Leadership Team</div>
-                  <p className="text-sm leading-relaxed">{company.foundersAndLeadership}</p>
+                  <p className="text-sm leading-relaxed">
+                    {company.foundersAndLeadership || company.founders_and_leadership || ''}
+                  </p>
                 </div>
               )}
               
@@ -554,12 +570,16 @@ export default function CompanyProfilePage() {
                     <UiBadge variant="outline" className="font-normal bg-slate-50">
                       {company.productsServices}
                     </UiBadge>
-                  ) : (
-                    parseArrayField(company.productsServices).map((product, idx) => (
+                  ) : isArrayOfStrings(company.productsServices) ? (
+                    company.productsServices.map((product, idx) => (
                       <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
                         {product}
                       </UiBadge>
                     ))
+                  ) : (
+                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                      {String(company.productsServices)}
+                    </UiBadge>
                   )
                 ) : (
                   <span className="text-muted-foreground italic text-sm">Not available</span>
@@ -573,19 +593,21 @@ export default function CompanyProfilePage() {
               <div className="flex flex-wrap gap-2">
                 {company.keyClientsPartners ? (
                   typeof company.keyClientsPartners === 'string' ? (
-                    company.keyClientsPartners.split(',').map((partner, idx) => (
+                    company.keyClientsPartners.split(',').map((partner: string, idx: number) => (
                       <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
                         {partner.trim()}
                       </UiBadge>
                     ))
-                  ) : Array.isArray(company.keyClientsPartners) ? (
-                    company.keyClientsPartners.map((partner, idx) => (
+                  ) : isArrayOfStrings(company.keyClientsPartners) ? (
+                    company.keyClientsPartners.map((partner: string, idx: number) => (
                       <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
                         {partner}
                       </UiBadge>
                     ))
                   ) : (
-                    <span className="text-muted-foreground italic text-sm">Not available</span>
+                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                      {String(company.keyClientsPartners)}
+                    </UiBadge>
                   )
                 ) : (
                   <span className="text-muted-foreground italic text-sm">Not available</span>
