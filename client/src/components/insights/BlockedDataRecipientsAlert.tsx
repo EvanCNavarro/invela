@@ -16,8 +16,6 @@ interface BlockedDataRecipientsAlertProps {
   count: number;
   /** Optional className for styling */
   className?: string;
-  /** Optional click handler for the alert */
-  onClick?: () => void;
 }
 
 /**
@@ -29,8 +27,7 @@ const logAlert = (action: string, details?: any) => {
 
 const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   count,
-  className,
-  onClick
+  className
 }) => {
   // Log when the component renders with a different count
   React.useEffect(() => {
@@ -45,16 +42,9 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4 flex items-center justify-between hover:bg-red-200 transition-colors",
-        onClick ? "cursor-pointer" : "",
+        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4 flex items-center",
         className
       )}
-      onClick={() => {
-        if (onClick) {
-          logAlert('Alert clicked');
-          onClick();
-        }
-      }}
     >
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0 text-red-500">
@@ -69,11 +59,6 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
           </p>
         </div>
       </div>
-      {onClick && (
-        <div className="text-sm text-red-700 font-medium">
-          View details →
-        </div>
-      )}
     </div>
   );
 };
