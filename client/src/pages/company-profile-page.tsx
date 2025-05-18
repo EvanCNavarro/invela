@@ -417,16 +417,7 @@ export default function CompanyProfilePage() {
 
   const renderUsersTab = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            value={userSearchQuery}
-            onChange={(e) => setUserSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      <div className="flex justify-end">
         <InviteButton
           variant="user"
           pulse={false}
@@ -435,8 +426,17 @@ export default function CompanyProfilePage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Company Users</CardTitle>
+          <div className="relative max-w-xs">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users..."
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
+              className="pl-8 w-[200px] h-8"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -448,7 +448,12 @@ export default function CompanyProfilePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {users
+                .filter(user => 
+                  user.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                  user.email?.toLowerCase().includes(userSearchQuery.toLowerCase())
+                )
+                .map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
