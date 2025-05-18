@@ -20,7 +20,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { Shield } from 'lucide-react';
-import { createLogger } from '@/lib/logger';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -67,9 +66,6 @@ interface RiskRadarChartProps {
   showDropdown?: boolean;
 }
 
-// Initialize logger for RiskRadarChart component
-const logger = createLogger('RiskRadarChart');
-
 export function RiskRadarChart({ className, companyId, showDropdown = true }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
@@ -91,10 +87,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Set the selected company ID once the current company is loaded or if a specific companyId is provided
   useEffect(() => {
     if (companyId) {
-      logger.info('Setting selected company ID from companyId prop:', companyId);
+      console.log('[RiskRadarChart] Setting selected company ID from companyId prop:', companyId);
       setSelectedCompanyId(companyId);
     } else if (company && !selectedCompanyId) {
-      logger.info('Setting selected company ID from current company:', company.id);
+      console.log('[RiskRadarChart] Setting selected company ID from current company:', company.id);
       setSelectedCompanyId(company.id);
     }
   }, [company, selectedCompanyId, companyId]);
@@ -103,12 +99,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
   const isFintech = company?.category === 'FinTech';
   
-  logger.debug('Company category check:', { 
-    category: company?.category,
-    isBankOrInvela,
-    isFintech,
-    showDropdownProp: showDropdown
-  });
+  // Log the company type for debugging
+  useEffect(() => {
+    if (company) {
+      console.log('[RiskRadarChart] Company category check:', { 
+        category: company?.category,
+        isBankOrInvela,
+        isFintech,
+        showDropdownProp: showDropdown
+      });
+    }
+  }, [company, isBankOrInvela, isFintech, showDropdown]);
   
   // Use a more specific return type to fix TypeScript errors
   interface CompanyNetworkResponse {
@@ -128,7 +129,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         risk_clusters: relationship.relatedCompanyRiskClusters
       } as CompanyWithRiskClusters));
       
-      logger.info('Fetched network companies:', {
+      console.log('[RiskRadarChart] Fetched network companies:', {
         count: transformedCompanies.length,
         companies: transformedCompanies.map(c => ({ id: c.id, name: c.name, category: c.category }))
       });
@@ -155,7 +156,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Log the current display company for debugging
   useEffect(() => {
     if (displayCompany) {
-      logger.info('Display company updated:', {
+      console.log('[RiskRadarChart] Display company updated:', {
         id: displayCompany.id,
         name: displayCompany.name,
         category: displayCompany.category,
@@ -172,7 +173,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Log when risk clusters data is missing
   useEffect(() => {
     if (displayCompany && !riskClusters) {
-      logger.warn('Risk clusters data missing for company:', {
+      console.warn('[RiskRadarChart] Risk clusters data missing for company:', {
         id: displayCompany.id,
         name: displayCompany.name
       });
@@ -433,7 +434,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                   value={selectedCompanyId?.toString()} 
                   onValueChange={(value) => {
                     const newCompanyId = parseInt(value);
-                    logger.info('Company selected from dropdown:', newCompanyId);
+                    console.log('[RiskRadarChart] Company selected from dropdown:', newCompanyId);
                     setSelectedCompanyId(newCompanyId);
                   }}
                 >
