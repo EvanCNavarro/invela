@@ -76,14 +76,14 @@ const calculateStatus = (
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'Blocked':
-      return 'bg-red-100 text-red-800 border-red-200';
+      return 'bg-red-50 text-red-700 border border-red-200/70 shadow-sm';
     case 'Approaching Block':
-      return 'bg-amber-100 text-amber-800 border-amber-200';
+      return 'bg-amber-50 text-amber-700 border border-amber-200/70 shadow-sm';
     case 'Monitoring':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-sm';
     case 'Stable':
     default:
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-green-50 text-green-700 border border-green-200/70 shadow-sm';
   }
 };
 
@@ -178,8 +178,10 @@ const RiskTable: React.FC<{
             <TableRow 
               key={company.id}
               className={cn(
-                onCompanyClick ? "cursor-pointer hover:bg-muted/50" : "",
-                company.status === 'Blocked' ? "bg-red-50" : ""
+                onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : "",
+                company.status === 'Blocked' ? "bg-gradient-to-r from-red-50/70 to-red-50/30" : 
+                company.status === 'Approaching Block' ? "bg-gradient-to-r from-amber-50/60 to-amber-50/20" :
+                company.status === 'Monitoring' ? "bg-gradient-to-r from-blue-50/40 to-blue-50/10" : ""
               )}
               onClick={() => onCompanyClick && onCompanyClick(company.id)}
             >
@@ -205,7 +207,7 @@ const RiskTable: React.FC<{
               </TableCell>
               <TableCell>
                 <span className={cn(
-                  "px-2 py-1 rounded-full text-xs font-medium border",
+                  "px-2.5 py-1 rounded-full text-xs font-medium",
                   getStatusColor(company.status)
                 )}>
                   {company.status}
