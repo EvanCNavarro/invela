@@ -1,186 +1,93 @@
 /**
- * Client-side Unified Logger
- * 
- * A central logging utility for the frontend that provides consistent formatting
- * and levels across all components. Implements proper log levels with
- * contextual information to improve debugging and reduce noise.
- * 
- * Usage:
- * import { logger } from '@/lib/logger';
- * 
- * logger.info('User profile updated', { userId: 123 });
- * logger.error('Failed to load data', { error: err.message, component: 'UserList' });
+ * Logger utility for consistent logging across the application
+ * Provides namespaced log messages with color coding for better debugging
  */
 
-// Log levels in order of verbosity
-export enum LogLevel {
-  TRACE = 0,
-  DEBUG = 1,
-  INFO = 2,
-  WARN = 3,
-  ERROR = 4,
+type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+interface LoggerOptions {
+  /** Enable or disable all logging */
+  enabled?: boolean;
+  /** Enable or disable specific log levels */
+  levels?: {
+    info?: boolean;
+    warn?: boolean;
+    error?: boolean;
+    debug?: boolean;
+  };
 }
 
-/**
- * Determine if we're in a production environment
- * In production, default to higher log level (less verbose)
- */
-const isProduction = import.meta.env.PROD;
-
-// Current log level (can be configured)
-const currentLogLevel = (() => {
-  // Allow override with localStorage for debugging
-  const localStorageLevel = localStorage.getItem('LOG_LEVEL')?.toUpperCase();
-  if (localStorageLevel) {
-    switch (localStorageLevel) {
-      case 'TRACE': return LogLevel.TRACE;
-      case 'DEBUG': return LogLevel.DEBUG;
-      case 'INFO': return LogLevel.INFO;
-      case 'WARN': return LogLevel.WARN;
-      case 'ERROR': return LogLevel.ERROR;
-    }
+const defaultOptions: LoggerOptions = {
+  enabled: process.env.NODE_ENV !== 'production',
+  levels: {
+    info: true,
+    warn: true,
+    error: true,
+    debug: process.env.NODE_ENV !== 'production'
   }
+};
 
-  // Default based on environment
-  return isProduction ? LogLevel.INFO : LogLevel.DEBUG;
-})();
-
-/**
- * Format a log message with timestamp, level and structured data
- */
-function formatLogEntry(level: string, message: string, data?: any): string {
-  const timestamp = new Date().toISOString();
-  return `[${timestamp}] [${level}] ${message}`;
-}
-
-/**
- * Determine if a message at the given level should be logged
- * based on the current log level setting
- */
-function shouldLog(level: LogLevel): boolean {
-  return level >= currentLogLevel;
-}
-
-/**
- * Apply styling to console output when possible
- */
-function getStyleForLevel(level: string): string {
-  switch (level) {
-    case 'TRACE': return 'color: #6c757d';
-    case 'DEBUG': return 'color: #17a2b8';
-    case 'INFO': return 'color: #28a745';
-    case 'WARN': return 'color: #ffc107; font-weight: bold';
-    case 'ERROR': return 'color: #dc3545; font-weight: bold';
-    default: return '';
-  }
-}
-
-/**
- * The logger interface with methods for each log level
- */
-export const logger = {
-  /**
-   * Trace level logging - most verbose, for fine-grained debugging
-   * Only enabled when LOG_LEVEL is set to TRACE
-   */
-  trace: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.TRACE)) {
-      console.log(
-        `%c${formatLogEntry('TRACE', message)}`, 
-        getStyleForLevel('TRACE'), 
-        data
-      );
-    }
-  },
-
-  /**
-   * Debug level logging - for development information
-   * Enabled when LOG_LEVEL is set to DEBUG or TRACE
-   */
-  debug: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.DEBUG)) {
-      console.log(
-        `%c${formatLogEntry('DEBUG', message)}`, 
-        getStyleForLevel('DEBUG'), 
-        data
-      );
-    }
-  },
-
-  /**
-   * Info level logging - for general operational information
-   * This is the default level in production
-   */
-  info: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.INFO)) {
-      console.log(
-        `%c${formatLogEntry('INFO', message)}`, 
-        getStyleForLevel('INFO'), 
-        data
-      );
-    }
-  },
-
-  /**
-   * Warning level logging - for potential issues that aren't errors
-   */
-  warn: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.WARN)) {
-      console.warn(
-        `%c${formatLogEntry('WARN', message)}`, 
-        getStyleForLevel('WARN'), 
-        data
-      );
-    }
-  },
-
-  /**
-   * Error level logging - for actual errors that need attention
-   */
-  error: (message: string, data?: any) => {
-    if (shouldLog(LogLevel.ERROR)) {
-      console.error(
-        `%c${formatLogEntry('ERROR', message)}`, 
-        getStyleForLevel('ERROR'), 
-        data
-      );
-    }
-  },
-
-  /**
-   * Group related log messages together to reduce noise
-   */
-  group: (label: string, collapsed = false) => {
-    if (collapsed) {
-      console.groupCollapsed(label);
-    } else {
-      console.group(label);
-    }
-  },
-
-  /**
-   * End the current log group
-   */
-  groupEnd: () => {
-    console.groupEnd();
-  },
+// Color styles for different log levels
+const styles = {
+  info: 'color: #2196F3; font-weight: bold;',
+  warn: 'color: #FF9800; font-weight: bold;',
+  error: 'color: #F44336; font-weight: bold;',
+  debug: 'color: #9C27B0; font-weight: bold;',
+  reset: 'color: inherit'
 };
 
 /**
- * Helper to create a component-specific logger
- * that prefixes all messages with the component name
+ * Creates a namespaced logger for a specific component or module
  * 
- * @param componentName Name of the component using the logger
- * @returns A logger instance with component context
+ * @param namespace The name of the component or module
+ * @param options Configuration options for the logger
+ * @returns A logger object with methods for different log levels
  */
-export function createComponentLogger(componentName: string) {
+export function createLogger(namespace: string, options: LoggerOptions = {}) {
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    levels: {
+      ...defaultOptions.levels,
+      ...options.levels
+    }
+  };
+
   return {
-    trace: (message: string, data?: any) => logger.trace(`[${componentName}] ${message}`, data),
-    debug: (message: string, data?: any) => logger.debug(`[${componentName}] ${message}`, data),
-    info: (message: string, data?: any) => logger.info(`[${componentName}] ${message}`, data),
-    warn: (message: string, data?: any) => logger.warn(`[${componentName}] ${message}`, data),
-    error: (message: string, data?: any) => logger.error(`[${componentName}] ${message}`, data),
-    group: (label: string, collapsed = false) => logger.group(`[${componentName}] ${label}`, collapsed),
-    groupEnd: () => logger.groupEnd(),
+    /**
+     * Log informational messages
+     */
+    info: (...args: any[]) => {
+      if (mergedOptions.enabled && mergedOptions.levels?.info) {
+        console.log(`%c[${namespace}]%c`, styles.info, styles.reset, ...args);
+      }
+    },
+
+    /**
+     * Log warning messages
+     */
+    warn: (...args: any[]) => {
+      if (mergedOptions.enabled && mergedOptions.levels?.warn) {
+        console.warn(`%c[${namespace}]%c`, styles.warn, styles.reset, ...args);
+      }
+    },
+
+    /**
+     * Log error messages
+     */
+    error: (...args: any[]) => {
+      if (mergedOptions.enabled && mergedOptions.levels?.error) {
+        console.error(`%c[${namespace}]%c`, styles.error, styles.reset, ...args);
+      }
+    },
+
+    /**
+     * Log debug messages (disabled in production)
+     */
+    debug: (...args: any[]) => {
+      if (mergedOptions.enabled && mergedOptions.levels?.debug) {
+        console.log(`%c[${namespace}:debug]%c`, styles.debug, styles.reset, ...args);
+      }
+    }
   };
 }
