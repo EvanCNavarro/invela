@@ -326,10 +326,10 @@ export default function CompanyProfilePage() {
                       usersError?.message === "Authentication required" || 
                       filesError?.message === "Authentication required";
   
-  const isLoadingData = authLoading || (isLoading && !error);
+  const isLoadingData = authLoading || companyLoading;
   const hasError = error || usersError || filesError;
   
-  if (isLoading) {
+  if (isLoadingData) {
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -360,22 +360,47 @@ export default function CompanyProfilePage() {
     );
   }
 
+  // Determine if this is a database connection issue
+  const isDatabaseError = error?.message?.includes("database") || 
+                          error?.message?.includes("connection") ||
+                          error?.message?.includes("terminating");
+
   if (hasError || !company) {
     return (
       <DashboardLayout>
         <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-10 h-10 text-gray-500" />
+              {isDatabaseError ? (
+                <Shield className="w-10 h-10 text-gray-500" />
+              ) : (
+                <AlertCircle className="w-10 h-10 text-gray-500" />
+              )}
             </div>
-            <h2 className="text-2xl font-semibold text-gray-800">Error Loading Company</h2>
-            <p className="text-muted-foreground">
-              {error instanceof Error ? error.message : "Failed to load company data"}
+            <h2 className="text-2xl font-semibold text-gray-800">
+              {isDatabaseError 
+                ? "Database Connection Error" 
+                : "Error Loading Company"
+              }
+            </h2>
+            <p className="text-gray-600 max-w-md">
+              {isDatabaseError 
+                ? "We're having trouble connecting to our database. This may be a temporary issue. Please try again in a few moments."
+                : error instanceof Error 
+                  ? error.message 
+                  : "Failed to load company data"
+              }
             </p>
-            <Button variant="outline" onClick={handleBackClick}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </Button>
+            <div className="flex space-x-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={handleBackClick}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+            </div>
           </div>
         </PageTemplate>
       </DashboardLayout>
@@ -428,52 +453,56 @@ export default function CompanyProfilePage() {
 
   const renderOverviewTab = () => (
     <div className="space-y-8">
-      {/* Company Summary Section */}
-      <Card className="bg-slate-50/50 border shadow-sm">
-        <CardContent className="pt-6">
+      {/* Company Summary Section - Monochromatic design */}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg text-gray-800 font-medium">Company Profile</CardTitle>
+          <CardDescription className="text-gray-500">Overview and key details</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Company description */}
               {company.description && (
-                <div className="text-md leading-relaxed max-w-3xl">
+                <div className="text-md text-gray-700 leading-relaxed max-w-3xl pb-4 border-b border-gray-100">
                   {company.description}
                 </div>
               )}
               
               {/* Key Facts Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Headquarters</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Building2 className="h-4 w-4 text-slate-500" />
-                    {formatValue(company.hqAddress)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Headquarters</div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-800">{formatValue(company.hqAddress)}</span>
                   </div>
                 </div>
                 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Category</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Tag className="h-4 w-4 text-slate-500" />
-                    {formatValue(company.category)}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Category</div>
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-800">{formatValue(company.category)}</span>
                   </div>
                 </div>
                 
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Website</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Globe className="h-4 w-4 text-slate-500" />
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-600 mb-1">Website</div>
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-gray-500" />
                     {company.websiteUrl ? (
                       <a
                         href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-700 hover:underline flex items-center gap-1"
+                        className="text-gray-700 hover:underline flex items-center gap-1"
                       >
                         {company.websiteUrl}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : (
-                      <span className="text-muted-foreground italic text-sm">Not available</span>
+                      <span className="text-gray-500 italic text-sm">Not available</span>
                     )}
                   </div>
                 </div>
