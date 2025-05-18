@@ -24,6 +24,7 @@ import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 
 // Default visualization types
 const defaultVisualizationTypes = [
+  { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "network_visualization", label: "Network Visualization" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
@@ -37,7 +38,7 @@ const fintechVisualizationTypes = [
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("consent_activity");
+  const [selectedVisualization, setSelectedVisualization] = useState("risk_monitoring");
   const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
   const [isFintech, setIsFintech] = useState(false);
   
@@ -89,9 +90,6 @@ export default function InsightsPage() {
             Export PDF
           </Button>
         </div>
-
-        {/* Risk Monitoring Insights - Always visible at the top for Banks and Invela companies */}
-        <RiskMonitoringInsight className="mb-6" />
         
         {!isFintech && (
           <div className="flex justify-between items-center">
@@ -114,6 +112,10 @@ export default function InsightsPage() {
         )}
 
         <Widget title="" className="h-[600px] mb-12">
+          {selectedVisualization === "risk_monitoring" && !isFintech && (
+            <RiskMonitoringInsight className="bg-transparent shadow-none border-none" />
+          )}
+          
           {selectedVisualization === "network_visualization" && !isFintech && (
             <NetworkInsightVisualization />
           )}
