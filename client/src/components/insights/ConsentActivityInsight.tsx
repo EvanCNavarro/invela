@@ -128,14 +128,27 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
           value={timeframe}
           onValueChange={handleTimeframeChange}
           className="justify-start border rounded-md p-1 bg-muted/30"
+          variant="outline"
         >
-          <ToggleGroupItem value="1day" aria-label="1 Day view" className="text-sm px-3 py-1">
+          <ToggleGroupItem 
+            value="1day" 
+            aria-label="1 Day view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
             1D
           </ToggleGroupItem>
-          <ToggleGroupItem value="30days" aria-label="30 Days view" className="text-sm px-3 py-1">
+          <ToggleGroupItem 
+            value="30days" 
+            aria-label="30 Days view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
             30D
           </ToggleGroupItem>
-          <ToggleGroupItem value="1year" aria-label="1 Year view" className="text-sm px-3 py-1">
+          <ToggleGroupItem 
+            value="1year" 
+            aria-label="1 Year view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
             1Y
           </ToggleGroupItem>
         </ToggleGroup>
