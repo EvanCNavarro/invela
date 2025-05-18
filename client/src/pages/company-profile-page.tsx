@@ -302,197 +302,295 @@ export default function CompanyProfilePage() {
     ? new Date().getFullYear() - company.incorporationYear
     : null;
 
+  // Helper function to format data with proper handling of empty values
+  const formatValue = (value: string | number | null | undefined, formatter?: (val: string | number) => React.ReactNode) => {
+    if (value === null || value === undefined || value === '') {
+      return <span className="text-muted-foreground italic text-sm">Not available</span>;
+    }
+    return formatter ? formatter(value) : value;
+  };
+
+  // Helper to parse arrays from strings
+  const parseArrayField = (field: string | string[] | null | undefined): string[] => {
+    if (!field) return [];
+    if (Array.isArray(field)) return field;
+    try {
+      // Attempt to parse if it's a JSON string
+      const parsed = JSON.parse(field);
+      return Array.isArray(parsed) ? parsed : [field];
+    } catch (e) {
+      // If not JSON, split by commas
+      return field.split(',').map(item => item.trim());
+    }
+  };
+
+  // Format accreditation status with monochromatic badge styling
+  const getStatusBadge = (status: string | null | undefined) => {
+    if (!status) return null;
+    
+    const label = getAccreditationStatusLabel(status);
+    
+    return (
+      <UiBadge variant="outline" className="font-normal bg-slate-50">
+        {label}
+      </UiBadge>
+    );
+  };
+
   const renderOverviewTab = () => (
-    <div className="space-y-6">
-      {/* Top row - Key metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Risk Score Card - Enhanced styling */}
-        <Card className="overflow-hidden border-t-4 border-t-blue-500 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="h-5 w-5 text-blue-500" />
-              <span className="leading-tight">S&P Data Access Risk Score</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RiskMeter 
-              score={company.riskScore || company.risk_score || 0}
-              chosenScore={company.chosenScore || company.chosen_score}
-              companyId={company.id || 0}
-              companyType={company.category || "FinTech"}
-            />
-            {/* Show accreditation status if available */}
-            {company.accreditationStatus && (
-              <div className="mt-3 pt-3 border-t border-muted">
-                <div className="text-sm font-medium text-muted-foreground mb-1">Accreditation Status</div>
-                <div className="flex items-center">
-                  <UiBadge 
-                    variant="outline" 
-                    className={
-                      company.accreditationStatus.toUpperCase() === 'APPROVED' ? "bg-green-50 text-green-700 border-green-200" :
-                      company.accreditationStatus.toUpperCase() === 'IN_PROCESS' ? "bg-purple-50 text-purple-700 border-purple-200" :
-                      company.accreditationStatus.toUpperCase() === 'UNDER_REVIEW' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
-                      company.accreditationStatus.toUpperCase() === 'REVOKED' ? "bg-red-50 text-red-700 border-red-200" :
-                      ""
-                    }
-                  >
-                    {getAccreditationStatusLabel(company.accreditationStatus)}
-                  </UiBadge>
+    <div className="space-y-8">
+      {/* Company Summary Section */}
+      <Card className="bg-slate-50/50 border shadow-sm">
+        <CardContent className="pt-6">
+          <div className="grid md:grid-cols-[1fr_auto] gap-6 items-start">
+            <div className="space-y-4">
+              {/* Company description */}
+              {company.description && (
+                <div className="text-md leading-relaxed max-w-3xl">
+                  {company.description}
+                </div>
+              )}
+              
+              {/* Key Facts Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Headquarters</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Building2 className="h-4 w-4 text-slate-500" />
+                    {formatValue(company.hqAddress)}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Category</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Tag className="h-4 w-4 text-slate-500" />
+                    {formatValue(company.category)}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Website</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Globe className="h-4 w-4 text-slate-500" />
+                    {company.websiteUrl ? (
+                      <a
+                        href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-700 hover:underline flex items-center gap-1"
+                      >
+                        {company.websiteUrl}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground italic text-sm">Not available</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+            
+            {/* Risk Score Card - Positioned to the right */}
+            <div className="bg-white rounded-lg border p-4 shadow-sm min-w-[240px]">
+              <div className="text-sm font-medium mb-2 flex items-center">
+                <Shield className="h-4 w-4 text-slate-500 mr-2" />
+                S&P Data Access Risk Score
+              </div>
+              <RiskMeter 
+                score={company.riskScore || company.risk_score || 0}
+                chosenScore={company.chosenScore || company.chosen_score}
+                companyId={company.id || 0}
+                companyType={company.category || "FinTech"}
+              />
+              
+              {/* Accreditation Status */}
+              {(company.accreditationStatus || company.accreditation_status) && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Accreditation Status</div>
+                  <div className="flex items-center">
+                    {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Data Grid - 2 columns responsive */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Business Information */}
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2 border-b bg-slate-50/80">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-slate-500" />
+              Business Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="space-y-4">
+              {/* Legal Structure */}
+              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                <div className="text-sm font-medium text-muted-foreground">Legal Entity</div>
+                <div>{formatValue(company.legalStructure)}</div>
+              </div>
+              
+              {/* Employee Count */}
+              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                <div className="text-sm font-medium text-muted-foreground">Employees</div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-slate-500" />
+                  {formatValue(company.numEmployees)}
+                </div>
+              </div>
+              
+              {/* Founded Year / Company Age */}
+              {company.incorporationYear && (
+                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                  <div className="text-sm font-medium text-muted-foreground">Founded</div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-slate-500" />
+                    <span>
+                      {company.incorporationYear} 
+                      {companyAge !== null && ` (${companyAge} ${companyAge === 1 ? 'year' : 'years'} ago)`}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Revenue Tier */}
+              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                <div className="text-sm font-medium text-muted-foreground">Revenue Tier</div>
+                <div>
+                  {company.revenueTier ? (
+                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                      {company.revenueTier === 'sm' ? 'Small' : 
+                      company.revenueTier === 'md' ? 'Medium' : 
+                      company.revenueTier === 'lg' ? 'Large' : 
+                      company.revenueTier}
+                    </UiBadge>
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not available</span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Certifications - Only show if available */}
+              {company.certifications_compliance && (
+                <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+                  <div className="text-sm font-medium text-muted-foreground">Certifications</div>
+                  <div className="flex flex-wrap gap-2">
+                    {company.certifications_compliance.split(',').map((cert, idx) => (
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                        {cert.trim()}
+                      </UiBadge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Company Overview Card - Enhanced styling */}
-        <Card className="overflow-hidden border-t-4 border-t-indigo-500 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Building2 className="h-5 w-5 text-indigo-500" />
-              Company Overview
+        {/* Leadership and Investment */}
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2 border-b bg-slate-50/80">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Users className="h-4 w-4 text-slate-500" />
+              Leadership & Investment
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Category</div>
-              <span className="font-medium">{company.category || 'Not available'}</span>
-            </div>
-            
-            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Website</div>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-indigo-500" />
-                {company.websiteUrl ? (
-                  <a
-                    href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1"
-                  >
-                    {company.websiteUrl}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+          <CardContent className="pt-4">
+            <div className="space-y-4">
+              {/* Leadership Team - Only show if available */}
+              {company.foundersAndLeadership && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Leadership Team</div>
+                  <p className="text-sm leading-relaxed">{company.foundersAndLeadership}</p>
+                </div>
+              )}
+              
+              {/* Funding Stage */}
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
+                {company.fundingStage ? (
+                  <UiBadge variant="outline" className="font-normal bg-slate-50">
+                    {company.fundingStage}
+                  </UiBadge>
                 ) : (
-                  <span className="text-muted-foreground italic">Not available</span>
+                  <span className="text-muted-foreground italic text-sm">Not available</span>
                 )}
               </div>
-            </div>
-            
-            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Headquarters</div>
-              <span>{company.hqAddress || 
-                <span className="text-muted-foreground italic">Not available</span>}
-              </span>
-            </div>
-            
-            {company.description && (
-              <div className="pt-2 mt-2 border-t border-muted">
-                <div className="text-sm font-medium text-muted-foreground mb-1">Description</div>
-                <p className="text-sm line-clamp-3">{company.description}</p>
+              
+              {/* Investors */}
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
+                <p className="text-sm">
+                  {formatValue(company.investors)}
+                </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Business Details Card - Enhanced styling */}
-        <Card className="overflow-hidden border-t-4 border-t-emerald-500 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Briefcase className="h-5 w-5 text-emerald-500" />
-              Business Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Employees</div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-emerald-500" />
-                <span className="font-medium">{company.numEmployees || 'Not available'}</span>
-              </div>
-            </div>
-            
-            {companyAge !== null && (
-              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-                <div className="text-sm font-medium text-muted-foreground">Company Age</div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-emerald-500" />
-                  <span>{companyAge} {companyAge === 1 ? 'year' : 'years'}</span>
-                </div>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Legal Structure</div>
-              <span>{company.legalStructure || 
-                <span className="text-muted-foreground italic">Not available</span>}
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
-              <div className="text-sm font-medium text-muted-foreground">Revenue Tier</div>
-              <UiBadge variant="outline" className="bg-slate-50">
-                {company.revenueTier === 'sm' ? 'Small' : 
-                 company.revenueTier === 'md' ? 'Medium' : 
-                 company.revenueTier === 'lg' ? 'Large' : 
-                 company.revenueTier || 'Not available'}
-              </UiBadge>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bottom row - Investment Profile with enhanced layout and visualization */}
-      <Card className="overflow-hidden border-t-4 border-t-amber-500 shadow-md hover:shadow-lg transition-shadow duration-300">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <DollarSign className="h-5 w-5 text-amber-500" />
-            Investment Profile
+      {/* Additional Data - Products & Partners */}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-2 border-b bg-slate-50/80">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <Layers className="h-4 w-4 text-slate-500" />
+            Products & Partnerships
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
-                <p className={!company.investors ? "text-muted-foreground italic" : ""}>
-                  {company.investors || 'No investor information available'}
-                </p>
-              </div>
-              
-              {company.keyClientsPartners && company.keyClientsPartners.length > 0 && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Key Partners</div>
-                  <div className="flex flex-wrap gap-2">
-                    {company.keyClientsPartners.map((partner, idx) => (
-                      <UiBadge key={idx} variant="outline" className="bg-slate-50">
-                        {partner}
-                      </UiBadge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {company.fundingStage && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
-                  <UiBadge className="bg-amber-50 text-amber-700 border-amber-200">{company.fundingStage}</UiBadge>
-                </div>
-              )}
-              
-              {company.productsServices && company.productsServices.length > 0 && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
-                  <div className="flex flex-wrap gap-2">
-                    {company.productsServices.map((product, idx) => (
-                      <UiBadge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            {/* Products & Services */}
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-2">Products & Services</div>
+              <div className="flex flex-wrap gap-2">
+                {company.productsServices ? (
+                  typeof company.productsServices === 'string' ? (
+                    <UiBadge variant="outline" className="font-normal bg-slate-50">
+                      {company.productsServices}
+                    </UiBadge>
+                  ) : (
+                    parseArrayField(company.productsServices).map((product, idx) => (
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
                         {product}
                       </UiBadge>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    ))
+                  )
+                ) : (
+                  <span className="text-muted-foreground italic text-sm">Not available</span>
+                )}
+              </div>
+            </div>
+            
+            {/* Key Clients & Partners */}
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-2">Key Clients & Partners</div>
+              <div className="flex flex-wrap gap-2">
+                {company.keyClientsPartners ? (
+                  typeof company.keyClientsPartners === 'string' ? (
+                    company.keyClientsPartners.split(',').map((partner, idx) => (
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                        {partner.trim()}
+                      </UiBadge>
+                    ))
+                  ) : Array.isArray(company.keyClientsPartners) ? (
+                    company.keyClientsPartners.map((partner, idx) => (
+                      <UiBadge key={idx} variant="outline" className="font-normal bg-slate-50">
+                        {partner}
+                      </UiBadge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-sm">Not available</span>
+                  )
+                ) : (
+                  <span className="text-muted-foreground italic text-sm">Not available</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
