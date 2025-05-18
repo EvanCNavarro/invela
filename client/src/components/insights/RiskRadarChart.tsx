@@ -71,6 +71,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
+  
+  // Create a ref to access the chart instance for direct updates
+  const chartRef = React.useRef<any>(null);
+  
+  // Cache previous risk clusters data to maintain chart visibility during loading
+  const [prevRiskClusters, setPrevRiskClusters] = useState<RiskClusters | null>(null);
+  
+  // Track if we're in the middle of a data transition for better UX
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Logger for tracking chart state changes
+  const logChartUpdate = (message: string, data: any) => {
+    console.log(`[RiskRadarChart] ${message}`, data);
+  };
 
   // Load ApexCharts components only on client side
   useEffect(() => {
@@ -87,10 +101,16 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Set the selected company ID once the current company is loaded or if a specific companyId is provided
   useEffect(() => {
     if (companyId) {
-      console.log('[RiskRadarChart] Setting selected company ID from companyId prop:', companyId);
+      logChartUpdate('Setting selected company ID from companyId prop', companyId);
+      
+      // Mark as transitioning when changing companies
+      if (selectedCompanyId && selectedCompanyId !== companyId) {
+        setIsTransitioning(true);
+      }
+      
       setSelectedCompanyId(companyId);
     } else if (company && !selectedCompanyId) {
-      console.log('[RiskRadarChart] Setting selected company ID from current company:', company.id);
+      logChartUpdate('Setting selected company ID from current company', company.id);
       setSelectedCompanyId(company.id);
     }
   }, [company, selectedCompanyId, companyId]);
@@ -283,22 +303,48 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     ('risk_clusters' in displayCompany ? displayCompany.risk_clusters : undefined) : 
     undefined;
     
+  // Cache risk clusters data when available to maintain chart during transitions
+  useEffect(() => {
+    if (riskClusters && Object.keys(riskClusters).length > 0) {
+      // Store current risk clusters for use during loading states
+      setPrevRiskClusters(riskClusters);
+      
+      logChartUpdate('Updated cached risk clusters', {
+        companyId: displayCompany?.id,
+        companyName: displayCompany?.name,
+        hasData: true
+      });
+      
+      // Mark transition as complete if we were in a transitioning state
+      if (isTransitioning) {
+        setIsTransitioning(false);
+      }
+    }
+  }, [riskClusters, displayCompany, isTransitioning]);
+  
   // Handle missing risk cluster data
   useEffect(() => {
     if (displayCompany && !riskClusters) {
       console.warn('[RiskRadarChart] Risk clusters data missing for company:', {
         id: displayCompany.id,
         name: displayCompany.name,
-        riskScore: displayCompany.risk_score || displayCompany.chosen_score
+        riskScore: displayCompany.risk_score || displayCompany.chosen_score,
+        usingCachedData: !!prevRiskClusters
       });
       
       // If the company was selected from the dropdown and is missing risk clusters,
       // we should invalidate the query to trigger a refetch with our enhanced query function
       if (selectedCompanyId && selectedCompanyId === displayCompany.id && selectedCompanyId !== company?.id) {
-        console.log('[RiskRadarChart] Invalidating query to refetch with risk data');
+        logChartUpdate('Invalidating query to refetch with risk data', {
+          selectedCompanyId,
+          currentCompanyId: company?.id
+        });
       }
     }
-  }, [displayCompany, riskClusters, selectedCompanyId, company?.id]);
+  }, [displayCompany, riskClusters, selectedCompanyId, company?.id, prevRiskClusters]);
+  
+  // The actual risk clusters to display - use cached data during transitions
+  const displayRiskClusters = riskClusters || (isTransitioning ? prevRiskClusters : null);
 
   // Format all category names to match the reference design
   const formatCategoryNames = (categories: string[]): string[] => {
@@ -567,7 +613,13 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 value={selectedCompanyId?.toString()} 
                 onValueChange={(value) => {
                   const newCompanyId = parseInt(value);
-                  console.log('[RiskRadarChart] Company selected from dropdown:', newCompanyId);
+                  logChartUpdate('Company selected from dropdown', newCompanyId);
+                  
+                  // Mark as transitioning to maintain chart visibility during data loading
+                  if (newCompanyId !== selectedCompanyId) {
+                    setIsTransitioning(true);
+                  }
+                  
                   setSelectedCompanyId(newCompanyId);
                 }}
               >
