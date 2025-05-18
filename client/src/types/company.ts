@@ -23,7 +23,6 @@ export type CompanyCategory = typeof CompanyCategory[keyof typeof CompanyCategor
  * PENDING - Old in-process status
  * SUSPENDED - Company with temporarily revoked access
  * EXPIRED - Company with lapsed accreditation
- * AWAITING_INVITATION - Company not yet onboarded
  */
 export const AccreditationStatus = {
   // Primary status values
@@ -37,8 +36,7 @@ export const AccreditationStatus = {
   IN_REVIEW: 'IN_REVIEW',
   PENDING: 'PENDING',
   SUSPENDED: 'SUSPENDED',
-  EXPIRED: 'EXPIRED',
-  AWAITING_INVITATION: 'AWAITING_INVITATION'
+  EXPIRED: 'EXPIRED'
 } as const;
 
 export type AccreditationStatus = typeof AccreditationStatus[keyof typeof AccreditationStatus];

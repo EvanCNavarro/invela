@@ -127,9 +127,7 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
             company.accreditationStatus === AccreditationStatus.SUSPENDED && 
               "bg-gray-100 text-gray-800",
             company.accreditationStatus === AccreditationStatus.EXPIRED && 
-              "bg-red-100 text-red-800",
-            company.accreditationStatus === AccreditationStatus.AWAITING_INVITATION && 
-              "bg-gray-100 text-gray-800"
+              "bg-red-100 text-red-800"
           )}
         >
           {/* Format the status value for display */}
