@@ -120,20 +120,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     enabled: isBankOrInvela && !!company?.id && showDropdown
   });
   
+  // Define the network visualization data type for better type safety
+  interface NetworkVisualizationData {
+    nodes: Array<{id: number, name: string, category: string, riskScore?: number}>;
+    edges: Array<{source: number, target: number}>;
+  }
+  
   // 2. Get network visualization data which may contain additional companies
-  const { data: networkVisualizationData, isLoading: isNetworkVisualizationLoading } = useQuery<any>({
+  const { data: networkVisualizationData, isLoading: isNetworkVisualizationLoading } = useQuery<NetworkVisualizationData>({
     queryKey: ['/api/network/visualization'],
     // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown,
-    onSuccess: (data) => {
-      console.log('[RiskRadarChart] Network visualization data loaded:', {
-        nodesCount: data?.nodes?.length || 0,
-        edgesCount: data?.edges?.length || 0
-      });
-    },
-    onError: (error) => {
-      console.error('[RiskRadarChart] Error loading network visualization:', error);
-    }
+    enabled: isBankOrInvela && !!company?.id && showDropdown
   });
   
   // 3. Also keep the existing relationships query for backward compatibility
@@ -169,10 +166,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     }
     
     // Add network visualization nodes if available
-    if (networkVisualizationData?.nodes) {
+    if (networkVisualizationData && networkVisualizationData.nodes) {
       const visualizationCompanies = networkVisualizationData.nodes
-        .filter((node: any) => node.category === 'FinTech')
-        .map((node: any) => ({
+        .filter(node => node.category === 'FinTech')
+        .map(node => ({
           id: node.id,
           name: node.name,
           category: node.category,
@@ -192,11 +189,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       (a.name || '').localeCompare(b.name || '')
     );
     
+    // Enhanced debugging to help track data sources and company availability
     console.log('[RiskRadarChart] Combined companies list:', {
       allCompaniesCount: allCompaniesData?.length || 0,
       relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
       visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
-      uniqueCompaniesCount: sortedCompanies.length
+      uniqueCompaniesCount: sortedCompanies.length,
+      firstFewCompanies: sortedCompanies.slice(0, 5).map(c => c.name),
+      userType: company?.category
     });
     
     return sortedCompanies;
