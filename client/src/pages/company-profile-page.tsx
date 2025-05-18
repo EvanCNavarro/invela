@@ -304,12 +304,14 @@ export default function CompanyProfilePage() {
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
+      {/* Top row - Key metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              <span className="leading-tight">S&P Data Access<br />Risk Score</span>
+        {/* Risk Score Card - Enhanced styling */}
+        <Card className="overflow-hidden border-t-4 border-t-blue-500 shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Shield className="h-5 w-5 text-blue-500" />
+              <span className="leading-tight">S&P Data Access Risk Score</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -318,98 +320,181 @@ export default function CompanyProfilePage() {
               chosenScore={company.chosenScore || company.chosen_score}
               companyId={company.id || 0}
               companyType={company.category || "FinTech"}
-              canAdjust={company.category === "Bank" || company.category === "Invela"}
             />
+            {/* Show accreditation status if available */}
+            {company.accreditationStatus && (
+              <div className="mt-3 pt-3 border-t border-muted">
+                <div className="text-sm font-medium text-muted-foreground mb-1">Accreditation Status</div>
+                <div className="flex items-center">
+                  <UiBadge 
+                    variant="outline" 
+                    className={
+                      company.accreditationStatus.toUpperCase() === 'APPROVED' ? "bg-green-50 text-green-700 border-green-200" :
+                      company.accreditationStatus.toUpperCase() === 'IN_PROCESS' ? "bg-purple-50 text-purple-700 border-purple-200" :
+                      company.accreditationStatus.toUpperCase() === 'UNDER_REVIEW' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                      company.accreditationStatus.toUpperCase() === 'REVOKED' ? "bg-red-50 text-red-700 border-red-200" :
+                      ""
+                    }
+                  >
+                    {getAccreditationStatusLabel(company.accreditationStatus)}
+                  </UiBadge>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+        {/* Company Overview Card - Enhanced styling */}
+        <Card className="overflow-hidden border-t-4 border-t-indigo-500 shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Building2 className="h-5 w-5 text-indigo-500" />
               Company Overview
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
               <div className="text-sm font-medium text-muted-foreground">Category</div>
-              <span>{company.category || 'Not available'}</span>
+              <span className="font-medium">{company.category || 'Not available'}</span>
             </div>
-            <div>
+            
+            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
               <div className="text-sm font-medium text-muted-foreground">Website</div>
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4" />
+                <Globe className="h-4 w-4 text-indigo-500" />
                 {company.websiteUrl ? (
                   <a
                     href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                    className="text-primary hover:underline flex items-center gap-1"
                   >
                     {company.websiteUrl}
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : (
-                  <span>Not available</span>
+                  <span className="text-muted-foreground italic">Not available</span>
                 )}
               </div>
             </div>
-            <div>
+            
+            <div className="grid grid-cols-[100px_1fr] gap-2 items-center">
               <div className="text-sm font-medium text-muted-foreground">Headquarters</div>
-              <span>{company.hqAddress || 'Not available'}</span>
+              <span>{company.hqAddress || 
+                <span className="text-muted-foreground italic">Not available</span>}
+              </span>
             </div>
+            
+            {company.description && (
+              <div className="pt-2 mt-2 border-t border-muted">
+                <div className="text-sm font-medium text-muted-foreground mb-1">Description</div>
+                <p className="text-sm line-clamp-3">{company.description}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5" />
+        {/* Business Details Card - Enhanced styling */}
+        <Card className="overflow-hidden border-t-4 border-t-emerald-500 shadow-md hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Briefcase className="h-5 w-5 text-emerald-500" />
               Business Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
               <div className="text-sm font-medium text-muted-foreground">Employees</div>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>{company.numEmployees || 'Not available'}</span>
+                <Users className="h-4 w-4 text-emerald-500" />
+                <span className="font-medium">{company.numEmployees || 'Not available'}</span>
               </div>
             </div>
+            
             {companyAge !== null && (
-              <div>
+              <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
                 <div className="text-sm font-medium text-muted-foreground">Company Age</div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{companyAge} years</span>
+                  <Calendar className="h-4 w-4 text-emerald-500" />
+                  <span>{companyAge} {companyAge === 1 ? 'year' : 'years'}</span>
                 </div>
               </div>
             )}
-            <div>
+            
+            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
               <div className="text-sm font-medium text-muted-foreground">Legal Structure</div>
-              <span>{company.legalStructure || 'Not available'}</span>
+              <span>{company.legalStructure || 
+                <span className="text-muted-foreground italic">Not available</span>}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-[120px_1fr] gap-2 items-center">
+              <div className="text-sm font-medium text-muted-foreground">Revenue Tier</div>
+              <UiBadge variant="outline" className="bg-slate-50">
+                {company.revenueTier === 'sm' ? 'Small' : 
+                 company.revenueTier === 'md' ? 'Medium' : 
+                 company.revenueTier === 'lg' ? 'Large' : 
+                 company.revenueTier || 'Not available'}
+              </UiBadge>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5" />
+      {/* Bottom row - Investment Profile with enhanced layout and visualization */}
+      <Card className="overflow-hidden border-t-4 border-t-amber-500 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <DollarSign className="h-5 w-5 text-amber-500" />
             Investment Profile
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="text-sm font-medium text-muted-foreground">Investors</div>
-            <span>{company.investors || 'No investor information available'}</span>
-          </div>
-          {company.fundingStage && (
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Funding Stage</div>
-              <UiBadge variant="outline">{company.fundingStage}</UiBadge>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
+                <p className={!company.investors ? "text-muted-foreground italic" : ""}>
+                  {company.investors || 'No investor information available'}
+                </p>
+              </div>
+              
+              {company.keyClientsPartners && company.keyClientsPartners.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Key Partners</div>
+                  <div className="flex flex-wrap gap-2">
+                    {company.keyClientsPartners.map((partner, idx) => (
+                      <UiBadge key={idx} variant="outline" className="bg-slate-50">
+                        {partner}
+                      </UiBadge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            
+            <div className="space-y-4">
+              {company.fundingStage && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
+                  <UiBadge className="bg-amber-50 text-amber-700 border-amber-200">{company.fundingStage}</UiBadge>
+                </div>
+              )}
+              
+              {company.productsServices && company.productsServices.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
+                  <div className="flex flex-wrap gap-2">
+                    {company.productsServices.map((product, idx) => (
+                      <UiBadge key={idx} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {product}
+                      </UiBadge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
