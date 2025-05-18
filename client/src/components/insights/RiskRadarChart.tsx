@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Shield, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 // Import these dynamically to prevent SSR issues
@@ -72,8 +72,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
   
-  // Create a ref to access the chart instance for direct updates
-  const chartRef = React.useRef<any>(null);
+  // We'll use state to manage chart updates instead of direct ref access
+  const [chartInstance, setChartInstance] = useState<any>(null);
   
   // Cache previous risk clusters data to maintain chart visibility during loading
   const [prevRiskClusters, setPrevRiskClusters] = useState<RiskClusters | null>(null);
@@ -562,35 +562,30 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
   // Effect to directly update the chart instance during transitions
   useEffect(() => {
     // Only run this effect when we have the chart loaded and we're transitioning 
-    if (chartComponentLoaded && chartRef.current && isTransitioning && displayRiskClusters) {
-      // Get the ApexCharts instance
-      const chart = chartRef.current.chart;
+    if (chartComponentLoaded && chartInstance && isTransitioning && displayRiskClusters) {
+      logChartUpdate('Directly updating chart series during transition', {
+        companyId: displayCompany?.id,
+        companyName: displayCompany?.name,
+        dimensions: Object.keys(displayRiskClusters).length
+      });
       
-      if (chart) {
-        logChartUpdate('Directly updating chart series during transition', {
+      // Update just the series data without re-rendering the entire chart
+      // This is the key to smooth animations between data sets
+      chartInstance.updateSeries([{
+        name: 'Risk Score',
+        data: Object.values(displayRiskClusters)
+      }], true);
+      
+      // End transition state after animation is complete
+      setTimeout(() => {
+        setIsTransitioning(false);
+        logChartUpdate('Transition animation completed', {
           companyId: displayCompany?.id,
-          companyName: displayCompany?.name,
-          dimensions: Object.keys(displayRiskClusters).length
+          companyName: displayCompany?.name
         });
-        
-        // Update just the series data without re-rendering the entire chart
-        // This is the key to smooth animations between data sets
-        chart.updateSeries([{
-          name: 'Risk Score',
-          data: Object.values(displayRiskClusters)
-        }], true);
-        
-        // End transition state after animation is complete
-        setTimeout(() => {
-          setIsTransitioning(false);
-          logChartUpdate('Transition animation completed', {
-            companyId: displayCompany?.id,
-            companyName: displayCompany?.name
-          });
-        }, 800); // Match this with the animation speed in chartOptions
-      }
+      }, 800); // Match this with the animation speed in chartOptions
     }
-  }, [chartComponentLoaded, displayRiskClusters, isTransitioning, displayCompany]);
+  }, [chartComponentLoaded, chartInstance, displayRiskClusters, isTransitioning, displayCompany]);
 
   // If we're still loading and don't have previous data, or if chart component isn't available yet, show a skeleton
   if ((isLoading && !prevRiskClusters && !isTransitioning) || !chartComponentLoaded) {
@@ -705,8 +700,11 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           {!displayCompany ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="flex flex-col items-center">
-                <Shield className="h-14 w-14 text-muted-foreground opacity-20 mb-3" />
-                <p className="text-sm text-muted-foreground">No company selected</p>
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
+                <p className="text-sm font-medium">Loading company data...</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Please wait while we prepare the risk data
+                </p>
               </div>
             </div>
           ) : isLoading && !isTransitioning ? (
@@ -760,14 +758,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 </div>
               )}
               
-              {/* The chart itself - doesn't need to be conditionally rendered anymore */}
+              {/* The chart itself with event handlers to capture the chart instance */}
               <ReactApexChart 
-                ref={chartRef}
                 options={chartOptions} 
                 series={series} 
                 type="radar" 
                 height="500"
                 width="100%"
+                onMount={(chart: any) => {
+                  setChartInstance(chart);
+                  logChartUpdate('Chart instance mounted', { available: true });
+                }}
               />
             </div>
           )}
