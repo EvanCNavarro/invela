@@ -26,28 +26,10 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // Add safety checks for the stored password format
-  if (!stored || !stored.includes('.')) {
-    console.error('Invalid password format in database', { stored: typeof stored });
-    return false;
-  }
-  
   const [hashed, salt] = stored.split(".");
-  
-  // Ensure we have both parts
-  if (!hashed || !salt) {
-    console.error('Invalid password hash format', { hasHash: !!hashed, hasSalt: !!salt });
-    return false;
-  }
-  
-  try {
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
-  } catch (error) {
-    console.error('Error comparing passwords:', error);
-    return false;
-  }
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
 async function getUserByEmail(email: string) {
