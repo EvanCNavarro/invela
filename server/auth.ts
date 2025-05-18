@@ -25,11 +25,39 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
+/**
+ * Securely compares a supplied password with a stored password hash
+ * Uses a constant-time comparison to prevent timing attacks
+ * 
+ * @param supplied - The password provided by the user during login
+ * @param stored - The hashed password stored in the database (format: "hash.salt")
+ * @returns boolean indicating if passwords match
+ */
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    // Split the stored password into hash and salt components
+    const [hashed, salt] = stored.split(".");
+    
+    if (!hashed || !salt) {
+      console.warn("Password comparison failed: Invalid password format", { 
+        hasHash: !!hashed, 
+        hasSalt: !!salt 
+      });
+      return false;
+    }
+    
+    // Convert stored hash to buffer
+    const hashedBuf = Buffer.from(hashed, "hex");
+    
+    // Hash the supplied password with the same salt
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    
+    // Use constant-time comparison to prevent timing attacks
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    return false;
+  }
 }
 
 async function getUserByEmail(email: string) {
@@ -44,8 +72,14 @@ async function getUserByUsername(username: string) {
 export function setupAuth(app: Express) {
   const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
   
-  // Use a hardcoded fallback secret to ensure we always have a value
-  const sessionSecret = 'development_session_secret_for_testing_purposes_only';
+  // Use environment variable for session secret with a secure fallback
+  const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
+  
+  // Log a warning if using the fallback secret in production
+  if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+    console.warn('WARNING: Using fallback session secret in production environment!');
+    console.warn('Please set SESSION_SECRET environment variable for better security.');
+  }
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
@@ -54,7 +88,8 @@ export function setupAuth(app: Express) {
     store,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'lax' // Help with CSRF protection
     }
   };
 
