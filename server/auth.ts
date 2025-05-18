@@ -36,22 +36,13 @@ async function getUserByEmail(email: string) {
   return db.select().from(users).where(eq(users.email, email)).limit(1);
 }
 
-// Function to get user by username - for passport
-async function getUserByUsername(username: string) {
-  return db.select().from(users).where(eq(users.email, username)).limit(1);
-}
-
 export function setupAuth(app: Express) {
   const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "development_session_secret_for_testing_purposes_only",
+    secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     store,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
   };
 
   app.set("trust proxy", 1);
@@ -60,11 +51,8 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy({
-      usernameField: 'email',
-      passwordField: 'password'
-    }, async (email, password, done) => {
-      const [user] = await getUserByEmail(email);
+    new LocalStrategy(async (username, password, done) => {
+      const [user] = await getUserByUsername(username);
       if (!user || !(await comparePasswords(password, user.password))) {
         return done(null, false);
       } else {
@@ -91,9 +79,9 @@ export function setupAuth(app: Express) {
       return res.status(400).send(error.toString());
     }
 
-    const [existingUser] = await getUserByEmail(result.data.email);
+    const [existingUser] = await getUserByUsername(result.data.username);
     if (existingUser) {
-      return res.status(400).send("Email already exists");
+      return res.status(400).send("Username already exists");
     }
 
     const [user] = await db
