@@ -241,10 +241,11 @@ const RiskTable: React.FC<{
   };
 
   return (
-    <div className="border rounded-md">
-      <Table>
-        <TableHeader>
-          <TableRow>
+    <div className="border rounded-md relative">
+      <div className="overflow-auto max-h-[500px]">
+        <Table>
+          <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+            <TableRow>
             <TableHead 
               className="cursor-pointer select-none"
               onClick={() => handleSort('name')}
