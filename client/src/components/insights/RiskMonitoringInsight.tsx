@@ -168,7 +168,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     <div className={cn("space-y-4", className)}>
       {/* Header row with warning and timeframe toggle */}
       {/* Row with warning message and timeframe toggle */}
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-center mb-4">
         {/* Warning message on the left */}
         <div className="flex-grow mr-4">
           {blockedCompanies.length > 0 && (
@@ -177,7 +177,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         </div>
 
         {/* Timeframe toggle on the right */}
-        <div className="flex-shrink-0 self-end">
+        <div className="flex-shrink-0">
           <Tabs 
             value={timeframe} 
             onValueChange={(val: string) => setTimeframe(val as '7day' | '30day')}
