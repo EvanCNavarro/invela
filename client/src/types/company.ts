@@ -85,10 +85,18 @@ export const companySchema = z.object({
   chosen_score: z.number().nullable().optional(), // Database column name
   chosenScore: z.number().nullable().optional(), // Frontend property name
   accreditationStatus: z.enum([
+    // Primary status values 
     'APPROVED',
     'UNDER_REVIEW',
     'IN_PROCESS',
-    'REVOKED'
+    'REVOKED',
+    // Legacy status values for backward compatibility
+    'PROVISIONALLY_APPROVED',
+    'IN_REVIEW',
+    'PENDING',
+    'SUSPENDED',
+    'EXPIRED',
+    'AWAITING_INVITATION'
   ]).default('IN_PROCESS'),
   available_tabs: z.array(z.string()).default(['task-center']),
   documents: z.array(documentSchema).optional(),

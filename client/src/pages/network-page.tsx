@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { Company, AccreditationStatus } from "@/types/company";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { InviteButton } from "@/components/ui/invite-button";
