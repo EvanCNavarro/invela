@@ -455,21 +455,17 @@ export default function CompanyProfilePage() {
     <div className="space-y-8">
       {/* Company Summary Section - Monochromatic design */}
       <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium text-gray-800">Company Profile</CardTitle>
-          <CardDescription className="text-sm text-gray-500">Overview and key details</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid md:grid-cols-[1fr_260px] gap-4 items-start">
-            <div className="space-y-4">
-              {/* Company description */}
-              {company.description && (
-                <div className="text-sm text-gray-700 leading-relaxed pb-3 border-b border-gray-100">
-                  {company.description}
-                </div>
-              )}
-              
-              {/* Key Facts Row */}
+        <CardContent className="p-4">
+          <div className="grid gap-4">
+            {/* Company description */}
+            {company.description && (
+              <div className="text-sm text-gray-700 leading-relaxed pb-3 border-b border-gray-100">
+                {company.description}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4">
+              {/* Key Facts Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-gray-50 rounded p-3">
                   <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Headquarters</div>
@@ -507,55 +503,35 @@ export default function CompanyProfilePage() {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Risk Score Card - Positioned to the right with monochromatic design */}
-            <div className="bg-gray-50 rounded p-4">
-              <div className="flex items-center mb-2">
-                <Shield className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Risk Assessment Score</div>
+              
+              {/* Risk Info - Simplified display */}
+              <div className="bg-gray-50 rounded p-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Risk Score - Plain text */}
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide flex items-center">
+                      <Shield className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
+                      Risk Score
+                    </div>
+                    <div className="text-2xl font-medium text-gray-800">
+                      {company.riskScore || company.risk_score || 0}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      No Risk
+                    </div>
+                  </div>
+                  
+                  {/* Accreditation Status */}
+                  {(company.accreditationStatus || company.accreditation_status) && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Accreditation</div>
+                      <div className="flex items-center">
+                        {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <RiskMeter 
-                score={company.riskScore || company.risk_score || 0}
-                chosenScore={company.chosenScore || company.chosen_score}
-                companyId={company.id || 0}
-                companyType={company.category || "FinTech"}
-              />
-              
-              {/* Accreditation Status */}
-              {(company.accreditationStatus || company.accreditation_status) && (
-                <div className="mt-3 pt-2 border-t border-gray-100">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Accreditation Status</div>
-                  <div className="flex items-center">
-                    {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
-                  </div>
-                </div>
-              )}
-              
-              {/* Risk Dimensions - New section */}
-              {company.risk_clusters && (
-                <div className="mt-3 pt-2 border-t border-gray-100">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Risk Dimensions</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white rounded p-2 border border-gray-100">
-                      <div className="text-xs text-gray-500 mb-0.5">Cybersecurity</div>
-                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.cybersecurity || 0}/100</div>
-                    </div>
-                    <div className="bg-white rounded p-2 border border-gray-100">
-                      <div className="text-xs text-gray-500 mb-0.5">Financial</div>
-                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.financial || 0}/100</div>
-                    </div>
-                    <div className="bg-white rounded p-2 border border-gray-100">
-                      <div className="text-xs text-gray-500 mb-0.5">Compliance</div>
-                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.compliance || 0}/100</div>
-                    </div>
-                    <div className="bg-white rounded p-2 border border-gray-100">
-                      <div className="text-xs text-gray-500 mb-0.5">Operational</div>
-                      <div className="text-sm font-medium text-gray-800">{company.risk_clusters.operational || 0}/100</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
