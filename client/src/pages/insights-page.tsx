@@ -127,8 +127,8 @@ export default function InsightsPage() {
           )}
           
           {selectedVisualization === "risk_radar" && (
-            <div className="w-full h-full p-4">
-              {/* Explicitly set showDropdown to true */}
+            <div className="w-full h-full">
+              {/* Explicitly set showDropdown to true with improved spacing */}
               <RiskRadarChart 
                 showDropdown={true} 
                 className="bg-white rounded-md shadow-sm border" 
