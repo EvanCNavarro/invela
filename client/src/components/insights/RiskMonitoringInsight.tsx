@@ -90,6 +90,9 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 }) => {
   // State for filtering to only show blocked companies
   const [showOnlyBlocked, setShowOnlyBlocked] = useState(false);
+  
+  // State for the selected time frame (7 days or 30 days)
+  const [timeframe, setTimeframe] = useState<'7day' | '30day'>('7day');
 
   // Get the current company data (to check if it's a Bank or Invela)
   const { data: currentCompany, isLoading: isLoadingCurrentCompany } = useQuery<any>({

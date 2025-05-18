@@ -10,12 +10,17 @@
 import React from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface BlockedDataRecipientsAlertProps {
   /** Number of blocked data recipients */
   count: number;
   /** Optional className for styling */
   className?: string;
+  /** Current timeframe setting */
+  timeframe?: '7day' | '30day';
+  /** Callback for when timeframe changes */
+  onTimeframeChange?: (timeframe: '7day' | '30day') => void;
 }
 
 /**
@@ -27,7 +32,9 @@ const logAlert = (action: string, details?: any) => {
 
 const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   count,
-  className
+  className,
+  timeframe = '7day',
+  onTimeframeChange
 }) => {
   // Log when the component renders with a different count
   React.useEffect(() => {
@@ -42,7 +49,7 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4 flex items-center",
+        "bg-red-100 border-l-4 border-red-500 p-4 rounded-md mb-4 flex items-center justify-between",
         className
       )}
     >
@@ -59,6 +66,19 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
           </p>
         </div>
       </div>
+      
+      {onTimeframeChange && (
+        <Tabs 
+          value={timeframe} 
+          onValueChange={(value) => onTimeframeChange(value as '7day' | '30day')}
+          className="mr-2"
+        >
+          <TabsList>
+            <TabsTrigger value="7day">7-Day Change</TabsTrigger>
+            <TabsTrigger value="30day">30-Day Change</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
     </div>
   );
 };
