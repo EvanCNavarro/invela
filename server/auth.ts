@@ -166,11 +166,34 @@ export function setupAuth(app: Express) {
       usernameField: 'email',
       passwordField: 'password'
     }, async (email, password, done) => {
-      const [user] = await getUserByEmail(email);
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return done(null, false);
-      } else {
+      try {
+        // Log the authentication attempt (without sensitive data)
+        authLogger.info(`Authentication attempt for email: ${email}`);
+        
+        // Look up the user
+        const [user] = await getUserByEmail(email);
+        
+        // If no user found with this email
+        if (!user) {
+          authLogger.warn(`No user found with email: ${email}`);
+          return done(null, false);
+        }
+        
+        // Attempt password comparison
+        const passwordValid = await comparePasswords(password, user.password);
+        
+        if (!passwordValid) {
+          authLogger.warn(`Invalid password for user: ${email}`);
+          return done(null, false);
+        }
+        
+        // Successfully authenticated
+        authLogger.info(`User authenticated successfully: ${email}`);
         return done(null, user);
+      } catch (error) {
+        // Log any authentication errors
+        authLogger.error('Authentication error', { error, email });
+        return done(error);
       }
     }),
   );
@@ -212,8 +235,35 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req, res, next) => {
+    // Enhanced login endpoint with better error handling
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        // If there's a server error
+        authLogger.error("Login server error", { err });
+        return res.status(500).send("An unexpected error occurred. Please try again later.");
+      }
+      
+      if (!user) {
+        // Authentication failed
+        authLogger.warn("Login failed", { email: req.body.email });
+        return res.status(401).send("Unauthorized");
+      }
+      
+      // Log user in (wrap in promise for async handling)
+      req.login(user, loginErr => {
+        if (loginErr) {
+          authLogger.error("Session creation error", { loginErr });
+          return res.status(500).send("Could not create login session. Please try again.");
+        }
+        
+        // Log success
+        authLogger.info("Login successful", { id: user.id, email: user.email });
+        
+        // Return the user data
+        return res.status(200).json(user);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
