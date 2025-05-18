@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { TrendingDown, TrendingUp, Minus, ArrowRight } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 
 // Define the types for our data
 export interface CompanyRiskData {
@@ -32,6 +32,7 @@ interface DeterioratingRiskTableProps {
   blockThreshold: number;
   className?: string;
   onCompanyClick?: (companyId: number) => void;
+  timeframe: '7day' | '30day';
 }
 
 /**
@@ -93,10 +94,9 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   companies,
   blockThreshold,
   className,
-  onCompanyClick
+  onCompanyClick,
+  timeframe
 }) => {
-  // State for the selected time frame (7 days or 30 days)
-  const [timeframe, setTimeframe] = useState<'7day' | '30day'>('7day');
   
   // Filtered and sorted companies based on the time frame and score change
   const processedCompanies = useMemo(() => {
@@ -137,33 +137,10 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   
   return (
     <div className={cn("space-y-4", className)}>
-      <Tabs 
-        defaultValue="7day" 
-        value={timeframe} 
-        onValueChange={(value) => setTimeframe(value as '7day' | '30day')}
-        className="w-full"
-      >
-        <div className="flex justify-end items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="7day">7-Day Change</TabsTrigger>
-            <TabsTrigger value="30day">30-Day Change</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="7day" className="mt-0">
-          <RiskTable 
-            companies={processedCompanies} 
-            onCompanyClick={onCompanyClick} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="30day" className="mt-0">
-          <RiskTable 
-            companies={processedCompanies} 
-            onCompanyClick={onCompanyClick} 
-          />
-        </TabsContent>
-      </Tabs>
+      <RiskTable 
+        companies={processedCompanies} 
+        onCompanyClick={onCompanyClick} 
+      />
     </div>
   );
 };
