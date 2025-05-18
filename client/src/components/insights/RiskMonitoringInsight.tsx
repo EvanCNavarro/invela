@@ -167,24 +167,27 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Header row with warning and timeframe toggle */}
-      <div className="mb-4">
-        {/* Warning message at the top */}
-        {blockedCompanies.length > 0 && (
-          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
-        )}
-      </div>
+      {/* Row with warning message and timeframe toggle */}
+      <div className="flex justify-between items-start mb-4">
+        {/* Warning message on the left */}
+        <div className="flex-grow mr-4">
+          {blockedCompanies.length > 0 && (
+            <BlockedDataRecipientsAlert count={blockedCompanies.length} />
+          )}
+        </div>
 
-      {/* Timeframe toggle positioned separately */}
-      <div className="flex justify-end mb-4">
-        <Tabs 
-          value={timeframe} 
-          onValueChange={(val: string) => setTimeframe(val as '7day' | '30day')}
-        >
-          <TabsList>
-            <TabsTrigger value="7day">7-Day Change</TabsTrigger>
-            <TabsTrigger value="30day">30-Day Change</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Timeframe toggle on the right */}
+        <div className="flex-shrink-0 self-end">
+          <Tabs 
+            value={timeframe} 
+            onValueChange={(val: string) => setTimeframe(val as '7day' | '30day')}
+          >
+            <TabsList>
+              <TabsTrigger value="7day">7-Day Change</TabsTrigger>
+              <TabsTrigger value="30day">30-Day Change</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
       
       {/* Show table with appropriate size based on isWidget */}
