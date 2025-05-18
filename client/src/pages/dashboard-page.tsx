@@ -389,16 +389,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
-            </div>
-          )}
-        </div>
-
-        <InviteModal
-          variant="fintech"
-          open={openFinTechModal}
-          onOpenChange={setOpenFinTechModal}
-        />
-      </PageTemplate>
-    </DashboardLayout>
-  );
-}
