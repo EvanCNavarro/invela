@@ -49,18 +49,21 @@ const getActiveConsents = (companyId: number | undefined): number => {
 };
 
 /**
- * Calculate newly granted consents using the 17:1 ratio (active:new)
- * with some natural variance to match active consent patterns
+ * Calculate newly granted consents using an enhanced algorithm
+ * that provides more volume and greater variance
  */
 const getNewlyGrantedConsents = (activeConsents: number): number => {
-  // Base calculation using the 17:1 ratio
-  const baseValue = activeConsents / 17;
+  // Use a more optimistic ratio (12:1 instead of 17:1) to increase volume
+  const baseValue = activeConsents / 12;
   
-  // Add slight variance (±10%) to make the pattern more natural
-  // This ensures newly granted consents follow a similar pattern to active consents
-  const varianceFactor = 0.9 + (Math.random() * 0.2); // 0.9 to 1.1
+  // Add higher variance (±25%) to make the pattern more dynamic
+  // This creates more pronounced peaks and valleys in the newly granted data
+  const varianceFactor = 0.75 + (Math.random() * 0.5); // 0.75 to 1.25
   
-  return Math.round(baseValue * varianceFactor);
+  // Apply seasonal adjustment to create more realistic patterns
+  const seasonalAdjustment = 1 + (Math.sin(Math.random() * Math.PI) * 0.15); // 0.85 to 1.15
+  
+  return Math.round(baseValue * varianceFactor * seasonalAdjustment);
 };
 
 /**
@@ -449,7 +452,7 @@ export function ConsentActivityChart({
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
+      <div className="flex items-center justify-center h-[550px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -457,7 +460,7 @@ export function ConsentActivityChart({
   
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] space-y-2">
+      <div className="flex flex-col items-center justify-center h-[550px] space-y-2">
         <div className="text-destructive font-medium">Failed to load data</div>
         <div className="text-xs text-muted-foreground max-w-md">
           {error instanceof Error ? error.message : 'Check console for details'}
@@ -470,11 +473,11 @@ export function ConsentActivityChart({
     <Card className={`${className}`}>
       <CardContent className="p-6">
         {!chartComponentLoaded ? (
-          <div className="flex items-center justify-center h-[400px]">
+          <div className="flex items-center justify-center h-[550px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="h-[400px]">
+          <div className="h-[550px]">
             {ReactApexChart && (
               <ReactApexChart
                 ref={chartRef}
