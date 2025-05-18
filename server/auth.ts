@@ -43,11 +43,18 @@ async function getUserByUsername(username: string) {
 
 export function setupAuth(app: Express) {
   const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
+  // Make sure we have a valid session secret
+  const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    }
   };
 
   app.set("trust proxy", 1);
