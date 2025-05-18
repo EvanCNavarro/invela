@@ -316,9 +316,10 @@ export function ConsentActivityChart({
       },
       parentHeightOffset: 0,
     },
-    // Add extra top margin for the chart
+    // Add extra margins for the chart
     margin: {
-      top: 30
+      top: 30,
+      bottom: 20
     },
     colors: ['#4965EC', '#6EE7B7'], // Primary blue for active, green for newly granted
     fill: {
@@ -369,7 +370,8 @@ export function ConsentActivityChart({
           month: timeframe === '1year' ? 'MMM' : "MMM 'yy",
           day: 'dd MMM',
           hour: timeframe === '1day' ? 'HH:mm' : undefined,
-        }
+        },
+        offsetY: 5, // Add offset to move labels down slightly
       },
       tooltip: {
         enabled: false
@@ -379,6 +381,9 @@ export function ConsentActivityChart({
       },
       axisTicks: {
         show: false
+      },
+      padding: {
+        bottom: 10 // Add padding at the bottom
       }
     },
     yaxis: {
