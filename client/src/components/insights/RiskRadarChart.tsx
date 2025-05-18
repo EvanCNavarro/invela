@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Label } from '@/components/ui/label';
 
 // Import these dynamically to prevent SSR issues
@@ -700,8 +701,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           {!displayCompany ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="flex flex-col items-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
-                <p className="text-sm font-medium">Loading company data...</p>
+                <LoadingSpinner size="lg" />
+                <p className="text-sm font-medium mt-4">Loading company data...</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Please wait while we prepare the risk data
                 </p>
@@ -710,8 +711,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           ) : isLoading && !isTransitioning ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="flex flex-col items-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
-                <p className="text-sm text-muted-foreground">Loading risk data...</p>
+                <LoadingSpinner size="lg" />
+                <p className="text-sm text-muted-foreground mt-4">Loading risk data...</p>
                 {prevRiskClusters && (
                   <p className="text-xs text-muted-foreground mt-1">
                     Updating from previous data...
@@ -753,7 +754,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               {/* Show a subtle loading indicator while transitioning between companies */}
               {isTransitioning && (
                 <div className="absolute top-2 right-2 z-10 flex items-center bg-blue-50 px-2 py-1 rounded-full">
-                  <Loader2 className="h-3 w-3 animate-spin text-blue-500 mr-1" />
+                  <LoadingSpinner className="text-blue-500 mr-1" size="xs" />
                   <span className="text-xs text-blue-600">Updating...</span>
                 </div>
               )}
@@ -765,12 +766,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 type="radar" 
                 height="500"
                 width="100%"
-                // Use the onMount callback to capture the chart instance for direct updates
-                onMount={(chart) => {
-                  // Store the chart instance in state for animations
-                  setChartInstance(chart);
-                  setChartComponentLoaded(true);
-                  logChartUpdate('Chart instance mounted', { available: true });
+                // ApexCharts doesn't have an official onMount prop, using ref approach instead
+                ref={(element: any) => {
+                  if (element && element.chart && !chartInstance) {
+                    // Store the chart instance in state for animations
+                    setChartInstance(element.chart);
+                    setChartComponentLoaded(true);
+                    logChartUpdate('Chart instance mounted', { available: true });
+                  }
                 }}
               />
             </div>
