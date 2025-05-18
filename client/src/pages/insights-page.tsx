@@ -127,7 +127,18 @@ export default function InsightsPage() {
           )}
           
           {selectedVisualization === "risk_radar" && (
-            <RiskRadarChart className="bg-transparent shadow-none border-none" />
+            <div className="w-full h-full p-4">
+              {/* Explicitly set showDropdown to true and add debug info */}
+              <RiskRadarChart 
+                showDropdown={true} 
+                className="bg-white rounded-md shadow-sm border" 
+              />
+              {currentCompany?.category === 'Invela' && (
+                <div className="mt-4 text-sm text-blue-500">
+                  Invela user detected - Company selection enabled
+                </div>
+              )}
+            </div>
           )}
           
           {selectedVisualization === "consent_activity" && (

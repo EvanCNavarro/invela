@@ -405,56 +405,67 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     );
   }
 
+  console.log('[RiskRadarChart] RENDER DEBUG - Current state:', {
+    company: company?.name,
+    category: company?.category, 
+    isBankOrInvela,
+    selectedCompanyId,
+    networkCompaniesCount: networkCompanies?.length || 0,
+    isCondensedView: className?.includes("border-none"),
+    displayCompanyName: displayCompany?.name
+  });
+
   return (
     <Card className={cn("w-full h-full", className)}>
-      {/* Only show header with title/description if NOT in condensed view (border-none class indicates dashboard widget) */}
-      {!className?.includes("border-none") && (
-        <CardHeader className="bg-slate-50 rounded-t-lg pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* Always show the header for Insights page views, but style it differently for widget view */}
+      <CardHeader className={className?.includes("border-none") ? "p-2" : "bg-slate-50 rounded-t-lg pb-3"}>
+        {/* Company selector for Bank/Invela users - moved outside the conditional rendering to ensure it's always considered */}
+        {showDropdown && isBankOrInvela && (
+          <div className="flex flex-row w-full items-center justify-between mb-2 bg-blue-100 p-2 rounded-md">
             <div>
-              <CardTitle className="text-slate-800">
-                Risk Dimension Analysis
-              </CardTitle>
-              <CardDescription className="text-slate-500">
-                Breakdown of risk across six key dimensions for {displayCompany?.name || 'this company'}
-              </CardDescription>
+              <h3 className="text-sm font-semibold text-blue-700">Select a company to view</h3>
+              <p className="text-xs text-blue-600">Found {networkCompanies?.length || 0} network members</p>
             </div>
-
-            {/* Company selector is shown only for Bank or Invela users */}
-            {showDropdown && isBankOrInvela && (
-              <div className="min-w-[220px] border-2 border-blue-500">
-                {/* Debug info to understand what's happening */}
-                <div className="text-xs text-blue-500 mb-1">
-                  Dropdown conditions met: {networkCompanies?.length || 0} companies
-                </div>
-                
-                <Select 
-                  value={selectedCompanyId?.toString()} 
-                  onValueChange={(value) => {
-                    const newCompanyId = parseInt(value);
-                    console.log('[RiskRadarChart] Company selected from dropdown:', newCompanyId);
-                    setSelectedCompanyId(newCompanyId);
-                  }}
-                >
-                  <SelectTrigger className="bg-white border-slate-300">
-                    <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
-                    {Array.isArray(networkCompanies) && networkCompanies
-                      // Show all network companies except the current one
-                      .filter(c => c.id !== (company?.id || 0))
-                      .map(c => (
-                        <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            
+            <div className="min-w-[200px]">
+              <Select 
+                value={selectedCompanyId?.toString()} 
+                onValueChange={(value) => {
+                  const newCompanyId = parseInt(value);
+                  console.log('[RiskRadarChart] Company selected from dropdown:', newCompanyId);
+                  setSelectedCompanyId(newCompanyId);
+                }}
+              >
+                <SelectTrigger className="bg-white border-slate-300">
+                  <SelectValue placeholder="Select a company" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={company?.id?.toString() || "0"}>{company?.name || "Your Company"} (You)</SelectItem>
+                  {Array.isArray(networkCompanies) && networkCompanies
+                    // Show all network companies except the current one
+                    .filter(c => c.id !== (company?.id || 0))
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </CardHeader>
-      )}
+        )}
+
+        {/* Only show title/description for non-widget views or after the company selector */}
+        {!className?.includes("border-none") && (
+          <div>
+            <CardTitle className="text-slate-800">
+              Risk Dimension Analysis
+            </CardTitle>
+            <CardDescription className="text-slate-500">
+              Breakdown of risk across six key dimensions for {displayCompany?.name || 'this company'}
+            </CardDescription>
+          </div>
+        )}
+      </CardHeader>
       <CardContent className="p-4">
         <div className="w-full" style={{ height: '450px' }}>
           {chartComponentLoaded && ReactApexChart && (
