@@ -113,6 +113,21 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     companies: CompanyWithRiskClusters[];
   }
   
+  // 1. Get direct companies data from API - similar to ConsentActivityInsight approach
+  const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
+    queryKey: ['/api/companies'],
+    // Only fetch for Bank and Invela users who should see the dropdown
+    enabled: isBankOrInvela && !!company?.id && showDropdown,
+  });
+  
+  // 2. Get network visualization data which may contain additional companies
+  const { data: networkVisualizationData, isLoading: isNetworkVisualizationLoading } = useQuery<any>({
+    queryKey: ['/api/network/visualization'],
+    // Only fetch for Bank and Invela users who should see the dropdown
+    enabled: isBankOrInvela && !!company?.id && showDropdown, 
+  });
+  
+  // 3. Also keep the existing relationships query for backward compatibility
   const { data: networkCompaniesData, isLoading: isNetworkLoading } = useQuery<RelationshipData[], Error, CompanyNetworkResponse>({
     queryKey: ['/api/relationships', company?.id],
     select: (data) => {
@@ -126,7 +141,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         risk_clusters: relationship.relatedCompanyRiskClusters
       } as CompanyWithRiskClusters));
       
-      console.log('[RiskRadarChart] Fetched network companies:', transformedCompanies.length);
+      console.log('[RiskRadarChart] Fetched relationship companies:', transformedCompanies.length);
       
       return { companies: transformedCompanies };
     },
@@ -134,8 +149,52 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     enabled: isBankOrInvela && !!company?.id,
   });
   
-  // Extract the companies array from the response
-  const networkCompanies = networkCompaniesData?.companies || [];
+  // 4. Combine all company sources and create a comprehensive list
+  const combinedCompanies = React.useMemo(() => {
+    // Start with the direct companies
+    let companies: CompanyWithRiskClusters[] = [...(allCompaniesData || [])];
+    
+    // Add relationship companies
+    if (networkCompaniesData?.companies) {
+      companies = [...companies, ...networkCompaniesData.companies];
+    }
+    
+    // Add network visualization nodes if available
+    if (networkVisualizationData?.nodes) {
+      const visualizationCompanies = networkVisualizationData.nodes
+        .filter((node: any) => node.category === 'FinTech')
+        .map((node: any) => ({
+          id: node.id,
+          name: node.name,
+          category: node.category,
+          risk_score: node.riskScore || 0
+        } as CompanyWithRiskClusters));
+      
+      companies = [...companies, ...visualizationCompanies];
+    }
+    
+    // Remove duplicates based on company ID
+    const uniqueCompanies = Array.from(
+      new Map(companies.map(company => [company.id, company])).values()
+    );
+    
+    // Sort alphabetically by name
+    const sortedCompanies = uniqueCompanies.sort((a, b) => 
+      (a.name || '').localeCompare(b.name || '')
+    );
+    
+    console.log('[RiskRadarChart] Combined companies list:', {
+      allCompaniesCount: allCompaniesData?.length || 0,
+      relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
+      visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
+      uniqueCompaniesCount: sortedCompanies.length
+    });
+    
+    return sortedCompanies;
+  }, [allCompaniesData, networkCompaniesData, networkVisualizationData]);
+  
+  // Use the combined list for the dropdown
+  const networkCompanies = combinedCompanies;
 
   // Fetch selected company data
   const { data: selectedCompany, isLoading: isSelectedCompanyLoading } = useQuery<CompanyWithRiskClusters>({
