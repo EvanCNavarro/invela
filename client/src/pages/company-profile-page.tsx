@@ -67,22 +67,36 @@ interface CompanyFile {
   uploadedBy: string;
 }
 
-// Helper function to determine the actual status based on the detailed status value
+/**
+ * Helper function to determine the display category based on accreditation status
+ * 
+ * Maps the detailed status values to one of three categories for UI purposes:
+ * - VALID: Approved companies
+ * - PENDING: Companies that are under review or in process
+ * - INVALID: Companies with revoked access
+ * 
+ * Also handles legacy status values for backward compatibility
+ */
 const getAccreditationStatus = (status: string | null | undefined): 'VALID' | 'PENDING' | 'INVALID' => {
   if (!status) return 'INVALID';
 
   // Normalize status to uppercase for case-insensitive comparison
   const normalizedStatus = status.toUpperCase();
-
-  const validStatuses = ['PROVISIONALLY_APPROVED', 'APPROVED'];
-  const pendingStatuses = ['IN_REVIEW', 'PENDING'];
-  const invalidStatuses = ['EXPIRED', 'REVOKED', 'SUSPENDED', 'AWAITING_INVITATION', 'NULL'];
   
   // Handle case where status might be "NULL" as a string instead of actual null
   if (normalizedStatus === 'NULL') return 'INVALID';
 
-  if (validStatuses.includes(normalizedStatus)) return 'VALID';
-  if (pendingStatuses.includes(normalizedStatus)) return 'PENDING';
+  // New status mappings
+  if (normalizedStatus === 'APPROVED') return 'VALID';
+  if (normalizedStatus === 'UNDER_REVIEW' || normalizedStatus === 'IN_PROCESS') return 'PENDING';
+  if (normalizedStatus === 'REVOKED') return 'INVALID';
+  
+  // Legacy status mappings for backward compatibility
+  if (['PROVISIONALLY_APPROVED'].includes(normalizedStatus)) return 'VALID';
+  if (['IN_REVIEW', 'PENDING'].includes(normalizedStatus)) return 'PENDING';
+  if (['EXPIRED', 'SUSPENDED', 'AWAITING_INVITATION'].includes(normalizedStatus)) return 'INVALID';
+  
+  // Default fallback
   return 'INVALID';
 };
 
