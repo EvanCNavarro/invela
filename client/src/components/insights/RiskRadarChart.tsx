@@ -456,20 +456,20 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
 
         {/* Title and description hidden as requested */}
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="w-full" style={{ height: '450px' }}>
+      <CardContent className="p-2">
+        <div className="w-full" style={{ height: '400px' }}>
           {chartComponentLoaded && ReactApexChart && (
             <ReactApexChart 
               options={chartOptions} 
               series={series} 
               type="radar" 
-              height="450"
+              height="400"
               width="100%"
             />
           )}
           {!chartComponentLoaded && (
             <div className="h-full w-full flex items-center justify-center">
-              <Skeleton className="w-full h-[450px] rounded-md" />
+              <Skeleton className="w-full h-[400px] rounded-md" />
             </div>
           )}
         </div>
