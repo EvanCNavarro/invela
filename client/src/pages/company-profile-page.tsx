@@ -428,14 +428,25 @@ export default function CompanyProfilePage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Company Users</CardTitle>
-          <div className="relative max-w-xs">
+          <div className="relative max-w-md">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search users..."
               value={userSearchQuery}
               onChange={(e) => setUserSearchQuery(e.target.value)}
-              className="pl-8 w-[200px] h-8"
+              className="pl-8 w-[300px] h-9"
             />
+            {userSearchQuery && (
+              <button
+                onClick={() => setUserSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -449,17 +460,35 @@ export default function CompanyProfilePage() {
             </TableHeader>
             <TableBody>
               {users
-                .filter(user => 
-                  user.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                  user.email?.toLowerCase().includes(userSearchQuery.toLowerCase())
-                )
-                .map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
-                </TableRow>
-              ))}
+                .filter(user => {
+                  if (!userSearchQuery) return true;
+                  const query = userSearchQuery.toLowerCase();
+                  return (
+                    (user.name?.toLowerCase().includes(query)) ||
+                    (user.email?.toLowerCase().includes(query))
+                  );
+                })
+                .map((user) => {
+                  // Highlight matching text if there's a search query
+                  const highlightMatch = (text: string) => {
+                    if (!userSearchQuery) return text;
+                    
+                    const parts = text.split(new RegExp(`(${userSearchQuery})`, 'i'));
+                    return parts.map((part, i) => 
+                      part.toLowerCase() === userSearchQuery.toLowerCase() 
+                        ? <span key={i} className="bg-yellow-100 dark:bg-yellow-900 text-black dark:text-white font-medium">{part}</span> 
+                        : part
+                    );
+                  };
+                  
+                  return (
+                    <TableRow key={user.id} className="hover:bg-muted/50">
+                      <TableCell>{highlightMatch(user.name || '')}</TableCell>
+                      <TableCell>{highlightMatch(user.email || '')}</TableCell>
+                      <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </CardContent>
