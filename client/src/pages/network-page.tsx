@@ -335,10 +335,18 @@ export default function NetworkPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
-                <SelectItem value="IN_PROCESS">In Process</SelectItem>
-                <SelectItem value="REVOKED">Revoked</SelectItem>
+                {/* Primary status values */}
+                <SelectItem value={AccreditationStatus.APPROVED}>Approved</SelectItem>
+                <SelectItem value={AccreditationStatus.UNDER_REVIEW}>Under Review</SelectItem>
+                <SelectItem value={AccreditationStatus.IN_PROCESS}>In Process</SelectItem>
+                <SelectItem value={AccreditationStatus.REVOKED}>Revoked</SelectItem>
+                
+                {/* Legacy status values for backward compatibility */}
+                <SelectItem value={AccreditationStatus.PROVISIONALLY_APPROVED}>Provisionally Approved</SelectItem>
+                <SelectItem value={AccreditationStatus.IN_REVIEW}>In Review (Legacy)</SelectItem>
+                <SelectItem value={AccreditationStatus.PENDING}>Pending (Legacy)</SelectItem>
+                <SelectItem value={AccreditationStatus.SUSPENDED}>Suspended</SelectItem>
+                <SelectItem value={AccreditationStatus.EXPIRED}>Expired</SelectItem>
               </SelectContent>
             </Select>
 
