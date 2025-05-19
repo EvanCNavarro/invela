@@ -408,8 +408,39 @@ export default function RegisterPage() {
               // If login fails, show error but don't block - account was still set up
               logRegistration(`Login after account setup failed: ${loginResponse.status} ${loginResponse.statusText}`);
               
-              // Verify invitation status was updated anyway
+              // Verify invitation status was updated
               logRegistration('Verifying invitation status update');
+              
+              // Make a separate API call to verify invitation status
+              try {
+                logRegistration(`Checking invitation code ${values.invitationCode} status`);
+                
+                // Re-validate the invitation code - if status changed to "used", registration was successful
+                const verifyResponse = await fetch(`/api/invitations/${values.invitationCode}/validate`, {
+                  method: "GET",
+                  credentials: "include"
+                });
+                
+                const verifyData = await verifyResponse.json();
+                
+                logRegistration(`Invitation verification response: ${JSON.stringify(verifyData)}`);
+                
+                // If invitation is marked as used or no longer valid
+                if (verifyData.used) {
+                  logRegistration(`Invitation confirmed as used at: ${verifyData.used_at}`);
+                } else if (!verifyData.valid && verifyData.message?.toLowerCase().includes("invalid")) {
+                  logRegistration('Invitation appears to be properly marked as invalid');
+                } else {
+                  // If it's still showing as valid, there might be an issue with status update
+                  logRegistration('Warning: Invitation may not be properly marked as used', true);
+                  
+                  // Log a more detailed warning for debugging purposes
+                  console.warn("[Registration] Invitation status verification result:", verifyData);
+                }
+              } catch (verifyError) {
+                console.error("[Registration] Error verifying invitation status:", verifyError);
+                logRegistration(`Error checking invitation status: ${verifyError}`, true);
+              }
               
               toast({
                 title: "Registration partially complete",
