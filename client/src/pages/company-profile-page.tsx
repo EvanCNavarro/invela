@@ -868,10 +868,10 @@ export default function CompanyProfilePage() {
             <span className="font-semibold text-foreground">{company.name}</span>
           </div>
 
-          {/* Back to Network button */}
+          {/* Back to Network button - using same pattern as claims tab */}
           <div className="mb-6">
-            <Link href="/network" className="inline-flex items-center space-x-1 py-2 px-6 border rounded-md hover:bg-muted">
-              <ArrowLeft className="h-4 w-4" />
+            <Link href="/network" className="inline-flex items-center py-2 px-4 border rounded-md hover:bg-muted">
+              <ArrowLeft className="h-4 w-4 mr-2" />
               <span>Back to Network</span>
             </Link>
           </div>
