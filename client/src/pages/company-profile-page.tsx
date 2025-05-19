@@ -838,29 +838,45 @@ export default function CompanyProfilePage() {
         <TutorialManager tabName="company-profile" />
         
         <div className="space-y-6">
-          {/* Header with back button and company title */}
-          <div className="flex items-center space-x-4 mb-6">
+          {/* Breadcrumb navigation */}
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+            <Link href="/network" className="flex items-center">
+              <div className="w-6 h-6 mr-1">
+                <CompanyLogo companyId={1} companyName="Invela" size="sm" />
+              </div>
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <Link href="/network" className="hover:text-primary">
+              Network
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="font-medium text-primary">{company.name}</span>
+          </div>
+
+          {/* Back to Network button */}
+          <div className="mb-6">
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
               onClick={handleBackClick}
-              className="h-8 w-8"
+              className="px-6 py-2 h-12 gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
+              Back to Network
             </Button>
-            
-            <div className="flex items-center gap-3">
-              <CompanyLogo
-                companyId={company.id}
-                companyName={company.name}
-                size="lg"
-              />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {company.category}
-                </p>
-              </div>
+          </div>
+          
+          {/* Company header with logo and title */}
+          <div className="flex items-center gap-3 mb-6">
+            <CompanyLogo
+              companyId={company.id}
+              companyName={company.name}
+              size="lg"
+            />
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+              <p className="text-sm text-muted-foreground">
+                {company.category}
+              </p>
             </div>
           </div>
           
