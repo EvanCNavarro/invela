@@ -77,15 +77,6 @@ interface CompanyUser {
   joinedAt: string;
 }
 
-interface CompanyFile {
-  id: number;
-  name: string;
-  type: string;
-  size: string;
-  uploadedAt: string;
-  uploadedBy: string;
-}
-
 /**
  * Helper function to get the accreditation status from a company object
  * regardless of which property naming convention is used
@@ -239,7 +230,6 @@ export default function CompanyProfilePage() {
   const companyId = params.companySlug;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
-
   const [openUserModal, setOpenUserModal] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
 
@@ -301,43 +291,12 @@ export default function CompanyProfilePage() {
     refetchOnWindowFocus: false
   });
 
-  const { 
-    data: filesResponse, 
-    isLoading: filesLoading, 
-    error: filesError 
-  } = useQuery<{data: CompanyFile[]}>({
-    queryKey: ["/api/companies", companyId, "files"],
-    queryFn: async () => {
-      // Only show files uploaded by users of this company
-      try {
-        const response = await fetch(`/api/companies/${companyId}/files`);
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Authentication required");
-          }
-          throw new Error("Error fetching company files");
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching files:", error);
-        throw error;
-      }
-    },
-    enabled: activeTab === "files" && !authLoading,
-    retry: 1,
-    refetchOnWindowFocus: false
-  });
-  
-  // Extract the actual files array from the response, falling back to an empty array
-  const files = filesResponse?.data || [];
-
   // Add variables to track different states
   const isAuthError = error?.message === "Authentication required" || 
-                      usersError?.message === "Authentication required" || 
-                      filesError?.message === "Authentication required";
+                      usersError?.message === "Authentication required";
   
   const isLoadingData = authLoading || companyLoading;
-  const hasError = error || usersError || filesError;
+  const hasError = error || usersError;
   
   if (isLoadingData) {
     return (
@@ -441,567 +400,296 @@ export default function CompanyProfilePage() {
       // If not JSON, split by commas
       return field.split(',').map(item => item.trim());
     }
-  };
+  }
 
-  // Format accreditation status with monochromatic badge styling
-  const getStatusBadge = (status: string | null | undefined) => {
+  // Filter users based on search query
+  const filteredUsers = users.filter(user => {
+    const searchString = userSearchQuery.toLowerCase();
+    return (
+      user.name.toLowerCase().includes(searchString) ||
+      user.email.toLowerCase().includes(searchString) ||
+      user.role.toLowerCase().includes(searchString)
+    );
+  });
+  
+  // Normalize product services for display
+  const productServices = parseArrayField(company.productsServices);
+  
+  // Normalize clients & partners for display
+  const clientsPartners = parseArrayField(company.keyClientsPartners);
+  
+  // Status badge component to standardize status display
+  const getStatusBadge = (status: string | undefined | null) => {
     if (!status) return null;
     
+    const normalizedStatus = getAccreditationStatus(status);
     const label = getAccreditationStatusLabel(status);
     
+    const badgeColor = 
+      normalizedStatus === 'VALID' ? 'bg-green-100 text-green-800 border-green-300' :
+      normalizedStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+      'bg-red-100 text-red-800 border-red-300';
+    
+    const indicatorColor = 
+      normalizedStatus === 'VALID' ? 'bg-green-500' :
+      normalizedStatus === 'PENDING' ? 'bg-yellow-500' :
+      'bg-red-500';
+    
     return (
-      <UiBadge variant="outline" className="font-normal bg-slate-50">
+      <div className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${badgeColor} border`}>
+        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${indicatorColor}`}></span>
         {label}
-      </UiBadge>
+      </div>
     );
   };
-  
-  // Type guard for array checking
-  const isArrayOfStrings = (value: any): value is string[] => {
-    return Array.isArray(value) && value.every(item => typeof item === 'string');
-  };
-
-  const renderOverviewTab = () => (
-    <div className="space-y-8">
-      {/* Company Summary Section - Monochromatic design */}
-      <Card className="border border-gray-200 shadow-none">
-        <CardContent className="p-4">
-          <div className="grid gap-4">
-            {/* Company description */}
-            {company.description && (
-              <div className="text-sm text-gray-700 leading-relaxed pb-3 border-b border-gray-100">
-                {company.description}
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-4">
-              {/* Key Facts Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-gray-50 rounded p-3">
-                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Headquarters</div>
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-800">{formatValue(company.hqAddress)}</span>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 rounded p-3">
-                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Category</div>
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-800">{formatValue(company.category)}</span>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 rounded p-3">
-                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Website</div>
-                  <div className="flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                    {company.websiteUrl ? (
-                      <a
-                        href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-gray-800 hover:underline flex items-center gap-1"
-                      >
-                        {company.websiteUrl}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ) : (
-                      <span className="text-sm text-gray-500 italic">Not available</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Risk Info - Simplified display */}
-              <div className="bg-gray-50 rounded p-3">
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Risk Score - Plain text */}
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide flex items-center">
-                      <Shield className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
-                      Risk Score
-                    </div>
-                    <div className="text-2xl font-medium text-gray-800">
-                      {company.riskScore || company.risk_score || 0}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      No Risk
-                    </div>
-                  </div>
-                  
-                  {/* Accreditation Status */}
-                  {(company.accreditationStatus || company.accreditation_status) && (
-                    <div>
-                      <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Accreditation</div>
-                      <div className="flex items-center">
-                        {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Main Data Grid - 2 columns responsive */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Business Information */}
-        <Card className="border border-gray-200 shadow-none">
-          <CardHeader className="pb-2">
-            <div className="flex items-center">
-              <Briefcase className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-              <CardTitle className="text-base font-medium text-gray-800">Business Information</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-2 gap-3">
-              {/* Legal Structure */}
-              <div className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Legal Entity</dt>
-                <dd className="text-sm text-gray-800">{formatValue(company.legalStructure)}</dd>
-              </div>
-              
-              {/* Employee Count */}
-              <div className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Employees</dt>
-                <dd className="text-sm text-gray-800 flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  {formatValue(company.numEmployees)}
-                </dd>
-              </div>
-              
-              {/* Founded Year / Company Age */}
-              <div className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Founded</dt>
-                <dd className="text-sm text-gray-800 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  {company.incorporationYear ? (
-                    <span>
-                      {company.incorporationYear}
-                      {companyAge !== null && ` (${companyAge} ${companyAge === 1 ? 'yr' : 'yrs'})`}
-                    </span>
-                  ) : (
-                    <span className="text-gray-500 italic">Not available</span>
-                  )}
-                </dd>
-              </div>
-              
-              {/* Revenue Tier */}
-              <div className="flex flex-col">
-                <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Revenue Tier</dt>
-                <dd className="text-sm text-gray-800">
-                  {company.revenueTier ? (
-                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                      {company.revenueTier === 'sm' ? 'Small' : 
-                      company.revenueTier === 'md' ? 'Medium' : 
-                      company.revenueTier === 'lg' ? 'Large' : 
-                      company.revenueTier}
-                    </UiBadge>
-                  ) : (
-                    <span className="text-gray-500 italic">Not available</span>
-                  )}
-                </dd>
-              </div>
-              
-              {/* Certifications - Only show if available */}
-              {company.certifications_compliance && (
-                <div className="flex flex-col">
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Certifications</dt>
-                  <dd className="flex flex-wrap gap-2">
-                    {typeof company.certifications_compliance === 'string' && 
-                      company.certifications_compliance.split(',').map((cert: string, idx: number) => (
-                        <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                          {cert.trim()}
-                        </UiBadge>
-                      ))
-                    }
-                  </dd>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Leadership and Investment */}
-        <Card className="border border-gray-200 shadow-none">
-          <CardHeader className="pb-2">
-            <div className="flex items-center">
-              <Users className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-              <CardTitle className="text-base font-medium text-gray-800">Leadership & Investment</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-1 gap-3">
-              {/* Leadership Team - Only show if available */}
-              {(company.foundersAndLeadership || company.founders_and_leadership) && (
-                <div className="flex flex-col">
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Leadership Team</dt>
-                  <dd className="text-sm text-gray-800 leading-relaxed">
-                    {company.foundersAndLeadership || company.founders_and_leadership || ''}
-                  </dd>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-3">
-                {/* Funding Stage */}
-                <div className="flex flex-col">
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Funding Stage</dt>
-                  <dd>
-                    {company.fundingStage ? (
-                      <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                        {company.fundingStage}
-                      </UiBadge>
-                    ) : (
-                      <span className="text-sm text-gray-500 italic">Not available</span>
-                    )}
-                  </dd>
-                </div>
-                
-                {/* Investors */}
-                <div className="flex flex-col">
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Investors</dt>
-                  <dd className="text-sm text-gray-800">
-                    {formatValue(company.investors)}
-                  </dd>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Data - Products & Partners */}
-      <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-2">
-          <div className="flex items-center">
-            <Layers className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-            <CardTitle className="text-base font-medium text-gray-800">Products & Partnerships</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Products & Services */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Products & Services</div>
-              <div className="flex flex-wrap gap-1.5">
-                {company.productsServices ? (
-                  typeof company.productsServices === 'string' ? (
-                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                      {company.productsServices}
-                    </UiBadge>
-                  ) : isArrayOfStrings(company.productsServices) ? (
-                    company.productsServices.map((product, idx) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                        {product}
-                      </UiBadge>
-                    ))
-                  ) : (
-                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                      {String(company.productsServices)}
-                    </UiBadge>
-                  )
-                ) : (
-                  <span className="text-sm text-gray-500 italic">Not available</span>
-                )}
-              </div>
-            </div>
-            
-            {/* Key Clients & Partners */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Key Clients & Partners</div>
-              <div className="flex flex-wrap gap-1.5">
-                {company.keyClientsPartners ? (
-                  typeof company.keyClientsPartners === 'string' ? (
-                    company.keyClientsPartners.split(',').map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                        {partner.trim()}
-                      </UiBadge>
-                    ))
-                  ) : isArrayOfStrings(company.keyClientsPartners) ? (
-                    company.keyClientsPartners.map((partner: string, idx: number) => (
-                      <UiBadge key={idx} variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                        {partner}
-                      </UiBadge>
-                    ))
-                  ) : (
-                    <UiBadge variant="outline" className="font-normal text-xs bg-gray-50 text-gray-700 border-gray-200">
-                      {String(company.keyClientsPartners)}
-                    </UiBadge>
-                  )
-                ) : (
-                  <span className="text-sm text-gray-500 italic">Not available</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderUsersTab = () => (
-    <div className="space-y-6">
-      <div className="flex justify-end">
-        <InviteButton
-          variant="user"
-          pulse={false}
-          onClick={() => setOpenUserModal(true)}
-        />
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Company Users</CardTitle>
-          <div className="relative max-w-md">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              value={userSearchQuery}
-              onChange={(e) => setUserSearchQuery(e.target.value)}
-              className="pl-8 w-[300px] h-9"
-            />
-            {userSearchQuery && (
-              <button
-                onClick={() => setUserSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(() => {
-                const filteredUsers = users.filter(user => {
-                  if (!userSearchQuery) return true;
-                  const query = userSearchQuery.toLowerCase();
-                  return (
-                    (user.name?.toLowerCase().includes(query)) ||
-                    (user.email?.toLowerCase().includes(query))
-                  );
-                });
-                
-                if (filteredUsers.length === 0 && userSearchQuery) {
-                  return (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
-                        <div className="flex flex-col items-center justify-center text-muted-foreground">
-                          <Search className="h-8 w-8 mb-2" />
-                          <p className="text-sm">No matching users found</p>
-                          <button 
-                            onClick={() => setUserSearchQuery("")}
-                            className="mt-2 text-xs text-primary hover:underline"
-                          >
-                            Clear search
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                }
-                
-                return filteredUsers.map((user) => {
-                  // Highlight matching text if there's a search query
-                  const highlightMatch = (text: string) => {
-                    if (!userSearchQuery) return text;
-                    
-                    const parts = text.split(new RegExp(`(${userSearchQuery})`, 'i'));
-                    return parts.map((part, i) => 
-                      part.toLowerCase() === userSearchQuery.toLowerCase() 
-                        ? <span key={i} className="bg-yellow-100 dark:bg-yellow-900 text-black dark:text-white font-medium">{part}</span> 
-                        : part
-                    );
-                  };
-                  
-                  return (
-                    <TableRow key={user.id} className="hover:bg-muted/50">
-                      <TableCell>{highlightMatch(user.name || '')}</TableCell>
-                      <TableCell>{highlightMatch(user.email || '')}</TableCell>
-                      <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  );
-                });
-              })()}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <InviteModal
-        variant="user"
-        open={openUserModal}
-        onOpenChange={setOpenUserModal}
-        companyId={parseInt(companyId || "0")}
-        companyName={company.name}
-      />
-    </div>
-  );
-  const renderRiskTab = () => (
-    <div className="space-y-6">
-      {/* Risk Factors Summary Card - Combined with risk score and accreditation status */}
-      <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-2">
-          <div className="flex items-center">
-            <FileText className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-            <CardTitle className="text-base font-medium text-gray-800">Risk Overview</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 gap-4">
-            {/* Top row with Risk Score and Accreditation Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Risk Score */}
-              <div className="bg-gray-50 rounded p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield className="h-3.5 w-3.5 text-gray-500" />
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Risk Score</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-medium text-gray-800">
-                      {company.riskScore || company.risk_score || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      No Risk
-                    </div>
-                  </div>
-                  {(company.category === "Bank" || company.category === "Invela") && (
-                    <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                      As a regulatory institution, you may adjust this risk score
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Accreditation Status */}
-              <div className="bg-gray-50 rounded p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <BadgeCheck className="h-3.5 w-3.5 text-gray-500" />
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Accreditation Status</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
-                </div>
-              </div>
-            </div>
-            
-            {/* Risk Factors Rows */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="bg-gray-50 rounded p-3">
-                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Company Age</div>
-                <div className="text-sm text-gray-800">{companyAge ? `${companyAge} years` : 'Not available'}</div>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Market Presence</div>
-                <div className="text-sm text-gray-800">{company.category || 'Not available'}</div>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Employee Count</div>
-                <div className="text-sm text-gray-800">{company.numEmployees || 'Not available'}</div>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Legal Structure</div>
-                <div className="text-sm text-gray-800">{company.legalStructure || 'Not available'}</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Risk Dimensions Grid */}
-      <Card className="border border-gray-200 shadow-none">
-        <CardHeader className="pb-2">
-          <div className="flex items-center">
-            <AlertCircle className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-            <CardTitle className="text-base font-medium text-gray-800">Risk Dimensions</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {company.risk_clusters && Object.entries(company.risk_clusters)
-              .filter(([key]) => {
-                // Only show the new risk dimensions
-                const newDimensions = [
-                  'Cyber Security', 'Financial Stability', 'Potential Liability',
-                  'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
-                ];
-                return newDimensions.includes(key);
-              })
-              .map(([key, value]) => (
-                <div key={key} className="bg-gray-50 rounded p-3">
-                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
-                    {key}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-2 h-2 rounded-full ${
-                      value > 66 ? 'bg-red-500' : 
-                      value > 33 ? 'bg-yellow-500' : 
-                      'bg-green-500'
-                    }`}></div>
-                    <span className="text-sm text-gray-800">{value}/100</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Risk Radar Chart */}
-      <Card className="border border-gray-200 shadow-none overflow-hidden">
-        <CardHeader className="pb-2">
-          <div className="flex items-center">
-            <Target className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
-            <CardTitle className="text-base font-medium text-gray-800">Risk Radar Visualization</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 pb-8">
-          {company.id ? (
-            <div className="w-full aspect-[2.5/1.5] max-w-[900px] mx-auto">
-              <RiskRadarChart 
-                companyId={company.id}
-                showDropdown={false}
-                className="shadow-none border-none"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-[300px]">
-              <div className="text-sm text-gray-500">No data available</div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
 
   // Default risk clusters if none are provided in the company data
   const defaultRiskClusters = {
     financial: 37,  // Converted from 550/1500 * 100
     operational: 32, // Converted from 480/1500 * 100
     compliance: 41,  // Converted from 620/1500 * 100
-    strategic: 33,   // Converted from 500/1500 * 100
+    strategic: 19,   // Converted from 280/1500 * 100
     reputational: 30, // Converted from 450/1500 * 100
     cybersecurity: 39 // Converted from 580/1500 * 100
   };
 
   // Use company's risk clusters or fallback to defaults
   const riskClusters = company.risk_clusters || defaultRiskClusters;
-  
+
+  const renderOverviewTab = () => (
+    <div className="space-y-6">
+      {/* Company Information Card */}
+      <Card className="border border-gray-200 shadow-none">
+        <CardHeader className="pb-2">
+          <div className="flex items-center">
+            <Building2 className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+            <CardTitle className="text-base font-medium text-gray-800">Company Information</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {/* Left column - Company details */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Description</h4>
+                <p className="text-sm text-gray-700">{company.description || 'Not available'}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Category</h4>
+                  <div className="text-sm text-gray-700">{company.category || 'Not available'}</div>
+                </div>
+                
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Website</h4>
+                  {company.websiteUrl ? (
+                    <a 
+                      href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                    >
+                      {company.websiteUrl}
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
+                  ) : (
+                    <span className="text-sm text-gray-500 italic">Not available</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Employees</h4>
+                  <div className="text-sm text-gray-700">{company.numEmployees || 'Not available'}</div>
+                </div>
+                
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Founded</h4>
+                  <div className="text-sm text-gray-700">{company.incorporationYear || 'Not available'}</div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Headquarters</h4>
+                <div className="text-sm text-gray-700">{company.hqAddress || 'Not available'}</div>
+              </div>
+            </div>
+            
+            {/* Right column - Business details */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Products & Services</h4>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {productServices.length > 0 ? (
+                    productServices.map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-md"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500 italic">Not available</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Clients & Partners</h4>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {clientsPartners.length > 0 ? (
+                    clientsPartners.map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-md"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500 italic">Not available</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Revenue Tier</h4>
+                  <div className="text-sm text-gray-700">
+                    {company.revenueTier || company.revenue_tier || 'Not available'}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Funding Stage</h4>
+                  <div className="text-sm text-gray-700">{company.fundingStage || 'Not available'}</div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Investors</h4>
+                <div className="text-sm text-gray-700">{company.investors || 'Not available'}</div>
+              </div>
+              
+              <div>
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Legal Structure</h4>
+                <div className="text-sm text-gray-700">{company.legalStructure || 'Not available'}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Leadership/Founders Card */}
+      {(company.foundersAndLeadership || company.founders_and_leadership) && (
+        <Card className="border border-gray-200 shadow-none">
+          <CardHeader className="pb-2">
+            <div className="flex items-center">
+              <Users className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+              <CardTitle className="text-base font-medium text-gray-800">Leadership</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm text-gray-700">{company.foundersAndLeadership || company.founders_and_leadership}</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Certifications Card */}
+      {company.certifications_compliance && (
+        <Card className="border border-gray-200 shadow-none">
+          <CardHeader className="pb-2">
+            <div className="flex items-center">
+              <Award className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+              <CardTitle className="text-base font-medium text-gray-800">Certifications & Compliance</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm text-gray-700">{company.certifications_compliance}</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
+  const renderUsersTab = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={userSearchQuery}
+            onChange={(e) => setUserSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        
+        <Button size="sm" variant="outline" onClick={() => setOpenUserModal(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite User
+        </Button>
+      </div>
+
+      {usersLoading ? (
+        <div className="flex justify-center py-8">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      {userSearchQuery ? (
+                        <div className="text-muted-foreground text-sm">
+                          No users found matching "{userSearchQuery}"
+                        </div>
+                      ) : (
+                        <div className="text-muted-foreground text-sm">
+                          No users added to this company yet
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+      
+      <InviteModal 
+        isOpen={openUserModal} 
+        onClose={() => setOpenUserModal(false)}
+        companyId={parseInt(companyId || "0")}
+        companyName={company.name}
+      />
+    </div>
+  );
+
   const renderRiskTab = () => (
     <div className="space-y-6">
       {/* Risk Factors Summary Card - Combined with risk score and accreditation status */}
@@ -1141,144 +829,58 @@ export default function CompanyProfilePage() {
 
   return (
     <DashboardLayout>
-      {/* Add tutorial manager for company profile page */}
-      <TutorialManager tabName="company-profile" />
-      
-      <PageTemplate
-        showBreadcrumbs
-      >
+      <PageTemplate>
+        <TutorialManager tabName="company-profile" />
+        
         <div className="space-y-6">
-          {/* Navigation and back button completely removed per requirements */}
-          <div className="flex items-center justify-between mb-6">
-            {/* Empty div to maintain spacing */}
-          </div>
-          
-          {/* Modern company profile header with enhanced aesthetics */}
-          <div className="relative mb-6 overflow-hidden bg-gradient-to-r from-white to-slate-50 rounded-xl shadow-sm border border-slate-100">
-            {/* Optional decorative elements */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-full -mr-20 -mt-20 opacity-30"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-50 rounded-full -ml-12 -mb-12 opacity-30"></div>
+          {/* Header with back button and company title */}
+          <div className="flex items-center space-x-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBackClick}
+              className="h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             
-            <div className="relative z-10 flex flex-col md:flex-row items-start gap-6 p-6">
-              {/* Logo container with enhanced neuomorphic style */}
-              <div className="relative w-24 h-24 min-w-24 rounded-xl flex items-center justify-center overflow-hidden 
-                  bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-[5px_5px_15px_0px_rgba(148,163,184,0.1),-5px_-5px_15px_0px_rgba(255,255,255,0.7)]">
-                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-blue-500">
-                  <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
-                </div>
-                
-                {/* Category indicator dot removed per requirements */}
-              </div>
-              
-              {/* Company information with better information hierarchy */}
-              <div className="flex-1 flex flex-col justify-between py-1 space-y-3">
-                <div>
-                  <div className="flex items-center flex-wrap gap-2">
-                    <h1 className="text-2xl font-bold text-gray-900 leading-tight">{company.name}</h1>
-                    
-                    {/* Category badge with grayscale styling */}
-                    {company.category && (
-                      <div 
-                        className="rounded-md px-3 py-0.5 text-xs font-semibold text-white bg-gray-600"
-                      >
-                        {company.category}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <p className="text-gray-600 text-sm font-normal mt-1.5 max-w-2xl">
-                    {company.description || "No description available"}
-                  </p>
-                </div>
-                
-                {/* Company metadata badges with slightly rounded corners */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {company.revenueTier && (
-                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
-                      <DollarSign className="h-3.5 w-3.5" />
-                      {company.revenueTier}
-                    </div>
-                  )}
-                  
-                  {company.legalStructure && (
-                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
-                      <Building2 className="h-3.5 w-3.5" />
-                      {company.legalStructure}
-                    </div>
-                  )}
-                  
-                  {company.fundingStage && (
-                    <div className="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium bg-slate-100 text-slate-700">
-                      <Briefcase className="h-3.5 w-3.5" />
-                      {company.fundingStage}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Enhanced metrics cards - same size, no hover, black titles with gradient backgrounds */}
-              <div className="flex flex-col md:flex-row items-stretch gap-3 self-stretch md:self-auto">
-                {/* Risk Score card with Invela blue background gradient */}
-                <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
-                  style={{ 
-                    backgroundColor: 'rgba(236, 241, 255, 0.5)', // Even softer blue that matches other colors
-                    borderColor: '#4965EC', // Solid Invela blue border
-                    borderLeft: '3px solid #4965EC', // Colored border accent
-                    boxShadow: '5px 5px 15px 0px rgba(148,163,184,0.1), -5px -5px 15px 0px rgba(255,255,255,0.7)' // Neumorphic shadow
-                  }}
-                >
-                  <div className="flex flex-col items-center justify-center gap-1 mb-1">
-                    <Award className="h-5 w-5 text-black mb-0.5" />
-                    <div className="text-xs text-black font-medium leading-tight">
-                      S&P DATA ACCESS<br />RISK SCORE
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 mt-1 py-1">
-                    {company.riskScore || 0}
-                  </div>
-                </div>
-                
-                {/* Accreditation status with color-coded background */}
-                <div 
-                  className="flex flex-col justify-between p-4 rounded-lg border text-center md:w-52"
-                  style={getAccreditationBoxStyle(getCompanyAccreditationStatus(company))}
-                >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <BadgeCheck className="h-5 w-5 text-black" />
-                    <div className="text-sm text-black font-medium">
-                      ACCREDITATION
-                    </div>
-                  </div>
-                  {/* Extract status once to avoid multiple function calls */}
-                  {(() => {
-                    const status = getCompanyAccreditationStatus(company);
-                    return (
-                      <div 
-                        className="text-lg font-semibold py-2"
-                        style={getAccreditationTextStyle(status)}
-                      >
-                        {getAccreditationStatusLabel(status)}
-                      </div>
-                    );
-                  })()}
+            <div className="flex items-center gap-3">
+              <CompanyLogo
+                name={company.name}
+                size="md"
+                category={company.category}
+              />
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+                <div className="flex items-center text-sm text-muted-foreground space-x-1">
+                  <span className={`bg-${companyTypeColors[company.category] || 'gray'}-100 text-${companyTypeColors[company.category] || 'gray'}-800 text-xs px-2 py-0.5 rounded-full`}>
+                    {company.category}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Tab navigation with cleaner styling */}
-          <div className="mt-1">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-gray-200">
-                <TabsList className="bg-transparent h-10 mb-0 p-0">
-                  <TabsTrigger value="overview" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+          
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+              <div className="px-4 py-2 border-b border-gray-200">
+                <TabsList className="h-9 w-full justify-start rounded-none bg-transparent p-0">
+                  <TabsTrigger
+                    value="overview"
+                    className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  >
                     Overview
                   </TabsTrigger>
-                  <TabsTrigger value="users" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                  <TabsTrigger
+                    value="users"
+                    className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  >
                     Users
                   </TabsTrigger>
-                  <TabsTrigger value="risk" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
+                  <TabsTrigger
+                    value="risk"
+                    className="rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  >
                     Risk
                   </TabsTrigger>
                 </TabsList>
@@ -1291,7 +893,6 @@ export default function CompanyProfilePage() {
                 <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderUsersTab()}
                 </TabsContent>
-
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderRiskTab()}
                 </TabsContent>
