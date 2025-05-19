@@ -894,31 +894,31 @@ export default function CompanyProfilePage() {
               </div>
               
               <div className="flex gap-6 flex-grow justify-end ml-auto">
-                {/* S&P Data Access Risk Score Box */}
-                <div className="border rounded-md flex items-center justify-center h-16 px-8 min-w-[200px] relative overflow-hidden">
+                {/* S&P Data Access Risk Score Box - styled to match screenshot */}
+                <div className="border rounded-lg flex flex-col h-24 px-10 min-w-[240px] relative overflow-hidden">
                   {/* Accent border - blue gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-gray-200"></div>
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   
-                  <div className="flex flex-col items-center py-3">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                  <div className="flex flex-col items-center justify-center h-full py-4 space-y-2">
+                    <span className="text-sm font-medium text-center text-gray-500 uppercase tracking-wide">
                       S&P DATA ACCESS RISK SCORE
                     </span>
-                    <span className="text-3xl font-bold">
+                    <span className="text-4xl font-bold text-gray-900">
                       {company.riskScore || "29"}
                     </span>
                   </div>
                 </div>
                 
-                {/* Accreditation Status Box */}
-                <div className="border rounded-md flex items-center justify-center h-16 px-8 min-w-[200px] relative overflow-hidden">
+                {/* Accreditation Status Box - styled to match screenshot */}
+                <div className="border rounded-lg flex flex-col h-24 px-10 min-w-[240px] relative overflow-hidden">
                   {/* Accent border - red gradient for Not Available */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-gray-200"></div>
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-500 to-rose-300"></div>
                   
-                  <div className="flex flex-col items-center py-3">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                  <div className="flex flex-col items-center justify-center h-full py-4 space-y-2">
+                    <span className="text-sm font-medium text-center text-gray-500 uppercase tracking-wide">
                       ACCREDITATION
                     </span>
-                    <span className="text-xl font-medium text-rose-500">
+                    <span className="text-2xl font-medium text-rose-500">
                       Not Available
                     </span>
                   </div>
