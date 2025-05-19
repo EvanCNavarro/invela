@@ -852,54 +852,138 @@ export default function CompanyProfilePage() {
       />
     </div>
   );
-
-  const renderFilesTab = () => (
+  const renderRiskTab = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search files..."
-            value={fileSearchQuery}
-            onChange={(e) => setFileSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Company Files</CardTitle>
+      {/* Risk Factors Summary Card - Combined with risk score and accreditation status */}
+      <Card className="border border-gray-200 shadow-none">
+        <CardHeader className="pb-2">
+          <div className="flex items-center">
+            <FileText className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+            <CardTitle className="text-base font-medium text-gray-800">Risk Overview</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Uploaded By</TableHead>
-                <TableHead>Upload Date</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {files.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell>{file.name}</TableCell>
-                  <TableCell>{file.type}</TableCell>
-                  <TableCell>{file.size}</TableCell>
-                  <TableCell>{file.uploadedBy}</TableCell>
-                  <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 gap-4">
+            {/* Top row with Risk Score and Accreditation Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Risk Score */}
+              <div className="bg-gray-50 rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Risk Score</div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-medium text-gray-800">
+                      {company.riskScore || company.risk_score || 0}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      No Risk
+                    </div>
+                  </div>
+                  {(company.category === "Bank" || company.category === "Invela") && (
+                    <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                      As a regulatory institution, you may adjust this risk score
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Accreditation Status */}
+              <div className="bg-gray-50 rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <BadgeCheck className="h-3.5 w-3.5 text-gray-500" />
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Accreditation Status</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(company.accreditationStatus || company.accreditation_status)}
+                </div>
+              </div>
+            </div>
+            
+            {/* Risk Factors Rows */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Company Age</div>
+                <div className="text-sm text-gray-800">{companyAge ? `${companyAge} years` : 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Market Presence</div>
+                <div className="text-sm text-gray-800">{company.category || 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Employee Count</div>
+                <div className="text-sm text-gray-800">{company.numEmployees || 'Not available'}</div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Legal Structure</div>
+                <div className="text-sm text-gray-800">{company.legalStructure || 'Not available'}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Risk Dimensions Grid */}
+      <Card className="border border-gray-200 shadow-none">
+        <CardHeader className="pb-2">
+          <div className="flex items-center">
+            <AlertCircle className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+            <CardTitle className="text-base font-medium text-gray-800">Risk Dimensions</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {company.risk_clusters && Object.entries(company.risk_clusters)
+              .filter(([key]) => {
+                // Only show the new risk dimensions
+                const newDimensions = [
+                  'Cyber Security', 'Financial Stability', 'Potential Liability',
+                  'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
+                ];
+                return newDimensions.includes(key);
+              })
+              .map(([key, value]) => (
+                <div key={key} className="bg-gray-50 rounded p-3">
+                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
+                    {key}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${
+                      value > 66 ? 'bg-red-500' : 
+                      value > 33 ? 'bg-yellow-500' : 
+                      'bg-green-500'
+                    }`}></div>
+                    <span className="text-sm text-gray-800">{value}/100</span>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Risk Radar Chart */}
+      <Card className="border border-gray-200 shadow-none overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex items-center">
+            <Target className="h-3.5 w-3.5 text-gray-500 mr-1.5" />
+            <CardTitle className="text-base font-medium text-gray-800">Risk Radar Visualization</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 pb-8">
+          {company.id ? (
+            <div className="w-full aspect-[2.5/1.5] max-w-[900px] mx-auto">
+              <RiskRadarChart 
+                companyId={company.id}
+                showDropdown={false}
+                className="shadow-none border-none"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[300px]">
+              <div className="text-sm text-gray-500">No data available</div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
