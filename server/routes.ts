@@ -2169,24 +2169,63 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         logger.info('Creating user session');
         
         try {
-          // Use proper Promise wrapper to handle Passport.js session creation
+          logger.info('Starting passport login with updated user');
+          
+          // Ensure we have the email on the user object and the password is not included in logs
+          const userForAuth = {
+            ...updatedUser,
+            email: email.toLowerCase() // Explicitly set email for auth
+          };
+
+          // Create a better debug log that masks sensitive data
+          logger.debug('User object for authentication', {
+            id: userForAuth.id,
+            email: userForAuth.email,
+            hasEmail: !!userForAuth.email,
+            hasRequiredFields: !!(userForAuth.id && userForAuth.email),
+          });
+
+          // Manual auth instead of req.login to ensure consistent behavior
           await new Promise<void>((resolve, reject) => {
-            // Pass the email field in case it's needed by Passport
-            updatedUser.email = updatedUser.email || email;
-            
-            req.login(updatedUser, (err) => {
+            passport.authenticate('local', (err, user, info) => {
               if (err) {
-                logger.error('Login error in session creation', { error: err });
+                logger.error('Authentication error', { error: err });
                 reject(err);
-              } else {
-                logger.info('Session created successfully', { userId: updatedUser.id });
-                resolve();
+                return;
               }
-            });
+              
+              if (!user) {
+                // If authenticate fails, try direct login as fallback
+                logger.warn('Authentication failed, trying direct login');
+                req.login(userForAuth, (loginErr) => {
+                  if (loginErr) {
+                    logger.error('Direct login error', { error: loginErr });
+                    reject(loginErr);
+                  } else {
+                    logger.info('Direct login successful');
+                    resolve();
+                  }
+                });
+              } else {
+                // Authentication succeeded, log the user in
+                req.login(user, (loginErr) => {
+                  if (loginErr) {
+                    logger.error('Login session creation error', { error: loginErr });
+                    reject(loginErr);
+                  } else {
+                    logger.info('Login session created successfully');
+                    resolve();
+                  }
+                });
+              }
+            })({ 
+              body: { email: email, password: password },
+              logIn: req.login.bind(req)
+            } as any, {} as any, () => {});
           });
           
-          // Session created successfully
-          logger.info('User is now authenticated', { 
+          // Verify session was created
+          logger.info('Authentication status', { 
             userId: updatedUser.id, 
             isAuthenticated: req.isAuthenticated() 
           });
