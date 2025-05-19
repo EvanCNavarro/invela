@@ -343,24 +343,85 @@ export default function RegisterPage() {
             return;
           }
           
-          // For success status codes (200-299), we don't need to parse the response
-          // The server has already set up the session cookie
-          logRegistration('Account setup successful');
+          // For success status codes (200-299), we need to now login the user
+          logRegistration('Account setup successful, now logging in the user');
           
-          // Show success message
+          // Show initial success message
           toast({
             title: "Account setup successful",
-            description: "Your account has been set up. Redirecting to dashboard...",
+            description: "Logging you in...",
           });
           
-          // Refresh auth data to pick up the new user session
-          await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-          
-          // Navigate to home page after a small delay to show the toast
-          setTimeout(() => {
-            // If we were redirected, go to that URL, otherwise go home
-            window.location.href = response.redirected ? response.url : "/";
-          }, 1500); // Slightly longer delay for a better UX
+          try {
+            // Perform login with the same credentials
+            logRegistration('Performing login after account setup');
+            const loginResponse = await fetch("/api/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                username: values.email, // The login endpoint expects username, not email
+                password: values.password
+              }),
+              credentials: "include"
+            });
+            
+            if (!loginResponse.ok) {
+              // If login fails, show error but don't block - account was still set up
+              logRegistration(`Login after account setup failed: ${loginResponse.status} ${loginResponse.statusText}`);
+              toast({
+                title: "Automatic login failed",
+                description: "Your account was set up, but you'll need to log in manually.",
+                variant: "destructive",
+              });
+              
+              // Reset loading states
+              setIsLoading(false);
+              setIsRegistering(false);
+              
+              // Redirect to login page
+              setTimeout(() => {
+                window.location.href = "/login";
+              }, 1500);
+              return;
+            }
+            
+            // Login successful
+            logRegistration('Login after account setup successful');
+            
+            // Show final success message
+            toast({
+              title: "Account setup complete",
+              description: "Your account has been set up. Redirecting to dashboard...",
+            });
+            
+            // Refresh auth data to pick up the new user session
+            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            // Navigate to home page after a small delay to show the toast
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1500);
+          } catch (loginError) {
+            // Login attempt failed with an exception
+            console.error("[Registration] Error during post-setup login:", loginError);
+            
+            toast({
+              title: "Automatic login failed",
+              description: "Your account was set up, but you'll need to log in manually.",
+              variant: "destructive",
+            });
+            
+            // Reset loading states
+            setIsLoading(false);
+            setIsRegistering(false);
+            
+            // Redirect to login page
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 1500);
+          }
         } catch (fetchError) {
           // Handle network errors or other exceptions during fetch
           console.error("[Registration] Account setup fetch error:", fetchError);
