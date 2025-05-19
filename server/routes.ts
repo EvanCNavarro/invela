@@ -1983,10 +1983,51 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Account setup endpoint
   app.post("/api/account/setup", async (req, res) => {
+    /**
+     * Enhanced account setup endpoint with transaction support
+     * This endpoint handles the registration process for users with valid invitation codes
+     * 
+     * The flow:
+     * 1. Validate invitation code and check if user record exists
+     * 2. Execute all database updates in a transaction
+     *    - Update user record with password and name
+     *    - Update task status if applicable
+     *    - Update invitation status to 'used'
+     * 3. Create user session
+     * 4. Return updated user info
+     */
+    const logger = {
+      info: (message: string, meta?: any) => {
+        console.log(`[Account Setup] ${message}`, meta || '');
+      },
+      warn: (message: string, meta?: any) => {
+        console.warn(`[Account Setup] ${message}`, meta || '');
+      },
+      error: (message: string, meta?: any) => {
+        console.error(`[Account Setup] ${message}`, meta || '');
+      },
+      debug: (message: string, meta?: any) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[Account Setup:DEBUG] ${message}`, meta || '');
+        }
+      }
+    };
+
     try {
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
 
-      console.log('[Account Setup] Processing setup request for:', email);
+      logger.info('Processing setup request', { email, invitationCode });
+
+      if (!email || !password || !invitationCode) {
+        logger.warn('Missing required fields', { 
+          hasEmail: !!email, 
+          hasPassword: !!password, 
+          hasInvitationCode: !!invitationCode 
+        });
+        return res.status(400).json({
+          message: "Missing required fields"
+        });
+      }
 
       // Validate invitation code
       const [invitation] = await db.select()
@@ -1999,11 +2040,16 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         ));
 
       if (!invitation) {
-        console.log('[Account Setup] Invalid invitation:', invitationCode);
+        logger.warn('Invalid invitation', { invitationCode, email });
         return res.status(400).json({
           message: "Invalid invitation code or email mismatch"
         });
       }
+
+      logger.info('Validated invitation', { 
+        invitationId: invitation.id, 
+        invitationEmail: invitation.email 
+      });
 
       // Find existing user with case-insensitive email match
       const [existingUser] = await db.select()
@@ -2011,109 +2057,177 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         .where(sql`LOWER(${users.email}) = LOWER(${email})`);
 
       if (!existingUser) {
-        console.log('[Account Setup] User not found for email:', email);
+        logger.warn('User not found', { email });
         return res.status(400).json({ message: "User account not found" });
       }
 
-      // Update the existing user with new information
-      const [updatedUser] = await db.update(users)
-        .set({
-          first_name: firstName,
-          last_name: lastName,
-          full_name: fullName,
-          password: await bcrypt.hash(password, 10),
-          onboarding_user_completed: false, // Ensure this stays false for new user registration
-        })
-        .where(eq(users.id, existingUser.id))
-        .returning();
-
-      console.log('[Account Setup] Updated user:', {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        onboarding_completed: updatedUser.onboarding_user_completed
+      logger.info('Found existing user', { 
+        userId: existingUser.id, 
+        email: existingUser.email 
       });
 
-      // Update the related task
-      const [task] = await db.select()
-        .from(tasks)
-        .where(and(
-          eq(tasks.user_email, email.toLowerCase()),
-          eq(tasks.status, TaskStatus.EMAIL_SENT)
-        ));
-
-      if (task) {
-        const [updatedTask] = await db.update(tasks)
-          .set({
-            status: TaskStatus.COMPLETED,
-            progress: 100, // Set directly to 100 for completed status
-            assigned_to: updatedUser.id,
-            metadata: {
-              ...task.metadata,
-              registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
-            }
-          })
-          .where(eq(tasks.id, task.id))
-          .returning();
-
-        console.log('[Account Setup] Updated task status:', {
-          taskId: updatedTask.id,
-          status: updatedTask.status,
-          progress: updatedTask.progress
-        });
-
-        // Use the imported broadcast function from unified-websocket
-        // This ensures we're using the standardized WebSocket implementation
-        broadcastTaskUpdate(updatedTask.id, {
-          status: updatedTask.status,
-          progress: updatedTask.progress,
-          metadata: updatedTask.metadata
-        });
-      }
-
-      // Update invitation status
-      console.log('[Account Setup] Updating invitation status for invitation ID:', invitation.id);
+      // Execute all database operations in a transaction
       try {
-        const [updatedInvitation] = await db.update(invitations)
-          .set({
-            status: 'used',
-            used_at: new Date(),
-          })
-          .where(eq(invitations.id, invitation.id))
-          .returning();
+        // Use db.transaction for atomic operations
+        const result = await db.transaction(async (tx) => {
+          logger.info('Starting database transaction');
           
-        console.log('[Account Setup] Invitation status successfully updated:', {
-          id: updatedInvitation.id,
-          email: updatedInvitation.email,
-          status: updatedInvitation.status,
-          used_at: updatedInvitation.used_at
-        });
-      } catch (invitationError) {
-        console.error('[Account Setup] Error updating invitation status:', invitationError);
-        // Don't throw error - we want to continue with login even if invitation update fails
-      }
+          // Step 1: Update user
+          const hashedPassword = await bcrypt.hash(password, 10);
+          logger.debug('Password hashed successfully');
+          
+          const [updatedUser] = await tx.update(users)
+            .set({
+              first_name: firstName,
+              last_name: lastName,
+              full_name: fullName,
+              password: hashedPassword,
+              onboarding_user_completed: false,
+              updated_at: new Date()
+            })
+            .where(eq(users.id, existingUser.id))
+            .returning();
 
-      // Log the user in - wrap req.login in a Promise for proper async/await handling
-      await new Promise<void>((resolve, reject) => {
-        req.login(updatedUser, (err) => {
-          if (err) {
-            console.error("[Account Setup] Login error:", err);
-            reject(err);
+          logger.info('User updated successfully', {
+            userId: updatedUser.id,
+            email: updatedUser.email,
+            timestamp: new Date().toISOString()
+          });
+
+          // Step 2: Update related task if it exists
+          let updatedTask = null;
+          const [task] = await tx.select()
+            .from(tasks)
+            .where(and(
+              eq(tasks.user_email, email.toLowerCase()),
+              eq(tasks.status, TaskStatus.EMAIL_SENT)
+            ));
+
+          if (task) {
+            logger.debug('Found related task', { taskId: task.id });
+            
+            [updatedTask] = await tx.update(tasks)
+              .set({
+                status: TaskStatus.COMPLETED,
+                progress: 100,
+                assigned_to: updatedUser.id,
+                metadata: {
+                  ...task.metadata,
+                  registeredAt: new Date().toISOString(),
+                  statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+                },
+                updated_at: new Date()
+              })
+              .where(eq(tasks.id, task.id))
+              .returning();
+
+            logger.info('Task updated successfully', {
+              taskId: updatedTask.id,
+              status: updatedTask.status,
+              progress: updatedTask.progress
+            });
           } else {
-            console.log("[Account Setup] Login successful for user ID:", updatedUser.id);
-            resolve();
+            logger.debug('No related task found', { email: email.toLowerCase() });
           }
+
+          // Step 3: Update invitation status
+          const [updatedInvitation] = await tx.update(invitations)
+            .set({
+              status: 'used',
+              used_at: new Date(),
+              updated_at: new Date()
+            })
+            .where(eq(invitations.id, invitation.id))
+            .returning();
+
+          logger.info('Invitation status updated', {
+            invitationId: updatedInvitation.id,
+            status: updatedInvitation.status,
+            usedAt: updatedInvitation.used_at
+          });
+
+          // Return all updated records
+          return { updatedUser, updatedTask, updatedInvitation };
         });
-      }).catch(err => {
-        throw new Error(`Login failed: ${err.message}`);
-      });
 
-      // Only respond after successful login
-      res.json(updatedUser);
+        logger.info('Transaction completed successfully');
+        
+        // Extract updated user from transaction result
+        const { updatedUser, updatedTask, updatedInvitation } = result;
+        
+        // Broadcast task update if task was updated
+        if (updatedTask) {
+          broadcastTaskUpdate(updatedTask.id, {
+            status: updatedTask.status,
+            progress: updatedTask.progress,
+            metadata: updatedTask.metadata
+          });
+          logger.info('Broadcast task update sent', { taskId: updatedTask.id });
+        }
 
+        // Create session for user
+        logger.info('Creating user session');
+        
+        try {
+          // Use proper Promise wrapper to handle Passport.js session creation
+          await new Promise<void>((resolve, reject) => {
+            // Pass the email field in case it's needed by Passport
+            updatedUser.email = updatedUser.email || email;
+            
+            req.login(updatedUser, (err) => {
+              if (err) {
+                logger.error('Login error in session creation', { error: err });
+                reject(err);
+              } else {
+                logger.info('Session created successfully', { userId: updatedUser.id });
+                resolve();
+              }
+            });
+          });
+          
+          // Session created successfully
+          logger.info('User is now authenticated', { 
+            userId: updatedUser.id, 
+            isAuthenticated: req.isAuthenticated() 
+          });
+          
+          // Return success response with user data
+          return res.json({
+            success: true,
+            user: updatedUser,
+            message: "Account setup successful"
+          });
+        } catch (sessionError) {
+          // Session creation failed, but account was set up
+          logger.error('Session creation failed', { error: sessionError });
+          
+          // Still return success but with a different status code
+          return res.status(201).json({
+            success: true,
+            user: updatedUser,
+            sessionCreated: false,
+            message: "Account setup successful, but automatic login failed. Please log in manually."
+          });
+        }
+      } catch (transactionError) {
+        // Transaction failed
+        logger.error('Transaction failed', { error: transactionError });
+        throw new Error(`Database transaction failed: ${transactionError.message}`);
+      }
     } catch (error) {
-      console.error("[Account Setup] Account setup error:", error);
-      res.status(500).json({ message: "Error updating user information" });
+      // Handle any other errors
+      logger.error('Account setup error', { error });
+      
+      // Provide more informative error message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "An unknown error occurred during account setup";
+        
+      return res.status(500).json({ 
+        success: false,
+        message: "Error updating user information",
+        error: errorMessage
+      });
     }
   });
 
