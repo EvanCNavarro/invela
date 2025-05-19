@@ -25,6 +25,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 
 interface NetworkRelationship {
   id: number;

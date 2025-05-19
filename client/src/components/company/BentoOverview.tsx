@@ -158,7 +158,7 @@ export function BentoOverview({
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-700">Accreditation Status</p>
                 <div className="mt-1">
-                  <StatusBadge company={company} />
+                  <AccreditationStatusDisplay company={company} variant="pill" />
                 </div>
               </div>
             </div>
