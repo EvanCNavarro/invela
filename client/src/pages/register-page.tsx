@@ -464,12 +464,15 @@ export default function RegisterPage() {
     } finally {
       // Ensure loading state is reset if we somehow missed a case
       if (isLoading) {
-        setTimeout(() => {
+        // Use a safety timeout to make sure the loading state is eventually reset
+        const safetyTimer = setTimeout(() => {
           // Add a delay to avoid UI flicker if there was a fast success case
-          if (isLoading) {
-            setIsLoading(false);
-          }
-        }, 2000);
+          setIsLoading(false);
+          setIsRegistering(false);
+        }, 5000); // Longer timeout for slow connections
+        
+        // Clean up the timer if component unmounts
+        return () => clearTimeout(safetyTimer);
       }
     }
   };
@@ -844,7 +847,7 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   className="w-full font-bold hover:opacity-90 h-14 text-base"
-                  disabled={registerMutation.isPending || !areRequiredFieldsValid()}
+                  disabled={registerMutation.isPending || !areRequiredFieldsValid() || isLoading}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
