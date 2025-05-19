@@ -223,13 +223,27 @@ export default function RegisterPage() {
     }
   };
 
+  // State to track if registration is currently in progress
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  // Function to handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
-    console.log("[Registration] Starting registration with values:", values);
-
-    const fullName = `${values.firstName} ${values.lastName}`.trim();
-    console.log("[Registration] Submitting registration with fullName:", fullName);
-
+    // Prevent duplicate submissions
+    if (isRegistering) {
+      console.log("[Registration] Submission already in progress, ignoring duplicate request");
+      return;
+    }
+    
     try {
+      setIsRegistering(true);
+      console.log("[Registration] Starting registration with values:", {
+        ...values,
+        password: values.password ? '********' : undefined // Mask password in logs
+      });
+
+      const fullName = `${values.firstName} ${values.lastName}`.trim();
+      console.log("[Registration] Submitting registration with fullName:", fullName);
+
       // Determine if we should use the account setup flow
       // This is for users who are accepting an invitation with a code
       const shouldUseAccountSetup = 
