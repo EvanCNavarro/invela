@@ -69,10 +69,10 @@ export function AccreditationStatusDisplay({
           <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${styleInfo.gradientFrom} ${styleInfo.gradientTo}`}></div>
           
           <div className="flex flex-col items-center justify-center h-full py-2">
-            <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1.5">
+            <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
               ACCREDITATION
             </span>
-            <span className={`${size === "lg" ? "text-3xl" : "text-xl"} font-medium ${styleInfo.textColor}`}>
+            <span className={`${size === "lg" ? "text-2xl" : "text-xl"} font-bold ${styleInfo.textColor}`}>
               {styleInfo.label}
             </span>
           </div>
