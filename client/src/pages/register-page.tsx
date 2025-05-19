@@ -225,24 +225,40 @@ export default function RegisterPage() {
 
   // State to track if registration is currently in progress
   const [isRegistering, setIsRegistering] = useState(false);
+  // Track loading state separately for better UX feedback
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Create a unified logging utility for consistent logging patterns
+  const logRegistration = (message: string, data?: any) => {
+    if (data) {
+      // Ensure we're not logging sensitive information like passwords
+      const sanitizedData = data.password ? { ...data, password: '********' } : data;
+      console.log(`[Registration] ${message}:`, sanitizedData);
+    } else {
+      console.log(`[Registration] ${message}`);
+    }
+  };
 
   // Function to handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     // Prevent duplicate submissions
     if (isRegistering) {
-      console.log("[Registration] Submission already in progress, ignoring duplicate request");
+      logRegistration('Submission already in progress, ignoring duplicate request');
       return;
     }
     
     try {
+      // Update both states to indicate registration is starting
       setIsRegistering(true);
-      console.log("[Registration] Starting registration with values:", {
+      setIsLoading(true);
+      
+      logRegistration('Starting registration with values', {
         ...values,
         password: values.password ? '********' : undefined // Mask password in logs
       });
 
       const fullName = `${values.firstName} ${values.lastName}`.trim();
-      console.log("[Registration] Submitting registration with fullName:", fullName);
+      logRegistration('Submitting registration with fullName', fullName);
 
       // Determine if we should use the account setup flow
       // This is for users who are accepting an invitation with a code
@@ -270,11 +286,11 @@ export default function RegisterPage() {
       });
       
       if (shouldUseAccountSetup) {
-        console.log("[Registration] Using account-setup flow for invitation code:", values.invitationCode);
+        logRegistration(`Using account-setup flow for invitation code: ${values.invitationCode}`);
         
         try {
           // Call the account-setup endpoint directly
-          console.log("[Registration] Submitting to account-setup endpoint");
+          logRegistration('Submitting to account-setup endpoint');
           const response = await fetch("/api/account-setup", {
             method: "POST",
             headers: {
@@ -292,11 +308,11 @@ export default function RegisterPage() {
             redirect: "follow" // Allow redirects to be followed
           });
           
-          console.log("[Registration] Account setup response status:", response.status, response.statusText);
+          logRegistration(`Account setup response status: ${response.status} ${response.statusText}`);
           
           // For non-success status codes, handle errors simply
           if (!response.ok) {
-            console.log("[Registration] Account setup failed with status:", response.status);
+            logRegistration(`Account setup failed with status: ${response.status}`);
             
             // Extract error message if available
             let errorMessage = "Account setup failed";
@@ -320,12 +336,16 @@ export default function RegisterPage() {
               description: errorMessage,
               variant: "destructive",
             });
+            
+            // Reset loading states
+            setIsLoading(false);
+            setIsRegistering(false);
             return;
           }
           
           // For success status codes (200-299), we don't need to parse the response
           // The server has already set up the session cookie
-          console.log("[Registration] Account setup successful with status:", response.status);
+          logRegistration('Account setup successful');
           
           // Show success message
           toast({
@@ -340,7 +360,7 @@ export default function RegisterPage() {
           setTimeout(() => {
             // If we were redirected, go to that URL, otherwise go home
             window.location.href = response.redirected ? response.url : "/";
-          }, 1000);
+          }, 1500); // Slightly longer delay for a better UX
         } catch (fetchError) {
           // Handle network errors or other exceptions during fetch
           console.error("[Registration] Account setup fetch error:", fetchError);
@@ -350,10 +370,14 @@ export default function RegisterPage() {
             description: "Unable to connect to the server. Please try again.",
             variant: "destructive",
           });
+          
+          // Reset loading states on error
+          setIsLoading(false);
+          setIsRegistering(false);
         }
       } else {
         // Standard registration flow (without invitation code)
-        console.log("[Registration] Using standard registration flow");
+        logRegistration('Using standard registration flow');
         
         try {
           // Call the standard registration endpoint through our mutation
@@ -367,7 +391,10 @@ export default function RegisterPage() {
             invitationCode: values.invitationCode,
           }, {
             onSuccess: () => {
-              console.log("[Registration] Registration successful");
+              logRegistration('Registration successful');
+              
+              // Reset loading state
+              setIsLoading(false);
               
               // Show success message
               toast({
@@ -383,10 +410,14 @@ export default function RegisterPage() {
               // Navigate to home page after a short delay
               setTimeout(() => {
                 window.location.href = "/";
-              }, 1000);
+              }, 1500); // Consistent with account setup flow
             },
             onError: (error: Error) => {
               console.error("[Registration] Registration error:", error);
+              
+              // Reset loading states
+              setIsLoading(false);
+              setIsRegistering(false);
               
               // Check if the error indicates the account already exists
               if (error.message.includes("already exists")) {
@@ -406,6 +437,11 @@ export default function RegisterPage() {
           });
         } catch (registerError) {
           console.error("[Registration] Unexpected error initiating registration:", registerError);
+          
+          // Reset loading states
+          setIsLoading(false);
+          setIsRegistering(false);
+          
           toast({
             title: "Registration failed",
             description: "An unexpected error occurred. Please try again.",
@@ -415,11 +451,26 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("[Registration] Unexpected error during submission:", error);
+      
+      // Reset loading states
+      setIsLoading(false);
+      setIsRegistering(false);
+      
       toast({
         title: "Registration failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Ensure loading state is reset if we somehow missed a case
+      if (isLoading) {
+        setTimeout(() => {
+          // Add a delay to avoid UI flicker if there was a fast success case
+          if (isLoading) {
+            setIsLoading(false);
+          }
+        }, 2000);
+      }
     }
   };
 
@@ -795,7 +846,17 @@ export default function RegisterPage() {
                   className="w-full font-bold hover:opacity-90 h-14 text-base"
                   disabled={registerMutation.isPending || !areRequiredFieldsValid()}
                 >
-                  Create Account
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Setting up account...
+                    </span>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </motion.div>
 
