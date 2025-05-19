@@ -5,6 +5,7 @@ export type RegisterData = {
   firstName?: string;
   lastName?: string;
   company?: string;
+  companyId?: number;
   invitationCode?: string;
 };
 

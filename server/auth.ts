@@ -227,43 +227,118 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
+    // Log registration attempt (with sanitized data)
+    authLogger.info('Registration attempt received', {
+      email: req.body.email,
+      hasFirstName: !!req.body.first_name,
+      hasLastName: !!req.body.last_name,
+      hasFullName: !!req.body.full_name,
+      hasCompanyId: !!req.body.company_id,
+      hasCompanyName: !!req.body.company_name,
+      hasInvitationCode: !!req.body.invitation_code
+    });
+    
+    // Validate the request body against our schema
     const result = insertUserSchema.safeParse(req.body);
     if (!result.success) {
       const error = fromZodError(result.error);
-      return res.status(400).send(error.toString());
-    }
-
-    // Normalize email to lowercase for consistent storage
-    const normalizedEmail = result.data.email.toLowerCase();
-    
-    // Log if email was normalized
-    if (normalizedEmail !== result.data.email) {
-      authLogger.debug('Email normalized during registration', {
-        original: result.data.email,
-        normalized: normalizedEmail
+      authLogger.warn('Registration validation failed', {
+        errorMessage: error.toString(),
+        errorDetails: result.error.format()
+      });
+      return res.status(400).json({
+        message: "Validation failed",
+        details: error.toString()
       });
     }
-    
-    // Check for existing user with this email (using our case-insensitive function)
-    const [existingUser] = await getUserByEmail(normalizedEmail);
-    if (existingUser) {
-      return res.status(400).send("Email already exists");
-    }
 
-    // Store user with normalized email
-    const [user] = await db
-      .insert(users)
-      .values({
+    try {
+      // Normalize email to lowercase for consistent storage
+      const normalizedEmail = result.data.email.toLowerCase();
+      
+      // Log if email was normalized
+      if (normalizedEmail !== result.data.email) {
+        authLogger.debug('Email normalized during registration', {
+          original: result.data.email,
+          normalized: normalizedEmail
+        });
+      }
+      
+      // Check for existing user with this email (using our case-insensitive function)
+      const [existingUser] = await getUserByEmail(normalizedEmail);
+      if (existingUser) {
+        authLogger.warn('Registration failed - email already exists', { email: normalizedEmail });
+        return res.status(400).json({
+          message: "Email already exists",
+          code: "EMAIL_EXISTS"
+        });
+      }
+  
+      // Handle company information
+      // If company_name is provided but no company_id, we could look up or create the company
+      // For now, we'll use the provided company_id or default to 1
+      let companyId = result.data.company_id || 1;
+  
+      // Store user with normalized email
+      const userData = {
         ...result.data,
         email: normalizedEmail, // Store normalized (lowercase) email
         password: await hashPassword(result.data.password),
-      })
-      .returning();
-
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
+        company_id: companyId
+      };
+      
+      authLogger.info('Creating new user account', {
+        email: normalizedEmail,
+        companyId: companyId
+      });
+  
+      // Create the user in the database
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .returning();
+      
+      authLogger.info('User account created successfully', {
+        userId: user.id,
+        email: user.email
+      });
+  
+      // Attempt to log the user in automatically
+      req.login(user, (err) => {
+        if (err) {
+          // Log the login error but don't fail the registration
+          authLogger.error('Auto-login after registration failed', {
+            userId: user.id,
+            email: user.email,
+            error: err
+          });
+          
+          // Return a special status code to indicate successful registration but failed login
+          // The client can handle this gracefully
+          return res.status(201).json({
+            id: user.id,
+            email: user.email,
+            loginStatus: 'failed',
+            message: 'Account created successfully, but automatic login failed. Please log in manually.'
+          });
+        }
+        
+        // Successfully registered and logged in
+        authLogger.info('User registered and logged in successfully', {
+          userId: user.id,
+          email: user.email
+        });
+        
+        res.status(201).json({
+          ...user,
+          loginStatus: 'success'
+        });
+      });
+    } catch (error) {
+      // Handle unexpected errors
+      authLogger.error('Registration error', { error });
+      next(error);
+    }
   });
 
   app.post("/api/login", (req, res, next) => {
@@ -271,7 +346,10 @@ export function setupAuth(app: Express) {
     // Check if email was provided
     if (!req.body.email) {
       authLogger.warn("Login attempt without email");
-      return res.status(400).send("Email is required");
+      return res.status(400).json({
+        message: "Email is required",
+        code: "MISSING_EMAIL"
+      });
     }
     
     // Log original vs. normalized email for debugging
@@ -283,11 +361,17 @@ export function setupAuth(app: Express) {
       });
     }
     
+    // Update request body with normalized email to ensure case-insensitive matching
+    req.body.email = normalizedEmail;
+    
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         // If there's a server error
         authLogger.error("Login server error", { err });
-        return res.status(500).send("An unexpected error occurred. Please try again later.");
+        return res.status(500).json({
+          message: "An unexpected error occurred. Please try again later.",
+          code: "SERVER_ERROR"
+        });
       }
       
       if (!user) {
@@ -295,16 +379,32 @@ export function setupAuth(app: Express) {
         authLogger.warn("Login failed", { 
           email: req.body.email,
           normalized: normalizedEmail,
-          wasNormalized: normalizedEmail !== req.body.email
+          wasNormalized: normalizedEmail !== req.body.email,
+          info: info || 'No additional info'
         });
-        return res.status(401).send("Unauthorized");
+        
+        // Provide more specific error feedback
+        return res.status(401).json({
+          message: "Invalid email or password. Please check your credentials and try again.",
+          code: "INVALID_CREDENTIALS"
+        });
       }
       
       // Log user in (wrap in promise for async handling)
-      req.login(user, loginErr => {
+      req.login(user, (loginErr) => {
         if (loginErr) {
-          authLogger.error("Session creation error", { loginErr });
-          return res.status(500).send("Could not create login session. Please try again.");
+          authLogger.error("Session creation error", { 
+            loginErr,
+            userId: user.id,
+            email: user.email
+          });
+          
+          return res.status(500).json({
+            message: "Could not create login session. Please try again.",
+            code: "SESSION_ERROR",
+            userId: user.id,  // Return user ID to help with troubleshooting
+            loginStatus: 'failed'
+          });
         }
         
         // Log success
@@ -312,11 +412,14 @@ export function setupAuth(app: Express) {
           id: user.id, 
           email: user.email,
           originalEmail: req.body.email,
-          wasNormalized: normalizedEmail !== req.body.email
+          wasNormalized: normalizedEmail !== req.body.original
         });
         
-        // Return the user data
-        return res.status(200).json(user);
+        // Return the user data with login status
+        return res.status(200).json({
+          ...user,
+          loginStatus: 'success'
+        });
       });
     })(req, res, next);
   });
