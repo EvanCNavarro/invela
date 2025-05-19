@@ -864,40 +864,42 @@ export default function CompanyProfilePage() {
             </div>
           </div>
           
-          <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent p-0">
-              <TabsTrigger
-                value="overview"
-                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="users"
-                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-              >
-                Users
-              </TabsTrigger>
-              <TabsTrigger
-                value="risk"
-                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-              >
-                Risk
-              </TabsTrigger>
-            </TabsList>
-            
-            <div className="pt-6">
-              <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                {renderOverviewTab()}
-              </TabsContent>
-              <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                {renderUsersTab()}
-              </TabsContent>
-              <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                {renderRiskTab()}
-              </TabsContent>
-            </div>
-          </Tabs>
+          <div className="bg-white rounded-md overflow-hidden shadow-sm">
+            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="flex h-12 border-b border-gray-200 w-full justify-start rounded-none bg-transparent p-0">
+                <TabsTrigger
+                  value="overview"
+                  className="flex-1 rounded-none border-b-2 border-transparent py-3 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="users"
+                  className="flex-1 rounded-none border-b-2 border-transparent py-3 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+                >
+                  Users
+                </TabsTrigger>
+                <TabsTrigger
+                  value="risk"
+                  className="flex-1 rounded-none border-b-2 border-transparent py-3 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+                >
+                  Risk
+                </TabsTrigger>
+              </TabsList>
+              
+              <div className="p-6">
+                <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderOverviewTab()}
+                </TabsContent>
+                <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderUsersTab()}
+                </TabsContent>
+                <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  {renderRiskTab()}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
         </div>
       </PageTemplate>
     </DashboardLayout>
