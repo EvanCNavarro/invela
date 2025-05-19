@@ -131,19 +131,51 @@ const useRegisterMutation = () => {
       });
       
       if (!res.ok) {
-        // Try to parse JSON error first, fallback to text
-        const errorData = await res.json().catch(async () => ({ 
-          message: await res.text() 
-        }));
+        // Enhanced error handling to avoid reading response body twice
+        const responseClone = res.clone();
         
-        // Provide a more user-friendly error message
-        const errorMessage = errorData.message || "Account setup failed";
-        const friendlyMessage = errorMessage.includes("duplicate") || errorMessage.includes("already exists")
+        // Check content type to determine how to parse the response
+        const contentType = res.headers.get('content-type') || '';
+        
+        // Log the error response details for debugging
+        console.log('[Auth] Registration error response:', { 
+          status: res.status, 
+          statusText: res.statusText,
+          contentType
+        });
+        
+        let errorMessage = "Account setup failed";
+        
+        try {
+          // If content type is JSON, parse as JSON
+          if (contentType.includes('application/json')) {
+            const errorData = await res.json();
+            errorMessage = errorData.message || errorMessage;
+          } else {
+            // Otherwise parse as text
+            errorMessage = await res.text();
+          }
+        } catch (parseError) {
+          // If parsing fails, try the clone as text
+          console.error('[Auth] Error parsing response:', parseError);
+          try {
+            errorMessage = await responseClone.text();
+          } catch (fallbackError) {
+            console.error('[Auth] Fallback error parsing failed:', fallbackError);
+            // Keep default error message if all parsing fails
+          }
+        }
+        
+        // Provide a more user-friendly message
+        const friendlyMessage = errorMessage.includes("duplicate") || 
+                                errorMessage.includes("already exists") || 
+                                errorMessage.includes("Email already exists")
           ? "This account already exists. Please try signing in instead."
           : errorMessage;
           
         throw new Error(friendlyMessage);
       }
+      
       return await res.json();
     },
     onSuccess: (user: User) => {
