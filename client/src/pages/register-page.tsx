@@ -391,6 +391,10 @@ export default function RegisterPage() {
               description: "Logging you in...",
             });
             
+            // Normalize email to lowercase before login to ensure case consistency
+            const normalizedEmail = values.email.toLowerCase();
+            logRegistration(`Attempting login with normalized email: ${normalizedEmail}`);
+            
             // Perform login with the same credentials
             const loginResponse = await fetch("/api/login", {
               method: "POST",
@@ -398,7 +402,7 @@ export default function RegisterPage() {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                username: values.email, // The login endpoint expects username, not email
+                email: normalizedEmail, // The login endpoint expects email, not username
                 password: values.password
               }),
               credentials: "include"
