@@ -19,6 +19,7 @@ import { InviteModal } from "@/components/playground/InviteModal";
 import { companyTypeColors } from "@/components/network/types";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { BentoOverview } from "@/components/company/BentoOverview";
+import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -903,20 +904,13 @@ export default function CompanyProfilePage() {
                   </div>
                 </div>
                 
-                {/* Accreditation Status Box - styled to match screenshot */}
-                <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
-                  {/* Accent border - red gradient for Not Available */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-500 to-rose-300"></div>
-                  
-                  <div className="flex flex-col items-center justify-center h-full py-2">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1.5">
-                      ACCREDITATION
-                    </span>
-                    <span className="text-xl font-medium text-rose-500">
-                      Not Available
-                    </span>
-                  </div>
-                </div>
+                {/* Accreditation Status Box - using unified component */}
+                <AccreditationStatusDisplay 
+                  company={company}
+                  variant="box"
+                  size="lg" 
+                  className="min-w-[200px]"
+                />
               </div>
             </div>
           </div>
