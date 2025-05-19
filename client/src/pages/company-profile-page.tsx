@@ -895,10 +895,10 @@ export default function CompanyProfilePage() {
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   
                   <div className="flex flex-col items-center justify-center h-full py-2">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1.5">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       S&P DATA ACCESS RISK SCORE
                     </span>
-                    <span className="text-3xl font-bold text-gray-900">
+                    <span className="text-2xl font-bold text-gray-900">
                       {company.riskScore || "29"}
                     </span>
                   </div>
