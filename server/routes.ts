@@ -2370,13 +2370,30 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           userMessage = "There was a problem with your invitation code";
         } else if (error.message.includes('password')) {
           userMessage = "There was a problem setting your password";
+        } else if (error.message.includes('column') && error.message.includes('does not exist')) {
+          // This catches SQL errors related to column names mismatch (camelCase vs snake_case)
+          userMessage = "Database schema error - please try again later";
+          logger.error('SQL column name error detected', {
+            errorMessage: error.message,
+            possibleCause: 'Likely camelCase/snake_case field name mismatch'
+          });
+        } else if (error.message.includes('value too long')) {
+          userMessage = "One of your input values exceeds the maximum allowed length";
         }
       }
+      
+      // Create a consistently formatted error response with better debugging info
+      logger.debug('Preparing final error response', {
+        userMessage,
+        errorSummary: error instanceof Error ? error.message : "Unknown error"
+      });
       
       return res.status(500).json({ 
         success: false, 
         message: userMessage,
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error instanceof Error ? error.message : "Unknown error",
+        // Include diagnostic code for client-side debugging
+        errorCode: error instanceof Error && (error as any).code ? (error as any).code : 'GENERAL_ERROR'
       });
     } finally {
       // Always release the client
