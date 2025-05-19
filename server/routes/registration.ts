@@ -14,21 +14,26 @@ export function registerRegistrationRoutes(app: Express) {
     console.log("[Registration] Processing registration request");
     
     try {
-      // Extract registration data
+      console.log('[Registration] Processing registration request with data:', JSON.stringify(req.body, null, 2));
+      
+      // Extract and validate registration data
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
       
+      if (!email || !password || !fullName || !invitationCode) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields: email, password, fullName, and invitationCode are required"
+        });
+      }
+      
       // First, validate the invitation
-      const [invitation] = await db
-        .select()
-        .from(invitations)
-        .where(
-          and(
-            eq(invitations.code, invitationCode),
-            eq(invitations.email, email),
-            eq(invitations.status, 'pending')
-          )
-        )
-        .limit(1);
+      const invitation = await db.query.invitations.findFirst({
+        where: and(
+          eq(invitations.code, invitationCode),
+          eq(invitations.email, email),
+          eq(invitations.status, 'pending')
+        ),
+      });
       
       if (!invitation) {
         return res.status(400).json({
@@ -73,19 +78,19 @@ export function registerRegistrationRoutes(app: Express) {
       const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
       const hashedPassword = `${hash}.${salt}`;
       
-      // Create the user
+      // Create the user with properly mapped field names
       const [newUser] = await db
         .insert(users)
         .values({
-          email: email,
+          email,
           password: hashedPassword,
           full_name: fullName,
           first_name: firstName || '',
           last_name: lastName || '',
           company_id: company.id,
-          role: 'User', // Default role
           created_at: new Date(),
           updated_at: new Date(),
+          onboarding_user_completed: false
         })
         .returning();
         
@@ -123,8 +128,7 @@ export function registerRegistrationRoutes(app: Express) {
             id: newUser.id,
             email: newUser.email,
             fullName: newUser.full_name,
-            companyId: newUser.company_id,
-            role: newUser.role
+            companyId: newUser.company_id
           }
         });
       });
@@ -149,56 +153,49 @@ export function registerRegistrationRoutes(app: Express) {
     }
     
     try {
-      console.log(`[Validate Invitation] Checking code ${invitationCode} for email ${email}`);
+      console.log(`[Validate Invitation] Checking invitation code: ${invitationCode} for email: ${email}`);
       
-      // Find the invitation using drizzle's query builder
-      const pendingInvitations = await db
-        .select()
-        .from(invitations)
-        .where(
-          and(
-            eq(invitations.code, invitationCode),
-            eq(invitations.email, email),
-            eq(invitations.status, 'pending')
-          )
-        );
+      // Use simple SQL query to avoid potential Drizzle ORM binding issues
+      const result = await db.query.invitations.findFirst({
+        where: and(
+          eq(invitations.code, invitationCode),
+          eq(invitations.email, email),
+          eq(invitations.status, 'pending')
+        ),
+      });
       
-      if (pendingInvitations.length === 0) {
+      if (!result) {
+        console.log('[Validate Invitation] No matching invitation found');
         return res.status(400).json({
           success: false,
           message: "Invalid invitation code or email"
         });
       }
       
-      const invitation = pendingInvitations[0];
-      console.log(`[Validate Invitation] Found invitation for company ID: ${invitation.company_id}`);
+      console.log(`[Validate Invitation] Found invitation for company ID: ${result.company_id}`);
       
       // Get company details
-      const companyDetails = await db
-        .select()
-        .from(companies)
-        .where(eq(companies.id, invitation.company_id));
-      
-      const company = companyDetails.length > 0 ? companyDetails[0] : null;
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, result.company_id),
+      });
       
       // Check if user already exists
-      const existingUsers = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email));
+      const existingUser = await db.query.users.findFirst({
+        where: eq(users.email, email),
+      });
       
       return res.status(200).json({
         success: true,
         invitation: {
-          code: invitation.code,
-          email: invitation.email,
-          expiresAt: invitation.expires_at
+          code: result.code,
+          email: result.email,
+          expiresAt: result.expires_at
         },
         company: company ? {
           id: company.id,
           name: company.name
         } : null,
-        userExists: existingUsers.length > 0
+        userExists: !!existingUser
       });
     } catch (error) {
       console.error("[Validate Invitation] Error:", error);
