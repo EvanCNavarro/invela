@@ -290,8 +290,8 @@ export default function RegisterPage() {
         
         try {
           // Call the account-setup endpoint directly
-          logRegistration('Submitting to account-setup endpoint');
-          const response = await fetch("/api/account-setup", {
+          logRegistration('Submitting to account/setup endpoint');
+          const response = await fetch("/api/account/setup", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
