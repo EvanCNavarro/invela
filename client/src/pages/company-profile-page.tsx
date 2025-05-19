@@ -47,12 +47,19 @@ interface CompanyProfileData {
   revenueTier?: string;
   revenue_tier?: string;
   risk_clusters?: {
-    financial: number;
-    operational: number;
-    compliance: number;
-    strategic: number;
-    reputational: number;
-    cybersecurity: number;
+    'Cyber Security': number;
+    'Financial Stability': number;
+    'Potential Liability': number;
+    'Dark Web Data': number;
+    'Public Sentiment': number;
+    'Data Access Scope': number;
+    // For backward compatibility with older data
+    financial?: number;
+    operational?: number;
+    compliance?: number;
+    strategic?: number;
+    reputational?: number;
+    cybersecurity?: number;
   };
   // Additional fields that may be in the data
   certifications_compliance?: string;
@@ -993,21 +1000,30 @@ export default function CompanyProfilePage() {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {Object.entries(riskClusters).map(([key, value]) => (
-              <div key={key} className="bg-gray-50 rounded p-3">
-                <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
+            {company.risk_clusters && Object.entries(company.risk_clusters)
+              .filter(([key]) => {
+                // Only show the new risk dimensions
+                const newDimensions = [
+                  'Cyber Security', 'Financial Stability', 'Potential Liability',
+                  'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
+                ];
+                return newDimensions.includes(key);
+              })
+              .map(([key, value]) => (
+                <div key={key} className="bg-gray-50 rounded p-3">
+                  <div className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
+                    {key}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${
+                      value > 66 ? 'bg-red-500' : 
+                      value > 33 ? 'bg-yellow-500' : 
+                      'bg-green-500'
+                    }`}></div>
+                    <span className="text-sm text-gray-800">{value}/100</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-2 h-2 rounded-full ${
-                    value > 66 ? 'bg-red-500' : 
-                    value > 33 ? 'bg-yellow-500' : 
-                    'bg-green-500'
-                  }`}></div>
-                  <span className="text-sm text-gray-800">{value}/100</span>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>
