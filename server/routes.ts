@@ -2012,6 +2012,9 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
     };
 
+    // Import database pool
+    const { pool } = require('@db');
+    
     // Configuration for connection retry mechanism
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 1000; // ms between retry attempts
@@ -2028,12 +2031,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           retryCount++;
           
           // Log connection error
-          const errorCode = connError instanceof Error && (connError as any).code 
+          const connErrorCode = connError instanceof Error && (connError as any).code 
             ? (connError as any).code : 'UNKNOWN';
             
           logger.warn(`Database connection attempt ${retryCount} failed`, {
             error: connError instanceof Error ? connError.message : String(connError),
-            errorCode,
+            errorCode: connErrorCode,
             willRetry: retryCount < MAX_RETRIES
           });
           
@@ -2386,11 +2389,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
         // Log comprehensive error information
         const pgError = transactionError as any;
-        const errorCode = pgError?.code || 'UNKNOWN';
+        const pgErrorCode = pgError?.code || 'UNKNOWN';
         
         logger.error('Transaction failed', { 
           error: transactionError instanceof Error ? transactionError.message : String(transactionError),
-          errorCode,
+          errorCode: pgErrorCode,
           pgErrorDetails: pgError?.code ? {
             code: pgError.code,
             detail: pgError.detail,
@@ -2413,12 +2416,42 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           });
         }
         
-        return res.status(500).json({ 
-          success: false, 
-          message: "Database update failed", 
-          errorCode: pgError?.code || 'UNKNOWN',
-          error: transactionError instanceof Error ? transactionError.message : "Unknown database error"
+        // Create a user-friendly error response based on error type
+        // Using the previously declared pgErrorCode
+        
+        // Prepare a more informative error response based on the specific error
+        let statusCode = 500;
+        let errorResponse = {
+          success: false,
+          message: "Sorry, we encountered an issue while creating your account.",
+          errorCode: pgErrorCode,
+          retryable: true // Default to retryable
+        };
+
+        // Handle specific PostgreSQL error codes
+        if (pgErrorCode === '57P01') {
+          // Database connection terminated - this is retryable
+          errorResponse.message = "The server is experiencing temporary connection issues. Please try again shortly.";
+          errorResponse.retryable = true;
+        } else if (pgErrorCode === '23505') {
+          // Unique constraint violation - user already exists
+          statusCode = 409; // Conflict
+          errorResponse.message = "An account with this email already exists.";
+          errorResponse.retryable = false;
+        } else if (pgErrorCode === '23503') {
+          // Foreign key violation - likely invalid invitation code
+          statusCode = 400; // Bad Request
+          errorResponse.message = "Invalid invitation code or the invitation has expired.";
+          errorResponse.retryable = false;
+        }
+        
+        logger.error('Sending error response to client', { 
+          statusCode,
+          errorCode: pgErrorCode,
+          message: errorResponse.message
         });
+        
+        return res.status(statusCode).json(errorResponse);
       }
     } catch (error) {
       // Outer error handler - ensure proper cleanup
