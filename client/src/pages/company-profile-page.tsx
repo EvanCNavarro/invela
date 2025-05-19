@@ -839,7 +839,7 @@ export default function CompanyProfilePage() {
         
         <div className="space-y-6">
           {/* Header with back button and company title */}
-          <div className="flex items-center space-x-6 mb-6">
+          <div className="flex items-center space-x-4 mb-6">
             <Button
               variant="ghost"
               size="icon"
@@ -849,72 +849,55 @@ export default function CompanyProfilePage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <CompanyLogo
                 companyId={company.id}
                 companyName={company.name}
                 size="lg"
               />
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">{company.name}</h1>
-                <div className="flex items-center text-sm text-muted-foreground mt-1 space-x-2">
-                  <span className="bg-gray-100 text-gray-800 text-xs px-2.5 py-0.5 rounded-full font-medium">
-                    {company.category}
-                  </span>
-                  {company.websiteUrl && (
-                    <a 
-                      href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline flex items-center"
-                    >
-                      <Globe className="h-3 w-3 mr-1" />
-                      Website
-                    </a>
-                  )}
-                </div>
+                <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {company.category}
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg border border-gray-200">
-            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-              <div className="border-b border-gray-200">
-                <TabsList className="w-full justify-start rounded-none bg-transparent p-0">
-                  <TabsTrigger
-                    value="overview"
-                    className="px-8 py-3 rounded-none border-b-2 border-transparent font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-                  >
-                    Overview
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="users"
-                    className="px-8 py-3 rounded-none border-b-2 border-transparent font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-                  >
-                    Users
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="risk"
-                    className="px-8 py-3 rounded-none border-b-2 border-transparent font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
-                  >
-                    Risk
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              
-              <div className="p-6">
-                <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderOverviewTab()}
-                </TabsContent>
-                <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderUsersTab()}
-                </TabsContent>
-                <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderRiskTab()}
-                </TabsContent>
-              </div>
-            </Tabs>
-          </div>
+          <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="border-b border-gray-200 w-full justify-start rounded-none bg-transparent p-0">
+              <TabsTrigger
+                value="overview"
+                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="users"
+                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+              >
+                Users
+              </TabsTrigger>
+              <TabsTrigger
+                value="risk"
+                className="rounded-none border-b-2 border-transparent px-6 py-2 font-medium text-gray-600 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent"
+              >
+                Risk
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="pt-6">
+              <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                {renderOverviewTab()}
+              </TabsContent>
+              <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                {renderUsersTab()}
+              </TabsContent>
+              <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                {renderRiskTab()}
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
       </PageTemplate>
     </DashboardLayout>
