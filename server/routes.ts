@@ -2208,8 +2208,17 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           // Ensure necessary fields are available for auth
           const userForAuth = {
             ...updatedUser,
-            email: email
+            email: email,
+            // Add required fields that Express session expects
+            id: updatedUser.id,
+            company_id: updatedUser.company_id
           };
+          
+          logger.debug('Preparing user authentication', {
+            userId: updatedUser.id,
+            email: updatedUser.email,
+            fieldsPresent: Object.keys(userForAuth).join(', ')
+          });
           
           // Authenticate directly instead of relying on passport
           await new Promise<void>((resolve, reject) => {

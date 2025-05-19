@@ -317,12 +317,19 @@ export default function RegisterPage() {
             // Extract error message if available
             let errorMessage = "Account setup failed";
             try {
-              // Try to get error message, but don't depend on it
+              // Try to get a detailed error message from the response
               const contentType = response.headers.get("content-type") || "";
               if (contentType.includes("application/json")) {
                 const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
+                // Use the message field or try to extract error details
+                errorMessage = errorData.message || 
+                  errorData.error || 
+                  (errorData.errorCode ? `Database error (${errorData.errorCode})` : errorMessage);
+                
+                // Log the complete error data for debugging
+                console.log("[Registration] Detailed error data:", errorData);
               } else {
+                // For non-JSON responses, use the text body
                 errorMessage = await response.text() || errorMessage;
               }
             } catch (parseError) {
@@ -377,7 +384,10 @@ export default function RegisterPage() {
               
               // Navigate to home page after a small delay to show the toast
               setTimeout(() => {
-                window.location.href = "/";
+                // Store user data in query cache for immediate access
+                queryClient.setQueryData(["/api/user"], userData);
+                // Use wouter navigation instead of direct location change
+                navigate("/");
               }, 1500);
               return;
             }
