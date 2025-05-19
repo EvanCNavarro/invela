@@ -18,6 +18,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { companyTypeColors } from "@/components/network/types";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { BentoOverview } from "@/components/company/BentoOverview";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -461,6 +462,19 @@ export default function CompanyProfilePage() {
   const riskClusters = company.risk_clusters || defaultRiskClusters;
 
   const renderOverviewTab = () => (
+    <BentoOverview 
+      company={company}
+      users={users}
+      usersLoading={usersLoading}
+      productServices={productServices}
+      clientsPartners={clientsPartners}
+      companyAge={companyAge}
+      setActiveTab={setActiveTab}
+    />
+  );
+  
+  // Original overview tab design, now replaced by BentoOverview
+  const _renderOriginalOverviewTab = () => (
     <div className="space-y-6">
       {/* Company Information Card */}
       <Card className="border border-gray-200 shadow-none">
