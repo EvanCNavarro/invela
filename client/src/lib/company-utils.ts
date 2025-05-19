@@ -22,82 +22,106 @@ export function getCompanyAccreditationStatus(company: any): string | undefined 
 }
 
 /**
+ * STANDARDIZED ACCREDITATION STATUSES
+ * These are the canonical status values used throughout the application:
+ * - APPROVED: Company has been approved for data access
+ * - IN_PROCESS: Company is being processed for approval
+ * - UNDER_REVIEW: Company is under review for approval
+ * - REVOKED: Company's approval has been revoked
+ * 
+ * Any other status values should be normalized to one of these.
+ */
+export type AccreditationStatus = 'APPROVED' | 'IN_PROCESS' | 'UNDER_REVIEW' | 'REVOKED' | 'NOT_AVAILABLE';
+
+/**
+ * Helper function to normalize various status formats to our standard status values
+ * 
+ * This ensures consistent status display across the application regardless of 
+ * the original format or naming convention used in the data.
+ */
+export function normalizeAccreditationStatus(status: string | undefined | null): AccreditationStatus {
+  if (!status) return 'NOT_AVAILABLE';
+  
+  // Handle string "null" or "undefined" as actual null
+  if (status.toLowerCase() === 'null' || status.toLowerCase() === 'undefined') {
+    return 'NOT_AVAILABLE';
+  }
+  
+  // Normalize the status to uppercase without spaces/underscores for comparison
+  const normalized = status.toUpperCase().replace(/[_\s-]/g, '');
+  
+  // Map to our standardized values
+  if (['APPROVED', 'CONNECTED', 'VALID', 'PROVISIONALLYAPPROVED'].includes(normalized)) {
+    return 'APPROVED';
+  }
+  
+  if (['INPROCESS', 'PENDING', 'REQUIRESAPPROVAL', 'PROCESSING'].includes(normalized)) {
+    return 'IN_PROCESS';
+  }
+  
+  if (['UNDERREVIEW', 'INREVIEW', 'REVIEW'].includes(normalized)) {
+    return 'UNDER_REVIEW';
+  }
+  
+  if (['REVOKED', 'DECLINED', 'REJECTED', 'EXPIRED', 'SUSPENDED'].includes(normalized)) {
+    return 'REVOKED';
+  }
+  
+  // Default fallback for unrecognized values
+  return 'NOT_AVAILABLE';
+}
+
+/**
  * Helper function to determine the display category based on accreditation status
  * 
  * Maps the detailed status values to one of three categories for UI purposes:
  * - VALID: Approved companies
  * - PENDING: Companies that are under review or in process
- * - INVALID: Companies with revoked access
- * 
- * Also handles legacy status values for backward compatibility
+ * - INVALID: Companies with revoked access or no status
  */
 export function getAccreditationStatusCategory(status: string | undefined): 'VALID' | 'PENDING' | 'INVALID' | undefined {
-  if (!status) return undefined;
+  if (!status) return 'INVALID';
   
-  // Normalize the status to lowercase for case-insensitive comparison
-  const normalizedStatus = status.toLowerCase();
+  const normalizedStatus = normalizeAccreditationStatus(status);
   
-  // Valid status values
-  if (normalizedStatus === 'approved') {
-    return 'VALID';
+  switch (normalizedStatus) {
+    case 'APPROVED':
+      return 'VALID';
+    case 'IN_PROCESS':
+    case 'UNDER_REVIEW':
+      return 'PENDING';
+    case 'REVOKED':
+    case 'NOT_AVAILABLE':
+      return 'INVALID';
+    default:
+      return 'INVALID';
   }
-  
-  // Pending status values
-  if (normalizedStatus === 'under review' || 
-      normalizedStatus === 'in process' || 
-      normalizedStatus === 'pending') {
-    return 'PENDING';
-  }
-  
-  // Invalid status values
-  if (normalizedStatus === 'revoked') {
-    return 'INVALID';
-  }
-  
-  // Legacy status mapping
-  if (normalizedStatus === 'connected') {
-    return 'VALID';
-  }
-  
-  if (normalizedStatus === 'not connected' || 
-      normalizedStatus === 'requires approval') {
-    return 'PENDING';
-  }
-  
-  // Default for unrecognized status values
-  return 'PENDING';
 }
 
 /**
  * Helper function to get a user-friendly label for the accreditation status
  * 
- * Converts the raw accreditation status to a formatted display label,
- * handling both new status values and legacy status values
+ * Converts the standardized status to a properly formatted display label
  */
 export function getAccreditationStatusLabel(status: string | undefined): string {
-  if (!status) return 'Unknown';
+  if (!status) return 'Not Available';
   
-  // Normalize the status to lowercase for case-insensitive comparison
-  const normalizedStatus = status.toLowerCase();
+  const normalizedStatus = normalizeAccreditationStatus(status);
   
-  // Map legacy status values to new formatted labels
-  if (normalizedStatus === 'connected') {
-    return 'Approved';
+  switch (normalizedStatus) {
+    case 'APPROVED':
+      return 'Approved';
+    case 'IN_PROCESS':
+      return 'In Process';
+    case 'UNDER_REVIEW':
+      return 'Under Review';
+    case 'REVOKED':
+      return 'Revoked';
+    case 'NOT_AVAILABLE':
+      return 'Not Available';
+    default:
+      return 'Not Available';
   }
-  
-  if (normalizedStatus === 'not connected') {
-    return 'Under Review';
-  }
-  
-  if (normalizedStatus === 'requires approval') {
-    return 'In Process';
-  }
-  
-  // For new status values, just capitalize the first letter of each word
-  return status
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
 }
 
 /**
@@ -110,45 +134,89 @@ export function getStatusBadgeStyle(status: string | undefined): {
   label: string; 
   variant?: "default" | "secondary" | "destructive" | "outline"; 
   className: string;
+  bgColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
 } {
   if (!status) {
     return { 
-      label: 'Unknown',
+      label: 'Not Available',
       variant: 'outline',
-      className: 'text-gray-500 border-gray-300'
+      className: 'text-rose-500 border-rose-200',
+      bgColor: 'bg-white',
+      textColor: 'text-rose-500',
+      borderColor: 'border-rose-200',
+      gradientFrom: 'from-rose-500',
+      gradientTo: 'to-rose-200'
     };
   }
   
-  const category = getAccreditationStatusCategory(status);
+  const normalizedStatus = normalizeAccreditationStatus(status);
   const label = getAccreditationStatusLabel(status);
   
-  switch (category) {
-    case 'VALID':
+  switch (normalizedStatus) {
+    case 'APPROVED':
       return { 
         label,
-        className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200'
+        className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200',
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        borderColor: 'border-green-200',
+        gradientFrom: 'from-green-600',
+        gradientTo: 'to-green-300'
       };
-    case 'PENDING':
-      if (status.toLowerCase() === 'under review') {
-        return { 
-          label,
-          className: 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
-        };
-      }
+    case 'IN_PROCESS':
       return { 
         label,
-        className: 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200'
+        className: 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200',
+        bgColor: 'bg-amber-100',
+        textColor: 'text-amber-800',
+        borderColor: 'border-amber-200',
+        gradientFrom: 'from-amber-500',
+        gradientTo: 'to-amber-300'
       };
-    case 'INVALID':
+    case 'UNDER_REVIEW':
       return { 
         label,
-        className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+        className: 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200',
+        bgColor: 'bg-purple-100',
+        textColor: 'text-purple-800',
+        borderColor: 'border-purple-200',
+        gradientFrom: 'from-purple-500',
+        gradientTo: 'to-purple-300'
+      };
+    case 'REVOKED':
+      return { 
+        label,
+        className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200',
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-800',
+        borderColor: 'border-red-200',
+        gradientFrom: 'from-red-600',
+        gradientTo: 'to-red-300'
+      };
+    case 'NOT_AVAILABLE':
+      return { 
+        label,
+        className: 'bg-white text-rose-500 border-rose-200',
+        bgColor: 'bg-white',
+        textColor: 'text-rose-500',
+        borderColor: 'border-rose-200',
+        gradientFrom: 'from-rose-500',
+        gradientTo: 'to-rose-200'
       };
     default:
       return { 
         label,
         variant: 'outline',
-        className: 'text-gray-500 border-gray-300'
+        className: 'text-gray-500 border-gray-300',
+        bgColor: 'bg-white',
+        textColor: 'text-gray-500',
+        borderColor: 'border-gray-300',
+        gradientFrom: 'from-gray-400',
+        gradientTo: 'to-gray-200'
       };
   }
 }

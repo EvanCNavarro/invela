@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Building2, Globe, Users, Calendar, Briefcase, Shield, 
   ExternalLink, ChevronRight, DollarSign, Tag, Layers, 
   FileText, Award as BadgeIcon } from "lucide-react";
-import { StatusBadge } from "@/components/company/StatusBadge";
+import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 
 interface BentoOverviewProps {
   company: any;
