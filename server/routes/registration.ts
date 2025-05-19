@@ -80,18 +80,22 @@ export function registerRegistrationRoutes(app: Express) {
       
       console.log(`[Registration] Creating new user with email: ${email} and company ID: ${company.id}`);
       
-      // Create the user with properly mapped field names
+      // Create the user with properly mapped field names to match the database schema
+      const userValues = {
+        email: email,
+        password: hashedPassword,
+        full_name: fullName,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        company_id: company.id,
+        onboarding_user_completed: false
+      };
+      
+      console.log('[Registration] Creating user with values:', JSON.stringify(userValues, null, 2));
+      
       const userResult = await db
         .insert(users)
-        .values({
-          email: email,
-          password: hashedPassword,
-          full_name: fullName,
-          first_name: firstName || '',
-          last_name: lastName || '',
-          company_id: company.id,
-          onboarding_user_completed: false
-        })
+        .values(userValues)
         .returning();
         
       if (!userResult || userResult.length === 0) {
