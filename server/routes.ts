@@ -1984,7 +1984,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Account setup endpoint - supporting both URL formats for backward compatibility
   app.post(["/api/account-setup", "/api/account/setup"], async (req, res) => {
     /**
-     * Fixed account setup endpoint with direct database operations
+     * Enhanced account setup endpoint with connection retry and error handling
      * 
      * This implementation:
      * 1. Uses direct SQL queries instead of relying on the ORM transaction
@@ -1992,6 +1992,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
      * 3. Adds extensive logging to track every operation
      * 4. Uses more reliable error propagation
      * 5. Handles camelCase to snake_case conversion for field names
+     * 6. Implements database connection retry logic for resilience
+     * 7. Provides better client-side error feedback for connection issues
      */
     const logger = {
       info: (message: string, meta?: any) => {
@@ -2010,10 +2012,52 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
     };
 
-    // Get a direct connection to the database for emergency direct queries if needed
-    const client = await pool.connect();
+    // Configuration for connection retry mechanism
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // ms between retry attempts
+    let retryCount = 0;
+    let client;
+    
+    // Connection function with retry logic
+    const getConnectionWithRetry = async () => {
+      while (retryCount < MAX_RETRIES) {
+        try {
+          logger.debug(`Database connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
+          return await pool.connect();
+        } catch (connError) {
+          retryCount++;
+          
+          // Log connection error
+          const errorCode = connError instanceof Error && (connError as any).code 
+            ? (connError as any).code : 'UNKNOWN';
+            
+          logger.warn(`Database connection attempt ${retryCount} failed`, {
+            error: connError instanceof Error ? connError.message : String(connError),
+            errorCode,
+            willRetry: retryCount < MAX_RETRIES
+          });
+          
+          // If we've exhausted retries, throw the error
+          if (retryCount >= MAX_RETRIES) {
+            logger.error('All database connection attempts failed', {
+              attempts: retryCount,
+              lastError: connError instanceof Error ? connError.message : String(connError)
+            });
+            throw connError;
+          }
+          
+          // Wait before trying again
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        }
+      }
+      
+      // This should not be reached due to the throw above, but TypeScript needs it
+      throw new Error('Failed to connect to database after retries');
+    };
     
     try {
+      // Get database connection with retry logic
+      client = await getConnectionWithRetry();
       // Parse and validate input - handle both camelCase and snake_case field names for compatibility
       const { 
         email, 
@@ -2309,23 +2353,55 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         }
         
       } catch (transactionError) {
-        // Transaction failed - roll back
-        try {
-          await client.query('ROLLBACK');
-          logger.error('Transaction failed - rolled back', { 
-            error: transactionError instanceof Error ? transactionError.message : String(transactionError),
-            stack: transactionError instanceof Error ? transactionError.stack : undefined
-          });
-        } catch (rollbackError) {
-          // Even rollback failed - critical database issue
-          logger.error('Critical database error - rollback failed', {
-            originalError: transactionError instanceof Error ? transactionError.message : String(transactionError),
-            rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
-          });
+        // Transaction failed - attempt roll back with retry
+        let rollbackSuccess = false;
+        
+        // Attempt transaction rollback with retry
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            logger.debug(`Attempting transaction rollback (attempt ${attempt + 1}/3)`);
+            await client.query('ROLLBACK');
+            
+            // If we get here, rollback succeeded
+            rollbackSuccess = true;
+            logger.info('Transaction rolled back successfully', {
+              attempt: attempt + 1
+            });
+            break;
+          } catch (rollbackError) {
+            // Log rollback error
+            logger.error('Rollback attempt failed', {
+              attempt: attempt + 1,
+              originalError: transactionError instanceof Error ? transactionError.message : String(transactionError),
+              rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+              willRetry: attempt < 2
+            });
+            
+            // Wait a bit before retrying
+            if (attempt < 2) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
         }
         
-        // Log the SQL state if available
+        // Log comprehensive error information
         const pgError = transactionError as any;
+        const errorCode = pgError?.code || 'UNKNOWN';
+        
+        logger.error('Transaction failed', { 
+          error: transactionError instanceof Error ? transactionError.message : String(transactionError),
+          errorCode,
+          pgErrorDetails: pgError?.code ? {
+            code: pgError.code,
+            detail: pgError.detail,
+            schema: pgError.schema,
+            table: pgError.table,
+            column: pgError.column,
+            constraint: pgError.constraint
+          } : undefined,
+          stack: transactionError instanceof Error ? transactionError.stack : undefined,
+          rollbackStatus: rollbackSuccess ? 'succeeded' : 'failed'
+        });
         if (pgError?.code) {
           logger.error('PostgreSQL error details', {
             code: pgError.code,
