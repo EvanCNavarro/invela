@@ -1981,8 +1981,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  // Account setup endpoint
-  app.post("/api/account/setup", async (req, res) => {
+  // Account setup endpoint - supporting both URL formats for backward compatibility
+  app.post(["/api/account-setup", "/api/account/setup"], async (req, res) => {
     /**
      * Fixed account setup endpoint with direct database operations
      * 
@@ -2077,17 +2077,25 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         const hashedPassword = await bcrypt.hash(password, 10);
         logger.debug('Password hashed successfully');
         
+        // Add detailed logging for query parameters (without sensitive data)
+        logger.debug('Executing user update query', { 
+          userId: existingUser.id,
+          firstName: firstName?.substring(0, 1) + '...',
+          lastName: lastName?.substring(0, 1) + '...',
+          fullNameLength: fullName?.length || 0
+        });
+        
         const updateUserResult = await client.query(
           `UPDATE users 
            SET first_name = $1, 
                last_name = $2, 
                full_name = $3, 
                password = $4, 
-               onboarding_user_completed = false,
+               onboarding_user_completed = TRUE,
                updated_at = NOW()
            WHERE id = $5
            RETURNING *`,
-          [firstName, lastName, fullName, hashedPassword, existingUser.id]
+          [firstName || '', lastName || '', fullName || '', hashedPassword, existingUser.id]
         );
         
         if (updateUserResult.rows.length === 0) {
@@ -2135,6 +2143,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         }
         
         // 3.3 Update invitation status
+        logger.debug('Updating invitation status', { 
+          invitationId: invitation.id,
+          currentStatus: invitation.status,
+          newStatus: 'used'
+        });
+        
         const updateInvitationResult = await client.query(
           `UPDATE invitations 
            SET status = 'used', 
@@ -2146,8 +2160,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         );
         
         if (updateInvitationResult.rows.length === 0) {
+          logger.error('Invitation update failed', { invitationId: invitation.id });
           throw new Error('Invitation update failed');
         }
+        
+        logger.info('Invitation marked as used', { id: invitation.id });
         
         const updatedInvitation = updateInvitationResult.rows[0];
         logger.info('Invitation updated successfully', { 
@@ -2161,12 +2178,28 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
         // 4. Broadcast task update if needed
         if (updatedTask) {
-          broadcastTaskUpdate(updatedTask.id, {
-            status: updatedTask.status,
-            progress: updatedTask.progress,
-            metadata: updatedTask.metadata
-          });
-          logger.info('Task update broadcast sent');
+          try {
+            // Use the websocket service to broadcast the task update
+            const websocketService = require('./services/websocket-service');
+            
+            if (typeof websocketService.broadcastTaskUpdate === 'function') {
+              websocketService.broadcastTaskUpdate(updatedTask.id, {
+                status: updatedTask.status,
+                progress: 100, // Ensure 100% progress
+                metadata: updatedTask.metadata
+              });
+              logger.info('Task update broadcast sent successfully');
+            } else {
+              logger.warn('broadcastTaskUpdate function not available', { 
+                available: Object.keys(websocketService)
+              });
+            }
+          } catch (broadcastError) {
+            // Non-critical error, just log it
+            logger.warn('Failed to broadcast task update', { 
+              error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
+            });
+          }
         }
         
         // 5. Attempt to log the user in (outside transaction)
@@ -2216,28 +2249,72 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
       } catch (transactionError) {
         // Transaction failed - roll back
-        await client.query('ROLLBACK');
-        logger.error('Transaction failed - rolled back', { error: transactionError });
+        try {
+          await client.query('ROLLBACK');
+          logger.error('Transaction failed - rolled back', { 
+            error: transactionError instanceof Error ? transactionError.message : String(transactionError),
+            stack: transactionError instanceof Error ? transactionError.stack : undefined
+          });
+        } catch (rollbackError) {
+          // Even rollback failed - critical database issue
+          logger.error('Critical database error - rollback failed', {
+            originalError: transactionError instanceof Error ? transactionError.message : String(transactionError),
+            rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
+          });
+        }
+        
+        // Log the SQL state if available
+        const pgError = transactionError as any;
+        if (pgError?.code) {
+          logger.error('PostgreSQL error details', {
+            code: pgError.code,
+            detail: pgError.detail,
+            schema: pgError.schema,
+            table: pgError.table,
+            column: pgError.column,
+            constraint: pgError.constraint
+          });
+        }
+        
         return res.status(500).json({ 
           success: false, 
           message: "Database update failed", 
-          error: transactionError instanceof Error ? transactionError.message : "Unknown error"
+          errorCode: pgError?.code || 'UNKNOWN',
+          error: transactionError instanceof Error ? transactionError.message : "Unknown database error"
         });
       }
     } catch (error) {
       // Outer error handler - ensure proper cleanup
-      logger.error('Unhandled error in account setup', { error });
+      logger.error('Unhandled error in account setup', { 
+        errorMessage: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Make sure we roll back if needed
       try {
         await client.query('ROLLBACK');
+        logger.info('Successfully rolled back transaction after outer error');
       } catch (rollbackError) {
-        logger.error('Rollback failed', { error: rollbackError });
+        logger.error('Failed to roll back transaction after outer error', { 
+          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
+        });
+      }
+      
+      // Check for specific errors that we can provide better messaging for
+      let userMessage = "Error processing account setup";
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key')) {
+          userMessage = "This email address is already registered";
+        } else if (error.message.includes('invitation')) {
+          userMessage = "There was a problem with your invitation code";
+        } else if (error.message.includes('password')) {
+          userMessage = "There was a problem setting your password";
+        }
       }
       
       return res.status(500).json({ 
         success: false, 
-        message: "Error processing account setup", 
+        message: userMessage,
         error: error instanceof Error ? error.message : "Unknown error"
       });
     } finally {
