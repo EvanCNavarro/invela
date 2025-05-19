@@ -43,13 +43,11 @@ export function registerRegistrationRoutes(app: Express) {
       }
       
       // Check if user already exists
-      const existingUsers = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const existingUser = await db.query.users.findFirst({
+        where: eq(users.email, email),
+      });
         
-      if (existingUsers.length > 0) {
+      if (existingUser) {
         return res.status(400).json({
           success: false,
           message: "User with this email already exists"
@@ -57,11 +55,9 @@ export function registerRegistrationRoutes(app: Express) {
       }
       
       // Get company details
-      const [company] = await db
-        .select()
-        .from(companies)
-        .where(eq(companies.id, invitation.company_id))
-        .limit(1);
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, invitation.company_id),
+      });
         
       if (!company) {
         return res.status(400).json({
@@ -69,6 +65,8 @@ export function registerRegistrationRoutes(app: Express) {
           message: "Invalid company associated with the invitation"
         });
       }
+      
+      console.log(`[Registration] Found company with ID ${company.id} and name ${company.name}`);
       
       // Import crypto for password hashing
       const crypto = await import('crypto');
@@ -78,21 +76,31 @@ export function registerRegistrationRoutes(app: Express) {
       const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
       const hashedPassword = `${hash}.${salt}`;
       
+      console.log(`[Registration] Creating new user with email: ${email} and company ID: ${company.id}`);
+      
       // Create the user with properly mapped field names
-      const [newUser] = await db
+      const userResult = await db
         .insert(users)
         .values({
-          email,
+          email: email,
           password: hashedPassword,
           full_name: fullName,
           first_name: firstName || '',
           last_name: lastName || '',
           company_id: company.id,
-          created_at: new Date(),
-          updated_at: new Date(),
           onboarding_user_completed: false
         })
         .returning();
+        
+      if (!userResult || userResult.length === 0) {
+        return res.status(500).json({
+          success: false,
+          message: "User creation failed: No user was returned"
+        });
+      }
+        
+      const newUser = userResult[0];
+      console.log(`[Registration] Successfully created user with ID: ${newUser.id}`);
         
       // Mark invitation as used
       await db
@@ -105,13 +113,13 @@ export function registerRegistrationRoutes(app: Express) {
         .where(eq(invitations.id, invitation.id));
       
       // Log in the user
-      req.login(newUser, (err) => {
+      req.login(userResult[0], (err) => {
         if (err) {
           console.error("[Registration] Login error:", err);
           return res.status(201).json({ 
             success: true, 
             message: "Registration successful, but automatic login failed. Please log in manually.", 
-            userId: newUser.id,
+            userId: userResult[0].id,
             companyId: company.id,
             sessionCreated: false
           });
@@ -121,14 +129,14 @@ export function registerRegistrationRoutes(app: Express) {
         return res.status(200).json({ 
           success: true, 
           message: "Registration and login successful", 
-          userId: newUser.id,
+          userId: userResult[0].id,
           companyId: company.id,
           sessionCreated: true,
           user: {
-            id: newUser.id,
-            email: newUser.email,
-            fullName: newUser.full_name,
-            companyId: newUser.company_id
+            id: userResult[0].id,
+            email: userResult[0].email,
+            fullName: userResult[0].full_name,
+            companyId: userResult[0].company_id
           }
         });
       });
