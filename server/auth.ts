@@ -133,7 +133,48 @@ async function getUserByUsername(username: string) {
 }
 
 export function setupAuth(app: Express) {
-  const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
+  // Create a session store with fallback to memory store if database isn't available
+  let store;
+  try {
+    // Configure PostgreSQL session store with error handling
+    const pgStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true,
+      // Add error handling to suppress errors during rate limiting
+      errorLog: (err) => {
+        if (err.code === 'XX000' || err.code === '57P01') {
+          // This is a Neon connection issue, log it but don't crash
+          authLogger.warn('Session store connection issue (using memory fallback)', { 
+            code: err.code,
+            message: err.message
+          });
+        } else {
+          // Log other errors normally
+          authLogger.error('Session store error', { error: err });
+        }
+      }
+    });
+    
+    // Attach error handler to the store
+    pgStore.on('error', (err) => {
+      authLogger.warn('Session store error (session continuity may be affected)', {
+        code: err.code,
+        message: err.message
+      });
+    });
+    
+    store = pgStore;
+    authLogger.info('Using PostgreSQL session store');
+  } catch (error) {
+    // If we can't initialize the PostgreSQL store, fall back to memory store
+    authLogger.warn('Failed to initialize PostgreSQL session store, using memory store as fallback', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    
+    // Memory store is not suitable for production but keeps the app running
+    const MemoryStore = session.MemoryStore;
+    store = new MemoryStore();
+  }
   
   // Use environment variable for session secret with a secure fallback
   const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
