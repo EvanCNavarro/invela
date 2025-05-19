@@ -323,12 +323,21 @@ export default function RegisterPage() {
           if (response.redirected) {
             console.log("[Registration] Account setup successful - redirected to:", response.url);
             
+            // Show a success message
+            toast({
+              title: "Account setup successful",
+              description: "You're being redirected to the dashboard...",
+            });
+            
             // We've been redirected, the server logged us in
             // Fetch current user to update the auth context
             await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             
-            // Navigate to the redirected URL or home page
-            window.location.href = response.url || "/";
+            // Navigate to the redirected URL or home page after a small delay
+            // to allow the user to see the success toast
+            setTimeout(() => {
+              window.location.href = response.url || "/";
+            }, 800);
             return;
           }
           
