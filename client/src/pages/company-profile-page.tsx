@@ -868,13 +868,7 @@ export default function CompanyProfilePage() {
             <span className="font-semibold text-foreground">{company.name}</span>
           </div>
 
-          {/* Back to Network button - using same pattern as claims tab */}
-          <div className="mb-6">
-            <Link href="/network" className="inline-flex items-center py-1.5 px-3 border rounded-md hover:bg-muted text-sm">
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              <span>Back to Network</span>
-            </Link>
-          </div>
+          {/* Back to Network button removed as requested */}
           
           {/* Company header with logo, title, and status boxes - neumorphic style */}
           <div className="bg-white rounded-lg p-5 mb-6 shadow-sm border border-gray-100">
