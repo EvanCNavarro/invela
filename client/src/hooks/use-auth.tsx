@@ -55,6 +55,20 @@ const useLoginMutation = () => {
     },
     onSuccess: async (user: User) => {
       console.log('[Auth] Login mutation succeeded, user:', user.id);
+      
+      // Check if login was successful but includes a warning about status
+      if (user.loginStatus === 'failed') {
+        console.warn('[Auth] Login partially successful:', user.message || 'Login process had issues');
+        
+        // Show a toast notification with the partial success message
+        toast({
+          title: "Login partially complete",
+          description: user.message || "Your account was authenticated but there was an issue with your session. Please try again.",
+          variant: "warning",
+        });
+      }
+      
+      // Save user data to query cache
       queryClient.setQueryData(["/api/user"], user);
       
       // Successfully logged in, no need to show error messages anymore
@@ -288,11 +302,35 @@ const useRegisterMutation = () => {
       return await res.json();
     },
     onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/user"], user);
-      setLocation("/");
+      console.log('[Auth] Registration succeeded, user data:', { userId: user.id, loginStatus: user.loginStatus });
       
-      // Registration success toast removed to improve user experience
-      // The start modal will be enough to welcome the user
+      // Check for partial success (account created but login failed)
+      if (user.loginStatus === 'failed') {
+        console.warn('[Auth] Registration partially successful:', user.message || 'Account created but auto-login failed');
+        
+        // Set a flag that can be used to show a special message on the login page
+        sessionStorage.setItem('registrationPartialSuccess', 'true');
+        sessionStorage.setItem('registrationEmail', user.email || '');
+        
+        // Store any available message
+        if (user.message) {
+          sessionStorage.setItem('registrationMessage', user.message);
+        }
+        
+        // Show toast with helpful information
+        toast({
+          title: "Account created successfully",
+          description: "Your account was created, but we couldn't log you in automatically. Please sign in with your credentials.",
+          variant: "default",
+        });
+        
+        // Redirect to login page
+        setLocation("/login");
+      } else {
+        // Complete success - store user data and redirect to dashboard
+        queryClient.setQueryData(["/api/user"], user);
+        setLocation("/");
+      }
     },
     onError: (error: Error) => {
       // Log the original error for debugging
