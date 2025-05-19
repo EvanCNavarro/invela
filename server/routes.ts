@@ -2248,22 +2248,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   });
 
   // Alias route for account setup to support hyphenated URL format
-  app.post("/api/account-setup", (req, res) => {
-    // Log that the hyphenated URL format is being used
-    console.log("[Account Setup] Using account-setup alias route with hyphenated URL");
-    // Create a direct handler for the hyphenated URL format that uses the same functionality
-    // as the standard route but doesn't try to proxy or redirect
+  app.post("/api/account-setup", async (req, res) => {
+    // Log that the hyphenated URL format is being used - this will help us track usage
+    console.log("[Account Setup] Received request to the hyphenated URL format");
+    console.log("[Account Setup] Redirecting to standard /api/account/setup endpoint");
     
-    // Get a direct connection to the database
-    pool.connect().then(async (client) => {
-      try {
-        // Validate required fields
-        const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
-        
-        console.log(`[Account Setup] Processing setup request for email: ${email}`);
-        
-        if (!email || !password || !invitationCode) {
-          return res.status(400).json({ message: "Missing required fields" });
+    // Forward to the /api/account/setup endpoint
+    res.redirect(307, "/api/account/setup");
+  });
         }
         
         // Check invitation validity
