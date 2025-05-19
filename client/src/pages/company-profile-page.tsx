@@ -876,18 +876,46 @@ export default function CompanyProfilePage() {
             </Link>
           </div>
           
-          {/* Company header with logo and title */}
-          <div className="flex items-center gap-3 mb-6">
-            <CompanyLogo
-              companyId={company.id}
-              companyName={company.name}
-              size="lg"
-            />
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {company.category}
-              </p>
+          {/* Company header with logo, title, and status boxes */}
+          <div className="flex flex-col md:flex-row mb-6 gap-4">
+            <div className="flex items-center gap-3">
+              <CompanyLogo
+                companyId={company.id}
+                companyName={company.name}
+                size="lg"
+              />
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {company.category}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-4 flex-grow md:justify-end">
+              {/* S&P Data Access Risk Score Box */}
+              <div className="border rounded-md flex flex-col items-center justify-center p-4 min-w-[180px]">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+                    S&P DATA ACCESS<br />RISK SCORE
+                  </span>
+                  <span className="text-3xl font-bold mt-1">
+                    {company.riskScore || "0"}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Accreditation Status Box */}
+              <div className="border rounded-md flex flex-col items-center justify-center p-4 min-w-[180px]">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+                    ACCREDITATION
+                  </span>
+                  <span className="text-lg font-medium mt-1 text-rose-500">
+                    {company.accreditationStatus || "Not Available"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           
