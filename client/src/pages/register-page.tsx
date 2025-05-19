@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { InvitationCodeInput } from "@/components/ui/invitation-code-input";
 import { motion } from "framer-motion";
+import { queryClient } from "@/lib/queryClient";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -229,39 +230,101 @@ export default function RegisterPage() {
     console.log("[Registration] Submitting registration with fullName:", fullName);
 
     try {
-      registerMutation.mutate({
-        email: values.email,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        fullName,
-        company: values.company,
-        invitationCode: values.invitationCode,
-      }, {
-        onSuccess: () => {
-          console.log("[Registration] Registration successful");
-          // Toast notification removed to improve user experience
-          // The welcome modal will be shown instead
-        },
-        onError: (error: Error) => {
-          console.error("[Registration] Registration error:", error);
+      // Check if we have a validated invitation - if so, use account-setup endpoint
+      // This is for users who are accepting an invitation with a code
+      if (validatedInvitation && values.invitationCode) {
+        console.log("[Registration] Using account-setup flow for invitation code:", values.invitationCode);
+        
+        // Call the account-setup endpoint directly
+        const response = await fetch("/api/account-setup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: values.email,
+            password: values.password,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            fullName,
+            invitationCode: values.invitationCode,
+          }),
+          credentials: "include" // Important for session cookies
+        });
+        
+        if (!response.ok) {
+          // Handle error response
+          let errorMessage = "Account setup failed";
           
-          // Check if the error indicates the account already exists
-          if (error.message.includes("already exists")) {
-            toast({
-              title: "Account Already Exists",
-              description: "This email is already registered. Please try signing in instead.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Registration failed",
-              description: error.message || "There was an error creating your account. Please try again.",
-              variant: "destructive",
-            });
+          try {
+            const contentType = response.headers.get("content-type") || "";
+            
+            // Handle different response formats
+            if (contentType.includes("application/json")) {
+              const errorData = await response.json();
+              errorMessage = errorData.message || errorMessage;
+            } else {
+              errorMessage = await response.text();
+            }
+          } catch (parseError) {
+            console.error("[Registration] Error parsing error response:", parseError);
           }
-        },
-      });
+          
+          // Show error message
+          toast({
+            title: "Account setup failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Success - user is logged in via the backend
+        const userData = await response.json();
+        console.log("[Registration] Account setup successful:", userData);
+        
+        // Refresh the user data in the auth context
+        queryClient.setQueryData(["/api/user"], userData);
+        
+        // Navigate to home page
+        window.location.href = "/";
+      } else {
+        // Standard registration flow (without invitation code)
+        console.log("[Registration] Using standard registration flow");
+        registerMutation.mutate({
+          email: values.email,
+          password: values.password,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          fullName,
+          company: values.company,
+          invitationCode: values.invitationCode,
+        }, {
+          onSuccess: () => {
+            console.log("[Registration] Registration successful");
+            // Toast notification removed to improve user experience
+            // The welcome modal will be shown instead
+          },
+          onError: (error: Error) => {
+            console.error("[Registration] Registration error:", error);
+            
+            // Check if the error indicates the account already exists
+            if (error.message.includes("already exists")) {
+              toast({
+                title: "Account Already Exists",
+                description: "This email is already registered. Please try signing in instead.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Registration failed",
+                description: error.message || "There was an error creating your account. Please try again.",
+                variant: "destructive",
+              });
+            }
+          },
+        });
+      }
     } catch (error) {
       console.error("[Registration] Unexpected error during submission:", error);
       toast({
