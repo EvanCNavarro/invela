@@ -682,8 +682,9 @@ export default function CompanyProfilePage() {
       )}
       
       <InviteModal 
-        isOpen={openUserModal} 
-        onClose={() => setOpenUserModal(false)}
+        variant="user"
+        open={openUserModal} 
+        onOpenChange={(open) => setOpenUserModal(open)}
         companyId={parseInt(companyId || "0")}
         companyName={company.name}
       />
