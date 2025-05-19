@@ -72,7 +72,7 @@ export function AccreditationStatusDisplay({
             <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
               ACCREDITATION
             </span>
-            <span className={`${size === "lg" ? "text-2xl" : "text-xl"} font-bold ${styleInfo.textColor}`}>
+            <span className={`${size === "lg" ? "text-2xl" : "text-xl"} font-bold text-gray-900`}>
               {styleInfo.label}
             </span>
           </div>
