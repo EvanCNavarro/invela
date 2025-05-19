@@ -111,22 +111,90 @@ const useLoginMutation = () => {
   });
 };
 
+/**
+ * Utility function to convert camelCase fields to snake_case
+ * Helps maintain consistency between client and server data formats
+ */
+const toCamelCase = (str: string): string => {
+  return str.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+};
+
+/**
+ * Utility function to convert camelCase fields to snake_case
+ * Helps maintain consistency between client and server data formats
+ */
+const toSnakeCase = (str: string): string => {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+};
+
+/**
+ * Convert object keys from camelCase to snake_case
+ * @param obj - Object with camelCase keys
+ * @returns Object with snake_case keys
+ */
+const objectToSnakeCase = (obj: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const snakeKey = toSnakeCase(key);
+      result[snakeKey] = obj[key];
+    }
+  }
+  return result;
+};
+
 const useRegisterMutation = () => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
+      // Log registration attempt (sanitizing sensitive data)
+      console.log('[Auth] Registration attempt:', {
+        email: data.email,
+        hasFirstName: !!data.firstName,
+        hasLastName: !!data.lastName,
+        hasPassword: !!data.password
+      });
+      
+      // Create a properly formatted payload for the server
+      // Converting camelCase client fields to snake_case server fields
+      const payload: Record<string, any> = {
+        email: data.email?.toLowerCase(), // Normalize email to lowercase
+        password: data.password,
+        // Handle both fullName and firstName/lastName combinations
+        full_name: data.fullName || (data.firstName && data.lastName ? 
+                   `${data.firstName} ${data.lastName}`.trim() : 
+                   data.firstName || data.lastName || ''),
+        // Set first_name and last_name when available
+        first_name: data.firstName || null,
+        last_name: data.lastName || null
+      };
+      
+      // Handle company data - use company_id if specifically provided,
+      // otherwise include company name for server-side handling
+      if (data.company) {
+        payload.company_name = data.company;
+      }
+      
+      // Include company_id from the data if available, otherwise use default
+      payload.company_id = data.companyId || 1;
+      
+      // Include invitation code if available
+      if (data.invitationCode) {
+        payload.invitation_code = data.invitationCode;
+      }
+      
+      console.log('[Auth] Sending registration payload:', {
+        ...payload,
+        password: '********' // Mask password in logs
+      });
+      
       // Use fetch directly to handle raw response
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          full_name: data.fullName,
-          company_id: 1 // Using default company ID for now
-        }),
+        body: JSON.stringify(payload),
         credentials: "include"
       });
       
@@ -141,37 +209,78 @@ const useRegisterMutation = () => {
         console.log('[Auth] Registration error response:', { 
           status: res.status, 
           statusText: res.statusText,
-          contentType
+          contentType,
+          payload: {...payload, password: '********'} // Log the payload that caused the error
         });
         
         let errorMessage = "Account setup failed";
+        let errorDetails = null;
         
         try {
           // If content type is JSON, parse as JSON
           if (contentType.includes('application/json')) {
             const errorData = await res.json();
-            errorMessage = errorData.message || errorMessage;
+            console.log('[Auth] Registration error details (JSON):', errorData);
+            
+            // Extract error message and details
+            errorMessage = errorData.message || errorData.error || errorMessage;
+            errorDetails = errorData.details || errorData.errors || null;
           } else {
             // Otherwise parse as text
-            errorMessage = await res.text();
+            const errorText = await res.text();
+            console.log('[Auth] Registration error details (Text):', errorText);
+            errorMessage = errorText || errorMessage;
           }
         } catch (parseError) {
           // If parsing fails, try the clone as text
           console.error('[Auth] Error parsing response:', parseError);
           try {
-            errorMessage = await responseClone.text();
+            const fallbackText = await responseClone.text();
+            console.log('[Auth] Fallback error text:', fallbackText);
+            errorMessage = fallbackText || errorMessage;
           } catch (fallbackError) {
             console.error('[Auth] Fallback error parsing failed:', fallbackError);
             // Keep default error message if all parsing fails
           }
         }
         
-        // Provide a more user-friendly message
-        const friendlyMessage = errorMessage.includes("duplicate") || 
-                                errorMessage.includes("already exists") || 
-                                errorMessage.includes("Email already exists")
-          ? "This account already exists. Please try signing in instead."
-          : errorMessage;
+        // Add special handling for login-related errors (registration successful but login failed)
+        if (res.status === 201 || 
+            errorMessage.includes("login") || 
+            errorMessage.includes("authentication") ||
+            errorMessage.includes("session")) {
+          console.log('[Auth] Detected registration success but login failure');
+          
+          // This is the case where account creation succeeded but automatic login failed
+          // We'll add better feedback for the user about what happened
+          throw new Error(
+            "Registration partially complete. Your account was set up, but we couldn't log you in automatically. " +
+            "Please log in manually with your new credentials."
+          );
+        }
+        
+        // Provide a more user-friendly message for common errors
+        let friendlyMessage = errorMessage;
+        
+        // Handle duplicate account errors
+        if (errorMessage.includes("duplicate") || 
+            errorMessage.includes("already exists") || 
+            errorMessage.includes("Email already exists")) {
+          friendlyMessage = "This account already exists. Please try signing in instead.";
+        }
+        // Handle validation errors
+        else if (errorMessage.includes("validation") || errorDetails) {
+          friendlyMessage = "Please check your information and try again.";
+          if (errorDetails) {
+            // Add specific field errors if available
+            friendlyMessage += " " + JSON.stringify(errorDetails);
+          }
+        }
+        
+        console.log('[Auth] Final error message:', {
+          original: errorMessage,
+          friendly: friendlyMessage
+        });
           
         throw new Error(friendlyMessage);
       }
