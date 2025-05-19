@@ -1991,6 +1991,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
      * 2. Separates database updates from the authentication process
      * 3. Adds extensive logging to track every operation
      * 4. Uses more reliable error propagation
+     * 5. Handles camelCase to snake_case conversion for field names
      */
     const logger = {
       info: (message: string, meta?: any) => {
@@ -2013,13 +2014,35 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     const client = await pool.connect();
     
     try {
-      // Parse and validate input
-      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+      // Parse and validate input - handle both camelCase and snake_case field names for compatibility
+      const { 
+        email, 
+        password, 
+        // Handle both camelCase (from client) and snake_case (if already converted) variations
+        fullName, full_name, 
+        firstName, first_name,
+        lastName, last_name,
+        invitationCode, invitation_code 
+      } = req.body;
       
-      logger.info('Processing setup request', { email, invitationCode });
+      // Map camelCase to snake_case for consistent database column names
+      const userFullName = full_name || fullName || '';
+      const userFirstName = first_name || firstName || '';
+      const userLastName = last_name || lastName || '';
+      const userInvitationCode = invitation_code || invitationCode || '';
+      
+      logger.info('Processing setup request', { 
+        email, 
+        invitationCode: userInvitationCode,
+        mappedFields: {
+          first_name: userFirstName ? `${userFirstName.substring(0, 1)}...` : null,
+          last_name: userLastName ? `${userLastName.substring(0, 1)}...` : null,
+          full_name: userFullName ? `${userFullName.length} chars` : null
+        }
+      });
       
       // Basic validation
-      if (!email || !password || !invitationCode) {
+      if (!email || !password || !userInvitationCode) {
         logger.warn('Missing required fields');
         return res.status(400).json({ message: "Missing required fields" });
       }
@@ -2033,11 +2056,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
            AND status = 'pending' 
            AND LOWER(email) = LOWER($2)
            AND expires_at > NOW()`,
-          [invitationCode, email]
+          [userInvitationCode, email]
         );
         
         if (inviteResult.rows.length === 0) {
-          logger.warn('Invalid invitation', { code: invitationCode, email });
+          logger.warn('Invalid invitation', { code: userInvitationCode, email });
           return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
         }
         
@@ -2078,13 +2101,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         logger.debug('Password hashed successfully');
         
         // Add detailed logging for query parameters (without sensitive data)
-        logger.debug('Executing user update query', { 
+        logger.debug('Executing user update query with field mapping', { 
           userId: existingUser.id,
-          firstName: firstName?.substring(0, 1) + '...',
-          lastName: lastName?.substring(0, 1) + '...',
-          fullNameLength: fullName?.length || 0
+          first_name: userFirstName ? `${userFirstName.substring(0, 1)}...` : null,
+          last_name: userLastName ? `${userLastName.substring(0, 1)}...` : null,
+          full_name_length: userFullName?.length || 0
         });
         
+        // THIS IS THE KEY FIX: Using properly mapped snake_case variable names for the SQL query
         const updateUserResult = await client.query(
           `UPDATE users 
            SET first_name = $1, 
@@ -2095,7 +2119,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
                updated_at = NOW()
            WHERE id = $5
            RETURNING *`,
-          [firstName || '', lastName || '', fullName || '', hashedPassword, existingUser.id]
+          [userFirstName || '', userLastName || '', userFullName || '', hashedPassword, existingUser.id]
         );
         
         if (updateUserResult.rows.length === 0) {
@@ -2180,7 +2204,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         if (updatedTask) {
           try {
             // Use the websocket service to broadcast the task update
-            const websocketService = require('./services/websocket-service');
+            // Using a more reliable path resolution for the websocket service
+            const websocketService = require(require('path').join(__dirname, 'services/websocket-service'));
+            
+            logger.debug('Loaded WebSocket service', {
+              serviceExists: !!websocketService,
+              hasBroadcastMethod: typeof websocketService.broadcastTaskUpdate === 'function',
+              availableMethods: Object.keys(websocketService || {})
+            });
             
             if (typeof websocketService.broadcastTaskUpdate === 'function') {
               websocketService.broadcastTaskUpdate(updatedTask.id, {
@@ -2240,17 +2271,38 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
         // 6. Send appropriate response based on auth status
         if (authSuccess) {
-          logger.info('Account setup complete with session');
+          logger.info('Account setup complete with session', {
+            userId: updatedUser.id,
+            sessionId: req.sessionID,
+            authenticated: req.isAuthenticated()
+          });
+          
           return res.status(200).json({ 
             success: true, 
-            user: updatedUser,
+            user: {
+              id: updatedUser.id,
+              email: updatedUser.email,
+              full_name: updatedUser.full_name,
+              first_name: updatedUser.first_name,
+              last_name: updatedUser.last_name,
+              role: updatedUser.role
+            },
+            authenticated: true,
             message: "Account setup and login successful" 
           });
         } else {
-          logger.info('Account setup complete without session');
+          logger.info('Account setup complete without session', {
+            userId: updatedUser.id,
+            reason: "Authentication failed but account setup succeeded"
+          });
+          
           return res.status(201).json({ 
             success: true, 
-            user: updatedUser,
+            user: {
+              id: updatedUser.id,
+              email: updatedUser.email
+            },
+            authenticated: false,
             sessionCreated: false,
             message: "Account setup successful, but automatic login failed. Please log in manually." 
           });
