@@ -58,16 +58,7 @@ class WebSocketManager {
     try {
       // Determine the correct WebSocket URL based on environment
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      
-      // Check for valid host to avoid connection attempts with invalid URLs
-      if (!host || host === "undefined" || host.includes("undefined")) {
-        console.warn('[WebSocket] Invalid host detected, skipping connection attempt');
-        this.handleClose({ code: 1006, reason: "Invalid host", wasClean: false } as CloseEvent);
-        return;
-      }
-      
-      const wsUrl = `${protocol}//${host}/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
       // Create a new WebSocket connection
       this.socket = new WebSocket(wsUrl);

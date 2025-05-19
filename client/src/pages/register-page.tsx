@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect, useLocation } from "wouter";
+import { Link, Redirect } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,14 +14,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check, Lock, ArrowLeft, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Check, Lock, ArrowLeft } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { InvitationCodeInput } from "@/components/ui/invitation-code-input";
 import { motion } from "framer-motion";
 import { queryClient } from "@/lib/queryClient";
-import { ConnectionError } from "@/components/ui/connection-error";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -55,7 +54,6 @@ const registrationSchema = z.object({
 export default function RegisterPage() {
   const { toast } = useToast();
   const { user, registerMutation } = useAuth();
-  const [_, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
@@ -229,16 +227,6 @@ export default function RegisterPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   // Track loading state separately for better UX feedback
   const [isLoading, setIsLoading] = useState(false);
-  // State to track database connection errors
-  const [connectionError, setConnectionError] = useState<{
-    title: string;
-    message: string;
-    isActive: boolean;
-  }>({
-    title: "Connection Issue",
-    message: "We're experiencing high demand right now. Please try again in a moment.",
-    isActive: false
-  });
 
   // Create a unified logging utility for consistent logging patterns
   const logRegistration = (message: string, data?: any) => {
@@ -329,19 +317,12 @@ export default function RegisterPage() {
             // Extract error message if available
             let errorMessage = "Account setup failed";
             try {
-              // Try to get a detailed error message from the response
+              // Try to get error message, but don't depend on it
               const contentType = response.headers.get("content-type") || "";
               if (contentType.includes("application/json")) {
                 const errorData = await response.json();
-                // Use the message field or try to extract error details
-                errorMessage = errorData.message || 
-                  errorData.error || 
-                  (errorData.errorCode ? `Database error (${errorData.errorCode})` : errorMessage);
-                
-                // Log the complete error data for debugging
-                console.log("[Registration] Detailed error data:", errorData);
+                errorMessage = errorData.message || errorMessage;
               } else {
-                // For non-JSON responses, use the text body
                 errorMessage = await response.text() || errorMessage;
               }
             } catch (parseError) {
@@ -349,31 +330,12 @@ export default function RegisterPage() {
               // Keep default error message
             }
             
-            // Check for database connection issues
-            const isConnectionError = 
-              errorMessage.includes('rate limit') || 
-              errorMessage.includes('too many connections') ||
-              errorMessage.includes('database connection') ||
-              errorMessage.includes('server is busy') ||
-              response.status === 503 || 
-              response.status === 429;
-              
-            if (isConnectionError) {
-              logRegistration('Database connection error detected');
-              // Show specialized connection error UI
-              setConnectionError({
-                title: "Database Connection Issue",
-                message: "Our system is experiencing high demand right now. Please wait a moment and try again.",
-                isActive: true
-              });
-            } else {
-              // Show standard error message for other errors
-              toast({
-                title: "Account setup failed",
-                description: errorMessage,
-                variant: "destructive",
-              });
-            }
+            // Show error message
+            toast({
+              title: "Account setup failed",
+              description: errorMessage,
+              variant: "destructive",
+            });
             
             // Reset loading states
             setIsLoading(false);
@@ -415,10 +377,7 @@ export default function RegisterPage() {
               
               // Navigate to home page after a small delay to show the toast
               setTimeout(() => {
-                // Store user data in query cache for immediate access
-                queryClient.setQueryData(["/api/user"], userData);
-                // Use wouter navigation instead of direct location change
-                navigate("/");
+                window.location.href = "/";
               }, 1500);
               return;
             }
@@ -495,8 +454,7 @@ export default function RegisterPage() {
               
               // Redirect to login page
               setTimeout(() => {
-                // Use React router navigation for smoother transition
-                navigate("/login");
+                window.location.href = "/login";
               }, 2000);
               return;
             }
@@ -515,8 +473,7 @@ export default function RegisterPage() {
             
             // Navigate to home page after a small delay to show the toast
             setTimeout(() => {
-              // Use the wouter navigation for a smoother transition
-              navigate("/");
+              window.location.href = "/";
             }, 1500);
           } catch (authError) {
             // Authentication attempt failed with an exception
@@ -548,7 +505,7 @@ export default function RegisterPage() {
                 await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
                 
                 setTimeout(() => {
-                  navigate("/");
+                  window.location.href = "/";
                 }, 1500);
                 return;
               }
@@ -572,7 +529,7 @@ export default function RegisterPage() {
             
             // Redirect to login page
             setTimeout(() => {
-              navigate("/login");
+              window.location.href = "/login";
             }, 2000);
           }
         } catch (fetchError) {
@@ -705,39 +662,9 @@ export default function RegisterPage() {
     
     return hasFirstName && hasLastName && hasPassword;
   };
-  
-  // Create a helper function to retry the submission when a connection error occurs
-  const handleRetry = () => {
-    logRegistration('Retrying after connection error');
-    // Reset the connection error state
-    setConnectionError(prev => ({ ...prev, isActive: false }));
-    // Reset loading states
-    setIsLoading(false);
-    setIsRegistering(false);
-    // User will need to click submit again
-  };
 
   return (
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
-      {/* Show connection error overlay if we have one */}
-      {connectionError.isActive && (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-md w-full"
-          >
-            <ConnectionError
-              title={connectionError.title}
-              message={connectionError.message}
-              onRetry={handleRetry}
-              showRetry={true}
-            />
-          </motion.div>
-        </div>
-      )}
-      
       {!validatedInvitation ? (
         <div className="invitation-container">
           <motion.div 

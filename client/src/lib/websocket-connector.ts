@@ -31,16 +31,7 @@ class WebSocketManager {
     try {
       // Determine the correct WebSocket URL
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const host = window.location.host;
-      
-      // Check for valid host to avoid connection attempts with invalid URLs
-      if (!host || host === "undefined" || host.includes("undefined")) {
-        console.warn('[WebSocket] Invalid host detected, skipping connection attempt');
-        this.scheduleReconnect();
-        return;
-      }
-      
-      const wsUrl = `${protocol}//${host}/ws`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
       console.info('[WebSocket] Connecting to WebSocket:', wsUrl);
       
@@ -52,7 +43,7 @@ class WebSocketManager {
       this.socket.onclose = this.handleClose.bind(this);
       this.socket.onerror = this.handleError.bind(this);
     } catch (error) {
-      console.warn('[WebSocket] Connection attempt failed:', error);
+      console.warn('[WebSocket] Connection to ' + window.location.host + '/ws failed:', error);
       this.scheduleReconnect();
     }
   }

@@ -3,7 +3,7 @@ import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
-import { db, pool } from '@db';
+import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
 import tutorialRouter from './routes/tutorial';
@@ -1981,19 +1981,16 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  // Account setup endpoint - supporting both URL formats for backward compatibility
-  app.post(["/api/account-setup", "/api/account/setup"], async (req, res) => {
+  // Account setup endpoint
+  app.post("/api/account/setup", async (req, res) => {
     /**
-     * Enhanced account setup endpoint with connection retry and error handling
+     * Fixed account setup endpoint with direct database operations
      * 
      * This implementation:
      * 1. Uses direct SQL queries instead of relying on the ORM transaction
      * 2. Separates database updates from the authentication process
      * 3. Adds extensive logging to track every operation
      * 4. Uses more reliable error propagation
-     * 5. Handles camelCase to snake_case conversion for field names
-     * 6. Implements database connection retry logic for resilience
-     * 7. Provides better client-side error feedback for connection issues
      */
     const logger = {
       info: (message: string, meta?: any) => {
@@ -2012,83 +2009,17 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
     };
 
-    // Database pool is already imported at the top of the file
-    
-    // Configuration for connection retry mechanism
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000; // ms between retry attempts
-    let retryCount = 0;
-    let client;
-    
-    // Connection function with retry logic
-    const getConnectionWithRetry = async () => {
-      while (retryCount < MAX_RETRIES) {
-        try {
-          logger.debug(`Database connection attempt ${retryCount + 1}/${MAX_RETRIES}`);
-          return await pool.connect();
-        } catch (connError) {
-          retryCount++;
-          
-          // Log connection error
-          const connErrorCode = connError instanceof Error && (connError as any).code 
-            ? (connError as any).code : 'UNKNOWN';
-            
-          logger.warn(`Database connection attempt ${retryCount} failed`, {
-            error: connError instanceof Error ? connError.message : String(connError),
-            errorCode: connErrorCode,
-            willRetry: retryCount < MAX_RETRIES
-          });
-          
-          // If we've exhausted retries, throw the error
-          if (retryCount >= MAX_RETRIES) {
-            logger.error('All database connection attempts failed', {
-              attempts: retryCount,
-              lastError: connError instanceof Error ? connError.message : String(connError)
-            });
-            throw connError;
-          }
-          
-          // Wait before trying again
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        }
-      }
-      
-      // This should not be reached due to the throw above, but TypeScript needs it
-      throw new Error('Failed to connect to database after retries');
-    };
+    // Get a direct connection to the database for emergency direct queries if needed
+    const client = await pool.connect();
     
     try {
-      // Get database connection with retry logic
-      client = await getConnectionWithRetry();
-      // Parse and validate input - handle both camelCase and snake_case field names for compatibility
-      const { 
-        email, 
-        password, 
-        // Handle both camelCase (from client) and snake_case (if already converted) variations
-        fullName, full_name, 
-        firstName, first_name,
-        lastName, last_name,
-        invitationCode, invitation_code 
-      } = req.body;
+      // Parse and validate input
+      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
       
-      // Map camelCase to snake_case for consistent database column names
-      const userFullName = full_name || fullName || '';
-      const userFirstName = first_name || firstName || '';
-      const userLastName = last_name || lastName || '';
-      const userInvitationCode = invitation_code || invitationCode || '';
-      
-      logger.info('Processing setup request', { 
-        email, 
-        invitationCode: userInvitationCode,
-        mappedFields: {
-          first_name: userFirstName ? `${userFirstName.substring(0, 1)}...` : null,
-          last_name: userLastName ? `${userLastName.substring(0, 1)}...` : null,
-          full_name: userFullName ? `${userFullName.length} chars` : null
-        }
-      });
+      logger.info('Processing setup request', { email, invitationCode });
       
       // Basic validation
-      if (!email || !password || !userInvitationCode) {
+      if (!email || !password || !invitationCode) {
         logger.warn('Missing required fields');
         return res.status(400).json({ message: "Missing required fields" });
       }
@@ -2102,11 +2033,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
            AND status = 'pending' 
            AND LOWER(email) = LOWER($2)
            AND expires_at > NOW()`,
-          [userInvitationCode, email]
+          [invitationCode, email]
         );
         
         if (inviteResult.rows.length === 0) {
-          logger.warn('Invalid invitation', { code: userInvitationCode, email });
+          logger.warn('Invalid invitation', { code: invitationCode, email });
           return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
         }
         
@@ -2146,26 +2077,17 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         const hashedPassword = await bcrypt.hash(password, 10);
         logger.debug('Password hashed successfully');
         
-        // Add detailed logging for query parameters (without sensitive data)
-        logger.debug('Executing user update query with field mapping', { 
-          userId: existingUser.id,
-          first_name: userFirstName ? `${userFirstName.substring(0, 1)}...` : null,
-          last_name: userLastName ? `${userLastName.substring(0, 1)}...` : null,
-          full_name_length: userFullName?.length || 0
-        });
-        
-        // THIS IS THE KEY FIX: Using properly mapped snake_case variable names for the SQL query
         const updateUserResult = await client.query(
           `UPDATE users 
            SET first_name = $1, 
                last_name = $2, 
                full_name = $3, 
                password = $4, 
-               onboarding_user_completed = TRUE,
+               onboarding_user_completed = false,
                updated_at = NOW()
            WHERE id = $5
            RETURNING *`,
-          [userFirstName || '', userLastName || '', userFullName || '', hashedPassword, existingUser.id]
+          [firstName, lastName, fullName, hashedPassword, existingUser.id]
         );
         
         if (updateUserResult.rows.length === 0) {
@@ -2213,12 +2135,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         }
         
         // 3.3 Update invitation status
-        logger.debug('Updating invitation status', { 
-          invitationId: invitation.id,
-          currentStatus: invitation.status,
-          newStatus: 'used'
-        });
-        
         const updateInvitationResult = await client.query(
           `UPDATE invitations 
            SET status = 'used', 
@@ -2230,11 +2146,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         );
         
         if (updateInvitationResult.rows.length === 0) {
-          logger.error('Invitation update failed', { invitationId: invitation.id });
           throw new Error('Invitation update failed');
         }
-        
-        logger.info('Invitation marked as used', { id: invitation.id });
         
         const updatedInvitation = updateInvitationResult.rows[0];
         logger.info('Invitation updated successfully', { 
@@ -2248,35 +2161,12 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
         // 4. Broadcast task update if needed
         if (updatedTask) {
-          try {
-            // Use the websocket service to broadcast the task update
-            // Using a more reliable path resolution for the websocket service
-            const websocketService = require(require('path').join(__dirname, 'services/websocket-service'));
-            
-            logger.debug('Loaded WebSocket service', {
-              serviceExists: !!websocketService,
-              hasBroadcastMethod: typeof websocketService.broadcastTaskUpdate === 'function',
-              availableMethods: Object.keys(websocketService || {})
-            });
-            
-            if (typeof websocketService.broadcastTaskUpdate === 'function') {
-              websocketService.broadcastTaskUpdate(updatedTask.id, {
-                status: updatedTask.status,
-                progress: 100, // Ensure 100% progress
-                metadata: updatedTask.metadata
-              });
-              logger.info('Task update broadcast sent successfully');
-            } else {
-              logger.warn('broadcastTaskUpdate function not available', { 
-                available: Object.keys(websocketService)
-              });
-            }
-          } catch (broadcastError) {
-            // Non-critical error, just log it
-            logger.warn('Failed to broadcast task update', { 
-              error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError)
-            });
-          }
+          broadcastTaskUpdate(updatedTask.id, {
+            status: updatedTask.status,
+            progress: updatedTask.progress,
+            metadata: updatedTask.metadata
+          });
+          logger.info('Task update broadcast sent');
         }
         
         // 5. Attempt to log the user in (outside transaction)
@@ -2285,17 +2175,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           // Ensure necessary fields are available for auth
           const userForAuth = {
             ...updatedUser,
-            email: email,
-            // Add required fields that Express session expects
-            id: updatedUser.id,
-            company_id: updatedUser.company_id
+            email: email
           };
-          
-          logger.debug('Preparing user authentication', {
-            userId: updatedUser.id,
-            email: updatedUser.email,
-            fieldsPresent: Object.keys(userForAuth).join(', ')
-          });
           
           // Authenticate directly instead of relying on passport
           await new Promise<void>((resolve, reject) => {
@@ -2317,191 +2198,47 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
         // 6. Send appropriate response based on auth status
         if (authSuccess) {
-          logger.info('Account setup complete with session', {
-            userId: updatedUser.id,
-            sessionId: req.sessionID,
-            authenticated: req.isAuthenticated()
-          });
-          
+          logger.info('Account setup complete with session');
           return res.status(200).json({ 
             success: true, 
-            user: {
-              id: updatedUser.id,
-              email: updatedUser.email,
-              full_name: updatedUser.full_name,
-              first_name: updatedUser.first_name,
-              last_name: updatedUser.last_name,
-              role: updatedUser.role
-            },
-            authenticated: true,
+            user: updatedUser,
             message: "Account setup and login successful" 
           });
         } else {
-          logger.info('Account setup complete without session', {
-            userId: updatedUser.id,
-            reason: "Authentication failed but account setup succeeded"
-          });
-          
+          logger.info('Account setup complete without session');
           return res.status(201).json({ 
             success: true, 
-            user: {
-              id: updatedUser.id,
-              email: updatedUser.email
-            },
-            authenticated: false,
+            user: updatedUser,
             sessionCreated: false,
             message: "Account setup successful, but automatic login failed. Please log in manually." 
           });
         }
         
       } catch (transactionError) {
-        // Transaction failed - attempt roll back with retry
-        let rollbackSuccess = false;
-        
-        // Attempt transaction rollback with retry
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            logger.debug(`Attempting transaction rollback (attempt ${attempt + 1}/3)`);
-            await client.query('ROLLBACK');
-            
-            // If we get here, rollback succeeded
-            rollbackSuccess = true;
-            logger.info('Transaction rolled back successfully', {
-              attempt: attempt + 1
-            });
-            break;
-          } catch (rollbackError) {
-            // Log rollback error
-            logger.error('Rollback attempt failed', {
-              attempt: attempt + 1,
-              originalError: transactionError instanceof Error ? transactionError.message : String(transactionError),
-              rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-              willRetry: attempt < 2
-            });
-            
-            // Wait a bit before retrying
-            if (attempt < 2) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-          }
-        }
-        
-        // Log comprehensive error information
-        const pgError = transactionError as any;
-        const pgErrorCode = pgError?.code || 'UNKNOWN';
-        
-        logger.error('Transaction failed', { 
-          error: transactionError instanceof Error ? transactionError.message : String(transactionError),
-          errorCode: pgErrorCode,
-          pgErrorDetails: pgError?.code ? {
-            code: pgError.code,
-            detail: pgError.detail,
-            schema: pgError.schema,
-            table: pgError.table,
-            column: pgError.column,
-            constraint: pgError.constraint
-          } : undefined,
-          stack: transactionError instanceof Error ? transactionError.stack : undefined,
-          rollbackStatus: rollbackSuccess ? 'succeeded' : 'failed'
+        // Transaction failed - roll back
+        await client.query('ROLLBACK');
+        logger.error('Transaction failed - rolled back', { error: transactionError });
+        return res.status(500).json({ 
+          success: false, 
+          message: "Database update failed", 
+          error: transactionError instanceof Error ? transactionError.message : "Unknown error"
         });
-        if (pgError?.code) {
-          logger.error('PostgreSQL error details', {
-            code: pgError.code,
-            detail: pgError.detail,
-            schema: pgError.schema,
-            table: pgError.table,
-            column: pgError.column,
-            constraint: pgError.constraint
-          });
-        }
-        
-        // Create a user-friendly error response based on error type
-        // Using the previously declared pgErrorCode
-        
-        // Prepare a more informative error response based on the specific error
-        let statusCode = 500;
-        let errorResponse = {
-          success: false,
-          message: "Sorry, we encountered an issue while creating your account.",
-          errorCode: pgErrorCode,
-          retryable: true // Default to retryable
-        };
-
-        // Handle specific PostgreSQL error codes
-        if (pgErrorCode === '57P01') {
-          // Database connection terminated - this is retryable
-          errorResponse.message = "The server is experiencing temporary connection issues. Please try again shortly.";
-          errorResponse.retryable = true;
-        } else if (pgErrorCode === '23505') {
-          // Unique constraint violation - user already exists
-          statusCode = 409; // Conflict
-          errorResponse.message = "An account with this email already exists.";
-          errorResponse.retryable = false;
-        } else if (pgErrorCode === '23503') {
-          // Foreign key violation - likely invalid invitation code
-          statusCode = 400; // Bad Request
-          errorResponse.message = "Invalid invitation code or the invitation has expired.";
-          errorResponse.retryable = false;
-        }
-        
-        logger.error('Sending error response to client', { 
-          statusCode,
-          errorCode: pgErrorCode,
-          message: errorResponse.message
-        });
-        
-        return res.status(statusCode).json(errorResponse);
       }
     } catch (error) {
       // Outer error handler - ensure proper cleanup
-      logger.error('Unhandled error in account setup', { 
-        errorMessage: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+      logger.error('Unhandled error in account setup', { error });
       
       // Make sure we roll back if needed
       try {
         await client.query('ROLLBACK');
-        logger.info('Successfully rolled back transaction after outer error');
       } catch (rollbackError) {
-        logger.error('Failed to roll back transaction after outer error', { 
-          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
-        });
+        logger.error('Rollback failed', { error: rollbackError });
       }
-      
-      // Check for specific errors that we can provide better messaging for
-      let userMessage = "Error processing account setup";
-      if (error instanceof Error) {
-        if (error.message.includes('duplicate key')) {
-          userMessage = "This email address is already registered";
-        } else if (error.message.includes('invitation')) {
-          userMessage = "There was a problem with your invitation code";
-        } else if (error.message.includes('password')) {
-          userMessage = "There was a problem setting your password";
-        } else if (error.message.includes('column') && error.message.includes('does not exist')) {
-          // This catches SQL errors related to column names mismatch (camelCase vs snake_case)
-          userMessage = "Database schema error - please try again later";
-          logger.error('SQL column name error detected', {
-            errorMessage: error.message,
-            possibleCause: 'Likely camelCase/snake_case field name mismatch'
-          });
-        } else if (error.message.includes('value too long')) {
-          userMessage = "One of your input values exceeds the maximum allowed length";
-        }
-      }
-      
-      // Create a consistently formatted error response with better debugging info
-      logger.debug('Preparing final error response', {
-        userMessage,
-        errorSummary: error instanceof Error ? error.message : "Unknown error"
-      });
       
       return res.status(500).json({ 
         success: false, 
-        message: userMessage,
-        error: error instanceof Error ? error.message : "Unknown error",
-        // Include diagnostic code for client-side debugging
-        errorCode: error instanceof Error && (error as any).code ? (error as any).code : 'GENERAL_ERROR'
+        message: "Error processing account setup", 
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     } finally {
       // Always release the client
@@ -3347,36 +3084,10 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         error,
         duration: Date.now() - startTime
       });
-      
-      // Check for database connection issues
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      const errorCode = (error as any)?.code;
-      const isConnectionError = 
-        errorMsg.includes('rate limit') || 
-        errorMsg.includes('too many connections') ||
-        errorMsg.includes('connection terminated') ||
-        errorCode === 'XX000' ||  // Neon control plane error
-        errorCode === '57P01';    // Terminating connection due to admin command
-      
-      if (isConnectionError) {
-        console.warn('[FinTech Invite] Database connection error detected:', {
-          code: errorCode,
-          message: errorMsg
-        });
-        
-        // Return a specific error for connection issues
-        return res.status(503).json({
-          message: "Database connection issue detected",
-          error: "Our system is experiencing high demand right now. Please try again in a moment.",
-          code: "DB_CONNECTION_LIMIT",
-          retry: true
-        });
-      }
 
-      // Default error response for other issues
       res.status(500).json({
         message: "Failed to process invitation",
-        error: errorMsg,
+        error: error instanceof Error ? error.message : "Unknown error",
         code: "INVITATION_FAILED"
       });
     }
