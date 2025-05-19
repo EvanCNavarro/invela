@@ -123,8 +123,25 @@ async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
+/**
+ * Retrieve a user by their email address
+ * Uses case-insensitive comparison for better user experience
+ * 
+ * @param email - The email address to search for
+ * @returns Promise resolving to an array of matching users (typically 0 or 1)
+ */
 async function getUserByEmail(email: string) {
-  return db.select().from(users).where(eq(users.email, email)).limit(1);
+  // Convert email to lowercase for case-insensitive matching
+  const normalizedEmail = email.toLowerCase();
+  
+  // Log the email normalization for debugging
+  authLogger.debug('Looking up user with normalized email', { 
+    original: email, 
+    normalized: normalizedEmail,
+    normalized_same: email === normalizedEmail 
+  });
+  
+  return db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
 }
 
 async function getUserByUsername(username: string) {
@@ -216,15 +233,29 @@ export function setupAuth(app: Express) {
       return res.status(400).send(error.toString());
     }
 
-    const [existingUser] = await getUserByEmail(result.data.email);
+    // Normalize email to lowercase for consistent storage
+    const normalizedEmail = result.data.email.toLowerCase();
+    
+    // Log if email was normalized
+    if (normalizedEmail !== result.data.email) {
+      authLogger.debug('Email normalized during registration', {
+        original: result.data.email,
+        normalized: normalizedEmail
+      });
+    }
+    
+    // Check for existing user with this email (using our case-insensitive function)
+    const [existingUser] = await getUserByEmail(normalizedEmail);
     if (existingUser) {
       return res.status(400).send("Email already exists");
     }
 
+    // Store user with normalized email
     const [user] = await db
       .insert(users)
       .values({
         ...result.data,
+        email: normalizedEmail, // Store normalized (lowercase) email
         password: await hashPassword(result.data.password),
       })
       .returning();
@@ -237,6 +268,21 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     // Enhanced login endpoint with better error handling
+    // Check if email was provided
+    if (!req.body.email) {
+      authLogger.warn("Login attempt without email");
+      return res.status(400).send("Email is required");
+    }
+    
+    // Log original vs. normalized email for debugging
+    const normalizedEmail = req.body.email.toLowerCase();
+    if (normalizedEmail !== req.body.email) {
+      authLogger.debug("Email normalized during login", { 
+        original: req.body.email, 
+        normalized: normalizedEmail 
+      });
+    }
+    
     passport.authenticate("local", (err, user, info) => {
       if (err) {
         // If there's a server error
@@ -246,7 +292,11 @@ export function setupAuth(app: Express) {
       
       if (!user) {
         // Authentication failed
-        authLogger.warn("Login failed", { email: req.body.email });
+        authLogger.warn("Login failed", { 
+          email: req.body.email,
+          normalized: normalizedEmail,
+          wasNormalized: normalizedEmail !== req.body.email
+        });
         return res.status(401).send("Unauthorized");
       }
       
@@ -258,7 +308,12 @@ export function setupAuth(app: Express) {
         }
         
         // Log success
-        authLogger.info("Login successful", { id: user.id, email: user.email });
+        authLogger.info("Login successful", { 
+          id: user.id, 
+          email: user.email,
+          originalEmail: req.body.email,
+          wasNormalized: normalizedEmail !== req.body.email
+        });
         
         // Return the user data
         return res.status(200).json(user);
