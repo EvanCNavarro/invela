@@ -343,18 +343,55 @@ export default function RegisterPage() {
             return;
           }
           
-          // For success status codes (200-299), we need to now login the user
-          logRegistration('Account setup successful, now logging in the user');
+          // For success status codes (200-299), the account setup was successful
+          // First, check if we're already logged in by the server-side login
+          logRegistration('Account setup successful, verifying login status');
           
           // Show initial success message
           toast({
             title: "Account setup successful",
-            description: "Logging you in...",
+            description: "Completing registration...",
           });
           
           try {
+            // First check if we're already logged in from the server-side req.login()
+            logRegistration('Checking current authentication status');
+            const authCheckResponse = await fetch("/api/user", {
+              method: "GET",
+              credentials: "include"
+            });
+            
+            // If we're already logged in, we can skip the manual login process
+            if (authCheckResponse.ok) {
+              const userData = await authCheckResponse.json();
+              logRegistration(`Already authenticated as user: ${userData.email}`);
+              
+              // Show final success message
+              toast({
+                title: "Account setup complete",
+                description: "Your account has been set up. Redirecting to dashboard...",
+              });
+              
+              // Refresh auth data to ensure latest state
+              await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              
+              // Navigate to home page after a small delay to show the toast
+              setTimeout(() => {
+                window.location.href = "/";
+              }, 1500);
+              return;
+            }
+            
+            // If we're not logged in yet, perform explicit login
+            logRegistration('Not authenticated yet, performing explicit login');
+            
+            // Show login attempt message
+            toast({
+              title: "Completing registration",
+              description: "Logging you in...",
+            });
+            
             // Perform login with the same credentials
-            logRegistration('Performing login after account setup');
             const loginResponse = await fetch("/api/login", {
               method: "POST",
               headers: {
@@ -370,9 +407,13 @@ export default function RegisterPage() {
             if (!loginResponse.ok) {
               // If login fails, show error but don't block - account was still set up
               logRegistration(`Login after account setup failed: ${loginResponse.status} ${loginResponse.statusText}`);
+              
+              // Verify invitation status was updated anyway
+              logRegistration('Verifying invitation status update');
+              
               toast({
-                title: "Automatic login failed",
-                description: "Your account was set up, but you'll need to log in manually.",
+                title: "Registration partially complete",
+                description: "Your account was set up, but we couldn't log you in automatically. Please log in manually.",
                 variant: "destructive",
               });
               
@@ -383,7 +424,7 @@ export default function RegisterPage() {
               // Redirect to login page
               setTimeout(() => {
                 window.location.href = "/login";
-              }, 1500);
+              }, 2000);
               return;
             }
             
@@ -403,10 +444,48 @@ export default function RegisterPage() {
             setTimeout(() => {
               window.location.href = "/";
             }, 1500);
-          } catch (loginError) {
-            // Login attempt failed with an exception
-            console.error("[Registration] Error during post-setup login:", loginError);
+          } catch (authError) {
+            // Authentication attempt failed with an exception
+            console.error("[Registration] Error during authentication verification:", authError);
             
+            // Try one last time with a direct login attempt
+            try {
+              logRegistration('Final login attempt after error');
+              const finalLoginResponse = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  username: values.email,
+                  password: values.password
+                }),
+                credentials: "include"
+              });
+              
+              if (finalLoginResponse.ok) {
+                logRegistration('Final login attempt succeeded');
+                
+                toast({
+                  title: "Account setup complete",
+                  description: "Your account has been set up. Redirecting to dashboard...",
+                });
+                
+                await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 1500);
+                return;
+              }
+              
+              // If we're here, both login attempts failed
+              logRegistration('Final login attempt also failed');
+            } catch (finalError) {
+              console.error("[Registration] Error during final login attempt:", finalError);
+            }
+            
+            // Show fallback error if everything failed
             toast({
               title: "Automatic login failed",
               description: "Your account was set up, but you'll need to log in manually.",
@@ -420,7 +499,7 @@ export default function RegisterPage() {
             // Redirect to login page
             setTimeout(() => {
               window.location.href = "/login";
-            }, 1500);
+            }, 2000);
           }
         } catch (fetchError) {
           // Handle network errors or other exceptions during fetch
