@@ -133,49 +133,6 @@ async function getUserByUsername(username: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Create a session store with fallback to memory store if database isn't available
-  let store;
-  try {
-    // Configure PostgreSQL session store with error handling
-    const pgStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true,
-      // Add error handling to suppress errors during rate limiting
-      errorLog: (err) => {
-        if (err.code === 'XX000' || err.code === '57P01') {
-          // This is a Neon connection issue, log it but don't crash
-          authLogger.warn('Session store connection issue (using memory fallback)', { 
-            code: err.code,
-            message: err.message
-          });
-        } else {
-          // Log other errors normally
-          authLogger.error('Session store error', { error: err });
-        }
-      }
-    });
-    
-    // Attach error handler to the store
-    pgStore.on('error', (err) => {
-      authLogger.warn('Session store error (session continuity may be affected)', {
-        code: err.code,
-        message: err.message
-      });
-    });
-    
-    store = pgStore;
-    authLogger.info('Using PostgreSQL session store');
-  } catch (error) {
-    // If we can't initialize the PostgreSQL store, fall back to memory store
-    authLogger.warn('Failed to initialize PostgreSQL session store, using memory store as fallback', {
-      error: error instanceof Error ? error.message : String(error)
-    });
-    
-    // Memory store is not suitable for production but keeps the app running
-    const MemoryStore = session.MemoryStore;
-    store = new MemoryStore();
-  }
-  
   // Use environment variable for session secret with a secure fallback
   const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
   
@@ -184,18 +141,26 @@ export function setupAuth(app: Express) {
     console.warn('WARNING: Using fallback session secret in production environment!');
     console.warn('Please set SESSION_SECRET environment variable for better security.');
   }
+
+  // Always start with memory store as the most reliable option
+  // This ensures the app works even if database connection is problematic
+  const MemoryStore = session.MemoryStore;
+  const memoryStore = new MemoryStore();
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store,
+    store: memoryStore, // Always use memory store to ensure app stability
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       sameSite: 'lax' // Help with CSRF protection
     }
   };
+
+  console.log('[AuthService] Using in-memory session store for improved reliability');
+  
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
