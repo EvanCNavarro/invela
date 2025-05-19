@@ -49,10 +49,41 @@ export default function RegisterPage() {
     }
   });
 
+  // Registration response type
+  type RegisterResponse = {
+    success: boolean;
+    message: string;
+    userId?: number;
+    companyId?: number;
+    sessionCreated?: boolean;
+    user?: {
+      id: number;
+      email: string;
+      fullName: string;
+      companyId: number;
+    };
+  };
+
+  // Invitation validation response type
+  type InvitationResponse = {
+    success: boolean;
+    message?: string;
+    invitation?: {
+      code: string;
+      email: string;
+      expiresAt: string;
+    };
+    company?: {
+      id: number;
+      name: string;
+    };
+    userExists?: boolean;
+  };
+
   // Registration mutation
-  const registerMutation = useMutation({
+  const registerMutation = useMutation<RegisterResponse, Error, RegisterFormValues>({
     mutationFn: async (values: RegisterFormValues) => {
-      const res = await apiRequest("POST", "/api/register", values);
+      const res = await apiRequest("POST", "/api/register", values) as Response;
       return await res.json();
     },
     onSuccess: (data) => {
@@ -87,9 +118,9 @@ export default function RegisterPage() {
   });
   
   // Validate invitation code mutation
-  const validateInvitationMutation = useMutation({
+  const validateInvitationMutation = useMutation<InvitationResponse, Error, { email: string; invitationCode: string }>({
     mutationFn: async (values: { email: string; invitationCode: string }) => {
-      const res = await apiRequest("POST", "/api/validate-invitation", values);
+      const res = await apiRequest("POST", "/api/validate-invitation", values) as Response;
       return await res.json();
     },
     onSuccess: (data) => {

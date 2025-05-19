@@ -70,17 +70,13 @@ export function registerRegistrationRoutes(app: Express) {
       
       console.log(`[Registration] Found company with ID ${company.id} and name ${company.name}`);
       
-      // Import crypto for password hashing
-      const crypto = await import('crypto');
-      
-      // Hash the password
-      const salt = crypto.randomBytes(16).toString('hex');
-      const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-      const hashedPassword = `${hash}.${salt}`;
+      // Hash the password using bcrypt - this is what our auth system expects
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
       
       console.log(`[Registration] Creating new user with email: ${email} and company ID: ${company.id}`);
       
-      // Create the user with properly mapped field names to match the database schema
+      // Create the user with field names that match the database schema exactly
       const userValues = {
         email: email,
         password: hashedPassword,
@@ -91,62 +87,83 @@ export function registerRegistrationRoutes(app: Express) {
         onboarding_user_completed: false
       };
       
-      console.log('[Registration] User values:', JSON.stringify(userValues, null, 2));
+      console.log('[Registration] User values:', JSON.stringify({
+        ...userValues, 
+        password: '[REDACTED]'
+      }, null, 2));
       
-      // Create the user directly in the database
-      const userResult = await db
-        .insert(users)
-        .values(userValues)
-        .returning();
-      
-      if (!userResult || userResult.length === 0) {
-        return res.status(500).json({
-          success: false,
-          message: "User creation failed: No user was returned"
-        });
-      }
+      try {
+        // Create the user directly in the database
+        const userResult = await db
+          .insert(users)
+          .values(userValues)
+          .returning();
         
-      const newUser = userResult[0];
-      console.log(`[Registration] Successfully created user with ID: ${newUser.id}`);
-        
-      // Mark invitation as used
-      await db
-        .update(invitations)
-        .set({
-          status: 'used',
-          used_at: new Date(),
-          updated_at: new Date()
-        })
-        .where(eq(invitations.id, invitation.id));
-      
-      // Log in the user
-      req.login(userResult[0], (err) => {
-        if (err) {
-          console.error("[Registration] Login error:", err);
-          return res.status(201).json({ 
-            success: true, 
-            message: "Registration successful, but automatic login failed. Please log in manually.", 
-            userId: userResult[0].id,
-            companyId: company.id,
-            sessionCreated: false
+        if (!userResult || userResult.length === 0) {
+          return res.status(500).json({
+            success: false,
+            message: "User creation failed: No user was returned"
           });
         }
+          
+        const newUser = userResult[0];
+        console.log(`[Registration] Successfully created user with ID: ${newUser.id}`);
         
-        // Return success with user data
-        return res.status(200).json({ 
-          success: true, 
-          message: "Registration and login successful", 
-          userId: userResult[0].id,
-          companyId: company.id,
-          sessionCreated: true,
-          user: {
-            id: userResult[0].id,
-            email: userResult[0].email,
-            fullName: userResult[0].full_name,
-            companyId: userResult[0].company_id
-          }
+        try {
+          // Mark invitation as used
+          await db
+            .update(invitations)
+            .set({
+              status: 'used',
+              used_at: new Date(),
+              updated_at: new Date()
+            })
+            .where(eq(invitations.id, invitation.id));
+          
+          // Log in the user
+          req.login(newUser, (err) => {
+            if (err) {
+              console.error("[Registration] Login error:", err);
+              return res.status(201).json({ 
+                success: true, 
+                message: "Registration successful, but automatic login failed. Please log in manually.", 
+                userId: newUser.id,
+                companyId: company.id,
+                sessionCreated: false
+              });
+            }
+            
+            // Return success with user data
+            return res.status(200).json({ 
+              success: true, 
+              message: "Registration and login successful", 
+              userId: newUser.id,
+              companyId: company.id,
+              sessionCreated: true,
+              user: {
+                id: newUser.id,
+                email: newUser.email,
+                fullName: newUser.full_name,
+                companyId: newUser.company_id
+              }
+            });
+          });
+        } catch (updateError) {
+          console.error("[Registration] Error updating invitation:", updateError);
+          // Even if updating the invitation fails, the user was created
+          return res.status(201).json({
+            success: true,
+            message: "Registration successful, but invitation update failed. Please log in.",
+            userId: newUser.id
+          });
+        }
+      } catch (dbError) {
+        console.error("[Registration] Database error creating user:", dbError);
+        return res.status(500).json({
+          success: false,
+          message: "Error creating user: " + (dbError instanceof Error ? dbError.message : 'Unknown database error')
         });
-      });
+      }
     } catch (error) {
       console.error("[Registration] Error:", error);
       return res.status(500).json({ 
