@@ -245,11 +245,21 @@ export default function RegisterPage() {
         },
         onError: (error: Error) => {
           console.error("[Registration] Registration error:", error);
-          toast({
-            title: "Registration failed",
-            description: "There was an error creating your account. Please try again.",
-            variant: "destructive",
-          });
+          
+          // Check if the error indicates the account already exists
+          if (error.message.includes("already exists")) {
+            toast({
+              title: "Account Already Exists",
+              description: "This email is already registered. Please try signing in instead.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Registration failed",
+              description: error.message || "There was an error creating your account. Please try again.",
+              variant: "destructive",
+            });
+          }
         },
       });
     } catch (error) {
