@@ -1997,8 +1997,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       return res.status(400).json({ message: "Missing required fields" });
     }
     
-    // Get a direct connection from the pool
-    const client = await db.pool.connect();
+    // Get a direct connection from the database module
+    const client = await db.pool.connect ? db.pool.connect() : pool.connect();
     
     try {
       // Start transaction
