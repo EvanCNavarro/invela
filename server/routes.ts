@@ -3,7 +3,7 @@ import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
-import { db, pool } from '@db';
+import { db } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
 import tutorialRouter from './routes/tutorial';
@@ -831,81 +831,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
-  // Get users for a specific company
-  app.get("/api/companies/:companyId/users", requireAuth, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ 
-          error: 'Unauthorized', 
-          message: 'Authentication required' 
-        });
-      }
-      
-      const companyId = parseInt(req.params.companyId);
-      
-      if (isNaN(companyId)) {
-        return res.status(400).json({ error: 'Invalid company ID' });
-      }
-      
-      console.log(`[Companies] Fetching users for company ${companyId}, requested by user ${req.user.id}`);
-      
-      // Verify the company exists
-      let company;
-      try {
-        const results = await db.select({
-          id: companies.id,
-          name: companies.name
-        })
-        .from(companies)
-        .where(eq(companies.id, companyId));
-        
-        company = results[0];
-      } catch (dbError) {
-        console.error('[Companies] Database error fetching company:', dbError);
-        return res.status(500).json({ 
-          error: 'Database error', 
-          message: 'Failed to verify company exists' 
-        });
-      }
-      
-      if (!company) {
-        console.log(`[Companies] Company ${companyId} not found`);
-        return res.status(404).json({ error: 'Company not found' });
-      }
-      
-      // Query users associated with this company
-      let companyUsers;
-      try {
-        // Select only fields that exist in the schema
-        // Removed 'role' field as it doesn't exist in the schema
-        companyUsers = await db.select({
-          id: users.id,
-          name: users.full_name,
-          email: users.email,
-          joinedAt: users.created_at
-        })
-        .from(users)
-        .where(eq(users.company_id, companyId));
-        
-        // Log database schema for debugging
-        console.log(`[Companies] Successfully queried users table schema for company ${companyId}`);
-      } catch (dbError) {
-        console.error('[Companies] Database error fetching company users:', dbError);
-        return res.status(500).json({ 
-          error: 'Database error', 
-          message: 'Failed to retrieve users for company' 
-        });
-      }
-      
-      console.log(`[Companies] Found ${companyUsers.length} users for company ${companyId}`);
-      
-      return res.json(companyUsers);
-    } catch (error) {
-      console.error('[Companies] Error fetching company users:', error);
-      return res.status(500).json({ error: 'Failed to fetch company users' });
-    }
-  });
-
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       const now = Date.now();
@@ -965,47 +890,14 @@ export function registerRoutes(app: Express): Express {
         isDemo: company.is_demo
       });
 
-      // Get user's onboarding status directly from the database to ensure we have the latest value
-      // This is the critical fix - we're no longer relying on the possibly outdated session data
-      let userOnboardingStatus = req.user?.onboarding_user_completed || false;
-      
-      // Fetch fresh user data from the database to ensure we have the latest onboarding status
-      if (req.user && req.user.id) {
-        try {
-          const [freshUserData] = await db.select({
-            id: users.id,
-            onboarding_user_completed: users.onboarding_user_completed
-          })
-          .from(users)
-          .where(eq(users.id, req.user.id))
-          .limit(1);
-          
-          if (freshUserData) {
-            // Use the fresh database value instead of the session value
-            userOnboardingStatus = freshUserData.onboarding_user_completed || false;
-            
-            // Log if there's a discrepancy between session and database values
-            if (userOnboardingStatus !== (req.user.onboarding_user_completed || false)) {
-              console.log('[Current Company] User onboarding status discrepancy detected:', {
-                userId: req.user.id,
-                sessionValue: req.user.onboarding_user_completed || false,
-                databaseValue: userOnboardingStatus,
-                timestamp: new Date().toISOString()
-              });
-            }
-          }
-        } catch (error) {
-          console.error('[Current Company] Error fetching fresh user data:', error);
-          // Fall back to session data if database query fails
-        }
-      }
+      // Get user's onboarding status to ensure consistent state across company and user
+      const userOnboardingStatus = req.user?.onboarding_user_completed || false;
       
       // Log detailed onboarding status for debugging
       console.log('[Current Company] Onboarding status check:', {
         userId: req.user?.id,
         companyId: companyId,
         userOnboardingStatus: userOnboardingStatus,
-        freshFromDatabase: true, // Flag to indicate we're using fresh data
         companyOnboardingStatus: company.onboarding_company_completed,
         timestamp: new Date().toISOString()
       });
@@ -1983,484 +1875,124 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Account setup endpoint
   app.post("/api/account/setup", async (req, res) => {
-    /**
-     * Fixed account setup endpoint with direct database operations
-     * 
-     * This implementation:
-     * 1. Uses direct SQL queries instead of relying on the ORM transaction
-     * 2. Separates database updates from the authentication process
-     * 3. Adds extensive logging to track every operation
-     * 4. Uses more reliable error propagation
-     */
-    const logger = {
-      info: (message: string, meta?: any) => {
-        console.log(`[Account Setup] ${message}`, meta || '');
-      },
-      warn: (message: string, meta?: any) => {
-        console.warn(`[Account Setup] ${message}`, meta || '');
-      },
-      error: (message: string, meta?: any) => {
-        console.error(`[Account Setup] ${message}`, meta || '');
-      },
-      debug: (message: string, meta?: any) => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[Account Setup:DEBUG] ${message}`, meta || '');
-        }
-      }
-    };
-
-    // Get a direct connection to the database for emergency direct queries if needed
-    const client = await pool.connect();
-    
     try {
-      // Parse and validate input
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
-      
-      logger.info('Processing setup request', { email, invitationCode });
-      
-      // Basic validation
-      if (!email || !password || !invitationCode) {
-        logger.warn('Missing required fields');
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-      
-      // 1. Check if invitation is valid using a direct query
-      let invitation;
-      try {
-        const inviteResult = await client.query(
-          `SELECT * FROM invitations 
-           WHERE LOWER(code) = LOWER($1) 
-           AND status = 'pending' 
-           AND LOWER(email) = LOWER($2)
-           AND expires_at > NOW()`,
-          [invitationCode, email]
-        );
-        
-        if (inviteResult.rows.length === 0) {
-          logger.warn('Invalid invitation', { code: invitationCode, email });
-          return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
-        }
-        
-        invitation = inviteResult.rows[0];
-        logger.info('Found valid invitation', { id: invitation.id });
-      } catch (err) {
-        logger.error('Error checking invitation', { error: err });
-        return res.status(500).json({ message: "Error validating invitation" });
-      }
-      
-      // 2. Check if user exists
-      let existingUser;
-      try {
-        const userResult = await client.query(
-          `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
-          [email]
-        );
-        
-        if (userResult.rows.length === 0) {
-          logger.warn('User not found', { email });
-          return res.status(400).json({ message: "User account not found" });
-        }
-        
-        existingUser = userResult.rows[0];
-        logger.info('Found existing user', { id: existingUser.id });
-      } catch (err) {
-        logger.error('Error checking user', { error: err });
-        return res.status(500).json({ message: "Error finding user account" });
-      }
-      
-      // 3. Begin direct transaction
-      try {
-        await client.query('BEGIN');
-        logger.info('Started database transaction');
-        
-        // 3.1 Update user record
-        const hashedPassword = await bcrypt.hash(password, 10);
-        logger.debug('Password hashed successfully');
-        
-        const updateUserResult = await client.query(
-          `UPDATE users 
-           SET first_name = $1, 
-               last_name = $2, 
-               full_name = $3, 
-               password = $4, 
-               onboarding_user_completed = false,
-               updated_at = NOW()
-           WHERE id = $5
-           RETURNING *`,
-          [firstName, lastName, fullName, hashedPassword, existingUser.id]
-        );
-        
-        if (updateUserResult.rows.length === 0) {
-          throw new Error('User update failed');
-        }
-        
-        const updatedUser = updateUserResult.rows[0];
-        logger.info('User updated successfully', { id: updatedUser.id });
-        
-        // 3.2 Update related task
-        let updatedTask = null;
-        const taskResult = await client.query(
-          `SELECT * FROM tasks 
-           WHERE LOWER(user_email) = LOWER($1) 
-           AND status = $2`,
-          [email, TaskStatus.EMAIL_SENT]
-        );
-        
-        if (taskResult.rows.length > 0) {
-          const task = taskResult.rows[0];
-          logger.debug('Found related task', { id: task.id });
-          
-          // Prepare metadata with status flow
-          const metadata = task.metadata || {};
-          if (!metadata.statusFlow) metadata.statusFlow = [];
-          metadata.statusFlow.push(TaskStatus.COMPLETED);
-          metadata.registeredAt = new Date().toISOString();
-          
-          const updateTaskResult = await client.query(
-            `UPDATE tasks 
-             SET status = $1, 
-                 progress = 100,
-                 assigned_to = $2,
-                 metadata = $3,
-                 updated_at = NOW()
-             WHERE id = $4
-             RETURNING *`,
-            [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
-          );
-          
-          if (updateTaskResult.rows.length > 0) {
-            updatedTask = updateTaskResult.rows[0];
-            logger.info('Task updated successfully', { id: updatedTask.id });
-          }
-        }
-        
-        // 3.3 Update invitation status
-        const updateInvitationResult = await client.query(
-          `UPDATE invitations 
-           SET status = 'used', 
-               used_at = NOW(),
-               updated_at = NOW()
-           WHERE id = $1
-           RETURNING *`,
-          [invitation.id]
-        );
-        
-        if (updateInvitationResult.rows.length === 0) {
-          throw new Error('Invitation update failed');
-        }
-        
-        const updatedInvitation = updateInvitationResult.rows[0];
-        logger.info('Invitation updated successfully', { 
-          id: updatedInvitation.id,
-          status: updatedInvitation.status 
-        });
-        
-        // 3.4 Commit the transaction
-        await client.query('COMMIT');
-        logger.info('Transaction committed successfully');
-        
-        // 4. Broadcast task update if needed
-        if (updatedTask) {
-          broadcastTaskUpdate(updatedTask.id, {
-            status: updatedTask.status,
-            progress: updatedTask.progress,
-            metadata: updatedTask.metadata
-          });
-          logger.info('Task update broadcast sent');
-        }
-        
-        // 5. Attempt to log the user in (outside transaction)
-        let authSuccess = false;
-        try {
-          // Ensure necessary fields are available for auth
-          const userForAuth = {
-            ...updatedUser,
-            email: email
-          };
-          
-          // Authenticate directly instead of relying on passport
-          await new Promise<void>((resolve, reject) => {
-            req.login(userForAuth, (err) => {
-              if (err) {
-                logger.error('Login error', { error: err });
-                reject(err);
-              } else {
-                logger.info('Login successful');
-                authSuccess = true;
-                resolve();
-              }
-            });
-          });
-        } catch (authError) {
-          logger.error('Authentication failed', { error: authError });
-          // Continue - we'll return partial success
-        }
-        
-        // 6. Send appropriate response based on auth status
-        if (authSuccess) {
-          logger.info('Account setup complete with session');
-          return res.status(200).json({ 
-            success: true, 
-            user: updatedUser,
-            message: "Account setup and login successful" 
-          });
-        } else {
-          logger.info('Account setup complete without session');
-          return res.status(201).json({ 
-            success: true, 
-            user: updatedUser,
-            sessionCreated: false,
-            message: "Account setup successful, but automatic login failed. Please log in manually." 
-          });
-        }
-        
-      } catch (transactionError) {
-        // Transaction failed - roll back
-        await client.query('ROLLBACK');
-        logger.error('Transaction failed - rolled back', { error: transactionError });
-        return res.status(500).json({ 
-          success: false, 
-          message: "Database update failed", 
-          error: transactionError instanceof Error ? transactionError.message : "Unknown error"
-        });
-      }
-    } catch (error) {
-      // Outer error handler - ensure proper cleanup
-      logger.error('Unhandled error in account setup', { error });
-      
-      // Make sure we roll back if needed
-      try {
-        await client.query('ROLLBACK');
-      } catch (rollbackError) {
-        logger.error('Rollback failed', { error: rollbackError });
-      }
-      
-      return res.status(500).json({ 
-        success: false, 
-        message: "Error processing account setup", 
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    } finally {
-      // Always release the client
-      client.release();
-      logger.debug('Database client released');
-    }
-  });
 
-  // Alias route for account setup to support hyphenated URL format
-  app.post("/api/account-setup", async (req, res) => {
-    // Log that the hyphenated URL format is being used - this will help us track usage
-    console.log("[Account Setup] Received request to the hyphenated URL format");
-    console.log("[Account Setup] Redirecting to standard /api/account/setup endpoint");
-    
-    // Forward to the /api/account/setup endpoint
-    res.redirect(307, "/api/account/setup");
-  });
-        }
-        
-        // Check invitation validity
-        const inviteResult = await client.query(
-          `SELECT * FROM invitations 
-           WHERE LOWER(code) = LOWER($1) 
-           AND status = 'pending' 
-           AND LOWER(email) = LOWER($2)
-           AND expires_at > NOW()`,
-          [invitationCode, email]
-        );
-        
-        if (inviteResult.rows.length === 0) {
-          return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
-        }
-        
-        const invitation = inviteResult.rows[0];
-        console.log(`[Account Setup] Found valid invitation ID: ${invitation.id}`);
-        
-        // Check if user exists
-        const userResult = await client.query(
-          `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
-          [email]
-        );
-        
-        if (userResult.rows.length === 0) {
-          return res.status(400).json({ message: "User account not found" });
-        }
-        
-        const existingUser = userResult.rows[0];
-        console.log(`[Account Setup] Found existing user ID: ${existingUser.id}`);
-        
-        // Execute transaction for updates
-        try {
-          await client.query('BEGIN');
-          
-          // Update user record with password and name
-          const hashedPassword = await bcrypt.hash(password, 10);
-          
-          const updateUserResult = await client.query(
-            `UPDATE users 
-             SET first_name = $1, 
-                 last_name = $2, 
-                 full_name = $3, 
-                 password = $4, 
-                 onboarding_user_completed = false,
-                 updated_at = NOW()
-             WHERE id = $5
-             RETURNING *`,
-            [firstName, lastName, fullName, hashedPassword, existingUser.id]
-          );
-          
-          if (updateUserResult.rows.length === 0) {
-            throw new Error('User update failed');
-          }
-          
-          const updatedUser = updateUserResult.rows[0];
-          console.log(`[Account Setup] User updated successfully ID: ${updatedUser.id}`);
-          
-          // Update related task if any
-          let updatedTask = null;
-          const taskResult = await client.query(
-            `SELECT * FROM tasks 
-             WHERE LOWER(user_email) = LOWER($1) 
-             AND status = $2`,
-            [email, TaskStatus.EMAIL_SENT]
-          );
-          
-          if (taskResult.rows.length > 0) {
-            const task = taskResult.rows[0];
-            
-            // Prepare task metadata
-            const metadata = task.metadata || {};
-            if (!metadata.statusFlow) metadata.statusFlow = [];
-            metadata.statusFlow.push(TaskStatus.COMPLETED);
-            metadata.registeredAt = new Date().toISOString();
-            
-            const updateTaskResult = await client.query(
-              `UPDATE tasks 
-               SET status = $1, 
-                   progress = 100,
-                   assigned_to = $2,
-                   metadata = $3,
-                   updated_at = NOW()
-               WHERE id = $4
-               RETURNING *`,
-              [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
-            );
-            
-            if (updateTaskResult.rows.length > 0) {
-              updatedTask = updateTaskResult.rows[0];
-              console.log(`[Account Setup] Task updated successfully ID: ${updatedTask.id}`);
-            }
-          }
-          
-          // Update invitation status
-          const updateInvitationResult = await client.query(
-            `UPDATE invitations 
-             SET status = 'used', 
-                 used_at = NOW(),
-                 updated_at = NOW()
-             WHERE id = $1
-             RETURNING *`,
-            [invitation.id]
-          );
-          
-          if (updateInvitationResult.rows.length === 0) {
-            throw new Error('Invitation update failed');
-          }
-          
-          const updatedInvitation = updateInvitationResult.rows[0];
-          console.log(`[Account Setup] Invitation marked as used ID: ${updatedInvitation.id}`);
-          
-          // Commit transaction
-          await client.query('COMMIT');
-          console.log(`[Account Setup] Database transaction committed successfully`);
-          
-          // Broadcast task update if needed
-          if (updatedTask) {
-            broadcastTaskUpdate(updatedTask.id, {
-              status: updatedTask.status,
-              progress: updatedTask.progress,
-              metadata: updatedTask.metadata
-            });
-          }
-          
-          // Try to log user in
-          let authSuccess = false;
-          try {
-            const userForAuth = {
-              ...updatedUser,
-              email: email
-            };
-            
-            await new Promise<void>((resolve, reject) => {
-              req.login(userForAuth, (err) => {
-                if (err) {
-                  console.error(`[Account Setup] Login error: ${err.message}`);
-                  reject(err);
-                } else {
-                  console.log(`[Account Setup] Login successful for user ID: ${userForAuth.id}`);
-                  authSuccess = true;
-                  resolve();
-                }
-              });
-            });
-          } catch (authError) {
-            console.error(`[Account Setup] Authentication failed: ${authError}`);
-            // Continue with partial success
-          }
-          
-          // Send response based on auth status
-          if (authSuccess) {
-            return res.status(200).json({ 
-              success: true, 
-              user: updatedUser,
-              message: "Account setup and login successful" 
-            });
-          } else {
-            return res.status(201).json({ 
-              success: true, 
-              user: updatedUser,
-              sessionCreated: false,
-              message: "Account setup successful, but automatic login failed. Please log in manually." 
-            });
-          }
-          
-        } catch (transactionError) {
-          // Transaction failed - roll back
-          await client.query('ROLLBACK');
-          console.error(`[Account Setup] Transaction failed: ${transactionError}`);
-          
-          return res.status(500).json({ 
-            success: false, 
-            message: "Database update failed", 
-            error: transactionError instanceof Error ? transactionError.message : "Unknown error"
-          });
-        }
-      } catch (error) {
-        console.error(`[Account Setup] Unhandled error: ${error}`);
-        
-        // Make sure transaction is rolled back if needed
-        try {
-          await client.query('ROLLBACK');
-        } catch (rollbackError) {
-          console.error(`[Account Setup] Rollback failed: ${rollbackError}`);
-        }
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: "Error processing account setup", 
-          error: error instanceof Error ? error.message : "Unknown error"
+      console.log('[Account Setup] Processing setup request for:', email);
+
+      // Validate invitation code
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, invitationCode.toUpperCase()),
+          eq(invitations.status, 'pending'),
+          sql`LOWER(${invitations.email}) = LOWER(${email})`,
+          gt(invitations.expires_at, new Date())
+        ));
+
+      if (!invitation) {
+        console.log('[Account Setup] Invalid invitation:', invitationCode);
+        return res.status(400).json({
+          message: "Invalid invitation code or email mismatch"
         });
-      } finally {
-        // Always release the client
-        client.release();
       }
-    }).catch(err => {
-      console.error(`[Account Setup] Database connection error: ${err}`);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Database connection failed", 
-        error: err instanceof Error ? err.message : "Unknown error"
+
+      // Find existing user with case-insensitive email match
+      const [existingUser] = await db.select()
+        .from(users)
+        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+
+      if (!existingUser) {
+        console.log('[Account Setup] User not found for email:', email);
+        return res.status(400).json({ message: "User account not found" });
+      }
+
+      // Update the existing user with new information
+      const [updatedUser] = await db.update(users)
+        .set({
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
+          password: await bcrypt.hash(password, 10),
+          onboarding_user_completed: false, // Ensure this stays false for new user registration
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+
+      console.log('[Account Setup] Updated user:', {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        onboarding_completed: updatedUser.onboarding_user_completed
       });
-    });
+
+      // Update the related task
+      const [task] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.user_email, email.toLowerCase()),
+          eq(tasks.status, TaskStatus.EMAIL_SENT)
+        ));
+
+      if (task) {
+        const [updatedTask] = await db.update(tasks)
+          .set({
+            status: TaskStatus.COMPLETED,
+            progress: 100, // Set directly to 100 for completed status
+            assigned_to: updatedUser.id,
+            metadata: {
+              ...task.metadata,
+              registeredAt: new Date().toISOString(),
+              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+            }
+          })
+          .where(eq(tasks.id, task.id))
+          .returning();
+
+        console.log('[Account Setup] Updated task status:', {
+          taskId: updatedTask.id,
+          status: updatedTask.status,
+          progress: updatedTask.progress
+        });
+
+        // Use the imported broadcast function from unified-websocket
+        // This ensures we're using the standardized WebSocket implementation
+        broadcastTaskUpdate(updatedTask.id, {
+          status: updatedTask.status,
+          progress: updatedTask.progress,
+          metadata: updatedTask.metadata
+        });
+      }
+
+      // Update invitation status
+      await db.update(invitations)
+        .set({
+          status: 'used',
+          used_at: new Date(),
+        })
+        .where(eq(invitations.id, invitation.id));
+
+      // Log the user in - wrap req.login in a Promise for proper async/await handling
+      await new Promise<void>((resolve, reject) => {
+        req.login(updatedUser, (err) => {
+          if (err) {
+            console.error("[Account Setup] Login error:", err);
+            reject(err);
+          } else {
+            console.log("[Account Setup] Login successful for user ID:", updatedUser.id);
+            resolve();
+          }
+        });
+      }).catch(err => {
+        throw new Error(`Login failed: ${err.message}`);
+      });
+
+      // Only respond after successful login
+      res.json(updatedUser);
+
+    } catch (error) {
+      console.error("[Account Setup] Account setup error:", error);
+      res.status(500).json({ message: "Error updating user information" });
+    }
   });
 
   // Add new endpoint after account setup endpoint
@@ -2550,7 +2082,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
             id: updatedCompanyData.id,
             name: updatedCompanyData.name,
-            onboardingCompleted: updatedCompanyData.onboarding_company_completed
+            onboardingCompleted: true
           } : null,
           elapsedMs: Date.now() - startTime
         });
@@ -2565,7 +2097,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
             id: updatedCompanyData.id,
             name: updatedCompanyData.name,
-            onboardingCompleted: updatedCompanyData.onboarding_company_completed
+            onboardingCompleted: true
           } : null,
           elapsedMs: Date.now() - startTime
         });
@@ -3053,71 +2585,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
           console.log('[FinTech Invite] Created company:', {
             id: newCompany.id,
-            is_demo: newCompany.is_demo,
             duration: Date.now() - txStartTime
           });
-          
-          // Directly populate file vault for demo companies
-          if (newCompany.is_demo === true) {
-            try {
-              console.log('[FinTech Invite] Populating file vault for demo company:', {
-                companyId: newCompany.id,
-                companyName: newCompany.name
-              });
-              
-              // Non-blocking file vault population - don't wait for it to complete
-              setTimeout(() => {
-                // This is executed in a separate async context to avoid blocking the main flow
-                (async () => {
-                  try {
-                    // Dynamically import the demo file vault module
-                    const demoFileVaultModule = await import('./utils/demo-file-vault.js')
-                      .catch(e => {
-                        console.error('[FinTech Invite] Dynamic import failed:', e.message);
-                        return null;
-                      });
-                    
-                    if (!demoFileVaultModule) {
-                      console.error('[FinTech Invite] Could not load demo file vault module');
-                      return;
-                    }
-                    
-                    const { populateDemoFileVault } = demoFileVaultModule;
-                    if (typeof populateDemoFileVault !== 'function') {
-                      console.error('[FinTech Invite] populateDemoFileVault is not a function');
-                      return;
-                    }
-                    
-                    const vaultResult = await populateDemoFileVault(newCompany);
-                    console.log('[FinTech Invite] Demo file vault population complete:', {
-                      companyId: newCompany.id,
-                      companyName: newCompany.name,
-                      success: vaultResult.success,
-                      fileCount: vaultResult.fileCount || 0
-                    });
-                  } catch (vaultError) {
-                    console.error('[FinTech Invite] Error populating demo file vault:', {
-                      error: vaultError instanceof Error ? vaultError.message : String(vaultError),
-                      companyId: newCompany.id,
-                      companyName: newCompany.name
-                    });
-                    // Non-blocking - we don't want to fail company creation
-                  }
-                })().catch(error => {
-                  console.error('[FinTech Invite] Unhandled promise rejection in file vault population:', {
-                    error: error instanceof Error ? error.message : String(error),
-                    companyId: newCompany.id
-                  });
-                });
-              }, 0);
-            } catch (error) {
-              console.error('[FinTech Invite] Error setting up file vault population:', {
-                error: error instanceof Error ? error.message : String(error),
-                companyId: newCompany.id
-              });
-              // Continue with company creation
-            }
-          }
 
           // Create user account
           const hashedPassword = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
@@ -3309,7 +2778,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  // Primary endpoint to handle user onboarding completion
+  // Add this endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
     try {
       if (!req.user || !req.user.id) {
@@ -3328,26 +2797,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         companyId: companyId,
         timestamp: new Date().toISOString()
       });
-      
-      // Check if user has already completed onboarding to prevent redundant updates
-      const [existingUser] = await db.select()
-        .from(users)
-        .where(eq(users.id, userId));
-        
-      if (existingUser?.onboarding_user_completed) {
-        console.log('[Complete Onboarding] Onboarding already completed for user:', {
-          userId: userId,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Return success even though no change was made
-        return res.json({
-          message: "Onboarding already completed",
-          success: true,
-          user: existingUser,
-          elapsedMs: Date.now() - startTime
-        });
-      }
       
       // Variable to store updated user data
       let updatedUserData = null;
@@ -3386,28 +2835,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         taskId: updatedTask?.id,
         elapsedMs: Date.now() - startTime
       });
-      
-      // Broadcast this update via WebSocket so any connected clients can update immediately
-      try {
-        // Use the WebSocketService module import directly instead of potentially undefined reference
-        const { default: WebSocketService } = require('../services/websocket-service');
-        
-        if (typeof WebSocketService.broadcast === 'function') {
-          // Broadcast to all clients - filtering will happen on the client side based on userId
-          WebSocketService.broadcast('onboarding_update', {
-            userId: userId,
-            onboardingCompleted: true,
-            timestamp: new Date().toISOString()
-          });
-          
-          console.log('[Complete Onboarding] Broadcast update via WebSocket for user:', userId);
-        } else {
-          console.log('[Complete Onboarding] WebSocket broadcast function not available');
-        }
-      } catch (wsError) {
-        // Non-blocking - just log the error
-        console.error('[Complete Onboarding] Failed to broadcast via WebSocket:', wsError);
-      }
       
       // Invalidate company cache to ensure fresh data is returned
       if (companyId) {
@@ -3797,30 +3224,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     try {
       console.log('[Invite Debug] Starting validation for code:', req.params.code);
 
-      // First check if the invitation has been used already
-      const [usedInvitation] = await db.select()
-        .from(invitations)
-        .where(and(
-          eq(invitations.code, req.params.code.toUpperCase()),
-          eq(invitations.status, 'used')
-        ));
-        
-      if (usedInvitation) {
-        console.log('[Invite Debug] Invitation has already been used:', {
-          id: usedInvitation.id,
-          email: usedInvitation.email,
-          status: usedInvitation.status,
-          used_at: usedInvitation.used_at
-        });
-        
-        return res.json({
-          valid: false,
-          message: "Invalid or used invitation code",
-          used: true,
-          used_at: usedInvitation.used_at
-        });
-      }
-
       // Get the invitation with case-insensitive code match and valid expiration
       const [invitation] = await db.select()
         .from(invitations)
@@ -3915,20 +3318,6 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     try {
       console.log('[Invite] Starting invitation process');
       console.log('[Invite] Request body:', req.body);
-
-      // Ensure we have a company ID
-      // If req.body.company_id is missing or invalid, use the authenticated user's company_id
-      if (!req.body.company_id || typeof req.body.company_id !== 'number') {
-        console.warn('[Invite] Using authenticated user company ID as fallback:', req.user.company_id);
-        req.body.company_id = req.user.company_id;
-      }
-      
-      // Additional safety check to prevent company_id = 1 unless explicitly intended
-      // This check should run in all cases
-      if (req.body.company_id === 1) {
-        console.warn('[Invite] Detected company_id = 1, this is likely incorrect. Using authenticated user company ID:', req.user.company_id);
-        req.body.company_id = req.user.company_id;
-      }
 
       // Validate and normalize invite data
       const inviteData = {
@@ -4355,30 +3744,19 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         `
       );
       
-      // Define status types and colors - Updated to use standardized statuses with distinct colors
+      // Define status types and colors
       const statusMap: Record<string, { color: string; label: string }> = {
         'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
-        'UNDER_REVIEW': { color: '#FFC300', label: 'Under Review' }, // Yellow
-        'IN_PROCESS': { color: '#9C27B0', label: 'In Process' }, // Purple (matching demo-autofill color)
-        'REVOKED': { color: '#EF4444', label: 'Revoked' }, // Red
-        
-        // Legacy status mappings (for backward compatibility with existing data)
-        'PENDING': { color: '#FFC300', label: 'Under Review' }, // Map old 'PENDING' to 'Under Review'
-        'PROVISIONALLY_APPROVED': { color: '#209C5A', label: 'Approved' }, // Map to 'Approved'
-        'IN_REVIEW': { color: '#FFC300', label: 'Under Review' } // Map to 'Under Review'
+        'PENDING': { color: '#FFC300', label: 'Pending' },   // Yellow
+        'AWAITING_INVITATION': { color: '#9CA3AF', label: 'Awaiting Invitation' }, // Pale Gray
+        'REVOKED': { color: '#EF4444', label: 'Revoked' }    // Red
       };
       
-      // Transform the data for the dot matrix visualization with standardized statuses
+      // Transform the data for the dot matrix visualization
       const companies = companiesResult.rows.map((row: any) => {
-        // Default to IN_PROCESS if status is null or not recognized (replacing AWAITING_INVITATION)
-        const status = row.accreditation_status || 'IN_PROCESS';
-        // Get status info or default to IN_PROCESS if not found in the map
-        const statusInfo = statusMap[status] || statusMap['IN_PROCESS'];
-        
-        // Add detailed logging for debugging status mapping
-        if (!statusMap[status]) {
-          console.log(`[AccreditationStatus] Mapping unrecognized status '${status}' to 'IN_PROCESS' for company ${row.id} (${row.name})`);
-        }
+        // Default to AWAITING_INVITATION if status is null or not recognized
+        const status = row.accreditation_status || 'AWAITING_INVITATION';
+        const statusInfo = statusMap[status] || statusMap['AWAITING_INVITATION'];
         
         return {
           id: row.id,
@@ -4390,42 +3768,20 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         };
       });
       
-      // Count companies by status using our standardized status categories
-      // Initialize with our standard statuses set to 0 (in display order)
-      const standardStatusKeys = ['APPROVED', 'IN_PROCESS', 'UNDER_REVIEW', 'REVOKED'];
-      const statusCounts = standardStatusKeys.reduce((acc, status) => {
-        acc[status] = 0;
+      // Count companies by status
+      const statusCounts = Object.keys(statusMap).reduce((acc, status) => {
+        acc[status] = companies.filter(c => c.status === status).length;
         return acc;
       }, {} as Record<string, number>);
       
-      // Count companies and map legacy status codes to standard ones
-      companies.forEach(company => {
-        const status = company.status;
-        // Map legacy statuses to standardized ones for counting
-        if (status === 'PENDING') {
-          statusCounts['UNDER_REVIEW'] += 1;
-        } else if (status === 'AWAITING_INVITATION') {
-          statusCounts['IN_PROCESS'] += 1;
-        } else if (standardStatusKeys.includes(status)) {
-          statusCounts[status] += 1;
-        } else {
-          // For any unrecognized status, count as IN_PROCESS
-          statusCounts['IN_PROCESS'] += 1;
-          console.log(`[AccreditationStatus] Counted unrecognized status '${status}' as 'IN_PROCESS'`);
-        }
-      });
-      
-      console.log('[AccreditationStatus] Calculated status counts:', statusCounts);
-      
-      // Format the response with only our standardized statuses
+      // Format the response
       const response = {
         companies,
         statusCounts,
-        // Only include the standardized statuses in the response (not legacy mappings)
-        statusMap: standardStatusKeys.map(statusKey => ({
-          id: statusKey,
-          ...statusMap[statusKey],
-          count: statusCounts[statusKey] || 0
+        statusMap: Object.entries(statusMap).map(([key, value]) => ({
+          id: key,
+          ...value,
+          count: statusCounts[key] || 0
         }))
       };
       
