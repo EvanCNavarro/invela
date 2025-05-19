@@ -12,7 +12,7 @@ interface BentoOverviewProps {
   usersLoading: boolean;
   productServices: string[];
   clientsPartners: string[];
-  companyAge: number;
+  companyAge: number | null;
   setActiveTab: (value: string) => void;
 }
 
