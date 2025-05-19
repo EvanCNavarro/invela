@@ -364,7 +364,7 @@ export function setupAuth(app: Express) {
     // Update request body with normalized email to ensure case-insensitive matching
     req.body.email = normalizedEmail;
     
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) {
         // If there's a server error
         authLogger.error("Login server error", { err });
