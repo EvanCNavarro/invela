@@ -766,11 +766,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 type="radar" 
                 height="500"
                 width="100%"
-                // ApexCharts doesn't have an official onMount prop, using ref approach instead
-                ref={(element: any) => {
-                  if (element && element.chart && !chartInstance) {
+                // Don't use ref directly on function components, use callback instead
+                className="apex-charts-wrapper"
+                key={`chart-${displayCompany?.id || 'default'}`}
+                // Use onMount as a prop instead of ref to avoid React warnings
+                onMount={(chartContext: any) => {
+                  if (chartContext && chartContext.chart && !chartInstance) {
                     // Store the chart instance in state for animations
-                    setChartInstance(element.chart);
+                    setChartInstance(chartContext.chart);
                     setChartComponentLoaded(true);
                     logChartUpdate('Chart instance mounted', { available: true });
                   }
