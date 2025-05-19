@@ -3,7 +3,7 @@ import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
-import { db } from '@db';
+import { db, pool } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
 import tutorialRouter from './routes/tutorial';
@@ -2245,6 +2245,230 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       client.release();
       logger.debug('Database client released');
     }
+  });
+
+  // Alias route for account setup to support hyphenated URL format
+  app.post("/api/account-setup", (req, res) => {
+    // Log that the hyphenated URL format is being used
+    console.log("[Account Setup] Using account-setup alias route with hyphenated URL");
+    // Create a direct handler for the hyphenated URL format that uses the same functionality
+    // as the standard route but doesn't try to proxy or redirect
+    
+    // Get a direct connection to the database
+    pool.connect().then(async (client) => {
+      try {
+        // Validate required fields
+        const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+        
+        console.log(`[Account Setup] Processing setup request for email: ${email}`);
+        
+        if (!email || !password || !invitationCode) {
+          return res.status(400).json({ message: "Missing required fields" });
+        }
+        
+        // Check invitation validity
+        const inviteResult = await client.query(
+          `SELECT * FROM invitations 
+           WHERE LOWER(code) = LOWER($1) 
+           AND status = 'pending' 
+           AND LOWER(email) = LOWER($2)
+           AND expires_at > NOW()`,
+          [invitationCode, email]
+        );
+        
+        if (inviteResult.rows.length === 0) {
+          return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
+        }
+        
+        const invitation = inviteResult.rows[0];
+        console.log(`[Account Setup] Found valid invitation ID: ${invitation.id}`);
+        
+        // Check if user exists
+        const userResult = await client.query(
+          `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
+          [email]
+        );
+        
+        if (userResult.rows.length === 0) {
+          return res.status(400).json({ message: "User account not found" });
+        }
+        
+        const existingUser = userResult.rows[0];
+        console.log(`[Account Setup] Found existing user ID: ${existingUser.id}`);
+        
+        // Execute transaction for updates
+        try {
+          await client.query('BEGIN');
+          
+          // Update user record with password and name
+          const hashedPassword = await bcrypt.hash(password, 10);
+          
+          const updateUserResult = await client.query(
+            `UPDATE users 
+             SET first_name = $1, 
+                 last_name = $2, 
+                 full_name = $3, 
+                 password = $4, 
+                 onboarding_user_completed = false,
+                 updated_at = NOW()
+             WHERE id = $5
+             RETURNING *`,
+            [firstName, lastName, fullName, hashedPassword, existingUser.id]
+          );
+          
+          if (updateUserResult.rows.length === 0) {
+            throw new Error('User update failed');
+          }
+          
+          const updatedUser = updateUserResult.rows[0];
+          console.log(`[Account Setup] User updated successfully ID: ${updatedUser.id}`);
+          
+          // Update related task if any
+          let updatedTask = null;
+          const taskResult = await client.query(
+            `SELECT * FROM tasks 
+             WHERE LOWER(user_email) = LOWER($1) 
+             AND status = $2`,
+            [email, TaskStatus.EMAIL_SENT]
+          );
+          
+          if (taskResult.rows.length > 0) {
+            const task = taskResult.rows[0];
+            
+            // Prepare task metadata
+            const metadata = task.metadata || {};
+            if (!metadata.statusFlow) metadata.statusFlow = [];
+            metadata.statusFlow.push(TaskStatus.COMPLETED);
+            metadata.registeredAt = new Date().toISOString();
+            
+            const updateTaskResult = await client.query(
+              `UPDATE tasks 
+               SET status = $1, 
+                   progress = 100,
+                   assigned_to = $2,
+                   metadata = $3,
+                   updated_at = NOW()
+               WHERE id = $4
+               RETURNING *`,
+              [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
+            );
+            
+            if (updateTaskResult.rows.length > 0) {
+              updatedTask = updateTaskResult.rows[0];
+              console.log(`[Account Setup] Task updated successfully ID: ${updatedTask.id}`);
+            }
+          }
+          
+          // Update invitation status
+          const updateInvitationResult = await client.query(
+            `UPDATE invitations 
+             SET status = 'used', 
+                 used_at = NOW(),
+                 updated_at = NOW()
+             WHERE id = $1
+             RETURNING *`,
+            [invitation.id]
+          );
+          
+          if (updateInvitationResult.rows.length === 0) {
+            throw new Error('Invitation update failed');
+          }
+          
+          const updatedInvitation = updateInvitationResult.rows[0];
+          console.log(`[Account Setup] Invitation marked as used ID: ${updatedInvitation.id}`);
+          
+          // Commit transaction
+          await client.query('COMMIT');
+          console.log(`[Account Setup] Database transaction committed successfully`);
+          
+          // Broadcast task update if needed
+          if (updatedTask) {
+            broadcastTaskUpdate(updatedTask.id, {
+              status: updatedTask.status,
+              progress: updatedTask.progress,
+              metadata: updatedTask.metadata
+            });
+          }
+          
+          // Try to log user in
+          let authSuccess = false;
+          try {
+            const userForAuth = {
+              ...updatedUser,
+              email: email
+            };
+            
+            await new Promise<void>((resolve, reject) => {
+              req.login(userForAuth, (err) => {
+                if (err) {
+                  console.error(`[Account Setup] Login error: ${err.message}`);
+                  reject(err);
+                } else {
+                  console.log(`[Account Setup] Login successful for user ID: ${userForAuth.id}`);
+                  authSuccess = true;
+                  resolve();
+                }
+              });
+            });
+          } catch (authError) {
+            console.error(`[Account Setup] Authentication failed: ${authError}`);
+            // Continue with partial success
+          }
+          
+          // Send response based on auth status
+          if (authSuccess) {
+            return res.status(200).json({ 
+              success: true, 
+              user: updatedUser,
+              message: "Account setup and login successful" 
+            });
+          } else {
+            return res.status(201).json({ 
+              success: true, 
+              user: updatedUser,
+              sessionCreated: false,
+              message: "Account setup successful, but automatic login failed. Please log in manually." 
+            });
+          }
+          
+        } catch (transactionError) {
+          // Transaction failed - roll back
+          await client.query('ROLLBACK');
+          console.error(`[Account Setup] Transaction failed: ${transactionError}`);
+          
+          return res.status(500).json({ 
+            success: false, 
+            message: "Database update failed", 
+            error: transactionError instanceof Error ? transactionError.message : "Unknown error"
+          });
+        }
+      } catch (error) {
+        console.error(`[Account Setup] Unhandled error: ${error}`);
+        
+        // Make sure transaction is rolled back if needed
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackError) {
+          console.error(`[Account Setup] Rollback failed: ${rollbackError}`);
+        }
+        
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error processing account setup", 
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      } finally {
+        // Always release the client
+        client.release();
+      }
+    }).catch(err => {
+      console.error(`[Account Setup] Database connection error: ${err}`);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Database connection failed", 
+        error: err instanceof Error ? err.message : "Unknown error"
+      });
+    });
   });
 
   // Add new endpoint after account setup endpoint
