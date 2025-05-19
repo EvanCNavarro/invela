@@ -1982,364 +1982,233 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   });
 
   // Account setup endpoint
+  // Account setup endpoint - using direct SQL with transaction support
   app.post("/api/account/setup", async (req, res) => {
-    /**
-     * Final account setup endpoint - completely rewritten with simpler approach
-     * 
-     * This implementation:
-     * 1. Uses simpler direct SQL with extensive error checking
-     * 2. Adds more detailed logging of the actual SQL execution
-     * 3. Verifies transaction success by checking affected row counts
-     * 4. Separates database operations completely from authentication
-     */
-    const logger = {
-      info: (message: string, meta?: any) => {
-        console.log(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
-      },
-      warn: (message: string, meta?: any) => {
-        console.warn(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
-      },
-      error: (message: string, meta?: any) => {
-        console.error(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
-      },
-      debug: (message: string, meta?: any) => {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[Account Setup:DEBUG] ${message}`, meta ? JSON.stringify(meta) : '');
-        }
-      },
-      sql: (query: string, params: any[]) => {
-        if (process.env.NODE_ENV !== 'production') {
-          const maskedParams = params.map(p => 
-            typeof p === 'string' && p.length > 20 ? p.substring(0, 3) + '...' : p
-          );
-          console.log(`[Account Setup:SQL] ${query.replace(/\s+/g, ' ')}`, JSON.stringify(maskedParams));
-        }
-      }
-    };
-
-    // Get a direct connection to the database
-    let client = null;
+    console.log("[Account Setup] Processing new account setup request");
+    
+    // Parse and validate input
+    const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+    
+    console.log(`[Account Setup] Request received for email: ${email}, code: ${invitationCode}`);
+    
+    // Basic validation
+    if (!email || !password || !invitationCode) {
+      console.warn("[Account Setup] Missing required fields");
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+    
+    // Get a direct connection from the pool
+    const client = await db.pool.connect();
     
     try {
-      client = await pool.connect();
-      logger.info('Database connection established');
-      
-      // Parse and validate input
-      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
-      
-      logger.info('Processing setup request', { 
-        email, 
-        invitationCode, 
-        hasPassword: !!password,
-        firstName,
-        lastName
-      });
-      
-      // Basic validation
-      if (!email || !password || !invitationCode) {
-        logger.warn('Missing required fields');
-        return res.status(400).json({ message: "Missing required fields" });
-      }
+      // Start transaction
+      await client.query('BEGIN');
+      console.log("[Account Setup] Transaction started");
       
       // 1. Check if invitation is valid
-      const inviteQuery = `
-        SELECT * FROM invitations 
-        WHERE LOWER(code) = LOWER($1) 
-        AND status = 'pending' 
-        AND LOWER(email) = LOWER($2)
-        AND expires_at > NOW()
-      `;
-      logger.sql(inviteQuery, [invitationCode, email]);
-      
-      const inviteResult = await client.query(inviteQuery, [invitationCode, email]);
+      console.log(`[Account Setup] Checking invitation code: ${invitationCode}`);
+      const inviteResult = await client.query(
+        `SELECT * FROM invitations 
+         WHERE LOWER(code) = LOWER($1) 
+         AND status = 'pending' 
+         AND LOWER(email) = LOWER($2)
+         AND expires_at > NOW()`,
+        [invitationCode, email]
+      );
       
       if (inviteResult.rows.length === 0) {
-        logger.warn('Invalid invitation', { code: invitationCode, email });
+        console.warn(`[Account Setup] Invalid invitation: ${invitationCode} for ${email}`);
+        await client.query('ROLLBACK');
         return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
       }
       
       const invitation = inviteResult.rows[0];
-      logger.info('Found valid invitation', { id: invitation.id, email: invitation.email });
+      console.log(`[Account Setup] Found valid invitation ID: ${invitation.id}`);
       
       // 2. Check if user exists
-      const userQuery = `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`;
-      logger.sql(userQuery, [email]);
-      
-      const userResult = await client.query(userQuery, [email]);
+      console.log(`[Account Setup] Looking up user with email: ${email}`);
+      const userResult = await client.query(
+        `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
+        [email]
+      );
       
       if (userResult.rows.length === 0) {
-        logger.warn('User not found', { email });
+        console.warn(`[Account Setup] User not found: ${email}`);
+        await client.query('ROLLBACK');
         return res.status(400).json({ message: "User account not found" });
       }
       
       const existingUser = userResult.rows[0];
-      logger.info('Found existing user', { id: existingUser.id, email: existingUser.email });
+      console.log(`[Account Setup] Found existing user ID: ${existingUser.id}`);
       
-      // 3. Begin transaction
+      // 3. Update user record with password and name
+      console.log(`[Account Setup] Updating user record with name and password`);
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const updateUserResult = await client.query(
+        `UPDATE users 
+         SET first_name = $1, 
+             last_name = $2, 
+             full_name = $3, 
+             password = $4, 
+             onboarding_user_completed = false,
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [firstName, lastName, fullName, hashedPassword, existingUser.id]
+      );
+      
+      if (updateUserResult.rowCount === 0) {
+        console.error(`[Account Setup] Failed to update user record: ${existingUser.id}`);
+        await client.query('ROLLBACK');
+        return res.status(500).json({ message: "Failed to update user record" });
+      }
+      
+      const updatedUser = updateUserResult.rows[0];
+      console.log(`[Account Setup] User updated successfully: ${updatedUser.id}`);
+      
+      // 4. Update related task if it exists
+      console.log(`[Account Setup] Checking for related tasks with email: ${email}`);
+      const taskResult = await client.query(
+        `SELECT * FROM tasks 
+         WHERE LOWER(user_email) = LOWER($1) 
+         AND status = $2`,
+        [email, TaskStatus.EMAIL_SENT]
+      );
+      
+      let updatedTask = null;
+      if (taskResult.rowCount > 0) {
+        const task = taskResult.rows[0];
+        console.log(`[Account Setup] Found related task ID: ${task.id}`);
+        
+        // Prepare metadata
+        const metadata = task.metadata || {};
+        if (!metadata.statusFlow) metadata.statusFlow = [];
+        metadata.statusFlow.push(TaskStatus.COMPLETED);
+        metadata.registeredAt = new Date().toISOString();
+        
+        const updateTaskResult = await client.query(
+          `UPDATE tasks 
+           SET status = $1, 
+               progress = 100,
+               assigned_to = $2,
+               metadata = $3,
+               updated_at = NOW()
+           WHERE id = $4
+           RETURNING *`,
+          [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
+        );
+        
+        if (updateTaskResult.rowCount > 0) {
+          updatedTask = updateTaskResult.rows[0];
+          console.log(`[Account Setup] Task updated successfully: ${updatedTask.id}`);
+        }
+      }
+      
+      // 5. Update invitation status
+      console.log(`[Account Setup] Updating invitation status to 'used': ${invitation.id}`);
+      const updateInvitationResult = await client.query(
+        `UPDATE invitations 
+         SET status = 'used', 
+             used_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [invitation.id]
+      );
+      
+      if (updateInvitationResult.rowCount === 0) {
+        console.error(`[Account Setup] Failed to update invitation status: ${invitation.id}`);
+        await client.query('ROLLBACK');
+        return res.status(500).json({ message: "Failed to update invitation status" });
+      }
+      
+      console.log(`[Account Setup] Invitation marked as used: ${invitation.id}`);
+      
+      // 6. Commit all database changes
+      await client.query('COMMIT');
+      console.log(`[Account Setup] Transaction committed successfully`);
+      
+      // 7. Broadcast task update if needed
+      if (updatedTask) {
+        try {
+          console.log(`[Account Setup] Broadcasting task update: ${updatedTask.id}`);
+          await broadcastTaskUpdate(updatedTask.id, updatedTask);
+          console.log(`[Account Setup] Task update broadcast successful`);
+        } catch (err) {
+          console.warn(`[Account Setup] Task broadcast failed, but continuing: ${err.message}`);
+          // Non-critical error, continue
+        }
+      }
+      
+      // 8. Try to log the user in
+      let isAuthenticated = false;
       try {
-        await client.query('BEGIN');
-        logger.info('Started database transaction');
+        console.log(`[Account Setup] Attempting to authenticate user: ${updatedUser.id}`);
         
-        // 3.1 Update user record with password and name
-        const hashedPassword = await bcrypt.hash(password, 10);
-        logger.debug('Password hashed successfully');
+        // Create auth-ready user object with email
+        const authUser = {
+          ...updatedUser,
+          email: email.toLowerCase()
+        };
         
-        const updateUserQuery = `
-          UPDATE users 
-          SET first_name = $1, 
-              last_name = $2, 
-              full_name = $3, 
-              password = $4, 
-              onboarding_user_completed = false,
-              updated_at = NOW()
-          WHERE id = $5
-          RETURNING *
-        `;
-        
-        // Log query with masked password
-        logger.sql(updateUserQuery, [
-          firstName, 
-          lastName, 
-          fullName, 
-          "***MASKED***", 
-          existingUser.id
-        ]);
-        
-        const updateUserResult = await client.query(
-          updateUserQuery,
-          [firstName, lastName, fullName, hashedPassword, existingUser.id]
-        );
-        
-        if (updateUserResult.rowCount === 0) {
-          logger.error('User update failed - no rows affected', { userId: existingUser.id });
-          throw new Error('User update failed - no rows affected');
-        }
-        
-        const updatedUser = updateUserResult.rows[0];
-        logger.info('User updated successfully', { 
-          id: updatedUser.id, 
-          email: updatedUser.email,
-          firstName: updatedUser.first_name,
-          lastName: updatedUser.last_name
+        await new Promise<void>((resolve, reject) => {
+          req.login(authUser, (err) => {
+            if (err) {
+              console.error(`[Account Setup] Login failed: ${err.message}`);
+              reject(err);
+            } else {
+              console.log(`[Account Setup] Login successful for user: ${authUser.id}`);
+              isAuthenticated = true;
+              resolve();
+            }
+          });
         });
-        
-        // 3.2 Update related task if it exists
-        const taskQuery = `
-          SELECT * FROM tasks 
-          WHERE LOWER(user_email) = LOWER($1) 
-          AND status = $2
-        `;
-        logger.sql(taskQuery, [email, TaskStatus.EMAIL_SENT]);
-        
-        const taskResult = await client.query(taskQuery, [email, TaskStatus.EMAIL_SENT]);
-        let updatedTask = null;
-        
-        if (taskResult.rowCount > 0) {
-          const task = taskResult.rows[0];
-          logger.info('Found related task', { id: task.id, status: task.status });
-          
-          // Prepare metadata with status flow
-          const metadata = task.metadata || {};
-          if (!metadata.statusFlow) metadata.statusFlow = [];
-          metadata.statusFlow.push(TaskStatus.COMPLETED);
-          metadata.registeredAt = new Date().toISOString();
-          
-          const updateTaskQuery = `
-            UPDATE tasks 
-            SET status = $1, 
-                progress = 100,
-                assigned_to = $2,
-                metadata = $3,
-                updated_at = NOW()
-            WHERE id = $4
-            RETURNING *
-          `;
-          logger.sql(updateTaskQuery, [
-            TaskStatus.COMPLETED, 
-            updatedUser.id, 
-            JSON.stringify(metadata), 
-            task.id
-          ]);
-          
-          const updateTaskResult = await client.query(
-            updateTaskQuery,
-            [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
-          );
-          
-          if (updateTaskResult.rowCount > 0) {
-            updatedTask = updateTaskResult.rows[0];
-            logger.info('Task updated successfully', { 
-              id: updatedTask.id,
-              status: updatedTask.status,
-              progress: updatedTask.progress
-            });
-          } else {
-            logger.warn('Task update failed - no rows affected', { taskId: task.id });
-          }
-        } else {
-          logger.info('No related task found for email', { email });
-        }
-        
-        // 3.3 Update invitation status
-        const updateInvitationQuery = `
-          UPDATE invitations 
-          SET status = 'used', 
-              used_at = NOW(),
-              updated_at = NOW()
-          WHERE id = $1
-          RETURNING *
-        `;
-        logger.sql(updateInvitationQuery, [invitation.id]);
-        
-        const updateInvitationResult = await client.query(
-          updateInvitationQuery,
-          [invitation.id]
-        );
-        
-        if (updateInvitationResult.rowCount === 0) {
-          logger.error('Invitation update failed - no rows affected', { invitationId: invitation.id });
-          throw new Error('Invitation update failed - no rows affected');
-        }
-        
-        const updatedInvitation = updateInvitationResult.rows[0];
-        logger.info('Invitation marked as used', { 
-          id: updatedInvitation.id,
-          status: updatedInvitation.status,
-          usedAt: updatedInvitation.used_at
+      } catch (authError) {
+        console.error(`[Account Setup] Authentication failed: ${authError.message}`);
+        // Non-fatal error, continue with partial success
+      }
+      
+      // 9. Send appropriate response
+      if (isAuthenticated) {
+        console.log(`[Account Setup] Account setup complete with auto-login`);
+        return res.status(200).json({
+          success: true,
+          message: "Account setup and login successful",
+          user: updatedUser
         });
-        
-        // 3.4 Commit the transaction
-        await client.query('COMMIT');
-        logger.info('Transaction COMMITTED successfully');
-        
-        // 4. Broadcast task update if available
-        if (updatedTask) {
-          try {
-            broadcastTaskUpdate(updatedTask.id, {
-              status: updatedTask.status,
-              progress: updatedTask.progress,
-              metadata: updatedTask.metadata
-            });
-            logger.info('Task update broadcast sent');
-          } catch (broadcastError) {
-            logger.warn('Failed to broadcast task update', { error: broadcastError.message });
-            // Non-critical error, continue
-          }
-        }
-        
-        // 5. Attempt login with simplified approach
-        let authSuccess = false;
-        try {
-          // Create a complete user object for auth
-          const userForLogin = {
-            ...updatedUser,
-            email: email.toLowerCase() // Ensure email is included and lowercase
-          };
-          
-          logger.debug('Attempting to login user', { 
-            userId: userForLogin.id,
-            email: userForLogin.email
-          });
-          
-          // Login directly
-          await new Promise<void>((resolve, reject) => {
-            req.login(userForLogin, (loginErr) => {
-              if (loginErr) {
-                logger.error('Login failed', { error: loginErr.message });
-                reject(loginErr);
-              } else {
-                logger.info('Login succeeded', { 
-                  userId: userForLogin.id,
-                  sessionId: req.sessionID
-                });
-                authSuccess = true;
-                resolve();
-              }
-            });
-          });
-        } catch (authError) {
-          logger.error('Authentication error', { 
-            error: authError.message,
-            stack: authError.stack
-          });
-          // Non-fatal error, continue with partial success
-        }
-        
-        // Verify authentication status
-        logger.info('Final authentication status', { 
-          success: authSuccess,
-          isAuthenticated: req.isAuthenticated()
-        });
-        
-        // 6. Return appropriate response
-        if (authSuccess) {
-          return res.status(200).json({ 
-            success: true, 
-            user: updatedUser,
-            message: "Account setup and login successful" 
-          });
-        } else {
-          return res.status(201).json({ 
-            success: true, 
-            user: updatedUser,
-            sessionCreated: false,
-            message: "Account setup successful, but automatic login failed. Please log in manually." 
-          });
-        }
-        
-      } catch (transactionError) {
-        // Transaction failed - roll back
-        logger.error('Transaction failed', { 
-          error: transactionError.message,
-          stack: transactionError.stack
-        });
-        
-        try {
-          await client.query('ROLLBACK');
-          logger.info('Transaction ROLLED BACK successfully');
-        } catch (rollbackError) {
-          logger.error('Rollback failed', { error: rollbackError.message });
-        }
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: "Database update failed", 
-          error: transactionError.message
+      } else {
+        console.log(`[Account Setup] Account setup complete, manual login required`);
+        return res.status(201).json({
+          success: true,
+          message: "Account setup successful, but automatic login failed. Please log in manually.",
+          user: updatedUser,
+          sessionCreated: false
         });
       }
     } catch (error) {
-      // Outer error handler
-      logger.error('Unhandled error in account setup', { 
-        error: error.message,
-        stack: error.stack
-      });
+      // Handle any errors
+      console.error(`[Account Setup] Error: ${error.message}`);
       
-      // Try to roll back if needed
-      if (client) {
-        try {
-          await client.query('ROLLBACK');
-          logger.info('Transaction ROLLED BACK successfully');
-        } catch (rollbackError) {
-          logger.error('Rollback failed', { error: rollbackError.message });
-        }
+      try {
+        await client.query('ROLLBACK');
+        console.log(`[Account Setup] Transaction rolled back due to error`);
+      } catch (rollbackError) {
+        console.error(`[Account Setup] Rollback failed: ${rollbackError.message}`);
       }
       
-      return res.status(500).json({ 
-        success: false, 
-        message: "Error processing account setup", 
+      return res.status(500).json({
+        success: false,
+        message: "Error setting up account",
         error: error.message
       });
     } finally {
       // Always release the client
-      if (client) {
-        try {
-          client.release();
-          logger.debug('Database client released');
-        } catch (releaseError) {
-          logger.error('Error releasing database client', { 
-            error: releaseError.message 
-          });
-        }
+      try {
+        client.release();
+        console.log(`[Account Setup] Database client released`);
+      } catch (releaseError) {
+        console.error(`[Account Setup] Error releasing client: ${releaseError.message}`);
       }
     }
   });
