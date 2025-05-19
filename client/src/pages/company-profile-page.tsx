@@ -893,32 +893,32 @@ export default function CompanyProfilePage() {
                 </div>
               </div>
               
-              <div className="flex gap-4 flex-grow justify-end ml-auto">
+              <div className="flex gap-6 flex-grow justify-end ml-auto">
                 {/* S&P Data Access Risk Score Box */}
-                <div className="border rounded-md flex items-center justify-center h-14 px-5 min-w-[180px] relative overflow-hidden">
+                <div className="border rounded-md flex items-center justify-center h-16 px-8 min-w-[200px] relative overflow-hidden">
                   {/* Accent border - blue gradient */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-gray-200"></div>
                   
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       S&P DATA ACCESS RISK SCORE
                     </span>
-                    <span className="text-2xl font-bold">
+                    <span className="text-3xl font-bold">
                       {company.riskScore || "29"}
                     </span>
                   </div>
                 </div>
                 
                 {/* Accreditation Status Box */}
-                <div className="border rounded-md flex items-center justify-center h-14 px-5 min-w-[180px] relative overflow-hidden">
+                <div className="border rounded-md flex items-center justify-center h-16 px-8 min-w-[200px] relative overflow-hidden">
                   {/* Accent border - red gradient for Not Available */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-gray-200"></div>
                   
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+                  <div className="flex flex-col items-center py-3">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       ACCREDITATION
                     </span>
-                    <span className="text-lg font-medium text-rose-500">
+                    <span className="text-xl font-medium text-rose-500">
                       Not Available
                     </span>
                   </div>
