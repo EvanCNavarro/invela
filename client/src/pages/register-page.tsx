@@ -14,13 +14,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check, Lock, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Check, Lock, ArrowLeft, RefreshCw } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { InvitationCodeInput } from "@/components/ui/invitation-code-input";
 import { motion } from "framer-motion";
 import { queryClient } from "@/lib/queryClient";
+import { ConnectionError } from "@/components/ui/connection-error";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -228,6 +229,16 @@ export default function RegisterPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   // Track loading state separately for better UX feedback
   const [isLoading, setIsLoading] = useState(false);
+  // State to track database connection errors
+  const [connectionError, setConnectionError] = useState<{
+    title: string;
+    message: string;
+    isActive: boolean;
+  }>({
+    title: "Connection Issue",
+    message: "We're experiencing high demand right now. Please try again in a moment.",
+    isActive: false
+  });
 
   // Create a unified logging utility for consistent logging patterns
   const logRegistration = (message: string, data?: any) => {
@@ -338,12 +349,31 @@ export default function RegisterPage() {
               // Keep default error message
             }
             
-            // Show error message
-            toast({
-              title: "Account setup failed",
-              description: errorMessage,
-              variant: "destructive",
-            });
+            // Check for database connection issues
+            const isConnectionError = 
+              errorMessage.includes('rate limit') || 
+              errorMessage.includes('too many connections') ||
+              errorMessage.includes('database connection') ||
+              errorMessage.includes('server is busy') ||
+              response.status === 503 || 
+              response.status === 429;
+              
+            if (isConnectionError) {
+              logRegistration('Database connection error detected');
+              // Show specialized connection error UI
+              setConnectionError({
+                title: "Database Connection Issue",
+                message: "Our system is experiencing high demand right now. Please wait a moment and try again.",
+                isActive: true
+              });
+            } else {
+              // Show standard error message for other errors
+              toast({
+                title: "Account setup failed",
+                description: errorMessage,
+                variant: "destructive",
+              });
+            }
             
             // Reset loading states
             setIsLoading(false);
@@ -674,6 +704,17 @@ export default function RegisterPage() {
     const hasPassword = !!password && !registrationForm.formState.errors.password;
     
     return hasFirstName && hasLastName && hasPassword;
+  };
+  
+  // Create a helper function to retry the submission when a connection error occurs
+  const handleRetry = () => {
+    logRegistration('Retrying after connection error');
+    // Reset the connection error state
+    setConnectionError(prev => ({ ...prev, isActive: false }));
+    // Reset loading states
+    setIsLoading(false);
+    setIsRegistering(false);
+    // User will need to click submit again
   };
 
   return (
