@@ -766,10 +766,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 type="radar" 
                 height="500"
                 width="100%"
-                // Don't use ref directly on function components, use callback instead
                 className={`apex-charts-wrapper ${!chartInstance ? 'chart-initializing' : ''}`}
                 key={`chart-${displayCompany?.id || 'default'}`}
-                // Use a proper React ref pattern instead of onMount
                 ref={(chartRef: any) => {
                   // Only set the chart instance once to avoid infinite re-renders
                   if (chartRef && chartRef.chart && !chartInstance) {
