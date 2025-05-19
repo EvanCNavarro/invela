@@ -3,7 +3,7 @@ import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
-import { db } from '@db';
+import { db, pool } from '@db';
 import timestampRouter from './routes/kyb-timestamp-routes';
 import claimsRouter from './routes/claims';
 import tutorialRouter from './routes/tutorial';
@@ -2012,8 +2012,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
     };
 
-    // Import database pool
-    const { pool } = require('@db');
+    // Database pool is already imported at the top of the file
     
     // Configuration for connection retry mechanism
     const MAX_RETRIES = 3;
