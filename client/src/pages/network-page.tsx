@@ -98,13 +98,17 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+      <TableCell className="text-center font-medium">
+        {company.riskScore || "N/A"}
+      </TableCell>
       <TableCell className="text-center">
-        <AccreditationStatusDisplay
-          status={company.accreditationStatus}
-          variant="pill"
-          size="sm"
-        />
+        <div className="flex justify-center">
+          <AccreditationStatusDisplay
+            status={company.accreditationStatus}
+            variant="pill"
+            size="sm"
+          />
+        </div>
       </TableCell>
       <TableCell className="text-center">
         <div className="invisible group-hover:visible flex items-center justify-center text-primary">
@@ -349,7 +353,7 @@ export default function NetworkPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[300px]">
+                  <TableHead className="w-[240px]">
                     <Button
                       variant="ghost"
                       className="p-0 hover:bg-transparent text-left w-full justify-start"
@@ -359,18 +363,18 @@ export default function NetworkPage() {
                       {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-center w-[180px]">
                     <Button
                       variant="ghost"
-                      className="p-0 hover:bg-transparent text-right w-full justify-end"
+                      className="p-0 hover:bg-transparent text-center w-full justify-center"
                       onClick={() => handleSort("riskScore")}
                     >
-                      <span>S&P Data Access Risk Score</span>
+                      <span>S&P Data Access Risk<br/>Score</span>
                       {getSortIcon("riskScore")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[100px] text-center"></TableHead>
+                  <TableHead className="text-center w-[150px]">Status</TableHead>
+                  <TableHead className="w-[80px] text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
