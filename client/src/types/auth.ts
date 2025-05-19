@@ -2,6 +2,10 @@ export type RegisterData = {
   email: string;
   password: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  invitationCode?: string;
 };
 
 export type LoginData = {

@@ -259,26 +259,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    onSuccess: (data) => {
-      console.log('[ONBOARDING DEBUG] useAuth query success:', { 
-        hasUser: !!data,
-        onboardingCompleted: data?.onboarding_user_completed,
-        userId: data?.id,
-        email: data?.email
-      });
-    },
-    onError: (err) => {
-      console.error('[ONBOARDING DEBUG] useAuth query error:', err);
-    }
+    gcTime: 60000 // 1 minute
   });
 
-  // DEBUGGING: Check if user object changes
+  // Log when user object changes (for debugging purposes)
   useEffect(() => {
     if (user) {
-      console.log('[ONBOARDING DEBUG] User object in AuthProvider changed:', {
+      console.log('[Auth] User object in AuthProvider changed:', {
         userId: user.id,
-        onboardingCompleted: user.onboarding_user_completed,
-        typeOfOnboardingFlag: typeof user.onboarding_user_completed,
+        email: user.email,
         timestamp: new Date().toISOString()
       });
     }
