@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -464,7 +464,8 @@ export default function RegisterPage() {
               
               // Redirect to login page
               setTimeout(() => {
-                window.location.href = "/login";
+                // Use React router navigation for smoother transition
+                navigate("/login");
               }, 2000);
               return;
             }
@@ -483,6 +484,7 @@ export default function RegisterPage() {
             
             // Navigate to home page after a small delay to show the toast
             setTimeout(() => {
+              // Use the wouter Link navigation for a smoother transition
               window.location.href = "/";
             }, 1500);
           } catch (authError) {
