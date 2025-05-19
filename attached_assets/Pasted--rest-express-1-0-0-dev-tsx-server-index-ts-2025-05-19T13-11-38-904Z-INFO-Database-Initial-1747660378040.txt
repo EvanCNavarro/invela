@@ -1,0 +1,175 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-19T13:11:38.904Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-19T13:11:38.988Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registered KY3P form submission fix routes
+[2025-05-19T13:11:39.098Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-19T13:11:39.098Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-19T13:11:39.098Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-19T13:11:39.099Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-19T13:11:39.100Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-19T13:11:39.102Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-19T13:11:39.102Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"o0pltg","timestamp":"2025-05-19T13:11:39.102Z"}
+[2025-05-19T13:11:39.102Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-19T13:11:39.102Z] [WARN] [App] [WebSocket] Form submission WebSocket initialization function not found 
+[2025-05-19T13:11:39.102Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-19T13:11:39.102Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-19T13:11:39.102Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-19T13:11:39.103Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-19T13:11:39.103Z] [INFO] [App] Setting up Vite development server 
+[2025-05-19T13:11:39.106Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (deployment mode: no) 
+[2025-05-19T13:11:39.106Z] [INFO] [App] [ENV] Environment=development (NODE_ENV explicitly set) 
+[2025-05-19T13:11:39.120Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-19T13:11:39.120Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-19T13:11:39.120Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-19T13:11:39.120Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-19T13:11:39.164Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660299164-06yxzr2","clients":1}
+[2025-05-19T13:11:39.880Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660299880-rquc2y2","clients":2}
+[2025-05-19T13:11:40.491Z] [INFO] [App] [ServerStartup] WebSocket server active with 2 connected clients 
+[2025-05-19T13:11:43.106Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660303105-zey255n","clients":3}
+[2025-05-19T13:11:44.115Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660304115-btunsan","clients":4}
+[2025-05-19T13:11:44.506Z] [INFO] [WebSocket] Received message from client client-1747660304115-btunsan {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T13:11:44.126Z"}}
+[2025-05-19T13:11:44.507Z] [INFO] [WebSocket] Authentication from client client-1747660304115-btunsan {"module":"WebSocket","hasToken":true}
+[2025-05-19T13:11:45.890Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660305890-sdrbm3k","clients":5}
+[2025-05-19T13:11:45.901Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660305901-tixiz5g","clients":6}
+[2025-05-19T13:11:45.939Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T13:11:45.955Z] [INFO] [WebSocket] Received message from client client-1747660305890-sdrbm3k {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T13:11:45.954Z"}}
+[2025-05-19T13:11:45.955Z] [INFO] [WebSocket] Authentication from client client-1747660305890-sdrbm3k {"module":"WebSocket","hasToken":true}
+[2025-05-19T13:11:46.021Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660306021-0vldls9","clients":7}
+[2025-05-19T13:11:46.292Z] [INFO] [WebSocket] Received message from client client-1747660299164-06yxzr2 {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747660297556_jelk9u7qw","timestamp":"2025-05-19T13:11:46.183Z"}
+[2025-05-19T13:11:46.293Z] [INFO] [WebSocket] Authentication from client client-1747660299164-06yxzr2 {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[2025-05-19T13:11:46.374Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660305901-tixiz5g","code":1001,"reason":"","remainingClients":6}
+[2025-05-19T13:11:46.375Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660306021-0vldls9","code":1001,"reason":"","remainingClients":5}
+[2025-05-19T13:11:46.375Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660305890-sdrbm3k","code":1001,"reason":"","remainingClients":4}
+[2025-05-19T13:11:49.121Z] [INFO] [App] Running background health checks... 
+[2025-05-19T13:11:49.121Z] [StartupChecks] Running application startup health checks... 
+[2025-05-19T13:11:49.121Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-19T13:11:49.122Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-19T13:11:49.320Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-19T13:11:49.349Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-19T13:11:49.383Z] [DBConnectionService] Database connection check successful 
+[2025-05-19T13:11:49.383Z] [StartupChecks] Database health check passed 
+[2025-05-19T13:11:49.384Z] [StartupChecks] All startup health checks passed! 
+[2025-05-19T13:11:49.384Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-19T13:11:59.281Z] [INFO] [WebSocket] Received message from client client-1747660299164-06yxzr2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T13:11:59.171Z","connectionId":"ws_1747660297556_jelk9u7qw"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  964, 965, 963, 967,
+  969, 968, 972, 973,
+  971, 978
+]
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[2025-05-19T13:12:10.011Z] [INFO] [WebSocket] Received message from client client-1747660299880-rquc2y2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T13:12:09.898Z","connectionId":"ws_1747659737907_30r4llww1"}
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[2025-05-19T13:12:12.461Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660299164-06yxzr2","code":1001,"reason":"","remainingClients":3}
+[2025-05-19T13:12:12.463Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660303105-zey255n","code":1001,"reason":"","remainingClients":2}
+[2025-05-19T13:12:12.463Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660304115-btunsan","code":1001,"reason":"","remainingClients":1}
+[2025-05-19T13:12:12.463Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747660299880-rquc2y2","code":1001,"reason":"","remainingClients":0}
+[2025-05-19T13:12:13.719Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T13:12:15.299Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T13:12:21.851Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660341851-qngcjli","clients":1}
+[2025-05-19T13:12:21.974Z] [INFO] [WebSocket] Received message from client client-1747660341851-qngcjli {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T13:12:21.859Z"}}
+[2025-05-19T13:12:21.974Z] [INFO] [WebSocket] Authentication from client client-1747660341851-qngcjli {"module":"WebSocket","hasToken":true}
+[2025-05-19T13:12:22.386Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660342386-wsj0vjv","clients":2}
+[2025-05-19T13:12:22.901Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660342901-xcnfdbx","clients":3}
+[2025-05-19T13:12:23.395Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660343395-nxw86y0","clients":4}
+[2025-05-19T13:12:23.893Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747660343893-r58pyu7","clients":5}
+[2025-05-19T13:12:24.205Z] [INFO] [WebSocket] Received message from client client-1747660343893-r58pyu7 {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747660342386_148zggi3g","timestamp":"2025-05-19T13:12:24.095Z"}
+[2025-05-19T13:12:24.205Z] [INFO] [WebSocket] Authentication from client client-1747660343893-r58pyu7 {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[Invite Debug] Starting validation for code: D6284C
+[Invite Debug] Found valid invitation: {
+  id: 397,
+  email: 'e@e.com',
+  status: 'pending',
+  expires_at: 2025-05-26T08:19:06.202Z
+}
+[2025-05-19T13:12:26.962Z] [INFO] [App] GET /api/invitations/D6284C/validate 304 in 95ms :: {"valid":true,"invitation":{"email":"e@e.com","invitee_name":"DemoTest","comp... 
+Unhandled Rejection: ReferenceError: require is not defined
+    at <anonymous> (/home/runner/workspace/server/routes.ts:2016:22)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+[2025-05-19T13:12:44.013Z] [INFO] [WebSocket] Received message from client client-1747660343893-r58pyu7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T13:12:43.903Z","connectionId":"ws_1747660342386_148zggi3g"}
+[2025-05-19T13:12:51.971Z] [INFO] [WebSocket] Received message from client client-1747660341851-qngcjli {"module":"WebSocket","type":"ping"}
+[2025-05-19T13:12:53.018Z] [INFO] [WebSocket] Received message from client client-1747660342901-xcnfdbx {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T13:12:52.909Z","connectionId":"ws_1747660342907_rwaatqkna"}
+[2025-05-19T13:12:53.523Z] [INFO] [WebSocket] Received message from client client-1747660343395-nxw86y0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T13:12:53.412Z","connectionId":"ws_1747660342392_wmo8s5sky"}

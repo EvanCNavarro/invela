@@ -1,0 +1,33 @@
+[2025-05-19T13:12:21.391Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-19T13:12:21.391Z] [App] Communication phase initializing 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-19T13:12:21.391Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-19T13:12:21.392Z] [App] Application ready for user interaction 
+[2025-05-19T13:12:21.392Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-19T13:12:21.392Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /register
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 401
+[TanStack Query] 401 Unauthorized for /api/user, returning null as configured
+[2025-05-19T13:12:21.575Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747660341851-qngcjli", timestamp: "2025-05-19T13:12:21.851Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-19T13:12:21.974Z", message: "Authentication successful"}
+[2025-05-19T13:12:22.385Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747660342386-wsj0vjv", timestamp: "2025-05-19T13:12:22.386Z", message: "Connection established"}
+[WebSocket] Connection established
