@@ -1984,39 +1984,56 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Account setup endpoint
   app.post("/api/account/setup", async (req, res) => {
     /**
-     * Fixed account setup endpoint with direct database operations
+     * Final account setup endpoint - completely rewritten with simpler approach
      * 
      * This implementation:
-     * 1. Uses direct SQL queries instead of relying on the ORM transaction
-     * 2. Separates database updates from the authentication process
-     * 3. Adds extensive logging to track every operation
-     * 4. Uses more reliable error propagation
+     * 1. Uses simpler direct SQL with extensive error checking
+     * 2. Adds more detailed logging of the actual SQL execution
+     * 3. Verifies transaction success by checking affected row counts
+     * 4. Separates database operations completely from authentication
      */
     const logger = {
       info: (message: string, meta?: any) => {
-        console.log(`[Account Setup] ${message}`, meta || '');
+        console.log(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
       },
       warn: (message: string, meta?: any) => {
-        console.warn(`[Account Setup] ${message}`, meta || '');
+        console.warn(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
       },
       error: (message: string, meta?: any) => {
-        console.error(`[Account Setup] ${message}`, meta || '');
+        console.error(`[Account Setup] ${message}`, meta ? JSON.stringify(meta) : '');
       },
       debug: (message: string, meta?: any) => {
         if (process.env.NODE_ENV !== 'production') {
-          console.log(`[Account Setup:DEBUG] ${message}`, meta || '');
+          console.log(`[Account Setup:DEBUG] ${message}`, meta ? JSON.stringify(meta) : '');
+        }
+      },
+      sql: (query: string, params: any[]) => {
+        if (process.env.NODE_ENV !== 'production') {
+          const maskedParams = params.map(p => 
+            typeof p === 'string' && p.length > 20 ? p.substring(0, 3) + '...' : p
+          );
+          console.log(`[Account Setup:SQL] ${query.replace(/\s+/g, ' ')}`, JSON.stringify(maskedParams));
         }
       }
     };
 
-    // Get a direct connection to the database for emergency direct queries if needed
-    const client = await pool.connect();
+    // Get a direct connection to the database
+    let client = null;
     
     try {
+      client = await pool.connect();
+      logger.info('Database connection established');
+      
       // Parse and validate input
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
       
-      logger.info('Processing setup request', { email, invitationCode });
+      logger.info('Processing setup request', { 
+        email, 
+        invitationCode, 
+        hasPassword: !!password,
+        firstName,
+        lastName
+      });
       
       // Basic validation
       if (!email || !password || !invitationCode) {
@@ -2024,91 +2041,102 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         return res.status(400).json({ message: "Missing required fields" });
       }
       
-      // 1. Check if invitation is valid using a direct query
-      let invitation;
-      try {
-        const inviteResult = await client.query(
-          `SELECT * FROM invitations 
-           WHERE LOWER(code) = LOWER($1) 
-           AND status = 'pending' 
-           AND LOWER(email) = LOWER($2)
-           AND expires_at > NOW()`,
-          [invitationCode, email]
-        );
-        
-        if (inviteResult.rows.length === 0) {
-          logger.warn('Invalid invitation', { code: invitationCode, email });
-          return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
-        }
-        
-        invitation = inviteResult.rows[0];
-        logger.info('Found valid invitation', { id: invitation.id });
-      } catch (err) {
-        logger.error('Error checking invitation', { error: err });
-        return res.status(500).json({ message: "Error validating invitation" });
+      // 1. Check if invitation is valid
+      const inviteQuery = `
+        SELECT * FROM invitations 
+        WHERE LOWER(code) = LOWER($1) 
+        AND status = 'pending' 
+        AND LOWER(email) = LOWER($2)
+        AND expires_at > NOW()
+      `;
+      logger.sql(inviteQuery, [invitationCode, email]);
+      
+      const inviteResult = await client.query(inviteQuery, [invitationCode, email]);
+      
+      if (inviteResult.rows.length === 0) {
+        logger.warn('Invalid invitation', { code: invitationCode, email });
+        return res.status(400).json({ message: "Invalid invitation code or email mismatch" });
       }
+      
+      const invitation = inviteResult.rows[0];
+      logger.info('Found valid invitation', { id: invitation.id, email: invitation.email });
       
       // 2. Check if user exists
-      let existingUser;
-      try {
-        const userResult = await client.query(
-          `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
-          [email]
-        );
-        
-        if (userResult.rows.length === 0) {
-          logger.warn('User not found', { email });
-          return res.status(400).json({ message: "User account not found" });
-        }
-        
-        existingUser = userResult.rows[0];
-        logger.info('Found existing user', { id: existingUser.id });
-      } catch (err) {
-        logger.error('Error checking user', { error: err });
-        return res.status(500).json({ message: "Error finding user account" });
+      const userQuery = `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`;
+      logger.sql(userQuery, [email]);
+      
+      const userResult = await client.query(userQuery, [email]);
+      
+      if (userResult.rows.length === 0) {
+        logger.warn('User not found', { email });
+        return res.status(400).json({ message: "User account not found" });
       }
       
-      // 3. Begin direct transaction
+      const existingUser = userResult.rows[0];
+      logger.info('Found existing user', { id: existingUser.id, email: existingUser.email });
+      
+      // 3. Begin transaction
       try {
         await client.query('BEGIN');
         logger.info('Started database transaction');
         
-        // 3.1 Update user record
+        // 3.1 Update user record with password and name
         const hashedPassword = await bcrypt.hash(password, 10);
         logger.debug('Password hashed successfully');
         
+        const updateUserQuery = `
+          UPDATE users 
+          SET first_name = $1, 
+              last_name = $2, 
+              full_name = $3, 
+              password = $4, 
+              onboarding_user_completed = false,
+              updated_at = NOW()
+          WHERE id = $5
+          RETURNING *
+        `;
+        
+        // Log query with masked password
+        logger.sql(updateUserQuery, [
+          firstName, 
+          lastName, 
+          fullName, 
+          "***MASKED***", 
+          existingUser.id
+        ]);
+        
         const updateUserResult = await client.query(
-          `UPDATE users 
-           SET first_name = $1, 
-               last_name = $2, 
-               full_name = $3, 
-               password = $4, 
-               onboarding_user_completed = false,
-               updated_at = NOW()
-           WHERE id = $5
-           RETURNING *`,
+          updateUserQuery,
           [firstName, lastName, fullName, hashedPassword, existingUser.id]
         );
         
-        if (updateUserResult.rows.length === 0) {
-          throw new Error('User update failed');
+        if (updateUserResult.rowCount === 0) {
+          logger.error('User update failed - no rows affected', { userId: existingUser.id });
+          throw new Error('User update failed - no rows affected');
         }
         
         const updatedUser = updateUserResult.rows[0];
-        logger.info('User updated successfully', { id: updatedUser.id });
+        logger.info('User updated successfully', { 
+          id: updatedUser.id, 
+          email: updatedUser.email,
+          firstName: updatedUser.first_name,
+          lastName: updatedUser.last_name
+        });
         
-        // 3.2 Update related task
+        // 3.2 Update related task if it exists
+        const taskQuery = `
+          SELECT * FROM tasks 
+          WHERE LOWER(user_email) = LOWER($1) 
+          AND status = $2
+        `;
+        logger.sql(taskQuery, [email, TaskStatus.EMAIL_SENT]);
+        
+        const taskResult = await client.query(taskQuery, [email, TaskStatus.EMAIL_SENT]);
         let updatedTask = null;
-        const taskResult = await client.query(
-          `SELECT * FROM tasks 
-           WHERE LOWER(user_email) = LOWER($1) 
-           AND status = $2`,
-          [email, TaskStatus.EMAIL_SENT]
-        );
         
-        if (taskResult.rows.length > 0) {
+        if (taskResult.rowCount > 0) {
           const task = taskResult.rows[0];
-          logger.debug('Found related task', { id: task.id });
+          logger.info('Found related task', { id: task.id, status: task.status });
           
           // Prepare metadata with status flow
           const metadata = task.metadata || {};
@@ -2116,96 +2144,141 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           metadata.statusFlow.push(TaskStatus.COMPLETED);
           metadata.registeredAt = new Date().toISOString();
           
+          const updateTaskQuery = `
+            UPDATE tasks 
+            SET status = $1, 
+                progress = 100,
+                assigned_to = $2,
+                metadata = $3,
+                updated_at = NOW()
+            WHERE id = $4
+            RETURNING *
+          `;
+          logger.sql(updateTaskQuery, [
+            TaskStatus.COMPLETED, 
+            updatedUser.id, 
+            JSON.stringify(metadata), 
+            task.id
+          ]);
+          
           const updateTaskResult = await client.query(
-            `UPDATE tasks 
-             SET status = $1, 
-                 progress = 100,
-                 assigned_to = $2,
-                 metadata = $3,
-                 updated_at = NOW()
-             WHERE id = $4
-             RETURNING *`,
+            updateTaskQuery,
             [TaskStatus.COMPLETED, updatedUser.id, JSON.stringify(metadata), task.id]
           );
           
-          if (updateTaskResult.rows.length > 0) {
+          if (updateTaskResult.rowCount > 0) {
             updatedTask = updateTaskResult.rows[0];
-            logger.info('Task updated successfully', { id: updatedTask.id });
+            logger.info('Task updated successfully', { 
+              id: updatedTask.id,
+              status: updatedTask.status,
+              progress: updatedTask.progress
+            });
+          } else {
+            logger.warn('Task update failed - no rows affected', { taskId: task.id });
           }
+        } else {
+          logger.info('No related task found for email', { email });
         }
         
         // 3.3 Update invitation status
+        const updateInvitationQuery = `
+          UPDATE invitations 
+          SET status = 'used', 
+              used_at = NOW(),
+              updated_at = NOW()
+          WHERE id = $1
+          RETURNING *
+        `;
+        logger.sql(updateInvitationQuery, [invitation.id]);
+        
         const updateInvitationResult = await client.query(
-          `UPDATE invitations 
-           SET status = 'used', 
-               used_at = NOW(),
-               updated_at = NOW()
-           WHERE id = $1
-           RETURNING *`,
+          updateInvitationQuery,
           [invitation.id]
         );
         
-        if (updateInvitationResult.rows.length === 0) {
-          throw new Error('Invitation update failed');
+        if (updateInvitationResult.rowCount === 0) {
+          logger.error('Invitation update failed - no rows affected', { invitationId: invitation.id });
+          throw new Error('Invitation update failed - no rows affected');
         }
         
         const updatedInvitation = updateInvitationResult.rows[0];
-        logger.info('Invitation updated successfully', { 
+        logger.info('Invitation marked as used', { 
           id: updatedInvitation.id,
-          status: updatedInvitation.status 
+          status: updatedInvitation.status,
+          usedAt: updatedInvitation.used_at
         });
         
         // 3.4 Commit the transaction
         await client.query('COMMIT');
-        logger.info('Transaction committed successfully');
+        logger.info('Transaction COMMITTED successfully');
         
-        // 4. Broadcast task update if needed
+        // 4. Broadcast task update if available
         if (updatedTask) {
-          broadcastTaskUpdate(updatedTask.id, {
-            status: updatedTask.status,
-            progress: updatedTask.progress,
-            metadata: updatedTask.metadata
-          });
-          logger.info('Task update broadcast sent');
+          try {
+            broadcastTaskUpdate(updatedTask.id, {
+              status: updatedTask.status,
+              progress: updatedTask.progress,
+              metadata: updatedTask.metadata
+            });
+            logger.info('Task update broadcast sent');
+          } catch (broadcastError) {
+            logger.warn('Failed to broadcast task update', { error: broadcastError.message });
+            // Non-critical error, continue
+          }
         }
         
-        // 5. Attempt to log the user in (outside transaction)
+        // 5. Attempt login with simplified approach
         let authSuccess = false;
         try {
-          // Ensure necessary fields are available for auth
-          const userForAuth = {
+          // Create a complete user object for auth
+          const userForLogin = {
             ...updatedUser,
-            email: email
+            email: email.toLowerCase() // Ensure email is included and lowercase
           };
           
-          // Authenticate directly instead of relying on passport
+          logger.debug('Attempting to login user', { 
+            userId: userForLogin.id,
+            email: userForLogin.email
+          });
+          
+          // Login directly
           await new Promise<void>((resolve, reject) => {
-            req.login(userForAuth, (err) => {
-              if (err) {
-                logger.error('Login error', { error: err });
-                reject(err);
+            req.login(userForLogin, (loginErr) => {
+              if (loginErr) {
+                logger.error('Login failed', { error: loginErr.message });
+                reject(loginErr);
               } else {
-                logger.info('Login successful');
+                logger.info('Login succeeded', { 
+                  userId: userForLogin.id,
+                  sessionId: req.sessionID
+                });
                 authSuccess = true;
                 resolve();
               }
             });
           });
         } catch (authError) {
-          logger.error('Authentication failed', { error: authError });
-          // Continue - we'll return partial success
+          logger.error('Authentication error', { 
+            error: authError.message,
+            stack: authError.stack
+          });
+          // Non-fatal error, continue with partial success
         }
         
-        // 6. Send appropriate response based on auth status
+        // Verify authentication status
+        logger.info('Final authentication status', { 
+          success: authSuccess,
+          isAuthenticated: req.isAuthenticated()
+        });
+        
+        // 6. Return appropriate response
         if (authSuccess) {
-          logger.info('Account setup complete with session');
           return res.status(200).json({ 
             success: true, 
             user: updatedUser,
             message: "Account setup and login successful" 
           });
         } else {
-          logger.info('Account setup complete without session');
           return res.status(201).json({ 
             success: true, 
             user: updatedUser,
@@ -2216,34 +2289,58 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         
       } catch (transactionError) {
         // Transaction failed - roll back
-        await client.query('ROLLBACK');
-        logger.error('Transaction failed - rolled back', { error: transactionError });
+        logger.error('Transaction failed', { 
+          error: transactionError.message,
+          stack: transactionError.stack
+        });
+        
+        try {
+          await client.query('ROLLBACK');
+          logger.info('Transaction ROLLED BACK successfully');
+        } catch (rollbackError) {
+          logger.error('Rollback failed', { error: rollbackError.message });
+        }
+        
         return res.status(500).json({ 
           success: false, 
           message: "Database update failed", 
-          error: transactionError instanceof Error ? transactionError.message : "Unknown error"
+          error: transactionError.message
         });
       }
     } catch (error) {
-      // Outer error handler - ensure proper cleanup
-      logger.error('Unhandled error in account setup', { error });
+      // Outer error handler
+      logger.error('Unhandled error in account setup', { 
+        error: error.message,
+        stack: error.stack
+      });
       
-      // Make sure we roll back if needed
-      try {
-        await client.query('ROLLBACK');
-      } catch (rollbackError) {
-        logger.error('Rollback failed', { error: rollbackError });
+      // Try to roll back if needed
+      if (client) {
+        try {
+          await client.query('ROLLBACK');
+          logger.info('Transaction ROLLED BACK successfully');
+        } catch (rollbackError) {
+          logger.error('Rollback failed', { error: rollbackError.message });
+        }
       }
       
       return res.status(500).json({ 
         success: false, 
         message: "Error processing account setup", 
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error.message
       });
     } finally {
       // Always release the client
-      client.release();
-      logger.debug('Database client released');
+      if (client) {
+        try {
+          client.release();
+          logger.debug('Database client released');
+        } catch (releaseError) {
+          logger.error('Error releasing database client', { 
+            error: releaseError.message 
+          });
+        }
+      }
     }
   });
 
