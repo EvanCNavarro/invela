@@ -84,7 +84,7 @@ export default function RegisterPage() {
   const registerMutation = useMutation<RegisterResponse, Error, RegisterFormValues>({
     mutationFn: async (values: RegisterFormValues) => {
       const res = await apiRequest("POST", "/api/register", values) as Response;
-      return await res.json();
+      return await res.json() as RegisterResponse;
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -121,7 +121,7 @@ export default function RegisterPage() {
   const validateInvitationMutation = useMutation<InvitationResponse, Error, { email: string; invitationCode: string }>({
     mutationFn: async (values: { email: string; invitationCode: string }) => {
       const res = await apiRequest("POST", "/api/validate-invitation", values) as Response;
-      return await res.json();
+      return await res.json() as InvitationResponse;
     },
     onSuccess: (data) => {
       if (data.success) {
