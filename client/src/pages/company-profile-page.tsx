@@ -647,7 +647,7 @@ export default function CompanyProfilePage() {
           />
         </div>
         
-        <Button size="sm" variant="outline" onClick={() => setOpenUserModal(true)}>
+        <Button size="sm" variant="default" onClick={() => setOpenUserModal(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite User
         </Button>
