@@ -129,6 +129,13 @@ export function invalidateCompanyCache(companyId: number) {
 }
 
 export function registerRoutes(app: Express): Express {
+  // Register authentication routes
+  import('./routes/registration').then(module => {
+    module.registerRegistrationRoutes(app);
+    console.log("[Routes] Registration routes registered successfully");
+  }).catch(err => {
+    console.error("[Routes] Failed to register registration routes:", err);
+  });
   app.use(companySearchRouter);
   app.use(kybRouter);
   
@@ -1997,8 +2004,14 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       return res.status(400).json({ message: "Missing required fields" });
     }
     
-    // Get a direct connection from the database module
-    const client = await db.pool.connect ? db.pool.connect() : pool.connect();
+    // Create a direct database connection
+    // Using a different approach to avoid import issues
+    const { Pool } = db.pool.constructor as any;
+    const directPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+    const client = await directPool.connect();
     
     try {
       // Start transaction
