@@ -870,8 +870,8 @@ export default function CompanyProfilePage() {
 
           {/* Back to Network button - using same pattern as claims tab */}
           <div className="mb-6">
-            <Link href="/network" className="inline-flex items-center py-2 px-4 border rounded-md hover:bg-muted">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+            <Link href="/network" className="inline-flex items-center py-1.5 px-3 border rounded-md hover:bg-muted text-sm">
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
               <span>Back to Network</span>
             </Link>
           </div>
