@@ -2072,12 +2072,26 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       }
 
       // Update invitation status
-      await db.update(invitations)
-        .set({
-          status: 'used',
-          used_at: new Date(),
-        })
-        .where(eq(invitations.id, invitation.id));
+      console.log('[Account Setup] Updating invitation status for invitation ID:', invitation.id);
+      try {
+        const [updatedInvitation] = await db.update(invitations)
+          .set({
+            status: 'used',
+            used_at: new Date(),
+          })
+          .where(eq(invitations.id, invitation.id))
+          .returning();
+          
+        console.log('[Account Setup] Invitation status successfully updated:', {
+          id: updatedInvitation.id,
+          email: updatedInvitation.email,
+          status: updatedInvitation.status,
+          used_at: updatedInvitation.used_at
+        });
+      } catch (invitationError) {
+        console.error('[Account Setup] Error updating invitation status:', invitationError);
+        // Don't throw error - we want to continue with login even if invitation update fails
+      }
 
       // Log the user in - wrap req.login in a Promise for proper async/await handling
       await new Promise<void>((resolve, reject) => {
@@ -3436,6 +3450,30 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
       console.log('[Invite Debug] Starting validation for code:', req.params.code);
+
+      // First check if the invitation has been used already
+      const [usedInvitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, req.params.code.toUpperCase()),
+          eq(invitations.status, 'used')
+        ));
+        
+      if (usedInvitation) {
+        console.log('[Invite Debug] Invitation has already been used:', {
+          id: usedInvitation.id,
+          email: usedInvitation.email,
+          status: usedInvitation.status,
+          used_at: usedInvitation.used_at
+        });
+        
+        return res.json({
+          valid: false,
+          message: "Invalid or used invitation code",
+          used: true,
+          used_at: usedInvitation.used_at
+        });
+      }
 
       // Get the invitation with case-insensitive code match and valid expiration
       const [invitation] = await db.select()
