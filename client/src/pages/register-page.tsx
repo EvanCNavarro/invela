@@ -54,6 +54,7 @@ const registrationSchema = z.object({
 export default function RegisterPage() {
   const { toast } = useToast();
   const { user, registerMutation } = useAuth();
+  const [_, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
@@ -484,8 +485,8 @@ export default function RegisterPage() {
             
             // Navigate to home page after a small delay to show the toast
             setTimeout(() => {
-              // Use the wouter Link navigation for a smoother transition
-              window.location.href = "/";
+              // Use the wouter navigation for a smoother transition
+              navigate("/");
             }, 1500);
           } catch (authError) {
             // Authentication attempt failed with an exception
@@ -517,7 +518,7 @@ export default function RegisterPage() {
                 await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
                 
                 setTimeout(() => {
-                  window.location.href = "/";
+                  navigate("/");
                 }, 1500);
                 return;
               }
@@ -541,7 +542,7 @@ export default function RegisterPage() {
             
             // Redirect to login page
             setTimeout(() => {
-              window.location.href = "/login";
+              navigate("/login");
             }, 2000);
           }
         } catch (fetchError) {
