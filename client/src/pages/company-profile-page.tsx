@@ -846,9 +846,9 @@ export default function CompanyProfilePage() {
             
             <div className="flex items-center gap-3">
               <CompanyLogo
-                name={company.name}
+                companyId={company.id}
+                companyName={company.name}
                 size="md"
-                category={company.category}
               />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
