@@ -230,64 +230,166 @@ export default function RegisterPage() {
     console.log("[Registration] Submitting registration with fullName:", fullName);
 
     try {
-      // Check if we have a validated invitation - if so, use account-setup endpoint
+      // Determine if we should use the account setup flow
       // This is for users who are accepting an invitation with a code
-      if (validatedInvitation && values.invitationCode) {
+      const shouldUseAccountSetup = 
+        // We have a validated invitation code
+        !!validatedInvitation && 
+        // The code is present in the form
+        !!values.invitationCode && 
+        (
+          // Either the invitation data is valid and the emails match
+          (invitationData?.valid && invitationData?.invitation?.email === values.email) ||
+          // Or we have no invitation data yet but we know the code is validated (fallback for cases where the data structure differs)
+          (validatedInvitation && !invitationData)
+        );
+      
+      // Log validation check details
+      console.log("[Registration] Invitation validation check:", {
+        hasValidatedInvitation: !!validatedInvitation,
+        hasCode: !!values.invitationCode,
+        isValid: invitationData?.valid,
+        invitationEmail: invitationData?.invitation?.email,
+        userEmail: values.email,
+        emailsMatch: invitationData?.invitation?.email === values.email,
+        shouldUseAccountSetup
+      });
+      
+      if (shouldUseAccountSetup) {
         console.log("[Registration] Using account-setup flow for invitation code:", values.invitationCode);
         
-        // Call the account-setup endpoint directly
-        const response = await fetch("/api/account-setup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: values.email,
-            password: values.password,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            fullName,
-            invitationCode: values.invitationCode,
-          }),
-          credentials: "include" // Important for session cookies
-        });
-        
-        if (!response.ok) {
-          // Handle error response
-          let errorMessage = "Account setup failed";
+        try {
+          // Call the account-setup endpoint directly
+          const response = await fetch("/api/account-setup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+              firstName: values.firstName,
+              lastName: values.lastName,
+              fullName,
+              invitationCode: values.invitationCode,
+            }),
+            credentials: "include", // Important for session cookies
+            redirect: "follow" // Allow redirects to be followed
+          });
           
-          try {
-            const contentType = response.headers.get("content-type") || "";
+          console.log("[Registration] Account setup response status:", response.status, response.statusText);
+          
+          // Clone the response for potential double reading
+          const responseClone = response.clone();
+          
+          if (!response.ok) {
+            // Handle error response
+            let errorMessage = "Account setup failed";
             
-            // Handle different response formats
-            if (contentType.includes("application/json")) {
-              const errorData = await response.json();
-              errorMessage = errorData.message || errorMessage;
-            } else {
-              errorMessage = await response.text();
+            try {
+              const contentType = response.headers.get("content-type") || "";
+              console.log("[Registration] Error response content type:", contentType);
+              
+              // Handle different response formats
+              if (contentType.includes("application/json")) {
+                const errorData = await response.json();
+                console.log("[Registration] Error response data:", errorData);
+                errorMessage = errorData.message || errorMessage;
+              } else {
+                const textError = await response.text();
+                console.log("[Registration] Error response text:", textError);
+                errorMessage = textError || errorMessage;
+              }
+            } catch (parseError) {
+              console.error("[Registration] Error parsing error response:", parseError);
+              try {
+                // Try reading the cloned response as text
+                errorMessage = await responseClone.text();
+              } catch (secondaryError) {
+                console.error("[Registration] Failed to read error response:", secondaryError);
+              }
             }
-          } catch (parseError) {
-            console.error("[Registration] Error parsing error response:", parseError);
+            
+            // Show error message
+            toast({
+              title: "Account setup failed",
+              description: errorMessage,
+              variant: "destructive",
+            });
+            return;
           }
           
-          // Show error message
+          // Check for redirect response (HTTP 3xx)
+          if (response.redirected) {
+            console.log("[Registration] Account setup successful - redirected to:", response.url);
+            
+            // We've been redirected, the server logged us in
+            // Fetch current user to update the auth context
+            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            // Navigate to the redirected URL or home page
+            window.location.href = response.url || "/";
+            return;
+          }
+          
+          // Not redirected, try to parse the response as JSON
+          // First check the content type to avoid JSON parse errors
+          const contentType = response.headers.get("content-type") || "";
+          console.log("[Registration] Success response content type:", contentType);
+          
+          if (contentType.includes("application/json")) {
+            try {
+              const userData = await response.json();
+              console.log("[Registration] Account setup successful:", userData);
+              
+              // Refresh the user data in the auth context
+              queryClient.setQueryData(["/api/user"], userData);
+              
+              // Navigate to home page
+              window.location.href = "/";
+            } catch (jsonError) {
+              console.error("[Registration] Error parsing success response as JSON:", jsonError);
+              
+              // If JSON parsing fails but response was ok, still consider it a success
+              // This might be an empty response body or non-standard content
+              toast({
+                title: "Account setup successful",
+                description: "Your account has been set up. Redirecting to dashboard...",
+              });
+              
+              // Invalidate user query to refetch user data
+              await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              
+              // Navigate to home page after a short delay
+              setTimeout(() => {
+                window.location.href = "/";  
+              }, 1500);
+            }
+          } else {
+            // Not JSON content, just redirect to home
+            console.log("[Registration] Account setup successful, non-JSON response");
+            
+            toast({
+              title: "Account setup successful",
+              description: "Your account has been set up. Redirecting to dashboard...",
+            });
+            
+            // Invalidate user query to refetch user data
+            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            // Navigate to home page
+            window.location.href = "/";
+          }
+        } catch (fetchError) {
+          // Handle network errors or other exceptions during fetch
+          console.error("[Registration] Account setup fetch error:", fetchError);
+          
           toast({
-            title: "Account setup failed",
-            description: errorMessage,
+            title: "Connection error",
+            description: "Unable to connect to the server. Please try again.",
             variant: "destructive",
           });
-          return;
         }
-        
-        // Success - user is logged in via the backend
-        const userData = await response.json();
-        console.log("[Registration] Account setup successful:", userData);
-        
-        // Refresh the user data in the auth context
-        queryClient.setQueryData(["/api/user"], userData);
-        
-        // Navigate to home page
-        window.location.href = "/";
       } else {
         // Standard registration flow (without invitation code)
         console.log("[Registration] Using standard registration flow");
@@ -300,10 +402,24 @@ export default function RegisterPage() {
           company: values.company,
           invitationCode: values.invitationCode,
         }, {
-          onSuccess: () => {
-            console.log("[Registration] Registration successful");
-            // Toast notification removed to improve user experience
-            // The welcome modal will be shown instead
+          onSuccess: (userData) => {
+            console.log("[Registration] Registration successful:", userData);
+            
+            // Show success message
+            toast({
+              title: "Account created",
+              description: "Your account has been created successfully.",
+            });
+            
+            // The welcome modal will be shown on the dashboard
+            
+            // Refresh the user data in the auth context
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            // Navigate to home page after a short delay
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1000);
           },
           onError: (error: Error) => {
             console.error("[Registration] Registration error:", error);
