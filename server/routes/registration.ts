@@ -19,6 +19,8 @@ export function registerRegistrationRoutes(app: Express) {
       // Extract and validate registration data
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
       
+      console.log('[Registration] Request body:', JSON.stringify(req.body, null, 2));
+      
       if (!email || !password || !fullName || !invitationCode) {
         return res.status(400).json({
           success: false,
