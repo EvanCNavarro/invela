@@ -34,4 +34,7 @@ export type User = {
   onboarding_user_completed: boolean;
   created_at: string;
   updated_at: string;
+  // Additional fields for authentication status information
+  loginStatus?: 'success' | 'failed';
+  message?: string;
 };
