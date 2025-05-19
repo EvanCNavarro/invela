@@ -104,8 +104,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
         return null; // Signal we need to delay
       }
       
-      // OODA: Orient - Create URL based on current location
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // OODA: Orient - Create URL based on current location with explicit port fallback
+      // Use the current window host but ensure port is specified
+      // Get port from the current URL or fall back to 5000 (default server port)
+      const port = window.location.port || "5000";
+      const host = window.location.hostname;
+      const wsUrl = `${protocol}//${host}:${port}/ws`;
       
       // Validate URL before returning with more detailed error reporting
       try {
@@ -119,6 +123,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
           return null;
         }
         
+        logger.info(`Created WebSocket URL: ${wsUrl}`);
         return wsUrl;
       } catch (urlError) {
         logger.warn(`Invalid WebSocket URL: ${wsUrl}`, urlError);
