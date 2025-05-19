@@ -394,21 +394,25 @@ export default function CompanyProfilePage() {
     if (Array.isArray(field)) return field;
     try {
       // Attempt to parse if it's a JSON string
-      const parsed = JSON.parse(field);
-      return Array.isArray(parsed) ? parsed : [field];
+      const parsed = JSON.parse(field as string);
+      return Array.isArray(parsed) ? parsed : [field as string];
     } catch (e) {
       // If not JSON, split by commas
-      return field.split(',').map(item => item.trim());
+      if (typeof field === 'string') {
+        return field.split(',').map(item => item.trim());
+      }
+      return [];
     }
   }
 
   // Filter users based on search query
   const filteredUsers = users.filter(user => {
+    if (!userSearchQuery) return true;
     const searchString = userSearchQuery.toLowerCase();
     return (
-      user.name.toLowerCase().includes(searchString) ||
-      user.email.toLowerCase().includes(searchString) ||
-      user.role.toLowerCase().includes(searchString)
+      (user.name && user.name.toLowerCase().includes(searchString)) ||
+      (user.email && user.email.toLowerCase().includes(searchString)) ||
+      (user.role && user.role.toLowerCase().includes(searchString))
     );
   });
   
