@@ -719,6 +719,25 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
+      {/* Show connection error overlay if we have one */}
+      {connectionError.isActive && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="max-w-md w-full"
+          >
+            <ConnectionError
+              title={connectionError.title}
+              message={connectionError.message}
+              onRetry={handleRetry}
+              showRetry={true}
+            />
+          </motion.div>
+        </div>
+      )}
+      
       {!validatedInvitation ? (
         <div className="invitation-container">
           <motion.div 

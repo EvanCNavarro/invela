@@ -3347,10 +3347,36 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         error,
         duration: Date.now() - startTime
       });
+      
+      // Check for database connection issues
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      const errorCode = (error as any)?.code;
+      const isConnectionError = 
+        errorMsg.includes('rate limit') || 
+        errorMsg.includes('too many connections') ||
+        errorMsg.includes('connection terminated') ||
+        errorCode === 'XX000' ||  // Neon control plane error
+        errorCode === '57P01';    // Terminating connection due to admin command
+      
+      if (isConnectionError) {
+        console.warn('[FinTech Invite] Database connection error detected:', {
+          code: errorCode,
+          message: errorMsg
+        });
+        
+        // Return a specific error for connection issues
+        return res.status(503).json({
+          message: "Database connection issue detected",
+          error: "Our system is experiencing high demand right now. Please try again in a moment.",
+          code: "DB_CONNECTION_LIMIT",
+          retry: true
+        });
+      }
 
+      // Default error response for other issues
       res.status(500).json({
         message: "Failed to process invitation",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMsg,
         code: "INVITATION_FAILED"
       });
     }
