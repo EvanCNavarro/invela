@@ -1,0 +1,325 @@
+> rest-express@1.0.0 dev
+[2025-05-19T12:44:56.074Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-19T12:44:56.160Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registered KY3P form submission fix routes
+[2025-05-19T12:44:56.283Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-19T12:44:56.283Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-19T12:44:56.283Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-19T12:44:56.283Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-19T12:44:56.285Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-19T12:44:56.287Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-19T12:44:56.287Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"j2apnf","timestamp":"2025-05-19T12:44:56.287Z"}
+[2025-05-19T12:44:56.287Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-19T12:44:56.288Z] [WARN] [App] [WebSocket] Form submission WebSocket initialization function not found 
+[2025-05-19T12:44:56.288Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-19T12:44:56.288Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-19T12:44:56.288Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-19T12:44:56.288Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-19T12:44:56.288Z] [INFO] [App] Setting up Vite development server 
+[2025-05-19T12:44:56.291Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (deployment mode: no) 
+[2025-05-19T12:44:56.291Z] [INFO] [App] [ENV] Environment=development (NODE_ENV explicitly set) 
+[2025-05-19T12:44:56.303Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-19T12:44:56.303Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-19T12:44:56.304Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-19T12:44:56.304Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-19T12:44:57.609Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-19T12:45:01.408Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T12:45:03.586Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658703586-jb16x86","clients":1}
+[2025-05-19T12:45:03.603Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658703603-bcvza21","clients":2}
+[2025-05-19T12:45:03.653Z] [INFO] [WebSocket] Received message from client client-1747658703586-jb16x86 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T12:45:03.652Z"}}
+[2025-05-19T12:45:03.653Z] [INFO] [WebSocket] Authentication from client client-1747658703586-jb16x86 {"module":"WebSocket","hasToken":true}
+[2025-05-19T12:45:03.737Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658703737-v05sj19","clients":3}
+[2025-05-19T12:45:04.088Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658703603-bcvza21","code":1001,"reason":"","remainingClients":2}
+[2025-05-19T12:45:04.089Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658703737-v05sj19","code":1001,"reason":"","remainingClients":1}
+[2025-05-19T12:45:04.089Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658703586-jb16x86","code":1001,"reason":"","remainingClients":0}
+[2025-05-19T12:45:06.233Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T12:45:06.304Z] [INFO] [App] Running background health checks... 
+[2025-05-19T12:45:06.304Z] [StartupChecks] Running application startup health checks... 
+[2025-05-19T12:45:06.304Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-19T12:45:06.305Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-19T12:45:06.527Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-19T12:45:06.562Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-19T12:45:06.592Z] [DBConnectionService] Database connection check successful 
+[2025-05-19T12:45:06.592Z] [StartupChecks] Database health check passed 
+[2025-05-19T12:45:06.592Z] [StartupChecks] All startup health checks passed! 
+[2025-05-19T12:45:06.592Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-19T12:45:25.254Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658725254-f7tkxwt","clients":1}
+[2025-05-19T12:45:25.382Z] [INFO] [WebSocket] Received message from client client-1747658725254-f7tkxwt {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T12:45:25.222Z"}}
+[2025-05-19T12:45:25.382Z] [INFO] [WebSocket] Authentication from client client-1747658725254-f7tkxwt {"module":"WebSocket","hasToken":true}
+[2025-05-19T12:45:25.747Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658725747-y11gxf3","clients":2}
+[2025-05-19T12:45:26.244Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658726244-7fq79zp","clients":3}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  981, 976, 982, 980,
+  977, 984, 986, 990,
+  988, 989
+]
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[2025-05-19T12:45:26.804Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658726804-d4slm6m","clients":4}
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[2025-05-19T12:45:27.295Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658727294-6cjw4vh","clients":5}
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 988 (company_kyb): 30/30 = 100%
+[2025-05-19T12:45:27.613Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747658726146_u8ge5i4ai","timestamp":"2025-05-19T12:45:27.464Z"}
+[2025-05-19T12:45:27.613Z] [INFO] [WebSocket] Authentication from client client-1747658727294-6cjw4vh {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[2025-05-19T12:45:47.413Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:45:47.264Z","connectionId":"ws_1747658726146_u8ge5i4ai"}
+[2025-05-19T12:45:55.378Z] [INFO] [WebSocket] Received message from client client-1747658725254-f7tkxwt {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:45:56.375Z] [INFO] [WebSocket] Received message from client client-1747658726244-7fq79zp {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:45:56.216Z","connectionId":"ws_1747658726214_k6tw9yx7j"}
+[2025-05-19T12:45:56.924Z] [INFO] [WebSocket] Received message from client client-1747658726804-d4slm6m {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:45:56.775Z","connectionId":"ws_1747658725716_e85viebp4"}
+[2025-05-19T12:46:07.413Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:07.264Z","connectionId":"ws_1747658726146_u8ge5i4ai"}
+[2025-05-19T12:46:25.371Z] [INFO] [WebSocket] Received message from client client-1747658725254-f7tkxwt {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:46:26.366Z] [INFO] [WebSocket] Received message from client client-1747658726244-7fq79zp {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:26.215Z","connectionId":"ws_1747658726214_k6tw9yx7j"}
+[2025-05-19T12:46:26.933Z] [INFO] [WebSocket] Received message from client client-1747658726804-d4slm6m {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:26.774Z","connectionId":"ws_1747658725716_e85viebp4"}
+[2025-05-19T12:46:27.412Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:27.263Z","connectionId":"ws_1747658726146_u8ge5i4ai"}
+[2025-05-19T12:46:43.155Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:46:43.160Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:46:43.161Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["23.23.229.9:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":908081610,"secretKey":-466430632,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":11999,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-19T12:46:43.166Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:46:43.166Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:46:47.412Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:47.263Z","connectionId":"ws_1747658726146_u8ge5i4ai"}
+[2025-05-19T12:46:55.374Z] [INFO] [WebSocket] Received message from client client-1747658725254-f7tkxwt {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:46:56.365Z] [INFO] [WebSocket] Received message from client client-1747658726244-7fq79zp {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:56.216Z","connectionId":"ws_1747658726214_k6tw9yx7j"}
+[2025-05-19T12:46:56.926Z] [INFO] [WebSocket] Received message from client client-1747658726804-d4slm6m {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:46:56.773Z","connectionId":"ws_1747658725716_e85viebp4"}
+[2025-05-19T12:47:07.413Z] [INFO] [WebSocket] Received message from client client-1747658727294-6cjw4vh {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:47:07.264Z","connectionId":"ws_1747658726146_u8ge5i4ai"}
+[2025-05-19T12:47:22.758Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658725254-f7tkxwt","code":1001,"reason":"","remainingClients":4}
+[2025-05-19T12:47:22.759Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658726244-7fq79zp","code":1001,"reason":"","remainingClients":3}
+[2025-05-19T12:47:22.760Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658727294-6cjw4vh","code":1001,"reason":"","remainingClients":2}
+[2025-05-19T12:47:22.760Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658725747-y11gxf3","code":1001,"reason":"","remainingClients":1}
+[2025-05-19T12:47:22.760Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658726804-d4slm6m","code":1001,"reason":"","remainingClients":0}
+[2025-05-19T12:47:23.980Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658843980-35oj1u9","clients":1}
+[2025-05-19T12:47:23.991Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658843991-gxfkvlh","clients":2}
+[2025-05-19T12:47:24.046Z] [INFO] [WebSocket] Received message from client client-1747658843980-35oj1u9 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T12:47:24.045Z"}}
+[2025-05-19T12:47:24.046Z] [INFO] [WebSocket] Authentication from client client-1747658843980-35oj1u9 {"module":"WebSocket","hasToken":true}
+[2025-05-19T12:47:24.118Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658844118-r9nw29r","clients":3}
+[2025-05-19T12:47:24.424Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658843980-35oj1u9","code":1001,"reason":"","remainingClients":2}
+[2025-05-19T12:47:24.425Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658843991-gxfkvlh","code":1001,"reason":"","remainingClients":1}
+[2025-05-19T12:47:24.425Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658844118-r9nw29r","code":1001,"reason":"","remainingClients":0}
+[2025-05-19T12:47:25.686Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T12:47:28.968Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T12:47:28.973Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T12:47:36.226Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658856226-iu9qp08","clients":1}
+[2025-05-19T12:47:36.343Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-19T12:47:36.194Z"}}
+[2025-05-19T12:47:36.343Z] [INFO] [WebSocket] Authentication from client client-1747658856226-iu9qp08 {"module":"WebSocket","hasToken":true}
+[2025-05-19T12:47:36.715Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658856715-05j7xy4","clients":2}
+[2025-05-19T12:47:37.206Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658857206-9919k70","clients":3}
+[2025-05-19T12:47:37.761Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658857761-ghkmonc","clients":4}
+[2025-05-19T12:47:38.248Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747658858248-xroj5e7","clients":5}
+[2025-05-19T12:47:38.552Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747658856728_enigh54lu","timestamp":"2025-05-19T12:47:38.403Z"}
+[2025-05-19T12:47:38.552Z] [INFO] [WebSocket] Authentication from client client-1747658858248-xroj5e7 {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[2025-05-19T12:47:58.367Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:47:58.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:48:06.345Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:48:07.325Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:07.176Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:48:07.878Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:07.730Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:48:18.368Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:18.218Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:48:37.282Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:48:38.284Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:38.133Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:48:38.284Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:38.134Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:48:39.288Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:39.139Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:48:59.284Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:48:59.134Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:49:04.105Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:49:04.105Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:49:04.118Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:49:04.118Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:49:04.121Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:49:04.121Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:49:07.288Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:49:08.291Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:08.142Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:49:08.291Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:08.142Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:49:19.282Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:19.133Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:49:37.283Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:49:38.287Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:38.134Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:49:38.288Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:38.133Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:49:39.290Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:49:39.142Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:49:58.505Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  978, 981, 982, 980,
+  977, 984, 986, 990,
+  988, 989
+]
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 988 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[2025-05-19T12:50:07.294Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:50:08.289Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:50:08.140Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:50:08.307Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:50:08.140Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:50:08.308Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:50:08.141Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:50:37.285Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:50:38.290Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:50:38.133Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:50:38.290Z] [INFO] [WebSocket] Received message from client client-1747658857761-ghkmonc {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:50:38.134Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:51:05.480Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747658857761-ghkmonc","code":1006,"reason":"","remainingClients":4}
+[2025-05-19T12:51:07.746Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747659067746-x8xvhgi","clients":5}
+[2025-05-19T12:51:08.283Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:51:08.133Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:51:08.287Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:51:08.134Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:51:08.287Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:51:16.199Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:51:16.200Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:51:38.289Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:51:38.133Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:52:08.285Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:08.133Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:52:08.286Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:08.133Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:52:08.286Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:08.133Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:52:08.286Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:52:38.284Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:38.133Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:52:44.894Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:44.745Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:52:44.901Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:44.752Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:52:44.901Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:52:58.370Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:52:58.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:53:06.346Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:53:07.326Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:07.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:53:07.863Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:07.713Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:53:18.370Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:18.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:53:36.346Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:53:37.326Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:37.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:53:37.864Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:37.714Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:53:38.369Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:38.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:53:58.367Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:53:58.218Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:54:06.346Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:54:07.327Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:07.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:54:07.864Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:07.714Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:54:18.371Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:18.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:54:36.346Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:54:37.329Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:37.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:54:37.864Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:37.714Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:54:38.368Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:38.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:54:56.562Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  976, 981, 982, 980,
+  977, 984, 986, 989,
+  990, 988
+]
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 988 (company_kyb): 30/30 = 100%
+[2025-05-19T12:54:58.369Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:54:58.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:55:06.350Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:55:07.326Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:07.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:55:07.864Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:07.714Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:55:18.369Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:18.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:55:36.346Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:55:37.328Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:37.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:55:37.864Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:37.714Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:55:38.369Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:38.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:55:59.287Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:55:59.136Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:56:07.284Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:56:08.295Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:08.142Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:56:08.295Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:08.143Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:56:16.084Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-19T12:56:16.084Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-19T12:56:19.283Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:19.134Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:56:37.287Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:56:38.288Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:38.134Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:56:38.289Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:38.135Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:56:39.304Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:39.145Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:56:58.373Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:56:58.219Z","connectionId":"ws_1747658856728_enigh54lu"}
+[2025-05-19T12:57:06.348Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:57:07.327Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:07.176Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:57:07.865Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:07.713Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:57:15.518Z] [INFO] [Database] New database connection established {"module":"Database"}
+[Invite Debug] Starting validation for code: D6284C
+[Invite Debug] Found valid invitation: {
+  id: 397,
+  email: 'e@e.com',
+  status: 'pending',
+  expires_at: 2025-05-26T08:19:06.202Z
+}
+[2025-05-19T12:57:15.775Z] [INFO] [App] GET /api/invitations/D6284C/validate 304 in 136ms :: {"valid":true,"invitation":{"email":"e@e.com","invitee_name":"DemoTest","comp... 
+[2025-05-19T12:57:18.367Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:18.218Z","connectionId":"ws_1747658856728_enigh54lu"}
+Unhandled Rejection: ReferenceError: pool is not defined
+    at <anonymous> (/home/runner/workspace/server/routes.ts:2014:20)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:646:15
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:265:14)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/workspace/server/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/server/node_modules/express/lib/router/index.js:328:13)
+[2025-05-19T12:57:36.345Z] [INFO] [WebSocket] Received message from client client-1747658856226-iu9qp08 {"module":"WebSocket","type":"ping"}
+[2025-05-19T12:57:37.327Z] [INFO] [WebSocket] Received message from client client-1747658857206-9919k70 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:37.177Z","connectionId":"ws_1747658857175_nh3zyhnxm"}
+[2025-05-19T12:57:37.862Z] [INFO] [WebSocket] Received message from client client-1747659067746-x8xvhgi {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:37.713Z","connectionId":"ws_1747658856683_w1a23n4u3"}
+[2025-05-19T12:57:38.368Z] [INFO] [WebSocket] Received message from client client-1747658858248-xroj5e7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-19T12:57:38.219Z","connectionId":"ws_1747658856728_enigh54lu"}
