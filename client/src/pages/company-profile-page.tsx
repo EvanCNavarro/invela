@@ -239,7 +239,7 @@ export default function CompanyProfilePage() {
   const companyId = params.companySlug;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [fileSearchQuery, setFileSearchQuery] = useState("");
+
   const [openUserModal, setOpenUserModal] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
 
@@ -1194,9 +1194,6 @@ export default function CompanyProfilePage() {
                   <TabsTrigger value="users" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
                     Users
                   </TabsTrigger>
-                  <TabsTrigger value="files" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
-                    Files
-                  </TabsTrigger>
                   <TabsTrigger value="risk" className="rounded-none border-0 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none data-[state=active]:font-medium data-[state=active]:text-blue-700 px-5 h-10">
                     Risk
                   </TabsTrigger>
@@ -1210,9 +1207,7 @@ export default function CompanyProfilePage() {
                 <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderUsersTab()}
                 </TabsContent>
-                <TabsContent value="files" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderFilesTab()}
-                </TabsContent>
+
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderRiskTab()}
                 </TabsContent>
