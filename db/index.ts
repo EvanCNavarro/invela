@@ -17,11 +17,15 @@ if (!process.env.DATABASE_URL) {
 // Connection settings optimized for Neon PostgreSQL's serverless architecture
 // These settings are designed to handle the unique behavior of Neon
 // including control plane rate limiting and connection pooling
-const POOL_SIZE = 3; // Small but sufficient pool size to reduce connection overhead
-const IDLE_TIMEOUT = 600000; // 10 minutes idle timeout
+const POOL_SIZE = 2; // Reduced pool size to minimize rate limit issues
+const IDLE_TIMEOUT = 900000; // 15 minutes idle timeout to reduce new connection frequency
 const CONNECTION_TIMEOUT = 180000; // 3 minutes connection timeout
+const INITIAL_DELAY = 500; // Small initial delay before first connection attempt
 
-dbLogger.info('Initializing database connection with optimized settings for Neon PostgreSQL');
+// Delay database initialization slightly to prevent rate limits during application startup
+setTimeout(() => {
+  dbLogger.info('Initializing database connection with optimized settings for Neon PostgreSQL');
+}, INITIAL_DELAY);
 
 // Configure the pool with optimized settings for Neon
 export const pool = new Pool({
@@ -32,21 +36,32 @@ export const pool = new Pool({
   allowExitOnIdle: false
 });
 
-// Add connection events with proper error handling
+// Enhanced connection error handling with rate limit detection
 pool.on('error', (err) => {
-  // Log the error but don't try to reconnect immediately
-  // This prevents cascading failures with Neon's rate limits
+  // Extract error details for consistent logging
+  const errorCode = (err as any).code || 'UNKNOWN';
+  const errorMessage = err.message;
+  
+  // Log the error with structured data for better analysis
   dbLogger.error('Database pool error:', {
-    message: err.message,
-    code: (err as any).code,
+    message: errorMessage,
+    code: errorCode,
     stack: err.stack
   });
   
-  // Check if this is a rate limit error
-  if (err.message.includes('rate limit') || 
-      err.message.includes('too many connections') ||
-      err.message.includes('connection terminated')) {
-    dbLogger.warn('Detected rate limiting or connection issue with Neon PostgreSQL');
+  // Improved rate limit and connection issue detection
+  const isRateLimitIssue = 
+    errorMessage.includes('rate limit') || 
+    errorMessage.includes('too many connections') ||
+    errorMessage.includes('connection terminated') ||
+    errorCode === 'XX000' || // Neon control plane error code
+    errorCode === '57P01';   // Terminating connection due to admin command
+    
+  if (isRateLimitIssue) {
+    dbLogger.warn('Detected rate limiting or connection issue with Neon PostgreSQL', {
+      errorCode,
+      suggestion: 'Consider reducing connection frequency or increasing connection idle timeout'
+    });
   }
 });
 
