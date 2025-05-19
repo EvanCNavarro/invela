@@ -133,6 +133,8 @@ async function getUserByUsername(username: string) {
 }
 
 export function setupAuth(app: Express) {
+  const store = new PostgresSessionStore({ pool, createTableIfMissing: true });
+  
   // Use environment variable for session secret with a secure fallback
   const sessionSecret = process.env.SESSION_SECRET || 'development_session_secret_for_testing_purposes_only';
   
@@ -141,26 +143,18 @@ export function setupAuth(app: Express) {
     console.warn('WARNING: Using fallback session secret in production environment!');
     console.warn('Please set SESSION_SECRET environment variable for better security.');
   }
-
-  // Always start with memory store as the most reliable option
-  // This ensures the app works even if database connection is problematic
-  const MemoryStore = session.MemoryStore;
-  const memoryStore = new MemoryStore();
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: memoryStore, // Always use memory store to ensure app stability
+    store,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       sameSite: 'lax' // Help with CSRF protection
     }
   };
-
-  console.log('[AuthService] Using in-memory session store for improved reliability');
-  
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
