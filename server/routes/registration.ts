@@ -91,13 +91,14 @@ export function registerRegistrationRoutes(app: Express) {
         onboarding_user_completed: false
       };
       
-      console.log('[Registration] Creating user with values:', JSON.stringify(userValues, null, 2));
+      console.log('[Registration] User values:', JSON.stringify(userValues, null, 2));
       
+      // Create the user directly in the database
       const userResult = await db
         .insert(users)
         .values(userValues)
         .returning();
-        
+      
       if (!userResult || userResult.length === 0) {
         return res.status(500).json({
           success: false,
