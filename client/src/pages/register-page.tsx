@@ -260,6 +260,7 @@ export default function RegisterPage() {
         
         try {
           // Call the account-setup endpoint directly
+          console.log("[Registration] Submitting to account-setup endpoint");
           const response = await fetch("/api/account-setup", {
             method: "POST",
             headers: {
@@ -279,35 +280,24 @@ export default function RegisterPage() {
           
           console.log("[Registration] Account setup response status:", response.status, response.statusText);
           
-          // Clone the response for potential double reading
-          const responseClone = response.clone();
-          
+          // For non-success status codes, handle errors simply
           if (!response.ok) {
-            // Handle error response
-            let errorMessage = "Account setup failed";
+            console.log("[Registration] Account setup failed with status:", response.status);
             
+            // Extract error message if available
+            let errorMessage = "Account setup failed";
             try {
+              // Try to get error message, but don't depend on it
               const contentType = response.headers.get("content-type") || "";
-              console.log("[Registration] Error response content type:", contentType);
-              
-              // Handle different response formats
               if (contentType.includes("application/json")) {
                 const errorData = await response.json();
-                console.log("[Registration] Error response data:", errorData);
                 errorMessage = errorData.message || errorMessage;
               } else {
-                const textError = await response.text();
-                console.log("[Registration] Error response text:", textError);
-                errorMessage = textError || errorMessage;
+                errorMessage = await response.text() || errorMessage;
               }
             } catch (parseError) {
               console.error("[Registration] Error parsing error response:", parseError);
-              try {
-                // Try reading the cloned response as text
-                errorMessage = await responseClone.text();
-              } catch (secondaryError) {
-                console.error("[Registration] Failed to read error response:", secondaryError);
-              }
+              // Keep default error message
             }
             
             // Show error message
@@ -319,76 +309,24 @@ export default function RegisterPage() {
             return;
           }
           
-          // Check for redirect response (HTTP 3xx)
-          if (response.redirected) {
-            console.log("[Registration] Account setup successful - redirected to:", response.url);
-            
-            // Show a success message
-            toast({
-              title: "Account setup successful",
-              description: "You're being redirected to the dashboard...",
-            });
-            
-            // We've been redirected, the server logged us in
-            // Fetch current user to update the auth context
-            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            
-            // Navigate to the redirected URL or home page after a small delay
-            // to allow the user to see the success toast
-            setTimeout(() => {
-              window.location.href = response.url || "/";
-            }, 800);
-            return;
-          }
+          // For success status codes (200-299), we don't need to parse the response
+          // The server has already set up the session cookie
+          console.log("[Registration] Account setup successful with status:", response.status);
           
-          // Not redirected, try to parse the response as JSON
-          // First check the content type to avoid JSON parse errors
-          const contentType = response.headers.get("content-type") || "";
-          console.log("[Registration] Success response content type:", contentType);
+          // Show success message
+          toast({
+            title: "Account setup successful",
+            description: "Your account has been set up. Redirecting to dashboard...",
+          });
           
-          if (contentType.includes("application/json")) {
-            try {
-              const userData = await response.json();
-              console.log("[Registration] Account setup successful:", userData);
-              
-              // Refresh the user data in the auth context
-              queryClient.setQueryData(["/api/user"], userData);
-              
-              // Navigate to home page
-              window.location.href = "/";
-            } catch (jsonError) {
-              console.error("[Registration] Error parsing success response as JSON:", jsonError);
-              
-              // If JSON parsing fails but response was ok, still consider it a success
-              // This might be an empty response body or non-standard content
-              toast({
-                title: "Account setup successful",
-                description: "Your account has been set up. Redirecting to dashboard...",
-              });
-              
-              // Invalidate user query to refetch user data
-              await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-              
-              // Navigate to home page after a short delay
-              setTimeout(() => {
-                window.location.href = "/";  
-              }, 1500);
-            }
-          } else {
-            // Not JSON content, just redirect to home
-            console.log("[Registration] Account setup successful, non-JSON response");
-            
-            toast({
-              title: "Account setup successful",
-              description: "Your account has been set up. Redirecting to dashboard...",
-            });
-            
-            // Invalidate user query to refetch user data
-            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            
-            // Navigate to home page
-            window.location.href = "/";
-          }
+          // Refresh auth data to pick up the new user session
+          await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          
+          // Navigate to home page after a small delay to show the toast
+          setTimeout(() => {
+            // If we were redirected, go to that URL, otherwise go home
+            window.location.href = response.redirected ? response.url : "/";
+          }, 1000);
         } catch (fetchError) {
           // Handle network errors or other exceptions during fetch
           console.error("[Registration] Account setup fetch error:", fetchError);
@@ -402,53 +340,64 @@ export default function RegisterPage() {
       } else {
         // Standard registration flow (without invitation code)
         console.log("[Registration] Using standard registration flow");
-        registerMutation.mutate({
-          email: values.email,
-          password: values.password,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          fullName,
-          company: values.company,
-          invitationCode: values.invitationCode,
-        }, {
-          onSuccess: (userData) => {
-            console.log("[Registration] Registration successful:", userData);
-            
-            // Show success message
-            toast({
-              title: "Account created",
-              description: "Your account has been created successfully.",
-            });
-            
-            // The welcome modal will be shown on the dashboard
-            
-            // Refresh the user data in the auth context
-            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            
-            // Navigate to home page after a short delay
-            setTimeout(() => {
-              window.location.href = "/";
-            }, 1000);
-          },
-          onError: (error: Error) => {
-            console.error("[Registration] Registration error:", error);
-            
-            // Check if the error indicates the account already exists
-            if (error.message.includes("already exists")) {
+        
+        try {
+          // Call the standard registration endpoint through our mutation
+          registerMutation.mutate({
+            email: values.email,
+            password: values.password,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            fullName,
+            company: values.company,
+            invitationCode: values.invitationCode,
+          }, {
+            onSuccess: () => {
+              console.log("[Registration] Registration successful");
+              
+              // Show success message
               toast({
-                title: "Account Already Exists",
-                description: "This email is already registered. Please try signing in instead.",
-                variant: "destructive",
+                title: "Account created",
+                description: "Your account has been created successfully.",
               });
-            } else {
-              toast({
-                title: "Registration failed",
-                description: error.message || "There was an error creating your account. Please try again.",
-                variant: "destructive",
-              });
-            }
-          },
-        });
+              
+              // The welcome modal will be shown on the dashboard
+              
+              // Refresh the user data in the auth context
+              queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              
+              // Navigate to home page after a short delay
+              setTimeout(() => {
+                window.location.href = "/";
+              }, 1000);
+            },
+            onError: (error: Error) => {
+              console.error("[Registration] Registration error:", error);
+              
+              // Check if the error indicates the account already exists
+              if (error.message.includes("already exists")) {
+                toast({
+                  title: "Account Already Exists",
+                  description: "This email is already registered. Please try signing in instead.",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Registration failed",
+                  description: error.message || "There was an error creating your account. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            },
+          });
+        } catch (registerError) {
+          console.error("[Registration] Unexpected error initiating registration:", registerError);
+          toast({
+            title: "Registration failed",
+            description: "An unexpected error occurred. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("[Registration] Unexpected error during submission:", error);
