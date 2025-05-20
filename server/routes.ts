@@ -1972,15 +1972,16 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         // This ensures we're using the standardized WebSocket implementation
         // Broadcast update for each task that was modified
         for (const task of onboardingTasks) {
-          // Use the correct function signature with proper parameters
-          broadcastTaskUpdate({
+          // Broadcast a task update with corrected taskId parameter
+          broadcast('task_updated', {
             taskId: task.id,
             status: TaskStatus.COMPLETED,
             progress: 100,
             metadata: {
               completed: true,
               submission_date: new Date().toISOString()
-            }
+            },
+            timestamp: new Date().toISOString()
           });
           console.log(`[Account Setup] Broadcast task update for task ${task.id}`);
         }
