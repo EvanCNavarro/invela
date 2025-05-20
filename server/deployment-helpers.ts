@@ -1,59 +1,57 @@
 /**
  * Deployment Helpers
  * 
- * This file contains utility functions to assist with deployment-specific configurations
+ * Utilities for configuring the server for deployment on Replit Autoscale
  */
 
+import { logger } from './utils/logger';
+
 /**
- * Get the correct port configuration based on environment and available variables
+ * Get the deployment port
  * 
- * In production, this will prioritize the PORT environment variable or use 80 as default (standard HTTP port)
- * In development, it will use 5000 as the default fallback
+ * In production, always returns 8080 for Autoscale compatibility
+ * 
+ * @returns Port number to use
  */
 export function getDeploymentPort(): number {
-  // IMPORTANT: Always return 8080 for Autoscale deployment compatibility
-  // This is a strict requirement for Replit Autoscale deployments
-  return 8080;
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (isProduction) {
+    // In production, always use port 8080 for Autoscale
+    return 8080;
+  }
+  
+  // In development, use environment variable or default
+  return parseInt(process.env.PORT || '8080', 10);
 }
 
 /**
- * Get the host interface to bind to:
+ * Get the deployment host
  * 
- * In Replit, we always bind to '0.0.0.0' (all interfaces) to ensure the server
- * is accessible from any source including the Replit preview tab. This is critical
- * because the preview system in Replit needs to access the server through a different
- * mechanism than direct browser tabs.
+ * @returns Host to bind to
  */
 export function getDeploymentHost(): string {
-  // Always return '0.0.0.0' regardless of environment to support Replit preview
-  return '0.0.0.0';
+  return process.env.HOST || '0.0.0.0';
 }
 
 /**
- * Log deployment information
+ * Log deployment configuration information
  * 
- * @param port The port the server is running on
- * @param host The host the server is binding to
+ * @param port Port being used
+ * @param host Host being used
  */
 export function logDeploymentInfo(port: number, host: string): void {
   const isProduction = process.env.NODE_ENV === 'production';
-  const environment = isProduction ? 'production' : 'development';
   
-  console.log(`[Deployment] Server running on ${host}:${port}`);
-  console.log(`[Deployment] Environment: ${environment}`);
-  
-  // Log port information with Autoscale specific message for port 8080
-  if (port === 8080) {
-    console.log(`[Deployment] Port forwarding: Using Autoscale standard port (8080)`);
-  } else if (port === 80) {
-    console.log(`[Deployment] Port forwarding: Using standard HTTP port (80)`);
-  } else {
-    console.log(`[Deployment] Port forwarding: Custom port: ${port}`);
-  }
+  logger.info(`Deployment configuration:`);
+  logger.info(`- Environment: ${isProduction ? 'production' : 'development'}`);
+  logger.info(`- Port: ${port}`);
+  logger.info(`- Host: ${host}`);
+  logger.info(`- Node version: ${process.version}`);
   
   if (isProduction) {
-    console.log('[Deployment] Production mode: Optimized for deployment');
+    logger.info('Production mode: Using optimized deployment configuration');
   } else {
-    console.log('[Deployment] Development mode: Hot reloading enabled');
+    logger.info('Development mode: Using development configuration');
   }
 }

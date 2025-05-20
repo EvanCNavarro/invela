@@ -1,0 +1,35 @@
+# Replit Deployment Configuration
+
+# Files and directories to exclude from deployment
+# This helps reduce the deployment image size
+exclude = [
+  # Large image directories
+  "backup_assets/**",
+  "backup_text/**",
+  
+  # Development files
+  "**/node_modules/.cache/**",
+  "**/*.log",
+  
+  # Large data files
+  "uploads/**",
+  
+  # Git files
+  ".git/**",
+  
+  # Test files
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.spec.ts",
+  "**/*.spec.tsx"
+]
+
+# Use port 8080 for Autoscale deployment
+port = 8080
+
+# Custom build command for production
+build = "npm run build"
+
+# Set NODE_ENV to production
+[env]
+NODE_ENV = "production"
