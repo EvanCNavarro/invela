@@ -27,13 +27,47 @@ const fs = require('fs');
 const app = express();
 const server = createServer(app);
 
-// Serve static files from the client build
-app.use(express.static(path.join(process.cwd(), 'dist', 'client')));
+// First serve static files from the public directory (assets, images, etc.)
+app.use(express.static(path.join(process.cwd(), 'dist', 'public')));
+
+// Then try the root dist directory for any other static files
+app.use(express.static(path.join(process.cwd(), 'dist')));
+
+// Log the available directories for debugging
+console.log('Available directories:');
+try {
+  const dirs = fs.readdirSync(path.join(process.cwd(), 'dist'));
+  console.log(dirs);
+} catch (err) {
+  console.error('Error listing directories:', err);
+}
 
 // Fallback route to serve index.html for client-side routing
 app.get('*', (req, res) => {
-  // Forward to index.html for client-side routing
-  res.sendFile(path.join(process.cwd(), 'dist', 'client', 'index.html'));
+  const indexPath = path.join(process.cwd(), 'dist', 'public', 'index.html');
+  
+  // Check if index.html exists in the expected location
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  
+  // If not found, respond with a simple HTML page
+  res.send(`
+    <html>
+      <head>
+        <title>Invela Platform</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+          h1 { color: #333; }
+        </style>
+      </head>
+      <body>
+        <h1>Invela Platform</h1>
+        <p>The application is running on port 8080, but the index.html file could not be found.</p>
+        <p>Current time: ${new Date().toISOString()}</p>
+      </body>
+    </html>
+  `);
 });
 
 // Start the server
