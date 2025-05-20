@@ -29,7 +29,7 @@ const TUTORIAL_CONTENT: Record<string, {
 }> = {
   // Claims tab tutorial - Reduced to 3 steps to match the provided images
   'claims': {
-    title: 'Claims Dashboard',
+    title: 'Claims Overview',
     description: 'Learn how to manage and track claims in your organization',
     steps: [
       {
@@ -67,7 +67,7 @@ const TUTORIAL_CONTENT: Record<string, {
   
   // Risk Score Configuration - Reduced to 3 steps to match the provided images
   'risk-score-configuration': {
-    title: 'Risk Score Configuration',
+    title: 'Risk Score Configuration Overview',
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
@@ -104,7 +104,7 @@ const TUTORIAL_CONTENT: Record<string, {
   },
   // Main Risk Score Dashboard - Reduced to 3 steps to match the provided images
   'risk-score': {
-    title: 'Risk Score Dashboard',
+    title: 'Risk Score Overview',
     description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
@@ -140,7 +140,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'insights': {
-    title: 'Insights Dashboard',
+    title: 'Insights Overview',
     description: 'Learn how to interpret and use business intelligence insights',
     steps: [
       {
@@ -212,7 +212,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'file-vault': {
-    title: 'File Vault',
+    title: 'File Vault Overview',
     description: 'Learn how to securely store and manage files',
     steps: [
       {
@@ -238,7 +238,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'company-profile': {
-    title: 'Company Profile',
+    title: 'Company Profile Overview',
     description: 'Learn how to manage and update your company information',
     steps: [
       {
@@ -288,7 +288,7 @@ const TUTORIAL_CONTENT: Record<string, {
     ]
   },
   'playground': {
-    title: 'Playground Environment',
+    title: 'Playground Overview',
     description: 'Learn how to use the testing playground for risk simulations',
     steps: [
       {
