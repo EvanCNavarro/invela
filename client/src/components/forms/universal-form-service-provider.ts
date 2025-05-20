@@ -6,8 +6,8 @@
  * used for each form type, and handles bulk updates and demo auto-fill consistently.
  */
 
-import { getFormServiceForTask } from './enhanced-form-provider';
-import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
+import { getFormServiceForTask } from './enhanced-form-provider.ts';
+import { fixedUniversalSaveProgress } from './fix-universal-bulk-save.ts';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('UniversalFormServiceProvider');
@@ -56,7 +56,10 @@ export async function saveFormProgress(
     
     // Fall back to the fixed universal save progress function
     logger.info(`Falling back to fixedUniversalSaveProgress for ${taskType}`);
-    return await fixedUniversalSaveProgress(taskId, taskType, formData);
+    return await fixedUniversalSaveProgress(taskId, taskType, formData, {
+      preserveProgress: true,
+      source: 'universal-provider'
+    });
   } catch (error) {
     logger.error(`Error in saveFormProgress:`, error);
     return false;
