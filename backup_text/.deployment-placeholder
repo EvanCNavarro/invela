@@ -1,1 +1,1 @@
-This directory is excluded during deployment.
+This directory is excluded during deployment to reduce image size.

@@ -1,4 +1,4 @@
-run = "NODE_ENV=production PORT=8080 node dist/server/index.js"
+run = "NODE_ENV=production PORT=8080 node deploy-server.js"
 build = "npm run build"
 entrypoint = "server/index.ts"
 
