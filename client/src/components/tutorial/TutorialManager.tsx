@@ -216,47 +216,33 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to securely store and manage files',
     steps: [
       {
-        title: 'File Vault Overview',
-        description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
-        // Image path removed for fresh start
-        stepTitle: 'File Vault Overview',
+        title: 'File Upload',
+        description: 'Upload documents securely to the vault with an easy drag-and-drop interface.',
+        stepTitle: 'Document Upload',
         bulletPoints: [
-          'Access all your documents in one secure, centralized location',
-          'Benefit from automatic versioning and audit trail features',
-          'Experience enterprise-grade security for sensitive information'
+          'Upload files using a simple drag-and-drop interface',
+          'Monitor upload progress with real-time status indicators',
+          'Search existing documents to avoid duplicates'
         ]
       },
       {
-        title: 'Document Categories',
-        description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
-        // Image path removed for fresh start
+        title: 'Document Generation',
+        description: 'Generate standardized documents and reports directly from the platform.',
+        stepTitle: 'File Generation',
+        bulletPoints: [
+          'Create new documents with customizable templates',
+          'Select document types and format options (PDF, etc.)',
+          'Add comments and customize document parameters'
+        ]
+      },
+      {
+        title: 'File Management',
+        description: 'Organize, categorize, and manage your documents efficiently within the vault.',
         stepTitle: 'Document Organization',
         bulletPoints: [
-          'Browse files organized by logical categories and subcategories',
-          'Use powerful search and filtering to quickly locate documents',
-          'Apply custom tags to improve document categorization and findability'
-        ]
-      },
-      {
-        title: 'Upload Process',
-        description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
-        // Image path removed for fresh start
-        stepTitle: 'File Upload & Management',
-        bulletPoints: [
-          'Upload multiple files with drag-and-drop or file selection',
-          'Add metadata and tags to enhance document searchability',
-          'Set document expiration dates and automatic retention policies'
-        ]
-      },
-      {
-        title: 'Security Settings',
-        description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
-        // Image path removed for fresh start
-        stepTitle: 'Security Controls',
-        bulletPoints: [
-          'Set granular permissions for individuals or groups of users',
-          'Apply document-level encryption for highly sensitive files',
-          'Monitor file access logs and receive security alerts'
+          'Categorize files using tags and custom folders',
+          'Apply document retention policies and access controls',
+          'Manage file versions and maintain audit trails for compliance'
         ]
       }
     ]
@@ -355,36 +341,33 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to navigate and use the main dashboard',
     steps: [
       {
-        title: 'Personalize Your Dashboard',
-        description: 'Select and arrange widgets to create your ideal dashboard. Easily customize your workspace based on your role and preferences.',
-        // Image path removed for fresh start
-        stepTitle: 'Personalize Your Dashboard',
+        title: 'Quick Overview',
+        description: 'The dashboard provides a snapshot of your organization\'s key metrics and activities.',
+        stepTitle: 'Dashboard Overview',
         bulletPoints: [
-          'Drag and drop widgets to reorganize your layout',
-          'Show or hide widgets based on your needs using the Customize menu',
-          'Save your preferences for future sessions automatically'
+          'View all critical metrics and activities in one unified dashboard',
+          'Monitor your organization\'s risk score and compliance status',
+          'Access recent tasks and upcoming deadlines at a glance'
         ]
       },
       {
-        title: 'Quick Actions at Your Fingertips',
-        description: 'Access frequently used features directly from your dashboard with Quick Actions.',
-        // Image path removed for fresh start
-        stepTitle: 'Quick Actions at Your Fingertips',
+        title: 'Navigation System',
+        description: 'Use the navigation menu to access different sections of the platform.',
+        stepTitle: 'Platform Navigation',
         bulletPoints: [
-          'Launch common tasks with a single click',
-          'Access company profiles, invitations, and insights directly',
-          'Customize which actions appear in your Quick Actions panel'
+          'Use the sidebar menu to switch between different platform sections',
+          'Access Claims, Risk Score, Insights, and other key areas directly',
+          'Return to the dashboard anytime using the home icon'
         ]
       },
       {
-        title: 'Tailored Data Visualizations',
-        description: 'View and interact with key metrics and visualizations that matter most to your role.',
-        // Image path removed for fresh start
-        stepTitle: 'Tailored Data Visualizations',
+        title: 'Task Management',
+        description: 'Track and manage your tasks and deadlines from the dashboard.',
+        stepTitle: 'Task Center',
         bulletPoints: [
-          'Monitor performance metrics and risk indicators in real-time',
-          'Interact with charts to drill down into detailed information',
-          'Customize visualization types to best represent your data'
+          'View all assigned tasks organized by priority and deadline',
+          'Track task completion status with visual progress indicators',
+          'Access detailed task information with a single click'
         ]
       }
     ]
