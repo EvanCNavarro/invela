@@ -204,6 +204,14 @@ export function registerRoutes(app: Express): Express {
   // with proper API path prefix
   app.use('/api/file-vault', fileVaultRouter);
   
+  // Register fix routes for handling missing files
+  app.use('/api/fix-missing-file-api', fixMissingFileRouter);
+  app.use('/api/fix-ky3p-files', fixKy3pFilesRouter);
+  
+  // Register route for fixing missing files in transactional forms
+  const fixMissingFileTransactional = require('./routes/transactional-form-routes/fix-missing-file').default;
+  app.use('/api/fix-missing-file', fixMissingFileTransactional);
+  
   // EMERGENCY ENDPOINT: Direct fix for file vault access
   app.post('/api/emergency/unlock-file-vault/:companyId', async (req, res) => {
     try {
