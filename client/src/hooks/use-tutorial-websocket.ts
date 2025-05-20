@@ -140,7 +140,9 @@ export function useTutorialWebSocket(tabName: string) {
       try {
         // Get the current origin and replace http/https with ws/wss
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+        // Use a more reliable WebSocket URL that works in both development and production
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const wsUrl = `${wsProtocol}//${window.location.hostname}${port}/ws`;
         
         logger.info(`Attempting to connect to WebSocket: ${wsUrl}`);
         
