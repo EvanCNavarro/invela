@@ -200,21 +200,26 @@ import { runStartupChecks } from './startup-checks';
 // This configuration ensures we ONLY use port 8080 in production mode
 // which is a strict requirement for Replit Autoscale deployment
 
-// Define port constants 
-const PORT = process.env.NODE_ENV === 'production' ? 8080 : (parseInt(process.env.PORT || '5000'));
-const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
+// DEPLOYMENT FIX: For Replit Autoscale, port 8080 is required
+// This is a HARD requirement - must be exactly 8080
+const PORT = process.env.NODE_ENV === 'production' ? 8080 : 5000;
+const HOST = '0.0.0.0'; // Required for proper binding in cloud environments
 
-// Set environment variable for components that need it
-process.env.PORT = PORT.toString();
+// Force port 8080 in production environment to ensure deployment compatibility
+if (process.env.NODE_ENV === 'production') {
+  process.env.PORT = '8080';
+}
 
-// Make it absolutely clear what's happening
+// Log the configuration to help with debugging
 logger.info('===========================================');
-logger.info(`SERVER CONFIGURATION: ${process.env.NODE_ENV || 'development'} MODE`);
+logger.info(`SERVER CONFIGURATION`);
 logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
+logger.info(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 logger.info('===========================================');
 
 // Single, simplified server listener - only one port open at a time
-server.listen(PORT, HOST, async () => {
+console.log(`Starting server on port ${PORT} for ${process.env.NODE_ENV} environment`);
+  server.listen(PORT, HOST, async () => {
   logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV || 'development'} mode)`);
   
   // Start the periodic task reconciliation system
