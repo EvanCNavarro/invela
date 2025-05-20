@@ -1,0 +1,14 @@
+{
+  "run": "NODE_ENV=production PORT=8080 node dist/server/index.js",
+  "entrypoint": "server/index.ts",
+  "exclude": [
+    "attached_assets",
+    "backup_assets",
+    "backup_text",
+    "uploads",
+    "node_modules/.cache",
+    ".git"
+  ],
+  "ignorePorts": true,
+  "port": 8080
+}

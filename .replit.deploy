@@ -1,35 +1,20 @@
-# Replit Deployment Configuration
+run = "NODE_ENV=production PORT=8080 node dist/server/index.js"
+build = [
+  "npm run pre-deploy",
+  "npm run build"
+]
+entrypoint = "server/index.ts"
 
-# Files and directories to exclude from deployment
-# This helps reduce the deployment image size
-exclude = [
-  # Large image directories
-  "backup_assets/**",
-  "backup_text/**",
-  
-  # Development files
-  "**/node_modules/.cache/**",
-  "**/*.log",
-  
-  # Large data files
-  "uploads/**",
-  
-  # Git files
-  ".git/**",
-  
-  # Test files
-  "**/*.test.ts",
-  "**/*.test.tsx",
-  "**/*.spec.ts",
-  "**/*.spec.tsx"
+# Exclude large directories to reduce image size
+excludePaths = [
+  "attached_assets",
+  "backup_assets",
+  "backup_text",
+  "uploads",
+  "node_modules/.cache",
+  ".git"
 ]
 
-# Use port 8080 for Autoscale deployment
-port = 8080
-
-# Custom build command for production
-build = "npm run build"
-
-# Set NODE_ENV to production
-[env]
-NODE_ENV = "production"
+# Ensure we only use port 8080
+ignorePorts = true
+deploymentTarget = "cloudrun"
