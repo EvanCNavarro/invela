@@ -169,15 +169,12 @@ export function TabTutorialModal({
                       src={imageUrl} 
                       alt={title}
                       onError={(e) => {
-                        // Try to load PNG version if SVG fails
-                        const currentSrc = e.currentTarget.src;
-                        if (currentSrc.endsWith('.svg')) {
-                          e.currentTarget.src = currentSrc.replace('.svg', '.png');
-                        } else if (!currentSrc.includes('overview')) {
-                          // Try overview.png as a last resort
-                          const basePath = currentSrc.substring(0, currentSrc.lastIndexOf('/') + 1);
-                          e.currentTarget.src = `${basePath}overview.png`;
-                        }
+                        // Show placeholder image when the original image fails to load
+                        console.error(`Image failed to load: ${imageUrl}`);
+                        e.currentTarget.src = '/assets/tutorials/placeholder.svg';
+                        
+                        // Add a data attribute for debugging
+                        e.currentTarget.setAttribute('data-original-src', imageUrl);
                       }}
                       className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
                     />
@@ -186,7 +183,11 @@ export function TabTutorialModal({
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center p-5">
                   <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
-                    No image available
+                    <img 
+                      src="/assets/tutorials/placeholder.svg" 
+                      alt="No image available"
+                      className="w-[90%] h-[90%] object-contain" 
+                    />
                   </div>
                 </div>
               )}
