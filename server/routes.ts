@@ -1925,42 +1925,65 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         onboarding_completed: updatedUser.onboarding_user_completed
       });
 
-      // Update the related task
-      const [task] = await db.select()
+      // Update the related task - improved to handle all user onboarding tasks
+      // We now search for all user onboarding tasks for this email, not just those with EMAIL_SENT status
+      const onboardingTasks = await db.select()
         .from(tasks)
         .where(and(
           eq(tasks.user_email, email.toLowerCase()),
-          eq(tasks.status, TaskStatus.EMAIL_SENT)
+          eq(tasks.task_type, 'user_onboarding')
         ));
 
-      if (task) {
-        const [updatedTask] = await db.update(tasks)
-          .set({
-            status: TaskStatus.COMPLETED,
-            progress: 100, // Set directly to 100 for completed status
-            assigned_to: updatedUser.id,
-            metadata: {
-              ...task.metadata,
-              registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
-            }
-          })
-          .where(eq(tasks.id, task.id))
-          .returning();
+      console.log(`[Account Setup] Found ${onboardingTasks.length} onboarding tasks for email: ${email.toLowerCase()}`);
 
-        console.log('[Account Setup] Updated task status:', {
-          taskId: updatedTask.id,
-          status: updatedTask.status,
-          progress: updatedTask.progress
+      if (onboardingTasks.length > 0) {
+        // Update all associated tasks to ensure consistent state
+        for (const task of onboardingTasks) {
+          const [updatedTask] = await db.update(tasks)
+            .set({
+              status: TaskStatus.COMPLETED,
+              progress: 100, // Set directly to 100 for completed status
+              assigned_to: updatedUser.id, // Ensure user is properly assigned to the task
+              metadata: {
+                ...task.metadata,
+                registeredAt: new Date().toISOString(),
+                completed: true,
+                submission_date: new Date().toISOString(),
+                statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+              }
+            })
+            .where(eq(tasks.id, task.id))
+            .returning();
+            
+          // Get the updated task after the update operation
+          console.log(`[Account Setup] Updated task: ${task.id} for user: ${updatedUser.id}, status: 'completed', progress: 100%`);
+        }
+
+        // Log summary of the tasks that were updated
+        const lastUpdatedTask = onboardingTasks[onboardingTasks.length - 1];
+        console.log('[Account Setup] Updated task status summary:', {
+          taskCount: onboardingTasks.length,
+          lastTaskId: lastUpdatedTask.id,
+          status: TaskStatus.COMPLETED,
+          progress: 100 // Explicitly set to 100% for completed status
         });
 
         // Use the imported broadcast function from unified-websocket
         // This ensures we're using the standardized WebSocket implementation
-        broadcastTaskUpdate(updatedTask.id, {
-          status: updatedTask.status,
-          progress: updatedTask.progress,
-          metadata: updatedTask.metadata
-        });
+        // Broadcast update for each task that was modified
+        for (const task of onboardingTasks) {
+          // Use the correct function signature with proper parameters
+          broadcastTaskUpdate({
+            taskId: task.id,
+            status: TaskStatus.COMPLETED,
+            progress: 100,
+            metadata: {
+              completed: true,
+              submission_date: new Date().toISOString()
+            }
+          });
+          console.log(`[Account Setup] Broadcast task update for task ${task.id}`);
+        }
       }
 
       // Update invitation status
