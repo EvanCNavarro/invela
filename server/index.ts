@@ -222,15 +222,29 @@ logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// Start the server with the standardized configuration for Autoscale compatibility
-// IMPORTANT: Always use 8080 for deployment - this is critical for Replit Autoscale
+// DEVELOPMENT FIX: Create a dual-port solution for development compatibility
+// This ensures the app works both in local development with Replit workflows (port 5000)
+// and in Autoscale deployment (port 8080)
+const DEV_PORT = 5000; // For local development and compatibility with Replit workflow
+
+// First, listen on port 8080 for Autoscale deployment
 server.listen(8080, HOST, async () => {
-  // Log the consistent port configuration - always 8080
-  logger.info(`Server running on ${HOST}:8080`);
+  logger.info(`Server running on ${HOST}:8080 (primary port for Autoscale deployment)`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
   
-  // Log additional deployment information with forced 8080 port
+  // Log additional deployment information
   logDeploymentInfo(8080, HOST);
+  
+  // If we're in development mode, also listen on port 5000 for workflow compatibility
+  if (process.env.NODE_ENV === 'development') {
+    // Create a duplicate server for port 5000 - required for workflow compatibility
+    const devServer = createServer(app);
+    
+    // Listen on development port 5000
+    devServer.listen(DEV_PORT, HOST, () => {
+      logger.info(`Development server running on ${HOST}:${DEV_PORT} (for workflow compatibility)`);
+    });
+  }
   
   // Start the periodic task reconciliation system directly
   // Don't wait for health checks to avoid creating more rate limit issues
