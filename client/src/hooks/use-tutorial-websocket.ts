@@ -136,37 +136,18 @@ export function useTutorialWebSocket(tabName: string) {
       webSocket.addEventListener('message', handleWebSocketMessage);
       logger.info(`Attached listener to WebSocket successfully`);
     } else {
-      // Try to create a new WebSocket connection directly to the server
-      try {
-        // Get the current origin and replace http/https with ws/wss
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Use a more reliable WebSocket URL that works in both development and production
-        const port = window.location.port ? `:${window.location.port}` : '';
-        const wsUrl = `${wsProtocol}//${window.location.hostname}${port}/ws`;
-        
-        logger.info(`Attempting to connect to WebSocket: ${wsUrl}`);
-        
-        // Create a new WebSocket connection
-        const newWs = new WebSocket(wsUrl);
-        
-        // Set up event handlers
-        newWs.addEventListener('open', () => {
-          logger.info(`WebSocket connection established`);
-          // Store the WebSocket for future use
-          (window as any).fallbackWebSocket = newWs;
-        });
-        
-        // Add message listener
-        newWs.addEventListener('message', handleWebSocketMessage);
-        
-        // Handle connection errors
-        newWs.addEventListener('error', (error) => {
-          logger.warn(`WebSocket connection error:`, error);
-        });
-        
-      } catch (error) {
-        logger.warn(`Failed to create WebSocket connection, using event bridge only:`, error);
-      }
+      // If no global WebSocket is available, use REST API polling instead
+      logger.info('WebSocket not available, falling back to polling mechanism');
+      
+      // The application will continue to function using the HTTP API fallback
+      setTutorialUpdate({
+        tabName: normalizedTabName,
+        userId: 0, // Will be populated by API
+        currentStep: 0,
+        completed: false,
+        timestamp: new Date().toISOString(),
+        metadata: { fallbackMode: true }
+      });
       
       // Still log a warning
       logger.warn(`App WebSocket not available from global scope, using event bridge only`);
