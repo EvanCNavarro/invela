@@ -733,7 +733,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
         <TabTutorialModal
           title={content.title}
           description={content.steps[0].description}
-          imageUrl={content.steps[0].imageUrl || content.steps[0].imagePath || `/assets/tutorials/${possibleMatch}/${1}.svg`}
+          imageUrl={
+            // First try explicit URL if provided
+            content.steps[0].imageUrl || 
+            // Then try PNG version for the step
+            `/assets/tutorials/${possibleMatch}/1.png` || 
+            // Fallback to old SVG path if specified
+            content.steps[0].imagePath
+          }
           isLoading={false}
           currentStep={0}
           totalSteps={content.steps.length}
@@ -775,7 +782,14 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse].description}
-      imageUrl={tutorialContent.steps[stepToUse].imageUrl || tutorialContent.steps[stepToUse].imagePath || `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.svg`}
+      imageUrl={
+        // First try to use the provided imageUrl if it exists
+        tutorialContent.steps[stepToUse].imageUrl || 
+        // Then try to use the PNG version for the current step
+        `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.png` || 
+        // Then fallback to specified image path
+        tutorialContent.steps[stepToUse].imagePath
+      }
       isLoading={isLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
