@@ -222,29 +222,58 @@ logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// DEVELOPMENT FIX: Create a dual-port solution for development compatibility
-// This ensures the app works both in local development with Replit workflows (port 5000)
-// and in Autoscale deployment (port 8080)
-const DEV_PORT = 5000; // For local development and compatibility with Replit workflow
+/**
+ * Port Configuration Strategy
+ * 
+ * We use an environment-aware port configuration strategy:
+ * 
+ * 1. PRODUCTION: Always use port 8080 exclusively for Autoscale deployment
+ * 2. DEVELOPMENT: Use dual-port approach (8080 primary, 5000 secondary) for workflow compatibility
+ * 
+ * This approach ensures we have proper deployment compatibility while maintaining
+ * development workflow functionality.
+ */
 
-// First, listen on port 8080 for Autoscale deployment
-server.listen(8080, HOST, async () => {
-  logger.info(`Server running on ${HOST}:8080 (primary port for Autoscale deployment)`);
-  logger.info(`Environment: ${process.env.NODE_ENV}`);
+// Define port constants based on best practices
+const AUTOSCALE_PORT = 8080; // Standard port for Replit Autoscale
+const DEV_PORT = 5000;       // Development port for Replit workflow compatibility
+
+// Determine if we're in production mode
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Log port configuration strategy
+logger.info(`[ServerConfig] Using ${isProduction ? 'production' : 'development'} port configuration strategy`);
+
+if (isProduction) {
+  // PRODUCTION: Listen only on port 8080 for Autoscale deployment
+  logger.info(`[ServerConfig] Production mode detected - using single port configuration (${AUTOSCALE_PORT})`);
   
-  // Log additional deployment information
-  logDeploymentInfo(8080, HOST);
-  
-  // If we're in development mode, also listen on port 5000 for workflow compatibility
-  if (process.env.NODE_ENV === 'development') {
-    // Create a duplicate server for port 5000 - required for workflow compatibility
-    const devServer = createServer(app);
+  server.listen(AUTOSCALE_PORT, HOST, async () => {
+    logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (Autoscale deployment)`);
+    logger.info(`Environment: ${process.env.NODE_ENV}`);
     
-    // Listen on development port 5000
-    devServer.listen(DEV_PORT, HOST, () => {
-      logger.info(`Development server running on ${HOST}:${DEV_PORT} (for workflow compatibility)`);
-    });
-  }
+    // Log additional deployment information
+    logDeploymentInfo(AUTOSCALE_PORT, HOST);
+  });
+} else {
+  // DEVELOPMENT: Use dual-port approach for local development and workflow compatibility
+  logger.info(`[ServerConfig] Development mode detected - using dual-port configuration (${AUTOSCALE_PORT} primary, ${DEV_PORT} secondary)`);
+  
+  // Primary server on port 8080 (for Autoscale testing)
+  server.listen(AUTOSCALE_PORT, HOST, async () => {
+    logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (primary port for Autoscale deployment)`);
+    logger.info(`Environment: ${process.env.NODE_ENV}`);
+    
+    // Log additional deployment information
+    logDeploymentInfo(AUTOSCALE_PORT, HOST);
+  });
+  
+  // Secondary server on port 5000 (for Replit workflow compatibility)
+  const devServer = createServer(app);
+  devServer.listen(DEV_PORT, HOST, () => {
+    logger.info(`Development server running on ${HOST}:${DEV_PORT} (for workflow compatibility)`);
+  });
+}
   
   // Start the periodic task reconciliation system directly
   // Don't wait for health checks to avoid creating more rate limit issues
