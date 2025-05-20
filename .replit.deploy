@@ -3,10 +3,14 @@ build = "npm run build"
 entrypoint = "server/index.ts"
 
 excludePaths = [
-  "attached_assets/**/*",
-  "backup_assets/**/*",
-  "backup_text/**/*",
-  "uploads/**/*",
-  "node_modules/.cache/**/*",
-  ".git/**/*"
+  "attached_assets",
+  "backup_assets",
+  "backup_text",
+  "cleanup-scripts",
+  "uploads",
+  "node_modules/.cache",
+  ".git"
 ]
+
+# Force port 8080 for deployment
+deploymentTarget = "cloudrun"
