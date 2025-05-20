@@ -1,0 +1,60 @@
+# .dockerignore file for Replit deployments
+# This file lists directories and files that should be excluded from Docker builds
+# to reduce image size and improve build times
+
+# Node.js dependencies and build artifacts
+node_modules/.cache
+node_modules/.vite
+
+# Development and debugging directories
+.git
+.github
+.vscode
+.idea
+
+# Large asset directories
+attached_assets
+backup_assets
+backup_text
+uploads
+cleanup-scripts
+
+# Test data and fixtures
+test
+tests
+__tests__
+__mocks__
+
+# Documentation
+docs
+documentation
+*.md
+
+# Development scripts
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# Utility scripts that aren't needed in production
+fix-*.js
+add-*.js
+check-*.js
+create-*.js
+demo-*.js
+direct-*.js
+import-*.js
+parse-*.js
+
+# Log files
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+.DS_Store
+*.tmp
+*.temp
+.env*.local
