@@ -33,9 +33,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to manage and track claims in your organization',
     steps: [
       {
-        title: 'Claims Status Overview',
+        title: 'Track Claim Status',
         description: 'The Claims Dashboard shows all claims categorized by their current status.',
-        stepTitle: 'Claims Dashboard Overview',
+        stepTitle: 'Track Claim Status',
         bulletPoints: [
           'View all claims organized by status: Active, Disputed, and Resolved',
           'Each claim category uses color coding for quick visual identification',
@@ -43,9 +43,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Claim Details',
+        title: 'View Claim Details',
         description: 'Access comprehensive information about any claim, including breach details and financial information.',
-        stepTitle: 'Claim Information Panel',
+        stepTitle: 'View Claim Details',
         bulletPoints: [
           'View breach details, bank information, and FinTech data in one place',
           'Track claim progress with the status indicator',
@@ -53,9 +53,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Claims Processing Workflow',
+        title: 'Manage Claim Process',
         description: 'Claims follow a standardized workflow from identification to resolution.',
-        stepTitle: 'Claims Processing Cycle',
+        stepTitle: 'Manage Claim Process',
         bulletPoints: [
           'Follow claims through a complete lifecycle workflow',
           'Claims move from initial identification to documentation and verification',
