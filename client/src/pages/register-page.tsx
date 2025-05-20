@@ -352,7 +352,7 @@ export default function RegisterPage() {
           // Show initial success message
           toast({
             title: "Account setup successful",
-            description: "Completing registration...",
+            description: "Creating your account...",
           });
           
           try {
@@ -370,8 +370,8 @@ export default function RegisterPage() {
               
               // Show final success message
               toast({
-                title: "Account setup complete",
-                description: "Your account has been set up. Redirecting to dashboard...",
+                title: "Welcome to Invela",
+                description: "Setting up your dashboard...",
               });
               
               // Refresh auth data to ensure latest state
@@ -392,7 +392,7 @@ export default function RegisterPage() {
             
             // Show login attempt message
             toast({
-              title: "Completing registration",
+              title: "Your account was successfully created",
               description: "Logging you in...",
             });
             
@@ -461,9 +461,12 @@ export default function RegisterPage() {
               setIsLoading(false);
               setIsRegistering(false);
               
-              // Redirect to login page
+              // Set loading transition state for redirect
+              setIsLoadingTransition(true);
+              
+              // Redirect to login page using React Router
               setTimeout(() => {
-                window.location.href = "/login";
+                navigate("/login");
               }, 2000);
               return;
             }
@@ -473,16 +476,19 @@ export default function RegisterPage() {
             
             // Show final success message
             toast({
-              title: "Account setup complete",
-              description: "Your account has been set up. Redirecting to dashboard...",
+              title: "Welcome to Invela",
+              description: "Setting up your dashboard...",
             });
             
             // Refresh auth data to pick up the new user session
             await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             
+            // Set loading transition state
+            setIsLoadingTransition(true);
+            
             // Navigate to home page after a small delay to show the toast
             setTimeout(() => {
-              window.location.href = "/";
+              navigate("/");
             }, 1500);
           } catch (authError) {
             // Authentication attempt failed with an exception
@@ -587,9 +593,12 @@ export default function RegisterPage() {
               // Refresh the user data in the auth context
               queryClient.invalidateQueries({ queryKey: ["/api/user"] });
               
-              // Navigate to home page after a short delay
+              // Set loading transition state for a smoother navigation experience
+              setIsLoadingTransition(true);
+              
+              // Navigate to home page after a short delay using React Router
               setTimeout(() => {
-                window.location.href = "/";
+                navigate("/");
               }, 1500); // Consistent with account setup flow
             },
             onError: (error: Error) => {
