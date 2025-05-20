@@ -13,9 +13,12 @@ const createLogger = (prefix: string) => ({
 // Create a logger instance
 const logger = createLogger('TutorialAssets');
 
+// Placeholder image path to use when an image is not found
+const PLACEHOLDER_IMAGE_PATH = '/assets/tutorials/placeholder.svg';
+
 /**
  * Hook for loading tutorial assets (images, etc.)
- * Handles fallback from SVG to PNG if SVG isn't available
+ * Uses only the exact image path specified, with a placeholder for missing images
  * 
  * @param {string} assetPath - Path to the asset to load
  * @param {boolean} shouldLoad - Whether to load the asset or not
@@ -25,80 +28,44 @@ export function useTutorialAssets(assetPath: string, shouldLoad: boolean = true)
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [imageNotFound, setImageNotFound] = useState<boolean>(false);
 
   useEffect(() => {
     // Reset when a new asset is requested
     if (assetPath && shouldLoad) {
       setIsLoading(true);
       setError(null);
+      setImageNotFound(false);
       
-      // Try to handle different image formats
-      const tryLoadImage = (path: string) => {
-        return new Promise<string>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(path);
-          img.onerror = () => reject(new Error(`Failed to load image: ${path}`));
-          img.src = path;
-        });
-      };
-
-      const attemptToLoadImage = async () => {
-        try {
-          // First try the original path
-          await tryLoadImage(assetPath);
-          logger.info(`Successfully loaded image: ${assetPath}`);
-          setImageUrl(assetPath);
-        } catch (originalError) {
-          // If the original path fails and ends with .svg, try with .png instead
-          if (assetPath.endsWith('.svg')) {
-            const pngPath = assetPath.replace('.svg', '.png');
-            try {
-              await tryLoadImage(pngPath);
-              logger.info(`Fallback: loaded PNG image instead of SVG: ${pngPath}`);
-              setImageUrl(pngPath);
-            } catch (pngError) {
-              logger.warn(`Failed to load both SVG and PNG versions:`, { svg: assetPath, png: pngPath });
-              // Try one more fallback: change only the extension but keep the original file name
-              const lastSlashIndex = assetPath.lastIndexOf('/');
-              if (lastSlashIndex >= 0) {
-                const basePath = assetPath.substring(0, lastSlashIndex + 1);
-                const fallbackPath = `${basePath}overview.png`;
-                try {
-                  await tryLoadImage(fallbackPath);
-                  logger.info(`Fallback: loaded overview.png as last resort: ${fallbackPath}`);
-                  setImageUrl(fallbackPath);
-                } catch (lastError) {
-                  // If all attempts fail, set the original path and let the browser handle the error
-                  logger.error(`All image loading attempts failed for: ${assetPath}`);
-                  setError(originalError as Error);
-                  setImageUrl(assetPath); // Set original path anyway
-                }
-              } else {
-                setError(originalError as Error);
-                setImageUrl(assetPath); // Set original path anyway
-              }
-            }
-          } else {
-            logger.warn(`Failed to load image and no fallback available: ${assetPath}`);
-            setError(originalError as Error);
-            setImageUrl(assetPath); // Set original path anyway
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      attemptToLoadImage();
+      // Set the image URL directly - we'll handle errors in the component
+      setImageUrl(assetPath);
+      
+      // Log the image path for debugging
+      logger.info(`Using image path: ${assetPath}`);
+      
+      // Complete loading
+      setIsLoading(false);
     } else {
       // Clear state if we shouldn't load
       setImageUrl('');
       setIsLoading(false);
+      setImageNotFound(false);
     }
   }, [assetPath, shouldLoad]);
+
+  // Utility function to handle image errors
+  const handleImageError = () => {
+    logger.error(`Failed to load image: ${imageUrl}`);
+    setError(new Error(`Failed to load image: ${imageUrl}`));
+    setImageNotFound(true);
+  };
 
   return {
     imageUrl,
     isLoading,
-    error
+    error,
+    imageNotFound,
+    handleImageError,
+    placeholderPath: PLACEHOLDER_IMAGE_PATH
   };
 }
