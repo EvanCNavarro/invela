@@ -190,122 +190,34 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-// Import deployment helpers for port and host configuration
-import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
-
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
-
-// Configure server for proper deployment
-// IMPORTANT: ALWAYS use port 8080 for Autoscale deployment
-// This is a strict requirement for Replit Autoscale - the application MUST listen on port 8080
-const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
-
-// Set NODE_ENV based on deployment context
-process.env.NODE_ENV = isDeployment ? 'production' : 'development';
-
-// Standardize port configuration for deployment compatibility
-// For Autoscale: we MUST use port 8080 regardless of any other environment variables
-// For development: we can use specified PORT or fallback to 5000
-// Always bind to 0.0.0.0 for proper network access
-const PORT = 8080; // Always use 8080 for consistent deployment behavior
-const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
-
-// Set environment variable for other components that might need it
-process.env.PORT = PORT.toString();
-process.env.HOST = HOST;
-
-// Log deployment configuration for debugging
-logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-/**
- * Port Configuration Strategy
- * 
- * We use an environment-aware port configuration strategy:
- * 
- * 1. PRODUCTION: Always use port 8080 exclusively for Autoscale deployment
- * 2. DEVELOPMENT: Use dual-port approach (8080 primary, 5000 secondary) for workflow compatibility
- * 
- * This approach ensures we have proper deployment compatibility while maintaining
- * development workflow functionality.
- */
+// SIMPLIFIED PORT CONFIGURATION FOR DEPLOYMENT
+// This configuration ensures we ONLY use port 8080 in production mode
+// which is a strict requirement for Replit Autoscale deployment
 
-// Define port constants based on best practices
-const AUTOSCALE_PORT = 8080; // Standard port for Replit Autoscale
-const DEV_PORT = 5000;       // Development port for Replit workflow compatibility
+// Define port constants 
+const PORT = process.env.NODE_ENV === 'production' ? 8080 : (parseInt(process.env.PORT || '5000'));
+const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
-// Determine if we're in production mode
-const isProduction = process.env.NODE_ENV === 'production';
+// Set environment variable for components that need it
+process.env.PORT = PORT.toString();
 
-// Log port configuration strategy
-logger.info(`[ServerConfig] Using ${isProduction ? 'production' : 'development'} port configuration strategy`);
+// Make it absolutely clear what's happening
+logger.info('===========================================');
+logger.info(`SERVER CONFIGURATION: ${process.env.NODE_ENV || 'development'} MODE`);
+logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
+logger.info('===========================================');
 
-// No matter what, we always set PORT=8080 in production for Autoscale
-if (process.env.NODE_ENV === 'production') {
-  process.env.PORT = '8080';
-}
-
-if (isProduction) {
-  // PRODUCTION: Listen ONLY on port 8080 for Autoscale deployment
-  logger.info(`[ServerConfig] Production mode detected - using ONLY port 8080 configuration (Autoscale requirement)`);
+// Single, simplified server listener - only one port open at a time
+server.listen(PORT, HOST, async () => {
+  logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV || 'development'} mode)`);
   
-  // Use the Autoscale port (always 8080 in production)
-  server.listen(AUTOSCALE_PORT, HOST, async () => {
-    logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (Autoscale deployment)`);
-    logger.info(`Environment: ${process.env.NODE_ENV}`);
-    logger.info(`[Deployment] PORT=${AUTOSCALE_PORT} HOST=${HOST}`);
-  });
-} else {
-  // DEVELOPMENT: Use dual-port approach for local development and workflow compatibility
-  logger.info(`[ServerConfig] Development mode detected - using dual-port configuration (${AUTOSCALE_PORT} primary, ${DEV_PORT} secondary)`);
-  
-  // Primary server on port 8080 (for Autoscale testing)
-  server.listen(AUTOSCALE_PORT, HOST, async () => {
-    logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (primary port for Autoscale deployment)`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
-  
-  // Secondary server on port 5000 (for Replit workflow compatibility)
-  const devServer = createServer(app);
-  devServer.listen(DEV_PORT, HOST, () => {
-    logger.info(`Development server running on ${HOST}:${DEV_PORT} (for workflow compatibility)`);
-  });
-}
-  
-if (isProduction) {
-  // In production, we put these callbacks inside the server listen callback
-  server.on('listening', () => {
-    // Start the periodic task reconciliation system directly
-    // Don't wait for health checks to avoid creating more rate limit issues
-    if (process.env.NODE_ENV !== 'test') {
-      logger.info('Starting periodic task reconciliation system...');
-      startPeriodicTaskReconciliation();
-      logger.info('Task reconciliation system initialized successfully');
-    }
-    
-    // Run startup health checks in the background but don't block application startup
-    setTimeout(async () => {
-      try {
-        logger.info('Running background health checks...');
-        const healthChecksPassed = await runStartupChecks();
-        
-        if (healthChecksPassed) {
-          logger.info('All background health checks passed successfully.');
-        } else {
-          logger.warn('Some background health checks failed. Application may encounter database errors.');
-        }
-      } catch (error) {
-        logger.error('Error running background health checks', error);
-      }
-    }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
-  });
-} else {
-  // In development, start these systems right away
-  // Start the periodic task reconciliation system directly
+  // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
     logger.info('Starting periodic task reconciliation system...');
     startPeriodicTaskReconciliation();
@@ -327,4 +239,6 @@ if (isProduction) {
       logger.error('Error running background health checks', error);
     }
   }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
-}
+});
+// All server initialization is now handled in the server.listen callback above
+// No additional initialization needed
