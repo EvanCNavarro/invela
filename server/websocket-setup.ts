@@ -1,9 +1,10 @@
 /**
  * WebSocket Server Configuration
  * 
- * This module sets up the unified WebSocket server for real-time communication.
- * It uses the centralized unified-websocket module for all WebSocket functionality
- * and also initializes the improved WebSocket server for form status updates.
+ * This module sets up a unified WebSocket server for real-time communication.
+ * It uses the centralized unified-websocket module for all WebSocket functionality.
+ * 
+ * IMPORTANT: We only create a single WebSocket server instance to avoid conflicts.
  */
 
 import { Server } from 'http';
@@ -25,6 +26,7 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
   
   try {
     // Initialize the WebSocket server using the unified module
+    // We create only ONE WebSocket server instance to avoid conflicts
     initializeUnifiedWebSocketServer(httpServer, '/ws');
     
     // Get the initialized instance
@@ -36,22 +38,18 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     
     logger.info('[WebSocket] Unified WebSocket server initialized successfully');
     
-    // Also initialize the improved form submission WebSocket server with the same HTTP server
-    // This provides enhanced real-time updates for form submissions
+    // IMPORTANT: We use the existing unified WebSocket server with our WebSocketService
+    // instead of creating a new one on the same path
     try {
-      // Use the static method directly with proper TypeScript typing
-      if (WebSocketService.initializeWebSocketServer) {
-        const wss = WebSocketService.initializeWebSocketServer(httpServer, '/ws');
-        // Create a new WebSocketService instance
-        const wsService = new WebSocketService(wss);
-        // Set the global instance for static method access
-        setGlobalWebSocketService(wsService);
-        logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
-      } else {
-        logger.warn('[WebSocket] Form submission WebSocket initialization function not found');
-      }
+      // Create a WebSocketService instance using the EXISTING unified WebSocket server
+      // This prevents duplicate socket upgrade handling
+      const wsService = new WebSocketService(unifiedWss);
+      
+      // Set the global instance for static method access
+      setGlobalWebSocketService(wsService);
+      logger.info('[WebSocket] Form submission WebSocket service initialized successfully');
     } catch (wsError) {
-      logger.warn('[WebSocket] Failed to initialize form submission WebSocket server, but unified server is working', {
+      logger.warn('[WebSocket] Failed to initialize form submission WebSocket service, but unified server is working', {
         error: wsError instanceof Error ? wsError.message : String(wsError)
       });
     }
@@ -70,8 +68,26 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     const fallbackWss = new WebSocketServer({ 
       server: httpServer, 
       path: '/ws',
-      clientTracking: true
+      clientTracking: true,
+      // Skip Vite HMR WebSocket connections
+      verifyClient: (info: any) => {
+        try {
+          const protocol = info.req.headers['sec-websocket-protocol'];
+          return protocol !== 'vite-hmr';
+        } catch (e) {
+          // If we can't check the protocol, allow the connection
+          return true;
+        }
+      }
     });
+    
+    // Also initialize WebSocketService with the fallback server
+    try {
+      const wsService = new WebSocketService(fallbackWss);
+      setGlobalWebSocketService(wsService);
+    } catch (error) {
+      logger.warn('[WebSocket] Failed to initialize WebSocket service with fallback server');
+    }
     
     // Return the fallback WebSocket server
     return fallbackWss;
