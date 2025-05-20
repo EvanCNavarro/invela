@@ -27,191 +27,116 @@ const TUTORIAL_CONTENT: Record<string, {
   title: string;
   description: string;
 }> = {
-  // Claims tab tutorial
+  // Claims tab tutorial - Reduced to 3 steps to match the provided images
   'claims': {
     title: 'Claims Dashboard',
     description: 'Learn how to manage and track claims in your organization',
     steps: [
       {
-        title: 'Claims Dashboard',
-        description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
-        // Image path removed for fresh start
+        title: 'Claims Status Overview',
+        description: 'The Claims Dashboard shows all claims categorized by their current status.',
         stepTitle: 'Claims Dashboard Overview',
         bulletPoints: [
-          'View a summary of all claims activity across your organization',
-          'Monitor critical metrics including claim frequency and severity',
-          'Track claims trends over time with interactive visualizations'
+          'View all claims organized by status: Active, Disputed, and Resolved',
+          'Each claim category uses color coding for quick visual identification',
+          'Access detailed information for any claim with a single click'
         ]
       },
       {
         title: 'Claim Details',
-        description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
-        // Image path removed for fresh start
-        stepTitle: 'Detailed Claims Information',
+        description: 'Access comprehensive information about any claim, including breach details and financial information.',
+        stepTitle: 'Claim Information Panel',
         bulletPoints: [
-          'Access comprehensive information about individual claims',
-          'Review policy details, coverage limits, and claim history',
-          'Track claim status and progression through your workflow'
+          'View breach details, bank information, and FinTech data in one place',
+          'Track claim progress with the status indicator',
+          'Download comprehensive reports or escalate claims as needed'
         ]
       },
       {
-        title: 'Claims Processing',
-        description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
-        // Image path removed for fresh start
-        stepTitle: 'Claims Processing Tools',
+        title: 'Claims Processing Workflow',
+        description: 'Claims follow a standardized workflow from identification to resolution.',
+        stepTitle: 'Claims Processing Cycle',
         bulletPoints: [
-          'Update claim status using standardized workflow steps',
-          'Request additional documentation when needed for evaluation',
-          'Process approvals and payments through integrated systems'
-        ]
-      },
-      {
-        title: 'Analytics Dashboard',
-        description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
-        // Image path removed for fresh start
-        stepTitle: 'Claims Analytics',
-        bulletPoints: [
-          'Identify patterns and trends in claims data over time',
-          'Compare performance metrics against industry benchmarks',
-          'Detect potential fraud indicators with advanced analytics'
-        ]
-      },
-      {
-        title: 'Documentation Management',
-        description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
-        // Image path removed for fresh start
-        stepTitle: 'Document Management',
-        bulletPoints: [
-          'Upload and organize claim-related documents securely',
-          'Control access permissions for sensitive information',
-          'Share documentation with appropriate stakeholders seamlessly'
+          'Follow claims through a complete lifecycle workflow',
+          'Claims move from initial identification to documentation and verification',
+          'Each step includes appropriate checks and regulatory compliance measures'
         ]
       }
     ]
   },
   
-  // Risk Score Configuration - Complete tutorial for risk scoring configuration
+  // Risk Score Configuration - Reduced to 3 steps to match the provided images
   'risk-score-configuration': {
     title: 'Risk Score Configuration',
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
-        title: 'Risk Score Configuration',
-        description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
-        // Image path removed for fresh start
-        stepTitle: 'Configuration Overview',
-        bulletPoints: [
-          'Tailor the S&P Data Access Risk Score to your organization\'s needs',
-          'Adjust weighting factors to reflect your specific risk priorities',
-          'Save multiple configuration profiles for different risk assessments'
-        ]
-      },
-      {
-        title: 'Risk Gauge',
-        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        // Image path removed for fresh start
-        stepTitle: 'Risk Level Visualization',
-        bulletPoints: [
-          'Visualize your current risk score on the interactive gauge',
-          'Understand color-coded risk thresholds from low to critical',
-          'See real-time updates as you modify configuration settings'
-        ]
-      },
-      {
-        title: 'Risk Dimensions',
-        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        // Image path removed for fresh start
-        stepTitle: 'Risk Dimension Weighting',
-        bulletPoints: [
-          'Customize weights for key risk factors like Cyber Security and Public Sentiment',
-          'Adjust the impact of Dark Web Data and Financial Stability indicators',
-          'Fine-tune Data Access Scope importance for your industry context'
-        ]
-      },
-      {
         title: 'Risk Acceptance Level',
-        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        // Image path removed for fresh start
-        stepTitle: 'Risk Tolerance Settings',
+        description: 'Configure your organization\'s risk tolerance using the interactive gauge and slider.',
+        stepTitle: 'Risk Acceptance Level',
         bulletPoints: [
-          'Set company-wide risk tolerance thresholds using the slider',
-          'Determine when alerts and notifications will be triggered',
-          'Configure different tolerance levels for various business units'
+          'View your current risk acceptance level on the interactive gauge',
+          'Adjust the slider to set your custom risk tolerance level',
+          'Choose between low (0-30), medium (31-70), and high (71-100) risk thresholds'
         ]
       },
       {
-        title: 'Comparative Analysis',
-        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        // Image path removed for fresh start
-        stepTitle: 'Benchmarking Tools',
+        title: 'Risk Priority Configuration',
+        description: 'Customize the priority and weight of different risk dimensions to reflect your organization\'s needs.',
+        stepTitle: 'Risk Priority Settings',
         bulletPoints: [
-          'Compare your risk configuration with industry peers and competitors',
-          'Identify gaps in your risk assessment approach',
-          'Generate reports highlighting differences between configurations'
+          'Assign percentage weights to five key risk priority categories',
+          'Higher priority categories receive more weight in the overall risk calculation',
+          'Visualize the distribution of risk priorities using the pie chart'
         ]
       },
+      {
+        title: 'Eligibility Settings',
+        description: 'Configure the eligibility thresholds that determine which partners and vendors meet your risk requirements.',
+        stepTitle: 'Risk Eligibility Rules',
+        bulletPoints: [
+          'Define eligibility criteria based on risk scores',
+          'Set thresholds to automatically categorize partners as eligible or ineligible',
+          'Use the slider to fine-tune your eligibility requirements'
+        ]
+      }
     ]
   },
-  // Main Risk Score Dashboard - Shows the S&P DARS score and overview
+  // Main Risk Score Dashboard - Reduced to 3 steps to match the provided images
   'risk-score': {
-    title: 'S&P Data Access Risk Score',
+    title: 'Risk Score Dashboard',
     description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
-        title: 'Risk Score Dashboard',
-        description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
-        // Image path removed for fresh start
-        stepTitle: 'Risk Score Overview',
-        bulletPoints: [
-          'View your current risk score and trend over time',
-          'Explore detailed breakdown of contributing risk factors',
-          'Access risk mitigation recommendations based on your profile'
-        ]
-      },
-      {
-        title: 'Risk Gauge',
-        description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        // Image path removed for fresh start
-        stepTitle: 'Understanding the Risk Gauge',
-        bulletPoints: [
-          'Interpret color-coded risk levels from low to critical',
-          'See how your score compares to industry benchmarks',
-          'Track changes in your risk gauge with historical data'
-        ]
-      },
-      {
-        title: 'Risk Dimensions',
-        description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        // Image path removed for fresh start
-        stepTitle: 'Managing Risk Dimensions',
-        bulletPoints: [
-          'Prioritize risk dimensions based on your business needs',
-          'Understand how each dimension affects your overall score',
-          'Create a custom weighting system for your industry context'
-        ]
-      },
-      {
         title: 'Risk Acceptance Level',
-        description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        // Image path removed for fresh start
-        stepTitle: 'Setting Risk Tolerance',
+        description: 'Configure your organization\'s risk tolerance using the interactive gauge and slider.',
+        stepTitle: 'Risk Acceptance Level',
         bulletPoints: [
-          'Define acceptable risk thresholds for your organization',
-          'Receive alerts when risks exceed your defined tolerance',
-          'Adjust your tolerance levels based on business requirements'
+          'View your current risk acceptance level on the interactive gauge',
+          'Adjust the slider to set your custom risk tolerance level',
+          'Choose between low (0-30), medium (31-70), and high (71-100) risk thresholds'
         ]
       },
       {
-        title: 'Comparative Analysis',
-        description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        // Image path removed for fresh start
-        stepTitle: 'Risk Comparison Tools',
+        title: 'Risk Priority Configuration',
+        description: 'Customize the priority and weight of different risk dimensions to reflect your organization\'s needs.',
+        stepTitle: 'Risk Priority Settings',
         bulletPoints: [
-          'Compare your risk profile with industry peers',
-          'Identify areas where you outperform or underperform',
-          'Use benchmarking data to set realistic improvement goals'
+          'Assign percentage weights to five key risk priority categories',
+          'Higher priority categories receive more weight in the overall risk calculation',
+          'Visualize the distribution of risk priorities using the pie chart'
         ]
       },
+      {
+        title: 'Eligibility Settings',
+        description: 'Configure the eligibility thresholds that determine which partners and vendors meet your risk requirements.',
+        stepTitle: 'Risk Eligibility Rules',
+        bulletPoints: [
+          'Define eligibility criteria based on risk scores',
+          'Set thresholds to automatically categorize partners as eligible or ineligible',
+          'Use the slider to fine-tune your eligibility requirements'
+        ]
+      }
     ]
   },
   'insights': {
@@ -219,47 +144,33 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to interpret and use business intelligence insights',
     steps: [
       {
-        title: 'Insights Overview',
-        description: 'Welcome to the Insights Dashboard. This analytics center provides data-driven insights to help you make informed decisions.',
-        // Image path removed for fresh start
-        stepTitle: 'Insights Overview',
+        title: 'Analytics Dashboard',
+        description: 'The Insights Dashboard provides multiple data visualizations for comprehensive analytics.',
+        stepTitle: 'Analytics Overview',
         bulletPoints: [
-          'Access comprehensive analytics on your business risk profile',
-          'View high-level KPIs and drill down into detailed metrics',
-          'Receive AI-powered recommendations based on your data'
+          'View all key metrics in a unified dashboard with multiple visualization types',
+          'Access interactive charts, graphs, and checklists in one place',
+          'Get a comprehensive view of your risk and compliance data'
         ]
       },
       {
-        title: 'Data Visualization',
-        description: 'These charts and graphs represent key metrics and trends. Hover over any element to see detailed information.',
-        // Image path removed for fresh start
-        stepTitle: 'Interactive Visualizations',
+        title: 'Performance Metrics',
+        description: 'Key performance indicators help you track progress and identify areas of improvement.',
+        stepTitle: 'Performance Analytics',
         bulletPoints: [
-          'Explore dynamic charts that respond to your interactions',
-          'Customize visualization types to best represent your data',
-          'Filter and segment data to uncover specific patterns'
+          'Monitor performance with clear numerical indicators',
+          'Track completion rates and progress across different metrics',
+          'Visualize performance trends with interactive charts'
         ]
       },
       {
-        title: 'Custom Reports',
-        description: 'Create customized reports based on your specific needs. Select metrics, time periods, and presentation formats.',
-        // Image path removed for fresh start
-        stepTitle: 'Report Customization',
+        title: 'Data Export Options',
+        description: 'Export your insights in multiple formats for sharing and further analysis.',
+        stepTitle: 'Export Functionality',
         bulletPoints: [
-          'Build tailored reports focusing on metrics that matter to you',
-          'Schedule automated report generation and delivery',
-          'Save report templates for consistent analysis over time'
-        ]
-      },
-      {
-        title: 'Export Options',
-        description: 'Use these options to export insights as PDFs, spreadsheets, or presentations to share with stakeholders.',
-        // Image path removed for fresh start
-        stepTitle: 'Sharing & Exporting',
-        bulletPoints: [
-          'Export data in multiple formats including PDF, CSV, and PowerPoint',
-          'Share insights directly with team members via email or link',
-          'Create annotated snapshots to highlight important findings'
+          'Export data in CSV, PDF, or XLS formats with one click',
+          'Share insights with stakeholders or use in other applications',
+          'Choose the format that best suits your reporting needs'
         ]
       }
     ]
@@ -269,36 +180,33 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to navigate and manage your partner relationships',
     steps: [
       {
-        title: 'Explore Your Network',
-        description: 'View and manage your network of business partners. Quickly identify who you work with and the status of each relationship.',
-        // Image path removed for fresh start
-        stepTitle: 'Explore Your Network',
+        title: 'Invite Partners',
+        description: 'Add new financial institutions to your secure network with the invitation feature.',
+        stepTitle: 'Partner Invitations',
         bulletPoints: [
-          'View your entire business network in an interactive visualization',
-          'Identify key relationships and connection patterns at a glance',
-          'Filter the network view by relationship type, risk level, or industry'
+          'Invite new partners to join your secure network with a simple interface',
+          'Add financial institutions, banks, and FinTech companies to your ecosystem',
+          'Track pending invitations and manage your network connections'
         ]
       },
       {
-        title: 'Invite New Connections',
-        description: 'Easily invite new fintech companies or banks to join your network directly from this interface.',
-        // Image path removed for fresh start
-        stepTitle: 'Invite New Connections',
+        title: 'Network Visualization',
+        description: 'View your entire financial network in an interactive visualization that shows relationships and connection strengths.',
+        stepTitle: 'Network Mapping',
         bulletPoints: [
-          'Add new partners to your network with just a few clicks',
-          'Track pending invitations and onboarding status',
-          'Build a more comprehensive view of your business ecosystem'
+          'Visualize your complete network of financial relationships',
+          'Identify connection patterns and relationship strengths visually',
+          'Understand data flows between your organization and partners'
         ]
       },
       {
-        title: 'Detailed Company Profiles',
-        description: 'Access detailed profiles including accreditation status, key contacts, and more by clicking into company entries.',
-        // Image path removed for fresh start
-        stepTitle: 'Detailed Company Profiles',
+        title: 'Partner Analytics',
+        description: 'Get detailed insights about your network partners, including risk scores, compliance status, and activity metrics.',
+        stepTitle: 'Partner Information',
         bulletPoints: [
-          'Access comprehensive information about any company in your network',
-          'Review risk scores, compliance status, and accreditation details',
-          'Identify key contacts and important company metrics'
+          'Access detailed profiles for all companies in your network',
+          'Monitor compliance status and risk scores for each partner',
+          'Track interaction history and data exchange patterns'
         ]
       }
     ]
@@ -770,13 +678,22 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
+  // Load the appropriate image for this tutorial step
+  const { imageUrl, isLoading: imageLoading } = useTutorialAssets(
+    normalizedTabName,
+    stepToUse,
+    tutorialEnabled
+  );
+  
+  logger.debug(`Loading image for ${normalizedTabName}, step ${stepToUse + 1}: ${imageUrl}`);
+  
   // Use the TabTutorialModal with the appropriate content
   return (
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse].description}
-      // No image paths specified - will use placeholder
-      isLoading={isLoading}
+      imageUrl={imageUrl}
+      isLoading={isLoading || imageLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
       onNext={handleNext}
