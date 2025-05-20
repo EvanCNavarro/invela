@@ -1,0 +1,18 @@
+# Excluded directories - these won't be included in the deployment
+/backup_assets
+/backup_text
+/attached_assets
+/uploads
+/node_modules/.cache
+/dist/_temp_server
+/.git
+
+# Exclude backup files
+**/*.backup
+**/*.bak
+
+# Exclude large log files
+**/*.log
+
+# Temporary files
+**/tmp/**
