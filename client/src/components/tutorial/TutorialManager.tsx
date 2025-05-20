@@ -514,8 +514,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // Get any custom assets for this tutorial
-  const { imageUrl, isLoading: assetsLoading } = useTutorialAssets(normalizedTabName);
+  // We'll use the more specific asset loading in the render function
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
@@ -662,11 +661,13 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   });
   
   // Load the appropriate image for this tutorial step
-  const { imageUrl, isLoading: imageLoading } = useTutorialAssets(
+  const tutorialAssets = useTutorialAssets(
     normalizedTabName,
     stepToUse,
     tutorialEnabled
   );
+  const imageUrl = tutorialAssets.imageUrl;
+  const imageLoading = tutorialAssets.isLoading;
   
   logger.debug(`Loading image for ${normalizedTabName}, step ${stepToUse + 1}: ${imageUrl}`);
   
