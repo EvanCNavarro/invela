@@ -1,12 +1,21 @@
 /**
  * DEPLOYMENT-SPECIFIC SERVER CONFIGURATION
- * 
- * This file is designed specifically for Replit Autoscale deployment.
- * It ensures:
- * 1. The server ONLY listens on port 8080
- * 2. No additional port forwards are created
- * 3. Proper host binding (0.0.0.0) for cloud environments
  */
+
+// Force production environment
+process.env.NODE_ENV = 'production';
+process.env.PORT = '8080';
+
+const HOST = '0.0.0.0';
+const PORT = 8080;
+
+// Import the main server module
+import('./index.js').then(() => {
+  console.log(`Server running on ${HOST}:${PORT} (Autoscale compatible)`);
+}).catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
 
 // Force production environment for deployment
 process.env.NODE_ENV = 'production';
