@@ -167,7 +167,18 @@ export function TabTutorialModal({
                     <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
                     <img 
                       src={imageUrl} 
-                      alt={title} 
+                      alt={title}
+                      onError={(e) => {
+                        // Try to load PNG version if SVG fails
+                        const currentSrc = e.currentTarget.src;
+                        if (currentSrc.endsWith('.svg')) {
+                          e.currentTarget.src = currentSrc.replace('.svg', '.png');
+                        } else if (!currentSrc.includes('overview')) {
+                          // Try overview.png as a last resort
+                          const basePath = currentSrc.substring(0, currentSrc.lastIndexOf('/') + 1);
+                          e.currentTarget.src = `${basePath}overview.png`;
+                        }
+                      }}
                       className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
                     />
                   </div>
