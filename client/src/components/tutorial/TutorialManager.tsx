@@ -104,7 +104,7 @@ const TUTORIAL_CONTENT: Record<string, {
   },
   // Main Risk Score Dashboard - Reduced to 3 steps to match the provided images
   'risk-score': {
-    title: 'Risk Score Overview',
+    title: 'S&P Data Access Risk Score (DARS) Overview',
     description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
