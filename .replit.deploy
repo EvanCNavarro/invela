@@ -1,20 +1,12 @@
 run = "NODE_ENV=production PORT=8080 node dist/server/index.js"
-build = [
-  "npm run pre-deploy",
-  "npm run build"
-]
+build = "npm run build"
 entrypoint = "server/index.ts"
 
-# Exclude large directories to reduce image size
 excludePaths = [
-  "attached_assets",
-  "backup_assets",
-  "backup_text",
-  "uploads",
-  "node_modules/.cache",
-  ".git"
+  "attached_assets/**/*",
+  "backup_assets/**/*",
+  "backup_text/**/*",
+  "uploads/**/*",
+  "node_modules/.cache/**/*",
+  ".git/**/*"
 ]
-
-# Ensure we only use port 8080
-ignorePorts = true
-deploymentTarget = "cloudrun"
