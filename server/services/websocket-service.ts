@@ -301,5 +301,3 @@ export function setGlobalWebSocketService(instance: WebSocketService) {
 }
 
 export default WebSocketService;
-
-export default WebSocketService;

@@ -196,9 +196,15 @@ export function useTabTutorials(inputTabName: string) {
       // This will synchronize UI display with database values
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
-      setTutorialEnabled(true);
+      
+      // Only enable the tutorial if it hasn't been completed yet
+      // This is a key change to fix the flickering issue - we take a pessimistic approach
+      // and only show tutorials that are explicitly not completed
+      setTutorialEnabled(data.exists === true && !data.completed);
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
+      // In case of error, don't show tutorial
+      setTutorialEnabled(false);
     }
   }, [data, error, tabName, totalSteps]);
   
