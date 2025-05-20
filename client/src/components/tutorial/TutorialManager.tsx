@@ -677,7 +677,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     // Use the correct prefix or fallback to a normalized version of the tab name
     const prefix = tabToPrefix[normalizedTabName] || `modal_${normalizedTabName.replace(/-/g, '_')}`;
     
-    return `/attached_assets/${prefix}_${stepToUse + 1}.png`;
+    return `/assets/tutorials/${prefix}_${stepToUse + 1}.png`;
   };
   
   const imageUrl = getImageUrl();
