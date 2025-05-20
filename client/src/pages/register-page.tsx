@@ -349,11 +349,14 @@ export default function RegisterPage() {
           // First, check if we're already logged in by the server-side login
           logRegistration('Account setup successful, verifying login status');
           
-          // Show initial success message
+          // Show a single, clear success message
           toast({
-            title: "Account setup successful",
-            description: "Creating your account...",
+            title: "Your account is being created",
+            description: "Please wait while we set everything up for you...",
           });
+          
+          // Start loading transition immediately
+          setIsLoadingTransition(true);
           
           try {
             // First check if we're already logged in from the server-side req.login()
@@ -368,11 +371,7 @@ export default function RegisterPage() {
               const userData = await authCheckResponse.json();
               logRegistration(`Already authenticated as user: ${userData.email}`);
               
-              // Show final success message
-              toast({
-                title: "Welcome to Invela",
-                description: "Setting up your dashboard...",
-              });
+              // Don't show another toast here - we already have the loading overlay
               
               // Refresh auth data to ensure latest state
               await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
@@ -683,12 +682,15 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
-      {/* Loading Transition Overlay */}
+      {/* Enhanced Loading Transition Overlay */}
       {isLoadingTransition && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-foreground font-medium">Setting up your account...</p>
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-all duration-500 ease-in-out">
+          <div className="flex flex-col items-center gap-6 max-w-md text-center p-8 rounded-xl">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold text-foreground">Setting up your account</h3>
+              <p className="text-muted-foreground">Your account is being created and configured. This may take a moment...</p>
+            </div>
           </div>
         </div>
       )}
