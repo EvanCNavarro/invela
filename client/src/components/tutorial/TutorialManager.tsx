@@ -661,9 +661,12 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // We'll manually handle the image URL without using the hook directly here
-  // Instead, we'll use the placeholder path
-  const imageUrl = `/attached_assets/modal_${normalizedTabName.replace('-', '_')}_${stepToUse + 1}.png`;
+  // Generate the image URL based on the tab name and step
+  const getImageUrl = () => {
+    return `/attached_assets/modal_${normalizedTabName.replace('-', '_')}_${stepToUse + 1}.png`;
+  };
+  
+  const imageUrl = getImageUrl();
   const imageLoading = false;
   
   logger.debug(`Loading image for ${normalizedTabName}, step ${stepToUse + 1}: ${imageUrl}`);
