@@ -1,30 +1,38 @@
 import { useState, useEffect } from 'react';
-
-/**
- * Utility to create a logger for debugging tutorial asset loading
- */
-const createLogger = (prefix: string) => ({
-  debug: (message: string, ...args: any[]) => console.debug(`[${prefix}]`, message, ...args),
-  info: (message: string, ...args: any[]) => console.info(`[${prefix}]`, message, ...args),
-  warn: (message: string, ...args: any[]) => console.warn(`[${prefix}]`, message, ...args),
-  error: (message: string, ...args: any[]) => console.error(`[${prefix}]`, message, ...args),
-});
+import { createTutorialLogger } from '@/lib/tutorial-logger';
 
 // Create a logger instance
-const logger = createLogger('TutorialAssets');
+const logger = createTutorialLogger('TutorialAssets');
 
 // Placeholder image path to use when an image is not found
 const PLACEHOLDER_IMAGE_PATH = '/assets/tutorials/placeholder.svg';
 
 /**
+ * Map tab names to their corresponding image prefix
+ * This ensures we use the correct naming pattern for each tab's tutorial images
+ */
+const TAB_TO_IMAGE_PREFIX: Record<string, string> = {
+  'claims': 'modal_claims_',
+  'claims-risk': 'modal_claims_',
+  'risk-score': 'modal_risk_',
+  'file-vault': 'modal_file_',
+  'network': 'modal_network_',
+  'network-view': 'modal_network_',
+  'insights': 'modal_insights_',
+  'dashboard': 'modal_dash_',
+  // Add more mappings as needed
+};
+
+/**
  * Hook for loading tutorial assets (images, etc.)
- * Uses only the exact image path specified, with a placeholder for missing images
+ * Now uses the client-provided PNG images from the attached_assets folder
  * 
- * @param {string} assetPath - Path to the asset to load
+ * @param {string} tabName - The tab name to load assets for
+ * @param {number} stepIndex - The step index (1-based)
  * @param {boolean} shouldLoad - Whether to load the asset or not
  * @returns {Object} - Object containing the loaded asset and loading state
  */
-export function useTutorialAssets(assetPath: string, shouldLoad: boolean = true) {
+export function useTutorialAssets(tabName: string, stepIndex: number, shouldLoad: boolean = true) {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -32,16 +40,24 @@ export function useTutorialAssets(assetPath: string, shouldLoad: boolean = true)
 
   useEffect(() => {
     // Reset when a new asset is requested
-    if (assetPath && shouldLoad) {
+    if (tabName && shouldLoad) {
       setIsLoading(true);
       setError(null);
       setImageNotFound(false);
       
+      // Get the image prefix for this tab, or use a default
+      const prefix = TAB_TO_IMAGE_PREFIX[tabName] || `modal_${tabName}_`;
+      
+      // Construct the image path using the new naming convention
+      // We need to add 1 to stepIndex because our internal indexing is 0-based but image filenames are 1-based
+      const computedPath = `/attached_assets/${prefix}${stepIndex + 1}.png`;
+      
       // Set the image URL directly - we'll handle errors in the component
-      setImageUrl(assetPath);
+      setImageUrl(computedPath);
       
       // Log the image path for debugging
-      logger.info(`Using image path: ${assetPath}`);
+      logger.debug(`Loading tutorial image for tab: ${tabName}, step: ${stepIndex + 1}`);
+      logger.debug(`Using image path: ${computedPath}`);
       
       // Complete loading
       setIsLoading(false);
@@ -51,7 +67,7 @@ export function useTutorialAssets(assetPath: string, shouldLoad: boolean = true)
       setIsLoading(false);
       setImageNotFound(false);
     }
-  }, [assetPath, shouldLoad]);
+  }, [tabName, stepIndex, shouldLoad]);
 
   // Utility function to handle image errors
   const handleImageError = () => {
