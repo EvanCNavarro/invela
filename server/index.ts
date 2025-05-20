@@ -244,16 +244,20 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Log port configuration strategy
 logger.info(`[ServerConfig] Using ${isProduction ? 'production' : 'development'} port configuration strategy`);
 
+// No matter what, we always set PORT=8080 in production for Autoscale
+if (process.env.NODE_ENV === 'production') {
+  process.env.PORT = '8080';
+}
+
 if (isProduction) {
-  // PRODUCTION: Listen only on port 8080 for Autoscale deployment
-  logger.info(`[ServerConfig] Production mode detected - using single port configuration (${AUTOSCALE_PORT})`);
+  // PRODUCTION: Listen ONLY on port 8080 for Autoscale deployment
+  logger.info(`[ServerConfig] Production mode detected - using ONLY port 8080 configuration (Autoscale requirement)`);
   
+  // Use the Autoscale port (always 8080 in production)
   server.listen(AUTOSCALE_PORT, HOST, async () => {
     logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (Autoscale deployment)`);
     logger.info(`Environment: ${process.env.NODE_ENV}`);
-    
-    // Log additional deployment information
-    logDeploymentInfo(AUTOSCALE_PORT, HOST);
+    logger.info(`[Deployment] PORT=${AUTOSCALE_PORT} HOST=${HOST}`);
   });
 } else {
   // DEVELOPMENT: Use dual-port approach for local development and workflow compatibility
@@ -262,10 +266,7 @@ if (isProduction) {
   // Primary server on port 8080 (for Autoscale testing)
   server.listen(AUTOSCALE_PORT, HOST, async () => {
     logger.info(`Server running on ${HOST}:${AUTOSCALE_PORT} (primary port for Autoscale deployment)`);
-    logger.info(`Environment: ${process.env.NODE_ENV}`);
-    
-    // Log additional deployment information
-    logDeploymentInfo(AUTOSCALE_PORT, HOST);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   });
   
   // Secondary server on port 5000 (for Replit workflow compatibility)
