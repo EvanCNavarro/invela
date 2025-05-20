@@ -514,9 +514,8 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // Always include all hooks here to maintain consistent hook order 
-  // We'll use this for baseline image URL construction without loading
-  const initialAssets = useTutorialAssets(normalizedTabName, 0, false);
+  // In React, we need to call hooks unconditionally to maintain consistent order
+  // This is a workaround to avoid the useTutorialAssets hook which causes issues
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
