@@ -71,9 +71,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
-        title: 'Risk Acceptance Level',
+        title: 'Set Risk Tolerance',
         description: 'Configure your organization\'s risk tolerance using the interactive gauge and slider.',
-        stepTitle: 'Risk Acceptance Level',
+        stepTitle: 'Set Risk Tolerance',
         bulletPoints: [
           'View your current risk acceptance level on the interactive gauge',
           'Adjust the slider to set your custom risk tolerance level',
@@ -81,9 +81,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Risk Priority Configuration',
+        title: 'Adjust Risk Weights',
         description: 'Customize the priority and weight of different risk dimensions to reflect your organization\'s needs.',
-        stepTitle: 'Risk Priority Settings',
+        stepTitle: 'Adjust Risk Weights',
         bulletPoints: [
           'Assign percentage weights to five key risk priority categories',
           'Higher priority categories receive more weight in the overall risk calculation',
@@ -91,9 +91,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Eligibility Settings',
+        title: 'Define Eligibility Rules',
         description: 'Configure the eligibility thresholds that determine which partners and vendors meet your risk requirements.',
-        stepTitle: 'Risk Eligibility Rules',
+        stepTitle: 'Define Eligibility Rules',
         bulletPoints: [
           'Define eligibility criteria based on risk scores',
           'Set thresholds to automatically categorize partners as eligible or ineligible',
@@ -108,9 +108,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Understand how to interpret and use your risk assessment dashboard',
     steps: [
       {
-        title: 'Risk Acceptance Level',
+        title: 'Set Risk Tolerance',
         description: 'Configure your organization\'s risk tolerance using the interactive gauge and slider.',
-        stepTitle: 'Risk Acceptance Level',
+        stepTitle: 'Set Risk Tolerance',
         bulletPoints: [
           'View your current risk acceptance level on the interactive gauge',
           'Adjust the slider to set your custom risk tolerance level',
@@ -118,9 +118,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Risk Priority Configuration',
+        title: 'Adjust Risk Weights',
         description: 'Customize the priority and weight of different risk dimensions to reflect your organization\'s needs.',
-        stepTitle: 'Risk Priority Settings',
+        stepTitle: 'Adjust Risk Weights',
         bulletPoints: [
           'Assign percentage weights to five key risk priority categories',
           'Higher priority categories receive more weight in the overall risk calculation',
@@ -128,9 +128,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Eligibility Settings',
+        title: 'Define Eligibility Rules',
         description: 'Configure the eligibility thresholds that determine which partners and vendors meet your risk requirements.',
-        stepTitle: 'Risk Eligibility Rules',
+        stepTitle: 'Define Eligibility Rules',
         bulletPoints: [
           'Define eligibility criteria based on risk scores',
           'Set thresholds to automatically categorize partners as eligible or ineligible',
@@ -144,9 +144,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to interpret and use business intelligence insights',
     steps: [
       {
-        title: 'Analytics Dashboard',
+        title: 'Analyze Key Metrics',
         description: 'The Insights Dashboard provides multiple data visualizations for comprehensive analytics.',
-        stepTitle: 'Analytics Overview',
+        stepTitle: 'Analyze Key Metrics',
         bulletPoints: [
           'View all key metrics in a unified dashboard with multiple visualization types',
           'Access interactive charts, graphs, and checklists in one place',
@@ -154,9 +154,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Performance Metrics',
+        title: 'Track Performance',
         description: 'Key performance indicators help you track progress and identify areas of improvement.',
-        stepTitle: 'Performance Analytics',
+        stepTitle: 'Track Performance',
         bulletPoints: [
           'Monitor performance with clear numerical indicators',
           'Track completion rates and progress across different metrics',
@@ -164,9 +164,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Data Export Options',
+        title: 'Export Data',
         description: 'Export your insights in multiple formats for sharing and further analysis.',
-        stepTitle: 'Export Functionality',
+        stepTitle: 'Export Data',
         bulletPoints: [
           'Export data in CSV, PDF, or XLS formats with one click',
           'Share insights with stakeholders or use in other applications',
@@ -182,7 +182,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Invite Partners',
         description: 'Add new financial institutions to your secure network with the invitation feature.',
-        stepTitle: 'Partner Invitations',
+        stepTitle: 'Invite Partners',
         bulletPoints: [
           'Invite new partners to join your secure network with a simple interface',
           'Add financial institutions, banks, and FinTech companies to your ecosystem',
@@ -190,9 +190,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Network Visualization',
+        title: 'Visualize Connections',
         description: 'View your entire financial network in an interactive visualization that shows relationships and connection strengths.',
-        stepTitle: 'Network Mapping',
+        stepTitle: 'Visualize Connections',
         bulletPoints: [
           'Visualize your complete network of financial relationships',
           'Identify connection patterns and relationship strengths visually',
@@ -200,9 +200,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Partner Analytics',
+        title: 'Monitor Partners',
         description: 'Get detailed insights about your network partners, including risk scores, compliance status, and activity metrics.',
-        stepTitle: 'Partner Information',
+        stepTitle: 'Monitor Partners',
         bulletPoints: [
           'Access detailed profiles for all companies in your network',
           'Monitor compliance status and risk scores for each partner',
@@ -216,9 +216,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to securely store and manage files',
     steps: [
       {
-        title: 'File Upload',
+        title: 'Upload Documents',
         description: 'Upload documents securely to the vault with an easy drag-and-drop interface.',
-        stepTitle: 'Document Upload',
+        stepTitle: 'Upload Documents',
         bulletPoints: [
           'Upload files using a simple drag-and-drop interface',
           'Monitor upload progress with real-time status indicators',
@@ -226,9 +226,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Document Generation',
+        title: 'Generate Reports',
         description: 'Generate standardized documents and reports directly from the platform.',
-        stepTitle: 'File Generation',
+        stepTitle: 'Generate Reports',
         bulletPoints: [
           'Create new documents with customizable templates',
           'Select document types and format options (PDF, etc.)',
