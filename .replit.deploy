@@ -1,15 +1,17 @@
-run = "NODE_ENV=production PORT=8080 node simple-deploy.js"
+run = "NODE_ENV=production PORT=8080 node deployment-server.js"
 build = "npm run build"
-entrypoint = "simple-deploy.js"
+entrypoint = "deployment-server.js"
 
 excludePaths = [
   "attached_assets",
   "backup_assets",
   "backup_text",
-  "cleanup-scripts",
+  "cleanup-scripts", 
+  "cleanup-plan",
   "uploads",
   "node_modules/.cache",
-  ".git"
+  ".git",
+  "deployment-excluded"
 ]
 
 # Force port 8080 for deployment
