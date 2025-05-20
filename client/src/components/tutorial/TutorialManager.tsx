@@ -242,10 +242,10 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to manage and update your company information',
     steps: [
       {
-        title: 'Profile Overview',
+        title: 'Manage Company Info',
         description: 'Welcome to your Company Profile. Here you can view and update all your organization\'s information and settings.',
         // Image path removed for fresh start
-        stepTitle: 'Company Profile Overview',
+        stepTitle: 'Manage Company Info',
         bulletPoints: [
           'View and edit your company\'s core information in one place',
           'Access historical profile changes and audit logs',
@@ -253,10 +253,10 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Business Information',
+        title: 'Update Business Details',
         description: 'This section contains your core business details. Keep this information up-to-date for accurate risk assessment.',
         // Image path removed for fresh start
-        stepTitle: 'Business Details',
+        stepTitle: 'Update Business Details',
         bulletPoints: [
           'Update essential company information including address and contacts',
           'Maintain industry classifications and business descriptions',
@@ -264,10 +264,10 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Team Management',
+        title: 'Control User Access',
         description: 'Manage your team members, their roles, and permissions. You can add new users or update existing access levels.',
         // Image path removed for fresh start
-        stepTitle: 'Team Management',
+        stepTitle: 'Control User Access',
         bulletPoints: [
           'Add new team members and assign appropriate roles',
           'Set granular permissions based on job responsibilities',
@@ -275,7 +275,7 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Compliance Status',
+        title: 'Track Compliance',
         description: 'Review your compliance status and certification levels. This section shows any outstanding requirements or upcoming renewals.',
         // Image path removed for fresh start
         stepTitle: 'Compliance Tracking',
@@ -331,9 +331,9 @@ const TUTORIAL_CONTENT: Record<string, {
     description: 'Learn how to navigate and use the main dashboard',
     steps: [
       {
-        title: 'Quick Overview',
+        title: 'Monitor Key Metrics',
         description: 'The dashboard provides a snapshot of your organization\'s key metrics and activities.',
-        stepTitle: 'Dashboard Overview',
+        stepTitle: 'Monitor Key Metrics',
         bulletPoints: [
           'View all critical metrics and activities in one unified dashboard',
           'Monitor your organization\'s risk score and compliance status',
@@ -341,9 +341,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Navigation System',
+        title: 'Navigate Platform',
         description: 'Use the navigation menu to access different sections of the platform.',
-        stepTitle: 'Platform Navigation',
+        stepTitle: 'Navigate Platform',
         bulletPoints: [
           'Use the sidebar menu to switch between different platform sections',
           'Access Claims, Risk Score, Insights, and other key areas directly',
@@ -351,9 +351,9 @@ const TUTORIAL_CONTENT: Record<string, {
         ]
       },
       {
-        title: 'Task Management',
+        title: 'Manage Tasks',
         description: 'Track and manage your tasks and deadlines from the dashboard.',
-        stepTitle: 'Task Center',
+        stepTitle: 'Manage Tasks',
         bulletPoints: [
           'View all assigned tasks organized by priority and deadline',
           'Track task completion status with visual progress indicators',
