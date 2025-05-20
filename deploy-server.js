@@ -1,26 +1,32 @@
 /**
- * Minimal Server Configuration for Deployment
+ * Deployment Server
  * 
- * This file provides a minimal server configuration that ensures:
- * 1. Only port 8080 is used
- * 2. No port forwarding or multiple bindings
- * 3. Production mode is enforced
+ * This script configures and starts the server for deployment environments.
+ * It handles port configuration, environment settings, and proper error handling.
  */
 
-// Force production environment and port 8080
+// Force production settings
 process.env.NODE_ENV = 'production';
-process.env.PORT = '8080';
+process.env.PORT = process.env.PORT || '8080';
 
-console.log('======================================');
-console.log('DEPLOYMENT SERVER STARTING');
-console.log('- PORT: 8080');
-console.log('- NODE_ENV: production');
-console.log('- HOST: 0.0.0.0');
-console.log('======================================');
+console.log('===========================================');
+console.log('INVELA PLATFORM - DEPLOYMENT SERVER');
+console.log(`PORT: ${process.env.PORT}`);
+console.log(`TIME: ${new Date().toISOString()}`);
+console.log('===========================================');
 
-// Import the built server
-import('./dist/server/index.js')
-  .catch(err => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  });
+// Import the server built files
+try {
+  // Dynamic import of the server
+  import('./dist/server/index.js')
+    .then(() => {
+      console.log('✅ Server started successfully');
+    })
+    .catch(err => {
+      console.error('❌ Failed to start server:', err);
+      process.exit(1);
+    });
+} catch (error) {
+  console.error('❌ Fatal error during server startup:', error);
+  process.exit(1);
+}
