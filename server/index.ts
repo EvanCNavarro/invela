@@ -275,15 +275,43 @@ if (isProduction) {
   });
 }
   
+if (isProduction) {
+  // In production, we put these callbacks inside the server listen callback
+  server.on('listening', () => {
+    // Start the periodic task reconciliation system directly
+    // Don't wait for health checks to avoid creating more rate limit issues
+    if (process.env.NODE_ENV !== 'test') {
+      logger.info('Starting periodic task reconciliation system...');
+      startPeriodicTaskReconciliation();
+      logger.info('Task reconciliation system initialized successfully');
+    }
+    
+    // Run startup health checks in the background but don't block application startup
+    setTimeout(async () => {
+      try {
+        logger.info('Running background health checks...');
+        const healthChecksPassed = await runStartupChecks();
+        
+        if (healthChecksPassed) {
+          logger.info('All background health checks passed successfully.');
+        } else {
+          logger.warn('Some background health checks failed. Application may encounter database errors.');
+        }
+      } catch (error) {
+        logger.error('Error running background health checks', error);
+      }
+    }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
+  });
+} else {
+  // In development, start these systems right away
   // Start the periodic task reconciliation system directly
-  // Don't wait for health checks to avoid creating more rate limit issues
   if (process.env.NODE_ENV !== 'test') {
     logger.info('Starting periodic task reconciliation system...');
     startPeriodicTaskReconciliation();
     logger.info('Task reconciliation system initialized successfully');
   }
   
-  // Run startup health checks in the background but don't block application startup
+  // Run startup health checks in the background
   setTimeout(async () => {
     try {
       logger.info('Running background health checks...');
@@ -298,4 +326,4 @@ if (isProduction) {
       logger.error('Error running background health checks', error);
     }
   }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
-});
+}

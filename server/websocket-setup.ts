@@ -24,6 +24,31 @@ import WebSocketService, { setGlobalWebSocketService } from './services/websocke
 export function setupWebSocketServer(httpServer: Server): WebSocketServer {
   logger.info('[WebSocket] Setting up unified WebSocket server on path /ws');
   
+  /**
+   * Environment-aware WebSocket initialization
+   * 
+   * In production mode, we only allow WebSocket initialization on port 8080
+   * to ensure compatibility with Replit Autoscale deployment requirements.
+   */
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Check server port for production mode constraints
+  if (isProduction) {
+    const address = httpServer.address();
+    const currentPort = typeof address === 'object' && address ? address.port : null;
+    
+    // In production, only initialize WebSocket on port 8080
+    if (currentPort !== 8080) {
+      logger.warn('[WebSocket] Production mode detected - WebSocket initialization skipped on port ' + 
+                 currentPort + ' (only allowed on port 8080)');
+      
+      // Return a non-operational WebSocket server to maintain API compatibility
+      return new WebSocketServer({ noServer: true });
+    }
+    
+    logger.info('[WebSocket] Production mode - Initializing WebSocket on required port 8080');
+  }
+  
   try {
     // Initialize the WebSocket server using the unified module
     // We create only ONE WebSocket server instance to avoid conflicts
