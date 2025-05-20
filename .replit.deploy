@@ -1,24 +1,19 @@
-run = "NODE_ENV=production PORT=8080 node deployment-server.js"
-build = "npm run build"
-entrypoint = "deployment-server.js"
+modules = ["nodejs-20", "web", "postgresql-16"]
+hidden = [".config", ".git", "generated-icon.png", "node_modules/.cache", "node_modules/.vite"]
+run = "npm run dev"
 
-excludePaths = [
-  # Large asset directories
-  "attached_assets",
-  "backup_assets",
-  "backup_text",
-  "cleanup-scripts", 
-  "cleanup-plan",
-  "uploads",
-  "deployment-excluded",
-  
-  # System directories that add unnecessary size
-  ".local",
-  ".cache",
-  ".pythonlibs",
-  ".git",
-  "node_modules/.cache"
-]
+[nix]
+channel = "stable-24_05"
 
-# Force port 8080 for deployment
+[deployment]
 deploymentTarget = "cloudrun"
+build = ["npm", "run", "build"]
+run = ["sh", "-c", "node dist/server/deployment-server.js"]
+
+# Only using a single port as required by Replit Cloud Run
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[workflows]
+runButton = "Project"
