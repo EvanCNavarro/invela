@@ -8,4 +8,8 @@ attached_assets/
 backup_assets/
 backup_text/
 cleanup-scripts/
+cleanup-plan/
 deployment-excluded/
+.local/
+.cache/
+.pythonlibs/
