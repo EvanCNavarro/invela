@@ -6,16 +6,16 @@
  */
 
 import express from 'express';
-import { db } from '../db';
-import { files, tasks, kyb_responses } from '../../db/schema';
+import { db } from '@db';
+import { files, tasks, kybResponses } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { isAuthenticated } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
 // Middleware to ensure user is authenticated
-router.use(isAuthenticated);
+router.use(requireAuth);
 
 /**
  * Check if a file is missing for a task

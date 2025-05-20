@@ -6,18 +6,18 @@
  */
 
 import express from 'express';
-import { db } from '../../db';
-import { files, tasks } from '../../../db/schema';
+import { db } from '@db';
+import { files, tasks } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../../utils/logger';
-import { isAuthenticated } from '../../middleware/auth';
+import { requireAuth } from '../../middleware/auth';
 import path from 'path';
 import fs from 'fs/promises';
 
 const router = express.Router();
 
 // Middleware to ensure user is authenticated
-router.use(isAuthenticated);
+router.use(requireAuth);
 
 /**
  * Check if a transactional form has missing file attachments
