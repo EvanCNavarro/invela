@@ -11,17 +11,9 @@
  * In development, it will use 5000 as the default fallback
  */
 export function getDeploymentPort(): number {
-  // Always prioritize the PORT environment variable, which is essential for Autoscale deployments
-  // where PORT is typically set to 8080
-  const envPort = process.env.PORT;
-  
-  if (envPort) {
-    const parsedPort = parseInt(envPort, 10);
-    return isNaN(parsedPort) ? 8080 : parsedPort;
-  }
-  
-  // For Autoscale deployments, always default to 8080 if PORT is not provided
-  return process.env.NODE_ENV === 'production' ? 8080 : 5000;
+  // IMPORTANT: Always return 8080 for Autoscale deployment compatibility
+  // This is a strict requirement for Replit Autoscale deployments
+  return 8080;
 }
 
 /**

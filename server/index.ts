@@ -197,15 +197,18 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
 // Configure server for proper deployment
-// Always use port 8080 for Autoscale deployment, 5000 for local development
+// IMPORTANT: ALWAYS use port 8080 for Autoscale deployment
+// This is a strict requirement for Replit Autoscale - the application MUST listen on port 8080
 const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
 
 // Set NODE_ENV based on deployment context
 process.env.NODE_ENV = isDeployment ? 'production' : 'development';
 
 // Standardize port configuration for deployment compatibility
+// For Autoscale: we MUST use port 8080 regardless of any other environment variables
+// For development: we can use specified PORT or fallback to 5000
 // Always bind to 0.0.0.0 for proper network access
-const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+const PORT = 8080; // Always use 8080 for consistent deployment behavior
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
@@ -219,13 +222,15 @@ logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// Start the server with the standardized configuration and health checks
-server.listen(PORT, HOST, async () => {
-  logger.info(`Server running on ${HOST}:${PORT}`);
+// Start the server with the standardized configuration for Autoscale compatibility
+// IMPORTANT: Always use 8080 for deployment - this is critical for Replit Autoscale
+server.listen(8080, HOST, async () => {
+  // Log the consistent port configuration - always 8080
+  logger.info(`Server running on ${HOST}:8080`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
   
-  // Log additional deployment information
-  logDeploymentInfo(PORT, HOST);
+  // Log additional deployment information with forced 8080 port
+  logDeploymentInfo(8080, HOST);
   
   // Start the periodic task reconciliation system directly
   // Don't wait for health checks to avoid creating more rate limit issues
