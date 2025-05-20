@@ -663,7 +663,21 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   
   // Generate the image URL based on the tab name and step
   const getImageUrl = () => {
-    return `/attached_assets/modal_${normalizedTabName.replace('-', '_')}_${stepToUse + 1}.png`;
+    // Map tab names to their correct image prefix pattern based on available files
+    const tabToPrefix = {
+      'dashboard': 'modal_dash',
+      'file-vault': 'modal_file',
+      'risk-score': 'modal_risk',
+      'risk-score-configuration': 'modal_risk',
+      'network': 'modal_network',
+      'claims': 'modal_claims',
+      'insights': 'modal_insights'
+    };
+    
+    // Use the correct prefix or fallback to a normalized version of the tab name
+    const prefix = tabToPrefix[normalizedTabName] || `modal_${normalizedTabName.replace(/-/g, '_')}`;
+    
+    return `/attached_assets/${prefix}_${stepToUse + 1}.png`;
   };
   
   const imageUrl = getImageUrl();
