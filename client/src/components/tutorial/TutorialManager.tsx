@@ -67,7 +67,7 @@ const TUTORIAL_CONTENT: Record<string, {
   
   // Risk Score Configuration - Reduced to 3 steps to match the provided images
   'risk-score-configuration': {
-    title: 'S&P Data Access Risk Score (DARS) Configuration Overview',
+    title: 'S&P Data Access Risk Score (DARS) Overview',
     description: 'Learn how to customize and interpret risk scoring for your organization',
     steps: [
       {
