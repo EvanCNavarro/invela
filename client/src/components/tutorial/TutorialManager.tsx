@@ -514,7 +514,9 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Query client for invalidating cache on WebSocket updates
   const queryClient = useQueryClient();
   
-  // We'll use the more specific asset loading in the render function
+  // Always include all hooks here to maintain consistent hook order 
+  // We'll use this for baseline image URL construction without loading
+  const initialAssets = useTutorialAssets(normalizedTabName, 0, false);
   
   // Handle initialization with comprehensive logging
   useEffect(() => {
@@ -660,14 +662,10 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     loading: isLoading
   });
   
-  // Load the appropriate image for this tutorial step
-  const tutorialAssets = useTutorialAssets(
-    normalizedTabName,
-    stepToUse,
-    tutorialEnabled
-  );
-  const imageUrl = tutorialAssets.imageUrl;
-  const imageLoading = tutorialAssets.isLoading;
+  // We'll manually handle the image URL without using the hook directly here
+  // Instead, we'll use the placeholder path
+  const imageUrl = `/attached_assets/modal_${normalizedTabName.replace('-', '_')}_${stepToUse + 1}.png`;
+  const imageLoading = false;
   
   logger.debug(`Loading image for ${normalizedTabName}, step ${stepToUse + 1}: ${imageUrl}`);
   
