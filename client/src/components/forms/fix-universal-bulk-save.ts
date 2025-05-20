@@ -22,15 +22,23 @@ const logger = getLogger('FixUniversalBulkSave');
  * @param taskId The ID of the task
  * @param taskType The type of the task (kyb, ky3p, open_banking)
  * @param formData The form data to save
+ * @param options Optional settings for the save operation
  * @returns Promise that resolves to true if successful, false otherwise
  */
 export async function fixedUniversalSaveProgress(
   taskId: number,
   taskType: string,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  options?: {
+    preserveProgress?: boolean;
+    source?: string;
+  }
 ): Promise<boolean> {
   try {
-    logger.info(`Using fixed universal save implementation for ${taskType} task ${taskId}`);
+    const source = options?.source || 'manual';
+    const preserveProgress = options?.preserveProgress === true;
+    
+    logger.info(`Using fixed universal save implementation for ${taskType} task ${taskId} (source: ${source})`);
     
     // Determine the appropriate endpoint based on task type
     let endpoint: string;
@@ -53,10 +61,14 @@ export async function fixedUniversalSaveProgress(
     
     // Log the endpoint and number of fields
     const fieldCount = Object.keys(formData).length;
-    logger.info(`Saving ${fieldCount} fields to ${endpoint}`);
+    logger.info(`Saving ${fieldCount} fields to ${endpoint} (preserveProgress: ${preserveProgress})`);
     
-    // Send the request
-    const response = await axios.post(endpoint, { formData });
+    // Send the request with additional options
+    const response = await axios.post(endpoint, { 
+      formData,
+      preserveProgress,
+      source
+    });
     
     if (response.status === 200) {
       logger.info(`Successfully saved ${taskType} form data for task ${taskId}`);
