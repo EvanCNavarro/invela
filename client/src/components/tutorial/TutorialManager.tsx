@@ -35,7 +35,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Claims Dashboard',
         description: 'Welcome to Claims Management. This dashboard gives you an overview of all claims, their status, and important metrics.',
-        imagePath: '/assets/tutorials/claims/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Claims Dashboard Overview',
         bulletPoints: [
           'View a summary of all claims activity across your organization',
@@ -46,7 +46,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Claim Details',
         description: 'Click on any claim to view its full details, including policy information, claimant data, and documentation.',
-        imagePath: '/assets/tutorials/claims/details.svg',
+        // Image path removed for fresh start
         stepTitle: 'Detailed Claims Information',
         bulletPoints: [
           'Access comprehensive information about individual claims',
@@ -57,7 +57,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Claims Processing',
         description: 'Use these tools to process claims efficiently. You can update status, request additional information, or approve payments.',
-        imagePath: '/assets/tutorials/claims/processing.svg',
+        // Image path removed for fresh start
         stepTitle: 'Claims Processing Tools',
         bulletPoints: [
           'Update claim status using standardized workflow steps',
@@ -68,7 +68,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Analytics Dashboard',
         description: 'The analytics dashboard provides insights into claims trends, settlement times, and potential fraud indicators.',
-        imagePath: '/assets/tutorials/claims/analytics.svg',
+        // Image path removed for fresh start
         stepTitle: 'Claims Analytics',
         bulletPoints: [
           'Identify patterns and trends in claims data over time',
@@ -79,7 +79,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Documentation Management',
         description: 'Manage all claim-related documents in this section. You can upload, organize, and securely share important files with stakeholders.',
-        imagePath: '/assets/tutorials/claims/documentation.svg',
+        // Image path removed for fresh start
         stepTitle: 'Document Management',
         bulletPoints: [
           'Upload and organize claim-related documents securely',
@@ -98,7 +98,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Score Configuration',
         description: 'Welcome to the Risk Score Configuration page. Here you can customize how risk is assessed across your organization and compare risk profiles with other companies.',
-        imagePath: '/assets/tutorials/risk-score/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Configuration Overview',
         bulletPoints: [
           'Tailor the S&P Data Access Risk Score to your organization\'s needs',
@@ -109,7 +109,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Gauge',
         description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        // Image path removed for fresh start
         stepTitle: 'Risk Level Visualization',
         bulletPoints: [
           'Visualize your current risk score on the interactive gauge',
@@ -120,7 +120,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Dimensions',
         description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        // Image path removed for fresh start
         stepTitle: 'Risk Dimension Weighting',
         bulletPoints: [
           'Customize weights for key risk factors like Cyber Security and Public Sentiment',
@@ -131,7 +131,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Acceptance Level',
         description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        // Image path removed for fresh start
         stepTitle: 'Risk Tolerance Settings',
         bulletPoints: [
           'Set company-wide risk tolerance thresholds using the slider',
@@ -142,7 +142,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Comparative Analysis',
         description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        // Image path removed for fresh start
         stepTitle: 'Benchmarking Tools',
         bulletPoints: [
           'Compare your risk configuration with industry peers and competitors',
@@ -160,7 +160,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Score Dashboard',
         description: 'Welcome to the Risk Score Dashboard. This page shows your current S&P Data Access Risk Score and provides tools to understand and manage your risk posture.',
-        imagePath: '/assets/tutorials/risk-score/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Risk Score Overview',
         bulletPoints: [
           'View your current risk score and trend over time',
@@ -171,7 +171,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Gauge',
         description: 'The Risk Gauge shows the current calculated risk level based on your configuration. Higher scores indicate greater risk exposure.',
-        imagePath: '/assets/tutorials/risk-score/gauge.svg',
+        // Image path removed for fresh start
         stepTitle: 'Understanding the Risk Gauge',
         bulletPoints: [
           'Interpret color-coded risk levels from low to critical',
@@ -182,7 +182,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Dimensions',
         description: 'Drag and drop these cards to prioritize different risk dimensions. The order indicates the relative importance of each dimension in the overall risk calculation.',
-        imagePath: '/assets/tutorials/risk-score/dimension-cards.svg',
+        // Image path removed for fresh start
         stepTitle: 'Managing Risk Dimensions',
         bulletPoints: [
           'Prioritize risk dimensions based on your business needs',
@@ -193,7 +193,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Risk Acceptance Level',
         description: 'Adjust this slider to set your organization\'s risk tolerance. This affects how calculated scores are interpreted in the context of your risk appetite.',
-        imagePath: '/assets/tutorials/risk-score/risk-acceptance.svg',
+        // Image path removed for fresh start
         stepTitle: 'Setting Risk Tolerance',
         bulletPoints: [
           'Define acceptable risk thresholds for your organization',
@@ -204,7 +204,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Comparative Analysis',
         description: 'Compare your risk profile with other companies or industry benchmarks. Use the search bar to add companies to your comparison.',
-        imagePath: '/assets/tutorials/risk-score/comparative.svg',
+        // Image path removed for fresh start
         stepTitle: 'Risk Comparison Tools',
         bulletPoints: [
           'Compare your risk profile with industry peers',
@@ -221,7 +221,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Insights Overview',
         description: 'Welcome to the Insights Dashboard. This analytics center provides data-driven insights to help you make informed decisions.',
-        imagePath: '/assets/tutorials/insights/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Insights Overview',
         bulletPoints: [
           'Access comprehensive analytics on your business risk profile',
@@ -232,7 +232,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Data Visualization',
         description: 'These charts and graphs represent key metrics and trends. Hover over any element to see detailed information.',
-        imagePath: '/assets/tutorials/insights/visualization.svg',
+        // Image path removed for fresh start
         stepTitle: 'Interactive Visualizations',
         bulletPoints: [
           'Explore dynamic charts that respond to your interactions',
@@ -243,7 +243,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Custom Reports',
         description: 'Create customized reports based on your specific needs. Select metrics, time periods, and presentation formats.',
-        imagePath: '/assets/tutorials/insights/reports.svg',
+        // Image path removed for fresh start
         stepTitle: 'Report Customization',
         bulletPoints: [
           'Build tailored reports focusing on metrics that matter to you',
@@ -254,7 +254,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Export Options',
         description: 'Use these options to export insights as PDFs, spreadsheets, or presentations to share with stakeholders.',
-        imagePath: '/assets/tutorials/insights/export.svg',
+        // Image path removed for fresh start
         stepTitle: 'Sharing & Exporting',
         bulletPoints: [
           'Export data in multiple formats including PDF, CSV, and PowerPoint',
@@ -271,7 +271,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Explore Your Network',
         description: 'View and manage your network of business partners. Quickly identify who you work with and the status of each relationship.',
-        imagePath: '/assets/tutorials/network/modal_network_1.png',
+        // Image path removed for fresh start
         stepTitle: 'Explore Your Network',
         bulletPoints: [
           'View your entire business network in an interactive visualization',
@@ -282,7 +282,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Invite New Connections',
         description: 'Easily invite new fintech companies or banks to join your network directly from this interface.',
-        imagePath: '/assets/tutorials/network/modal_network_2.png',
+        // Image path removed for fresh start
         stepTitle: 'Invite New Connections',
         bulletPoints: [
           'Add new partners to your network with just a few clicks',
@@ -293,7 +293,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Detailed Company Profiles',
         description: 'Access detailed profiles including accreditation status, key contacts, and more by clicking into company entries.',
-        imagePath: '/assets/tutorials/network/modal_network_3.png',
+        // Image path removed for fresh start
         stepTitle: 'Detailed Company Profiles',
         bulletPoints: [
           'Access comprehensive information about any company in your network',
@@ -310,7 +310,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'File Vault Overview',
         description: 'Welcome to the File Vault. This secure repository stores all your important documents with enhanced security and organization.',
-        imagePath: '/assets/tutorials/file-vault/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'File Vault Overview',
         bulletPoints: [
           'Access all your documents in one secure, centralized location',
@@ -321,7 +321,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Document Categories',
         description: 'Files are organized by these categories. Click on any category to view related documents or use the search to find specific files.',
-        imagePath: '/assets/tutorials/file-vault/categories.svg',
+        // Image path removed for fresh start
         stepTitle: 'Document Organization',
         bulletPoints: [
           'Browse files organized by logical categories and subcategories',
@@ -332,7 +332,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Upload Process',
         description: 'Use this section to upload new files. You can add metadata, set permissions, and choose the appropriate category for better organization.',
-        imagePath: '/assets/tutorials/file-vault/upload.svg',
+        // Image path removed for fresh start
         stepTitle: 'File Upload & Management',
         bulletPoints: [
           'Upload multiple files with drag-and-drop or file selection',
@@ -343,7 +343,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Security Settings',
         description: 'Manage file permissions and access controls here. You can set who can view, edit, or download each document or category.',
-        imagePath: '/assets/tutorials/file-vault/security.svg',
+        // Image path removed for fresh start
         stepTitle: 'Security Controls',
         bulletPoints: [
           'Set granular permissions for individuals or groups of users',
@@ -360,7 +360,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Profile Overview',
         description: 'Welcome to your Company Profile. Here you can view and update all your organization\'s information and settings.',
-        imagePath: '/assets/tutorials/company-profile/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Company Profile Overview',
         bulletPoints: [
           'View and edit your company\'s core information in one place',
@@ -371,7 +371,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Business Information',
         description: 'This section contains your core business details. Keep this information up-to-date for accurate risk assessment.',
-        imagePath: '/assets/tutorials/company-profile/business-info.svg',
+        // Image path removed for fresh start
         stepTitle: 'Business Details',
         bulletPoints: [
           'Update essential company information including address and contacts',
@@ -382,7 +382,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Team Management',
         description: 'Manage your team members, their roles, and permissions. You can add new users or update existing access levels.',
-        imagePath: '/assets/tutorials/company-profile/team.svg',
+        // Image path removed for fresh start
         stepTitle: 'Team Management',
         bulletPoints: [
           'Add new team members and assign appropriate roles',
@@ -393,7 +393,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Compliance Status',
         description: 'Review your compliance status and certification levels. This section shows any outstanding requirements or upcoming renewals.',
-        imagePath: '/assets/tutorials/company-profile/compliance.svg',
+        // Image path removed for fresh start
         stepTitle: 'Compliance Tracking',
         bulletPoints: [
           'Track compliance status across multiple regulatory frameworks',
@@ -410,7 +410,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Playground Overview',
         description: 'Welcome to the Playground. This is a safe environment where you can test different scenarios without affecting your production data.',
-        imagePath: '/assets/tutorials/playground/overview.svg',
+        // Image path removed for fresh start
         stepTitle: 'Simulation Environment',
         bulletPoints: [
           'Experiment with risk scenarios in a safe, isolated environment',
@@ -421,7 +421,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Scenario Building',
         description: 'Use these tools to create different test scenarios. You can simulate various risk events and see how they would impact your business.',
-        imagePath: '/assets/tutorials/playground/scenarios.svg',
+        // Image path removed for fresh start
         stepTitle: 'Creating Risk Scenarios',
         bulletPoints: [
           'Build custom scenarios with multiple risk variables',
@@ -432,7 +432,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Results Analysis',
         description: 'After running a simulation, you can analyze the results here. Compare different scenarios to find optimal risk strategies.',
-        imagePath: '/assets/tutorials/playground/results.svg',
+        // Image path removed for fresh start
         stepTitle: 'Analyzing Outcomes',
         bulletPoints: [
           'Compare simulation results side-by-side with detailed metrics',
@@ -449,7 +449,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Personalize Your Dashboard',
         description: 'Select and arrange widgets to create your ideal dashboard. Easily customize your workspace based on your role and preferences.',
-        imagePath: '/assets/tutorials/dashboard/modal_dash_1.png',
+        // Image path removed for fresh start
         stepTitle: 'Personalize Your Dashboard',
         bulletPoints: [
           'Drag and drop widgets to reorganize your layout',
@@ -460,7 +460,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Quick Actions at Your Fingertips',
         description: 'Access frequently used features directly from your dashboard with Quick Actions.',
-        imagePath: '/assets/tutorials/dashboard/modal_dash_2.png',
+        // Image path removed for fresh start
         stepTitle: 'Quick Actions at Your Fingertips',
         bulletPoints: [
           'Launch common tasks with a single click',
@@ -471,7 +471,7 @@ const TUTORIAL_CONTENT: Record<string, {
       {
         title: 'Tailored Data Visualizations',
         description: 'View and interact with key metrics and visualizations that matter most to your role.',
-        imagePath: '/assets/tutorials/dashboard/modal_dash_3.png',
+        // Image path removed for fresh start
         stepTitle: 'Tailored Data Visualizations',
         bulletPoints: [
           'Monitor performance metrics and risk indicators in real-time',
@@ -733,14 +733,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
         <TabTutorialModal
           title={content.title}
           description={content.steps[0].description}
-          imageUrl={
-            // First try explicit URL if provided
-            content.steps[0].imageUrl || 
-            // Then try PNG version for the step
-            `/assets/tutorials/${possibleMatch}/1.png` || 
-            // Fallback to old SVG path if specified
-            content.steps[0].imagePath
-          }
+          // No image paths specified - will use placeholder
           isLoading={false}
           currentStep={0}
           totalSteps={content.steps.length}
@@ -782,14 +775,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     <TabTutorialModal
       title={modalTitle}
       description={tutorialContent.steps[stepToUse].description}
-      imageUrl={
-        // First try to use the provided imageUrl if it exists
-        tutorialContent.steps[stepToUse].imageUrl || 
-        // Then try to use the PNG version for the current step
-        `/assets/tutorials/${normalizedTabName}/${stepToUse + 1}.png` || 
-        // Then fallback to specified image path
-        tutorialContent.steps[stepToUse].imagePath
-      }
+      // No image paths specified - will use placeholder
       isLoading={isLoading}
       currentStep={stepToUse}
       totalSteps={tutorialContent.steps.length}
