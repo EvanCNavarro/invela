@@ -3,15 +3,21 @@ build = "npm run build"
 entrypoint = "deployment-server.js"
 
 excludePaths = [
+  # Large asset directories
   "attached_assets",
   "backup_assets",
   "backup_text",
   "cleanup-scripts", 
   "cleanup-plan",
   "uploads",
-  "node_modules/.cache",
+  "deployment-excluded",
+  
+  # System directories that add unnecessary size
+  ".local",
+  ".cache",
+  ".pythonlibs",
   ".git",
-  "deployment-excluded"
+  "node_modules/.cache"
 ]
 
 # Force port 8080 for deployment
