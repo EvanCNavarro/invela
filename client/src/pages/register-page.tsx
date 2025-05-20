@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,12 +54,14 @@ const registrationSchema = z.object({
 export default function RegisterPage() {
   const { toast } = useToast();
   const { user, registerMutation } = useAuth();
+  const [, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
     company: string;
     fullName: string;
   } | null>(null);
+  const [isLoadingTransition, setIsLoadingTransition] = useState(false);
 
   const invitationForm = useForm<z.infer<typeof invitationCodeSchema>>({
     resolver: zodResolver(invitationCodeSchema),
@@ -375,9 +377,12 @@ export default function RegisterPage() {
               // Refresh auth data to ensure latest state
               await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
               
+              // Set loading transition state
+              setIsLoadingTransition(true);
+              
               // Navigate to home page after a small delay to show the toast
               setTimeout(() => {
-                window.location.href = "/";
+                navigate("/");
               }, 1500);
               return;
             }
