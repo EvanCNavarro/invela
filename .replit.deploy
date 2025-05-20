@@ -1,6 +1,6 @@
-run = "NODE_ENV=production PORT=8080 node deploy-server.js"
+run = "NODE_ENV=production PORT=8080 node production-server.js"
 build = "npm run build"
-entrypoint = "deployment-entry.js"
+entrypoint = "production-server.js"
 
 excludePaths = [
   "attached_assets",
@@ -10,9 +10,18 @@ excludePaths = [
   "uploads",
   "node_modules/.cache",
   ".git",
-  "server/routes/fix-missing-file-api.ts",
-  "server/routes/fix-ky3p-files.ts",
-  "server/routes/transactional-form-routes/fix-missing-file.ts"
+  "add-*.js",
+  "browser-*.js",
+  "check-*.js",
+  "cleanup-*.js",
+  "create-*.js",
+  "database-*.js",
+  "demo-*.js",
+  "deployment-excluded/",
+  "direct-*.js",
+  "fix-*.js",
+  "force-*.js",
+  "form-*.js"
 ]
 
 # Force port 8080 for deployment

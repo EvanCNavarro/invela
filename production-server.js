@@ -1,25 +1,35 @@
 /**
- * Production Server Entry Point for Replit Deployment
- *
- * This file ensures the server ONLY listens on port 8080 for Replit Autoscale deployment.
+ * Production Server Entry Point
+ * 
+ * This is a simplified production server that uses the built files
+ * from the dist directory and avoids any TypeScript compilation issues.
  */
 
 // Force production environment
 process.env.NODE_ENV = 'production';
-// Force port 8080
 process.env.PORT = '8080';
 
-console.log('===========================================');
-console.log('PRODUCTION SERVER STARTING');
-console.log('===========================================');
-console.log('Environment: production');
-console.log('Port: 8080');
-console.log('Host: 0.0.0.0');
-console.log('===========================================');
+console.log('=======================================');
+console.log('INVELA PLATFORM - PRODUCTION SERVER');
+console.log(`Starting server at: ${new Date().toISOString()}`);
+console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`Port: ${process.env.PORT}`);
+console.log('=======================================');
 
-// Import the server
-import('./dist/server/index.js')
-  .catch(err => {
-    console.error('Error starting production server:', err);
-    process.exit(1);
-  });
+// Dynamically import the built server
+try {
+  // Import with proper error handling
+  import('./dist/server/index.js')
+    .then(() => {
+      console.log('✅ Server started successfully!');
+    })
+    .catch(error => {
+      console.error('❌ Failed to start server:', error);
+      console.error('Stack trace:', error.stack);
+      process.exit(1);
+    });
+} catch (error) {
+  console.error('❌ Fatal error importing server module:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+}
