@@ -1,0 +1,11 @@
+node_modules/
+uploads/
+dist/
+client/node_modules/
+.git/
+*.log
+attached_assets/
+backup_assets/
+backup_text/
+cleanup-scripts/
+deployment-excluded/
