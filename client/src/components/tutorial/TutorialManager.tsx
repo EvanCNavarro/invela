@@ -234,16 +234,6 @@ const TUTORIAL_CONTENT: Record<string, {
           'Select document types and format options (PDF, etc.)',
           'Add comments and customize document parameters'
         ]
-      },
-      {
-        title: 'File Management',
-        description: 'Organize, categorize, and manage your documents efficiently within the vault.',
-        stepTitle: 'Document Organization',
-        bulletPoints: [
-          'Categorize files using tags and custom folders',
-          'Apply document retention policies and access controls',
-          'Manage file versions and maintain audit trails for compliance'
-        ]
       }
     ]
   },
