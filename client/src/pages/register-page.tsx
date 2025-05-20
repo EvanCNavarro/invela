@@ -683,6 +683,16 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
+      {/* Loading Transition Overlay */}
+      {isLoadingTransition && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="text-foreground font-medium">Setting up your account...</p>
+          </div>
+        </div>
+      )}
+      
       {!validatedInvitation ? (
         <div className="invitation-container">
           <motion.div 
