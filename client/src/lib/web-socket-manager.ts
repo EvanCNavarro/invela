@@ -56,9 +56,22 @@ class WebSocketManager {
     if (companyId) this.companyId = companyId;
     
     try {
-      // Determine the correct WebSocket URL based on environment
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Determine if we're in a production deployment environment
+      const isProduction = window.location.hostname.includes('replit.app') ||
+                          window.location.hostname.includes('replit.dev');
+      
+      let wsUrl;
+      
+      if (isProduction) {
+        // In production deployment, always use the secure protocol with the hostname
+        wsUrl = `wss://${window.location.host}/ws`;
+        console.log('[WebSocket] Production environment detected, using:', wsUrl);
+      } else {
+        // In development, use the protocol-based approach
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/ws`;
+        console.log('[WebSocket] Development environment detected, using:', wsUrl);
+      }
       
       // Create a new WebSocket connection
       this.socket = new WebSocket(wsUrl);
@@ -69,9 +82,19 @@ class WebSocketManager {
       this.socket.onclose = this.handleClose.bind(this);
       this.socket.onerror = this.handleError.bind(this);
       
+      // Make socket available globally for compatibility with other components
+      (window as any).unifiedWebSocket = this.socket;
+      
       console.log('[WebSocket] Connection attempt initiated');
     } catch (error) {
       console.error('[WebSocket] Connection error:', error);
+      
+      // In case of connection error, notify the application
+      this.emit('error', {
+        timestamp: new Date().toISOString(),
+        message: 'Failed to establish WebSocket connection',
+        error: String(error)
+      });
     }
   }
   
