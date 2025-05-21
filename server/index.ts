@@ -50,6 +50,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Register health check endpoint BEFORE other routes
+// This ensures root path requests will be handled properly for deployment health checks
+logger.info('[HealthCheck] Registering health check endpoints');
+app.use(createHealthCheckRouter());
+logger.info('[HealthCheck] Health check endpoints registered successfully');
+
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 

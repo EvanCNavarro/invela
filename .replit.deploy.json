@@ -1,7 +1,7 @@
 {
-  "run": "NODE_ENV=production PORT=8080 node dist/server.js",
+  "run": "NODE_ENV=production PORT=8080 node dist/index.js",
   "entrypoint": "server/index.ts",
-  "build": "./deploy.sh",
+  "build": "npm run build && node deploy-setup.js",
   "exclude": [
     "attached_assets",
     "backup_assets",
@@ -16,10 +16,10 @@
     "server/src",
     "*.md",
     "*.sh",
-    "!deploy.sh",
     "*.cjs",
     "*.ts",
     "*.tsx",
+    "!deploy-setup.js",
     "!dist/**/*.js",
     "!server/**/*.js"
   ],
