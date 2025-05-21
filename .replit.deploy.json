@@ -1,26 +1,29 @@
 {
-  "run": "NODE_ENV=production PORT=8080 node server/deployment-server.js",
+  "run": "node server/deployment-server.js",
   "entrypoint": "server/deployment-server.js",
-  "build": "npm run build",
+  "build": "npm run build && node build-for-deployment.js",
   "exclude": [
-    "attached_assets",
-    "backup_assets",
-    "backup_text",
-    "uploads",
-    "node_modules/.cache",
-    "node_modules/typescript",
-    "node_modules/@types",
-    "node_modules/esbuild",
-    ".git",
-    "client/src",
-    "server/src",
-    "*.md",
-    "*.sh",
-    "*.cjs",
-    "*.ts",
-    "*.tsx",
+    "*",
+    "**/*",
+    "!package.json",
+    "!package-lock.json",
+    "!dist/public/**/*.html",
+    "!dist/public/**/*.js",
+    "!dist/public/**/*.css",
+    "!dist/public/**/*.png",
+    "!dist/public/**/*.jpg",
+    "!dist/public/**/*.svg",
+    "!dist/public/**/*.ico",
+    "!dist/public/**/*.json",
     "!server/deployment-server.js",
-    "!dist/**/*.js"
+    "!node_modules/express/**",
+    "!node_modules/http/**",
+    "!node_modules/path/**",
+    "!node_modules/fs/**"
   ],
-  "port": 8080
+  "port": 8080,
+  "env": {
+    "PORT": "8080",
+    "NODE_ENV": "production"
+  }
 }
