@@ -35,8 +35,9 @@ export class APIError extends Error {
   }
 }
 
-// Import our custom CORS middleware
+// Import our custom middlewares
 import { setupCorsBypass } from './cors-middleware';
+import { viteHostAdapter } from './vite-adapter';
 
 // Create our Express application
 const app = express();
@@ -44,6 +45,9 @@ const server = createServer(app);
 
 // Apply our custom CORS middleware first to handle Replit preview domains
 app.use(setupCorsBypass);
+
+// Apply the Vite adapter to handle blocked host requests
+app.use(viteHostAdapter);
 
 // Then configure standard CORS for all other environments
 app.use(cors({
