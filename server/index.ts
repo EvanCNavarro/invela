@@ -8,6 +8,7 @@ import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
+import { setupReplitPreviewHandler, setupPreviewApiEndpoints } from "./replit-preview-handler";
 
 // Create required directories
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -118,6 +119,11 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Setup Replit preview handler for direct compatibility
+setupReplitPreviewHandler(app);
+setupPreviewApiEndpoints(app);
+logger.info('[ServerStartup] Replit preview compatibility handler initialized');
 
 // Register API routes
 registerRoutes(app);
