@@ -1,40 +1,24 @@
 /**
- * Deployment Server for Replit Cloud Run
- * 
- * A minimal server that explicitly binds to port 8080
- * to satisfy Replit's deployment requirements.
+ * Ultra-Minimal Deployment Server for Replit
  */
 
+// Using CommonJS syntax for maximum compatibility
 const http = require('http');
 
-// Port configuration - explicitly bind to 8080
-const PORT = 8080; 
+// Always use 8080 for Replit deployment
+const PORT = 8080;
 const HOST = '0.0.0.0';
 
-// Simple timestamp function for logs
-function getTimestamp() {
-  return new Date().toISOString();
-}
-
-function log(message) {
-  console.log(`[${getTimestamp()}] ${message}`);
-}
-
-// Create a minimal server
+// Create the simplest possible server
 const server = http.createServer((req, res) => {
-  log(`Request received: ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] Request: ${req.method} ${req.url}`);
   
-  // Simple health check response
-  res.writeHead(200, {'Content-Type': 'application/json'});
-  res.end(JSON.stringify({
-    status: 'ok',
-    message: 'API is running',
-    timestamp: getTimestamp()
-  }));
+  // Always return 200 OK for health checks
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('OK');
 });
 
-// Start server with explicit port binding
+// Start server with explicit binding
 server.listen(PORT, HOST, () => {
-  log(`Server running at http://${HOST}:${PORT}`);
-  log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+  console.log(`[${new Date().toISOString()}] Server running at http://${HOST}:${PORT}`);
 });
