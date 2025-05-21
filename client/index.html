@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Fix for Vite's "Blocked request. This host is not allowed" error -->
+    <script>
+      /**
+       * Replit Preview Domain Validation Fix
+       * 
+       * This script fixes the "Blocked request. This host is not allowed" error
+       * by adding the current Replit preview domain to Vite's allowed hosts list.
+       */
+      (function() {
+        // Check if we're on a Replit preview domain
+        const isReplitDomain = typeof window !== 'undefined' && 
+                               window.location.hostname.includes('.repl.co') || 
+                               window.location.hostname.includes('.replit.dev');
+        
+        if (isReplitDomain) {
+          // Create the __vite_plugin_trusted_types_trust_domains object
+          window.__vite_plugin_trusted_types_trust_domains = 
+            window.__vite_plugin_trusted_types_trust_domains || {};
+          
+          // Add the current domain to the trusted list
+          window.__vite_plugin_trusted_types_trust_domains[window.location.hostname] = true;
+          
+          // Log once to confirm the fix was applied
+          console.log(`[Vite Host Fix] Added ${window.location.hostname} to Vite's allowed hosts list`);
+        }
+      })();
+    </script>
     <!-- Proper fix for Vite WebSocket connection issues in Replit environment -->
     <script>
       /**
@@ -77,20 +104,37 @@
           _connect() {
             let connectionUrl = this._url;
             
-            // Only fix Vite HMR URLs with undefined port
-            if (typeof connectionUrl === 'string' && 
-                connectionUrl.includes('vite') && 
-                (connectionUrl.includes('localhost:undefined') || connectionUrl.endsWith(':undefined/'))) {
+            // Handle Replit preview domains and fix URLs with undefined port
+            if (typeof connectionUrl === 'string' && connectionUrl.includes('vite')) {
+              const isReplitDomain = window.location.hostname.includes('.repl.co') || 
+                                    window.location.hostname.includes('.replit.dev');
               
-              // Fix the URL with the correct port
-              const oldUrl = connectionUrl;
-              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:5000');
+              // Case 1: Fix undefined port issues
+              if (connectionUrl.includes('localhost:undefined') || connectionUrl.endsWith(':undefined/')) {
+                const oldUrl = connectionUrl;
+                connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:5000');
+                
+                // Log the URL fix only once per unique URL pattern
+                const logKey = `fixed-${oldUrl}-to-${connectionUrl}`;
+                if (!CONNECTION_STATE.seenMessages.has(logKey)) {
+                  console.log(`[WebSocket] Fixed Vite URL: ${oldUrl} → ${connectionUrl}`);
+                  CONNECTION_STATE.seenMessages.add(logKey);
+                }
+              }
               
-              // Log the URL fix only once per unique URL pattern
-              const logKey = `fixed-${oldUrl}-to-${connectionUrl}`;
-              if (!CONNECTION_STATE.seenMessages.has(logKey)) {
-                console.log(`[WebSocket] Fixed Vite URL: ${oldUrl} → ${connectionUrl}`);
-                CONNECTION_STATE.seenMessages.add(logKey);
+              // Case 2: Replace localhost with Replit domain for preview environment
+              if (isReplitDomain && connectionUrl.includes('localhost')) {
+                const oldUrl = connectionUrl;
+                // Use the current domain instead of localhost
+                connectionUrl = connectionUrl.replace(/wss?:\/\/localhost:[0-9]+/, 
+                                                     `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`);
+                
+                // Log the URL rewrite only once per unique URL pattern
+                const replitKey = `replit-${oldUrl}-to-${connectionUrl}`;
+                if (!CONNECTION_STATE.seenMessages.has(replitKey)) {
+                  console.log(`[WebSocket] Replit domain fix: ${oldUrl} → ${connectionUrl}`);
+                  CONNECTION_STATE.seenMessages.add(replitKey);
+                }
               }
               
               // Check if we should implement backoff for this URL
