@@ -14,10 +14,9 @@ import { Router } from 'express';
 export function createHealthCheckRouter() {
   const router = Router();
   
-  // Dedicated health check endpoint (useful for specific checks)
-  // Use /health instead of / to avoid interfering with the main application
-  router.get('/health', (req, res) => {
-    console.log('[HealthCheck] Received health check request on /health');
+  // Root path handler for Replit health checks
+  router.get('/', (req, res) => {
+    console.log('[HealthCheck] Received health check request');
     res.status(200).json({ 
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -26,9 +25,9 @@ export function createHealthCheckRouter() {
     });
   });
   
-  // Alternative check endpoint for Replit specific health checks
-  router.get('/healthz', (req, res) => {
-    console.log('[HealthCheck] Received health check request on /healthz');
+  // Dedicated health check endpoint (useful for specific checks)
+  router.get('/health', (req, res) => {
+    console.log('[HealthCheck] Received health check request on /health');
     res.status(200).json({ 
       status: 'ok',
       timestamp: new Date().toISOString(),
