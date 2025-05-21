@@ -256,6 +256,7 @@ server.listen(PORT, HOST, async () => {
     logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
     
     // Start a dedicated workflow proxy server on port 5000
+    // This is required for Replit to detect that our workflow is running
     import('./workflow-proxy').then(module => {
       module.startWorkflowProxy(HOST);
     }).catch(error => {
