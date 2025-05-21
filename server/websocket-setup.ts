@@ -11,7 +11,7 @@ import { WebSocketServer } from 'ws';
 import { logger } from './utils/logger';
 import { initializeWebSocketServer as initializeUnifiedWebSocketServer, getWebSocketServer } from './utils/unified-websocket';
 // Import the enhanced WebSocket service
-import WebSocketService, { setGlobalWebSocketService } from './services/websocket-service';
+import * as WebSocketService from './services/websocket-service';
 
 /**
  * Initialize the WebSocket server on the specified path
@@ -39,13 +39,11 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     // Also initialize the improved form submission WebSocket server with the same HTTP server
     // This provides enhanced real-time updates for form submissions
     try {
-      // Use the static method directly with proper TypeScript typing
-      if (WebSocketService.initializeWebSocketServer) {
-        const wss = WebSocketService.initializeWebSocketServer(httpServer, '/ws');
-        // Create a new WebSocketService instance
-        const wsService = new WebSocketService(wss);
-        // Set the global instance for static method access
-        setGlobalWebSocketService(wsService);
+      // Our new WebSocketService might not be fully TypeScript compatible yet
+      // Using JavaScript-style access pattern as a workaround
+      const initFn = WebSocketService['initializeWebSocketServer'];
+      if (typeof initFn === 'function') {
+        initFn(httpServer);
         logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
       } else {
         logger.warn('[WebSocket] Form submission WebSocket initialization function not found');

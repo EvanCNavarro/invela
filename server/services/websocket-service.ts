@@ -108,36 +108,6 @@ export class WebSocketService {
   }
   
   /**
-   * Set up WebSocket server for initial connection handling
-   * This method is needed for deployment compatibility
-   * 
-   * @param server The HTTP server to attach the WebSocket server to
-   * @param path The path for the WebSocket server
-   * @returns The WebSocket server instance
-   */
-  static initializeWebSocketServer(server: any, path: string = '/ws'): WebSocketServer {
-    const wss = new WebSocketServer({ 
-      server,
-      path,
-      // Important: Skip HMR WebSocket connections
-      verifyClient: (info: any) => {
-        const protocol = info.req.headers['sec-websocket-protocol'];
-        return protocol !== 'vite-hmr';
-      }
-    });
-    
-    console.log(`[WebSocketService] Unified WebSocket server initialized successfully`, {
-      module: 'WebSocket',
-      clients: 0,
-      path,
-      id: Math.random().toString(36).substring(2, 8),
-      timestamp: new Date().toISOString()
-    });
-    
-    return wss;
-  }
-  
-  /**
    * Send a message to a specific client
    * 
    * @param client The client to send the message to
@@ -175,49 +145,6 @@ export class WebSocketService {
     this.clients.forEach(client => {
       this.sendToClient(client, message);
     });
-  }
-  
-  /**
-   * Broadcast a general message to all clients
-   * This method is needed for deployment compatibility
-   * 
-   * @param type The message type
-   * @param data The message data
-   */
-  static broadcastMessage(type: string, data: any) {
-    const instance = globalWebSocketService;
-    if (!instance) {
-      console.warn(`[WebSocketService] No global WebSocket service instance available, cannot broadcast message of type: ${type}`);
-      return;
-    }
-    
-    instance.broadcast({
-      type,
-      ...data,
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  /**
-   * Broadcast a form submission completion event
-   * This method is needed for deployment compatibility
-   * 
-   * @param data The form submission data
-   */
-  static broadcastFormSubmissionCompleted(data: any) {
-    const instance = globalWebSocketService;
-    if (!instance) {
-      console.warn('[WebSocketService] No global WebSocket service instance available, cannot broadcast form submission completed');
-      return;
-    }
-    
-    instance.broadcast({
-      type: 'form_submission_completed',
-      ...data,
-      timestamp: new Date().toISOString()
-    });
-    
-    return true;
   }
   
   /**
@@ -288,16 +215,6 @@ export class WebSocketService {
       }
     });
   }
-}
-
-// Create a global instance for static method access
-let globalWebSocketService: WebSocketService | null = null;
-
-// Export a function to set the global instance
-export function setGlobalWebSocketService(instance: WebSocketService) {
-  globalWebSocketService = instance;
-  console.log('[WebSocketService] Global WebSocket service instance set');
-  return instance;
 }
 
 export default WebSocketService;
