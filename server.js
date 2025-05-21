@@ -1,30 +1,40 @@
 /**
- * Standalone deployment server for Replit Cloud
+ * Invela Platform API - Deployment Server
  * 
- * This server runs independently without requiring a build step
+ * This is a standalone HTTP server that runs independently
+ * without requiring any build process.
  */
 
 const http = require('http');
 
-// Always use port 8080 for Replit Cloud deployment
+// Port configuration - always use 8080 for Replit Cloud
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
-// Create minimal HTTP server
+// Timestamp utility
+function timestamp() {
+  return new Date().toISOString();
+}
+
+// Log with timestamp
+function log(message) {
+  console.log(`[${timestamp()}] ${message}`);
+}
+
+// Create a minimal HTTP server
 const server = http.createServer((req, res) => {
-  console.log(`[${new Date().toISOString()}] Received: ${req.method} ${req.url}`);
+  log(`Request received: ${req.method} ${req.url}`);
   
-  // Always respond with 200 OK for health checks
+  // Health check endpoint - respond with 200 OK
   res.writeHead(200, {'Content-Type': 'application/json'});
   res.end(JSON.stringify({
     status: 'ok',
     service: 'Invela Platform API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: timestamp()
   }));
 });
 
-// Start server with explicit port binding
+// Start the server on the correct port
 server.listen(PORT, HOST, () => {
-  console.log(`[${new Date().toISOString()}] Server running at http://${HOST}:${PORT}`);
+  log(`Server running at http://${HOST}:${PORT}`);
 });

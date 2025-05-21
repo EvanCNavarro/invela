@@ -1,4 +1,5 @@
 {
   "run": "node server.js",
-  "entrypoint": "server.js"
+  "entrypoint": "server.js",
+  "port": 8080
 }
