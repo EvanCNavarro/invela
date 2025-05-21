@@ -35,8 +35,13 @@ export class APIError extends Error {
   }
 }
 
-// Import our custom CORS middleware
+// Import our custom CORS middleware and host validation override
 import { setupCorsBypass } from './cors-middleware';
+import { initReplitHostValidation, isReplitPreviewRequest } from './replit-host-validation';
+
+// Initialize the Replit host validation override before creating the server
+// This ensures that all HTTP requests are properly handled for Replit preview domains
+initReplitHostValidation();
 
 // Create our Express application
 const app = express();
@@ -44,6 +49,14 @@ const server = createServer(app);
 
 // Apply our custom CORS middleware to handle all domains including Replit preview domains
 app.use(setupCorsBypass);
+
+// Add special middleware to handle Replit preview requests
+app.use((req, res, next) => {
+  if (isReplitPreviewRequest(req)) {
+    logger.info(`[ReplitPreview] Processing request from Replit preview domain: ${req.headers.host}`);
+  }
+  next();
+});
 
 // Then configure standard CORS for all other environments
 app.use(cors({
