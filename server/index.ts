@@ -9,6 +9,11 @@ import cors from "cors";
 import fs from 'fs';
 import path from 'path';
 import { setupReplitPreviewHandler, setupPreviewApiEndpoints } from "./replit-preview-handler";
+import { initializeViteHostValidation } from "./vite-host-adapter";
+
+// Initialize Vite host validation adapter for Replit preview domains
+// This addresses the "Blocked request. This host is not allowed" error
+initializeViteHostValidation();
 
 // Create required directories
 const uploadsDir = path.join(process.cwd(), 'uploads');
