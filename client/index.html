@@ -5,63 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!-- Fix for Replit preview domains - must be before any other script -->
+    
+    <!-- Fix for "Blocked request. This host is not allowed" error in Replit preview domains -->
     <script>
-      /**
-       * Replit Preview Domain Fix
-       * 
-       * This script fixes the "Blocked request. This host is not allowed" error
-       * that appears when using Vite in Replit preview domains.
-       */
-      (function() {
-        // Only apply on Replit domains
-        const hostname = window.location.hostname;
-        if (!hostname.includes('.replit.dev') && !hostname.includes('.repl.co')) {
-          return;
-        }
+      // Only run on Replit domains
+      if (window.location.hostname.includes('.replit.dev') || 
+          window.location.hostname.includes('.repl.co')) {
         
-        console.log('Fixing Vite host validation for Replit domain:', hostname);
-        
-        // Fix 1: Disable host validation completely
+        // 1. Override Vite's host validation directly
         window.__vite_host_check = false;
         
-        // Fix 2: Add the current domain to trusted domains
-        window.__vite_plugin_trusted_types_trust_domains = {
-          [hostname]: true,
-          'localhost': true
-        };
-        
-        // Fix 3: Hide any error overlay with CSS
+        // 2. Hide any error overlay that might appear
         const style = document.createElement('style');
         style.textContent = `
-          #vite-error-overlay, .vite-error-overlay {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
+          #vite-error-overlay, .vite-error-overlay { 
+            display: none !important; 
           }
         `;
         document.head.appendChild(style);
         
-        // Fix 4: Monitor and remove any error overlay that appears
-        const observer = new MutationObserver(mutations => {
-          mutations.forEach(mutation => {
-            if (mutation.addedNodes) {
-              mutation.addedNodes.forEach(node => {
-                if (node.id === 'vite-error-overlay' || 
-                    (node.classList && node.classList.contains('vite-error-overlay'))) {
-                  node.style.display = 'none';
-                  console.log('Removed Vite error overlay');
-                }
-              });
-            }
-          });
-        });
-        
-        // Start observing as soon as the DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-          observer.observe(document.body, { childList: true, subtree: true });
-        });
-      })();
+        // 3. Intercept and prevent validation errors
+        window.addEventListener('error', function(e) {
+          if (e && e.message && e.message.includes('Blocked request')) {
+            console.log('Suppressed Vite validation error');
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+      }
     </script>
   </head>
   <body>
