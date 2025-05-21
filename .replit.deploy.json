@@ -1,5 +1,5 @@
 {
-  "run": "NODE_ENV=production PORT=8080 node dist/server/deployment-server.mjs",
+  "run": "NODE_ENV=production PORT=8080 node dist/server/deployment-server.js",
   "entrypoint": "server/index.ts",
   "exclude": [
     "attached_assets",
@@ -13,8 +13,10 @@
     "*.md",
     "*.sh",
     "*.cjs",
-    "*.js",
-    "!dist/**/*.js"
+    "*.ts",
+    "*.tsx",
+    "!dist/**/*.js",
+    "!server/deployment-server.js"
   ],
   "ignorePorts": true,
   "port": 8080
