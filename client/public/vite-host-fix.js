@@ -1,63 +1,68 @@
 /**
- * Vite Host Validation Fix for Replit Preview Domains
+ * Vite Host Validation Fix for Replit Preview
  * 
- * This script directly addresses the "Blocked request. This host is not allowed" error
- * by injecting the current domain into Vite's allowed hosts list.
+ * This script patches Vite's WebSocket connection to work with any Replit preview domain.
+ * It works by hooking into the WebSocket API and patching the connection URL.
  */
+
 (function() {
-  if (typeof window === 'undefined') return;
+  console.log('[ViteHostFix] Starting Vite host validation fix');
   
-  // Current host from the URL
-  const currentHost = window.location.hostname;
+  // Store the original WebSocket constructor
+  const OriginalWebSocket = window.WebSocket;
   
-  // Only apply on Replit domains
-  if (!currentHost.includes('.replit.dev') && !currentHost.includes('.repl.co')) return;
-  
-  console.log(`[Vite Host Fix] Applying for Replit domain: ${currentHost}`);
-  
-  // Approach 1: Inject metadata at window level
-  window.VITE_ALLOWED_HOSTS = window.VITE_ALLOWED_HOSTS || [];
-  window.VITE_ALLOWED_HOSTS.push(currentHost, '*.replit.dev', '*.repl.co');
-  
-  // Approach 2: Intercept Vite's validation function
-  const injectScript = document.createElement('script');
-  injectScript.textContent = `
-    // Override Vite's host validation
-    window.__vite_validate_host = function() { return true; };
-    
-    // Patch any future validation attempts
-    Object.defineProperty(window, 'VITE_HOST_CHECK', { 
-      value: false,
-      writable: false,
-      configurable: false
-    });
-  `;
-  document.head.appendChild(injectScript);
-  
-  // Approach 3: Set specific Vite variables for new versions
-  window.__vite_plugin_trusted_types_trust_domains = window.__vite_plugin_trusted_types_trust_domains || {};
-  window.__vite_plugin_trusted_types_trust_domains[currentHost] = true;
-  
-  // Approach 4: Create a global error handler to remove the message
-  window.addEventListener('error', function(event) {
-    // Check if it's the Vite host validation error
-    if (event.message && event.message.includes('Blocked request') && 
-        event.message.includes('This host is not allowed')) {
+  // Replace the WebSocket constructor with our patched version
+  window.WebSocket = function(url, protocols) {
+    // Only intercept Vite HMR WebSocket connections
+    if (url && url.includes('vite') && url.includes('hmr')) {
+      console.log('[ViteHostFix] Intercepting Vite HMR WebSocket connection');
       
-      // Prevent the error from showing
-      event.preventDefault();
-      event.stopPropagation();
-      
-      console.log('[Vite Host Fix] Suppressed Vite host validation error');
-      
-      // Attempt to force reload without the error
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-      
-      return false;
+      try {
+        // Extract the port from the URL (assuming format like 'ws://localhost:3000/_vite/hmr')
+        const urlObj = new URL(url);
+        const port = urlObj.port || '80';
+        
+        // Replace the hostname while keeping the same port and path
+        const currentHost = window.location.hostname;
+        urlObj.hostname = currentHost;
+        
+        // Use the modified URL
+        const newUrl = urlObj.toString();
+        console.log(`[ViteHostFix] Rewriting WebSocket URL from ${url} to ${newUrl}`);
+        url = newUrl;
+      } catch (e) {
+        console.error('[ViteHostFix] Error patching WebSocket URL:', e);
+      }
     }
-  }, true);
+    
+    // Call the original WebSocket constructor with our potentially modified URL
+    return new OriginalWebSocket(url, protocols);
+  };
   
-  console.log('[Vite Host Fix] Applied all Replit domain fixes');
+  // Copy all static properties from the original WebSocket to our replacement
+  for (const prop in OriginalWebSocket) {
+    if (OriginalWebSocket.hasOwnProperty(prop)) {
+      window.WebSocket[prop] = OriginalWebSocket[prop];
+    }
+  }
+  
+  // Set the prototype chain correctly
+  window.WebSocket.prototype = OriginalWebSocket.prototype;
+  
+  // Also patch fetch for Vite's HTTP requests
+  const originalFetch = window.fetch;
+  window.fetch = function(resource, options) {
+    if (typeof resource === 'string' && resource.includes('/@vite/')) {
+      try {
+        const url = new URL(resource, window.location.origin);
+        console.log(`[ViteHostFix] Intercepting Vite HTTP request: ${resource}`);
+        resource = url.toString();
+      } catch (e) {
+        console.error('[ViteHostFix] Error patching fetch URL:', e);
+      }
+    }
+    return originalFetch(resource, options);
+  };
+  
+  console.log('[ViteHostFix] Vite host validation fix installed successfully');
 })();

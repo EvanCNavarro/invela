@@ -1,0 +1,573 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-21T15:16:39.070Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-21T15:16:39.160Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-05-21T15:16:39.264Z] [INFO] [App] [ViteHostAdapter] Initializing Vite host validation adapter for Replit previews 
+[2025-05-21T15:16:39.264Z] [ERROR] [App] [ViteHostAdapter] Failed to initialize: ReferenceError: require is not defined 
+[2025-05-21T15:16:39.264Z] [INFO] [App] [ReplitHostValidation] Initializing Replit host validation override 
+[2025-05-21T15:16:39.264Z] [INFO] [App] [ReplitHostValidation] Successfully initialized host validation override 
+[2025-05-21T15:16:39.267Z] [INFO] [App] [ReplitPreview] Setting up minimal preview environment support 
+[2025-05-21T15:16:39.268Z] [INFO] [App] [ServerStartup] Replit preview compatibility handler initialized 
+[Routes] Registered KY3P form submission fix routes
+[2025-05-21T15:16:39.270Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-21T15:16:39.271Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-21T15:16:39.271Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-21T15:16:39.271Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-21T15:16:39.272Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-21T15:16:39.274Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-21T15:16:39.274Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"1ja6ue","timestamp":"2025-05-21T15:16:39.274Z"}
+[2025-05-21T15:16:39.274Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[WebSocketService] Initialized successfully
+[WebSocketService] Global WebSocket service instance set
+[2025-05-21T15:16:39.274Z] [INFO] [App] [WebSocket] Form submission WebSocket service initialized successfully 
+[2025-05-21T15:16:39.274Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-21T15:16:39.274Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-21T15:16:39.274Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-21T15:16:39.275Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-21T15:16:39.275Z] [INFO] [App] Setting up Vite development server 
+[2025-05-21T15:16:39.276Z] [INFO] [App] =========================================== 
+[2025-05-21T15:16:39.276Z] [INFO] [App] SERVER CONFIGURATION 
+[2025-05-21T15:16:39.276Z] [INFO] [App] PORT: 3000 | HOST: 0.0.0.0 
+[2025-05-21T15:16:39.276Z] [INFO] [App] NODE_ENV: development 
+[2025-05-21T15:16:39.276Z] [INFO] [App] =========================================== 
+[2025-05-21T15:16:39.289Z] [INFO] [App] Server running on 0.0.0.0:5000 (development) mode 
+[2025-05-21T15:16:39.289Z] [INFO] [App] Server ready to accept connections 
+[2025-05-21T15:16:39.289Z] [INFO] [App] Preview URL: https://workspace.EvanCNavarro.repl.co 
+[2025-05-21T15:16:39.289Z] [INFO] [App] [ServerStartup] Running in development mode with Replit preview support 
+[2025-05-21T15:16:39.289Z] [INFO] [App] [ServerStartup] Preview URL: https://workspace.EvanCNavarro.repl.co 
+[2025-05-21T15:16:39.289Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-21T15:16:39.290Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-21T15:16:39.691Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev, url: / 
+[2025-05-21T15:16:39.692Z] [INFO] [App] [CORS] Special handling for UUID Replit preview domain: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev 
+[2025-05-21T15:16:40.275Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-21T15:16:42.286Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-21T15:16:42.450Z] [DEBUG] [App] [ReactApp] Root path request - Host: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev 
+[2025-05-21T15:16:42.450Z] [DEBUG] [App] [ReplitPreview] Preview request detected: GET / 
+[2025-05-21T15:16:45.826Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 127.0.0.1:5000, url: / 
+[2025-05-21T15:16:45.826Z] [DEBUG] [App] [ReactApp] Root path request - Host: 127.0.0.1:5000 
+[2025-05-21T15:16:45.875Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /@vite/client 
+[2025-05-21T15:16:45.875Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:45.879Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 127.0.0.1:5000, url: /replit-host-fix.js 
+[2025-05-21T15:16:45.884Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/main.tsx?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:45.884Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:45.888Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /@react-refresh 
+[2025-05-21T15:16:45.888Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.143Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /@fs/home/runner/workspace/node_modules/vite/dist/client/env.mjs 
+[2025-05-21T15:16:46.143Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.143Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev, url: / 
+[2025-05-21T15:16:46.143Z] [INFO] [App] [CORS] Special handling for UUID Replit preview domain: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev 
+[2025-05-21T15:16:46.259Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/App.tsx?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.259Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.260Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/index.css?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.260Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.261Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/queryClient.ts?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.261Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.261Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/app-initialization.ts?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.261Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.263Z] [DEBUG] [App] [ReactApp] Root path request - Host: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev 
+[2025-05-21T15:16:46.263Z] [DEBUG] [App] [ReplitPreview] Preview request detected: GET / 
+[2025-05-21T15:16:46.303Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/websocket-connector.ts?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.303Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.716Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/web-socket-manager.ts?v=VLT7C68kiE5dLU9Zhnkd2 
+[2025-05-21T15:16:46.717Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.729Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/queryClient.ts 
+[2025-05-21T15:16:46.729Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.730Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-auth.tsx 
+[2025-05-21T15:16:46.730Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.730Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/toaster.tsx 
+[2025-05-21T15:16:46.730Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:46.734Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/OnboardingWrapper.tsx 
+[2025-05-21T15:16:46.734Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:47.421Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/toast.tsx 
+[2025-05-21T15:16:47.421Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.222Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/providers/websocket-provider.tsx 
+[2025-05-21T15:16:49.222Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.222Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ScrollToTop.tsx 
+[2025-05-21T15:16:49.222Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.223Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/layouts/DashboardLayout.tsx 
+[2025-05-21T15:16:49.223Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.245Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/unified-service-registration.ts 
+[2025-05-21T15:16:49.246Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.275Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/phased-startup.ts 
+[2025-05-21T15:16:49.276Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.326Z] [INFO] [App] Running background health checks... 
+[2025-05-21T15:16:49.326Z] [StartupChecks] Running application startup health checks... 
+[2025-05-21T15:16:49.326Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-21T15:16:49.327Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-21T15:16:49.965Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/standardized-logger.ts 
+[2025-05-21T15:16:49.965Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.970Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/form-submission-workflow.tsx 
+[2025-05-21T15:16:49.970Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.970Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/dashboard-page.tsx 
+[2025-05-21T15:16:49.970Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:49.971Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/not-found.tsx 
+[2025-05-21T15:16:49.971Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.037Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/login-page.tsx 
+[2025-05-21T15:16:50.037Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.128Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/register-page.tsx 
+[2025-05-21T15:16:50.128Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.321Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/network-page.tsx 
+[2025-05-21T15:16:50.322Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.322Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/task-center-page.tsx 
+[2025-05-21T15:16:50.322Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.322Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/insights-page.tsx 
+[2025-05-21T15:16:50.322Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.323Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/FileVault.tsx 
+[2025-05-21T15:16:50.323Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.323Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/company-profile-page.tsx 
+[2025-05-21T15:16:50.323Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.323Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/task-page.tsx 
+[2025-05-21T15:16:50.323Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.418Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/ky3p-task-page.tsx 
+[2025-05-21T15:16:50.419Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.419Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/open-banking-task-page.tsx 
+[2025-05-21T15:16:50.419Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.419Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/diagnostic-page.tsx 
+[2025-05-21T15:16:50.419Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.420Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/risk-score-page.tsx 
+[2025-05-21T15:16:50.420Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.420Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/claims-risk-page.tsx 
+[2025-05-21T15:16:50.420Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.621Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/TaskFix.tsx 
+[2025-05-21T15:16:50.621Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.804Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/websocket-demo-page.tsx 
+[2025-05-21T15:16:50.804Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.805Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/protected-route.tsx 
+[2025-05-21T15:16:50.805Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.805Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/index.tsx 
+[2025-05-21T15:16:50.805Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.806Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/company/about.tsx 
+[2025-05-21T15:16:50.806Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.884Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/company/contact-us.tsx 
+[2025-05-21T15:16:50.884Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.909Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/accreditation.tsx 
+[2025-05-21T15:16:50.909Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.909Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/risk-score.tsx 
+[2025-05-21T15:16:50.909Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.909Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/invela-registry.tsx 
+[2025-05-21T15:16:50.909Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.910Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/data-access-grants-service.tsx 
+[2025-05-21T15:16:50.910Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.917Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/liability-insurance.tsx 
+[2025-05-21T15:16:50.917Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.917Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/dispute-resolution.tsx 
+[2025-05-21T15:16:50.917Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.973Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/products/insights-consulting.tsx 
+[2025-05-21T15:16:50.973Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.974Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/legal/privacy-policy.tsx 
+[2025-05-21T15:16:50.974Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.974Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/legal/terms-of-use.tsx 
+[2025-05-21T15:16:50.975Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:50.975Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/legal/compliance.tsx 
+[2025-05-21T15:16:50.975Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.034Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/legal/index.tsx 
+[2025-05-21T15:16:51.034Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.035Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/landing/site-map.tsx 
+[2025-05-21T15:16:51.035Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.051Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/risk-score-configuration-page.tsx 
+[2025-05-21T15:16:51.051Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.051Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/claims/index.tsx 
+[2025-05-21T15:16:51.051Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.053Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/pages/claims/[id].tsx 
+[2025-05-21T15:16:51.053Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.053Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/risk-score-data-service.ts 
+[2025-05-21T15:16:51.054Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.069Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/risk-score-logger.ts 
+[2025-05-21T15:16:51.070Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.070Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-toast.ts 
+[2025-05-21T15:16:51.070Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.073Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/modals/AnimatedOnboardingModal.tsx 
+[2025-05-21T15:16:51.073Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.073Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/utils.ts 
+[2025-05-21T15:16:51.074Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.074Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/Sidebar.tsx 
+[2025-05-21T15:16:51.074Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.074Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/TopNav.tsx 
+[2025-05-21T15:16:51.074Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.085Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/stores/sidebar-store.ts 
+[2025-05-21T15:16:51.085Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.086Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/modals/EmptyWelcomeModal.tsx 
+[2025-05-21T15:16:51.086Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.087Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/websocket/WebSocketEventBridge.tsx 
+[2025-05-21T15:16:51.087Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.091Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/componentFactory.ts 
+[2025-05-21T15:16:51.091Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.210Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/enhanced-kyb-service-factory.ts 
+[2025-05-21T15:16:51.210Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.210Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/unified-ky3p-form-service.ts 
+[2025-05-21T15:16:51.210Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.211Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/open-banking-form-service.ts 
+[2025-05-21T15:16:51.211Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.214Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/card.tsx 
+[2025-05-21T15:16:51.214Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.214Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/button.tsx 
+[2025-05-21T15:16:51.215Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.220Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-21T15:16:51.221Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/input.tsx 
+[2025-05-21T15:16:51.221Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.222Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/label.tsx 
+[2025-05-21T15:16:51.222Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.222Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/separator.tsx 
+[2025-05-21T15:16:51.222Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.222Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/select.tsx 
+[2025-05-21T15:16:51.222Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.225Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/tabs.tsx 
+[2025-05-21T15:16:51.225Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.226Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/loading-spinner.tsx 
+[2025-05-21T15:16:51.226Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.227Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/FormSubmissionListener.tsx 
+[2025-05-21T15:16:51.227Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.229Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/modals/SubmissionSuccessModal.tsx 
+[2025-05-21T15:16:51.229Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.231Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/form-submission-service.ts 
+[2025-05-21T15:16:51.232Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.232Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/Widget.tsx 
+[2025-05-21T15:16:51.232Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.235Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/CompanySnapshot.tsx 
+[2025-05-21T15:16:51.235Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.236Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/RiskRadarWidget.tsx 
+[2025-05-21T15:16:51.236Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.236Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/NetworkVisualizationWidget.tsx 
+[2025-05-21T15:16:51.236Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.240Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/RiskMonitoringWidget.tsx 
+[2025-05-21T15:16:51.240Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.242Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/invite-button.tsx 
+[2025-05-21T15:16:51.242Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.243Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/page-template.tsx 
+[2025-05-21T15:16:51.243Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.245Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/page-side-drawer.tsx 
+[2025-05-21T15:16:51.245Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.246Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tutorial/TutorialManager.tsx 
+[2025-05-21T15:16:51.246Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.249Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-21T15:16:51.252Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/dropdown-menu.tsx 
+[2025-05-21T15:16:51.252Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.253Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/playground/InviteModal.tsx 
+[2025-05-21T15:16:51.253Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.253Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/SkeletonWidgets.tsx 
+[2025-05-21T15:16:51.253Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.254Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/form.tsx 
+[2025-05-21T15:16:51.254Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.254Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/auth/AuthLayout.tsx 
+[2025-05-21T15:16:51.254Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.260Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/invitation-code-input.tsx 
+[2025-05-21T15:16:51.260Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.265Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/page-header.tsx 
+[2025-05-21T15:16:51.265Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.279Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/types/company.ts 
+[2025-05-21T15:16:51.279Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.280Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/company-logo.tsx 
+[2025-05-21T15:16:51.280Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.282Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/table.tsx 
+[2025-05-21T15:16:51.286Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.287Z] [DBConnectionService] Database connection check successful 
+[2025-05-21T15:16:51.287Z] [StartupChecks] Database health check passed 
+[2025-05-21T15:16:51.287Z] [StartupChecks] All startup health checks passed! 
+[2025-05-21T15:16:51.287Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-21T15:16:51.287Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/company/AccreditationStatusDisplay.tsx 
+[2025-05-21T15:16:51.297Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.298Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/NetworkInsightVisualization.tsx 
+[2025-05-21T15:16:51.299Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.299Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/AccreditationDotMatrix.tsx 
+[2025-05-21T15:16:51.299Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.300Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/RiskRadarChart.tsx 
+[2025-05-21T15:16:51.300Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.300Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/ConsentActivityInsight.tsx 
+[2025-05-21T15:16:51.300Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.323Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/RiskMonitoringInsight.tsx 
+[2025-05-21T15:16:51.324Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.324Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tasks/CreateTaskModal.tsx 
+[2025-05-21T15:16:51.324Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.326Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/client-logger.ts 
+[2025-05-21T15:16:51.327Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.327Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/badge.tsx 
+[2025-05-21T15:16:51.327Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.327Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /@fs/home/runner/workspace/db/schema.ts 
+[2025-05-21T15:16:51.327Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.328Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/websocket.ts 
+[2025-05-21T15:16:51.328Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.332Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tasks/TaskTable.tsx 
+[2025-05-21T15:16:51.332Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.332Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/tooltip.tsx 
+[2025-05-21T15:16:51.332Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.344Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/files/FileUploadZone.tsx 
+[2025-05-21T15:16:51.344Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.348Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/files/DragDropProvider.tsx 
+[2025-05-21T15:16:51.348Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.350Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-unified-toast.ts 
+[2025-05-21T15:16:51.350Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.353Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-file-toast.tsx 
+[2025-05-21T15:16:51.353Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.354Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-user.ts 
+[2025-05-21T15:16:51.354Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.354Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/search-bar.tsx 
+[2025-05-21T15:16:51.354Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.357Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/files/FileTable.tsx 
+[2025-05-21T15:16:51.357Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.362Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/company/BentoOverview.tsx 
+[2025-05-21T15:16:51.362Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.365Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/BreadcrumbNav.tsx 
+[2025-05-21T15:16:51.365Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.366Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/form-skeleton.tsx 
+[2025-05-21T15:16:51.366Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.366Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/FormWithLoadingWrapper.tsx 
+[2025-05-21T15:16:51.367Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.369Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/EnhancedTaskDownloadMenu.tsx 
+[2025-05-21T15:16:51.369Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.370Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/UniversalSuccessModal.tsx 
+[2025-05-21T15:16:51.370Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.375Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/confetti.ts 
+[2025-05-21T15:16:51.375Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.378Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/alert.tsx 
+[2025-05-21T15:16:51.378Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.381Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/api/form-submission-api.ts 
+[2025-05-21T15:16:51.381Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.381Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/user-context.ts 
+[2025-05-21T15:16:51.381Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.383Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/logger.ts 
+[2025-05-21T15:16:51.383Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.384Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/index.ts 
+[2025-05-21T15:16:51.384Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.385Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/submission-tracker.ts 
+[2025-05-21T15:16:51.385Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.387Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-enhanced-form-submission.tsx 
+[2025-05-21T15:16:51.387Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.391Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/modals/ConnectionIssueModal.tsx 
+[2025-05-21T15:16:51.391Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.392Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/skeleton.tsx 
+[2025-05-21T15:16:51.392Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.392Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/kybService.ts 
+[2025-05-21T15:16:51.392Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.394Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/diagnostic/DiagnosticFormView.tsx 
+[2025-05-21T15:16:51.394Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.394Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/WebSocketDemo.tsx 
+[2025-05-21T15:16:51.394Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.395Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/landing/LandingLayout.tsx 
+[2025-05-21T15:16:51.396Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.396Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/landing/SectionTitleChip.tsx 
+[2025-05-21T15:16:51.396Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.397Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/textarea.tsx 
+[2025-05-21T15:16:51.397Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.399Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/slider.tsx 
+[2025-05-21T15:16:51.399Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.400Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/risk-score/RiskGauge.tsx 
+[2025-05-21T15:16:51.400Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.403Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/risk-score/ComparativeVisualization.tsx 
+[2025-05-21T15:16:51.403Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.403Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-risk-score-data.ts 
+[2025-05-21T15:16:51.403Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.406Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/claims/ClaimsTable.tsx 
+[2025-05-21T15:16:51.407Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.409Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/claims/NewClaimModal.tsx 
+[2025-05-21T15:16:51.409Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.409Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/claims/ClaimsProcessFlowChart.tsx 
+[2025-05-21T15:16:51.409Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.409Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tutorial/tabs/ClaimsTutorial.tsx 
+[2025-05-21T15:16:51.409Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.411Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/tutorial-logger.ts 
+[2025-05-21T15:16:51.411Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.412Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/claims/ClaimsTableSkeleton.tsx 
+[2025-05-21T15:16:51.412Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.412Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/risk-score-configuration-data.ts 
+[2025-05-21T15:16:51.412Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.414Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/claims/ClaimDetailSkeleton.tsx 
+[2025-05-21T15:16:51.415Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.415Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/playground/SearchBar.tsx 
+[2025-05-21T15:16:51.415Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.417Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-current-company.ts 
+[2025-05-21T15:16:51.417Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.418Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-prevent-focus.ts 
+[2025-05-21T15:16:51.418Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.419Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/dashboard/SidebarTab.tsx 
+[2025-05-21T15:16:51.419Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.421Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/no-close-dialog.tsx 
+[2025-05-21T15:16:51.421Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.421Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/formUtils.ts 
+[2025-05-21T15:16:51.421Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.423Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/enhanced-kyb-service.ts 
+[2025-05-21T15:16:51.423Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.425Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/ky3p-form-service.ts 
+[2025-05-21T15:16:51.425Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.427Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/dialog.tsx 
+[2025-05-21T15:16:51.427Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.427Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/network/index.ts 
+[2025-05-21T15:16:51.427Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.429Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tutorial/TabTutorialModal.tsx 
+[2025-05-21T15:16:51.429Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.430Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-tab-tutorials.ts 
+[2025-05-21T15:16:51.430Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.431Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-tutorial-websocket.ts 
+[2025-05-21T15:16:51.432Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.434Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/checkbox.tsx 
+[2025-05-21T15:16:51.434Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.435Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/auth/AuthHeroSection.tsx 
+[2025-05-21T15:16:51.435Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.435Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/auth/AuthFooter.tsx 
+[2025-05-21T15:16:51.435Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.436Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/company-utils.ts 
+[2025-05-21T15:16:51.436Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.438Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/network/ConnectionDetails.tsx 
+[2025-05-21T15:16:51.438Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.438Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/network/types.ts 
+[2025-05-21T15:16:51.438Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.438Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/toggle-group.tsx 
+[2025-05-21T15:16:51.439Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.441Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/ConsentActivityChart.tsx 
+[2025-05-21T15:16:51.441Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.442Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/BlockedDataRecipientsAlert.tsx 
+[2025-05-21T15:16:51.442Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.443Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/insights/DeterioratingRiskTable.tsx 
+[2025-05-21T15:16:51.443Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.446Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/calendar.tsx 
+[2025-05-21T15:16:51.446Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.446Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/popover.tsx 
+[2025-05-21T15:16:51.446Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.448Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/command.tsx 
+[2025-05-21T15:16:51.448Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.449Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/tasks/TaskModal.tsx 
+[2025-05-21T15:16:51.449Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.449Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/breadcrumb.tsx 
+[2025-05-21T15:16:51.449Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.451Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/UniversalFormNew.tsx 
+[2025-05-21T15:16:51.451Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.452Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/TaskDownloadMenu.tsx 
+[2025-05-21T15:16:51.452Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.454Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/FormProgressBar.tsx 
+[2025-05-21T15:16:51.454Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.455Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/SectionNavigation.tsx 
+[2025-05-21T15:16:51.455Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.455Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/SectionContent.tsx 
+[2025-05-21T15:16:51.455Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.457Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/UnifiedDemoAutoFill.tsx 
+[2025-05-21T15:16:51.457Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.458Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/formStatusUtils.ts 
+[2025-05-21T15:16:51.458Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.458Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/use-websocket.ts 
+[2025-05-21T15:16:51.458Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.460Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/landing/NavigationMenu.tsx 
+[2025-05-21T15:16:51.460Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.462Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/useScrollToHash.ts 
+[2025-05-21T15:16:51.462Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.469Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /@fs/home/runner/workspace/node_modules/.vite/deps/plotly__js-dist-min.js?v=d6ac8797 
+[2025-05-21T15:16:51.469Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.470Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/web-socket-manager.ts 
+[2025-05-21T15:16:51.470Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.470Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/enhanced-skeleton.tsx 
+[2025-05-21T15:16:51.470Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.517Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/types/form-data.ts 
+[2025-05-21T15:16:51.517Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.519Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/form-utils.ts 
+[2025-05-21T15:16:51.520Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.520Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/form-optimization.ts 
+[2025-05-21T15:16:51.520Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.521Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/network/NetworkVisualization.tsx 
+[2025-05-21T15:16:51.521Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.526Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/network/NetworkFilters.tsx 
+[2025-05-21T15:16:51.526Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.527Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/toggle.tsx 
+[2025-05-21T15:16:51.527Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.528Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/progress.tsx 
+[2025-05-21T15:16:51.528Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.534Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/FixMissingFileButton.tsx 
+[2025-05-21T15:16:51.534Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.534Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/ui/accordion.tsx 
+[2025-05-21T15:16:51.534Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.543Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/services/taskTemplateService.ts 
+[2025-05-21T15:16:51.543Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.543Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/form/use-form-data-manager.ts 
+[2025-05-21T15:16:51.543Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.544Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/form/use-form-status.ts 
+[2025-05-21T15:16:51.544Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.546Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/hooks/useUser.ts 
+[2025-05-21T15:16:51.546Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.548Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/FormFieldsListener.tsx 
+[2025-05-21T15:16:51.548Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.560Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/enhanced-logger.ts 
+[2025-05-21T15:16:51.560Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.560Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/StatusIcon.tsx 
+[2025-05-21T15:16:51.560Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.560Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/handleDemoAutoFill.ts 
+[2025-05-21T15:16:51.560Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.561Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/components/forms/field-renderers/FieldRenderer.tsx 
+[2025-05-21T15:16:51.561Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.561Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/logger.ts 
+[2025-05-21T15:16:51.561Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:51.570Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/utils/logging-config.ts 
+[2025-05-21T15:16:51.570Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:52.558Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747840612558-gdkemww","clients":1}
+[WebSocketService] New client connected
+[2025-05-21T15:16:52.574Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747840612574-d5qb335","clients":2}
+[WebSocketService] New client connected
+[2025-05-21T15:16:52.635Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 127.0.0.1:5000, url: /api/user 
+[2025-05-21T15:16:52.665Z] [DEBUG] [App] [Preview Debug] Request origin: http://127.0.0.1:5000, host: 127.0.0.1:5000, url: /src/lib/app-initialization.ts 
+[2025-05-21T15:16:52.666Z] [INFO] [App] [CORS] Allowed request from local development: http://127.0.0.1:5000 
+[2025-05-21T15:16:52.683Z] [INFO] [WebSocket] Received message from client client-1747840612558-gdkemww {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-21T15:16:52.682Z"}}
+[2025-05-21T15:16:52.683Z] [INFO] [WebSocket] Authentication from client client-1747840612558-gdkemww {"module":"WebSocket","hasToken":true}
+[2025-05-21T15:16:52.761Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 127.0.0.1:5000, url: /invela-logo.svg 
+[2025-05-21T15:16:52.765Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 127.0.0.1:5000, url: /assets/auth_animation.gif 
+[2025-05-21T15:16:52.782Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747840612782-zqs2ovu","clients":3}
+[WebSocketService] New client connected
+[2025-05-21T15:16:53.315Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747840612558-gdkemww","code":1001,"reason":"","remainingClients":2}
+[WebSocketService] Client disconnected
+[2025-05-21T15:16:53.316Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747840612782-zqs2ovu","code":1001,"reason":"","remainingClients":1}
+[WebSocketService] Client disconnected
+[2025-05-21T15:16:53.316Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747840612574-d5qb335","code":1001,"reason":"","remainingClients":0}
+[WebSocketService] Client disconnected
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  964, 965, 963, 972,
+  969, 968, 967, 973,
+  971, 978
+]
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[2025-05-21T15:18:33.812Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["44.199.59.172:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":476772277,"secretKey":182061405,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":11936,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-21T15:18:33.826Z] [ERROR] [Database] Client-specific error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01"}
+[2025-05-21T15:18:33.830Z] [ERROR] [Database] Database pool error: {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)"}
+[2025-05-21T15:21:39.891Z] [INFO] [Database] New database connection established {"module":"Database"}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  963, 964, 965, 969,
+  973, 968, 967, 972,
+  971, 976
+]
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%

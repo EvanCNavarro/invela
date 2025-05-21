@@ -8,6 +8,12 @@ import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
+import { setupReplitPreviewHandler, setupPreviewApiEndpoints } from "./replit-preview-handler";
+import { initializeViteHostValidation } from "./vite-host-adapter";
+
+// Initialize Vite host validation adapter for Replit preview domains
+// This addresses the "Blocked request. This host is not allowed" error
+initializeViteHostValidation();
 
 // Create required directories
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -34,10 +40,34 @@ export class APIError extends Error {
   }
 }
 
+// Import our custom CORS middleware and preview domain handlers
+import { setupCorsBypass } from './cors-middleware';
+import { initReplitHostValidation, isReplitPreviewRequest } from './replit-host-validation';
+import { setupDirectPreviewHandler } from './direct-preview-handler';
+
+// Initialize the Replit host validation override before creating the server
+// This ensures that all HTTP requests are properly handled for Replit preview domains
+initReplitHostValidation();
+
+// Create our Express application
 const app = express();
 const server = createServer(app);
 
-// Configure CORS for all environments
+// Initialize our direct preview handler to redirect UUID preview domains
+setupDirectPreviewHandler(app);
+
+// Apply our custom CORS middleware to handle all domains including Replit preview domains
+app.use(setupCorsBypass);
+
+// Add special middleware to handle Replit preview requests
+app.use((req, res, next) => {
+  if (isReplitPreviewRequest(req)) {
+    logger.info(`[ReplitPreview] Processing request from Replit preview domain: ${req.headers.host}`);
+  }
+  next();
+});
+
+// Then configure standard CORS for all other environments
 app.use(cors({
   origin: true,
   credentials: true,
@@ -112,6 +142,23 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Let Vite handle all frontend routing - React will manage routes
+// No special handling for the root path, allowing the React app to handle routing correctly
+app.get('/', (req, res, next) => {
+  const host = req.headers.host || '';
+  
+  // Just log the request for debugging
+  logger.debug(`[ReactApp] Root path request - Host: ${host}`);
+  
+  // Continue with normal Vite processing
+  next();
+});
+
+// Setup the rest of the Replit preview handler
+setupReplitPreviewHandler(app);
+setupPreviewApiEndpoints(app);
+logger.info('[ServerStartup] Replit preview compatibility handler initialized');
 
 // Register API routes
 registerRoutes(app);
@@ -196,16 +243,15 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// SIMPLIFIED PORT CONFIGURATION FOR DEPLOYMENT
-// This configuration ensures we ONLY use port 8080 in production mode
-// which is a strict requirement for Replit Autoscale deployment
+// SERVER PORT CONFIGURATION
+// In Replit, we need to use port 3000 as the primary port
+// We remove the separate workflow proxy port to avoid conflicts
 
-// DEPLOYMENT CONFIGURATION - SINGLE PORT
-// For Replit Autoscale deployment, we must ONLY use port 8080
-const PORT = 8080; // Always use 8080 for deployment compatibility
-const HOST = '0.0.0.0'; // Required for proper binding in cloud environments
+// Use a consistent port that works with Replit's environment
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Bind to all interfaces
 
-// Force environment variables for consistency
+// Set environment variables for consistency
 process.env.PORT = PORT.toString();
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -216,9 +262,19 @@ logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
 logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info('===========================================');
 
-// SINGLE port binding - crucial for deployment
-server.listen(PORT, HOST, async () => {
-  logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV || 'development'} mode)`);
+// Standard port binding - using port 5000 (the default Replit workflow port)
+server.listen(5000, HOST, () => {
+  logger.info(`Server running on ${HOST}:5000 (${process.env.NODE_ENV}) mode`);
+  
+  // Log successful startup for debugging
+  logger.info(`Server ready to accept connections`);
+  logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'http://localhost:5000'}`);
+  
+  // Log preview URL information for development mode
+  if (process.env.NODE_ENV === 'development') {
+    logger.info('[ServerStartup] Running in development mode with Replit preview support');
+    logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
+  }
   
   // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
