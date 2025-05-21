@@ -9,57 +9,55 @@
  * the proper configuration for deployment.
  */
 
-// CommonJS version for compatibility with Node.js default mode
 // Force production environment
 process.env.NODE_ENV = 'production';
 
 // Force port 8080 as required by Replit Cloud Run
 process.env.PORT = '8080';
 
-// Import necessary modules using CommonJS
-const path = require('path');
-const fs = require('fs');
+// Configure logger with timestamps
+function logInfo(message) {
+  console.log(`[${new Date().toISOString()}] [INFO] ${message}`);
+}
 
-// Get directory name in CommonJS
-const __dirname = __dirname;
+function logError(message, error) {
+  console.error(`[${new Date().toISOString()}] [ERROR] ${message}`);
+  if (error) {
+    console.error(`[${new Date().toISOString()}] [ERROR] Details: ${error}`);
+  }
+}
 
-// Configure logger
-const logger = {
-  info: (message) => console.log(`[${new Date().toISOString()}] [INFO] ${message}`),
-  error: (message, error) => {
-    console.error(`[${new Date().toISOString()}] [ERROR] ${message}`);
-    if (error) console.error(`[${new Date().toISOString()}] [ERROR] Details: ${error}`);
-  },
-  success: (message) => console.log(`[${new Date().toISOString()}] [SUCCESS] ${message}`)
-};
+function logSuccess(message) {
+  console.log(`[${new Date().toISOString()}] [SUCCESS] ${message}`);
+}
 
 // Display startup banner
-logger.info('===========================================');
-logger.info('INVELA PLATFORM - DEPLOYMENT SERVER');
-logger.info(`Starting at: ${new Date().toISOString()}`);
-logger.info(`PORT: ${process.env.PORT}`);
-logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
-logger.info('===========================================');
+logInfo('===========================================');
+logInfo('INVELA PLATFORM - DEPLOYMENT SERVER');
+logInfo(`Starting at: ${new Date().toISOString()}`);
+logInfo(`PORT: ${process.env.PORT}`);
+logInfo(`NODE_ENV: ${process.env.NODE_ENV}`);
+logInfo('===========================================');
 
 // Import the built server code
-try {
-  logger.info('Importing server module...');
-  
-  // Require the built server file (CommonJS style)
-  require('../index.js');
-  logger.success('Server started successfully');
-  
-} catch (error) {
-  logger.error('Error during server startup:', error);
-  process.exit(1);
-}
+logInfo('Importing server module...');
+
+// Use dynamic import for ES modules
+import('../index.js')
+  .then(() => {
+    logSuccess('Server started successfully');
+  })
+  .catch((error) => {
+    logError('Error during server startup:', error);
+    process.exit(1);
+  });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception:', error);
+  logError('Uncaught exception:', error);
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled promise rejection:', reason);
+process.on('unhandledRejection', (reason) => {
+  logError('Unhandled promise rejection:', reason);
 });

@@ -20,14 +20,14 @@ npm run build
 # 3. Ensure deployment server is in the correct location
 echo "📦 Preparing deployment server..."
 mkdir -p dist/server
-cp server/deployment-server.js dist/server/deployment-server.js
+cp server/deployment-server.js dist/server/deployment-server.mjs
 
 echo ""
 echo "✅ Build completed successfully!"
-echo "Deployment server ready at dist/server/deployment-server.js"
+echo "Deployment server ready at dist/server/deployment-server.mjs"
 echo ""
 echo "========== DEPLOYMENT INSTRUCTIONS =========="
 echo "You can now deploy the application with:"
-echo "   Run command: node dist/server/deployment-server.js"
+echo "   Run command: node dist/server/deployment-server.mjs"
 echo "   Port: 8080"
 echo "==========================================="
