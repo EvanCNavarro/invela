@@ -1,5 +1,5 @@
 {
-  "run": "NODE_ENV=production PORT=8080 node dist/server/index.js",
+  "run": "NODE_ENV=production PORT=8080 node dist/server/deployment-server.mjs",
   "entrypoint": "server/index.ts",
   "exclude": [
     "attached_assets",
@@ -7,7 +7,14 @@
     "backup_text",
     "uploads",
     "node_modules/.cache",
-    ".git"
+    ".git",
+    "client/src",
+    "server/src",
+    "*.md",
+    "*.sh",
+    "*.cjs",
+    "*.js",
+    "!dist/**/*.js"
   ],
   "ignorePorts": true,
   "port": 8080
