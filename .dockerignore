@@ -1,66 +1,69 @@
-# Source files that get compiled
+# Development and source files
 client/src
 server/src
-
-# Development files and tools
-.git
-.github
-**/.DS_Store
-**/.vscode
-**/.idea
-**/*.log
-**/*.md
-**/*.sh
-**/*.cjs
 **/*.ts
 **/*.tsx
 !dist/**/*.js
+!server/deployment-server.js
 
-# Large directories that can be rebuilt
+# Build artifacts and cache
+**/*.map
+**/*.log
+.cache
+.turbo
+.next
+.svelte-kit
 node_modules/.cache
-node_modules/@types
 node_modules/typescript
+node_modules/@types
 node_modules/esbuild
 node_modules/vite
+node_modules/unocss
+node_modules/tailwindcss
+dist/client/assets/*.map
 
-# Test and docs
-**/test
-**/tests
-**/__tests__
-**/docs
-**/doc
-**/coverage
-
-# Assets and uploads that aren't needed for production
+# Large assets not needed in production
 attached_assets
 backup_assets
 backup_text
 uploads
+**/*.csv
+**/*.sql
 
-# Build artifacts and cache
-.turbo
-.svelte-kit
-.next
-dist/client/*.map
-**/*.map
+# Test and documentation
+**/__tests__
+**/test
+**/tests
+**/doc
+**/docs
+**/coverage
+**/*.md
+!FIXED_DEPLOYMENT_GUIDE.md
 
-# Scripts and utilities not needed in production
+# Version control
+.git
+.github
+
+# Development config files
+**/.vscode
+**/.idea
+**/.DS_Store
+.editorconfig
+tsconfig.json
+tailwind.config.js
+postcss.config.js
+**/*.config.js
+**/*.config.json
+!.replit.deploy.json
+
+# Scripts and utilities
+**/*.sh
+**/*.cjs
 cleanup-scripts
 deployment-excluded
 cleanup-plan
 replit_agent
-*.sql
-*.csv
 
-# Unnecessary configuration files
-tsconfig.json
-tailwind.config.js
-postcss.config.js
-drizzle.config.ts
-*.config.json
-*.config.js
-
-# Keep only essential JavaScript files for the server
-!deployment-server.js
-!dist/server/index.js
-!dist/index.js
+# Keep essential files for deployment
+!dist/server/deployment-server.js
+!.replit
