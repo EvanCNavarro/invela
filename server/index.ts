@@ -37,7 +37,13 @@ export class APIError extends Error {
 const app = express();
 const server = createServer(app);
 
-// Configure CORS for all environments
+// Import our custom CORS middleware
+import { setupCorsBypass } from './cors-middleware';
+
+// Apply our custom CORS middleware first to handle Replit preview domains
+app.use(setupCorsBypass);
+
+// Then configure standard CORS for all other environments
 app.use(cors({
   origin: true,
   credentials: true,
