@@ -28,6 +28,8 @@ import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
 // Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
+// Import diagnostic routes for preview testing and support
+import { diagnosticRouter } from './routes/diagnostic-routes';
 // Import enhanced KY3P submission handler for better progress handling
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
@@ -134,6 +136,10 @@ import testEndpointsRouter from './routes/test-endpoints';
 export function registerRoutes(app: Express): Express {
   // Register the test endpoints first for easy diagnostics
   app.use(testEndpointsRouter);
+  
+  // Register our diagnostic routes for preview testing
+  // These don't require authentication and help with troubleshooting
+  app.use(diagnosticRouter);
   
   app.use(companySearchRouter);
   app.use(kybRouter);
