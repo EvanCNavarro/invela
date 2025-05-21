@@ -1,45 +1,26 @@
+# Node modules
+node_modules/
+
+# Git files
+.git/
+
 # Large asset directories
-attached_assets/*
-!attached_assets/.placeholder
-backup_assets/*
-!backup_assets/.placeholder
-backup_text/*
-!backup_text/.placeholder
-uploads/*
-!uploads/.placeholder
-deployment-excluded/*
+attached_assets/
+backup_assets/
+backup_text/
+uploads/
 
-# Development files
-.git
-.github
+# Build artifacts
+dist/client/
+
+# Log files
 *.log
-logs
-temp
-tmp
 
-# Build and cache directories
-node_modules/.cache
-node_modules/.vite
-dist/cache
-.cache
+# Unnecessary files
+*.md
+*.sh
+!deploy.sh
 
-# Test directories
-**/test
-**/tests
-**/__tests__
-
-# Documentation
-**/docs
-**/doc
-**/*.md
-!README.md
-!DEPLOYMENT.md
-
-# Utility scripts (that aren't needed in production)
-cleanup-*.js
-cleanup-*.sh
-populate-*.js
-import-*.ts
-force-*.js
-*.cjs
-*.mjs
+# Dev files
+*.ts
+*.tsx
