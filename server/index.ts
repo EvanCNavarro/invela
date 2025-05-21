@@ -202,59 +202,69 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// DUAL PORT CONFIGURATION FOR DEVELOPMENT AND DEPLOYMENT
-// In development, we need to support both port 5000 (for Replit workflow) and 8080 (for our server)
-// In production, we only use port 8080 which is required for Replit Autoscale deployment
+// SERVER PORT CONFIGURATION
+// Using a consistent port in both development and production
+// In development, the app needs to be accessible via the preview
+// In production, we use 8080 for Replit deployments
 
-// Main port configuration
-const MAIN_PORT = 8080; // Main port for our server
-const REPLIT_WORKFLOW_PORT = 5000; // Port that Replit workflow is expecting
-const HOST = '0.0.0.0'; // Required for proper binding in cloud environments
+// Use the standard port for development (3000)
+// This is what Vite uses by default
+const PORT = process.env.NODE_ENV === 'production' ? 8080 : 3000;
+const HOST = '0.0.0.0'; // Bind to all interfaces
 
-// Set environment variables
-process.env.PORT = MAIN_PORT.toString();
+// Set environment variables for consistency
+process.env.PORT = PORT.toString();
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Log the configuration
 logger.info('===========================================');
 logger.info(`SERVER CONFIGURATION`);
-logger.info(`MAIN PORT: ${MAIN_PORT} | WORKFLOW PORT: ${REPLIT_WORKFLOW_PORT}`);
-logger.info(`HOST: ${HOST} | NODE_ENV: ${process.env.NODE_ENV}`);
+logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
+logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info('===========================================');
 
-// Start the main server
-server.listen(MAIN_PORT, HOST, async () => {
-  logger.info(`Main server running on ${HOST}:${MAIN_PORT} (${process.env.NODE_ENV || 'development'} mode)`);
+// Standard port binding - using a single port for simplicity
+server.listen(PORT, HOST, async () => {
+  logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV}) mode`);
   
-  // In development mode, also start a proxy server on port 5000 to satisfy Replit workflow
+  // Log successful startup for debugging
+  logger.info(`Server ready to accept connections`);
+  logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
+  
+  // In development, also handle the proxy server for testing
   if (process.env.NODE_ENV === 'development') {
+    const originalPort = PORT;
     try {
-      const http = await import('http');
-      const proxy = http.createServer((req, res) => {
-        // Simple HTTP redirect to the main server
-        res.writeHead(302, {
-          'Location': `http://${HOST}:${MAIN_PORT}${req.url}`
-        });
-        res.end();
-      });
-      
-      proxy.listen(REPLIT_WORKFLOW_PORT, HOST, () => {
-        logger.info(`Workflow proxy server running on ${HOST}:${REPLIT_WORKFLOW_PORT} -> redirecting to ${MAIN_PORT}`);
-      });
-      
-      // Handle proxy server errors
-      proxy.on('error', (err: Error & { code?: string }) => {
-        logger.warn(`Workflow proxy server error: ${err.message}`);
-        // If the port is already in use, it might mean Replit already has something there
-        // which is fine - our main server will still work
-        if (err.code === 'EADDRINUSE') {
-          logger.info(`Port ${REPLIT_WORKFLOW_PORT} already in use - continuing with main server only`);
+      // Try to also listen on port 5000 to satisfy Replit workflow
+      // This is just a fallback and not the primary connection method
+      const tryWorkflowPort = async () => {
+        try {
+          const http = await import('http');
+          const workflowPort = 5000;
+          const workflowProxy = http.createServer((req, res) => {
+            logger.info(`Workflow proxy received request: ${req.url}`);
+            res.writeHead(302, {
+              'Location': `http://${HOST}:${originalPort}${req.url}`
+            });
+            res.end();
+          });
+          
+          workflowProxy.listen(workflowPort, HOST, () => {
+            logger.info(`Workflow proxy running on port ${workflowPort} (redirecting to main port ${originalPort})`);
+          });
+          
+          workflowProxy.on('error', (err) => {
+            logger.warn(`Workflow proxy error: ${err.message}`);
+          });
+        } catch (err) {
+          logger.warn(`Could not start workflow proxy: ${err instanceof Error ? err.message : String(err)}`);
         }
-      });
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      logger.warn(`Could not start workflow proxy server: ${errorMessage}`);
-      logger.info(`Continuing with main server only on port ${MAIN_PORT}`);
+      };
+      
+      // Try the proxy but don't block the main server if it fails
+      setTimeout(tryWorkflowPort, 1000);
+    } catch (err) {
+      logger.warn(`Additional port setup failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
   
