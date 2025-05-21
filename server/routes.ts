@@ -128,7 +128,13 @@ export function invalidateCompanyCache(companyId: number) {
   return false;
 }
 
+// Import our test endpoints router
+import testEndpointsRouter from './routes/test-endpoints';
+
 export function registerRoutes(app: Express): Express {
+  // Register the test endpoints first for easy diagnostics
+  app.use(testEndpointsRouter);
+  
   app.use(companySearchRouter);
   app.use(kybRouter);
   
