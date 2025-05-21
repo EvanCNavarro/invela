@@ -202,29 +202,60 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// SIMPLIFIED PORT CONFIGURATION FOR DEPLOYMENT
-// This configuration ensures we ONLY use port 8080 in production mode
-// which is a strict requirement for Replit Autoscale deployment
+// DUAL PORT CONFIGURATION FOR DEVELOPMENT AND DEPLOYMENT
+// In development, we need to support both port 5000 (for Replit workflow) and 8080 (for our server)
+// In production, we only use port 8080 which is required for Replit Autoscale deployment
 
-// DEPLOYMENT CONFIGURATION - SINGLE PORT
-// For Replit Autoscale deployment, we must ONLY use port 8080
-const PORT = 8080; // Always use 8080 for deployment compatibility
+// Main port configuration
+const MAIN_PORT = 8080; // Main port for our server
+const REPLIT_WORKFLOW_PORT = 5000; // Port that Replit workflow is expecting
 const HOST = '0.0.0.0'; // Required for proper binding in cloud environments
 
-// Force environment variables for consistency
-process.env.PORT = PORT.toString();
+// Set environment variables
+process.env.PORT = MAIN_PORT.toString();
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Log the configuration
 logger.info('===========================================');
 logger.info(`SERVER CONFIGURATION`);
-logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
-logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
+logger.info(`MAIN PORT: ${MAIN_PORT} | WORKFLOW PORT: ${REPLIT_WORKFLOW_PORT}`);
+logger.info(`HOST: ${HOST} | NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info('===========================================');
 
-// SINGLE port binding - crucial for deployment
-server.listen(PORT, HOST, async () => {
-  logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV || 'development'} mode)`);
+// Start the main server
+server.listen(MAIN_PORT, HOST, async () => {
+  logger.info(`Main server running on ${HOST}:${MAIN_PORT} (${process.env.NODE_ENV || 'development'} mode)`);
+  
+  // In development mode, also start a proxy server on port 5000 to satisfy Replit workflow
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const http = await import('http');
+      const proxy = http.createServer((req, res) => {
+        // Simple HTTP redirect to the main server
+        res.writeHead(302, {
+          'Location': `http://${HOST}:${MAIN_PORT}${req.url}`
+        });
+        res.end();
+      });
+      
+      proxy.listen(REPLIT_WORKFLOW_PORT, HOST, () => {
+        logger.info(`Workflow proxy server running on ${HOST}:${REPLIT_WORKFLOW_PORT} -> redirecting to ${MAIN_PORT}`);
+      });
+      
+      // Handle proxy server errors
+      proxy.on('error', (err) => {
+        logger.warn(`Workflow proxy server error: ${err.message}`);
+        // If the port is already in use, it might mean Replit already has something there
+        // which is fine - our main server will still work
+        if (err.code === 'EADDRINUSE') {
+          logger.info(`Port ${REPLIT_WORKFLOW_PORT} already in use - continuing with main server only`);
+        }
+      });
+    } catch (err) {
+      logger.warn(`Could not start workflow proxy server: ${err.message}`);
+      logger.info(`Continuing with main server only on port ${MAIN_PORT}`);
+    }
+  }
   
   // Start the periodic task reconciliation system
   if (process.env.NODE_ENV !== 'test') {
