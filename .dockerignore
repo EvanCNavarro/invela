@@ -1,12 +1,5 @@
 # Exclude large directories to reduce image size
 node_modules/.cache
-node_modules/.vite
-node_modules/.pnpm
-node_modules/@types
-node_modules/typescript
-node_modules/esbuild
-node_modules/@esbuild
-node_modules/vite
 attached_assets
 backup_assets
 backup_text
@@ -14,8 +7,3 @@ uploads
 deployment-excluded
 cleanup-scripts
 cleanup-plan
-
-# Include only minimal files needed for deployment
-!package.json
-!package-lock.json
-!server/deployment-server.js
