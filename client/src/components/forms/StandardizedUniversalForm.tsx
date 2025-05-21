@@ -11,12 +11,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { StandardizedFormField } from './StandardizedFormField.tsx';
-import { handleUniversalDemoAutoFill } from './universal-demo-autofill.ts';
+import { StandardizedFormField } from './StandardizedFormField';
+import { handleUniversalDemoAutoFill } from './universal-demo-autofill';
 import { Progress } from '@/components/ui/progress';
 import { getFormServiceForTaskType } from '@/services/standardized-service-registry';
-import { standardizedBulkUpdate } from './standardized-ky3p-update.ts';
-import { fixedUniversalSaveProgress } from './fix-universal-bulk-save.ts';
+import { standardizedBulkUpdate } from './standardized-ky3p-update';
+import { fixedUniversalSaveProgress } from './fix-universal-bulk-save';
 import getLogger from '@/utils/logger';
 import submissionTracker from '@/utils/submission-tracker';
 

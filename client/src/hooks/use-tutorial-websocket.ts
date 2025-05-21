@@ -121,36 +121,15 @@ export function useTutorialWebSocket(tabName: string) {
       }
     });
     
-    // Get the WebSocket instance if available - try both possible sources
-    // First check window.appWebSocket (old style)
-    let webSocket = (window as any).appWebSocket;
+    // Get the WebSocket instance if available
+    const webSocket = (window as any).appWebSocket;
     
-    // If not available, try the newer unified WebSocket instance
-    if (!webSocket && (window as any).unifiedWebSocket) {
-      webSocket = (window as any).unifiedWebSocket;
-      logger.info('Using unified WebSocket connection');
-    }
-    
-    // If we have direct access to any WebSocket instance, listen for messages
+    // If we have direct access to the WebSocket, listen for messages
     if (webSocket && webSocket.addEventListener) {
       webSocket.addEventListener('message', handleWebSocketMessage);
-      logger.info(`Attached listener to WebSocket successfully`);
+      logger.info(`Attached listener to app WebSocket`);
     } else {
-      // If no global WebSocket is available, use REST API polling instead
-      logger.info('WebSocket not available, falling back to polling mechanism');
-      
-      // The application will continue to function using the HTTP API fallback
-      setTutorialUpdate({
-        tabName: normalizedTabName,
-        userId: 0, // Will be populated by API
-        currentStep: 0,
-        completed: false,
-        timestamp: new Date().toISOString(),
-        metadata: { fallbackMode: true }
-      });
-      
-      // Still log a warning
-      logger.warn(`App WebSocket not available from global scope, using event bridge only`);
+      logger.warn(`App WebSocket not available, using event bridge only`);
     }
     
     // Clean up

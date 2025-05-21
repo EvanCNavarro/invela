@@ -25,26 +25,13 @@ class WebSocketManager {
   }
   
   /**
-   * Connect to the WebSocket server with production-ready fallbacks
+   * Connect to the WebSocket server
    */
   private connect() {
     try {
-      // Determine if we're in a deployment environment
-      const isDeployment = window.location.hostname.includes('replit.app') ||
-                          window.location.hostname.includes('replit.dev');
-      
-      let wsUrl;
-      
-      if (isDeployment) {
-        // In deployment, always use the secure protocol
-        // Use the deployment domain directly for WebSocket connection
-        // This ensures compatibility with Replit Autoscale
-        wsUrl = `wss://${window.location.host}/ws`;
-      } else {
-        // In development, use the protocol-relative approach
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        wsUrl = `${protocol}//${window.location.host}/ws`;
-      }
+      // Determine the correct WebSocket URL
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
       console.info('[WebSocket] Connecting to WebSocket:', wsUrl);
       
@@ -55,9 +42,6 @@ class WebSocketManager {
       this.socket.onmessage = this.handleMessage.bind(this);
       this.socket.onclose = this.handleClose.bind(this);
       this.socket.onerror = this.handleError.bind(this);
-      
-      // Make socket available globally for debugging
-      (window as any).appWebSocket = this.socket;
     } catch (error) {
       console.warn('[WebSocket] Connection to ' + window.location.host + '/ws failed:', error);
       this.scheduleReconnect();

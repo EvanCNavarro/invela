@@ -28,10 +28,6 @@ import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
 // Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
-// Import diagnostic routes for preview testing and support
-import { diagnosticRouter } from './routes/diagnostic-routes';
-// Import preview endpoint for Replit preview support
-import { previewRouter } from './routes/preview-endpoint';
 // Import enhanced KY3P submission handler for better progress handling
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
@@ -132,20 +128,7 @@ export function invalidateCompanyCache(companyId: number) {
   return false;
 }
 
-// Import our test endpoints router
-import testEndpointsRouter from './routes/test-endpoints';
-
 export function registerRoutes(app: Express): Express {
-  // Register the test endpoints first for easy diagnostics
-  app.use(testEndpointsRouter);
-  
-  // Register our diagnostic routes for preview testing
-  // These don't require authentication and help with troubleshooting
-  app.use(diagnosticRouter);
-  
-  // Register preview router for Replit preview functionality
-  app.use(previewRouter);
-  
   app.use(companySearchRouter);
   app.use(kybRouter);
   
@@ -220,36 +203,6 @@ export function registerRoutes(app: Express): Express {
   // Register the File Vault router for direct access to file vault functionality 
   // with proper API path prefix
   app.use('/api/file-vault', fileVaultRouter);
-  
-  // Register fix routes for handling missing files
-  // Use direct Router instantiation instead of imports to avoid TypeScript errors and module issues
-  const fixMissingFileRouter = Router();
-  fixMissingFileRouter.get('/check/:taskId', (req, res) => {
-    res.json({ message: 'File check API endpoint', taskId: req.params.taskId });
-  });
-  fixMissingFileRouter.post('/fix/:taskId', (req, res) => {
-    res.json({ success: true, message: 'File fix API endpoint', taskId: req.params.taskId });
-  });
-  
-  const fixKy3pFilesRouter = Router();
-  fixKy3pFilesRouter.get('/check/:taskId', (req, res) => {
-    res.json({ message: 'KY3P file check endpoint', taskId: req.params.taskId });
-  });
-  fixKy3pFilesRouter.post('/fix/:taskId', (req, res) => {
-    res.json({ success: true, message: 'KY3P file fix endpoint', taskId: req.params.taskId });
-  });
-  
-  const fixMissingFileTransactional = Router();
-  fixMissingFileTransactional.get('/check/:taskId', (req, res) => {
-    res.json({ message: 'Transactional form file check endpoint', taskId: req.params.taskId });
-  });
-  fixMissingFileTransactional.post('/fix/:taskId', (req, res) => {
-    res.json({ success: true, message: 'Transactional form file fix endpoint', taskId: req.params.taskId });
-  });
-  
-  app.use('/api/fix-missing-file-api', fixMissingFileRouter);
-  app.use('/api/fix-ky3p-files', fixKy3pFilesRouter);
-  app.use('/api/fix-missing-file', fixMissingFileTransactional);
   
   // EMERGENCY ENDPOINT: Direct fix for file vault access
   app.post('/api/emergency/unlock-file-vault/:companyId', async (req, res) => {

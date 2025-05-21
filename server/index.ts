@@ -8,12 +8,6 @@ import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
-import { setupReplitPreviewHandler, setupPreviewApiEndpoints } from "./replit-preview-handler";
-import { initializeViteHostValidation } from "./vite-host-adapter";
-
-// Initialize Vite host validation adapter for Replit preview domains
-// This addresses the "Blocked request. This host is not allowed" error
-initializeViteHostValidation();
 
 // Create required directories
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -40,34 +34,10 @@ export class APIError extends Error {
   }
 }
 
-// Import our custom CORS middleware and preview domain handlers
-import { setupCorsBypass } from './cors-middleware';
-import { initReplitHostValidation, isReplitPreviewRequest } from './replit-host-validation';
-import { setupDirectPreviewHandler } from './direct-preview-handler';
-
-// Initialize the Replit host validation override before creating the server
-// This ensures that all HTTP requests are properly handled for Replit preview domains
-initReplitHostValidation();
-
-// Create our Express application
 const app = express();
 const server = createServer(app);
 
-// Initialize our direct preview handler to redirect UUID preview domains
-setupDirectPreviewHandler(app);
-
-// Apply our custom CORS middleware to handle all domains including Replit preview domains
-app.use(setupCorsBypass);
-
-// Add special middleware to handle Replit preview requests
-app.use((req, res, next) => {
-  if (isReplitPreviewRequest(req)) {
-    logger.info(`[ReplitPreview] Processing request from Replit preview domain: ${req.headers.host}`);
-  }
-  next();
-});
-
-// Then configure standard CORS for all other environments
+// Configure CORS for all environments
 app.use(cors({
   origin: true,
   credentials: true,
@@ -142,23 +112,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// Let Vite handle all frontend routing - React will manage routes
-// No special handling for the root path, allowing the React app to handle routing correctly
-app.get('/', (req, res, next) => {
-  const host = req.headers.host || '';
-  
-  // Just log the request for debugging
-  logger.debug(`[ReactApp] Root path request - Host: ${host}`);
-  
-  // Continue with normal Vite processing
-  next();
-});
-
-// Setup the rest of the Replit preview handler
-setupReplitPreviewHandler(app);
-setupPreviewApiEndpoints(app);
-logger.info('[ServerStartup] Replit preview compatibility handler initialized');
 
 // Register API routes
 registerRoutes(app);
@@ -237,53 +190,52 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
+// Import deployment helpers for port and host configuration
+import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
+
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
+
+// Configure server for proper deployment
+// Always use port 8080 for Autoscale deployment, 5000 for local development
+const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
+
+// Set NODE_ENV based on deployment context
+process.env.NODE_ENV = isDeployment ? 'production' : 'development';
+
+// Standardize port configuration for deployment compatibility
+// Always bind to 0.0.0.0 for proper network access
+const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
+
+// Set environment variable for other components that might need it
+process.env.PORT = PORT.toString();
+process.env.HOST = HOST;
+
+// Log deployment configuration for debugging
+logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 
-// SERVER PORT CONFIGURATION
-// In Replit, we need to use port 3000 as the primary port
-// We remove the separate workflow proxy port to avoid conflicts
-
-// Use a consistent port that works with Replit's environment
-const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0'; // Bind to all interfaces
-
-// Set environment variables for consistency
-process.env.PORT = PORT.toString();
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Log the configuration
-logger.info('===========================================');
-logger.info(`SERVER CONFIGURATION`);
-logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
-logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
-logger.info('===========================================');
-
-// Standard port binding - using port 5000 (the default Replit workflow port)
-server.listen(5000, HOST, () => {
-  logger.info(`Server running on ${HOST}:5000 (${process.env.NODE_ENV}) mode`);
+// Start the server with the standardized configuration and health checks
+server.listen(PORT, HOST, async () => {
+  logger.info(`Server running on ${HOST}:${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV}`);
   
-  // Log successful startup for debugging
-  logger.info(`Server ready to accept connections`);
-  logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'http://localhost:5000'}`);
+  // Log additional deployment information
+  logDeploymentInfo(PORT, HOST);
   
-  // Log preview URL information for development mode
-  if (process.env.NODE_ENV === 'development') {
-    logger.info('[ServerStartup] Running in development mode with Replit preview support');
-    logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
-  }
-  
-  // Start the periodic task reconciliation system
+  // Start the periodic task reconciliation system directly
+  // Don't wait for health checks to avoid creating more rate limit issues
   if (process.env.NODE_ENV !== 'test') {
     logger.info('Starting periodic task reconciliation system...');
     startPeriodicTaskReconciliation();
     logger.info('Task reconciliation system initialized successfully');
   }
   
-  // Run startup health checks in the background
+  // Run startup health checks in the background but don't block application startup
   setTimeout(async () => {
     try {
       logger.info('Running background health checks...');
@@ -299,5 +251,3 @@ server.listen(5000, HOST, () => {
     }
   }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
 });
-// All server initialization is now handled in the server.listen callback above
-// No additional initialization needed

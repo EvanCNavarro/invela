@@ -108,43 +108,25 @@ export class WebSocketService {
   }
   
   /**
-   * Use an existing WebSocket server instead of creating a new one
-   * This method is provided for backwards compatibility but now accepts an existing server
+   * Set up WebSocket server for initial connection handling
+   * This method is needed for deployment compatibility
    * 
-   * @param server The HTTP server or existing WebSocketServer to use
-   * @param path The path for the WebSocket server (unused if existing WebSocketServer provided)
+   * @param server The HTTP server to attach the WebSocket server to
+   * @param path The path for the WebSocket server
    * @returns The WebSocket server instance
    */
   static initializeWebSocketServer(server: any, path: string = '/ws'): WebSocketServer {
-    // If we received a WebSocketServer instance directly, use it
-    if (server instanceof WebSocketServer) {
-      console.log(`[WebSocketService] Using existing WebSocketServer instance`, {
-        module: 'WebSocket',
-        timestamp: new Date().toISOString()
-      });
-      return server;
-    }
-    
-    // THIS CODE PATH SHOULD NOT BE USED IN PRODUCTION
-    // It's kept for compatibility with tests and development
-    console.warn('[WebSocketService] Warning: Creating a new WebSocketServer instance is not recommended');
-    
     const wss = new WebSocketServer({ 
       server,
       path,
       // Important: Skip HMR WebSocket connections
-      verifyClient: (info: { req: { headers: Record<string, any> } }) => {
-        try {
-          const protocol = info.req.headers['sec-websocket-protocol'];
-          return protocol !== 'vite-hmr';
-        } catch (e) {
-          // If we can't check the protocol, allow the connection
-          return true;
-        }
+      verifyClient: (info: any) => {
+        const protocol = info.req.headers['sec-websocket-protocol'];
+        return protocol !== 'vite-hmr';
       }
     });
     
-    console.log(`[WebSocketService] WebSocket server initialized`, {
+    console.log(`[WebSocketService] Unified WebSocket server initialized successfully`, {
       module: 'WebSocket',
       clients: 0,
       path,
