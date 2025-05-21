@@ -121,37 +121,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// ULTRA-DIRECT ROOT HANDLER - absolutely highest priority
-// This responds to ANY request to the root path with the static HTML
+// Let Vite handle all frontend routing - React will manage routes
+// No special handling for the root path, allowing the React app to handle routing correctly
 app.get('/', (req, res, next) => {
   const host = req.headers.host || '';
   
-  // Log EVERY root request with detailed info
-  logger.info(`[RootHandler] Request to / - Host: ${host}, Headers: ${JSON.stringify(req.headers)}`);
+  // Just log the request for debugging
+  logger.debug(`[ReactApp] Root path request - Host: ${host}`);
   
-  // Always send our static file for the root path in preview environment
-  // This ensures something shows up in the preview regardless of other configuration
-  try {
-    // Find and serve our ultra-simple static HTML file
-    const rootIndexPath = path.join(process.cwd(), 'index.html');
-    if (fs.existsSync(rootIndexPath)) {
-      logger.info(`[RootHandler] Serving static index.html for host: ${host}`);
-      
-      // Use this ultra-simple approach to avoid any complex processing
-      const html = fs.readFileSync(rootIndexPath, 'utf8');
-      
-      // Set cache control to prevent caching issues
-      res.setHeader('Cache-Control', 'no-store, max-age=0');
-      res.setHeader('Content-Type', 'text/html');
-      return res.send(html);
-    } else {
-      logger.error(`[RootHandler] index.html not found at ${rootIndexPath}`);
-    }
-  } catch (err) {
-    logger.error(`[RootHandler] Error serving static index.html:`, err);
-  }
-  
-  // If we get here, continue with normal routing
+  // Continue with normal Vite processing
   next();
 });
 

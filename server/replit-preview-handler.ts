@@ -42,9 +42,9 @@ export function setupReplitPreviewHandler(app: express.Express) {
     return;
   }
 
-  logger.info('[ReplitPreview] Setting up special handlers for Replit preview environment');
+  logger.info('[ReplitPreview] Setting up minimal preview environment support');
 
-  // Add debug logging for preview requests
+  // Just add debug logging for preview requests
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (isReplitPreviewRequest(req)) {
       logger.debug(`[ReplitPreview] Preview request detected: ${req.method} ${req.url}`);
@@ -52,8 +52,8 @@ export function setupReplitPreviewHandler(app: express.Express) {
     next();
   });
   
-  // Let the normal Vite development server handle all requests
-  // This will serve the React application properly with all routing
+  // No special handling - let the Vite development server handle all routing
+  // This ensures the React application with all its routes works properly
 }
 
 /**
