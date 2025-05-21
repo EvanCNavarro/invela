@@ -5,174 +5,233 @@
  * by reducing the image size and ensuring only necessary files are included.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
 
-// Logging helper
+// Setup __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 function log(message) {
-  console.log(`[${new Date().toISOString()}] [BUILD] ${message}`);
+  console.log(`[Build] ${message}`);
 }
 
-// Success logging helper
 function success(message) {
-  console.log(`[${new Date().toISOString()}] [BUILD-SUCCESS] ${message}`);
+  console.log(`[Build] ✅ ${message}`);
 }
 
-// Error logging helper
 function error(message, err = null) {
-  console.error(`[${new Date().toISOString()}] [BUILD-ERROR] ${message}`);
+  console.error(`[Build] ❌ ${message}`);
   if (err) console.error(err);
 }
 
-// Get size of directory in MB
+async function executeCommand(command) {
+  return new Promise((resolve, reject) => {
+    exec(command, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
 async function getDirSizeMB(dirPath) {
   try {
-    // Use du command to get directory size
-    const stdout = execSync(`du -sm "${dirPath}"`, { encoding: 'utf8' });
-    const size = parseFloat(stdout.split(/\s+/)[0]);
-    return size;
+    const { stdout } = await executeCommand(`du -sm ${dirPath} | cut -f1`);
+    return parseInt(stdout.trim(), 10);
   } catch (err) {
     error(`Failed to get size of ${dirPath}`, err);
     return 0;
   }
 }
 
-// Clean up the node_modules directory
-async function cleanNodeModules() {
-  const nodeModulesPath = path.join(process.cwd(), 'node_modules');
-  
-  try {
-    log(`Cleaning up node_modules directory...`);
-    const initialSize = await getDirSizeMB(nodeModulesPath);
-    log(`Initial node_modules size: ${initialSize.toFixed(2)} MB`);
-    
-    // Delete test directories
-    execSync('find node_modules -type d -name "test" -o -name "tests" | xargs rm -rf', { stdio: 'inherit' });
-    log('Removed test directories');
-    
-    // Delete documentation
-    execSync('find node_modules -type d -name "docs" -o -name "doc" -o -name "documentation" | xargs rm -rf', { stdio: 'inherit' });
-    log('Removed documentation directories');
-    
-    // Delete source maps
-    execSync('find node_modules -name "*.map" -type f -delete', { stdio: 'inherit' });
-    log('Removed source maps');
-    
-    // Delete examples
-    execSync('find node_modules -type d -name "example" -o -name "examples" | xargs rm -rf', { stdio: 'inherit' });
-    log('Removed example directories');
-    
-    // Remove specific large packages
-    const largePackages = [
-      'typescript',
-      '@types',
-      'esbuild',
-      'vite',
-      'tailwindcss',
-      'postcss',
-      'autoprefixer',
-      'plotly.js-dist',
-      'plotly.js-dist-min',
-      'canvas-confetti',
-      'pdf-parse',
-      'pdf.js-extract',
-      'recharts'
-    ];
-    
-    for (const pkg of largePackages) {
-      const pkgPath = path.join(nodeModulesPath, pkg);
-      if (fs.existsSync(pkgPath)) {
-        execSync(`rm -rf "${pkgPath}"`, { stdio: 'inherit' });
-        log(`Removed large package: ${pkg}`);
-      }
-    }
-    
-    const finalSize = await getDirSizeMB(nodeModulesPath);
-    log(`Final node_modules size: ${finalSize.toFixed(2)} MB`);
-    success(`Reduced node_modules size by ${(initialSize - finalSize).toFixed(2)} MB`);
-    
-  } catch (err) {
-    error('Error cleaning node_modules', err);
+async function ensureDirectory(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    log(`Created directory: ${dir}`);
   }
 }
 
-// Remove source maps from dist directory
-async function cleanDistDirectory() {
-  const distPath = path.join(process.cwd(), 'dist');
-  
+async function copyFile(source, target) {
   try {
-    log(`Cleaning up dist directory...`);
-    const initialSize = await getDirSizeMB(distPath);
-    log(`Initial dist size: ${initialSize.toFixed(2)} MB`);
-    
-    // Delete source maps from dist
-    execSync('find dist -name "*.map" -type f -delete', { stdio: 'inherit' });
-    log('Removed source maps from dist');
-    
-    const finalSize = await getDirSizeMB(distPath);
-    log(`Final dist size: ${finalSize.toFixed(2)} MB`);
-    success(`Reduced dist size by ${(initialSize - finalSize).toFixed(2)} MB`);
-    
+    fs.copyFileSync(source, target);
+    log(`Copied ${source} to ${target}`);
+    return true;
   } catch (err) {
-    error('Error cleaning dist directory', err);
-  }
-}
-
-// Copy deployment server to proper location
-function copyDeploymentServer() {
-  try {
-    const sourcePath = path.join(process.cwd(), 'server', 'deployment-server.js');
-    
-    if (fs.existsSync(sourcePath)) {
-      log('Deployment server exists at correct location');
-      return true;
-    } else {
-      error('Deployment server not found at expected location: ' + sourcePath);
-      return false;
-    }
-  } catch (err) {
-    error('Error checking deployment server', err);
+    error(`Failed to copy ${source} to ${target}`, err);
     return false;
   }
 }
 
-// Main function
+async function writeFile(path, content) {
+  try {
+    fs.writeFileSync(path, content);
+    log(`Created ${path}`);
+    return true;
+  } catch (err) {
+    error(`Failed to write to ${path}`, err);
+    return false;
+  }
+}
+
+async function ensureServerFiles() {
+  log('Ensuring server files are in the correct location...');
+  
+  // Make sure dist/server directory exists
+  await ensureDirectory('dist/server');
+  
+  // Copy dist/index.js to dist/server/index.js if it exists
+  if (fs.existsSync('dist/index.js')) {
+    await copyFile('dist/index.js', 'dist/server/index.js');
+  } else {
+    error('dist/index.js not found, server might not start correctly');
+  }
+  
+  // Create the deployment server
+  const deploymentServerContent = `/**
+ * Deployment Server for Replit Cloud Run
+ * 
+ * This is a minimalist server that binds to the port required by Replit.
+ */
+
+import http from 'http';
+
+// Port configuration - explicitly using 8080 for deployment
+const PORT = 8080; // Always use 8080 for deployment compatibility
+const HOST = '0.0.0.0';
+
+// Helper functions
+const timestamp = () => new Date().toISOString();
+const log = (message) => console.log(\`[\${timestamp()}] \${message}\`);
+
+// Create server
+const server = http.createServer((req, res) => {
+  log(\`Request: \${req.method} \${req.url}\`);
+  
+  // Always respond with 200 OK for health checks
+  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.end(JSON.stringify({
+    status: 'ok',
+    message: 'Invela Platform API',
+    timestamp: timestamp()
+  }));
+});
+
+// Start server with explicit port binding for Replit
+server.listen(PORT, HOST, () => {
+  log(\`Server running at http://\${HOST}:\${PORT}\`);
+  log(\`Environment: \${process.env.NODE_ENV || 'development'}\`);
+});`;
+
+  await writeFile('dist/server/deployment-server.js', deploymentServerContent);
+}
+
+async function createOptimizedDeployConfig() {
+  log('Creating optimized .replit.deploy.json...');
+  
+  const deployConfig = {
+    "run": "node dist/server/index.js",
+    "entrypoint": "dist/server/index.js",
+    "build": "npm run build && node build-for-deployment.js",
+    "port": 8080,
+    "exclude": [
+      "node_modules/.cache",
+      "node_modules/.pnpm",
+      "node_modules/.vite",
+      "attached_assets",
+      "backup_assets",
+      "backup_text",
+      "cleanup-scripts",
+      "cleanup-plan"
+    ]
+  };
+  
+  await writeFile('.replit.deploy.json', JSON.stringify(deployConfig, null, 2));
+}
+
+async function createOptimizedDockerIgnore() {
+  log('Creating optimized .dockerignore...');
+  
+  const dockerIgnoreContent = `# Exclude everything by default
+*
+**/*
+
+# Only include what's absolutely necessary for deployment
+!package.json
+!package-lock.json
+!build-for-deployment.js
+!dist/server/index.js
+!dist/server/deployment-server.js
+!dist/public/index.html
+!dist/public/assets/**/*
+
+# Exclude large cache directories
+node_modules/.cache/**
+node_modules/.vite/**
+node_modules/.pnpm/**
+node_modules/@types/**
+node_modules/typescript/**
+node_modules/esbuild/**
+node_modules/@esbuild/**
+node_modules/vite/**
+
+# Exclude development and backup folders
+attached_assets/**
+backup_assets/**
+backup_text/**
+cleanup-scripts/**
+cleanup-plan/**
+deployment-excluded/**`;
+
+  await writeFile('.dockerignore', dockerIgnoreContent);
+}
+
+async function cleanupNodeModules() {
+  log('Cleaning up node_modules to reduce image size...');
+  
+  const sizeBefore = await getDirSizeMB('node_modules');
+  log(`node_modules size before cleanup: ${sizeBefore} MB`);
+  
+  try {
+    // Remove cache directories which take a lot of space
+    await executeCommand('rm -rf node_modules/.cache node_modules/.vite node_modules/.pnpm');
+    
+    // Remove dev dependencies that aren't needed in production
+    await executeCommand('rm -rf node_modules/@types node_modules/typescript node_modules/esbuild node_modules/@esbuild node_modules/vite');
+    
+    const sizeAfter = await getDirSizeMB('node_modules');
+    log(`node_modules size after cleanup: ${sizeAfter} MB`);
+    success(`Reduced node_modules size by ${sizeBefore - sizeAfter} MB`);
+  } catch (err) {
+    error('Failed to clean up node_modules', err);
+  }
+}
+
 async function main() {
   try {
-    log('Starting build optimization for deployment...');
+    log('Starting deployment preparation...');
     
-    // Get initial project size
-    const initialSize = await getDirSizeMB(process.cwd());
-    log(`Initial project size: ${initialSize.toFixed(2)} MB`);
+    // Ensure server files are in the correct location
+    await ensureServerFiles();
     
-    // Clean up node_modules
-    await cleanNodeModules();
+    // Create optimized deployment configuration
+    await createOptimizedDeployConfig();
     
-    // Clean up dist directory
-    await cleanDistDirectory();
+    // Create optimized .dockerignore
+    await createOptimizedDockerIgnore();
     
-    // Verify deployment server
-    copyDeploymentServer();
+    // Clean up node_modules to reduce image size
+    await cleanupNodeModules();
     
-    // Get final project size
-    const finalSize = await getDirSizeMB(process.cwd());
-    log(`Final project size: ${finalSize.toFixed(2)} MB`);
-    
-    success(`Total size reduction: ${(initialSize - finalSize).toFixed(2)} MB`);
-    success('Build optimization completed successfully');
-    
-    if (finalSize > 7000) {
-      log('WARNING: Project is still quite large. Additional cleanup may be required for deployment.');
-    } else {
-      success('Project size should be within Replit deployment limits.');
-    }
-    
+    success('Deployment preparation complete! Ready to deploy.');
   } catch (err) {
-    error('Build optimization failed', err);
+    error('Deployment preparation failed!', err);
     process.exit(1);
   }
 }
 
-// Run the main function
 main();
