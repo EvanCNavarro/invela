@@ -1,0 +1,94 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-19T06:27:25.834Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-19T06:27:25.941Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registered KY3P form submission fix routes
+[2025-05-19T06:27:26.075Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-19T06:27:26.075Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-19T06:27:26.075Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-19T06:27:26.076Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-19T06:27:26.077Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-19T06:27:26.080Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-19T06:27:26.080Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"o2odiz","timestamp":"2025-05-19T06:27:26.080Z"}
+[2025-05-19T06:27:26.081Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-19T06:27:26.081Z] [WARN] [App] [WebSocket] Form submission WebSocket initialization function not found 
+[2025-05-19T06:27:26.081Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-19T06:27:26.081Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-19T06:27:26.081Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-19T06:27:26.082Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-19T06:27:26.082Z] [INFO] [App] Setting up Vite development server 
+[2025-05-19T06:27:26.084Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (deployment mode: no) 
+[2025-05-19T06:27:26.084Z] [INFO] [App] [ENV] Environment=development (NODE_ENV explicitly set) 
+[2025-05-19T06:27:26.102Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-19T06:27:26.102Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-19T06:27:26.102Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-19T06:27:26.102Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-19T06:27:27.083Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-19T06:27:36.106Z] [INFO] [App] Running background health checks... 
+[2025-05-19T06:27:36.106Z] [StartupChecks] Running application startup health checks... 
+[2025-05-19T06:27:36.106Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-19T06:27:36.107Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-19T06:27:36.307Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-19T06:27:36.339Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-19T06:27:36.522Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-19T06:27:36.551Z] [DBConnectionService] Database connection check successful 
+[2025-05-19T06:27:36.551Z] [StartupChecks] Database health check passed 
+[2025-05-19T06:27:36.551Z] [StartupChecks] All startup health checks passed! 
+[2025-05-19T06:27:36.551Z] [INFO] [App] All background health checks passed successfully. 
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  963, 964, 965, 967,
+  969, 972, 973, 968,
+  971, 978
+]
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[2025-05-19T06:28:12.772Z] [INFO] [Database] New database connection established {"module":"Database"}
+6:28:17 AM [vite] hmr update /src/pages/company-profile-page.tsx, /src/index.css?v=TvX_nFrfpmmG0NYJah17w
+6:28:26 AM [vite] Pre-transform error: /home/runner/workspace/client/src/pages/company-profile-page.tsx: Identifier 'renderRiskTab' has already been declared. (1005:8)
+
+  1003 |   const riskClusters = company.risk_clusters || defaultRiskClusters;
+  1004 |   
+> 1005 |   const renderRiskTab = () => (
+       |         ^
+  1006 |     <div className="space-y-6">
+  1007 |       {/* Risk Factors Summary Card - Combined with risk score and accreditation status */}
+  1008 |       <Card className="border border-gray-200 shadow-none">
+
+
+
+

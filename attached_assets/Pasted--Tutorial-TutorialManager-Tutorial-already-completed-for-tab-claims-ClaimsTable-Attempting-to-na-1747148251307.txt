@@ -1,0 +1,37 @@
+[Tutorial:TutorialManager] Tutorial already completed for tab: claims
+[ClaimsTable] Attempting to navigate to claim details: 
+Object {id: 5, claim_id: "CLM-2025-005", bank_id: "BNK-54321", bank_name: "Liberty Savings", fintech_name: "Financial Data Connect", …}
+[ClaimsTable] Navigating to path: /claims/5
+[Router] Current location: /claims/5
+[Router] Rendering claim details page for ID: 5
+[ClaimDetailsPage] Rendering with claimId param: 5
+[ClaimDetailsPage] Full params: 
+Object {0: "5", claimId: "5"}
+[Tutorial:ClaimsPage] Claims Management page unmounting
+[Tutorial:Claims] Claims tutorial component unmounting
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for claims
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/claims/5", …}
+[Sidebar] Tab state check: company=1, path=/claims/5, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 8, email: "evan.navarro@invela.com", onboardingCompleted: true, userObject: "{↵  "id": 8,↵  "email": "evan.navarro@invela.com",↵  "full_name": "Evan Navarro",↵ …"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[TanStack Query] Fetching: /api/claims/5
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[TanStack Query] Response for /api/claims/5: Status 404
+API error 404: {"error":"Claim not found"}...
+[TanStack Query] Error fetching /api/claims/5: 
+Error {}
+
+[ClaimDetailsPage] Rendering with claimId param: 5
+[ClaimDetailsPage] Full params: 
+Object {0: "5", claimId: "5"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:57:29.005Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:57:30.062Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:57:30.558Z", echo: {…}}

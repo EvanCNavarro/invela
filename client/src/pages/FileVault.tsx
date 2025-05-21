@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import Fuse from 'fuse.js';
 import {
   FileIcon,
@@ -11,12 +12,14 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
-  ChevronsRightIcon,
-  Loader2
+  ChevronsRightIcon
 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +30,8 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .PNG,
 
 export const FileVault: React.FC = () => {
   const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
+  const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -311,6 +316,76 @@ export const FileVault: React.FC = () => {
       });
     }
   }, [currentPage, queryClient, searchQuery, statusFilter, uploadingFiles.length, user?.company_id, itemsPerPage]);
+  
+  // Listen for WebSocket file_vault_update events to refresh file list automatically
+  useEffect(() => {
+    console.log('[FileVault Debug] Setting up WebSocket listener for file vault updates');
+    
+    // This function will be called whenever a file_vault_update event is received
+    const handleFileVaultUpdate = (payload: any) => {
+      console.log('[FileVault Debug] Received file_vault_update event:', payload);
+      
+      // Check if this update is for our company
+      if (payload.companyId && user?.company_id && payload.companyId === user.company_id) {
+        console.log('[FileVault Debug] Refreshing file list for company:', payload.companyId);
+        
+        // Invalidate and refetch the files query
+        queryClient.invalidateQueries({ 
+          queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+        });
+      }
+    };
+    
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', (event: any) => {
+        if (event.detail) {
+          handleFileVaultUpdate(event.detail);
+        }
+      });
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', (event: any) => {
+        // Check if this is a file vault update event
+        if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+          handleFileVaultUpdate(event.detail.payload);
+        }
+      });
+    }
+    
+    // Keep references to the actual event listeners so we can remove them properly
+    const fileVaultEventHandler = (event: any) => {
+      if (event.detail) {
+        handleFileVaultUpdate(event.detail);
+      }
+    };
+    
+    const wsMessageEventHandler = (event: any) => {
+      // Check if this is a file vault update event
+      if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+        handleFileVaultUpdate(event.detail.payload);
+      }
+    };
+    
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', fileVaultEventHandler);
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', wsMessageEventHandler);
+    }
+    
+    return () => {
+      // Clean up event listeners when component unmounts
+      if (typeof window !== 'undefined') {
+        // Remove event listeners by referencing the same function instances
+        window.removeEventListener('file_vault_update', fileVaultEventHandler);
+        window.removeEventListener('ws_message', wsMessageEventHandler);
+      }
+    };
+  }, [queryClient, user?.company_id, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
@@ -386,20 +461,38 @@ export const FileVault: React.FC = () => {
     };
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
-
+    
+    // Create an upload toast with a unique ID
+    const toastId = unifiedToast.fileUploadProgress(file.name);
+    
+    console.log('[FileVault] Created upload toast with ID:', toastId);
+    
     try {
-      await uploadMutation.mutateAsync(formData);
+      // Perform the actual upload
+      const result = await uploadMutation.mutateAsync(formData);
+      console.log('[FileVault] Upload completed:', result);
+      
+      // Update local state
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
+      
       // Invalidate with the complete query key structure to match our fetch
       queryClient.invalidateQueries({ 
         queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
-      toast({
-        title: "Success",
-        description: `${file.name} uploaded successfully`,
-        duration: 3000,
-      });
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Successfully dismissed upload toast');
+      }
+      
+      // Then after a brief delay, show the success toast
+      setTimeout(() => {
+        unifiedToast.fileUploadSuccess(file.name);
+        console.log('[FileVault] Showed success toast for file:', file.name);
+      }, 300);
+      
     } catch (error) {
       console.error('[FileVault Debug] Upload error:', {
         error,
@@ -407,6 +500,7 @@ export const FileVault: React.FC = () => {
         tempId
       });
 
+      // Update UI for failed upload
       setUploadingFiles(prev =>
         prev.map(f =>
           f.id === tempId
@@ -415,12 +509,21 @@ export const FileVault: React.FC = () => {
         )
       );
 
-      toast({
-        title: "Upload Error",
-        description: error instanceof Error ? error.message : "Failed to upload file",
-        variant: "destructive",
-        duration: 5000,
-      });
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Dismissed error upload toast');
+      }
+      
+      // Then show the error toast
+      setTimeout(() => {
+        unifiedToast.fileUploadError(
+          file.name, 
+          error instanceof Error ? error.message : "Upload failed"
+        );
+        console.log('[FileVault] Showed error toast for file:', file.name);
+      }, 300);
     }
   };
 
@@ -434,8 +537,25 @@ export const FileVault: React.FC = () => {
 
     setIsUploading(true);
     try {
-      for (const file of files) {
-        await uploadFile(file);
+      // For bulk uploads, we need special handling to ensure toasts work properly
+      if (files.length > 1) {
+        console.log('[FileVault] Processing bulk upload of', files.length, 'files');
+        
+        // Process files one by one, with a slight delay between success toasts
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          
+          // Upload each file
+          await uploadFile(file);
+          
+          // For bulk uploads, add a small delay between files to prevent toast overlap
+          if (i < files.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+      } else {
+        // Single file upload - normal flow
+        await uploadFile(files[0]);
       }
     } finally {
       setIsUploading(false);
@@ -484,9 +604,12 @@ export const FileVault: React.FC = () => {
 
   return (
     <DashboardLayout>
+      {/* Add the tutorial manager for file-vault */}
+      <TutorialManager tabName="file-vault" />
+      
       {!user ? (
         <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <LoadingSpinner size="sm" className="text-primary" />
         </div>
       ) : (
         <div className="space-y-6">

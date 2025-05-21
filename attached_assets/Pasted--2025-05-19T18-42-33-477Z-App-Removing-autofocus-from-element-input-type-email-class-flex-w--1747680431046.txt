@@ -1,0 +1,56 @@
+[2025-05-19T18:42:33.477Z] [App] Removing autofocus from element 
+<input type="email" class="flex w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 h-14 bg-gray-50" name="email" autocomplete="email" placeholder="Enter your email" id=":r0:-form-item" aria-describedby=":r0:-form-item-description" aria-invalid="false" value></input>
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Phase framework completed successfully 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing startup phase: context 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing 1 callbacks for phase context 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing callback 1/1 for phase context 
+[2025-05-19T18:42:33.483Z] [App] Context phase initializing 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Phase context completed successfully 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Phase services dependencies satisfied, executing... 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing startup phase: services 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing 1 callbacks for phase services 
+[2025-05-19T18:42:33.483Z] [PhaseStartup] Executing callback 1/1 for phase services 
+[2025-05-19T18:42:33.483Z] [App] Services phase initializing 
+[2025-05-19T18:42:33.483Z] [App] Initializing unified service registration 
+[2025-05-19T18:42:33.483Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+[2025-05-19T18:42:33.483Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T18:42:33.484Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-19T18:42:33.484Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}

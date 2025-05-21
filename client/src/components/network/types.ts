@@ -1,4 +1,4 @@
-export type RiskBucket = 'low' | 'medium' | 'high' | 'critical';
+export type RiskBucket = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
 export interface NetworkNode {
   id: number;
@@ -11,6 +11,7 @@ export interface NetworkNode {
   accreditationStatus: string;
   revenueTier: string;
   category: string;
+  activeConsents?: number; // Number of active consents for FinTechs
 }
 
 export interface NetworkCenter {
@@ -34,10 +35,22 @@ export interface NetworkFilters {
 }
 
 export const riskBucketColors: Record<RiskBucket, string> = {
+  none: '#FFFFFF', // White for 'no risk' score of 0
   low: '#DFE3EA',
   medium: '#B3B8C6',
   high: '#7B74A8', // Reverted to match legacy key colors in legend
   critical: '#4C2F54' // Reverted to match legacy key colors in legend
 };
 
-export const centerNodeColor = '#4965EC';
+// Color-coding for company types
+export const companyTypeColors: Record<string, string> = {
+  'Bank': '#8A4FE0',  // Purple for banks (matches Bank avatar in navbar)
+  'Invela': '#4965EC', // Blue for Invela 
+  'FinTech': '#48BB78', // Green for FinTechs
+  'Default': '#8A4FE0' // Default to Bank purple
+};
+
+// Navbar user icon purple color for center node - exact match with Bank avatar
+export const centerUserPurple = '#8A4FE0';
+
+export const centerNodeColor = '#4965EC'; // This will be replaced by company type color in the visualization

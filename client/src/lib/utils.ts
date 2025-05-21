@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Add classNames as an alias for cn
+export const classNames = cn;
+
 export function formatFileSize(bytes: number) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;

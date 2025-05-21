@@ -1,7 +1,7 @@
-import OpenAI from "openai";
 import { companies } from "@db/schema";
 import { db } from "@db";
 import { openaiSearchAnalytics } from "@db/schema";
+import { openai, extractCompanyData, generateMissingDataPrompt, generateFieldSuggestionPrompt, logOpenAIUsage } from "../utils/openaiUtils";
 
 // Export the Answer interface to match our aggregation expectations
 export interface Answer {
@@ -18,8 +18,145 @@ export interface DocumentAnswer {
   confidence: number;
 }
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export interface FieldSuggestion {
+  value: string;
+  confidence: number;
+  source?: string;
+}
+
+export interface FormFieldSuggestions {
+  [key: string]: FieldSuggestion;
+}
+
+interface SearchAnalytics {
+  searchType: string;
+  companyId?: number;
+  searchPrompt: string;
+  searchResults: Record<string, any>;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCost: number;
+  model: string;
+  success: boolean;
+  errorMessage?: string;
+  duration: number;
+  searchDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Get AI-powered suggestions for form fields
+ * This function focuses on the current form step only for better performance
+ * and adds strict precautions against hallucination
+ */
+export async function getFormFieldSuggestions(
+  companyInfo: Record<string, any>,
+  formFields: Array<{ field_key: string; question: string; field_type: string }>,
+  existingFormData: Record<string, any> = {}
+): Promise<FormFieldSuggestions> {
+  const startTime = Date.now();
+  
+  console.log('[OpenAI Service] Generating form field suggestions:', {
+    companyName: companyInfo.name,
+    fieldsCount: formFields.length,
+    existingDataCount: Object.keys(existingFormData).length,
+    timestamp: new Date().toISOString()
+  });
+  
+  try {
+    // Generate a prompt specifically for form field suggestions using the utility function
+    const prompt = generateFieldSuggestionPrompt(companyInfo, formFields, existingFormData);
+
+    // Call OpenAI with low temperature setting to reduce randomness
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system", 
+          content: "You are a helpful assistant specializing in business data verification. You prioritize accuracy and never hallucinate data when uncertain."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1 // Low temperature for more deterministic, factual responses
+    });
+
+    const duration = Date.now() - startTime;
+    
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    // Parse the response
+    const suggestions = JSON.parse(response.choices[0].message.content) as FormFieldSuggestions;
+    
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'form_suggestions',
+      companyId: companyInfo.id,
+      searchPrompt: prompt,
+      searchResults: suggestions,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-3.5-turbo'
+      ),
+      model: 'gpt-3.5-turbo',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    console.log('[OpenAI Service] Field suggestions generated successfully:', {
+      duration,
+      suggestionCount: Object.keys(suggestions).length,
+      fields: Object.keys(suggestions),
+      timestamp: new Date().toISOString()
+    });
+    
+    return suggestions;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    console.error('[OpenAI Service] Error generating field suggestions:', {
+      error: errorMessage,
+      duration,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Log error analytics
+    await logSearchAnalytics({
+      searchType: 'form_suggestions',
+      companyId: companyInfo.id,
+      searchPrompt: '',
+      searchResults: {},
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      model: 'gpt-3.5-turbo',
+      success: false,
+      errorMessage,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    // Return empty suggestions on error
+    return {};
+  }
+}
+
+// OpenAI API client is now imported from utils/openaiUtils.ts
 
 // Document classification specific types
 export enum DocumentCategory {
@@ -368,54 +505,8 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
   );
 }
 
-function generateMissingDataPrompt(companyInfo: Partial<CleanedCompanyData>, missingFields: string[]): string {
-  console.log("[OpenAI Search] 📋 Generating search prompt for fields:", missingFields);
-
-  // Filter out excluded fields from company info
-  const relevantInfo = { ...companyInfo };
-  const excludedFields = [
-    'category', 'riskScore', 'accreditationStatus', 'onboardingCompanyCompleted',
-    'registryDate', 'filesPublic', 'filesPrivate', 'createdAt', 'updatedAt',
-    'id', 'logoId'
-  ];
-
-  console.log("[OpenAI Search] 🔍 Filtering out excluded fields:", excludedFields);
-  excludedFields.forEach(field => delete relevantInfo[field as keyof typeof relevantInfo]);
-
-  // Filter out excluded fields from missing fields list
-  const relevantMissingFields = missingFields.filter(field => !excludedFields.includes(field));
-  console.log("[OpenAI Search] 🎯 Relevant missing fields to search for:", relevantMissingFields);
-
-  return `
-As a financial data expert, use the following known details to find accurate company information. Focus on the missing fields and prioritize data from the sources listed below:
-
-**Company Details:**
-${JSON.stringify(relevantInfo, null, 2)}
-
-**Missing Fields to Focus On:**
-${relevantMissingFields.map(field => `- ${field}`).join('\n')}
-
-**Sources (Prioritized Order):**
-1. Wikipedia
-2. Official Website
-3. LinkedIn
-4. Crunchbase
-5. ZoomInfo
-6. Dun & Bradstreet
-
-**Instructions:**
-1. Find and return the missing fields only, matching the CleanedCompanyData interface.
-2. For each field, provide the source and data.
-3. If unsure about a field, omit it. Do not guess.
-4. Return data in this JSON format:
-   {
-     "fieldName": {
-       "source": "Source Name",
-       "data": "actual data or array"
-     }
-   }
-`;
-}
+// Local generateMissingDataPrompt function has been removed.
+// Now using the imported function from utils/openaiUtils.ts
 
 export async function findMissingCompanyData(
   companyInfo: Partial<CleanedCompanyData>,
@@ -426,6 +517,7 @@ export async function findMissingCompanyData(
   console.log("[OpenAI Search] 🔍 Missing fields:", missingFields);
 
   const startTime = Date.now();
+  // Use the imported utility function instead of the local one
   const prompt = generateMissingDataPrompt(companyInfo, missingFields);
 
   try {
@@ -800,12 +892,29 @@ export async function analyzeDocument(
       timestamp: new Date().toISOString()
     });
 
+    // Determine if the content appears to be from a CSV file
+    const isCSVContent = documentText.startsWith('CSV Document Content:') || 
+                        documentText.includes('Headers:') && documentText.includes('Row ');
+    
+    // Customize prompt based on content type
+    let documentTypeInstructions = '';
+    if (isCSVContent) {
+      documentTypeInstructions = `
+      This document appears to be in CSV format. Pay special attention to:
+      - The headers that define each column
+      - Row numbers that indicate separate entries
+      - Column-value pairs that match with field questions
+      - Remember that each row may contain information relevant to different fields`;
+    }
+
     const prompt = `
     As a compliance and security expert, analyze this document section and extract specific information for each field.
     You must maintain strict field key mapping throughout your analysis.
 
     Document Text:
     ${documentText}
+
+    ${documentTypeInstructions}
 
     Instructions:
     1. For each field below, extract ONLY information that directly answers its specific question
@@ -818,7 +927,7 @@ export async function analyzeDocument(
     ${fields.map(f => `
     Field Key: "${f.field_key}"
     Question: ${f.question}
-    Search Instructions: ${f.ai_search_instructions}
+    Search Instructions: ${f.ai_search_instructions || 'Look for relevant information in the document'}
     Look for:
     - Direct statements or claims
     - Specific dates, numbers, or procedures
@@ -849,11 +958,15 @@ export async function analyzeDocument(
 
     console.log('[OpenAI Service] Sending request with field keys:', { 
       fieldKeys: fields.map(f => f.field_key),
+      isCSVContent,
       timestamp: new Date().toISOString() 
     });
 
+    // Use GPT-4o for better CSV parsing when available
+    const model = "gpt-3.5-turbo";  // Fall back to 3.5 as default
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: model,
       messages: [
         {
           role: "system",

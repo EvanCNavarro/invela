@@ -4,7 +4,7 @@ import { Settings, FileText, Layout, Bell, Edit, Trash2, Archive, Download, Eye 
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { useToast } from '@/hooks/use-toast'
+import { useUnifiedToast } from '@/hooks/use-unified-toast'
 
 const DropdownPlayground = () => {
   // State for regular dropdown
@@ -16,7 +16,7 @@ const DropdownPlayground = () => {
 
   // State for action dropdown
   const [selectedAction, setSelectedAction] = React.useState<string | null>(null)
-  const { toast } = useToast()
+  const unifiedToast = useUnifiedToast()
 
   const widgetItems = [
     { id: 'updates', label: 'Updates', leftIcon: showIcons ? Bell : undefined },
@@ -42,11 +42,7 @@ const DropdownPlayground = () => {
       label: 'View Details', 
       leftIcon: Eye,
       onClick: () => {
-        toast({
-          title: "View Details",
-          description: "Opening details modal...",
-          duration: 2000,
-        })
+        unifiedToast.info("View Details", "Opening details modal...")
       }
     },
     { 
@@ -54,11 +50,7 @@ const DropdownPlayground = () => {
       label: 'Edit', 
       leftIcon: Edit,
       onClick: () => {
-        toast({
-          title: "Edit",
-          description: "Opening edit modal...",
-          duration: 2000,
-        })
+        unifiedToast.info("Edit", "Opening edit modal...")
       }
     },
     { 
@@ -66,11 +58,7 @@ const DropdownPlayground = () => {
       label: 'Download', 
       leftIcon: Download,
       onClick: () => {
-        toast({
-          title: "Download",
-          description: "Starting download...",
-          duration: 2000,
-        })
+        unifiedToast.info("Download", "Starting download...")
       }
     },
     { 
@@ -78,11 +66,7 @@ const DropdownPlayground = () => {
       label: 'Delete', 
       leftIcon: Trash2,
       onClick: () => {
-        toast({
-          title: "Delete",
-          description: "Opening delete confirmation modal...",
-          duration: 2000,
-        })
+        unifiedToast.warning("Delete", "Opening delete confirmation modal...")
       }
     },
     { 
@@ -90,11 +74,7 @@ const DropdownPlayground = () => {
       label: 'Archive', 
       leftIcon: Archive,
       onClick: () => {
-        toast({
-          title: "Archive",
-          description: "Opening archive confirmation modal...",
-          duration: 2000,
-        })
+        unifiedToast.info("Archive", "Opening archive confirmation modal...")
       }
     },
   ]

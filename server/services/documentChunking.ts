@@ -32,6 +32,80 @@ export async function createDocumentChunks(
 
     if (mimeType === 'application/pdf') {
       content = await extractTextFromFirstPages(filePath);
+    } else if (mimeType === 'text/csv' || mimeType === 'application/vnd.ms-excel' || filePath.toLowerCase().endsWith('.csv')) {
+      console.log('[DocumentChunking] Processing CSV file:', {
+        filePath: filePath.split('/').pop(),
+        mimeType
+      });
+      
+      // Improved CSV parsing with support for quoted fields containing commas
+      const csvData = fs.readFileSync(filePath, 'utf8');
+      
+      // Helper function to parse CSV lines properly
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let inQuotes = false;
+        let currentValue = '';
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        
+        // Add the last value
+        result.push(currentValue.trim());
+        return result;
+      };
+      
+      const lines = csvData.split('\n').filter(line => line.trim().length > 0);
+      
+      if (lines.length <= 1) {
+        console.error('[DocumentChunking] CSV file contains no data rows', {
+          filePath: filePath.split('/').pop(),
+          lineCount: lines.length
+        });
+        throw new DocumentChunkingError('CSV file contains no data rows');
+      }
+      
+      // Extract headers and format content in a more readable way
+      const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, ''));
+      
+      console.log('[DocumentChunking] CSV headers:', {
+        headers,
+        headerCount: headers.length
+      });
+      
+      content = 'CSV Document Content:\n\n';
+      content += `Headers: ${headers.join(', ')}\n\n`;
+      
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        const values = parseCSVLine(lines[i]);
+        content += `Row ${i}:\n`;
+        
+        for (let j = 0; j < Math.min(headers.length, values.length); j++) {
+          const value = values[j].replace(/"/g, '') || '';
+          if (value) {
+            content += `${headers[j]}: ${value}\n`;
+          }
+        }
+        content += '\n';
+      }
+      
+      console.log('[DocumentChunking] CSV parsed successfully:', {
+        filePath: filePath.split('/').pop(),
+        contentLength: content.length,
+        rowCount: lines.length - 1
+      });
     } else {
       content = fs.readFileSync(filePath, 'utf8');
     }
@@ -119,7 +193,14 @@ export async function processChunk(
     });
 
     // Pass complete field information to OpenAI
-    const result = await analyzeDocument(chunk.content, fields);
+    // Ensure fields have the required ai_search_instructions property
+    const fieldsWithInstructions = fields.map(field => ({
+      field_key: field.field_key,
+      question: field.question,
+      ai_search_instructions: field.ai_search_instructions || 'Extract this information from the document'
+    }));
+    
+    const result = await analyzeDocument(chunk.content, fieldsWithInstructions);
 
     console.log('[DocumentChunking] Chunk analysis complete:', {
       chunkIndex: chunk.index,

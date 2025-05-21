@@ -1,8 +1,10 @@
 import { db } from "@db";
 import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
-import { broadcastTaskUpdate } from "./websocket";
+import * as WebSocketService from "./websocket";
 import { eq } from "drizzle-orm";
+// Import demo company hooks for automatic file vault population
+import { processNewCompany } from "../hooks/demo-company-hooks";
 
 /**
  * Creates a new company and handles all associated rules/tasks
@@ -102,7 +104,7 @@ async function createCompanyInternal(
       .values({
         title: `1. KYB Form: ${newCompany.name}`,
         description: `Complete KYB verification for ${newCompany.name}`,
-        task_type: 'company_onboarding_KYB',
+        task_type: 'company_kyb',
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'high',
@@ -120,9 +122,16 @@ async function createCompanyInternal(
           company_name: newCompany.name,
           created_via: metadata?.created_via || 'company_creation',
           status_flow: [TaskStatus.NOT_STARTED],
-          created_by_id: createdById,
+          progressHistory: [{
+            value: 0,
+            timestamp: new Date().toISOString()
+          }],
           created_at: new Date().toISOString(),
-          prerequisite_for: ['security_assessment'] // This task is a prerequisite for security assessment
+          last_updated: new Date().toISOString(),
+          created_by_id: createdById,
+          locked: false, // KYB tasks are never locked
+          prerequisite_for: ['ky3p'], // This task is a prerequisite for KY3P task
+          isKy3pTask: false // Flag to explicitly identify this as not a KY3P task
         }
       })
       .returning();
@@ -133,13 +142,13 @@ async function createCompanyInternal(
       duration: Date.now() - startTime
     });
 
-    // Create Security Assessment task (locked until KYB is completed)
-    console.log('[Company Service] Creating Security Assessment task for company:', newCompany.id);
+    // Create S&P KY3P Security Assessment task
+    console.log('[Company Service] Creating S&P KY3P Security Assessment task for company:', newCompany.id);
     const [securityTask] = await tx.insert(tasks)
       .values({
-        title: `2. Security Assessment: ${newCompany.name}`,
-        description: `Complete Security Assessment for ${newCompany.name}`,
-        task_type: 'security_assessment',
+        title: `2. S&P KY3P Security Assessment: ${newCompany.name}`,
+        description: `Complete S&P KY3P Security Assessment for ${newCompany.name}`,
+        task_type: 'ky3p', // Standardized task type for KY3P assessment
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'medium',
@@ -164,27 +173,29 @@ async function createCompanyInternal(
           created_at: new Date().toISOString(),
           last_updated: new Date().toISOString(),
           created_by_id: createdById,
-          locked: true, // Task is initially locked
-          prerequisite_task_id: kybTask.id, // KYB task is a prerequisite
-          prerequisite_for: ['company_card'], // This task is a prerequisite for CARD
-          prerequisite_task_type: 'company_onboarding_KYB'
+          locked: true, // Lock KY3P tasks until KYB is completed
+          prerequisite_completed: false, // KYB must be completed first
+          prerequisite_task_id: kybTask.id, // Reference to the prerequisite task
+          prerequisite_for: ['company_card'], // Reference only, not used for locking
+          prerequisite_task_type: 'company_kyb',
+          isKy3pTask: true // Flag to explicitly identify this as a KY3P task
         }
       })
       .returning();
 
-    console.log('[Company Service] Created Security Assessment task:', {
+    console.log('[Company Service] Created S&P KY3P Security Assessment task:', {
       taskId: securityTask.id,
       companyId: newCompany.id,
       duration: Date.now() - startTime
     });
 
-    // Create CARD compliance task (locked until Security Assessment is completed)
-    console.log('[Company Service] Creating CARD task for company:', newCompany.id);
+    // Create Open Banking Survey task
+    console.log('[Company Service] Creating Open Banking Survey task for company:', newCompany.id);
     const [cardTask] = await tx.insert(tasks)
       .values({
-        title: `3. 1033 Open Banking Survey: ${newCompany.name}`,
-        description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
-        task_type: 'company_card',
+        title: `3. Open Banking Survey: ${newCompany.name}`,
+        description: `Complete Open Banking Survey for ${newCompany.name}`,
+        task_type: 'open_banking',
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'high',
@@ -209,14 +220,16 @@ async function createCompanyInternal(
           created_at: new Date().toISOString(),
           last_updated: new Date().toISOString(),
           created_by_id: createdById,
-          locked: true, // Task is initially locked
-          prerequisite_task_id: securityTask.id, // Security Assessment task is a prerequisite
-          prerequisite_task_type: 'security_assessment'
+          locked: true, // Lock Open Banking tasks until KY3P is completed
+          prerequisite_completed: false, // KY3P must be completed first
+          prerequisite_task_id: securityTask.id, // Reference to the prerequisite task
+          prerequisite_task_type: 'ky3p',
+          isKy3pTask: false // Flag to explicitly identify this as not a KY3P task
         }
       })
       .returning();
 
-    console.log('[Company Service] Created CARD task:', {
+    console.log('[Company Service] Created Open Banking Survey task:', {
       taskId: cardTask.id,
       companyId: newCompany.id,
       duration: Date.now() - startTime
@@ -274,28 +287,57 @@ async function createCompanyInternal(
       });
     }
 
-    // Broadcast task updates
-    broadcastTaskUpdate({
+    // Broadcast task updates using the standardized WebSocket service
+    WebSocketService.broadcastTaskUpdate({
       id: kybTask.id,
       status: kybTask.status,
       progress: kybTask.progress,
       metadata: kybTask.metadata
     });
     
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       id: securityTask.id,
       status: securityTask.status,
       progress: securityTask.progress,
       metadata: securityTask.metadata
     });
 
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       id: cardTask.id,
       status: cardTask.status,
       progress: cardTask.progress,
       metadata: cardTask.metadata
     });
 
+    // Process demo company hooks (file vault population for demo companies)
+    try {
+      console.log('[Company Service] Checking if this is a demo company for file vault population');
+      
+      // Call our demo company hook non-blocking
+      setTimeout(async () => {
+        try {
+          const demoResult = await processNewCompany(newCompany);
+          console.log('[Company Service] Demo company processing result:', {
+            companyId: newCompany.id,
+            success: demoResult.success,
+            fileCount: demoResult.fileCount || 0
+          });
+        } catch (demoError) {
+          console.error('[Company Service] Error in demo company processing:', {
+            error: demoError,
+            companyId: newCompany.id
+          });
+          // Non-blocking - we don't want to fail company creation if demo processing fails
+        }
+      }, 0);
+    } catch (demoError) {
+      console.error('[Company Service] Error initiating demo company processing:', {
+        error: demoError,
+        companyId: newCompany.id
+      });
+      // Non-blocking - we don't want to fail company creation if demo processing fails
+    }
+    
     // Return with additional task IDs for reference in calling code
     return {
       ...newCompany,

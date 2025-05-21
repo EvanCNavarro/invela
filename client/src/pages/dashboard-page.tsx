@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
+import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
+import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
+import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
+import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
+import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import {
   Settings,
   Check,
@@ -14,8 +20,12 @@ import {
   Bell,
   Zap,
   Globe,
+  Shield,
   AlertTriangle,
-  LayoutGrid
+  LayoutGrid,
+  User,
+  BarChart3,
+  FileText
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,34 +41,56 @@ import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { cn } from "@/lib/utils";
+import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { NetworkVisualization } from "@/components/network";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { 
+  DashboardSkeleton, 
+  FinTechDashboardSkeleton 
+} from "@/components/dashboard/SkeletonWidgets";
 
-const DEFAULT_WIDGETS = {
-  updates: true,
-  announcements: true,
+// Create separate default widget sets based on company type
+const FINTECH_DEFAULT_WIDGETS = {
   quickActions: true,
-  companyScore: true,
-  networkVisualization: true
+  companySnapshot: true,
+  networkVisualization: false,
+  riskRadar: true,
+  riskMonitoring: false
+};
+
+const OTHER_DEFAULT_WIDGETS = {
+  quickActions: true,
+  companySnapshot: true,
+  networkVisualization: true,
+  riskRadar: false,
+  riskMonitoring: true
 };
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const [, setLocation] = useLocation(); // wouter hook for navigation
+  // Initially set to a common subset of widgets
+  const [visibleWidgets, setVisibleWidgets] = useState({
+    quickActions: true,
+    companySnapshot: true,
+    networkVisualization: false,
+    riskRadar: false,
+    riskMonitoring: false
+  });
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Updated query configuration with shorter refetch interval and stale time
+  // Use optimized query options for better performance
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user,
-    refetchInterval: 5000, // Refetch every 5 seconds
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true
+    ...getOptimizedQueryOptions("/api/companies/current"),
+    refetchInterval: false
   });
 
-  const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
+  type WidgetKey = 'quickActions' | 'companySnapshot' | 'networkVisualization' | 'riskRadar' | 'riskMonitoring';
+  
+  const toggleWidget = (widgetId: WidgetKey) => {
     setVisibleWidgets(prev => ({
       ...prev,
       [widgetId]: !prev[widgetId]
@@ -69,12 +101,22 @@ export default function DashboardPage() {
     setDrawerOpen(prev => !prev);
   };
 
-  // If company is a FinTech, hide the network visualization widget
+  // Toggle widgets based on company type
   useEffect(() => {
     if (companyData?.category === 'FinTech') {
       setVisibleWidgets(prev => ({
         ...prev,
-        networkVisualization: false
+        networkVisualization: false,
+        riskRadar: true,
+        riskMonitoring: false
+      }));
+    } else {
+      // For non-FinTech companies (Bank, Invela)
+      setVisibleWidgets(prev => ({
+        ...prev,
+        networkVisualization: true,
+        riskRadar: false,
+        riskMonitoring: true
       }));
     }
   }, [companyData?.category]);
@@ -83,6 +125,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Add the Tutorial Manager component */}
+      <TutorialManager tabName="dashboard" />
+      
       <PageTemplate
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
@@ -100,12 +145,29 @@ export default function DashboardPage() {
               <DropdownMenuContent align="end" className="w-56" sideOffset={4}>
                 <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                {Object.entries(visibleWidgets)
+                  // Filter dropdown options based on company type
+                  .filter(([key]) => {
+                    if (key === 'riskRadar') {
+                      // Only show Risk Radar for FinTech
+                      return companyData?.category === 'FinTech';
+                    }
+                    if (key === 'networkVisualization') {
+                      // Hide Network Visualization for FinTech
+                      return companyData?.category !== 'FinTech';
+                    }
+                    if (key === 'riskMonitoring') {
+                      // Only show Risk Monitoring for Bank and Invela
+                      return companyData?.category !== 'FinTech';
+                    }
+                    return true;
+                  })
+                  .map(([key, isVisible]) => (
                   <DropdownMenuItem
                     key={key}
                     onSelect={(event) => {
                       event.preventDefault();
-                      toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                      toggleWidget(key as WidgetKey);
                     }}
                     className="flex items-center gap-2"
                   >
@@ -150,9 +212,9 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-12 space-y-8">
+        <div className="mt-2 space-y-4 flex-1 flex flex-col overflow-y-auto">
           {allWidgetsHidden ? (
-            <div className="grid grid-cols-3 gap-4 min-h-[400px]">
+            <div className="grid grid-cols-3 gap-4 h-full">
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
@@ -167,129 +229,152 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
+          ) : isLoading ? (
+            // Show appropriate skeleton based on current loading state
+            <DashboardSkeleton />
           ) : (
-            <div className="grid grid-cols-3 gap-4">
-              {visibleWidgets.updates && (
-                <Widget
-                  title="Recent Updates"
-                  icon={<Activity className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('updates')}
-                  isVisible={visibleWidgets.updates}
-                >
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      No recent updates to show.
-                    </p>
-                  </div>
-                </Widget>
-              )}
-
-              {visibleWidgets.announcements && (
-                <Widget
-                  title="Announcements"
-                  icon={<Bell className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('announcements')}
-                  isVisible={visibleWidgets.announcements}
-                >
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Welcome to Invela! Check out our latest features.
-                    </p>
-                  </div>
-                </Widget>
-              )}
-
+            <div className="grid grid-cols-3 gap-4 flex-1 pb-8">
+              {/* Quick Actions - Full width at the top */}
               {visibleWidgets.quickActions && (
-                <Widget
-                  title="Quick Actions"
-                  icon={<Zap className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('quickActions')}
-                  isVisible={visibleWidgets.quickActions}
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Only show Invite FinTech button if user is not a FinTech company */}
-                    {companyData?.category !== 'FinTech' && (
-                      <InviteButton
-                        variant="fintech"
-                        pulse={true}
-                        className="w-full font-medium"
-                        onClick={() => setOpenFinTechModal(true)}
-                      />
+                <div className="col-span-3">
+                  <Widget
+                    title="Quick Actions"
+                    icon={<Zap className="h-5 w-5" />}
+                    size="triple"
+                    onVisibilityToggle={() => toggleWidget('quickActions')}
+                    isVisible={visibleWidgets.quickActions}
+                  >
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Only show Invite FinTech button if user is not a FinTech company */}
+                      {companyData?.category !== 'FinTech' ? (
+                        <>
+                          <InviteButton
+                            variant="fintech"
+                            pulse={false}
+                            className="w-full font-medium"
+                            onClick={() => setOpenFinTechModal(true)}
+                          />
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => setLocation(`/network/company/${companyData?.id}`)}
+                          >
+                            <User className="h-4 w-4" />
+                            View Company Profile
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => setLocation('/insights')}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            View Insights
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                          >
+                            <FileText className="h-4 w-4" />
+                            View Documentation
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => setLocation(`/network/company/${companyData?.id}`)}
+                          >
+                            <User className="h-4 w-4" />
+                            View Company Profile
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full font-medium flex items-center justify-center gap-2"
+                            onClick={() => setLocation('/insights')}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            View Insights
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </Widget>
+                </div>
+              )}
+
+              {/* Middle section */}
+              <div className="col-span-3 grid gap-4">
+                {/* FinTech layout - 1:3 ratio grid */}
+                {companyData?.category === 'FinTech' && (visibleWidgets.companySnapshot || visibleWidgets.riskRadar) && (
+                  <div className="grid grid-cols-4 gap-4 h-[450px]">
+                    {/* Company Snapshot (1/4 width) for FinTech */}
+                    {visibleWidgets.companySnapshot && companyData && (
+                      <div className="col-span-1">
+                        <CompanySnapshot 
+                          companyData={companyData}
+                          onToggle={() => toggleWidget('companySnapshot')}
+                          isVisible={visibleWidgets.companySnapshot}
+                        />
+                      </div>
                     )}
-                    <Button variant="outline" className="w-full font-medium">
-                      Add User
-                    </Button>
-                    <Button variant="outline" className="w-full font-medium">
-                      Set Risk Tracker
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full font-medium"
-                      onClick={toggleDrawer}
-                    >
-                      {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
-                    </Button>
-                    {/* Show this button only when we're hiding the Invite FinTech button */}
-                    {companyData?.category === 'FinTech' && (
-                      <Button variant="outline" className="w-full font-medium">
-                        View Documentation
-                      </Button>
+
+                    {/* Risk Radar (3/4 width) for FinTech */}
+                    {visibleWidgets.riskRadar && companyData && (
+                      <div className="col-span-3 h-full">
+                        <RiskRadarWidget
+                          companyId={companyData?.id || 0}
+                          onToggle={() => toggleWidget('riskRadar')}
+                          isVisible={visibleWidgets.riskRadar}
+                        />
+                      </div>
                     )}
                   </div>
-                </Widget>
-              )}
+                )}
 
-              {visibleWidgets.companyScore && companyData && (
-                <Widget
-                  title="Company Score"
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('companyScore')}
-                  isVisible={visibleWidgets.companyScore}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">Loading company data...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData?.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              console.debug(`Failed to load logo for company: ${companyData.name}`);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">
-                              {companyData?.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">{companyData?.name}</span>
+                {/* Bank/Invela layout - 1:1 ratio grid */}
+                {companyData?.category !== 'FinTech' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Company Snapshot for Bank/Invela */}
+                    {visibleWidgets.companySnapshot && companyData && (
+                      <div>
+                        <CompanySnapshot 
+                          companyData={companyData}
+                          onToggle={() => toggleWidget('companySnapshot')}
+                          isVisible={visibleWidgets.companySnapshot}
+                        />
                       </div>
-                      <RiskMeter score={companyData?.riskScore || companyData?.risk_score || 0} />
-                    </div>
-                  )}
-                </Widget>
-              )}
+                    )}
 
-              {visibleWidgets.networkVisualization && (
-                <Widget
-                  title="Network Visualization"
-                  icon={<Globe className="h-5 w-5" />}
-                  size="triple"
-                  onVisibilityToggle={() => toggleWidget('networkVisualization')}
-                  isVisible={visibleWidgets.networkVisualization}
-                >
-                  <NetworkVisualization className="shadow-none border-none" />
-                </Widget>
+                    {/* Network Visualization for Bank/Invela */}
+                    {visibleWidgets.networkVisualization && (
+                      <div className="h-[600px]">
+                        <NetworkVisualizationWidget
+                          onToggle={() => toggleWidget('networkVisualization')}
+                          isVisible={visibleWidgets.networkVisualization}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* Risk Monitoring Widget for Bank/Invela - Full width */}
+              {visibleWidgets.riskMonitoring && companyData?.category !== 'FinTech' && (
+                <div className="col-span-3 mt-4">
+                  <RiskMonitoringWidget />
+                </div>
+              )}
+              
+              {/* Risk Radar - Only for Bank/Invela companies as full width */}
+              {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && companyData && (
+                <div className="col-span-3 h-[400px]">
+                  <RiskRadarWidget
+                    companyId={companyData?.id || 0}
+                    onToggle={() => toggleWidget('riskRadar')}
+                    isVisible={visibleWidgets.riskRadar}
+                  />
+                </div>
               )}
             </div>
           )}

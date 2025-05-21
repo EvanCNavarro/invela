@@ -1,0 +1,115 @@
+[2025-05-19T19:35:08.003Z] [PhaseStartup] Executing callback 1/1 for phase services 
+[2025-05-19T19:35:08.003Z] [App] Services phase initializing 
+[2025-05-19T19:35:08.003Z] [App] Initializing unified service registration 
+[2025-05-19T19:35:08.003Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+[2025-05-19T19:35:08.003Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-05-19T19:35:08.003Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-19T19:35:08.003Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-05-19T19:35:08.003Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-19T19:35:08.003Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-19T19:35:08.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-19T19:35:08.004Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-19T19:35:08.004Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-19T19:35:08.004Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-19T19:35:08.004Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-19T19:35:08.004Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-19T19:35:08.004Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-19T19:35:08.004Z] [App] Communication phase initializing 
+[2025-05-19T19:35:08.005Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-19T19:35:08.005Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-19T19:35:08.005Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-19T19:35:08.005Z] [App] Application ready for user interaction 
+[2025-05-19T19:35:08.005Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-19T19:35:08.005Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /login
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 401
+[TanStack Query] 401 Unauthorized for /api/user, returning null as configured
+[2025-05-19T19:35:08.185Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747683308509-029etqe", timestamp: "2025-05-19T19:35:08.509Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-19T19:35:08.626Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747683308996-pbovbm5", timestamp: "2025-05-19T19:35:08.996Z", message: "Connection established"}
+[2025-05-19T19:35:08.996Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747683309485-z3otfjb", timestamp: "2025-05-19T19:35:09.485Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1747683309980-oeljnb0", timestamp: "2025-05-19T19:35:09.981Z", message: "Connection established"}
+clientId: "client-1747683309980-oeljnb0"
+message: "Connection established"
+timestamp: "2025-05-19T19:35:09.981Z"
+type: "connection_established"
+[[Prototype]]: Object
+[2025-05-19T19:35:10.397Z] [WebSocket] WebSocket connection established 
+[2025-05-19T19:35:10.397Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-19T19:35:10.398Z] [WebSocket] Received message of type: connection_established 
+[2025-05-19T19:35:10.398Z] [WebSocket] WebSocket server connection confirmed with ID: client-1747683310468-re95r51 
+[2025-05-19T19:35:10.581Z] [WebSocket] Sending authentication message 
+Object {userId: "8", companyId: "1", connectionId: "ws_1747683308997_8hugj4rtm", hasUserData: false, hasCompanyData: false}
+[2025-05-19T19:35:10.700Z] [WebSocket] Received message of type: authenticated 
+[2025-05-19T19:35:10.700Z] [WebSocket] WebSocket authentication confirmed for client: unknown 

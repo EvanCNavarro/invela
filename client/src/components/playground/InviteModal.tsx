@@ -3,9 +3,10 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send, AlertTriangle, ExternalLink } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useCurrentCompany } from "@/hooks/use-current-company";
 import confetti from 'canvas-confetti';
 import { Link } from "wouter";
 
@@ -20,6 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -49,11 +53,13 @@ function slugify(text: string): string {
 }
 
 export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId, companyName }: InviteModalProps) {
-  const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
   const { user } = useAuth();
+  const { company } = useCurrentCompany();
   const [serverError, setServerError] = useState<string | null>(null);
   const [existingCompany, setExistingCompany] = useState<{ id: number; name: string; category: string; } | null>(null);
   const [isCheckingCompany, setIsCheckingCompany] = useState(false);
+  const [isDemoFintech, setIsDemoFintech] = useState(true); // Default to true
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -97,8 +103,9 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.full_name,
-        sender_company: user?.company_name || 'Invela',
-        ...(variant === 'user' && { company_id: companyId }) // Only include company_id for user invites
+        sender_company: 'Invela', // Simplified to use a default value
+        ...(variant === 'user' && { company_id: companyId }), // Only include company_id for user invites
+        ...(variant === 'fintech' && { is_demo: isDemoFintech }) // Include is_demo flag for fintech invites
       };
 
       console.log(`[InviteModal] Sending ${variant} invitation with payload:`, payload);
@@ -141,10 +148,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         });
       }
 
-      toast({
-        title: "Invitation Sent Successfully",
-        description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
-      });
+      unifiedToast.success(
+        "Invitation Sent Successfully", 
+        `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`
+      );
 
       form.reset({
         email: "",
@@ -159,11 +166,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
     onError: (error: Error) => {
       if (error.message !== "COMPANY_EXISTS") {
         setServerError(error.message);
-        toast({
-          title: "Error Sending Invitation",
-          description: error.message,
-          variant: "destructive",
-        });
+        unifiedToast.error(
+          "Error Sending Invitation", 
+          error.message
+        );
       }
     },
   });
@@ -272,6 +278,23 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                 </FormItem>
               )}
             />
+            {/* Demo FinTech checkbox - only shown for Invela company users inviting a fintech */}
+            {variant === 'fintech' && company?.category === 'Invela' && (
+              <div className="flex items-center space-x-2 mt-2 p-3 rounded-md bg-blue-50">
+                <Checkbox 
+                  id="demo-fintech-checkbox" 
+                  checked={isDemoFintech}
+                  disabled={true} // Read-only checkbox
+                  className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                />
+                <Label 
+                  htmlFor="demo-fintech-checkbox" 
+                  className="text-sm font-medium text-blue-700"
+                >
+                  Create as Demo FinTech
+                </Label>
+              </div>
+            )}
             {serverError && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
                 {serverError}

@@ -1,0 +1,99 @@
+[WebSocket] Smart WebSocket connection manager initialized
+[vite] connecting...
+[WebSocket] Connection to wss://localhost:undefined/ failed: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/' is invalid.
+[vite] failed to connect to websocket.
+your current setup:
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ <--[HTTP]--> localhost:undefined/ (server)
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:/ <--[WebSocket (failing)]--> localhost:undefined/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] Creating app-level EnhancedKybFormService instance
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-05-18T18:45:52.465Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+Risk Score Logger initialized: 
+Object {showDiff: true, debugMode: true, enabledTags: {…}}
+[WebSocket] Smart WebSocket connection manager initialized
+[WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection attempt initiated
+[RiskScore]:init Risk Score Data Service initialized successfully
+Risk Score Service exposed on window.__riskScoreService for development debugging
+[RiskScore]:init Application services initialized successfully
+[App] WebSocket connection managers initialized
+[App] Application services initialized
+[Router] Current location: /
+[2025-05-18T18:45:52.740Z] [WebSocket] WebSocket connection manager initialized 
+[2025-05-18T18:45:52.740Z] [WebSocket] Scheduling initial WebSocket connection in 1000ms to ensure environment is ready 
+[TanStack Query] Fetching: /api/user
+[2025-05-18T18:45:52.742Z] [App] Initializing application with phased startup approach 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Registering callback for phase: framework 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Registering callback for phase: context 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Registering callback for phase: services 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Registering callback for phase: communication 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Registering callback for phase: ready 
+[2025-05-18T18:45:52.742Z] [PhaseStartup] Starting phased application initialization 
+[2025-05-18T18:45:52.743Z] [PhaseStartup] Executing startup phase: framework 
+[2025-05-18T18:45:52.743Z] [PhaseStartup] Executing 1 callbacks for phase framework 
+[2025-05-18T18:45:52.743Z] [PhaseStartup] Executing callback 1/1 for phase framework 
+[2025-05-18T18:45:52.743Z] [App] Framework phase initializing 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Phase framework completed successfully 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing startup phase: context 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing 1 callbacks for phase context 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing callback 1/1 for phase context 
+[2025-05-18T18:45:52.745Z] [App] Context phase initializing 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Phase context completed successfully 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Phase services dependencies satisfied, executing... 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing startup phase: services 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing 1 callbacks for phase services 
+[2025-05-18T18:45:52.745Z] [PhaseStartup] Executing callback 1/1 for phase services 
+[2025-05-18T18:45:52.745Z] [App] Services phase initializing 
+[2025-05-18T18:45:52.745Z] [App] Initializing unified service registration 
+[2025-05-18T18:45:52.745Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+[2025-05-18T18:45:52.745Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-18T18:45:52.746Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-18T18:45:52.746Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]

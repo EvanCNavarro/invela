@@ -16,9 +16,9 @@ export function PageTemplate({
   showBreadcrumbs = false
 }: PageTemplateProps) {
   return (
-    <div className="flex-1 flex overflow-x-hidden">
+    <div className="flex-1 flex overflow-x-hidden min-h-screen">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300",
+        "flex-1 min-w-0 transition-all duration-300 flex flex-col",
         drawerOpen ? "mr-[25.75rem]" : "",
       )}>
         {showBreadcrumbs && <BreadcrumbNav />}
@@ -29,7 +29,7 @@ export function PageTemplate({
             actions={headerActions}
           />
         )}
-        <div className={cn(className)}>
+        <div className={cn("mt-4 flex-grow", className)}>
           {children}
         </div>
       </div>

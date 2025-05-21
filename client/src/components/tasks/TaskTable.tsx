@@ -5,9 +5,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
+// WebSocketTester import removed - not needed in production
 import { highlightSearchMatch } from "@/components/ui/search-bar";
 import {
   Tooltip,
@@ -37,6 +38,7 @@ interface Task {
 }
 
 const taskStatusMap = {
+  // Support both uppercase (from server) and lowercase (from client) status values
   EMAIL_SENT: 'Email Sent',
   COMPLETED: 'Completed',
   NOT_STARTED: 'Not Started',
@@ -44,6 +46,14 @@ const taskStatusMap = {
   READY_FOR_SUBMISSION: 'Ready for Submission',
   SUBMITTED: 'Submitted',
   APPROVED: 'Approved',
+  // Add lowercase versions
+  email_sent: 'Email Sent',
+  completed: 'Completed',
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  ready_for_submission: 'Ready for Submission',
+  submitted: 'Submitted',
+  approved: 'Approved',
 } as const;
 
 const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -76,17 +86,17 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'company_onboarding_KYB' && 
+      task.task_type === 'company_kyb' && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
 
-  // Find Security Assessment task completion status for the company
+  // Find Security Assessment or KY3P task completion status for the company
   const isSecurityCompleted = (companyId: number | null): boolean => {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'security_assessment' && 
+      (task.task_type === 'security_assessment' || task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -101,37 +111,42 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       timestamp: new Date().toISOString()
     });
 
-    // Check if Security Assessment task is locked (needs KYB to be completed)
-    if (task.task_type === 'security_assessment' && !isKybCompleted(task.company_id)) {
-      console.log('[TaskTable] Security Assessment task locked - KYB not completed');
-      return; // Prevent navigation
-    }
+    // Reset any lingering overlay issues first
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = '';
+    const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+    overlays.forEach(overlay => {
+      if (overlay instanceof HTMLElement) {
+        overlay.style.display = 'none';
+      }
+    });
 
-    // Check if CARD task is locked (needs both KYB and Security Assessment to be completed)
-    if (task.task_type === 'company_card' && 
-        (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
-      console.log('[TaskTable] CARD task locked - prerequisite tasks not completed');
-      return; // Prevent navigation
-    }
+    // All locking logic has been removed - all tasks are now accessible regardless of dependencies
 
-    // Navigate to form pages for KYB, Security and CARD tasks if not in submitted status
-    if ((task.task_type === 'company_kyb' || 
-         task.task_type === 'company_onboarding_KYB' || 
-         task.task_type === 'company_card' ||
-         task.task_type === 'security_assessment') && 
-        task.status !== 'submitted') {
+    // Navigate to form pages for KYB, Security, KY3P, CARD, and Open Banking tasks (including submitted tasks)
+    if (task.task_type === 'company_kyb' || 
+        task.task_type === 'company_card' ||
+        task.task_type === 'security_assessment' ||
+        task.task_type === 'sp_ky3p_assessment' ||
+        task.task_type === 'ky3p' ||
+        task.task_type === 'open_banking' ||
+        task.task_type === 'open_banking_survey') {
       
       // Get task ID for direct navigation
       const taskId = task.id;
       
       // Get task type for form type determination
       let formType;
-      if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+      if (task.task_type === 'company_kyb') {
         formType = 'kyb';
       } else if (task.task_type === 'company_card') {
         formType = 'card';
       } else if (task.task_type === 'security_assessment') {
         formType = 'security';
+      } else if (task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p') {
+        formType = 'ky3p';
+      } else if (task.task_type === 'open_banking' || task.task_type === 'open_banking_survey') {
+        formType = 'open_banking';
       }
       
       // Get company name from task title or metadata
@@ -142,7 +157,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         companyName = task.metadata.company.name;
       } else {
         // Try to extract from title as fallback
-        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
+        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment|S&P KY3P Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
         if (match && match[2]) {
           companyName = match[2].trim();
         }
@@ -172,6 +187,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         constructedUrl: formUrl,
         status: task.status,
         isReadyForSubmission: task.status.toUpperCase() === 'READY_FOR_SUBMISSION',
+        isSubmitted: task.status.toLowerCase() === 'submitted',
         timestamp: new Date().toISOString()
       });
 
@@ -186,22 +202,48 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         isSubmitted: task.status === 'submitted',
         timestamp: new Date().toISOString()
       });
-      // Show modal for other task types or submitted KYB/CARD tasks
-      setSelectedTask(task);
-      setDetailsModalOpen(true);
+      
+      // Make sure any existing modal is closed first
+      setDetailsModalOpen(false);
+      
+      // Small delay to ensure previous modal is fully closed
+      setTimeout(() => {
+        // Show modal for other task types
+        setSelectedTask(task);
+        setDetailsModalOpen(true);
+      }, 50);
     }
   };
 
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No tasks found
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <path d="M9 16l2 2 4-4"></path>
+            </svg>
+          </div>
+        </div>
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">All Caught Up!</h3>
+        <p className="text-muted-foreground text-center max-w-md">
+          You have no tasks that match your current filters. Try adjusting your filters or create a new task to get started.
+        </p>
       </div>
     );
   }
 
   return (
     <>
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-xs text-muted-foreground">
+          {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} found
+        </div>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -210,7 +252,6 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
-              <TableHead>Due Date</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -218,115 +259,124 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
             {tasks.map((task) => {
               // Determine if the task is locked based on its type and prerequisites
               const isCardTask = task.task_type === 'company_card';
+              const isOpenBankingTask = task.task_type === 'open_banking' || task.task_type === 'open_banking_survey';
               const isSecurityTask = task.task_type === 'security_assessment';
+              const isKy3pTask = task.task_type === 'sp_ky3p_assessment' || task.task_type === 'ky3p';
               
-              // Check locked status based on task type and prerequisites
-              const isLocked = 
-                (isSecurityTask && !isKybCompleted(task.company_id)) || 
-                (isCardTask && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
-                // Also consider the locked flag in metadata if it exists
-                (task.metadata?.locked === true);
+              // All tasks are now unlocked - removed dependency checking
+              const isLocked = false;
+              
+              // No tooltips needed since all tasks are unlocked
+              const tooltipContent = null;
 
               return (
-                <TooltipProvider key={task.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <TableRow 
-                        className={classNames(
-                          "cursor-pointer hover:bg-muted/50 transition-colors",
-                          task.task_type === 'company_onboarding_KYB' && task.status !== 'submitted' && "hover:bg-blue-50/50",
-                          task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
-                          isLocked && "opacity-50 cursor-not-allowed"
-                        )}
-                        onClick={() => !isLocked && handleTaskClick(task)}
-                      >
-                        <TableCell className="font-mono text-xs">
-                          {task.id}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <span className="flex items-center space-x-2">
-                            {task.searchMatches ? (
-                              <span 
-                                dangerouslySetInnerHTML={{ 
-                                  __html: highlightSearchMatch(
-                                    task.title, 
-                                    task.searchMatches.filter(match => match.key === 'title')
-                                  ) 
-                                }} 
-                              />
-                            ) : (
-                              <span>{task.title}</span>
-                            )}
-                            {isLocked && (
+                <TableRow 
+                  key={task.id}
+                  className={classNames(
+                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                    task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
+                    isLocked && "opacity-50 cursor-not-allowed"
+                  )}
+                  onClick={() => !isLocked && handleTaskClick(task)}
+                >
+                  <TableCell className="font-mono text-xs">
+                    {task.id}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center space-x-2">
+                      {task.searchMatches ? (
+                        <span 
+                          dangerouslySetInnerHTML={{ 
+                            __html: highlightSearchMatch(
+                              task.title, 
+                              task.searchMatches.filter(match => match.key === 'title')
+                            ) 
+                          }} 
+                        />
+                      ) : (
+                        <span>{task.title}</span>
+                      )}
+                      {isLocked && tooltipContent ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
-                            )}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(task.status)}>
-                            {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="w-full block">
-                            <span className="block w-full bg-secondary h-2 rounded-full">
-                              <span
-                                className="block bg-primary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${task.progress}%` }}
-                              />
-                            </span>
-                            <span className="block text-xs text-muted-foreground mt-1">
-                              {task.progress}%
-                            </span>
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
-                        </TableCell>
-                        <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-                          {!isLocked && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 p-0 hover:bg-accent"
-                                >
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-[160px]">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedTask(task);
-                                    setDetailsModalOpen(true);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  View Details
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    </TooltipTrigger>
-                    {isLocked && (
-                      <TooltipContent>
-                        {isSecurityTask && (
-                          <p>Complete the KYB form to unlock this Security Assessment task</p>
-                        )}
-                        {isCardTask && (
-                          <p>Complete both KYB and Security Assessment tasks to unlock this CARD task</p>
-                        )}
-                        {!isCardTask && !isSecurityTask && task.metadata?.locked && (
-                          <p>This task is locked due to dependencies</p>
-                        )}
-                      </TooltipContent>
+                            </TooltipTrigger>
+                            <TooltipContent>{tooltipContent}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : isLocked ? (
+                        <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
+                      ) : null}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(task.status)}>
+                      {/* Try both original case and uppercase to handle server and client status values */}
+                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || 
+                       taskStatusMap[task.status.toUpperCase() as keyof typeof taskStatusMap] || 
+                       task.status.replace(/_/g, ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="w-full block">
+                      <span className="block w-full bg-secondary h-2 rounded-full">
+                        <span
+                          className="block bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${task.progress < 1 ? task.progress * 100 : task.progress}%` }}
+                        />
+                      </span>
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {task.progress < 1 ? Math.ceil(task.progress * 100) : task.progress}%
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                    {!isLocked && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 p-0 hover:bg-accent"
+                          >
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[210px]">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              // Reset any lingering overlay issues first
+                              document.body.style.overflow = '';
+                              document.body.style.pointerEvents = '';
+                              const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+                              overlays.forEach(overlay => {
+                                if (overlay instanceof HTMLElement) {
+                                  overlay.style.display = 'none';
+                                }
+                              });
+                              
+                              // Make sure any existing modal is closed first
+                              setDetailsModalOpen(false);
+                              
+                              // Small delay to ensure previous modal is fully closed
+                              setTimeout(() => {
+                                setSelectedTask(task);
+                                setDetailsModalOpen(true);
+                              }, 50);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          {/* WebSocket tester removed - not needed in production */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                  </Tooltip>
-                </TooltipProvider>
+                  </TableCell>
+                </TableRow>
               );
             })}
           </TableBody>

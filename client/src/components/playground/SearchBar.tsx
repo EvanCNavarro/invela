@@ -105,15 +105,15 @@ export function SearchBar({
   // Determine placeholder text
   const getPlaceholder = () => {
     if (isLoading) return "Loading..."
-    if (isGlobalSearch) return "Search Invela"
+    if (isGlobalSearch) return "Search Invela Trust Network..."
     if (contextualType) return `Search for ${contextualType}`
     return placeholder || "Search..."
   }
 
   return (
-    <div className={cn("relative flex w-full items-center", containerClassName)}>
+    <div className={cn("relative flex w-full items-center min-w-0 bg-white dark:bg-zinc-950 rounded-full border shadow-sm", containerClassName)}>
       <SearchIcon 
-        className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
+        className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none"
       />
       <Input
         type="text"
@@ -121,9 +121,16 @@ export function SearchBar({
         onChange={handleChange}
         placeholder={getPlaceholder()}
         className={cn(
-          "pl-9 pr-[70px]",
+          "pl-10 pr-[70px] text-sm w-full h-10 rounded-full border-none bg-transparent shadow-none",
           className
         )}
+        style={{
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          width: '100%'
+        }}
+        autoFocus={false}
         {...props}
       />
       <div className="absolute right-3 flex items-center gap-2">
@@ -144,8 +151,13 @@ export function SearchBar({
   )
 }
 
+// Define the types for Fuse matches
+interface FuseIndices {
+  indices: [number, number][];
+}
+
 // Utility function to highlight matched text
-export function highlightMatch(text: string, matches: Fuse.FuseResultMatch[]) {
+export function highlightMatch(text: string, matches: FuseIndices[]) {
   if (!matches?.length) return text
 
   const indices = matches.reduce<[number, number][]>((acc, match) => {

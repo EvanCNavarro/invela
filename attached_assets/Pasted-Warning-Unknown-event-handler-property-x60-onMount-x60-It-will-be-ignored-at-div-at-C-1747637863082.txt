@@ -1,0 +1,82 @@
+Warning: Unknown event handler property &#x60;onMount&#x60;. It will be ignored.
+    at div
+    at Charts (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-apexcharts.js?v=2c749595:10097:19)
+    at div
+    at div
+    at div
+    at _c9 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/card.tsx:106:12)
+    at div
+    at _c (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/card.tsx:20:11)
+    at RiskRadarChart (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/insights/RiskRadarChart.tsx:42:34)
+    at div
+    at div
+    at _c9 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/card.tsx:106:12)
+    at div
+    at _c (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=2c749595:77:13
+    at Presence (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RNAEPQ6M.js?v=2c749595:24:11)
+    at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=2c749595:221:13
+    at _c5 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/tabs.tsx:86:12)
+    at div
+    at div
+    at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=2c749595:77:13
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=2c749595:38:15)
+    at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=2c749595:99:7
+    at div
+    at div
+    at div
+    at div
+    at div
+    at PageTemplate (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/page-template.tsx:21:3)
+    at div
+    at main
+    at div
+    at div
+    at DashboardLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/layouts/DashboardLayout.tsx:29:35)
+    at CompanyProfilePage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/company-profile-page.tsx?t=1747637721830:142:18)
+    at div
+    at div
+    at OnboardingWrapper (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/OnboardingWrapper.tsx:22:37)
+    at div
+    at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747637721830&v=LIj1qhZgIUonuF1Pz9dwh:80:28)
+    at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747637721830&v=LIj1qhZgIUonuF1Pz9dwh:309:92)
+    at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:191:16)
+    at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:247:17)
+    at div
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747637721830&v=LIj1qhZgIUonuF1Pz9dwh:90:22)
+    at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/providers/websocket-provider.tsx:40:37)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:182:32)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=2c749595:38:15)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:28:15)
+    at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:89:13)
+    at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=2c749595:106:5)
+    at QueryClientProvider…
+[TanStack Query] Response for /api/relationships: Status 200
+[RiskRadarChart] Fetched relationship companies: 65
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 65, visualizationNodesCount: 0, uniqueCompaniesCount: 58, firstFewCompanies: Array(5), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Invela", category: "Invela", isBankOrInvela: true, selectedCompanyId: 1, networkCompaniesCount: 58, …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-19T06:57:28.046Z", echo: {…}}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/1
+[RiskRadarChart] Fetched relationship companies: 65
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 65, visualizationNodesCount: 0, uniqueCompaniesCount: 58, firstFewCompanies: Array(5), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Invela", category: "Invela", isBankOrInvela: true, selectedCompanyId: 1, networkCompaniesCount: 58, …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-19T06:57:28.533Z", echo: {…}}

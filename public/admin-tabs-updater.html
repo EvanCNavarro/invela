@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Tools - Update Company Tabs</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 1rem;
+    }
+    .tabs-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .tab-card {
+      flex: 1;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    button:disabled {
+      background-color: #a0aec0;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #166534;
+    }
+    .error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+    }
+    pre {
+      overflow-x: auto;
+      background-color: #f8fafc;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #e2e8f0;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+    }
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-invela {
+      background-color: #e0f2fe;
+      color: #0369a1;
+    }
+    .badge-bank {
+      background-color: #ecfccb;
+      color: #3f6212;
+    }
+    .badge-fintech {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Tools - Update Company Tabs</h1>
+  
+  <div class="tabs-container">
+    <div class="tab-card">
+      <h2>Claims Tab</h2>
+      <p>External tab that opens:</p>
+      <pre>https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/claims</pre>
+      <p>Added to: <span class="badge badge-invela">Invela</span> <span class="badge badge-bank">Bank</span></p>
+    </div>
+    
+    <div class="tab-card">
+      <h2>S&P Risk Score Tab</h2>
+      <p>External tab that opens:</p>
+      <pre>https://kzmpi00aqgxqa533ay5q.lite.vusercontent.net/risk-score</pre>
+      <p>Added to: <span class="badge badge-invela">Invela</span> <span class="badge badge-bank">Bank</span></p>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Update All Company Tabs</h2>
+    <p>This tool will update the sidebar navigation for all companies to ensure they have the proper tabs available based on their company type:</p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Company Type</th>
+          <th>Available Tabs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-invela">Invela</span></td>
+          <td>Dashboard, Task Center, Network, File Vault, Insights, Builder, Playground, <strong>Claims</strong>, <strong>S&P Risk Score</strong></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-bank">Bank</span></td>
+          <td>Dashboard, Task Center, Network, File Vault, Insights, Builder, <strong>Claims</strong>, <strong>S&P Risk Score</strong></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-fintech">FinTech</span></td>
+          <td>Task Center</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <p><strong>Note:</strong> This action will immediately update all connected clients via WebSocket messages.</p>
+    
+    <button id="updateButton" onclick="updateTabs()">Update All Company Tabs</button>
+    
+    <div id="resultContainer" class="result">
+      <div id="resultContent"></div>
+      <pre id="resultDetails"></pre>
+    </div>
+  </div>
+
+  <script>
+    async function updateTabs() {
+      const button = document.getElementById('updateButton');
+      const resultContainer = document.getElementById('resultContainer');
+      const resultContent = document.getElementById('resultContent');
+      const resultDetails = document.getElementById('resultDetails');
+      
+      // Disable button and show loading state
+      button.disabled = true;
+      button.textContent = 'Updating...';
+      
+      try {
+        const response = await fetch('/api/admin/update-tabs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        // Display result
+        resultContainer.style.display = 'block';
+        
+        if (response.ok) {
+          resultContainer.className = 'result success';
+          resultContent.textContent = data.message || 'Successfully updated company tabs';
+          resultDetails.textContent = JSON.stringify(data, null, 2);
+        } else {
+          resultContainer.className = 'result error';
+          resultContent.textContent = data.message || 'Failed to update company tabs';
+          resultDetails.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        // Handle error
+        resultContainer.style.display = 'block';
+        resultContainer.className = 'result error';
+        resultContent.textContent = 'An error occurred while updating tabs';
+        resultDetails.textContent = error.toString();
+      } finally {
+        // Reset button
+        button.disabled = false;
+        button.textContent = 'Update All Company Tabs';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/network/company/1", …}
+[Sidebar] Tab state check: company=undefined, path=/network/company/1, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[RiskScore]:websocket Initializing WebSocket connection
+[WebSocket] Connection attempt initiated
+[TanStack Query] Response for /api/user: Status 200
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/network/company/1", …}
+[Sidebar] Tab state check: company=1, path=/network/company/1, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[ONBOARDING DEBUG] User object in AuthProvider changed: 
+Object {userId: 8, onboardingCompleted: true, typeOfOnboardingFlag: "boolean", timestamp: "2025-05-18T16:59:58.273Z"}
+[App] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-18T16:59:58.274Z"}
+[2025-05-18T16:59:58.458Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+Tag is not defined
+Tag is not defined
+The above error occurred in the <CompanyProfilePage> component:
+
+    at CompanyProfilePage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/company-profile-page.tsx?t=1747587580053:144:18)
+    at div
+    at div
+    at OnboardingWrapper (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/OnboardingWrapper.tsx:22:37)
+    at div
+    at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&v=xlwqZTWE3OivsA0q8UJhA:80:28)
+    at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&v=xlwqZTWE3OivsA0q8UJhA:309:92)
+    at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:191:16)
+    at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:247:17)
+    at div
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&v=xlwqZTWE3OivsA0q8UJhA:90:22)
+    at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/providers/websocket-provider.tsx:40:37)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:176:32)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=2c749595:38:15)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:28:15)
+    at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:89:13)
+    at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=2c749595:106:5)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2c749595:2805:3)
+    at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&v=xlwqZTWE3OivsA0q8UJhA:714:43)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at CompanyProfilePage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/company-profile-page.tsx?t=1747587580053:144:18)
+at div
+at div
+at OnboardingWrapper (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/OnboardingWrapper.tsx:22:37)
+at div
+at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&amp;v=xlwqZTWE3OivsA0q8UJhA:80:28)
+at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&amp;v=xlwqZTWE3OivsA0q8UJhA:309:92)
+at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:191:16)
+at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2c749595:247:17)
+at div
+at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&amp;v=xlwqZTWE3OivsA0q8UJhA:90:22)
+at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/providers/websocket-provider.tsx:40:37)
+at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:176:32)
+at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=2c749595:38:15)
+at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:28:15)
+at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=2c749595:89:13)
+at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=2c749595:106:5)
+at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2c749595:2805:3)
+at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1747587580053&amp;v=xlwqZTWE3OivsA0q8UJhA:714:43)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

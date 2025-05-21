@@ -19,12 +19,14 @@ import { cn } from "@/lib/utils";
 
 interface WidgetProps {
   title: string;
+  subtitle?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
   onVisibilityToggle?: () => void;
   isVisible?: boolean;
   onEdit?: () => void;
   className?: string;
+  headerClassName?: string;
   size?: 'single' | 'double' | 'triple';
   actions?: Array<{
     label: string;
@@ -35,12 +37,14 @@ interface WidgetProps {
 
 export function Widget({ 
   title, 
+  subtitle,
   icon, 
   children, 
   onVisibilityToggle,
   isVisible = true,
   onEdit,
   className,
+  headerClassName,
   size = 'single',
   actions = []
 }: WidgetProps) {
@@ -51,16 +55,22 @@ export function Widget({
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
       !isVisible && 'opacity-50',
+      className?.includes("h-full") ? "flex flex-col h-full" : "",
       className
     )}>
-      <div className="flex items-center justify-between px-4 pt-4">
+      <div className={cn("flex items-center justify-between px-4 pt-4", headerClassName)}>
         <div className="flex items-center gap-2">
           {icon && (
             <div className="text-muted-foreground">
               {icon}
             </div>
           )}
-          <h3 className="font-medium text-base">{title}</h3>
+          <div>
+            <h3 className="font-medium text-base">{title}</h3>
+            {subtitle && (
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
         </div>
         {(onVisibilityToggle || actions.length > 0 || onEdit) && (
           <DropdownMenu>
@@ -110,7 +120,11 @@ export function Widget({
           </DropdownMenu>
         )}
       </div>
-      <div className="p-4">
+      <div className={cn(
+        "p-4", 
+        (className?.includes("flex-col") || className?.includes("h-full")) && "flex-grow h-full",
+        "overflow-hidden" // Prevent content overflow
+      )}>
         {children}
       </div>
     </Card>

@@ -1,0 +1,49 @@
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:56.587Z", messageId: "msg_1747492556587_xoa72fktb"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:56.587Z", messageId: "msg_1747492556587_xoa72fktb"}
+[2025-05-17T14:35:56.578Z] [WebSocket] Received message of type: task_update 
+[2025-05-17T14:35:56.578Z] [WebSocket] Task update received: Task #930 - Status: ready_for_submission, Progress: 100% 
+[KYB Timestamp Sync] Saving timestamps for task 930 - 30 fields
+[KYB Timestamp Sync] Successfully synchronized timestamps with server
+[WebSocket] Received message: 
+Object {type: "field_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:57.728Z", messageId: "msg_1747492557728_rcowr4umg"}
+[2025-05-17T14:35:57.715Z] [WebSocket] Received message of type: field_update 
+[WebSocket] Received message: 
+Object {type: "field_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:57.728Z", messageId: "msg_1747492557728_rcowr4umg"}
+[WebSocket] Received message: 
+Object {type: "field_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:57.728Z", messageId: "msg_1747492557728_rcowr4umg"}
+[WebSocket] Received message: 
+Object {type: "field_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:35:57.728Z", messageId: "msg_1747492557728_rcowr4umg"}
+[TaskCenter] Raw WebSocket task_update data: 
+Object {payload: {…}, data: {…}, taskId: 930, timestamp: "2025-05-17T14:36:00.591Z"}
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: true, hasNestedPayload: false, hasData: true, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: 930, status: "ready_for_submission", progress: 100, metadata: {…}, timestamp: "2025-05-17T14:36:00.579Z"}
+[TaskCenter] Ignoring outdated update for task 930 
+Object {currentTimestamp: "2025-05-17T14:35:59.439Z", updateTimestamp: "2025-05-17T14:35:57.640Z"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:36:00.591Z", messageId: "msg_1747492560591_pl339ng5g"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:36:00.591Z", messageId: "msg_1747492560591_pl339ng5g"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:36:00.591Z", messageId: "msg_1747492560591_pl339ng5g"}
+[WebSocket] Received message: 
+Object {type: "task_update", payload: {…}, data: {…}, timestamp: "2025-05-17T14:36:00.591Z", messageId: "msg_1747492560591_pl339ng5g"}
+[2025-05-17T14:36:00.579Z] [WebSocket] Received message of type: task_update 
+[2025-05-17T14:36:00.579Z] [WebSocket] Task update received: Task #930 - Status: ready_for_submission, Progress: 100% 
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=310, path=/task-center, file-vault-unlocked=true
+[Sidebar] Recent form submission detected: 
+Object {taskId: 930, taskType: "kyb", formType: "kyb", companyId: 310, timestamp: "2025-05-17T14:35:55.912Z", …}
+[CurrentCompany] Setting company context: 310
+[2025-05-17T14:36:05.455Z] [INFO] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-17T14:36:05.455Z"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T14:36:14.397Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T14:36:14.935Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T14:36:15.453Z", echo: {…}}

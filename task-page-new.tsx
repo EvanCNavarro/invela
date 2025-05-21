@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms/UniversalForm";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -375,15 +375,11 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Header is now in the OnboardingKYBFormPlayground component */}
-              <OnboardingKYBFormPlayground
+              {/* Universal form component */}
+              <UniversalForm
                 taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                savedFormData={task.savedFormData}
+                taskType="kyb"
+                initialData={task.savedFormData}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting KYB Form",
@@ -415,12 +411,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                       setFileId(result.fileId);
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "KYB form has been saved successfully.",
-                        variant: "default",
-                      });
+                      
+                      // Remove success toast here - we'll only show the modal
                     })
                     .catch(error => {
                       console.error('[TaskPage] Form submission failed:', error);
@@ -527,12 +519,8 @@ export default function TaskPage({ params }: TaskPageProps) {
 
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "Security assessment has been submitted successfully.",
-                        variant: "default",
-                      });
+                      
+                      // Remove success toast - we'll only show the modal
                     })
                     .catch(error => {
                       console.error('[TaskPage] Security assessment submission failed:', error);
@@ -648,14 +636,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                       setFileId(result.fileId);
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: result.warnings?.length
-                          ? "Compliance form has been saved successfully with some updates to existing data."
-                          : "Compliance form has been saved successfully.",
-                        variant: "default",
-                      });
+                      
+                      // Remove success toast - we'll only show the modal in one place
 
                       if (result.warnings?.length) {
                         result.warnings.forEach((warning: string) => {

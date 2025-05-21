@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
+import { logger } from "@/utils/client-logger";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -68,13 +69,37 @@ export default function TaskCenterPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' }); // Sort by ID by default
+  const [wsConnected, setWsConnected] = useState(false); // Track WebSocket connection state
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Use a ref to track and update timestamps without triggering re-renders
+  const taskTimestampRef = useRef<Record<number, number>>({});
+  // No longer need dependency checking as all tasks are unlocked by default
+  
+  // This function has been removed since tasks are now always unlocked
+  // and dependency checks are no longer needed
+  
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000,
-    refetchInterval: 5000,
+    staleTime: 5000,
+    // Only poll when WebSocket isn't connected - rely on WebSocket for real-time updates
+    // This eliminates the competing data sources that cause flickering
+    refetchInterval: wsConnected ? false : 15000,
+    // Intercept and process the response to store the last updated timestamp
+    select: (data) => {
+      // Store the server response timestamp for each task
+      const now = Date.now();
+      
+      // Update our ref with timestamps (doesn't trigger re-renders)
+      data.forEach(task => {
+        taskTimestampRef.current[task.id] = now;
+      });
+      
+      // No longer need dependency checking as all tasks are unlocked by default
+      
+      return data;
+    }
   });
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
@@ -86,43 +111,283 @@ export default function TaskCenterPage() {
 
   const isLoading = isTasksLoading || isCompanyLoading;
 
+  // No longer need dependency checking as all tasks are unlocked by default
+
+  // Force task status refresh when navigating to task center
+  useEffect(() => {
+    // Immediate task refresh when the component mounts
+    const refreshTasks = async () => {
+      logger.info('[TaskCenter] Page loaded - refreshing task statuses');
+      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    };
+    
+    refreshTasks();
+  }, [queryClient]);
+
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
 
     const setupSubscriptions = async () => {
       try {
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: any) => {
-          console.log('[TaskCenter] WebSocket Update Received:', {
-            taskId: data.taskId,
-            newStatus: data.status,
-            newProgress: data.progress,
-            timestamp: new Date().toISOString()
+        // Subscribe to WebSocket connection status
+        const connectionSub = await wsService.subscribe('connection_established', () => {
+          console.log('[TaskCenter] WebSocket connection established');
+          setWsConnected(true);
+        });
+        
+        subscriptions.push(connectionSub);
+        
+        // Also subscribe to disconnection events to restart polling when WebSocket is down
+        const disconnectionSub = await wsService.subscribe('connection_closed', () => {
+          console.log('[TaskCenter] WebSocket connection closed, reverting to polling');
+          setWsConnected(false);
+        });
+        
+        subscriptions.push(disconnectionSub);
+        
+        // Subscribe to task updates
+        const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
+          // Message data now comes directly from the WebSocket service
+          console.log('[TaskCenter] Raw WebSocket task_update data:', data);
+          
+          // Enhanced logging to help diagnose the exact structure
+          console.log('[TaskCenter] WebSocket message structure analysis:', {
+            hasPayload: !!data?.payload,
+            hasNestedPayload: !!data?.payload?.payload,
+            hasData: !!data?.data,
+            hasNestedData: !!data?.data?.data,
+            directTaskId: data?.id,
+            payloadTaskId: data?.payload?.id,
+            nestedPayloadTaskId: data?.payload?.payload?.id,
+            dataTaskId: data?.data?.id,
+            nestedDataTaskId: data?.data?.data?.id,
+          });
+          
+          // Extract task data from potentially nested structure
+          // First try direct properties, then look inside payload, then inside nested payload
+          let taskData: any = null;
+          let taskId: number | null = null;
+          
+          // Handle a special triple-nested structure seen for KY3P tasks
+          if (data?.payload?.payload?.taskId && data?.payload?.payload?.progress !== undefined) {
+            // Triple-nested structure for KY3P tasks
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.taskId;
+            console.log('[TaskCenter] Detected special triple-nested KY3P task structure');
+          }
+          // Try to extract from different possible structures
+          else if (data?.id) {
+            // Direct structure
+            taskData = data;
+            taskId = data.id;
+          } else if (data?.payload?.id) {
+            // payload.id structure
+            taskData = data.payload;
+            taskId = data.payload.id;
+          } else if (data?.payload?.payload?.id) {
+            // Doubly nested payload structure
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.id;
+          } else if (data?.taskId) {
+            // Has explicit taskId field
+            taskData = data;
+            taskId = data.taskId;
+          } else if (data?.payload?.taskId) {
+            // payload.taskId structure
+            taskData = data.payload;
+            taskId = data.payload.taskId;
+          }
+          
+          // If we still don't have task data but have a taskId, construct minimal object
+          if (!taskData && taskId) {
+            taskData = { id: taskId };
+          }
+          
+          // Fallback to empty object if no task data found
+          taskData = taskData || {};
+          
+          // Get current timestamp for this update
+          const now = Date.now();
+
+          console.log('[TaskCenter] WebSocket task_update processed:', {
+            taskId,
+            status: taskData.status,
+            progress: taskData.progress,
+            metadata: taskData.metadata,
+            timestamp: new Date(now).toISOString()
           });
 
-          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            const updatedTasks = oldTasks.map(task =>
-              task.id === data.taskId
-                ? { 
-                    ...task, 
-                    status: data.status, 
-                    progress: data.progress || 0 
-                  }
-                : task
-            );
-
-            console.log('[TaskCenter] Updated task state:', {
-              taskId: data.taskId,
-              progress: data.progress,
-              updatedTask: updatedTasks.find(t => t.id === data.taskId)
+          if (!taskId) {
+            console.warn('[TaskCenter] Missing task ID in WebSocket update');
+            return;
+          }
+          
+          // Get the server timestamp from the metadata if available, or use current timestamp
+          const serverTimestamp = taskData.metadata?.lastUpdated 
+            ? new Date(taskData.metadata.lastUpdated).getTime()
+            : now;
+            
+          // Check if this update is more recent than what we already have using our ref
+          // If we have no recorded timestamp or the server timestamp is newer, apply the update
+          const prevTimestamp = taskTimestampRef.current[taskId];
+          
+          if (!prevTimestamp || serverTimestamp > prevTimestamp) {
+            console.log(`[TaskCenter] Update for task ${taskId} is newer, applying`, {
+              prevTimestamp: prevTimestamp ? new Date(prevTimestamp).toISOString() : 'none',
+              newTimestamp: new Date(serverTimestamp).toISOString()
             });
+            
+            // Update our list of tasks with the new data
+            queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+              const updatedTasks = oldTasks.map(task =>
+                task.id === taskId
+                  ? { 
+                      ...task, 
+                      status: taskData.status || task.status, 
+                      progress: taskData.progress !== undefined ? taskData.progress : task.progress
+                    }
+                  : task
+              );
+  
+              console.log('[TaskCenter] Updated task state via WebSocket:', {
+                taskId,
+                progress: taskData.progress,
+                status: taskData.status,
+                updatedTask: updatedTasks.find(t => t.id === taskId)
+              });
+  
+              return updatedTasks;
+            });
+            
+            // Store the new timestamp in our ref
+            taskTimestampRef.current[taskId] = serverTimestamp;
+          } else {
+            // Otherwise log that we're ignoring an outdated update
+            console.log(`[TaskCenter] Ignoring outdated update for task ${taskId}`, {
+              currentTimestamp: new Date(prevTimestamp).toISOString(),
+              updateTimestamp: new Date(serverTimestamp).toISOString()
+            });
+          }
 
-            return updatedTasks;
-          });
-
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          // Don't invalidate - this would trigger another fetch and defeat real-time purpose
+          // Only invalidate if we need to force a refresh of additional data not in the update
+          if (taskData.metadata?.forceRefresh) {
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          }
         });
 
         subscriptions.push(unsubTaskUpdate);
+        
+        // 2. Subscribe to test task notifications as well
+        const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
+          // Enhanced logging to see the raw data structure
+          console.log('[TaskCenter] Raw WebSocket test_notification data:', data);
+
+          // Enhanced logging to help diagnose the exact structure
+          console.log('[TaskCenter] Test notification structure analysis:', {
+            hasPayload: !!data?.payload,
+            hasNestedPayload: !!data?.payload?.payload,
+            hasData: !!data?.data,
+            hasNestedData: !!data?.data?.data,
+            directTaskId: data?.id,
+            payloadTaskId: data?.payload?.id,
+            nestedPayloadTaskId: data?.payload?.payload?.id,
+            dataTaskId: data?.data?.id,
+            nestedDataTaskId: data?.data?.data?.id,
+          });
+          
+          // Extract task data from potentially nested structure - same approach as task_update
+          let taskData: any = null;
+          let taskId: number | null = null;
+          
+          // Handle a special triple-nested structure seen for KY3P tasks
+          if (data?.payload?.payload?.taskId && data?.payload?.payload?.progress !== undefined) {
+            // Triple-nested structure for KY3P tasks
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.taskId;
+            console.log('[TaskCenter] Detected special triple-nested KY3P task structure in test notification');
+          }
+          // Try to extract from different possible structures
+          else if (data?.id) {
+            // Direct structure
+            taskData = data;
+            taskId = data.id;
+          } else if (data?.payload?.id) {
+            // payload.id structure
+            taskData = data.payload;
+            taskId = data.payload.id;
+          } else if (data?.payload?.payload?.id) {
+            // Doubly nested payload structure
+            taskData = data.payload.payload;
+            taskId = data.payload.payload.id;
+          } else if (data?.taskId) {
+            // Has explicit taskId field
+            taskData = data;
+            taskId = data.taskId;
+          } else if (data?.payload?.taskId) {
+            // payload.taskId structure
+            taskData = data.payload;
+            taskId = data.payload.taskId;
+          }
+          
+          // If we still don't have task data but have a taskId, construct minimal object
+          if (!taskData && taskId) {
+            taskData = { id: taskId };
+          }
+          
+          // Fallback to empty object if no task data found
+          taskData = taskData || {};
+          
+          // Get current timestamp for this update
+          const now = Date.now();
+          
+          console.log('[TaskCenter] WebSocket test notification processed:', {
+            taskId,
+            status: taskData.status,
+            progress: taskData.progress,
+            metadata: taskData.metadata,
+            timestamp: new Date(now).toISOString()
+          });
+          
+          if (!taskId) {
+            console.warn('[TaskCenter] Missing task ID in test notification');
+            return;
+          }
+          
+          // Get the server timestamp from the metadata if available, or use current timestamp
+          const serverTimestamp = taskData.metadata?.lastUpdated 
+            ? new Date(taskData.metadata.lastUpdated).getTime()
+            : now;
+          
+          // Check if this update is more recent than what we already have using our ref
+          const prevTimestamp = taskTimestampRef.current[taskId];
+          
+          // Only update if this is a newer timestamp
+          if (!prevTimestamp || serverTimestamp > prevTimestamp) {
+            // Update our list of tasks with the new data
+            queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+              return oldTasks.map(task =>
+                task.id === taskId
+                  ? {
+                      ...task,
+                      status: taskData.status || task.status,
+                      progress: taskData.progress !== undefined ? taskData.progress : task.progress
+                    }
+                  : task
+              );
+            });
+            
+            // Record the timestamp of this update
+            taskTimestampRef.current[taskId] = serverTimestamp;
+          } else {
+            console.log(`[TaskCenter] Ignoring outdated test notification for task ${taskId}`, {
+              currentTimestamp: new Date(prevTimestamp).toISOString(),
+              updateTimestamp: new Date(serverTimestamp).toISOString()
+            });
+          }
+        });
+        
+        subscriptions.push(unsubTaskTestNotification);
       } catch (error) {
         console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
       }

@@ -4,10 +4,12 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
-import { WelcomeModal } from "@/components/modals/WelcomeModal";
+import { WelcomeModal } from "@/components/modals/EmptyWelcomeModal";
+import { getOptimizedQueryOptions } from "@/lib/queryClient";
+import { WebSocketEventBridge } from "@/components/websocket/WebSocketEventBridge";
 
 interface Company {
   id: number;
@@ -30,18 +32,86 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
+  const queryClient = useQueryClient();
 
-  // Add refetchInterval to automatically check for updates
+  // Use the optimized query options for frequently accessed endpoints
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    refetchInterval: 5000, // Refetch every 5 seconds
+    ...getOptimizedQueryOptions("/api/tasks"),
   });
 
-  // Add refetchInterval to automatically check for company updates
-  const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
+  // Use the optimized query options for frequently accessed endpoints
+  // But make sure we use aggressive refetching settings to reflect unlocked features
+  const { data: currentCompany, isLoading: isLoadingCompany, refetch: refetchCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
+    ...getOptimizedQueryOptions("/api/companies/current"),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Consider data stale immediately to ensure fresh data
+    
+    // Reduced polling frequency to reduce server load
+    // We rely on WebSocket events for real-time updates instead
+    refetchInterval: 10000, // Poll every 10 seconds as a fallback
   });
+  
+  // Listen for WebSocket events to refresh company data in real-time
+  useEffect(() => {
+    // Handler for WebSocket connection status changes
+    const handleWebSocketReconnect = () => {
+      console.log('[DashboardLayout] WebSocket reconnected, refreshing company data');
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+      refetchCompany();
+    };
+    
+    // Handler for company tabs updates via WebSocket
+    const handleCompanyTabsUpdate = (event: CustomEvent) => {
+      const { companyId, availableTabs, cacheInvalidation } = event.detail || {};
+      
+      console.log('[DashboardLayout] Received company tabs update event:', {
+        companyId,
+        availableTabs,
+        cacheInvalidation,
+        eventType: event.type,
+        currentCompanyId: currentCompany?.id,
+        currentAvailableTabs: currentCompany?.available_tabs
+      });
+      
+      // Only process if it affects the current company
+      if (companyId === currentCompany?.id) {
+        console.log('[DashboardLayout] Processing update for current company');
+        
+        // Enhanced approach with better cache handling:
+        // 1. Remove the cached data first
+        queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
+        
+        // 2. Immediately update the cache with the new tabs - this provides instant UI feedback
+        //    even before the API refetch completes
+        if (currentCompany && Array.isArray(availableTabs)) {
+          console.log('[DashboardLayout] Directly updating query cache with new tabs:', availableTabs);
+          
+          queryClient.setQueryData(['/api/companies/current'], {
+            ...currentCompany,
+            available_tabs: availableTabs
+          });
+        }
+        
+        // 3. Still refetch from the server to ensure full sync
+        console.log('[DashboardLayout] Also refetching company data from server for complete sync');
+        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+        refetchCompany();
+      }
+    };
+    
+    // Register event listeners
+    window.addEventListener('websocket-reconnected', handleWebSocketReconnect);
+    window.addEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
+    
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('websocket-reconnected', handleWebSocketReconnect);
+      window.removeEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
+    };
+  }, [currentCompany?.id, queryClient, refetchCompany]);
 
   const relevantTasks = tasks.filter(task => {
     if (task.company_id !== currentCompany?.id) {
@@ -60,50 +130,76 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return path === '' ? 'dashboard' : path;
   };
 
+  // All routes are now accessible by default - we've removed the locking logic
   const isRouteAccessible = () => {
-    if (isLoadingCompany || !currentCompany) return true; // Wait for company data
-    const availableTabs = currentCompany.available_tabs || ['task-center'];
+    // Log the current tab and available tabs for debugging purposes only
+    const availableTabs = currentCompany?.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
-
+    
     console.log('[DashboardLayout] Checking route access:', {
       currentTab,
       availableTabs,
       isLoadingCompany
     });
 
-    return currentTab === 'task-center' || availableTabs.includes(currentTab);
+    // Always return true - all tabs are accessible
+    console.log(`[DashboardLayout] Tab "${currentTab}" accessible: true`);
+    
+    return true;
   };
 
+  // Add redirection functionality to automatically redirect users from locked tabs to the Task Center
   useEffect(() => {
-    // Skip navigation if company data is not yet loaded
-    if (isLoadingCompany || !currentCompany) {
-      console.log('[DashboardLayout] Waiting for company data...');
-      return;
+    if (!isLoadingCompany && currentCompany) {
+      const availableTabs = currentCompany?.available_tabs || ['task-center'];
+      const currentTab = getCurrentTab();
+      
+      // Check if the current tab is accessible
+      const isCurrentTabAccessible = currentTab === 'task-center' || 
+        availableTabs.includes(currentTab) || 
+        (currentTab === 'risk-score-configuration' && availableTabs.includes('risk-score'));
+      
+      // If the current tab is not accessible, redirect to the Task Center
+      if (!isCurrentTabAccessible) {
+        console.log(`[DashboardLayout] Tab "${currentTab}" is locked. Redirecting to task-center.`);
+        navigate('/task-center');
+      }
     }
+  }, [currentCompany, isLoadingCompany, location, navigate]);
+  
+  // Override tab visibility on route change to prevent any flickering issues
+  useEffect(() => {
+    const stopFlickering = () => {
+      const company = queryClient.getQueryData(['/api/companies/current']) as any;
+      if (company && location.includes('file-vault') && !company.available_tabs?.includes('file-vault')) {
+        console.log('[DashboardLayout] CRITICAL FIX: Correcting file-vault visibility in navigation');
+        
+        // If we're on the file-vault route but it's not in available tabs, add it
+        queryClient.setQueryData(['/api/companies/current'], {
+          ...company,
+          available_tabs: [...(company.available_tabs || []), 'file-vault']
+        });
+      }
+    };
+    
+    // Check multiple times with decreasing frequency
+    stopFlickering();
+    const timer1 = setTimeout(stopFlickering, 50);
+    const timer2 = setTimeout(stopFlickering, 200);
+    const timer3 = setTimeout(stopFlickering, 500);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [location, queryClient]);
 
-    const currentTab = getCurrentTab();
-    if (currentTab !== 'task-center' && !isRouteAccessible()) {
-      console.log('[DashboardLayout] Route not accessible, redirecting to task-center');
-      navigate('/task-center');
-    }
-  }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
-
-  if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4 px-4">
-          <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
-          <h1 className="text-2xl font-semibold">Section Locked</h1>
-          <p className="text-muted-foreground max-w-md">
-            Complete tasks in the Task Center to unlock more features.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // We've removed the locked section screen
+  // All sections are now accessible by default
 
   return (
-    <div className="min-h-screen bg-[hsl(220,33%,97%)] relative">
+    <div className="min-h-screen bg-[#FAFCFD] relative flex flex-col">
       <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
@@ -124,21 +220,29 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
+      {/* Fixed navbar that spans across the entire width minus sidebar */}
+      <header 
+        className={cn(
+          "fixed top-0 right-0 z-30 h-14 bg-background/90 backdrop-blur-sm border-b flex-shrink-0",
+          "transition-all duration-300 ease-in-out",
+          isExpanded ? "left-64" : "left-20"
+        )}
+      >
+        <TopNav />
+      </header>
+
+      {/* Content area with proper spacing for fixed navbar */}
       <div
         className={cn(
-          "min-h-screen flex flex-col transition-all duration-300 ease-in-out",
+          "min-h-screen flex flex-col pt-14 transition-all duration-300 ease-in-out", 
           isExpanded ? "ml-64" : "ml-20"
         )}
       >
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b">
-          <TopNav />
-        </header>
-
-        <main className="flex-1 relative overflow-auto">
+        <main className="flex-1 flex flex-col overflow-hidden">
           <div className={cn(
-            "px-8 py-4",
+            "px-4 sm:px-6 md:px-8 py-4",
             "transition-all duration-300 ease-in-out",
-            "container mx-auto max-w-7xl"
+            "container mx-auto max-w-full flex-1 flex flex-col"
           )}>
             {children}
           </div>
@@ -146,6 +250,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <WelcomeModal />
+      
+      {/* Bridge WebSocket events to DOM events */}
+      <WebSocketEventBridge eventTypes={[
+        'file_vault_update',
+        'form_submission',
+        'company_tabs_update'
+        // Removed 'company_tabs_updated' as it's not used by any broadcast
+      ]} />
     </div>
   );
 }

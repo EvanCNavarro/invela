@@ -72,28 +72,34 @@ export function NetworkFiltersComponent({ filters, onFiltersChange }: NetworkFil
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Risk Level</DropdownMenuLabel>
         <DropdownMenuCheckboxItem
+          checked={filters.riskBuckets.includes('none')}
+          onCheckedChange={() => toggleRiskBucket('none')}
+        >
+          None (0)
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
           checked={filters.riskBuckets.includes('low')}
           onCheckedChange={() => toggleRiskBucket('low')}
         >
-          Low
+          Low (1-33)
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={filters.riskBuckets.includes('medium')}
           onCheckedChange={() => toggleRiskBucket('medium')}
         >
-          Medium
+          Medium (34-66)
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={filters.riskBuckets.includes('high')}
           onCheckedChange={() => toggleRiskBucket('high')}
         >
-          High
+          High (67-99)
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={filters.riskBuckets.includes('critical')}
           onCheckedChange={() => toggleRiskBucket('critical')}
         >
-          Critical
+          Critical (100)
         </DropdownMenuCheckboxItem>
 
         <DropdownMenuSeparator />

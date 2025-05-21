@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { companies } from "@db/schema";
-import { validateAndCleanCompanyData, openai } from "./openai";
+import { validateAndCleanCompanyData } from "./openai";
+import { openai } from "../utils/openaiUtils";
 
 // Define priority sources and their weights
 const PRIORITY_SOURCES = {
