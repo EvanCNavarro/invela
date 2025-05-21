@@ -26,7 +26,7 @@ router.get('/api/test-database', async (req, res) => {
       status: 'success',
       message: 'Database connection is working',
       timestamp: new Date().toISOString(),
-      server_time: result.rows[0]?.server_time || 'unknown'
+      server_time: result?.[0]?.server_time || 'unknown'
     });
   } catch (error) {
     logger.error('[TestEndpoint] Database test failed', error);

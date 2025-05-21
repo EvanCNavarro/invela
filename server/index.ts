@@ -243,7 +243,7 @@ server.listen(MAIN_PORT, HOST, async () => {
       });
       
       // Handle proxy server errors
-      proxy.on('error', (err) => {
+      proxy.on('error', (err: Error & { code?: string }) => {
         logger.warn(`Workflow proxy server error: ${err.message}`);
         // If the port is already in use, it might mean Replit already has something there
         // which is fine - our main server will still work
@@ -251,8 +251,9 @@ server.listen(MAIN_PORT, HOST, async () => {
           logger.info(`Port ${REPLIT_WORKFLOW_PORT} already in use - continuing with main server only`);
         }
       });
-    } catch (err) {
-      logger.warn(`Could not start workflow proxy server: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.warn(`Could not start workflow proxy server: ${errorMessage}`);
       logger.info(`Continuing with main server only on port ${MAIN_PORT}`);
     }
   }
