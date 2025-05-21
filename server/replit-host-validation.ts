@@ -21,10 +21,14 @@ const originalCreateServer = http.createServer;
 export function initReplitHostValidation() {
   logger.info('[ReplitHostValidation] Initializing Replit host validation override');
   
-  // Override the createServer function
-  (http as any).createServer = function(...args: any[]) {
-    // Get the listener callback (usually the second argument)
-    const originalListener = args[0];
+  // Override the createServer function with a typed version
+  (http as any).createServer = function(
+    requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void
+  ) {
+    // If no listener was provided, pass through to original implementation
+    if (!requestListener) {
+      return originalCreateServer.apply(this, arguments);
+    }
     
     // Create a new listener that will modify the request before passing it to the original listener
     const patchedListener = function(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -43,18 +47,15 @@ export function initReplitHostValidation() {
         (patchedReq as any)._replitPreviewRequest = true;
         
         // Pass the patched request to the original listener
-        return originalListener(patchedReq, res);
+        return requestListener(patchedReq, res);
       }
       
       // For normal requests, just pass through to the original listener
-      return originalListener(req, res);
+      return requestListener(req, res);
     };
     
-    // Replace the original listener with our patched version
-    args[0] = patchedListener;
-    
-    // Call the original createServer with our modified arguments
-    return originalCreateServer.apply(this, args);
+    // Call the original createServer with our patched listener as a properly typed parameter
+    return originalCreateServer.call(this, patchedListener as any);
   };
   
   logger.info('[ReplitHostValidation] Successfully initialized host validation override');
