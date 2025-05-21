@@ -1,0 +1,132 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-18T18:28:33.085Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-18T18:28:33.176Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registered KY3P form submission fix routes
+[2025-05-18T18:28:33.294Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-18T18:28:33.294Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-18T18:28:33.294Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-18T18:28:33.295Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-18T18:28:33.296Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-18T18:28:33.298Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-18T18:28:33.299Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"mptjfn","timestamp":"2025-05-18T18:28:33.299Z"}
+[2025-05-18T18:28:33.299Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-18T18:28:33.299Z] [WARN] [App] [WebSocket] Form submission WebSocket initialization function not found 
+[2025-05-18T18:28:33.299Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-18T18:28:33.299Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-18T18:28:33.299Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-18T18:28:33.299Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-18T18:28:33.300Z] [INFO] [App] Setting up Vite development server 
+[2025-05-18T18:28:33.302Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (deployment mode: no) 
+[2025-05-18T18:28:33.302Z] [INFO] [App] [ENV] Environment=development (NODE_ENV explicitly set) 
+[2025-05-18T18:28:33.314Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-18T18:28:33.314Z] [INFO] [App] Environment: development 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: development
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Development mode: Hot reloading enabled
+[2025-05-18T18:28:33.315Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-18T18:28:33.315Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-18T18:28:34.905Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-18T18:28:43.315Z] [INFO] [App] Running background health checks... 
+[2025-05-18T18:28:43.316Z] [StartupChecks] Running application startup health checks... 
+[2025-05-18T18:28:43.316Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-18T18:28:43.317Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-18T18:28:45.992Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-18T18:28:46.032Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-18T18:28:48.251Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-18T18:28:48.280Z] [DBConnectionService] Database connection check successful 
+[2025-05-18T18:28:48.280Z] [StartupChecks] Database health check passed 
+[2025-05-18T18:28:48.280Z] [StartupChecks] All startup health checks passed! 
+[2025-05-18T18:28:48.280Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-18T18:28:54.026Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592934026-hqz0mpk","clients":1}
+[2025-05-18T18:28:54.156Z] [INFO] [WebSocket] Received message from client client-1747592934026-hqz0mpk {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-18T18:28:53.981Z"}}
+[2025-05-18T18:28:54.156Z] [INFO] [WebSocket] Authentication from client client-1747592934026-hqz0mpk {"module":"WebSocket","hasToken":true}
+[2025-05-18T18:28:54.530Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592934530-kbz03aa","clients":2}
+[2025-05-18T18:28:55.094Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592935094-872iofb","clients":3}
+[2025-05-18T18:28:55.603Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592935603-9i296no","clients":4}
+[2025-05-18T18:28:56.100Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592936100-7g6zabt","clients":5}
+[2025-05-18T18:28:56.349Z] [INFO] [WebSocket] Received message from client client-1747592936100-7g6zabt {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747592934805_15hf5rafw","timestamp":"2025-05-18T18:28:56.181Z"}
+[2025-05-18T18:28:56.349Z] [INFO] [WebSocket] Authentication from client client-1747592936100-7g6zabt {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[2025-05-18T18:28:59.592Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592934026-hqz0mpk","code":1001,"reason":"","remainingClients":4}
+[2025-05-18T18:28:59.598Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592934530-kbz03aa","code":1001,"reason":"","remainingClients":3}
+[2025-05-18T18:28:59.598Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592935603-9i296no","code":1001,"reason":"","remainingClients":2}
+[2025-05-18T18:28:59.598Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592936100-7g6zabt","code":1001,"reason":"","remainingClients":1}
+[2025-05-18T18:28:59.598Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592935094-872iofb","code":1001,"reason":"","remainingClients":0}
+[2025-05-18T18:29:01.547Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592941547-7uomuwa","clients":1}
+[2025-05-18T18:29:01.559Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592941559-wnxkh77","clients":2}
+[2025-05-18T18:29:02.009Z] [INFO] [WebSocket] Received message from client client-1747592941547-7uomuwa {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-18T18:29:02.007Z"}}
+[2025-05-18T18:29:02.009Z] [INFO] [WebSocket] Authentication from client client-1747592941547-7uomuwa {"module":"WebSocket","hasToken":true}
+[2025-05-18T18:29:02.033Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592942033-7wr9f2o","clients":3}
+[2025-05-18T18:29:02.049Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592942049-xjtmcvz","clients":4}
+[2025-05-18T18:29:02.619Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592941547-7uomuwa","code":1001,"reason":"","remainingClients":3}
+[2025-05-18T18:29:02.619Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592942049-xjtmcvz","code":1001,"reason":"","remainingClients":2}
+[2025-05-18T18:29:02.619Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592941559-wnxkh77","code":1001,"reason":"","remainingClients":1}
+[2025-05-18T18:29:02.619Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747592942033-7wr9f2o","code":1001,"reason":"","remainingClients":0}
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  963, 964, 965, 968,
+  972, 967, 973, 969,
+  971, 981
+]
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[2025-05-18T18:29:15.371Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592955370-o4er9za","clients":1}
+[2025-05-18T18:29:15.488Z] [INFO] [WebSocket] Received message from client client-1747592955370-o4er9za {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-18T18:29:15.324Z"}}
+[2025-05-18T18:29:15.489Z] [INFO] [WebSocket] Authentication from client client-1747592955370-o4er9za {"module":"WebSocket","hasToken":true}
+[2025-05-18T18:29:15.852Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592955852-n95qh39","clients":2}
+[2025-05-18T18:29:16.340Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592956340-tkxnm8r","clients":3}
+[2025-05-18T18:29:16.826Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592956826-30ip6oe","clients":4}
+[2025-05-18T18:29:17.337Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747592957337-qgvrtnt","clients":5}
+[2025-05-18T18:29:17.582Z] [INFO] [WebSocket] Received message from client client-1747592957337-qgvrtnt {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1747592956799_gwwkqz52o","timestamp":"2025-05-18T18:29:17.414Z"}
+[2025-05-18T18:29:17.582Z] [INFO] [WebSocket] Authentication from client client-1747592957337-qgvrtnt {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[2025-05-18T18:29:37.953Z] [INFO] [WebSocket] Received message from client client-1747592957337-qgvrtnt {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:29:37.785Z","connectionId":"ws_1747592956799_gwwkqz52o"}
+[2025-05-18T18:29:45.948Z] [INFO] [WebSocket] Received message from client client-1747592955370-o4er9za {"module":"WebSocket","type":"ping"}
+[2025-05-18T18:29:46.949Z] [INFO] [WebSocket] Received message from client client-1747592956340-tkxnm8r {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:29:46.787Z","connectionId":"ws_1747592956295_iha32xiek"}
+[2025-05-18T18:29:47.955Z] [INFO] [WebSocket] Received message from client client-1747592956826-30ip6oe {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:29:47.788Z","connectionId":"ws_1747592955806_i8uln4pmn"}
+[2025-05-18T18:29:57.947Z] [INFO] [WebSocket] Received message from client client-1747592957337-qgvrtnt {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:29:57.784Z","connectionId":"ws_1747592956799_gwwkqz52o"}
+[2025-05-18T18:30:15.488Z] [INFO] [WebSocket] Received message from client client-1747592955370-o4er9za {"module":"WebSocket","type":"ping"}
+[2025-05-18T18:30:16.459Z] [INFO] [WebSocket] Received message from client client-1747592956340-tkxnm8r {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:30:16.296Z","connectionId":"ws_1747592956295_iha32xiek"}
+[2025-05-18T18:30:16.963Z] [INFO] [WebSocket] Received message from client client-1747592956826-30ip6oe {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:30:16.799Z","connectionId":"ws_1747592955806_i8uln4pmn"}
+[2025-05-18T18:30:17.464Z] [INFO] [WebSocket] Received message from client client-1747592957337-qgvrtnt {"module":"WebSocket","type":"ping","timestamp":"2025-05-18T18:30:17.293Z","connectionId":"ws_1747592956799_gwwkqz52o"}
+Unhandled Rejection: TypeError [ERR_INVALID_ARG_TYPE]: The "salt" argument must be of type string or an instance of ArrayBuffer, Buffer, TypedArray, or DataView. Received undefined
+    at check (node:internal/crypto/scrypt:84:10)
+    at scrypt (node:internal/crypto/scrypt:46:13)
+    at node:internal/util:432:7
+    at new Promise (<anonymous>)
+    at scrypt (node:internal/util:418:12)
+    at comparePasswords (/home/runner/workspace/server/auth.ts:31:30)
+    at Strategy._verify (/home/runner/workspace/server/auth.ts:72:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}

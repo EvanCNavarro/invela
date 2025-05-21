@@ -1,0 +1,378 @@
+[2025-05-20T06:41:37.312Z] [INFO] [App] GET /api/companies/current 200 in 64ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:37.532Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":992,"title":"New User Invitation: 10@e.com","description":"Complete us... 
+[2025-05-20T06:41:37.532Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:37.796Z] [DEBUG] [App] Incoming invite request - Headers: {"host":"9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36","content-length":"149","accept":"*/*","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","content-type":"application/json","cookie":"connect.sid=s%3A836xoB7Ui1OrpMbEb-onTa2U0OWOFL2j.WUn1kv2jhQGsIcYHKDUT4wMlOfAjWlgYKnnqXqXSxSI","dnt":"1","origin":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev","referer":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/task-center","sec-ch-ua":"\"Not.A/Brand\";v=\"99\", \"Chromium\";v=\"136\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","sec-fetch-storage-access":"active","x-forwarded-for":"79.117.186.58, 10.81.3.33","x-forwarded-proto":"https","x-replit-user-bio":"","x-replit-user-id":"","x-replit-user-name":"","x-replit-user-profile-image":"","x-replit-user-roles":"","x-replit-user-teams":"","x-replit-user-url":""} 
+[2025-05-20T06:41:37.796Z] [DEBUG] [App] Request body (raw): {"email":"test1@1.com","full_name":"Test Invite","company_id":332,"company_name":"DemoTest10","sender_name":"John Doe","sender_company":"DemoTest10"} 
+[Invite] Starting invitation process
+[Invite] Request body: {
+  email: 'test1@1.com',
+  full_name: 'Test Invite',
+  company_id: 332,
+  company_name: 'DemoTest10',
+  sender_name: 'John Doe',
+  sender_company: 'DemoTest10'
+}
+[Invite] Validated invite data: {
+  email: 'test1@1.com',
+  full_name: 'Test Invite',
+  company_id: 332,
+  company_name: 'DemoTest10',
+  sender_name: 'John Doe',
+  sender_company: 'DemoTest10'
+}
+[Invite] Starting database transaction
+[Invite] Creating user account
+[EmailService] Starting to send template email
+[EmailService] Template type: user_invite
+[EmailService] Recipient: test1@1.com
+[EmailService] Template data (raw): {
+  "recipientEmail": "test1@1.com",
+  "recipientName": "Test Invite",
+  "senderName": "John Doe",
+  "senderCompany": "DemoTest10",
+  "targetCompany": "DemoTest10",
+  "code": "861534",
+  "inviteUrl": "https://invela.replit.app//auth?code=861534"
+}
+[EmailService] Starting email validation for: test1@1.com
+[EmailService] Checking MX records for domain: 1.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND 1.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: '1.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: test1@1.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientEmail": "test1@1.com",
+  "recipientName": "Test Invite",
+  "senderName": "John Doe",
+  "senderCompany": "DemoTest10",
+  "targetCompany": "DemoTest10",
+  "code": "861534",
+  "inviteUrl": "https://invela.replit.app//auth?code=861534"
+}
+[EmailService] Built invite URL: https://invela.replit.app//auth?code=861534
+[EmailService] Transformed template data: {
+  "recipientName": "Test Invite",
+  "recipientEmail": "test1@1.com",
+  "senderName": "John Doe",
+  "senderCompany": "DemoTest10",
+  "targetCompany": "DemoTest10",
+  "inviteUrl": "https://invela.replit.app//auth?code=861534",
+  "code": "861534"
+}
+[EmailService] Getting email template: user_invite
+[EmailTemplate] Getting template: user_invite
+[EmailTemplate] Template data: {
+  "recipientName": "Test Invite",
+  "recipientEmail": "test1@1.com",
+  "senderName": "John Doe",
+  "senderCompany": "DemoTest10",
+  "targetCompany": "DemoTest10",
+  "inviteUrl": "https://invela.replit.app//auth?code=861534",
+  "code": "861534"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "Test Invite",
+  "recipientEmail": "test1@1.com",
+  "senderName": "John Doe",
+  "senderCompany": "DemoTest10",
+  "targetCompany": "DemoTest10",
+  "inviteUrl": "https://invela.replit.app//auth?code=861534",
+  "code": "861534",
+  "inviteType": "user"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'noreply@example.com',
+  to: 'test1@1.com',
+  subject: 'Invitation to join Invela',
+  textLength: 456,
+  htmlLength: 1528
+}
+[EmailService] Email sent successfully to: test1@1.com
+[2025-05-20T06:41:38.852Z] [INFO] [App] POST /api/users/invite 201 in 1056ms :: {"message":"Invitation sent successfully","invitation":{"id":399,"email":"tes... 
+[2025-05-20T06:41:39.069Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:40.184Z] [INFO] [App] GET /api/companies/current 304 in 39ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:43.193Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:46.241Z] [INFO] [App] GET /api/companies/current 304 in 35ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:49.185Z] [INFO] [App] GET /api/companies/current 304 in 34ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:41:52.130Z] [INFO] [WebSocket] Received message from client client-1747722051983-d943qqb {"module":"WebSocket","type":"ping"}
+[2025-05-20T06:41:52.191Z] [INFO] [App] GET /api/companies/current 304 in 35ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 392, company_id: 332, email: '10@e.com' }
+[2025-05-20T06:41:52.796Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":332,"userId":392}
+[2025-05-20T06:41:52.828Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":332}
+[Tasks] Automatically unlocking all tasks for company { userId: 392, companyId: 332, requestedBy: 'automatic_task_unlock' }
+[2025-05-20T06:41:52.829Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":332}
+[2025-05-20T06:41:52.865Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":992,"userEmail":"10@e.com","currentStatus":"completed","currentProgress":100}
+[2025-05-20T06:41:52.865Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":996,"userEmail":"test1@1.com","currentStatus":"email_sent","currentProgress":100}
+[2025-05-20T06:41:52.865Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":332,"count":5,"taskIds":[992,993,994,995,996],"taskTypes":["user_onboarding","company_kyb","ky3p","open_banking","user_onboarding"],"ky3pTaskCount":1,"ky3pTaskIds":[994]}
+[2025-05-20T06:41:52.865Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":992,"userEmail":"10@e.com","timestamp":"2025-05-20T06:41:52.865Z"}
+[2025-05-20T06:41:52.896Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-20T06:41:52.896Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:52.896Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":992,"status":"completed"}
+[UnifiedProgress] Starting progress update for task 993 (company_kyb) {
+  taskId: 993,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1747723312897-395',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 993 (company_kyb)
+[UnifiedProgressCalc] Task 993 (company_kyb) progress: 0/30 = 0%
+[2025-05-20T06:41:53.055Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.055Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.056Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":993,"messageId":"msg_1747723313055_hhco6nca"}
+[2025-05-20T06:41:53.056Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 993 {"progress":0,"status":"not_started","messageId":"msg_1747723313055_hhco6nca"}
+[2025-05-20T06:41:53.056Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":993,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-20T06:41:53.056Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":994,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-20T06:41:53.056Z"}
+[UnifiedProgress] Starting progress update for task 994 (ky3p) {
+  taskId: 994,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1747723313056-552',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 994 (ky3p)
+[KY3P Progress] Calculated progress for task 994: {
+  taskId: 994,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-20T06:41:53.176Z'
+}
+[UnifiedProgressCalc] Task 994 (ky3p) progress: 0/120 = 0%
+[2025-05-20T06:41:53.212Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.212Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.213Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":994,"messageId":"msg_1747723313211_a7gg9mk2"}
+[2025-05-20T06:41:53.213Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 994 {"progress":0,"status":"not_started","messageId":"msg_1747723313211_a7gg9mk2"}
+[2025-05-20T06:41:53.213Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":994,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 995 (open_banking) {
+  taskId: 995,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1747723313213-375',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-20T06:41:53.238Z] [INFO] [WebSocket] Received message from client client-1747722053115-j2773dl {"module":"WebSocket","type":"ping","timestamp":"2025-05-20T06:41:53.115Z","connectionId":"ws_1747722053074_jds68nye8"}
+[UnifiedProgressCalc] Calculating progress for task 995 (open_banking)
+[UnifiedProgressCalc] Task 995 (open_banking) progress: 0/44 = 0%
+[2025-05-20T06:41:53.365Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.365Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.365Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":995,"messageId":"msg_1747723313364_htz4ntdf"}
+[2025-05-20T06:41:53.365Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 995 {"progress":0,"status":"not_started","messageId":"msg_1747723313364_htz4ntdf"}
+[2025-05-20T06:41:53.365Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":995,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-20T06:41:53.365Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":996,"userEmail":"test1@1.com","timestamp":"2025-05-20T06:41:53.365Z"}
+[2025-05-20T06:41:53.404Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-20T06:41:53.405Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:41:53.405Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":996,"status":"completed"}
+[2025-05-20T06:41:53.405Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":332,"count":5}
+[Tasks] Successfully unlocked all tasks for company: 332
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 392',
+    condition2: 'tasks.created_by = 392',
+    condition3: "tasks.company_id = 332 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('10@e.com')"
+  }
+}
+[Tasks] Tasks found: { count: 5 }
+[2025-05-20T06:41:53.503Z] [INFO] [App] GET /api/tasks 200 in 708ms :: [{"id":996,"title":"New User Invitation: test1@1.com","description":"Invitati... 
+[2025-05-20T06:41:53.766Z] [INFO] [WebSocket] Received message from client client-1747722053639-elptqqz {"module":"WebSocket","type":"ping","timestamp":"2025-05-20T06:41:53.641Z","connectionId":"ws_1747722052467_d3uilla6o"}
+[2025-05-20T06:41:54.791Z] [INFO] [WebSocket] Received message from client client-1747722054664-mkun4xe {"module":"WebSocket","type":"ping","timestamp":"2025-05-20T06:41:54.668Z","connectionId":"ws_1747722052413_j7odm3mrz"}
+[Invite Debug] Starting validation for code: 861534
+[Invite Debug] Found valid invitation: {
+  id: 399,
+  email: 'test1@1.com',
+  status: 'pending',
+  expires_at: 2025-05-27T06:41:37.919Z
+}
+[2025-05-20T06:42:08.388Z] [INFO] [App] GET /api/invitations/861534/validate 200 in 65ms :: {"valid":true,"invitation":{"email":"test1@1.com","invitee_name":"Test Invite... 
+[2025-05-20T06:42:14.792Z] [INFO] [WebSocket] Received message from client client-1747722054664-mkun4xe {"module":"WebSocket","type":"ping","timestamp":"2025-05-20T06:42:14.668Z","connectionId":"ws_1747722052413_j7odm3mrz"}
+[Account Setup] Processing setup request for: test1@1.com
+[Account Setup] Updated user: { id: 393, email: 'test1@1.com', onboarding_completed: false }
+[Account Setup] Login successful for user ID: 393
+[2025-05-20T06:42:16.742Z] [INFO] [App] POST /api/account/setup 200 in 352ms :: {"id":393,"email":"test1@1.com","full_name":"Test Invite","first_name":"Test"... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 393, company_id: 332, email: 'test1@1.com' }
+[2025-05-20T06:42:17.734Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":332,"userId":393}
+[2025-05-20T06:42:17.763Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":332}
+[Tasks] Automatically unlocking all tasks for company { userId: 393, companyId: 332, requestedBy: 'automatic_task_unlock' }
+[2025-05-20T06:42:17.764Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":332}
+[2025-05-20T06:42:17.785Z] [INFO] [App] GET /api/companies/current 304 in 40ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:42:17.793Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":992,"userEmail":"10@e.com","currentStatus":"completed","currentProgress":100}
+[2025-05-20T06:42:17.793Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":996,"userEmail":"test1@1.com","currentStatus":"completed","currentProgress":100}
+[2025-05-20T06:42:17.793Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":332,"count":5,"taskIds":[992,993,994,995,996],"taskTypes":["user_onboarding","company_kyb","ky3p","open_banking","user_onboarding"],"ky3pTaskCount":1,"ky3pTaskIds":[994]}
+[2025-05-20T06:42:17.793Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":992,"userEmail":"10@e.com","timestamp":"2025-05-20T06:42:17.793Z"}
+[2025-05-20T06:42:17.823Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-20T06:42:17.823Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:17.823Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":992,"status":"completed"}
+[UnifiedProgress] Starting progress update for task 993 (company_kyb) {
+  taskId: 993,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1747723337824-901',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 993 (company_kyb)
+[UnifiedProgressCalc] Task 993 (company_kyb) progress: 0/30 = 0%
+[2025-05-20T06:42:17.976Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:17.977Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:17.977Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":993,"messageId":"msg_1747723337976_9tfuio4i"}
+[2025-05-20T06:42:17.977Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 993 {"progress":0,"status":"not_started","messageId":"msg_1747723337976_9tfuio4i"}
+[2025-05-20T06:42:17.977Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":993,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-20T06:42:17.977Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":994,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-20T06:42:17.977Z"}
+[UnifiedProgress] Starting progress update for task 994 (ky3p) {
+  taskId: 994,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1747723337977-857',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-20T06:42:17.994Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 393 
+[2025-05-20T06:42:17.994Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-20T06:42:17.994Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-20T06:42:17.994Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 393 
+[2025-05-20T06:42:18.023Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 393 
+[UnifiedProgressCalc] Calculating progress for task 994 (ky3p)
+[2025-05-20T06:42:18.057Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 63ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[KY3P Progress] Calculated progress for task 994: {
+  taskId: 994,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-20T06:42:18.106Z'
+}
+[UnifiedProgressCalc] Task 994 (ky3p) progress: 0/120 = 0%
+[2025-05-20T06:42:18.135Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:18.136Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:18.136Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":994,"messageId":"msg_1747723338135_qwa5la8l"}
+[2025-05-20T06:42:18.136Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 994 {"progress":0,"status":"not_started","messageId":"msg_1747723338135_qwa5la8l"}
+[2025-05-20T06:42:18.136Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":994,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 995 (open_banking) {
+  taskId: 995,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1747723338136-133',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 995 (open_banking)
+[Relationships] Fetching network for company: 332
+[UnifiedProgressCalc] Task 995 (open_banking) progress: 0/44 = 0%
+[Relationships] Found network members: { count: 2 }
+[2025-05-20T06:42:18.278Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:18.278Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:18.278Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":995,"messageId":"msg_1747723338277_t2gcwb93"}
+[2025-05-20T06:42:18.278Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 995 {"progress":0,"status":"not_started","messageId":"msg_1747723338277_t2gcwb93"}
+[2025-05-20T06:42:18.278Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":332,"taskId":995,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-20T06:42:18.278Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":996,"userEmail":"test1@1.com","timestamp":"2025-05-20T06:42:18.278Z"}
+[2025-05-20T06:42:18.303Z] [INFO] [App] GET /api/relationships 304 in 66ms :: [{"id":438,"companyId":1,"relatedCompanyId":332,"relationshipType":"network_m... 
+[2025-05-20T06:42:18.309Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-20T06:42:18.310Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-20T06:42:18.310Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":996,"status":"completed"}
+[2025-05-20T06:42:18.310Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":332,"count":5}
+[Tasks] Successfully unlocked all tasks for company: 332
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 393',
+    condition2: 'tasks.created_by = 393',
+    condition3: "tasks.company_id = 332 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('test1@1.com')"
+  }
+}
+[2025-05-20T06:42:18.344Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[Tasks] Tasks found: { count: 4 }
+[2025-05-20T06:42:18.400Z] [INFO] [App] GET /api/tasks 200 in 666ms :: [{"id":996,"title":"New User Invitation: test1@1.com","description":"Invitati... 
+[2025-05-20T06:42:19.049Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722052506-k47n4i9","code":1001,"reason":"","remainingClients":5}
+[2025-05-20T06:42:19.049Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722053115-j2773dl","code":1001,"reason":"","remainingClients":4}
+[2025-05-20T06:42:19.049Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722054148-4h42pbj","code":1001,"reason":"","remainingClients":3}
+[2025-05-20T06:42:19.050Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722054664-mkun4xe","code":1001,"reason":"","remainingClients":2}
+[2025-05-20T06:42:19.050Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722053639-elptqqz","code":1001,"reason":"","remainingClients":1}
+[2025-05-20T06:42:19.050Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1747722051983-d943qqb","code":1001,"reason":"","remainingClients":0}
+[2025-05-20T06:42:30.717Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 393 
+[2025-05-20T06:42:30.717Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-20T06:42:30.717Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-20T06:42:30.717Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 393 
+[2025-05-20T06:42:30.730Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:42:30.745Z] [INFO] [App] GET /api/tasks 304 in 46ms :: [{"id":996,"title":"New User Invitation: test1@1.com","description":"Invitati... 
+[2025-05-20T06:42:30.751Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723350751-q8t26bp","clients":1}
+[2025-05-20T06:42:30.755Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 393 
+[2025-05-20T06:42:30.785Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 69ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-20T06:42:30.889Z] [INFO] [WebSocket] Received message from client client-1747723350751-q8t26bp {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-20T06:42:30.767Z"}}
+[2025-05-20T06:42:30.889Z] [INFO] [WebSocket] Authentication from client client-1747723350751-q8t26bp {"module":"WebSocket","hasToken":true}
+[Relationships] Fetching network for company: 332
+[Relationships] Found network members: { count: 2 }
+[2025-05-20T06:42:30.982Z] [INFO] [App] GET /api/relationships 304 in 60ms :: [{"id":438,"companyId":1,"relatedCompanyId":332,"relationshipType":"network_m... 
+[2025-05-20T06:42:30.996Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:42:31.250Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723351250-0ojyktj","clients":2}
+[2025-05-20T06:42:31.790Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723351790-81pbni5","clients":3}
+[2025-05-20T06:42:32.453Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723352453-0kgocul","clients":4}
+[2025-05-20T06:42:32.950Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723352950-g7hcyc5","clients":5}
+[2025-05-20T06:42:33.072Z] [INFO] [WebSocket] Received message from client client-1747723352950-g7hcyc5 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1747723349906_apsdm35yu","timestamp":"2025-05-20T06:42:32.949Z"}
+[2025-05-20T06:42:33.072Z] [INFO] [WebSocket] Authentication from client client-1747723352950-g7hcyc5 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-20T06:42:33.558Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1747723353558-icuhkjk","clients":6}
+[2025-05-20T06:42:33.993Z] [INFO] [App] GET /api/companies/current 304 in 40ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:42:34.232Z] [INFO] [App] GET /api/companies/current 304 in 44ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 
+[2025-05-20T06:42:34.363Z] [INFO] [WebSocket] Received message from client client-1747723353558-icuhkjk {"module":"WebSocket","type":"authenticate","userId":393,"companyId":332,"clientId":"ws_1747723351259_ynbplmvgr","timestamp":"2025-05-20T06:42:34.236Z"}
+[2025-05-20T06:42:34.363Z] [INFO] [WebSocket] Authentication from client client-1747723353558-icuhkjk {"module":"WebSocket","userId":393,"companyId":332,"hasToken":true}
+[2025-05-20T06:42:36.988Z] [INFO] [App] GET /api/companies/current 304 in 36ms :: {"id":332,"name":"DemoTest10","category":"FinTech","is_demo":true,"revenue_ti... 

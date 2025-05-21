@@ -1,5 +1,28 @@
 {
-  "run": "node server.js",
-  "entrypoint": "server.js",
+  "run": "NODE_ENV=production PORT=8080 node dist/server.js",
+  "entrypoint": "server/index.ts",
+  "build": "./deploy.sh",
+  "exclude": [
+    "attached_assets",
+    "backup_assets",
+    "backup_text",
+    "uploads",
+    "node_modules/.cache",
+    "node_modules/typescript",
+    "node_modules/@types",
+    "node_modules/esbuild",
+    ".git",
+    "client/src",
+    "server/src",
+    "*.md",
+    "*.sh",
+    "!deploy.sh",
+    "*.cjs",
+    "*.ts",
+    "*.tsx",
+    "!dist/**/*.js",
+    "!server/**/*.js"
+  ],
+  "ignorePorts": false,
   "port": 8080
 }
