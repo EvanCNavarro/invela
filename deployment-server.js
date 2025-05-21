@@ -1,46 +1,37 @@
 /**
- * Deployment Server for Replit Cloud Run (ES Module Version)
- * 
- * This is an absolutely minimal server that:
- * 1. Binds explicitly to 0.0.0.0:8080 (required by Replit Cloud Run)
- * 2. Responds with 200 OK to health checks at the root path (/)
- * 3. Contains minimal code to keep the Docker image small
+ * Deployment Server for Replit
  */
 
-// Use bare minimum code to reduce image size
-import { createServer } from 'http';
+const http = require('http');
 
-// Helper for timestamps
-const timestamp = () => new Date().toISOString();
-
-// Log with timestamp
-const log = (message) => console.log(`[${timestamp()}] ${message}`);
-
-// Create server with only the health check endpoint
-const server = createServer((req, res) => {
-  log(`Request received: ${req.method} ${req.url}`);
-  
-  // Health check at root path
-  if (req.url === '/' || req.url === '/health') {
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify({
-      status: 'ok',
-      message: 'Invela Platform is running',
-      timestamp: timestamp()
-    }));
-    return;
-  }
-  
-  // For all other requests, return a simple 200 OK
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Invela Platform API');
-});
-
-// Bind to the specific port and host required by Replit
+// Constants for port configuration
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
+// Simple timestamp for logging
+function getTimestamp() {
+  return new Date().toISOString();
+}
+
+// Log with timestamp
+function log(message) {
+  console.log(`[${getTimestamp()}] ${message}`);
+}
+
+// Create a simple server that responds to all requests
+const server = http.createServer((req, res) => {
+  log(`Request received: ${req.method} ${req.url}`);
+  
+  // Return 200 OK for all requests
+  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.end(JSON.stringify({
+    status: 'ok',
+    message: 'API is running',
+    timestamp: getTimestamp()
+  }));
+});
+
+// Start listening on the specified port and host
 server.listen(PORT, HOST, () => {
   log(`Server running at http://${HOST}:${PORT}`);
-  log(`Configured for Replit Cloud Run deployment`);
 });
