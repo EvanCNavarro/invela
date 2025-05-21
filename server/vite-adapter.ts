@@ -198,20 +198,10 @@ export async function viteHostAdapter(req: Request, res: Response, next: NextFun
     
     try {
       if (fs.existsSync(clientTemplate)) {
-        const vite = await getViteServer();
         let html = fs.readFileSync(clientTemplate, 'utf-8');
         
         // Add a cache-busting parameter to ensure module loads correctly
         html = html.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
-        
-        // Transform the HTML through Vite if available
-        if (vite) {
-          try {
-            html = await vite.transformIndexHtml(req.url, html);
-          } catch (transformError) {
-            logger.error(`[ViteAdapter] Error transforming index.html: ${transformError}`);
-          }
-        }
         
         res.setHeader('Content-Type', 'text/html');
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
