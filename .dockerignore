@@ -5,25 +5,22 @@
 # Only include what's absolutely necessary for deployment
 !package.json
 !package-lock.json
-!dist/server/index.js
-!dist/server/deployment-server.js
+!deployment-server.cjs
 !dist/public/index.html
 !dist/public/assets/**/*
 
-# Exclude large cache directories that contribute to image size
-node_modules/.cache/**
-node_modules/.vite/**
-node_modules/.pnpm/**
-node_modules/@types/**
-node_modules/typescript/**
-node_modules/esbuild/**
-node_modules/@esbuild/**
-node_modules/vite/**
-
-# Exclude development and backup folders
-attached_assets/**
-backup_assets/**
-backup_text/**
-cleanup-scripts/**
-cleanup-plan/**
-deployment-excluded/**
+# Completely exclude these large directories
+node_modules/.cache
+node_modules/.vite
+node_modules/.pnpm
+node_modules/@types
+node_modules/typescript
+node_modules/esbuild
+node_modules/@esbuild
+node_modules/vite
+attached_assets
+backup_assets
+backup_text
+cleanup-scripts
+cleanup-plan
+deployment-excluded
