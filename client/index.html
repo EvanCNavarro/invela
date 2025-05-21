@@ -5,33 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!-- Fix for Vite's "Blocked request. This host is not allowed" error -->
-    <script>
-      /**
-       * Replit Preview Domain Validation Fix
-       * 
-       * This script fixes the "Blocked request. This host is not allowed" error
-       * by adding the current Replit preview domain to Vite's allowed hosts list.
-       */
-      (function() {
-        // Check if we're on a Replit preview domain
-        const isReplitDomain = typeof window !== 'undefined' && 
-                               window.location.hostname.includes('.repl.co') || 
-                               window.location.hostname.includes('.replit.dev');
-        
-        if (isReplitDomain) {
-          // Create the __vite_plugin_trusted_types_trust_domains object
-          window.__vite_plugin_trusted_types_trust_domains = 
-            window.__vite_plugin_trusted_types_trust_domains || {};
-          
-          // Add the current domain to the trusted list
-          window.__vite_plugin_trusted_types_trust_domains[window.location.hostname] = true;
-          
-          // Log once to confirm the fix was applied
-          console.log(`[Vite Host Fix] Added ${window.location.hostname} to Vite's allowed hosts list`);
-        }
-      })();
-    </script>
+    <!-- Load the Replit domain fix script -->
+    <script src="/replit-domain-fix.js"></script>
     <!-- Proper fix for Vite WebSocket connection issues in Replit environment -->
     <script>
       /**
@@ -126,6 +101,7 @@
               if (isReplitDomain && connectionUrl.includes('localhost')) {
                 const oldUrl = connectionUrl;
                 // Use the current domain instead of localhost
+                // Note that the server is running on port 8080 according to the logs
                 connectionUrl = connectionUrl.replace(/wss?:\/\/localhost:[0-9]+/, 
                                                      `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`);
                 
