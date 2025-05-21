@@ -1,5 +1,4 @@
 {
-  "run": "node deployment-server.cjs",
-  "entrypoint": "deployment-server.cjs",
-  "port": 8080
+  "run": "node server.js",
+  "entrypoint": "server.js"
 }
