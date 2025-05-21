@@ -277,29 +277,12 @@ server.listen(PORT, HOST, async () => {
     logger.info('[ServerStartup] Running in development mode with Replit preview support');
     logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
     
-    // Create a simple HTTP server on port 5000 for the workflow to detect
-    try {
-      const http = require('http');
-      const workflowPort = 5000;
-      const workflowProxy = http.createServer((req, res) => {
-        // Log the request
-        logger.info(`[WorkflowProxy] Request received: ${req.url}`);
-        
-        // Send a simple success response
-        res.writeHead(200, {'Content-Type': 'text/plain'});
-        res.end('Workflow proxy active. Main application is running on port 3000.');
-      });
-      
-      workflowProxy.listen(workflowPort, HOST, () => {
-        logger.info(`[WorkflowProxy] Workflow detection server running on port ${workflowPort}`);
-      });
-      
-      workflowProxy.on('error', (err) => {
-        logger.warn(`[WorkflowProxy] Error: ${err.message}`);
-      });
-    } catch (err) {
-      logger.warn(`[WorkflowProxy] Could not start workflow proxy: ${err instanceof Error ? err.message : String(err)}`);
-    }
+    // Start a dedicated workflow proxy server on port 5000
+    import('./workflow-proxy').then(module => {
+      module.startWorkflowProxy(HOST);
+    }).catch(error => {
+      logger.error(`[ServerStartup] Failed to start workflow proxy: ${error}`);
+    });
   }
   
   // Start the periodic task reconciliation system
