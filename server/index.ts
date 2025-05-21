@@ -229,13 +229,11 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 import { runStartupChecks } from './startup-checks';
 
 // SERVER PORT CONFIGURATION
-// Using a consistent port in both development and production
-// In development, the app needs to be accessible via the preview
-// In production, we use 8080 for Replit deployments
+// In Replit, we need to use port 3000 as the primary port
+// We remove the separate workflow proxy port to avoid conflicts
 
-// Use the standard port for development (3000)
-// This is what Vite uses by default
-const PORT = process.env.NODE_ENV === 'production' ? 8080 : 3000;
+// Use a consistent port that works with Replit's environment
+const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Bind to all interfaces
 
 // Set environment variables for consistency
@@ -249,26 +247,18 @@ logger.info(`PORT: ${PORT} | HOST: ${HOST}`);
 logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info('===========================================');
 
-// Standard port binding - using a single port for simplicity
-server.listen(PORT, HOST, async () => {
-  logger.info(`Server running on ${HOST}:${PORT} (${process.env.NODE_ENV}) mode`);
+// Standard port binding - using port 5000 (the default Replit workflow port)
+server.listen(5000, HOST, () => {
+  logger.info(`Server running on ${HOST}:5000 (${process.env.NODE_ENV}) mode`);
   
   // Log successful startup for debugging
   logger.info(`Server ready to accept connections`);
-  logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
+  logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'http://localhost:5000'}`);
   
-  // In development, also create a simple proxy on port 5000 for the workflow
+  // Log preview URL information for development mode
   if (process.env.NODE_ENV === 'development') {
     logger.info('[ServerStartup] Running in development mode with Replit preview support');
     logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
-    
-    // Start a dedicated workflow proxy server on port 5000
-    // This is required for Replit to detect that our workflow is running
-    import('./workflow-proxy').then(module => {
-      module.startWorkflowProxy(HOST);
-    }).catch(error => {
-      logger.error(`[ServerStartup] Failed to start workflow proxy: ${error}`);
-    });
   }
   
   // Start the periodic task reconciliation system
