@@ -177,13 +177,7 @@ node_modules/@types
 node_modules/typescript
 node_modules/esbuild
 node_modules/@esbuild
-node_modules/vite
-
-# Only include what's necessary
-!package.json
-!package-lock.json
-!deployment-server.js
-!server/deployment-server.js`;
+node_modules/vite`;
 
   try {
     fs.writeFileSync('.dockerignore', dockerIgnoreContent);

@@ -1,22 +1,0 @@
-Now we’re going to make some changes to the Invela Registry page and company related database  Here is some context:
-This application is created by Invela. Invela has a database of companies; Invela Registry. There are graphs, and algorithmic values/metrics based on the data of the relationships these companies have with eachtother and with the Bank Companies. The types of companies for now are two types: Banks, and Third Party FinTech Companies. Each user as a result is either part of the Bank Company [Bank], or part of a Third Party FinTech Company [FinTech]. Companies among other data fields will have a “company_type” field which will be either “bank” or “fintech”. The banks will be able to search through the application for these companies and view a page with all of their details and information. Companies are unique in the database; such that there are not two “PayPal”’s. Newly registered users who sign up with a new company, will have the company added to the database as a new company as a fintech company (as long as it doesn’t exist already, which will be checked by the application ignoring case sensitivity and will also use fuzzy matching to account for similar names in case the user made an error).  it’s also worth noting that the fields that a company will have are as follows:
-- company_logo
-- company_name
-- stock_ticker
-- website_url
-- company_description
-- company_type
-- legal_structure
-- market_position
-- hq_address
-- products_services
-- incorporation_year
-- founders_and_leadership
-- num_employees
-- revenue
-- key_clients_partners
-- investors
-- funding_stage
-- exit_strategy_history
-- certifications_compliance
-  1. Does this all make sense? Yes or No.  If yes, - list back out the rules described in the context. - then search through and assess the code to figure out what level of changes would be necessary to make these changes happen within the app. - list out the steps you’ll take to make it happen - list out any additional suggestions to make the new changes better more optimized and standardized like other TPRM SaaS - keep in mind as well that I will be providing you with a .csv file with 51 rows (1 row for header, other 50 are for 50 companies to be added to the registry) with company data based on the 19 fields listed previously  if no, - what doesn’t make sense

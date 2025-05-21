@@ -1,16 +1,13 @@
-# Exclude everything by default
-*
-**/*
-
-# Only include what's absolutely necessary for deployment
-!package.json
-!package-lock.json
-!deployment-server.cjs
-!dist/public/index.html
-!dist/public/assets/**/*
-
-# Completely exclude these large directories
+# Exclude large directories to reduce image size
 node_modules/.cache
+attached_assets
+backup_assets
+backup_text
+uploads
+deployment-excluded
+cleanup-scripts
+
+# Exclude development files
 node_modules/.vite
 node_modules/.pnpm
 node_modules/@types
@@ -18,9 +15,9 @@ node_modules/typescript
 node_modules/esbuild
 node_modules/@esbuild
 node_modules/vite
-attached_assets
-backup_assets
-backup_text
-cleanup-scripts
-cleanup-plan
-deployment-excluded
+
+# Only include what's necessary
+!package.json
+!package-lock.json
+!deployment-server.js
+!server/deployment-server.js
