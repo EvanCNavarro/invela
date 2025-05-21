@@ -46,8 +46,11 @@ const server = createServer(app);
 // Apply our custom CORS middleware first to handle Replit preview domains
 app.use(setupCorsBypass);
 
-// Apply the Vite adapter to handle blocked host requests
-app.use(viteHostAdapter);
+// Apply the enhanced Vite adapter to handle blocked host requests
+// This is an async middleware, so we need to handle it properly
+app.use(async (req, res, next) => {
+  await viteHostAdapter(req, res, next);
+});
 
 // Then configure standard CORS for all other environments
 app.use(cors({
