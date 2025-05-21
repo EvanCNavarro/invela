@@ -19,7 +19,13 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
+import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
+import { BuilderPage } from "@/pages/builder/BuilderPage";
+import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
+import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
+import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
+import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 
 // Landing pages
@@ -44,7 +50,7 @@ function Router() {
   console.log('[Router] Current location:', location);
 
   return (
-    <>
+    <div>
       <ScrollToTop />
       <Switch>
         {/* Landing Pages */}
@@ -166,9 +172,80 @@ function Router() {
           )} 
         />
 
+        <ProtectedRoute 
+          path="/builder" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <BuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/builder/onboarding" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <OnboardingBuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/builder/risk-rules" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <RiskRulesBuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/builder/reporting" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <ReportingBuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/builder/groups" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <GroupsBuilderPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/playground" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <div className={cn(
+                  "min-h-screen",
+                  location === "/playground" && "bg-emerald-950/5"
+                )}>
+                  <PlaygroundPage />
+                </div>
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
         <Route component={NotFound} />
       </Switch>
-    </>
+    </div>
   );
 }
 
