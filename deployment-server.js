@@ -1,13 +1,13 @@
 /**
- * Universal Deployment Server
+ * Simple Deployment Server
  * 
- * A robust and adaptable deployment server for Replit that:
- * - Dynamically locates the correct application entry point
- * - Provides extensive logging for troubleshooting
- * - Ensures consistent port configuration for Replit
- * - Works with both ESM and CommonJS modules
+ * A streamlined deployment server for Replit that:
+ * - Finds the correct application entry point
+ * - Enforces proper port binding
+ * - Provides helpful logging
+ * - Handles ESM format compatibility
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 // Force production mode and required port
