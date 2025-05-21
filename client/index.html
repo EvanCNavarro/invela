@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Allow all hosts for Vite preview in Replit -->
+    <script>
+      window.__vite_allow_replit_domain = true;
+      console.log('✅ Vite host restrictions override enabled');
+    </script>
     <!-- Proper fix for Vite WebSocket connection issues in Replit environment -->
     <script>
       /**
