@@ -13,7 +13,6 @@ run = ["sh", "-c", "node dist/server/deployment-server.js"]
 [[ports]]
 localPort = 3000
 externalPort = 3002
-exposeLocalhost = true
 
 [[ports]]
 localPort = 3001
@@ -37,7 +36,7 @@ externalPort = 3001
 
 [[ports]]
 localPort = 8080
-externalPort = 8080
+externalPort = 8000
 
 [[ports]]
 localPort = 8090
