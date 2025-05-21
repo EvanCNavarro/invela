@@ -30,6 +30,8 @@ import ky3pRouter from './routes/ky3p';
 import ky3pFieldsRouter from './routes/ky3p-fields';
 // Import diagnostic routes for preview testing and support
 import { diagnosticRouter } from './routes/diagnostic-routes';
+// Import preview endpoint for Replit preview support
+import { previewRouter } from './routes/preview-endpoint';
 // Import enhanced KY3P submission handler for better progress handling
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
@@ -140,6 +142,9 @@ export function registerRoutes(app: Express): Express {
   // Register our diagnostic routes for preview testing
   // These don't require authentication and help with troubleshooting
   app.use(diagnosticRouter);
+  
+  // Register preview router for Replit preview functionality
+  app.use(previewRouter);
   
   app.use(companySearchRouter);
   app.use(kybRouter);
