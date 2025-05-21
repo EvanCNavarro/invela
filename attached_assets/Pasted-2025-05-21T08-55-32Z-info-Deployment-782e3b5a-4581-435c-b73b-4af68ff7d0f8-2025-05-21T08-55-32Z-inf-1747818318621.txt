@@ -1,0 +1,62 @@
+2025-05-21T08:55:32Z info: Deployment: 782e3b5a-4581-435c-b73b-4af68ff7d0f8
+2025-05-21T08:55:32Z info: Build: d4d461ca-e7d1-4791-a632-2ddab08e64f9
+2025-05-21T08:55:32Z info: Connecting to builder
+2025-05-21T08:55:37Z info: Builder connected
+2025-05-21T08:55:39Z info: Installing packages
+2025-05-21T08:55:40Z info: Starting Build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+
+vite v5.4.10 building for production...
+
+transforming...
+
+✓ 4006 modules transformed.
+
+rendering chunks...
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/hooks/use-toast.ts is dynamically imported by /home/runner/workspace/client/src/components/forms/UniversalSuccessModal.tsx but also statically imported by /home/runner/workspace/client/src/components/FixMissingFileButton.tsx, /home/runner/workspace/client/src/components/TaskDownloadMenu.tsx, /home/runner/workspace/client/src/components/claims/NewClaimModal.tsx, /home/runner/workspace/client/src/components/files/FileUploadZone.tsx, /home/runner/workspace/client/src/components/forms/FormFieldsListener.tsx, /home/runner/workspace/client/src/components/forms/FormSubmissionListener.tsx, /home/runner/workspace/client/src/components/forms/UnifiedDemoAutoFill.tsx, /home/runner/workspace/client/src/components/forms/UniversalFormNew.tsx, /home/runner/workspace/client/src/components/forms/ky3p-field-update.ts, /home/runner/workspace/client/src/components/forms/kyb-field-update.ts, /home/runner/workspace/client/src/components/modals/AnimatedOnboardingModal.tsx, /home/runner/workspace/client/src/components/risk-score/ComparativeVisualization.tsx, /home/runner/workspace/client/src/components/tasks/CreateTaskModal.tsx, /home/runner/workspace/client/src/components/ui/toaster.tsx, /home/runner/workspace/client/src/hooks/use-auth.tsx, /home/runner/workspace/client/src/hooks/use-enhanced-form-submission.tsx, /home/runner/workspace/client/src/hooks/use-file-toast.tsx, /home/runner/workspace/client/src/hooks/use-risk-score-data.ts, /home/runner/workspace/client/src/hooks/use-unified-toast.ts, /home/runner/workspace/client/src/pages/FileVault.tsx, /home/runner/workspace/client/src/pages/TaskFix.tsx, /home/runner/workspace/client/src/pages/claims/[id].tsx, /home/runner/workspace/client/src/pages/claims/index.tsx, /home/runner/workspace/client/src/pages/form-submission-workflow.tsx, /home/runner/workspace/client/src/pages/ky3p-task-page.tsx, /home/runner/workspace/client/src/pages/landing/company/contact-us.tsx, /home/runner/workspace/client/src/pages/open-banking-task-page.tsx, /home/runner/workspace/client/src/pages/register-page.tsx, /home/runner/workspace/client/src/pages/risk-score-configuration-page.tsx, /home/runner/workspace/client/src/pages/task-page.tsx, /home/runner/workspace/client/src/services/form-submission-service.ts, dynamic import will not move module into another chunk.
+
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/logger.ts is dynamically imported by /home/runner/workspace/client/src/components/dashboard/SidebarTab.tsx but also statically imported by /home/runner/workspace/client/src/components/forms/FormFieldsListener.tsx, dynamic import will not move module into another chunk.
+
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/app-initialization.ts is dynamically imported by /home/runner/workspace/client/src/services/unified-service-registration.ts, /home/runner/workspace/client/src/services/unified-service-registration.ts but also statically imported by /home/runner/workspace/client/src/main.tsx, dynamic import will not move module into another chunk.
+
+
+computing gzip size...
+
+../dist/public/index.html                                      14.24 kB │ gzip:     3.46 kB
+
+../dist/public/assets/index-DLMJu3uB.css                      148.32 kB │ gzip:    23.04 kB
+
+✓ built in 37.39s
+
+▲ [WARNING] Import "broadcastFormSubmissionCompleted" will always be undefined because there is no matching export in "server/services/websocket-service.ts" [import-is-undefined]
+
+    server/services/form-submission-broadcaster.ts:56:43:
+      56 │ ...roadcastFn = WebSocketService['broadcastFormSubmissionCompleted'];
+         ╵                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.4.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.4.0
+npm notice To update run: npm install -g npm@11.4.0
+npm notice
+
+2025-05-21T08:56:29Z info: Pushing pid1 binary layer...
+2025-05-21T08:56:30Z info: Created pid1 binary layer
+2025-05-21T08:56:31Z info: Pushing hosting layer...
+2025-05-21T08:56:31Z info: Pushing Repl layer...
+2025-05-21T08:56:31Z info: Retrieved cached nix layer
+2025-05-21T08:56:31Z info: Created hosting layer
+2025-05-21T09:00:47Z info: Created Repl layer
+2025-05-21T09:00:47Z info: Pushing Repl (cache) layer...
+2025-05-21T09:00:47Z info: Created Repl (cache) layer
+2025-05-21T09:00:47Z error: image size is over the limit of 8 GiB
