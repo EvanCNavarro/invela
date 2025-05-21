@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { logger } from '../utils/logger';
 import { db } from '@db';
 import { sql } from 'drizzle-orm';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -62,6 +64,37 @@ router.get('/test-page', (req, res) => {
       </body>
     </html>
   `);
+});
+
+// Direct working preview page - specially designed to work in Replit preview
+router.get('/working-preview', (req, res) => {
+  logger.info('[PreviewEndpoint] Working preview page accessed');
+  try {
+    const previewHtml = fs.readFileSync(path.join(process.cwd(), 'public', 'working-preview.html'), 'utf8');
+    res.setHeader('Content-Type', 'text/html');
+    res.send(previewHtml);
+  } catch (err) {
+    logger.error('[PreviewEndpoint] Error reading working-preview.html:', err);
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invela Preview</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .error { color: #721c24; background: #f8d7da; padding: 10px; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <h1>Invela Platform</h1>
+          <p class="error">Could not load preview page. Server is running but encountered an error.</p>
+          <p>Timestamp: ${new Date().toISOString()}</p>
+          <p>Mode: ${process.env.NODE_ENV || 'development'}</p>
+          <p>Try accessing <a href="/api/test">/api/test</a> to check API functionality.</p>
+        </body>
+      </html>
+    `);
+  }
 });
 
 export default router;
