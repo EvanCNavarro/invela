@@ -9,20 +9,19 @@
  * the proper configuration for deployment.
  */
 
+// CommonJS version for compatibility with Node.js default mode
 // Force production environment
 process.env.NODE_ENV = 'production';
 
 // Force port 8080 as required by Replit Cloud Run
 process.env.PORT = '8080';
 
-// Import necessary modules
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+// Import necessary modules using CommonJS
+const path = require('path');
+const fs = require('fs');
 
-// Get directory name in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Get directory name in CommonJS
+const __dirname = __dirname;
 
 // Configure logger
 const logger = {
@@ -46,15 +45,10 @@ logger.info('===========================================');
 try {
   logger.info('Importing server module...');
   
-  // Dynamic import of the main server (built by Vite)
-  import('../index.js')
-    .then(() => {
-      logger.success('Server started successfully');
-    })
-    .catch(err => {
-      logger.error('Failed to import server module:', err);
-      process.exit(1);
-    });
+  // Require the built server file (CommonJS style)
+  require('../index.js');
+  logger.success('Server started successfully');
+  
 } catch (error) {
   logger.error('Error during server startup:', error);
   process.exit(1);
