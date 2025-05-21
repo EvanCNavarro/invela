@@ -1,240 +1,198 @@
 /**
- * Aggressive Deployment Cleanup Script
+ * Deployment Cleanup Script
  * 
- * This script performs a thorough cleanup to dramatically reduce Docker image size
- * by removing unnecessary files and directories before deployment.
+ * This script performs aggressive cleanup operations to reduce Docker image
+ * size before deployment by removing unnecessary files and directories.
  */
 
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { promisify } from 'util';
+import { exec as execCallback } from 'child_process';
 
-// Logger
-class CleanupLogger {
+const exec = promisify(execCallback);
+
+// Configure logger with timestamps for better debugging
+class Logger {
   static log(message) {
-    console.log(`[CLEANUP] ${message}`);
+    console.log(`[${new Date().toISOString()}] [INFO] ${message}`);
   }
   
   static success(message) {
-    console.log(`[CLEANUP] ✅ ${message}`);
+    console.log(`[${new Date().toISOString()}] [SUCCESS] ${message}`);
   }
   
-  static error(message) {
-    console.error(`[CLEANUP] ❌ ${message}`);
+  static error(message, error = null) {
+    console.error(`[${new Date().toISOString()}] [ERROR] ${message}`);
+    if (error) {
+      console.error(`[${new Date().toISOString()}] [ERROR] Details: ${error.message || error}`);
+    }
+  }
+  
+  static warning(message) {
+    console.warn(`[${new Date().toISOString()}] [WARNING] ${message}`);
   }
 }
 
-// Get directory size in MB
+// Get directory size in MB (useful for debugging)
 async function getDirSizeMB(dirPath) {
   try {
-    const result = execSync(`du -sm "${dirPath}" | cut -f1`, { encoding: 'utf8' });
-    return parseInt(result.trim(), 10);
-  } catch (err) {
+    const { stdout } = await exec(`du -sm "${dirPath}"`);
+    const size = parseFloat(stdout.split('\t')[0]);
+    return size;
+  } catch (error) {
+    Logger.error(`Failed to get size of ${dirPath}`, error);
     return 0;
   }
 }
 
-// Clean node_modules (remove dev dependencies and caches)
+// Clean up node_modules to reduce size
 async function cleanNodeModules() {
-  CleanupLogger.log('Cleaning node_modules...');
+  Logger.log('Cleaning node_modules...');
+  const startSize = await getDirSizeMB('node_modules');
   
   try {
-    // Remove development-only packages
-    const devDirsToRemove = [
-      'node_modules/.cache',
-      'node_modules/.vite',
-      'node_modules/@types',
-      'node_modules/typescript',
-      'node_modules/ts-node',
-      'node_modules/eslint',
-      'node_modules/jest',
-      'node_modules/tailwindcss',
-      'node_modules/postcss',
-      'node_modules/autoprefixer',
-      'node_modules/vite',
-      'node_modules/@vitejs',
-      'node_modules/esbuild',
-      'node_modules/nodemon',
-      'node_modules/concurrently',
-    ];
+    // Remove cache directories
+    await exec('rm -rf node_modules/.cache node_modules/.vite');
+    Logger.success('Removed cache directories');
     
-    for (const dir of devDirsToRemove) {
-      try {
-        if (fs.existsSync(dir)) {
-          const sizeBefore = await getDirSizeMB(dir);
-          await fs.rm(dir, { recursive: true, force: true });
-          CleanupLogger.success(`Removed ${dir} (${sizeBefore}MB)`);
-        }
-      } catch (err) {
-        CleanupLogger.error(`Failed to remove ${dir}: ${err.message}`);
-      }
-    }
+    // Remove test directories
+    await exec('find node_modules -type d -name "test" -o -name "tests" | xargs rm -rf 2>/dev/null || true');
+    Logger.success('Removed test directories');
     
-    // Remove documentation, examples, and tests from all packages
-    CleanupLogger.log('Removing package documentation and tests...');
-    try {
-      execSync('find node_modules -type d -name "docs" -o -name "doc" -o -name "example" -o -name "examples" -o -name "test" -o -name "tests" -o -name "__tests__" | xargs rm -rf', { stdio: 'ignore' });
-      CleanupLogger.success('Removed documentation and test directories');
-    } catch (err) {
-      CleanupLogger.error(`Failed to remove documentation: ${err.message}`);
-    }
+    // Remove documentation
+    await exec('find node_modules -type d -name "docs" -o -name "doc" | xargs rm -rf 2>/dev/null || true');
+    Logger.success('Removed documentation directories');
     
-    // Remove .md files
-    try {
-      execSync('find node_modules -type f -name "*.md" -o -name "LICENSE*" -o -name "*.ts" -not -name "*.d.ts" | xargs rm -f', { stdio: 'ignore' });
-      CleanupLogger.success('Removed markdown and license files');
-    } catch (err) {
-      CleanupLogger.error(`Failed to remove markdown files: ${err.message}`);
-    }
+    // Remove unnecessary files
+    await exec('find node_modules -name "*.md" -o -name "*.ts" -not -name "*.d.ts" | xargs rm -f 2>/dev/null || true');
+    Logger.success('Removed unnecessary files');
     
-    CleanupLogger.success('Cleaned node_modules directory');
-  } catch (err) {
-    CleanupLogger.error(`Error cleaning node_modules: ${err.message}`);
+    const endSize = await getDirSizeMB('node_modules');
+    Logger.success(`Reduced node_modules size from ${startSize}MB to ${endSize}MB (saved ${(startSize - endSize).toFixed(2)}MB)`);
+  } catch (error) {
+    Logger.error('Error cleaning node_modules', error);
   }
 }
 
-// Remove large directories
+// Remove large asset directories
 async function removeLargeDirectories() {
-  CleanupLogger.log('Removing large directories...');
+  Logger.log('Cleaning large asset directories...');
   
-  const dirsToRemove = [
+  // Create excluded directory if it doesn't exist
+  if (!fs.existsSync('deployment-excluded')) {
+    fs.mkdirSync('deployment-excluded', { recursive: true });
+  }
+  
+  const directories = [
     'attached_assets',
     'backup_assets',
     'backup_text',
-    'uploads',
-    'cleanup-scripts',
-    '.git',
-    '.github',
-    'tests',
-    'test',
-    'docs',
-    'scripts',
-    'demo'
+    'uploads'
   ];
   
-  // Create a backup directory for reference
-  await fs.mkdir('deployment-excluded', { recursive: true });
-  
-  for (const dir of dirsToRemove) {
+  for (const dir of directories) {
     try {
       if (fs.existsSync(dir)) {
-        const sizeBefore = await getDirSizeMB(dir);
+        const startSize = await getDirSizeMB(dir);
         
-        // Create a placeholder
-        const placeholderContent = `This directory (${dir}) was excluded during deployment to reduce image size.`;
+        // Move files to excluded directory
+        await exec(`find ${dir} -type f -not -name ".placeholder" | xargs -I{} mv {} deployment-excluded/ 2>/dev/null || true`);
         
-        // Create a record in the excluded directory
-        await fs.writeFile(
-          path.join('deployment-excluded', `${dir}.excluded`),
-          `Directory ${dir} (${sizeBefore}MB) was excluded from deployment.`
-        );
+        // Create placeholder
+        fs.writeFileSync(`${dir}/.placeholder`, 'Directory cleaned for deployment');
         
-        // Create a placeholder in the original location
-        await fs.mkdir(dir, { recursive: true });
-        await fs.writeFile(
-          path.join(dir, '.deployment-placeholder'),
-          placeholderContent
-        );
-        
-        CleanupLogger.success(`Processed ${dir} directory (${sizeBefore}MB)`);
+        const endSize = await getDirSizeMB(dir);
+        Logger.success(`Cleaned ${dir}: ${startSize}MB → ${endSize}MB (saved ${(startSize - endSize).toFixed(2)}MB)`);
       }
-    } catch (err) {
-      CleanupLogger.error(`Failed to process ${dir}: ${err.message}`);
+    } catch (error) {
+      Logger.error(`Error cleaning ${dir}`, error);
     }
   }
 }
 
-// Remove large utility scripts
+// Remove utility scripts that aren't needed in production
 async function removeUtilityScripts() {
-  CleanupLogger.log('Removing utility scripts...');
-  
-  // Common patterns for utility scripts
-  const scriptPatterns = [
-    /^direct-.*\.js$/,
-    /^fix-.*\.js$/,
-    /^add-.*\.js$/,
-    /^check-.*\.js$/,
-    /^create-.*\.js$/,
-    /^demo-.*\.js$/,
-    /^import-.*\.js$/,
-    /^parse-.*\.js$/,
-    /^setup-.*\.js$/
-  ];
+  Logger.log('Removing utility scripts...');
   
   try {
-    const files = await fs.readdir('.');
-    for (const file of files) {
-      if (scriptPatterns.some(pattern => pattern.test(file))) {
-        try {
-          const stats = await fs.stat(file);
-          if (stats.isFile()) {
-            await fs.writeFile(
-              path.join('deployment-excluded', file),
-              `// Original script ${file} was excluded during deployment to reduce image size.`
-            );
-            
-            await fs.writeFile(
-              file,
-              `// Original script was excluded during deployment to reduce image size.`
-            );
-            
-            CleanupLogger.success(`Processed utility script: ${file}`);
-          }
-        } catch (err) {
-          CleanupLogger.error(`Failed to process ${file}: ${err.message}`);
-        }
-      }
+    await exec('mkdir -p deployment-excluded/scripts');
+    
+    // Move utility scripts to excluded directory
+    const patterns = [
+      'cleanup-*.js',
+      'cleanup-*.sh',
+      'populate-*.js',
+      'import-*.ts',
+      'force-*.js',
+      'fix_*.js',
+      'add-*.cjs',
+      'create-*.cjs'
+    ];
+    
+    for (const pattern of patterns) {
+      await exec(`find . -maxdepth 1 -name "${pattern}" | xargs -I{} mv {} deployment-excluded/scripts/ 2>/dev/null || true`);
     }
-  } catch (err) {
-    CleanupLogger.error(`Failed to process utility scripts: ${err.message}`);
+    
+    Logger.success('Removed utility scripts');
+  } catch (error) {
+    Logger.error('Error removing utility scripts', error);
   }
 }
 
-// Clean dist directory before build
+// Clean the dist directory if it exists
 async function cleanDistDirectory() {
-  CleanupLogger.log('Cleaning dist directory...');
+  Logger.log('Cleaning dist directory...');
   
   try {
     if (fs.existsSync('dist')) {
-      await fs.rm('dist', { recursive: true, force: true });
-      CleanupLogger.success('Removed dist directory for clean build');
+      // Remove any cache files
+      await exec('find dist -name ".cache" | xargs rm -rf 2>/dev/null || true');
+      
+      // Remove source maps
+      await exec('find dist -name "*.map" | xargs rm -f 2>/dev/null || true');
+      
+      Logger.success('Cleaned dist directory');
+    } else {
+      Logger.log('Dist directory does not exist yet, skipping');
     }
-  } catch (err) {
-    CleanupLogger.error(`Failed to clean dist directory: ${err.message}`);
+  } catch (error) {
+    Logger.error('Error cleaning dist directory', error);
   }
 }
 
-// Main function
+// Main function to execute all cleanup tasks
 async function main() {
+  Logger.log('Starting deployment cleanup...');
+  
+  const startTime = Date.now();
+  
   try {
-    console.log('\n========== DEPLOYMENT CLEANUP ==========');
-    console.log(`Starting at: ${new Date().toISOString()}`);
-    
-    // Get initial size information
+    // Get initial size
     const initialSize = await getDirSizeMB('.');
-    CleanupLogger.log(`Initial project size: ${initialSize}MB`);
+    Logger.log(`Initial project size: ${initialSize}MB`);
     
-    // Run cleanup operations
-    await cleanDistDirectory();
-    await cleanNodeModules();
+    // Run cleanup tasks
     await removeLargeDirectories();
+    await cleanNodeModules();
     await removeUtilityScripts();
+    await cleanDistDirectory();
     
     // Get final size
     const finalSize = await getDirSizeMB('.');
     const savedSize = initialSize - finalSize;
     
-    console.log('\n========== CLEANUP COMPLETE ==========');
-    CleanupLogger.success(`Initial size: ${initialSize}MB`);
-    CleanupLogger.success(`Final size: ${finalSize}MB`);
-    CleanupLogger.success(`Saved approximately ${savedSize}MB (${Math.round(savedSize/initialSize*100)}%)`);
-    console.log('\nYour project is now ready for deployment!');
-    
-  } catch (err) {
-    CleanupLogger.error(`Deployment cleanup failed: ${err.message}`);
+    // Log results
+    Logger.success(`Cleanup completed in ${((Date.now() - startTime) / 1000).toFixed(1)} seconds`);
+    Logger.success(`Final project size: ${finalSize}MB (saved ${savedSize.toFixed(2)}MB, ${(savedSize / initialSize * 100).toFixed(1)}% reduction)`);
+  } catch (error) {
+    Logger.error('Cleanup failed', error);
     process.exit(1);
   }
 }
 
-// Run the script
-main();
+// Run the main function
+main().catch(error => {
+  Logger.error('Unhandled error in cleanup script', error);
+  process.exit(1);
+});

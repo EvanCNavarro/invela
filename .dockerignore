@@ -1,13 +1,3 @@
-# Node.js dependencies and build artifacts
-node_modules/.cache
-node_modules/.vite
-
-# Development and debugging directories
-.git
-.github
-.vscode
-.idea
-
 # Large asset directories
 attached_assets/*
 !attached_assets/.placeholder
@@ -17,46 +7,39 @@ backup_text/*
 !backup_text/.placeholder
 uploads/*
 !uploads/.placeholder
-cleanup-scripts/*
-!cleanup-scripts/.placeholder
-deployment-excluded
+deployment-excluded/*
 
-# Test data and fixtures
-test
-tests
-__tests__
-__mocks__
+# Development files
+.git
+.github
+*.log
+logs
+temp
+tmp
+
+# Build and cache directories
+node_modules/.cache
+node_modules/.vite
+dist/cache
+.cache
+
+# Test directories
+**/test
+**/tests
+**/__tests__
 
 # Documentation
-docs
-documentation
-*.md
+**/docs
+**/doc
+**/*.md
+!README.md
+!DEPLOYMENT.md
 
-# Development scripts
-*.test.js
-*.spec.js
-*.test.ts
-*.spec.ts
-
-# Utility scripts that aren't needed in production
-fix-*.js
-add-*.js
-check-*.js
-create-*.js
-demo-*.js
-direct-*.js
-import-*.js
-parse-*.js
-
-# Log files
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Temporary files
-.DS_Store
-*.tmp
-*.temp
-.env*.local
+# Utility scripts (that aren't needed in production)
+cleanup-*.js
+cleanup-*.sh
+populate-*.js
+import-*.ts
+force-*.js
+*.cjs
+*.mjs
