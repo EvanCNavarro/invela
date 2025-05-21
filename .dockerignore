@@ -1,61 +1,60 @@
-# Include only what we absolutely need for deployment
-# Default: exclude everything
+# Exclude everything by default
 *
 **/*
 
-# Allow only specific files/directories
+# Only include what's absolutely necessary for deployment
 !package.json
-!package-lock.json
-!dist/public/**
-!server/deployment-server.js
-!.replit.deploy.json
+!deployment-server.js
+!dist/public/index.html
+!dist/public/assets/**/*
 
-# Explicitly exclude large directories
-node_modules/**
-attached_assets/**
-backup_assets/**
-backup_text/**
-uploads/**
-client/src/**
-server/src/**
-.git/**
-.cache/**
-
-# Exclude development files
-**/*.ts
-**/*.tsx
-**/*.map
-**/*.log
-**/*.md
-**/.DS_Store
-**/__tests__/**
-**/test/**
-**/tests/**
-**/coverage/**
-
-# Keep only minimal production node_modules
-node_modules/**/LICENSE
-node_modules/**/license
-node_modules/**/package.json
-node_modules/**/*.js
-!node_modules/**/dist/**
-!node_modules/**/build/**
-!node_modules/**/lib/**
-
-# Exclude unnecessary large modules
-node_modules/typescript/**
-node_modules/@types/**
-node_modules/esbuild/**
-node_modules/vite/**
-node_modules/tailwindcss/**
-node_modules/postcss/**
-node_modules/autoprefixer/**
-node_modules/echarts/**
-node_modules/react-plotly.js/**
-node_modules/plotly.js-dist/**
-node_modules/plotly.js-dist-min/**
-node_modules/canvas-confetti/**
-node_modules/pdf-parse/**
-node_modules/pdf.js-extract/**
-node_modules/sharp/**
-node_modules/recharts/**
+# Keep express module for server
+!node_modules/express/**/*
+!node_modules/accepts/**/*
+!node_modules/array-flatten/**/*
+!node_modules/body-parser/**/*
+!node_modules/bytes/**/*
+!node_modules/content-disposition/**/*
+!node_modules/content-type/**/*
+!node_modules/cookie/**/*
+!node_modules/cookie-signature/**/*
+!node_modules/debug/**/*
+!node_modules/depd/**/*
+!node_modules/destroy/**/*
+!node_modules/ee-first/**/*
+!node_modules/encodeurl/**/*
+!node_modules/escape-html/**/*
+!node_modules/etag/**/*
+!node_modules/finalhandler/**/*
+!node_modules/forwarded/**/*
+!node_modules/fresh/**/*
+!node_modules/http-errors/**/*
+!node_modules/iconv-lite/**/*
+!node_modules/inherits/**/*
+!node_modules/ipaddr.js/**/*
+!node_modules/media-typer/**/*
+!node_modules/merge-descriptors/**/*
+!node_modules/methods/**/*
+!node_modules/mime/**/*
+!node_modules/mime-db/**/*
+!node_modules/mime-types/**/*
+!node_modules/ms/**/*
+!node_modules/negotiator/**/*
+!node_modules/on-finished/**/*
+!node_modules/parseurl/**/*
+!node_modules/path-to-regexp/**/*
+!node_modules/proxy-addr/**/*
+!node_modules/qs/**/*
+!node_modules/range-parser/**/*
+!node_modules/raw-body/**/*
+!node_modules/safe-buffer/**/*
+!node_modules/safer-buffer/**/*
+!node_modules/send/**/*
+!node_modules/serve-static/**/*
+!node_modules/setprototypeof/**/*
+!node_modules/statuses/**/*
+!node_modules/toidentifier/**/*
+!node_modules/type-is/**/*
+!node_modules/unpipe/**/*
+!node_modules/utils-merge/**/*
+!node_modules/vary/**/*
