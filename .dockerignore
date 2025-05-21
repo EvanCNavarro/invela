@@ -1,69 +1,61 @@
-# Development and source files
-client/src
-server/src
-**/*.ts
-**/*.tsx
-!dist/**/*.js
+# Include only what we absolutely need for deployment
+# Default: exclude everything
+*
+**/*
+
+# Allow only specific files/directories
+!package.json
+!package-lock.json
+!dist/public/**
 !server/deployment-server.js
-
-# Build artifacts and cache
-**/*.map
-**/*.log
-.cache
-.turbo
-.next
-.svelte-kit
-node_modules/.cache
-node_modules/typescript
-node_modules/@types
-node_modules/esbuild
-node_modules/vite
-node_modules/unocss
-node_modules/tailwindcss
-dist/client/assets/*.map
-
-# Large assets not needed in production
-attached_assets
-backup_assets
-backup_text
-uploads
-**/*.csv
-**/*.sql
-
-# Test and documentation
-**/__tests__
-**/test
-**/tests
-**/doc
-**/docs
-**/coverage
-**/*.md
-!FIXED_DEPLOYMENT_GUIDE.md
-
-# Version control
-.git
-.github
-
-# Development config files
-**/.vscode
-**/.idea
-**/.DS_Store
-.editorconfig
-tsconfig.json
-tailwind.config.js
-postcss.config.js
-**/*.config.js
-**/*.config.json
 !.replit.deploy.json
 
-# Scripts and utilities
-**/*.sh
-**/*.cjs
-cleanup-scripts
-deployment-excluded
-cleanup-plan
-replit_agent
+# Explicitly exclude large directories
+node_modules/**
+attached_assets/**
+backup_assets/**
+backup_text/**
+uploads/**
+client/src/**
+server/src/**
+.git/**
+.cache/**
 
-# Keep essential files for deployment
-!dist/server/deployment-server.js
-!.replit
+# Exclude development files
+**/*.ts
+**/*.tsx
+**/*.map
+**/*.log
+**/*.md
+**/.DS_Store
+**/__tests__/**
+**/test/**
+**/tests/**
+**/coverage/**
+
+# Keep only minimal production node_modules
+node_modules/**/LICENSE
+node_modules/**/license
+node_modules/**/package.json
+node_modules/**/*.js
+!node_modules/**/dist/**
+!node_modules/**/build/**
+!node_modules/**/lib/**
+
+# Exclude unnecessary large modules
+node_modules/typescript/**
+node_modules/@types/**
+node_modules/esbuild/**
+node_modules/vite/**
+node_modules/tailwindcss/**
+node_modules/postcss/**
+node_modules/autoprefixer/**
+node_modules/echarts/**
+node_modules/react-plotly.js/**
+node_modules/plotly.js-dist/**
+node_modules/plotly.js-dist-min/**
+node_modules/canvas-confetti/**
+node_modules/pdf-parse/**
+node_modules/pdf.js-extract/**
+node_modules/sharp/**
+node_modules/recharts/**
