@@ -174,18 +174,16 @@ export function setupReplitPreviewHandler(app: express.Express) {
     res.send(html);
   });
 
-  // Changed approach: Always load the full application by default
-  // The preview page is available but we no longer redirect to it automatically
+  // Completely bypass the preview page and always load the actual React application
   app.use((req: Request, res: Response, next: NextFunction) => {
-    // Only log in preview mode, but never redirect
+    // Only log in preview mode, but never use the static preview page
     if (req.method === 'GET' && 
-        req.url === '/' && 
         isReplitPreviewRequest(req)) {
       
-      logger.info('[ReplitPreview] Replit preview detected, loading full application');
+      logger.info('[ReplitPreview] Replit preview detected, loading actual React application');
     }
     
-    // Always proceed to the main application
+    // Always proceed to the main React application with no redirection
     next();
   });
 }
