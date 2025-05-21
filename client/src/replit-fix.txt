@@ -1,5 +1,0 @@
-To allow this host, add "9606674c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36lgjj.picard.replit.dev" to `server.allowedHosts` in vite.config.js.
-
-This message is shown in the preview. We need to find a way to bypass Vite's host validation without modifying vite.config.js directly since it's not allowed in the Replit environment.
-
-The solution was to add a special script in the HTML file that runs before Vite loads that modifies the host validation check directly.

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Replit Preview Diagnostic</title>
+  <script src="/browser-debug.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { 
+      color: #2c3e50; 
+      text-align: center;
+    }
+    h2 {
+      color: #3498db;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    button {
+      background: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .status-ok {
+      background-color: #28a745;
+    }
+    .status-error {
+      background-color: #dc3545;
+    }
+    .status-warning {
+      background-color: #ffc107;
+    }
+    pre {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    #websocket-test-result, #vite-hmr-test-result, #static-test-result, #port-test-result {
+      margin-top: 10px;
+    }
+    .test-btn {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Replit Preview Diagnostic</h1>
+    <p>This page helps diagnose issues with the Replit preview functionality. Click the buttons below to run various tests.</p>
+  </div>
+
+  <div class="card">
+    <h2>Environment Information</h2>
+    <div id="env-info">
+      <ul>
+        <li><strong>URL:</strong> <span id="current-url"></span></li>
+        <li><strong>Protocol:</strong> <span id="protocol"></span></li>
+        <li><strong>Host:</strong> <span id="hostname"></span></li>
+        <li><strong>Port:</strong> <span id="port"></span></li>
+        <li><strong>User Agent:</strong> <span id="user-agent"></span></li>
+        <li><strong>Window Dimensions:</strong> <span id="window-dimensions"></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Static Asset Test</h2>
+    <p>Tests if the server can serve static assets correctly.</p>
+    <button class="test-btn" id="test-static">Test Static Assets</button>
+    <div id="static-test-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>API Test</h2>
+    <p>Tests if the API endpoints are accessible.</p>
+    <button class="test-btn" id="test-api">Test API Connection</button>
+    <div id="api-test-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>Port Configuration Test</h2>
+    <p>Tests if the server is accessible on the expected ports.</p>
+    <button class="test-btn" id="test-ports">Test Port Configuration</button>
+    <div id="port-test-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>WebSocket Connection Test</h2>
+    <p>Tests if WebSocket connections can be established.</p>
+    <button class="test-btn" id="test-websocket">Test WebSocket Connection</button>
+    <div id="websocket-test-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>Vite HMR Test</h2>
+    <p>Tests if Vite's Hot Module Replacement connections can be established.</p>
+    <button class="test-btn" id="test-vite-hmr">Test Vite HMR</button>
+    <div id="vite-hmr-test-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>Navigation Links</h2>
+    <p>Try accessing these different parts of the application:</p>
+    <ul>
+      <li><a href="/" id="home-link">Home Page</a></li>
+      <li><a href="/test.html" id="test-page-link">Static Test Page</a></li>
+      <li><a href="/api/test" id="api-link">API Test Endpoint</a></li>
+    </ul>
+  </div>
+
+  <script>
+    // Environment Information
+    document.getElementById('current-url').textContent = window.location.href;
+    document.getElementById('protocol').textContent = window.location.protocol;
+    document.getElementById('hostname').textContent = window.location.hostname;
+    document.getElementById('port').textContent = window.location.port || '(default)';
+    document.getElementById('user-agent').textContent = navigator.userAgent;
+    document.getElementById('window-dimensions').textContent = `${window.innerWidth}x${window.innerHeight}`;
+
+    // Static Asset Test
+    document.getElementById('test-static').addEventListener('click', function() {
+      const resultElement = document.getElementById('static-test-result');
+      resultElement.innerHTML = 'Testing static assets...';
+      
+      // Check if we can load a simple image
+      const img = new Image();
+      img.onload = function() {
+        resultElement.innerHTML = `
+          <div>
+            <span class="status-indicator status-ok"></span>
+            <span>Static assets loaded successfully</span>
+          </div>
+        `;
+      };
+      img.onerror = function() {
+        resultElement.innerHTML = `
+          <div>
+            <span class="status-indicator status-error"></span>
+            <span>Failed to load static assets</span>
+          </div>
+          <div>Error: Could not load test image</div>
+        `;
+      };
+      // Try to load the favicon as a test
+      img.src = '/favicon.ico?' + new Date().getTime();
+    });
+
+    // API Test
+    document.getElementById('test-api').addEventListener('click', function() {
+      const resultElement = document.getElementById('api-test-result');
+      resultElement.innerHTML = 'Testing API connection...';
+      
+      fetch('/api/test')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          resultElement.innerHTML = `
+            <div>
+              <span class="status-indicator status-ok"></span>
+              <span>API connection successful!</span>
+            </div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        })
+        .catch(error => {
+          resultElement.innerHTML = `
+            <div>
+              <span class="status-indicator status-error"></span>
+              <span>API connection failed</span>
+            </div>
+            <pre>Error: ${error.message}</pre>
+          `;
+        });
+    });
+
+    // Port Configuration Test
+    document.getElementById('test-ports').addEventListener('click', async function() {
+      const resultElement = document.getElementById('port-test-result');
+      resultElement.innerHTML = 'Testing port configuration...';
+      
+      const ports = [3000, 5000, 8080];
+      const results = [];
+      
+      for (const port of ports) {
+        try {
+          const protocol = window.location.protocol;
+          const hostname = window.location.hostname;
+          
+          const startTime = Date.now();
+          const response = await fetch(`${protocol}//${hostname}:${port}/api/test`, {
+            mode: 'no-cors', // This allows us to at least detect if the request didn't fail outright
+            cache: 'no-store',
+            method: 'HEAD',
+            headers: { 'Cache-Control': 'no-cache' }
+          }).catch(err => {
+            return { ok: false, error: err.message };
+          });
+          
+          const endTime = Date.now();
+          const latency = endTime - startTime;
+          
+          const status = response.ok !== false ? 'Available' : 'Failed';
+          const statusClass = response.ok !== false ? 'status-ok' : 'status-error';
+          
+          results.push(`
+            <div>
+              <span class="status-indicator ${statusClass}"></span>
+              <span>Port ${port}: ${status} (latency: ${latency}ms)</span>
+            </div>
+          `);
+        } catch (error) {
+          results.push(`
+            <div>
+              <span class="status-indicator status-error"></span>
+              <span>Port ${port}: Error - ${error.message}</span>
+            </div>
+          `);
+        }
+      }
+      
+      resultElement.innerHTML = results.join('');
+    });
+
+    // WebSocket Connection Test
+    document.getElementById('test-websocket').addEventListener('click', function() {
+      const resultElement = document.getElementById('websocket-test-result');
+      resultElement.innerHTML = 'Testing WebSocket connection...';
+      
+      try {
+        // Determine WebSocket URL based on current location
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const wsUrl = `${protocol}//${host}/ws`;
+        
+        console.log(`Attempting to connect to WebSocket at: ${wsUrl}`);
+        
+        const socket = new WebSocket(wsUrl);
+        
+        socket.onopen = function() {
+          resultElement.innerHTML = `
+            <div>
+              <span class="status-indicator status-ok"></span>
+              <span>WebSocket connection established successfully!</span>
+            </div>
+            <div>Connected to: ${wsUrl}</div>
+          `;
+          
+          // Close the socket after successful test
+          setTimeout(() => socket.close(), 1000);
+        };
+        
+        socket.onerror = function(error) {
+          resultElement.innerHTML = `
+            <div>
+              <span class="status-indicator status-error"></span>
+              <span>WebSocket connection failed</span>
+            </div>
+            <div>URL: ${wsUrl}</div>
+            <div>Error: WebSocket connection could not be established</div>
+          `;
+        };
+        
+        socket.onclose = function(event) {
+          console.log(`WebSocket closed with code: ${event.code}, reason: ${event.reason}`);
+          if (resultElement.innerHTML.includes('Testing WebSocket')) {
+            resultElement.innerHTML = `
+              <div>
+                <span class="status-indicator status-error"></span>
+                <span>WebSocket connection failed</span>
+              </div>
+              <div>URL: ${wsUrl}</div>
+              <div>Closed with code: ${event.code}, reason: ${event.reason || 'No reason specified'}</div>
+            `;
+          }
+        };
+      } catch (error) {
+        resultElement.innerHTML = `
+          <div>
+            <span class="status-indicator status-error"></span>
+            <span>WebSocket test error</span>
+          </div>
+          <div>Error: ${error.message}</div>
+        `;
+      }
+    });
+
+    // Vite HMR Test
+    document.getElementById('test-vite-hmr').addEventListener('click', function() {
+      const resultElement = document.getElementById('vite-hmr-test-result');
+      resultElement.innerHTML = 'Testing Vite HMR connection...';
+      
+      try {
+        // Mimic how Vite creates its HMR WebSocket connection
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname;
+        const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+        const hmrPort = port; // Vite HMR uses the same port in our configuration
+        
+        // Different possible HMR socket URLs to try
+        const hmrUrls = [
+          `${protocol}//${hostname}:${hmrPort}/__vite_hmr`,
+          `${protocol}//${hostname}:${hmrPort}/_hmr`,
+          `${protocol}//${hostname}:${hmrPort}/@vite/client`
+        ];
+        
+        let successfulConnection = false;
+        let attemptCount = 0;
+        let errorMessages = [];
+        
+        function tryNextConnection() {
+          if (attemptCount >= hmrUrls.length || successfulConnection) {
+            if (!successfulConnection) {
+              resultElement.innerHTML = `
+                <div>
+                  <span class="status-indicator status-error"></span>
+                  <span>All Vite HMR connection attempts failed</span>
+                </div>
+                <div>Tried URLs:</div>
+                <ul>
+                  ${hmrUrls.map(url => `<li>${url}</li>`).join('')}
+                </ul>
+                <div>Errors:</div>
+                <ul>
+                  ${errorMessages.map(msg => `<li>${msg}</li>`).join('')}
+                </ul>
+              `;
+            }
+            return;
+          }
+          
+          const wsUrl = hmrUrls[attemptCount];
+          console.log(`Attempting Vite HMR connection to: ${wsUrl}`);
+          
+          try {
+            const socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function() {
+              successfulConnection = true;
+              resultElement.innerHTML = `
+                <div>
+                  <span class="status-indicator status-ok"></span>
+                  <span>Vite HMR connection established successfully!</span>
+                </div>
+                <div>Connected to: ${wsUrl}</div>
+              `;
+              
+              // Close the socket after successful test
+              setTimeout(() => socket.close(), 1000);
+            };
+            
+            socket.onerror = function() {
+              errorMessages.push(`Failed to connect to ${wsUrl}`);
+              attemptCount++;
+              tryNextConnection();
+            };
+            
+            socket.onclose = function() {
+              if (!successfulConnection) {
+                errorMessages.push(`Connection to ${wsUrl} was closed`);
+                attemptCount++;
+                tryNextConnection();
+              }
+            };
+          } catch (error) {
+            errorMessages.push(`Error creating WebSocket for ${wsUrl}: ${error.message}`);
+            attemptCount++;
+            tryNextConnection();
+          }
+        }
+        
+        // Start trying connections
+        tryNextConnection();
+      } catch (error) {
+        resultElement.innerHTML = `
+          <div>
+            <span class="status-indicator status-error"></span>
+            <span>Vite HMR test error</span>
+          </div>
+          <div>Error: ${error.message}</div>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

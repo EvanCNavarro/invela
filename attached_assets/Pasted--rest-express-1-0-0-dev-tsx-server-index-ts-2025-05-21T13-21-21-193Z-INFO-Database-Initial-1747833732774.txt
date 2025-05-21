@@ -1,0 +1,89 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-21T13:21:21.193Z] [INFO] [Database] Initializing database connection with optimized settings for Neon PostgreSQL {"module":"Database"}
+Database migrations disabled - schema already applied
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-21T13:21:21.381Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registered KY3P form submission fix routes
+[2025-05-21T13:21:21.531Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-21T13:21:21.531Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-21T13:21:21.531Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[Routes] Registered KY3P field key router
+[2025-05-21T13:21:21.531Z] [INFO] [App] Registering KY3P field update routes 
+[Routes] Setting up unified clear fields router
+[Routes] Successfully registered unified clear fields router
+[Routes] Setting up task broadcast router
+[Routes] Successfully registered task broadcast router
+[2025-05-21T13:21:21.532Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Routes setup completed
+[2025-05-21T13:21:21.544Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-21T13:21:21.544Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"ov91za","timestamp":"2025-05-21T13:21:21.544Z"}
+[2025-05-21T13:21:21.544Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[WebSocketService] Initialized successfully
+[WebSocketService] Global WebSocket service instance set
+[2025-05-21T13:21:21.544Z] [INFO] [App] [WebSocket] Form submission WebSocket service initialized successfully 
+[2025-05-21T13:21:21.544Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-21T13:21:21.544Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-21T13:21:21.544Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[TaskBroadcast] WebSocket server reference set up
+[TaskBroadcast] WebSocket server active with 0 connected clients
+[2025-05-21T13:21:21.545Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-21T13:21:21.545Z] [INFO] [App] Setting up Vite development server 
+[2025-05-21T13:21:21.549Z] [INFO] [App] =========================================== 
+[2025-05-21T13:21:21.549Z] [INFO] [App] SERVER CONFIGURATION 
+[2025-05-21T13:21:21.549Z] [INFO] [App] PORT: 3000 | HOST: 0.0.0.0 
+[2025-05-21T13:21:21.549Z] [INFO] [App] NODE_ENV: development 
+[2025-05-21T13:21:21.549Z] [INFO] [App] =========================================== 
+[2025-05-21T13:21:21.560Z] [INFO] [App] Server running on 0.0.0.0:3000 (development) mode 
+[2025-05-21T13:21:21.560Z] [INFO] [App] Server ready to accept connections 
+[2025-05-21T13:21:21.560Z] [INFO] [App] Preview URL: https://workspace.EvanCNavarro.repl.co 
+[2025-05-21T13:21:21.560Z] [INFO] [App] Starting periodic task reconciliation system... 
+[PeriodicTaskReconciliation] Stopped periodic reconciliation system
+[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: 300000ms)
+[2025-05-21T13:21:21.560Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-21T13:21:22.355Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev, url: / 
+[2025-05-21T13:21:22.355Z] [INFO] [App] [CORS] Allowed request from direct preview 
+[2025-05-21T13:21:22.545Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-21T13:21:22.566Z] [INFO] [App] Workflow proxy running on port 5000 (redirecting to main port 3000) 
+[2025-05-21T13:21:23.342Z] [INFO] [App] Workflow proxy received request: /test-page 
+[2025-05-21T13:21:24.916Z] [INFO] [Database] New database connection established {"module":"Database"}
+[2025-05-21T13:21:31.562Z] [INFO] [App] Running background health checks... 
+[2025-05-21T13:21:31.562Z] [StartupChecks] Running application startup health checks... 
+[2025-05-21T13:21:31.562Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-21T13:21:31.563Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-21T13:21:31.767Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-21T13:21:31.795Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-21T13:21:31.833Z] [DBConnectionService] Database connection check successful 
+[2025-05-21T13:21:31.833Z] [StartupChecks] Database health check passed 
+[2025-05-21T13:21:31.833Z] [StartupChecks] All startup health checks passed! 
+[2025-05-21T13:21:31.833Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-21T13:21:36.252Z] [INFO] [App] Workflow proxy received request: /preview/ 
+[2025-05-21T13:21:36.255Z] [DEBUG] [App] [Preview Debug] Request origin: undefined, host: 0.0.0.0:3000, url: /preview/ 
+[2025-05-21T13:21:36.255Z] [INFO] [App] [CORS] Allowed request from direct preview 
+[2025-05-21T13:21:36.817Z] [INFO] [App] Workflow proxy received request: /preview/ 
+[PeriodicTaskReconciliation] Reconciling batch of 10 tasks: [
+  964, 965, 963, 968,
+  972, 967, 973, 969,
+  971, 978
+]
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
