@@ -1,6 +1,5 @@
 {
-  "run": "node simple-server.js",
-  "entrypoint": "simple-server.js", 
-  "build": "npm install",
+  "run": "node deployment-server.cjs",
+  "entrypoint": "deployment-server.cjs",
   "port": 8080
 }

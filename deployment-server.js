@@ -1,37 +1,27 @@
 /**
- * Deployment Server for Replit
+ * Minimal deployment server for Replit Cloud
+ *
+ * This uses ES module syntax to match your project's configuration
  */
 
-const http = require('http');
+// Use ES module syntax (import instead of require)
+import http from 'http';
 
-// Constants for port configuration
-const PORT = 8080;
+// Port must be 8080 for Replit Cloud
+const PORT = 8080; 
 const HOST = '0.0.0.0';
 
-// Simple timestamp for logging
-function getTimestamp() {
-  return new Date().toISOString();
-}
-
-// Log with timestamp
-function log(message) {
-  console.log(`[${getTimestamp()}] ${message}`);
-}
-
-// Create a simple server that responds to all requests
+// Create minimal server
 const server = http.createServer((req, res) => {
-  log(`Request received: ${req.method} ${req.url}`);
+  // Log all requests
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   
-  // Return 200 OK for all requests
-  res.writeHead(200, {'Content-Type': 'application/json'});
-  res.end(JSON.stringify({
-    status: 'ok',
-    message: 'API is running',
-    timestamp: getTimestamp()
-  }));
+  // Send 200 OK for all requests
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('Invela Platform is running');
 });
 
-// Start listening on the specified port and host
+// Start server
 server.listen(PORT, HOST, () => {
-  log(`Server running at http://${HOST}:${PORT}`);
+  console.log(`[${new Date().toISOString()}] Server running at http://${HOST}:${PORT}`);
 });
