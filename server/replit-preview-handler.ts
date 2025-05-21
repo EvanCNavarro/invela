@@ -174,23 +174,18 @@ export function setupReplitPreviewHandler(app: express.Express) {
     res.send(html);
   });
 
-  // Redirect root requests in preview mode to our compatible page
+  // Changed approach: Always load the full application by default
+  // The preview page is available but we no longer redirect to it automatically
   app.use((req: Request, res: Response, next: NextFunction) => {
-    // Only intercept GET requests to the root in Replit preview mode
+    // Only log in preview mode, but never redirect
     if (req.method === 'GET' && 
         req.url === '/' && 
         isReplitPreviewRequest(req)) {
       
-      // Check if we have any query parameter indicating we want to try the full app
-      if (req.query.fullapp === 'true') {
-        logger.info('[ReplitPreview] User requested full app, bypassing preview handler');
-        return next();
-      }
-      
-      logger.info('[ReplitPreview] Redirecting root request to preview compatibility page');
-      return res.redirect('/replit-preview');
+      logger.info('[ReplitPreview] Replit preview detected, loading full application');
     }
     
+    // Always proceed to the main application
     next();
   });
 }
