@@ -6,13 +6,18 @@
   <title>Invela Risk Assessment Platform</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      line-height: 1.6;
-      color: #333;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #f8f9fa;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f7f9;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #1a73e8;
     }
     
     .card {
@@ -23,181 +28,81 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    h1 { 
-      color: #2c3e50; 
-      text-align: center;
-    }
-    
-    h2 {
-      color: #3498db;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
-    
-    .btn {
-      display: inline-block;
-      background: #4CAF50;
-      color: white;
-      padding: 10px 15px;
-      text-decoration: none;
+    .alert {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 12px;
       border-radius: 4px;
-      margin: 5px;
-      font-weight: 500;
+      border-left: 4px solid #28a745;
+      margin-bottom: 20px;
     }
     
-    .btn:hover {
-      background: #45a049;
-    }
-    
-    .btn-secondary {
-      background: #2196F3;
-    }
-    
-    .btn-secondary:hover {
-      background: #0b7dda;
-    }
-    
-    .status {
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #f1f1f1;
-      border-radius: 4px;
+    code {
+      background: #f0f0f0;
+      padding: 2px 4px;
+      border-radius: 3px;
       font-family: monospace;
     }
     
-    .logo {
-      display: block;
-      margin: 0 auto 20px;
-      max-width: 200px;
+    .info-list {
+      list-style-type: none;
+      padding: 0;
     }
     
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 20px 0;
+    .info-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
     }
     
-    .preview-notice {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      border-left: 4px solid #ffeeba;
+    .info-list li strong {
+      display: inline-block;
+      width: 120px;
     }
     
-    /* For mobile devices */
-    @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
-      .btn-group {
-        flex-direction: column;
-      }
-      .btn {
-        margin: 5px 0;
-      }
+    .footer {
+      text-align: center;
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <div id="app-container">
-    <!-- Content will be dynamically added here -->
+  <h1>Invela Risk Assessment Platform</h1>
+  
+  <div class="alert">
+    <strong>Success!</strong> The preview is working correctly.
+  </div>
+  
+  <div class="card">
+    <h2>Preview Information</h2>
+    <p>This is a simple static HTML page being served from the <code>public</code> directory to verify the Replit preview functionality.</p>
+    <p>The main application can be accessed at <a href="/" id="root-url">/</a> once the server is fully initialized.</p>
+  </div>
+  
+  <div class="card">
+    <h2>Request Details</h2>
+    <ul class="info-list">
+      <li><strong>Current URL:</strong> <span id="current-url">Loading...</span></li>
+      <li><strong>Protocol:</strong> <span id="protocol">Loading...</span></li>
+      <li><strong>Host:</strong> <span id="hostname">Loading...</span></li>
+      <li><strong>Path:</strong> <span id="pathname">Loading...</span></li>
+      <li><strong>Time:</strong> <span id="current-time">Loading...</span></li>
+    </ul>
+  </div>
+  
+  <div class="footer">
+    &copy; 2025 Invela Risk Assessment Platform
   </div>
 
   <script>
-    // Helper functions
-    function isReplitPreview() {
-      // Check if this is running in a Replit preview environment
-      const hostname = window.location.hostname;
-      return hostname.includes('.repl.co') || 
-             hostname.includes('.repl.dev') ||
-             hostname.includes('replit.dev');
-    }
-    
-    function checkApiStatus() {
-      return fetch('/api/test')
-        .then(response => {
-          if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-          return response.json();
-        })
-        .then(data => {
-          document.getElementById('api-status').innerHTML = 'API is working! ✅';
-          document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
-          document.getElementById('api-status').style.backgroundColor = '#e8f5e9';
-        })
-        .catch(error => {
-          document.getElementById('api-status').innerHTML = 'API Error: ' + error.message;
-          document.getElementById('api-status').style.backgroundColor = '#ffebee';
-        });
-    }
-    
-    function loadContent() {
-      const container = document.getElementById('app-container');
-      
-      if (isReplitPreview()) {
-        // Generate preview-compatible content
-        container.innerHTML = `
-          <div class="card">
-            <h1>Invela Risk Assessment Platform</h1>
-            <img src="/invela-logo.svg" alt="Invela Logo" class="logo">
-            
-            <div class="preview-notice">
-              <strong>Preview Mode Detected:</strong> You're viewing this application in the Replit preview environment.
-              For the best experience, this special preview interface has been loaded.
-            </div>
-            
-            <p>This enterprise risk assessment platform provides comprehensive tools for managing and assessing
-               third-party risk across your organization. Access the various components of the platform below:</p>
-            
-            <div class="btn-group">
-              <a href="/auth/login" class="btn">Login Page</a>
-              <a href="/dashboard" class="btn">Dashboard</a>
-              <a href="/tasks" class="btn">Task Management</a>
-              <a href="/?fullapp=true" class="btn">Try Full Application</a>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h2>Diagnostic Tools</h2>
-            <p>These tools can help diagnose connection or rendering issues:</p>
-            
-            <div class="btn-group">
-              <a href="/test.html" class="btn btn-secondary">Static Test Page</a>
-              <a href="/debug.html" class="btn btn-secondary">Diagnostics</a>
-            </div>
-            
-            <div>
-              <h3>API Status Check</h3>
-              <button onclick="checkApiStatus()" class="btn">Check API Status</button>
-              <div id="api-status" class="status">Click the button to check API status</div>
-              <pre id="api-response" class="status"></pre>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h2>Environment Information</h2>
-            <ul>
-              <li><strong>URL:</strong> ${window.location.href}</li>
-              <li><strong>Protocol:</strong> ${window.location.protocol}</li>
-              <li><strong>Host:</strong> ${window.location.hostname}</li>
-              <li><strong>Path:</strong> ${window.location.pathname}</li>
-              <li><strong>User Agent:</strong> ${navigator.userAgent}</li>
-            </ul>
-          </div>
-        `;
-      } else if (window.location.search.includes('fullapp=true')) {
-        // User wants to try the full app
-        window.location.href = '/src/';
-      } else {
-        // Redirect to the actual application
-        window.location.href = '/src/';
-      }
-    }
-    
-    // Initialize the page
-    document.addEventListener('DOMContentLoaded', loadContent);
+    // Display request information
+    document.getElementById('current-url').textContent = window.location.href;
+    document.getElementById('protocol').textContent = window.location.protocol;
+    document.getElementById('hostname').textContent = window.location.hostname;
+    document.getElementById('pathname').textContent = window.location.pathname;
+    document.getElementById('current-time').textContent = new Date().toLocaleString();
+    document.getElementById('root-url').href = window.location.protocol + '//' + window.location.host + '/';
   </script>
 </body>
 </html>

@@ -35,20 +35,14 @@ export class APIError extends Error {
   }
 }
 
-// Import handlers
+// Import our custom CORS middleware
 import { setupCorsBypass } from './cors-middleware';
-import { directPreviewHandler } from './preview-handler';
-import { createSimplePreviewApp } from './fix-preview';
-import { startDedicatedPreviewServer } from './preview-specific';
-
-// Start our standalone preview server
-startDedicatedPreviewServer();
 
 // Create our Express application
 const app = express();
 const server = createServer(app);
 
-// Apply CORS middleware
+// Apply our custom CORS middleware first to handle Replit preview domains
 app.use(setupCorsBypass);
 
 // Then configure standard CORS for all other environments
