@@ -40,8 +40,12 @@ const server = createServer(app);
 
 // Import our custom CORS middleware
 import { setupCorsBypass } from './cors-middleware';
+import { directPreviewHandler } from './preview-handler';
 
-// Apply our custom CORS middleware first to handle Replit preview domains
+// First middleware: Direct preview handler (highest priority)
+app.use(directPreviewHandler);
+
+// Second middleware: Apply our custom CORS middleware to handle Replit preview domains
 app.use(setupCorsBypass);
 
 // Then configure standard CORS for all other environments
@@ -120,18 +124,37 @@ app.use((req, res, next) => {
   next();
 });
 
-// Lightweight debug logging middleware - just logs requests, doesn't modify behavior
-app.use((req, res, next) => {
-  // Log basic request info for debugging
+// ULTRA-DIRECT ROOT HANDLER - absolutely highest priority
+// This responds to ANY request to the root path with the static HTML
+app.get('/', (req, res, next) => {
   const host = req.headers.host || '';
-  const url = req.url || '';
-  const isPreviewDomain = host.includes('.replit.dev') || host.includes('.repl.co');
   
-  if (url === '/' || url.includes('/api/')) {
-    logger.debug(`[Request] ${req.method} ${url} - Host: ${host} - Preview: ${isPreviewDomain}`);
+  // Log EVERY root request with detailed info
+  logger.info(`[RootHandler] Request to / - Host: ${host}, Headers: ${JSON.stringify(req.headers)}`);
+  
+  // Always send our static file for the root path in preview environment
+  // This ensures something shows up in the preview regardless of other configuration
+  try {
+    // Find and serve our ultra-simple static HTML file
+    const rootIndexPath = path.join(process.cwd(), 'index.html');
+    if (fs.existsSync(rootIndexPath)) {
+      logger.info(`[RootHandler] Serving static index.html for host: ${host}`);
+      
+      // Use this ultra-simple approach to avoid any complex processing
+      const html = fs.readFileSync(rootIndexPath, 'utf8');
+      
+      // Set cache control to prevent caching issues
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    } else {
+      logger.error(`[RootHandler] index.html not found at ${rootIndexPath}`);
+    }
+  } catch (err) {
+    logger.error(`[RootHandler] Error serving static index.html:`, err);
   }
   
-  // Don't interfere with request processing - just continue
+  // If we get here, continue with normal routing
   next();
 });
 
