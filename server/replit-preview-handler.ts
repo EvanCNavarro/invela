@@ -174,17 +174,16 @@ export function setupReplitPreviewHandler(app: express.Express) {
     res.send(html);
   });
 
-  // Set up a direct endpoint to force-serve the React application
-  app.get('/app', (req: Request, res: Response) => {
-    logger.info('[ReplitPreview] Direct app request detected, serving React application');
+  // Serve the React application directly from the root URL
+  app.get('/', (req: Request, res: Response) => {
+    logger.info('[ReplitPreview] Root path accessed, serving React application directly');
     
     // Serve the React application directly
     res.sendFile(path.join(process.cwd(), 'client/index.html'));
   });
   
-  // Check if the request is for the main page and coming from Replit preview
+  // For all other requests, just proceed normally
   app.use((req: Request, res: Response, next: NextFunction) => {
-    // For all other requests, just proceed normally
     next();
   });
 }
