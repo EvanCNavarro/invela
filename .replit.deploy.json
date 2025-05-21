@@ -1,6 +1,6 @@
 {
-  "run": "NODE_ENV=production PORT=8080 node deployment-server.js",
-  "entrypoint": "deployment-server.js",
+  "run": "NODE_ENV=production PORT=8080 node dist/server/deployment-server.js",
+  "entrypoint": "dist/server/deployment-server.js",
   "build": "npm run build",
   "exclude": [
     "attached_assets",
@@ -19,7 +19,7 @@
     "*.cjs",
     "*.ts",
     "*.tsx",
-    "!deployment-server.js",
+    "!dist/server/deployment-server.js",
     "!dist/**/*.js",
     "!server/**/*.js"
   ],

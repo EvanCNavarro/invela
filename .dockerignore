@@ -1,45 +1,66 @@
-# Large asset directories
-attached_assets/*
-!attached_assets/.placeholder
-backup_assets/*
-!backup_assets/.placeholder
-backup_text/*
-!backup_text/.placeholder
-uploads/*
-!uploads/.placeholder
-deployment-excluded/*
+# Source files that get compiled
+client/src
+server/src
 
-# Development files
+# Development files and tools
 .git
 .github
-*.log
-logs
-temp
-tmp
+**/.DS_Store
+**/.vscode
+**/.idea
+**/*.log
+**/*.md
+**/*.sh
+**/*.cjs
+**/*.ts
+**/*.tsx
+!dist/**/*.js
 
-# Build and cache directories
+# Large directories that can be rebuilt
 node_modules/.cache
-node_modules/.vite
-dist/cache
-.cache
+node_modules/@types
+node_modules/typescript
+node_modules/esbuild
+node_modules/vite
 
-# Test directories
+# Test and docs
 **/test
 **/tests
 **/__tests__
-
-# Documentation
 **/docs
 **/doc
-**/*.md
-!README.md
-!DEPLOYMENT.md
+**/coverage
 
-# Utility scripts (that aren't needed in production)
-cleanup-*.js
-cleanup-*.sh
-populate-*.js
-import-*.ts
-force-*.js
-*.cjs
-*.mjs
+# Assets and uploads that aren't needed for production
+attached_assets
+backup_assets
+backup_text
+uploads
+
+# Build artifacts and cache
+.turbo
+.svelte-kit
+.next
+dist/client/*.map
+**/*.map
+
+# Scripts and utilities not needed in production
+cleanup-scripts
+deployment-excluded
+cleanup-plan
+replit_agent
+*.sql
+*.csv
+
+# Unnecessary configuration files
+tsconfig.json
+tailwind.config.js
+postcss.config.js
+drizzle.config.ts
+*.config.json
+*.config.js
+
+# Keep only essential JavaScript files for the server
+!deployment-server.js
+!dist/server/index.js
+!dist/index.js
