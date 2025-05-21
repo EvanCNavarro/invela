@@ -5,29 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Invela</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!-- Replit Preview Domain Support - Works with UUID format domains -->
-    <script>
-      (function() {
-        // Check if we're on a Replit preview domain (UUID style)
-        const isReplitPreview = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*picard\.replit\.dev/.test(location.host);
-        
-        if (isReplitPreview) {
-          console.log('[ReplitPreviewSupport] Running on UUID-style Replit preview domain:', location.host);
-          
-          // Patch Vite's host validation by adding our domain to the allowed list
-          window.__VITE_ALLOWED_HOSTS = window.__VITE_ALLOWED_HOSTS || [];
-          window.__VITE_ALLOWED_HOSTS.push(location.host);
-          
-          // Also add the base domain without the UUID prefix
-          const baseDomain = location.host.replace(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[0-9]{2}-/, '');
-          window.__VITE_ALLOWED_HOSTS.push(baseDomain);
-          
-          console.log('[ReplitPreviewSupport] Patched allowed hosts list:', window.__VITE_ALLOWED_HOSTS);
-        }
-      })();
-    </script>
-    <!-- Replit host validation fix script -->
-    <script src="/vite-host-fix.js"></script>
     <!-- Proper fix for Vite WebSocket connection issues in Replit environment -->
     <script>
       /**
@@ -107,7 +84,7 @@
               
               // Fix the URL with the correct port
               const oldUrl = connectionUrl;
-              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:3000');
+              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:5000');
               
               // Log the URL fix only once per unique URL pattern
               const logKey = `fixed-${oldUrl}-to-${connectionUrl}`;

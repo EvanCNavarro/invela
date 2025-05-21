@@ -13,6 +13,7 @@ run = ["sh", "-c", "node dist/server/deployment-server.js"]
 [[ports]]
 localPort = 3000
 externalPort = 3002
+exposeLocalhost = true
 
 [[ports]]
 localPort = 3001
@@ -41,10 +42,6 @@ externalPort = 8080
 [[ports]]
 localPort = 8090
 externalPort = 5000
-
-[[ports]]
-localPort = 24678
-externalPort = 5173
 
 [workflows]
 runButton = "Project"
