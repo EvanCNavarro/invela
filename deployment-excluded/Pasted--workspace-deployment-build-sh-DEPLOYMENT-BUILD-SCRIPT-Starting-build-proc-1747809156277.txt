@@ -1,0 +1,112 @@
+~/workspace$ ./deployment-build.sh
+========== DEPLOYMENT BUILD SCRIPT ==========
+Starting build process at Wed 21 May 2025 06:31:38 AM UTC
+🧹 Running cleanup script to reduce image size...
+[2025-05-21T06:31:38.264Z] [INFO] Starting deployment cleanup...
+[2025-05-21T06:31:38.441Z] [INFO] Initial project size: 6625MB
+[2025-05-21T06:31:38.442Z] [INFO] Cleaning large asset directories...
+[2025-05-21T06:31:38.463Z] [SUCCESS] Cleaned attached_assets: 1MB → 1MB (saved 0.00MB)
+[2025-05-21T06:31:38.481Z] [SUCCESS] Cleaned backup_assets: 1MB → 1MB (saved 0.00MB)
+[2025-05-21T06:31:38.500Z] [SUCCESS] Cleaned backup_text: 1MB → 1MB (saved 0.00MB)
+[2025-05-21T06:31:38.519Z] [SUCCESS] Cleaned uploads: 1MB → 1MB (saved 0.00MB)
+[2025-05-21T06:31:38.519Z] [INFO] Cleaning node_modules...
+[2025-05-21T06:31:38.637Z] [SUCCESS] Removed cache directories
+[2025-05-21T06:31:38.723Z] [SUCCESS] Removed test directories
+[2025-05-21T06:31:38.809Z] [SUCCESS] Removed documentation directories
+[2025-05-21T06:31:39.366Z] [SUCCESS] Removed unnecessary files
+[2025-05-21T06:31:39.462Z] [SUCCESS] Reduced node_modules size from 789MB to 730MB (saved 59.00MB)
+[2025-05-21T06:31:39.462Z] [INFO] Removing utility scripts...
+[2025-05-21T06:31:39.640Z] [SUCCESS] Removed utility scripts
+[2025-05-21T06:31:39.641Z] [INFO] Cleaning dist directory...
+[2025-05-21T06:31:39.675Z] [SUCCESS] Cleaned dist directory
+[2025-05-21T06:31:39.852Z] [SUCCESS] Cleanup completed in 1.6 seconds
+[2025-05-21T06:31:39.853Z] [SUCCESS] Final project size: 6566MB (saved 59.00MB, 0.9% reduction)
+🔨 Running standard build process...
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.10 building for production...
+✓ 4006 modules transformed.
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/hooks/use-toast.ts is dynamically imported by /home/runner/workspace/client/src/components/forms/UniversalSuccessModal.tsx but also statically imported by /home/runner/workspace/client/src/components/FixMissingFileButton.tsx, /home/runner/workspace/client/src/components/TaskDownloadMenu.tsx, /home/runner/workspace/client/src/components/claims/NewClaimModal.tsx, /home/runner/workspace/client/src/components/files/FileUploadZone.tsx, /home/runner/workspace/client/src/components/forms/FormFieldsListener.tsx, /home/runner/workspace/client/src/components/forms/FormSubmissionListener.tsx, /home/runner/workspace/client/src/components/forms/UnifiedDemoAutoFill.tsx, /home/runner/workspace/client/src/components/forms/UniversalFormNew.tsx, /home/runner/workspace/client/src/components/forms/ky3p-field-update.ts, /home/runner/workspace/client/src/components/forms/kyb-field-update.ts, /home/runner/workspace/client/src/components/modals/AnimatedOnboardingModal.tsx, /home/runner/workspace/client/src/components/risk-score/ComparativeVisualization.tsx, /home/runner/workspace/client/src/components/tasks/CreateTaskModal.tsx, /home/runner/workspace/client/src/components/ui/toaster.tsx, /home/runner/workspace/client/src/hooks/use-auth.tsx, /home/runner/workspace/client/src/hooks/use-enhanced-form-submission.tsx, /home/runner/workspace/client/src/hooks/use-file-toast.tsx, /home/runner/workspace/client/src/hooks/use-risk-score-data.ts, /home/runner/workspace/client/src/hooks/use-unified-toast.ts, /home/runner/workspace/client/src/pages/FileVault.tsx, /home/runner/workspace/client/src/pages/TaskFix.tsx, /home/runner/workspace/client/src/pages/claims/[id].tsx, /home/runner/workspace/client/src/pages/claims/index.tsx, /home/runner/workspace/client/src/pages/form-submission-workflow.tsx, /home/runner/workspace/client/src/pages/ky3p-task-page.tsx, /home/runner/workspace/client/src/pages/landing/company/contact-us.tsx, /home/runner/workspace/client/src/pages/open-banking-task-page.tsx, /home/runner/workspace/client/src/pages/register-page.tsx, /home/runner/workspace/client/src/pages/risk-score-configuration-page.tsx, /home/runner/workspace/client/src/pages/task-page.tsx, /home/runner/workspace/client/src/services/form-submission-service.ts, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/websocket.ts is dynamically imported by /home/runner/workspace/client/src/services/enhanced-kyb-service.ts but also statically imported by /home/runner/workspace/client/src/components/dashboard/Sidebar.tsx, /home/runner/workspace/client/src/components/websocket/WebSocketEventBridge.tsx, /home/runner/workspace/client/src/pages/task-center-page.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/node_modules/canvas-confetti/dist/confetti.module.mjs is dynamically imported by /home/runner/workspace/client/src/components/forms/UniversalSuccessModal.tsx but also statically imported by /home/runner/workspace/client/src/components/playground/InviteModal.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/logger.ts is dynamically imported by /home/runner/workspace/client/src/components/dashboard/SidebarTab.tsx but also statically imported by /home/runner/workspace/client/src/components/forms/FormFieldsListener.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /home/runner/workspace/client/src/lib/app-initialization.ts is dynamically imported by /home/runner/workspace/client/src/services/unified-service-registration.ts, /home/runner/workspace/client/src/services/unified-service-registration.ts but also statically imported by /home/runner/workspace/client/src/main.tsx, dynamic import will not move module into another chunk.
+
+../dist/public/index.html                                      14.24 kB │ gzip:     3.46 kB
+../dist/public/assets/index-DLMJu3uB.css                      148.32 kB │ gzip:    23.04 kB
+../dist/public/assets/fix-universal-bulk-save-73fwk52W.js       0.07 kB │ gzip:     0.09 kB
+../dist/public/assets/ky3p-field-update-DQZXOoX5.js             0.76 kB │ gzip:     0.47 kB
+../dist/public/assets/kyb-field-update-Brhy8oHL.js              0.85 kB │ gzip:     0.47 kB
+../dist/public/assets/enhancedClearFields-BM-hTVlC.js           1.15 kB │ gzip:     0.49 kB
+../dist/public/assets/form-service-factory-DiV8dP9x.js         24.87 kB │ gzip:     6.17 kB
+../dist/public/assets/standardized-ky3p-update-DlYdT-9Y.js     35.66 kB │ gzip:    14.33 kB
+../dist/public/assets/react-apexcharts.min-Pzl36dBh.js        576.63 kB │ gzip:   156.54 kB
+../dist/public/assets/index-B63FjaJA.js                     6,527.05 kB │ gzip: 1,926.38 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 27.84s
+▲ [WARNING] Import "broadcastFormSubmissionCompleted" will always be undefined because there is no matching export in "server/services/websocket-service.ts" [import-is-undefined]
+
+    server/services/form-submission-broadcaster.ts:56:43:
+      56 │       const broadcastFn = WebSocketService['broadcastFormSubmissionCompleted'];
+         ╵                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "broadcastTaskUpdate" will always be undefined because there is no matching export in "server/services/websocket-service.ts" [import-is-undefined]
+
+    server/services/form-submission-broadcaster.ts:144:53:
+      144 │       const broadcastTaskUpdateFn = WebSocketService['broadcastTaskUpdate'];
+          ╵                                                      ~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Import "broadcastMessage" will always be undefined because there is no matching export in "server/services/websocket-service.ts" [import-is-undefined]
+
+    server/routes.ts:3233:29:
+      3233 │             WebSocketService.broadcastMessage('task_update', {
+           ╵                              ~~~~~~~~~~~~~~~~
+
+3 warnings
+
+  dist/index.js  1.3mb ⚠️
+
+⚡ Done in 52ms
+📦 Preparing deployment server...
+
+✅ Build completed successfully!
+Deployment server ready at dist/server/deployment-server.js
+
+========== DEPLOYMENT INSTRUCTIONS ==========
+You can now deploy the application with:
+   Run command: node dist/server/deployment-server.js
+   Port: 8080
+===========================================
+~/workspace$ node dist/server/deployment-server.js
+(node:5750) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+(Use `node --trace-warnings ...` to show where the warning was created)
+/home/runner/workspace/dist/server/deployment-server.js:19
+import path from 'path';
+^^^^^^
+
+SyntaxError: Cannot use import statement outside a module
+    at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+    at Module._compile (node:internal/modules/cjs/loader:1428:41)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+    at Module.load (node:internal/modules/cjs/loader:1288:32)
+    at Module._load (node:internal/modules/cjs/loader:1104:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+    at node:internal/main/run_main_module:28:49
+
+Node.js v20.18.1
+~/workspace$ 

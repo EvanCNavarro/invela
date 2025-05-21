@@ -1,9 +1,45 @@
-# Exclude large directories to reduce image size
+# Large asset directories
+attached_assets/*
+!attached_assets/.placeholder
+backup_assets/*
+!backup_assets/.placeholder
+backup_text/*
+!backup_text/.placeholder
+uploads/*
+!uploads/.placeholder
+deployment-excluded/*
+
+# Development files
+.git
+.github
+*.log
+logs
+temp
+tmp
+
+# Build and cache directories
 node_modules/.cache
-attached_assets
-backup_assets
-backup_text
-uploads
-deployment-excluded
-cleanup-scripts
-cleanup-plan
+node_modules/.vite
+dist/cache
+.cache
+
+# Test directories
+**/test
+**/tests
+**/__tests__
+
+# Documentation
+**/docs
+**/doc
+**/*.md
+!README.md
+!DEPLOYMENT.md
+
+# Utility scripts (that aren't needed in production)
+cleanup-*.js
+cleanup-*.sh
+populate-*.js
+import-*.ts
+force-*.js
+*.cjs
+*.mjs

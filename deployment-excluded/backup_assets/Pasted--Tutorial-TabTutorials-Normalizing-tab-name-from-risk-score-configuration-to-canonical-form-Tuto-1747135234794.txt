@@ -1,0 +1,71 @@
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: risk-score-configuration (original: risk-score-configuration)
+[Tutorial:TabTutorials] Current state for risk-score-configuration: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab risk-score-configuration (path: /risk-score-configuration, expected: /risk-score-configuration)
+[Tutorial:TutorialManager] Tutorial already completed for tab: risk-score-configuration
+[RiskScore:gauge] Rendering with score: 45, level: medium
+[SidebarTab] Clicked Playground tab, href=/playground, isDisabled=false
+[Router] Current location: /playground
+PlaygroundPage is not defined
+[Router] Current location: /playground
+PlaygroundPage is not defined
+The above error occurred in the <component> component:
+
+    at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:569:47)
+    at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=b5b493eb:191:16)
+    at ProtectedRoute (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=b5b493eb:247:17)
+    at div
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:88:22)
+    at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/providers/websocket-provider.tsx:40:37)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:176:32)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XSD2Y4RK.js?v=b5b493eb:38:15)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=b5b493eb:28:15)
+    at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=b5b493eb:89:13)
+    at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=b5b493eb:104:5)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=b5b493eb:2805:3)
+    at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:708:43)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at component (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:569:47)
+at Route (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=b5b493eb:191:16)
+at ProtectedRoute (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/lib/protected-route.tsx:22:3)
+at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=b5b493eb:247:17)
+at div
+at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:88:22)
+at WebSocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/providers/websocket-provider.tsx:40:37)
+at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:176:32)
+at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-XSD2Y4RK.js?v=b5b493eb:38:15)
+at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=b5b493eb:28:15)
+at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=b5b493eb:89:13)
+at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=b5b493eb:104:5)
+at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=b5b493eb:2805:3)
+at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=ajnZir0w90aF7toiWJ4Kb:708:43)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+PlaygroundPage is not defined
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for risk-score-configuration
+[WebSocketEventBridge] Cleaning up event bridge
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:19:53.047Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:19:54.023Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:19:54.513Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:20:23.047Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:20:24.025Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T11:20:24.514Z", echo: {…}}

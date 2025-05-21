@@ -1,0 +1,83 @@
+[2025-05-16T05:38:02.954Z] [INFO] Setting up form fields listener for task 872 (kyb) undefined
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Starting section status calculation 
+Object {timestamp: "2025-05-16T05:38:02.954Z", sectionCount: 4, hasValues: true, valueCount: 30}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Processing section "Company Profile" 
+Object {sectionId: "section-0", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Section "Company Profile" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Processing section "Governance & Leadership" 
+Object {sectionId: "section-1", fieldCount: 10, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Section "Governance & Leadership" fields 
+Object {fieldCount: 10, fields: Array(10)}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Processing section "Financial Profile" 
+Object {sectionId: "section-2", fieldCount: 4, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Section "Financial Profile" fields 
+Object {fieldCount: 4, fields: Array(4)}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Processing section "Operations & Compliance" 
+Object {sectionId: "section-3", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373882954_r9blp] Section "Operations & Compliance" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[TaskPage] Form progress updated: 100%
+[UniversalSuccessModal] Processing submission result: 
+Object {fileId: undefined, fileName: undefined, taskId: 872, taskStatus: "submitted", unlockedTabs: undefined, …}
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 872 (kyb) with fileId: none
+[UniversalForm] [SectionMapping] Form type: kyb
+[UniversalForm] [SectionMapping] Fields total: 30
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:38:02.958Z] [INFO] Cleaned up form fields listener for task 872 undefined
+[UniversalSuccessModal] Retrieved companyId 298 from userContext
+[UniversalSuccessModal] Stored form submission info in localStorage: 
+Object {taskId: 872, taskType: "kyb", formType: "kyb", companyId: 298, fileId: undefined, …}
+[2025-05-16T05:38:02.958Z] [INFO] Setting up form fields listener for task 872 (kyb) undefined
+[UniversalForm] Form data changed: 30 fields
+[UniversalForm] [SectionMapping] Form type: kyb
+[UniversalForm] [SectionMapping] Fields total: 30
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:38:04.456Z] [INFO] Cleaned up form fields listener for task 872 undefined
+[2025-05-16T05:38:04.456Z] [INFO] Setting up form fields listener for task 872 (kyb) undefined
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Starting section status calculation 
+Object {timestamp: "2025-05-16T05:38:04.456Z", sectionCount: 4, hasValues: true, valueCount: 30}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Processing section "Company Profile" 
+Object {sectionId: "section-0", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Section "Company Profile" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Processing section "Governance & Leadership" 
+Object {sectionId: "section-1", fieldCount: 10, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Section "Governance & Leadership" fields 
+Object {fieldCount: 10, fields: Array(10)}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Processing section "Financial Profile" 
+Object {sectionId: "section-2", fieldCount: 4, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Section "Financial Profile" fields 
+Object {fieldCount: 4, fields: Array(4)}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Processing section "Operations & Compliance" 
+Object {sectionId: "section-3", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1747373884456_jou0w] Section "Operations & Compliance" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[TaskPage] Form progress updated: 100%
+[UniversalSuccessModal] Processing submission result: 
+Object {fileId: undefined, fileName: undefined, taskId: 872, taskStatus: "submitted", unlockedTabs: undefined, …}
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 872 (kyb) with fileId: none
+[UniversalForm] [SectionMapping] Form type: kyb
+[UniversalForm] [SectionMapping] Fields total: 30
+[UniversalForm] [SectionMapping] Sections total: 4
+[UniversalForm] [SectionMapping] Sample field section properties: 
+(3) [{…}, {…}, {…}]
+[UniversalForm] [SectionMapping] Sample section properties: 
+(3) [{…}, {…}, {…}]
+[2025-05-16T05:38:04.460Z] [INFO] Cleaned up form fields listener for task 872 undefined
+[UniversalSuccessModal] Retrieved companyId 298 from userContext
+[UniversalSuccessModal] Stored form submission info in localStorage: 
+Object {taskId: 872, taskType: "kyb", formType: "kyb", companyId: 298, fileId: undefined, …}
+[2025-05-16T05:38:04.460Z] [INFO] Setting up form fields listener for task 872 (kyb) undefined
+[UniversalSuccessModal] Processing submission result: 
+Object {fileId: undefined, fileName: undefined, taskId: 872, taskStatus: "submitted", unlockedTabs: undefined, …}

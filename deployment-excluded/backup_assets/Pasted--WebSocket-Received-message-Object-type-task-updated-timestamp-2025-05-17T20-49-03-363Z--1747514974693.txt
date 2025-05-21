@@ -1,0 +1,165 @@
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.363Z", id: 124, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:03.334Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.399Z", id: 122, status: "completed", progress: 100, …}
+[2025-05-17T20:49:03.367Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.399Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.399Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.399Z", id: 122, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:03.368Z"}
+[2025-05-17T20:49:03.402Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.431Z", id: 251, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.431Z", id: 251, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.431Z", id: 251, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:03.402Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.431Z", id: 251, status: "completed", progress: 100, …}
+[2025-05-17T20:49:03.431Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.461Z", id: 188, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:03.431Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.461Z", id: 188, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.461Z", id: 188, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.461Z", id: 188, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.492Z", id: 172, status: "completed", progress: 100, …}
+[2025-05-17T20:49:03.463Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.492Z", id: 172, status: "completed", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:03.463Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.492Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:03.492Z", id: 172, status: "completed", progress: 100, …}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-05-17T20:16:38.398Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-05-17T20:16:38.398Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=2, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=1, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[TanStack Query] Fetching: /api/relationships
+[TanStack Query] Fetching: /api/network/visualization
+[CurrentCompany] Setting company context: 1
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[2025-05-17T20:49:05.473Z] [INFO] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-17T20:49:05.472Z"}
+[TanStack Query] Response for /api/relationships: Status 200
+[TanStack Query] Response for /api/network/visualization: Status 200
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-17T20:49:18.672Z", echo: {…}}
+[InviteModal] Sending fintech invitation with payload: 
+Object {email: "7@e.com", full_name: "John Doe7", company_name: "DemoTest7", sender_name: "Evan Navarro", sender_company: "Invela", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.940Z", id: 980, status: "not_started", progress: 0, …}
+[2025-05-17T20:49:25.910Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.940Z", id: 980, status: "not_started", progress: 0, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.940Z", id: 980, status: "not_started", progress: 0, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:25.910Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.941Z", id: 981, status: "not_started", progress: 0, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.940Z", id: 980, status: "not_started", progress: 0, …}
+[2025-05-17T20:49:25.910Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.941Z", id: 981, status: "not_started", progress: 0, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.941Z", id: 981, status: "not_started", progress: 0, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:25.910Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.941Z", id: 981, status: "not_started", progress: 0, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-17T20:49:25.918Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.942Z", id: 982, status: "not_started", progress: 0, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.942Z", id: 982, status: "not_started", progress: 0, …}
+[2025-05-17T20:49:25.918Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-17T20:49:25.942Z", id: 982, status: "not_started", progress: 0, …}

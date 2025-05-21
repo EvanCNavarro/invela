@@ -1,0 +1,51 @@
+[TaskPage] Form progress updated: 0%
+[UniversalForm] Fetching template for task type: open_banking
+[TaskTemplateService] Fetching template for task type: open_banking
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 892 (open_banking) with fileId: none
+[2025-05-17T07:28:04.166Z] [INFO] Cleaned up form fields listener for task 892 undefined
+[2025-05-17T07:28:04.167Z] [INFO] Setting up form fields listener for task 892 (open_banking) undefined
+[TaskTemplateService] Successfully fetched template: 
+Object {templateId: 50, templateName: "Open Banking Survey Template", taskType: "open_banking", configCount: 7}
+[UniversalForm] Template loaded: ID=50, Name=Open Banking Survey Template
+[UniversalForm] Looking for company-specific form service for task type: open_banking
+[2025-05-17T07:28:04.481Z] [INFO] Cleaned up form fields listener for task 892 undefined
+[2025-05-17T07:28:04.481Z] [INFO] Setting up form fields listener for task 892 (open_banking) undefined
+[UniversalForm] Data isolation: Using company ID 302 from user context
+[FormServiceFactory] Creating form service for type: open_banking 
+Object {companyId: 302, taskId: 892, useEnhanced: true, fromContext: false}
+[FormServiceFactory] Using standard ComponentFactory for form type: open_banking
+[ComponentFactory] Looking up form service for task type: open_banking 
+Object {found: true, serviceType: "OpenBankingFormService", timestamp: "2025-05-17T07:28:04.481Z"}
+[UniversalForm] Found form service: OpenBankingFormService
+[2025-05-17T07:28:04.482Z] [INFO] Cleaned up form fields listener for task 892 undefined
+[2025-05-17T07:28:04.482Z] [INFO] Setting up form fields listener for task 892 (open_banking) undefined
+[FormStatus] [DIAGNOSTIC][diag_1747466884482_saw5i] Starting section status calculation 
+Object {timestamp: "2025-05-17T07:28:04.482Z", sectionCount: 0, hasValues: true, valueCount: 44}
+[TaskPage] Form progress updated: 0%
+[UniversalForm] Initializing form structure with form service
+[UniversalForm] Form service type: OpenBankingFormService
+[UniversalForm] Form service has initialize method: true
+[UniversalForm] Initializing form service with template ID: 50
+INFO: [OpenBankingFormService] Already initialized 
+Object {templateId: 50}
+[EnhancedTaskDownloadMenu] EnhancedTaskDownloadMenu mounted for task 892 (open_banking) with fileId: none
+[2025-05-17T07:28:04.483Z] [INFO] Cleaned up form fields listener for task 892 undefined
+[2025-05-17T07:28:04.483Z] [INFO] Setting up form fields listener for task 892 (open_banking) undefined
+[UniversalForm] Form service initialization completed
+[UniversalForm] Fetching fields from form service...
+INFO: [OpenBankingFormService] Field sample with section mapping 
+Object {fieldSample: {…}}
+INFO: [OpenBankingFormService] Returning all fields 
+Object {count: 44, distinctSections: "step0_Functionality, step1_Authentication, step2_Security, step3_Privacy"}
+[UniversalForm] Fields result type: object
+[UniversalForm] Is fields array: true
+[UniversalForm] Loaded 44 fields from form service
+[UniversalForm] Sample field: {"id":1,"name":"dataSchemaAlignment","key":"dataSchemaAlignment","label":"Data Schema Alignment","displayName":"Data Schema Alignment","description":"Explain your alignment with the FDX schema, including details on data structure consistency.","tooltip":"Explain your alignment with the FDX schema, including details on data structure consistency.","question":"Describe how your API's data structures align with the standardized FDX schema requirements.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Validated Assessment by Person","validationRules":null,"section":"step0_Functionality","group":"Functionality"}
+[UniversalForm] Fetching sections from form service...
+INFO: [OpenBankingFormService] Getting sections 
+Object {count: 4, sectionIds: "step0_Functionality, step1_Authentication, step2_Security, step3_Privacy"}
+[UniversalForm] Sections result type: object
+[UniversalForm] Is sections array: true
+[UniversalForm] Loaded 4 sections from form service
+[UniversalForm] Sample section: {"id":"step0_Functionality","title":"Functionality","order":0,"fields":[{"id":1,"name":"dataSchemaAlignment","key":"dataSchemaAlignment","label":"Data Schema Alignment","displayName":"Data Schema Alignment","description":"Explain your alignment with the FDX schema, including details on data structure consistency.","tooltip":"Explain your alignment with the FDX schema, including details on data structure consistency.","question":"Describe how your API's data structures align with the standardized FDX schema requirements.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Validated Assessment by Person","validationRules":null,"section":"step0_Functionality","group":"Functionality"},{"id":2,"name":"endpointTestingMethodology","key":"endpointTestingMethodology","label":"Endpoint Testing Methodology","displayName":"Endpoint Testing Methodology","description":"Briefly explain the testing methods used to ensure endpoint functionality and data accuracy.","tooltip":"Briefly explain the testing methods used to ensure endpoint functionality and data accuracy.","question":"Outline your methodology for testing each endpoint to confirm expected functionality and accuracy of data responses.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Test Result Review","validationRules":null,"section":"step0_Functionality","group":"Functionality"},{"id":3,"name":"fdxEndpointImplementation","key":"fdxEndpointImplementation","label":"FDX Endpoint Implementation","displayName":"FDX Endpoint Implementation","description":"Outline your organizationÕs method for comprehensive endpoint implementation according to FDX standards.","tooltip":"Outline your organizationÕs method for comprehensive endpoint implementation according to FDX standards.","question":"Explain the process your organization followed to implement all required FDX endpoints comprehensively.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Validated Assessment by Person","validationRules":null,"section":"step0_Functionality","group":"Functionality"},{"id":4,"name":"fdxCertification","key":"fdxCertification","label":"FDX Certification","displayName":"FDX Certification","description":"Clarify any FDX certifications or attestations you have received.","tooltip":"Clarify any FDX certifications or attestations you have received.","question":"Share details of any certifications or attestations obtained by your organization that confirm alignment with FDX standards.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Self-Attestation & Self-Assertion","validationRules":null,"section":"step0_Functionality","group":"Functionality"},{"id":5,"name":"standardizedErrorHandling","key":"standardizedErrorHandling","label":"Standardized Error Handling","displayName":"Standardized Error Handling","description":"Clarify your approach to consistent, standardized API error messaging.","tooltip":"Clarify your approach to consistent, standardized API error messaging.","question":"Explain how your API ensures that all error messages conform to the standardized FDX error handling requirements.","type":"textarea","required":false,"options":[],"placeholder":"","validationType":"Self-Attestation &…
+[UniversalForm] Processing section step0_Functionality (Functionality) with 14 fields
