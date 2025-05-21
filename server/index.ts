@@ -8,6 +8,7 @@ import { setupWebSocketServer } from "./websocket-setup";
 import cors from "cors";
 import fs from 'fs';
 import path from 'path';
+import { createHealthCheckRouter } from "./health-check";
 
 // Create required directories
 const uploadsDir = path.join(process.cwd(), 'uploads');
