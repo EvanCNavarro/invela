@@ -174,16 +174,17 @@ export function setupReplitPreviewHandler(app: express.Express) {
     res.send(html);
   });
 
-  // Completely bypass the preview page and always load the actual React application
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    // Only log in preview mode, but never use the static preview page
-    if (req.method === 'GET' && 
-        isReplitPreviewRequest(req)) {
-      
-      logger.info('[ReplitPreview] Replit preview detected, loading actual React application');
-    }
+  // Set up a direct endpoint to force-serve the React application
+  app.get('/app', (req: Request, res: Response) => {
+    logger.info('[ReplitPreview] Direct app request detected, serving React application');
     
-    // Always proceed to the main React application with no redirection
+    // Serve the React application directly
+    res.sendFile(path.join(process.cwd(), 'client/index.html'));
+  });
+  
+  // Check if the request is for the main page and coming from Replit preview
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // For all other requests, just proceed normally
     next();
   });
 }
