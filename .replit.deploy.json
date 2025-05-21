@@ -1,6 +1,6 @@
 {
   "run": "node server/deployment-server.js",
   "entrypoint": "server/deployment-server.js",
-  "build": "npm run build",
+  "build": "npm install && npm run build",
   "port": 8080
 }
