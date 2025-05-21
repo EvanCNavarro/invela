@@ -72,13 +72,16 @@
           'localhost': true
         };
         
-        // Fix 5: Modify WebSocket to handle Vite connections
+        // Fix 5: Modify WebSocket to handle Vite connections with correct port
         const OriginalWebSocket = window.WebSocket;
         window.WebSocket = function(url, protocols) {
-          if (typeof url === 'string' && url.includes('vite') && url.includes('localhost')) {
-            // Use current domain and protocol for WebSocket
+          if (typeof url === 'string' && (url.includes('vite') || url.includes('hmr'))) {
+            // Use current domain and protocol with the correct port (8080)
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            url = url.replace(/^wss?:\/\/localhost(:[0-9]+)?/, wsProtocol + '//' + hostname);
+            const wsPort = ':8080'; // The port the server is actually running on
+            
+            // Replace with current hostname and correct port
+            url = url.replace(/^wss?:\/\/localhost(:[0-9]+)?/, wsProtocol + '//' + hostname + wsPort);
             console.log('[Replit Fix] WebSocket URL rewritten:', url);
           }
           return new OriginalWebSocket(url, protocols);
