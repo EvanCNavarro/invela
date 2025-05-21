@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
 import { WebSocketProvider } from "@/providers/websocket-provider";
-import { ScrollToTop } from "@/components/ScrollToTop";
+import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
@@ -19,13 +19,7 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
-import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
-import { BuilderPage } from "@/pages/builder/BuilderPage";
-import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
-import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
-import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
-import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 
 // Landing pages
@@ -172,76 +166,7 @@ function Router() {
           )} 
         />
 
-        <ProtectedRoute 
-          path="/builder" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <BuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/onboarding" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <OnboardingBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/risk-rules" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <RiskRulesBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/reporting" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <ReportingBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/builder/groups" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <GroupsBuilderPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
-
-        <ProtectedRoute 
-          path="/playground" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <div className={cn(
-                  "min-h-screen",
-                  location === "/playground" && "bg-emerald-950/5"
-                )}>
-                  <PlaygroundPage />
-                </div>
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
+        {/* Builder and Playground routes removed */}
 
         <Route component={NotFound} />
       </Switch>
@@ -266,14 +191,8 @@ export default function App() {
 
 
 
-    // Apply immediately and after a small delay to catch delayed focus events
-    preventAutoFocus();
-    const timeoutId = setTimeout(preventAutoFocus, 100);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-  
-  return (
+
+
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
