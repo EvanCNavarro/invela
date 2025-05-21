@@ -166,8 +166,6 @@ function Router() {
           )} 
         />
 
-        {/* Builder and Playground routes removed */}
-
         <Route component={NotFound} />
       </Switch>
     </>
@@ -185,23 +183,6 @@ export default function App() {
           </ToastProvider>
         </WebSocketProvider>
       </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-
-
-
-
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthProvider>
-          <WebSocketProvider>
-            <Router />
-            <Toaster />
-          </WebSocketProvider>
-        </AuthProvider>
-      </ToastProvider>
     </QueryClientProvider>
   );
 }
