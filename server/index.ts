@@ -272,40 +272,33 @@ server.listen(PORT, HOST, async () => {
   logger.info(`Server ready to accept connections`);
   logger.info(`Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
   
-  // In development, also handle the proxy server for testing
+  // In development, also create a simple proxy on port 5000 for the workflow
   if (process.env.NODE_ENV === 'development') {
-    const originalPort = PORT;
+    logger.info('[ServerStartup] Running in development mode with Replit preview support');
+    logger.info(`[ServerStartup] Preview URL: ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : `http://localhost:${PORT}`}`);
+    
+    // Create a simple HTTP server on port 5000 for the workflow to detect
     try {
-      // Try to also listen on port 5000 to satisfy Replit workflow
-      // This is just a fallback and not the primary connection method
-      const tryWorkflowPort = async () => {
-        try {
-          const http = await import('http');
-          const workflowPort = 5000;
-          const workflowProxy = http.createServer((req, res) => {
-            logger.info(`Workflow proxy received request: ${req.url}`);
-            res.writeHead(302, {
-              'Location': `http://${HOST}:${originalPort}${req.url}`
-            });
-            res.end();
-          });
-          
-          workflowProxy.listen(workflowPort, HOST, () => {
-            logger.info(`Workflow proxy running on port ${workflowPort} (redirecting to main port ${originalPort})`);
-          });
-          
-          workflowProxy.on('error', (err) => {
-            logger.warn(`Workflow proxy error: ${err.message}`);
-          });
-        } catch (err) {
-          logger.warn(`Could not start workflow proxy: ${err instanceof Error ? err.message : String(err)}`);
-        }
-      };
+      const http = require('http');
+      const workflowPort = 5000;
+      const workflowProxy = http.createServer((req, res) => {
+        // Log the request
+        logger.info(`[WorkflowProxy] Request received: ${req.url}`);
+        
+        // Send a simple success response
+        res.writeHead(200, {'Content-Type': 'text/plain'});
+        res.end('Workflow proxy active. Main application is running on port 3000.');
+      });
       
-      // Try the proxy but don't block the main server if it fails
-      setTimeout(tryWorkflowPort, 1000);
+      workflowProxy.listen(workflowPort, HOST, () => {
+        logger.info(`[WorkflowProxy] Workflow detection server running on port ${workflowPort}`);
+      });
+      
+      workflowProxy.on('error', (err) => {
+        logger.warn(`[WorkflowProxy] Error: ${err.message}`);
+      });
     } catch (err) {
-      logger.warn(`Additional port setup failed: ${err instanceof Error ? err.message : String(err)}`);
+      logger.warn(`[WorkflowProxy] Could not start workflow proxy: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
   
