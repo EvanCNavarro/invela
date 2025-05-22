@@ -196,32 +196,41 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
+// Early production optimizations - must run before other configurations
+// Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
+import { initializeProductionOptimizations } from './deployment/production-config';
+initializeProductionOptimizations();
+
 // Configure server for proper deployment
-// Production-first port configuration for Cloud Run compatibility
-// Cloud Run requires port 8080 specifically, detected via multiple deployment indicators
-const isCloudRunDeployment = process.env.NODE_ENV === 'production' || 
-                             process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true' ||
-                             process.env.REPLIT_DEPLOYMENT === 'true' ||
-                             process.env.PORT === '8080';
+// Production deployment detection with comprehensive indicators
+// Root cause fix: Addresses .replit port conflicts by using definitive deployment signals
+// Homogeneous with existing app patterns: Uses same detection logic as logging system
+const isProductionDeployment = process.env.NODE_ENV === 'production' || 
+                               process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true' ||
+                               process.env.REPLIT_DEPLOYMENT === 'true' ||
+                               process.env.REPLIT_DISABLE_PACKAGE_LAYER === '1' ||  // Infrastructure optimization signal
+                               (process.env.PORT && parseInt(process.env.PORT) === 8080);
 
 // Set NODE_ENV based on deployment context - prioritize explicit production setting
 if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = isCloudRunDeployment ? 'production' : 'development';
+  process.env.NODE_ENV = isProductionDeployment ? 'production' : 'development';
 }
 
-// Homogeneous port configuration strategy aligned with Cloud Run requirements
-// Priority: Explicit PORT env var → Cloud Run standard (8080) → Development fallback (5000)
-const PORT = isCloudRunDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
+// Cloud Run port configuration with .replit conflict resolution
+// Root cause fix: Overrides conflicting .replit port mappings with definitive production logic
+// Best practice: Production-first configuration (8080) with development fallback (5000)
+const PORT = isProductionDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Log deployment configuration for debugging with improved error handling
-logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isCloudRunDeployment ? 'yes' : 'no'})`);
+// Enhanced deployment logging with comprehensive indicator tracking
+// Best practice: Clear visibility into deployment detection logic for debugging
+logger.info(`[ENV] Server will listen on PORT=${PORT} (production mode: ${isProductionDeployment ? 'yes' : 'no'})`);
 logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
-logger.info(`[ENV] Cloud Run deployment indicators checked: NODE_ENV=${process.env.NODE_ENV}, REPLIT_AUTOSCALE=${process.env.REPLIT_AUTOSCALE_DEPLOYMENT}`);
+logger.info(`[ENV] Production indicators: NODE_ENV=${process.env.NODE_ENV}, REPLIT_AUTOSCALE=${process.env.REPLIT_AUTOSCALE_DEPLOYMENT}, PACKAGE_LAYER=${process.env.REPLIT_DISABLE_PACKAGE_LAYER}`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
