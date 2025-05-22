@@ -34,7 +34,7 @@ import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 import ky3pProgressRouter from './routes/ky3p-progress';
 // Test route removed during cleanup
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
-import ky3pFixedRouter from './routes/ky3p-fixed-routes';
+import ky3pFixedRouter from './routes/ky3p-enhanced.routes';
 // Import KY3P submission fix to properly handle form submissions
 import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
 // Import standardized KY3P batch update routes
