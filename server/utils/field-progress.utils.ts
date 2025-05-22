@@ -1,8 +1,8 @@
 /**
- * Unified Field Progress Module
+ * Fixed Field Progress Module
  * 
- * This module provides a standardized approach to calculating progress across all form types
- * (KYB, KY3P, Open Banking) using field_key for consistent reference and standard status values.
+ * This module provides a fixed version of the field progress calculation that works around
+ * the Drizzle ORM type errors by using raw SQL queries for status comparisons.
  */
 
 import { db } from '@db';
@@ -16,27 +16,27 @@ import {
   openBankingResponses, 
   openBankingFields
 } from '@db/schema';
-import { FieldStatus } from './field-status';
+import { FieldStatus, isValidFieldStatus } from './field-status';
 import { logger } from './logger';
 import { TaskStatus } from '../types';
 
 // Import the status determination utility
 import { determineTaskStatus } from './task-status-determiner';
 
+// We'll use dynamic imports for WebSocketServer to avoid circular dependencies
+
 /**
- * Calculate progress for any task type using a standardized approach
+ * Calculate progress for any task type using raw SQL for status comparison
  * 
- * This function handles all task types consistently by:
- * 1. Using field_key as the primary reference for fields (with fallback to field_id)
- * 2. Using standardized status values from FieldStatus enum
- * 3. Using consistent math (completed fields / total fields) with Math.round
+ * This function avoids the Drizzle ORM type errors by using raw SQL queries for status comparisons.
+ * It provides a consistent approach across all form types.
  * 
  * @param taskId Task ID
  * @param taskType Task type ('kyb', 'ky3p', 'open_banking')
  * @param options Additional options
  * @returns Progress percentage (0-100)
  */
-export async function calculateTaskProgress(
+export async function calculateTaskProgressFixed(
   taskId: number,
   taskType: string,
   options: { 
@@ -48,7 +48,7 @@ export async function calculateTaskProgress(
 ): Promise<number> {
   // Generate a unique diagnostic ID for this calculation
   const diagnosticId = options.diagnosticId || `prog-calc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const logPrefix = `[Unified Progress ${diagnosticId}]`;
+  const logPrefix = `[Fixed Progress ${diagnosticId}]`;
   const debug = options.debug || false;
   const useFieldKey = options.useFieldKey !== false; // Default to using field_key unless explicitly disabled
   
@@ -76,82 +76,42 @@ export async function calculateTaskProgress(
     
     // Use different calculation logic based on task type
     if (normalizedTaskType === 'open_banking') {
-      if (useFieldKey) {
-        // Count total Open Banking fields
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(openBankingFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed Open Banking responses using field_key
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(DISTINCT field_key)` })
-          .from(openBankingResponses)
-          .where(
-            and(
-              eq(openBankingResponses.task_id, taskId),
-              eq(openBankingResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      } else {
-        // Legacy approach using field_id
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(openBankingFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed responses with legacy approach
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(openBankingResponses)
-          .where(
-            and(
-              eq(openBankingResponses.task_id, taskId),
-              eq(openBankingResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      }
+      // Count total Open Banking fields
+      const totalFieldsResult = await dbContext
+        .select({ count: sql<number>`count(*)` })
+        .from(openBankingFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed Open Banking responses using raw SQL for status comparison
+      const completedResultQuery = await dbContext
+        .select({ count: useFieldKey ? sql<number>`count(DISTINCT field_key)` : sql<number>`count(*)` })
+        .from(openBankingResponses)
+        .where(
+          and(
+            eq(openBankingResponses.task_id, taskId),
+            sql`${openBankingResponses.status} = ${FieldStatus.COMPLETE}`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
     } 
     else if (normalizedTaskType === 'ky3p') {
-      if (useFieldKey) {
-        // Count total KY3P fields
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(ky3pFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed KY3P responses using field_key for accurate counting
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(DISTINCT field_key)` })
-          .from(ky3pResponses)
-          .where(
-            and(
-              eq(ky3pResponses.task_id, taskId),
-              eq(ky3pResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      } else {
-        // Legacy approach using field_id
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(ky3pFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed responses with legacy approach
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(ky3pResponses)
-          .where(
-            and(
-              eq(ky3pResponses.task_id, taskId),
-              eq(ky3pResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      }
+      // Count total KY3P fields
+      const totalFieldsResult = await dbContext
+        .select({ count: sql<number>`count(*)` })
+        .from(ky3pFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed KY3P responses using raw SQL for status comparison
+      const completedResultQuery = await dbContext
+        .select({ count: useFieldKey ? sql<number>`count(DISTINCT field_key)` : sql<number>`count(*)` })
+        .from(ky3pResponses)
+        .where(
+          and(
+            eq(ky3pResponses.task_id, taskId),
+            sql`${ky3pResponses.status} = ${FieldStatus.COMPLETE}`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
       
       // Detailed logging for KY3P progress calculation
       if (debug) {
@@ -162,68 +122,51 @@ export async function calculateTaskProgress(
           
         logger.debug(`${logPrefix} KY3P responses details:`, {
           totalCount: responseDetails.length,
-          completeCount: responseDetails.filter(r => r.status === FieldStatus.COMPLETE).length,
+          completeCount: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.COMPLETE).length,
           byStatus: {
-            [FieldStatus.COMPLETE]: responseDetails.filter(r => r.status === FieldStatus.COMPLETE).length,
-            [FieldStatus.INCOMPLETE]: responseDetails.filter(r => r.status === FieldStatus.INCOMPLETE).length,
-            [FieldStatus.EMPTY]: responseDetails.filter(r => r.status === FieldStatus.EMPTY).length,
-            [FieldStatus.INVALID]: responseDetails.filter(r => r.status === FieldStatus.INVALID).length,
-            other: responseDetails.filter(r => !Object.values(FieldStatus).includes(r.status as any)).length
+            [FieldStatus.COMPLETE]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.COMPLETE).length,
+            [FieldStatus.INCOMPLETE]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INCOMPLETE).length,
+            [FieldStatus.EMPTY]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.EMPTY).length,
+            [FieldStatus.INVALID]: responseDetails.filter((r: {status: string}) => r.status === FieldStatus.INVALID).length,
+            other: responseDetails.filter((r: {status: string}) => !isValidFieldStatus(r.status)).length
           },
           useFieldKey,
           byFieldKey: useFieldKey
-            ? Object.fromEntries(
-                Array.from(
-                  responseDetails.reduce((acc, r) => {
-                    const key = r.field_key || 'unknown';
-                    acc.set(key, (acc.get(key) || 0) + 1);
-                    return acc;
-                  }, new Map<string, number>())
-                )
-              )
+            ? (() => {
+                // Create a simpler field key counter to avoid type issues
+                const fieldKeyCounter = new Map<string, number>();
+                // Use a properly typed iteration
+                const typedResponses = responseDetails as Array<{field_key?: string}>;
+                for (const r of typedResponses) {
+                  const key = r.field_key || 'unknown';
+                  fieldKeyCounter.set(key, (fieldKeyCounter.get(key) || 0) + 1);
+                }
+                // Convert the Map to an array of entries and then to an object
+                return Object.fromEntries([...fieldKeyCounter.entries()]);
+              })()
             : 'Field key analysis disabled'
         });
       }
     }
     else { 
       // Assume KYB by default
-      if (useFieldKey) {
-        // Count total KYB fields
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(kybFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed KYB responses using field_key
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(DISTINCT field_key)` })
-          .from(kybResponses)
-          .where(
-            and(
-              eq(kybResponses.task_id, taskId),
-              eq(kybResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      } else {
-        // Legacy approach using field_id
-        const totalFieldsResult = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(kybFields);
-        totalFields = totalFieldsResult[0].count;
-        
-        // Count completed responses with legacy approach
-        const completedResultQuery = await dbContext
-          .select({ count: sql<number>`count(*)` })
-          .from(kybResponses)
-          .where(
-            and(
-              eq(kybResponses.task_id, taskId),
-              eq(kybResponses.status, FieldStatus.COMPLETE)
-            )
-          );
-        completedFields = completedResultQuery[0].count;
-      }
+      // Count total KYB fields
+      const totalFieldsResult = await dbContext
+        .select({ count: sql<number>`count(*)` })
+        .from(kybFields);
+      totalFields = totalFieldsResult[0].count;
+      
+      // Count completed KYB responses using raw SQL for status comparison
+      const completedResultQuery = await dbContext
+        .select({ count: useFieldKey ? sql<number>`count(DISTINCT field_key)` : sql<number>`count(*)` })
+        .from(kybResponses)
+        .where(
+          and(
+            eq(kybResponses.task_id, taskId),
+            sql`${kybResponses.status} = ${FieldStatus.COMPLETE}`
+          )
+        );
+      completedFields = completedResultQuery[0].count;
     }
     
     // Calculate progress percentage using the same formula for all task types
@@ -237,10 +180,9 @@ export async function calculateTaskProgress(
       taskId,
       normalizedTaskType,
       originalTaskType: taskType,
-      totalFields,
-      completedFields,
-      progressPercentage,
-      useFieldKey,
+      totalFields: String(totalFields),
+      completedFields: String(completedFields),
+      progress: progressPercentage,
       timestamp: new Date().toISOString()
     });
     
@@ -260,7 +202,7 @@ export async function calculateTaskProgress(
 }
 
 /**
- * Update task progress and status in the database
+ * Update task progress and status in the database using the fixed progress calculator
  * 
  * This function updates the task progress and status in the database, ensuring type safety
  * and consistent status determination across all task types.
@@ -269,7 +211,7 @@ export async function calculateTaskProgress(
  * @param taskType Task type ('kyb', 'ky3p', 'open_banking')
  * @param options Additional options
  */
-export async function updateTaskProgressAndStatus(
+export async function updateTaskProgressAndStatusFixed(
   taskId: number,
   taskType: string,
   options: { 
@@ -281,7 +223,7 @@ export async function updateTaskProgressAndStatus(
   } = {}
 ): Promise<any> {
   const { forceUpdate = false, skipBroadcast = false, debug = false, metadata = {} } = options;
-  const logPrefix = '[Unified Progress Update]';
+  const logPrefix = '[Fixed Progress Update]';
   const useFieldKey = options.useFieldKey !== false;
   
   try {
@@ -295,8 +237,8 @@ export async function updateTaskProgressAndStatus(
       throw new Error(`Task ${taskId} not found`);
     }
     
-    // Step 2: Calculate the current progress
-    const calculatedProgress = await calculateTaskProgress(taskId, taskType, { 
+    // Step 2: Calculate the current progress using the fixed calculator
+    const calculatedProgress = await calculateTaskProgressFixed(taskId, taskType, { 
       debug, 
       useFieldKey
     });
@@ -308,7 +250,8 @@ export async function updateTaskProgressAndStatus(
       hasSubmissionDate: !!task.completion_date,
       hasSubmittedFlag: task.metadata?.status === 'submitted' || task.metadata?.explicitlySubmitted === true,
       hasResponses: true, // Assume has responses if we're calculating progress
-      metadata: task.metadata || {}
+      metadata: task.metadata || {},
+      timestamp: new Date().toISOString()
     });
     
     // Only update if there are changes or we're forcing an update
@@ -345,8 +288,21 @@ export async function updateTaskProgressAndStatus(
         logger.debug(`Broadcasting task update with object format`, { taskId, status: newStatus });
         
         // Get the WebSocket server instance - this reuses the singleton
-        const { getWebSocketServer } = await import('../services/websocket-manager');
-        const wss = await getWebSocketServer();
+        // Use dynamic import with proper error handling to avoid circular dependencies
+        let wss = null;
+        try {
+          // Try the unified websocket module first
+          const unifiedWebsocket = await import('../utils/unified-websocket');
+          wss = await unifiedWebsocket.getWebSocketServer();
+        } catch (importError) {
+          // Fall back to the standard websocket service
+          try {
+            const websocketService = await import('../services/websocket');
+            wss = websocketService.getWebSocketServer();
+          } catch (fallbackError) {
+            logger.warn(`Could not import websocket modules: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+          }
+        }
         
         if (wss) {
           logger.info(`Successfully retrieved unified WebSocket server for broadcast`);
@@ -358,7 +314,7 @@ export async function updateTaskProgressAndStatus(
             progress: calculatedProgress,
             metadata: {
               ...metadata,
-              updatedVia: 'unified-progress-update',
+              updatedVia: 'fixed-progress-update',
               timestamp: new Date().toISOString(),
               previousProgress: task.progress,
               previousStatus: task.status,

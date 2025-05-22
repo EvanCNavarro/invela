@@ -32,15 +32,14 @@ import ky3pFieldsRouter from './routes/ky3p-fields';
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Import the KY3P progress test route
-import testKy3pProgressRouter from './routes/test-ky3p-progress';
+// Test route removed during cleanup
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
-import ky3pFixedRouter from './routes/ky3p-fixed-routes';
+import ky3pFixedRouter from './routes/ky3p-enhanced.routes';
 // Import KY3P submission fix to properly handle form submissions
 import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
 // Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
-import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
+import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update.routes';
 // Import the new unified KY3P update routes
 import { registerUnifiedKY3PUpdateRoutes } from './routes/unified-ky3p-update';
 // Import the KY3P field key router for string-based field key references
@@ -54,12 +53,12 @@ import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import { fixTaskStatus, batchFixTasks } from './routes/task-fix';
 // Import manual KY3P fix route for direct recalculation of KY3P task progress
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
-import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
+import openBankingDemoAutofillRouter from './routes/open-banking-demo.routes';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 // Import the fix-missing-file API route
 import fixMissingFileRouter from './routes/fix-missing-file-api';
 // Import WebSocket notification test router
-import testWebSocketNotificationsRouter from './routes/test-websocket-notifications';
+// Test router removed during cleanup
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
@@ -73,9 +72,9 @@ import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our new task broadcast router
 import taskBroadcastRouter from './routes/task-broadcast';
 // Import our KY3P progress fix test route
-import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
+// Test router removed during cleanup
 // Import our test submission state router for testing submission state preservation
-import createTestSubmissionStateRouter from './routes/test-submission-state';
+// Test router removed during cleanup
 // Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
@@ -128,9 +127,31 @@ export function invalidateCompanyCache(companyId: number) {
   return false;
 }
 
+/**
+ * Smart Route Registration Tracker
+ * 
+ * Consolidates individual route registration logs into a clean summary,
+ * reducing startup noise while maintaining visibility of module initialization.
+ */
+const routeRegistrationTracker = {
+  modules: [] as string[],
+  
+  register(moduleName: string) {
+    this.modules.push(moduleName);
+  },
+  
+  getSummary() {
+    return `Route registration completed: ${this.modules.length} modules initialized [${this.modules.join(', ')}]`;
+  }
+};
+
 export function registerRoutes(app: Express): Express {
+  // Track core routes
   app.use(companySearchRouter);
+  routeRegistrationTracker.register('CompanySearch');
+  
   app.use(kybRouter);
+  routeRegistrationTracker.register('KYB');
   
   // Register KYB progress route with status update support
   const kybProgressRouter = Router();
@@ -381,9 +402,9 @@ export function registerRoutes(app: Express): Express {
   // Register debug-routes.ts
   app.use('/api/debug', debugRoutesTs);
   // Register test submission state router
-  app.use('/api/test-submission', createTestSubmissionStateRouter());
+  // Test router removed during cleanup
   // Register test WebSocket notifications router
-  app.use('/api/test/websocket', testWebSocketNotificationsRouter);
+  // Test router removed during cleanup
   // Temporarily disabled until module compatibility is fixed
   // app.use('/api/debug', debugEndpoints);
   
@@ -397,41 +418,51 @@ export function registerRoutes(app: Express): Express {
   // Register enhanced KY3P submission router with fixed progress handling
   app.use(enhancedKy3pSubmissionRouter);
   // Register KY3P progress test route
-  app.use(testKy3pProgressRouter);
+  // Test router removed during cleanup
   // Register KY3P progress fix test route
-  app.use(ky3pProgressFixTestRouter);
+  // Test router removed during cleanup
   // Register manual KY3P progress fix endpoint
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
   // Register KY3P submission fix router to properly handle form submissions
   app.use(ky3pSubmissionFixRouter);
-  console.log('[Routes] Registered KY3P form submission fix routes');
+  routeRegistrationTracker.register('KY3P-SubmissionFix');
+  
   // Register task progress endpoints for testing and direct manipulation
   app.use(taskProgressRouter);
+  routeRegistrationTracker.register('TaskProgress');
+  
   // Register the unified form update API for all form types
   app.use(unifiedFormUpdateRouter);
+  routeRegistrationTracker.register('UnifiedFormUpdate');
+  
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
+  routeRegistrationTracker.register('KY3P-Fixed');
+  
   // Use our enhanced KY3P demo auto-fill routes
   app.use(ky3pDemoAutofillRouter);
+  routeRegistrationTracker.register('KY3P-DemoAutofill');
+  
   // Register the standardized KY3P batch update routes
   const ky3pBatchFixedRouter = registerKY3PBatchUpdateRoutes();
   app.use(ky3pBatchFixedRouter);
+  routeRegistrationTracker.register('KY3P-BatchUpdate');
   
   // Register the fully unified KY3P update routes
   const unifiedKy3pRouter = registerUnifiedKY3PUpdateRoutes();
   app.use(unifiedKy3pRouter);
+  routeRegistrationTracker.register('KY3P-UnifiedUpdate');
   
   // Register the KY3P field key router for string-based field key references
   registerKY3PFieldKeyRouter(app);
-  console.log('[Routes] Registered KY3P field key router');
+  routeRegistrationTracker.register('KY3P-FieldKey');
   // Removed reference to old KY3P batch update implementation
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
   app.use(ky3pFieldUpdateRouter);
   // Register the unified clear fields router for all form types
-  console.log('[Routes] Setting up unified clear fields router');
   app.use(unifiedClearFieldsRouter);
-  console.log('[Routes] Successfully registered unified clear fields router');
+  routeRegistrationTracker.register('UnifiedClearFields');
   app.use(openBankingDemoAutofillRouter);
   // Register the KY3P files fix router
   app.use(fixKy3pFilesRouter);
@@ -447,9 +478,8 @@ export function registerRoutes(app: Express): Express {
   app.use(fixMissingFileRouter);
   
   // Register task broadcast router for WebSocket notifications
-  console.log('[Routes] Setting up task broadcast router');
   app.use('/api/tasks', taskBroadcastRouter);
-  console.log('[Routes] Successfully registered task broadcast router');
+  routeRegistrationTracker.register('TaskBroadcast');
   
   // Register Open Banking Survey routes with WebSocket support
   // Use getWebSocketServer from the unified implementation
@@ -3199,8 +3229,9 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             const chunkAnswers = await analyzeDocument(chunkText, fields);
             answers.push(...chunkAnswers);
 
-            // Send progress update via WebSocket
-            WebSocketService.broadcastMessage('task_update', {
+            // Send progress update via unified WebSocket broadcast system
+            // Uses the same consistent broadcasting approach as the rest of the application
+            broadcast('task_update', {
               id: req.body.taskId, // Using the task ID from request body
               metadata: {
                 type: 'CLASSIFICATION_UPDATE',
@@ -4016,7 +4047,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  console.log('[Routes] Routes setup completed');  
+  // Output consolidated route registration summary
+  console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
   return app;
 }
 

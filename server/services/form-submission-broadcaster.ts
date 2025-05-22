@@ -51,29 +51,28 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
     let websocketSuccess = false;
     
     try {
-      // First try the enhanced WebSocket service if it exists
-      // Using JavaScript-style access pattern to handle TypeScript compatibility issues
-      const broadcastFn = WebSocketService['broadcastFormSubmissionCompleted'];
+      // Use the unified WebSocket broadcast system for form submission events
+      // This provides consistent, reliable broadcasting aligned with the application's architecture
+      unifiedBroadcast('form_submission_completed', {
+        taskId,
+        formType,
+        status: 'submitted',
+        companyId,
+        submissionDate: new Date().toISOString()
+      });
       
-      if (typeof broadcastFn === 'function') {
-        broadcastFn(taskId, formType, companyId);
-        channels.push('form_submission_completed');
-        websocketSuccess = true;
-        
-        logger.debug(`[Form Broadcaster] Sent message using enhanced WebSocket service`, {
-          taskId,
-          formType,
-          companyId
-        });
-      } else {
-        logger.debug(`[Form Broadcaster] Enhanced WebSocket service function not available, falling back`, {
-          taskId,
-          formType
-        });
-      }
-    } catch (enhancedError) {
-      logger.warn(`[Form Broadcaster] Error using enhanced WebSocket service, falling back to unified broadcast`, {
-        error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
+      channels.push('form_submission_completed');
+      websocketSuccess = true;
+      
+      logger.debug(`[Form Broadcaster] Successfully broadcast form submission via unified WebSocket`, {
+        taskId,
+        formType,
+        companyId,
+        status: 'submitted'
+      });
+    } catch (broadcastError) {
+      logger.warn(`[Form Broadcaster] Error broadcasting form submission via unified WebSocket`, {
+        error: broadcastError instanceof Error ? broadcastError.message : 'Unknown error',
         taskId,
         formType
       });
@@ -140,35 +139,30 @@ export async function broadcastFormSubmission(data: FormSubmissionData): Promise
     let taskUpdateSuccess = false;
     
     try {
-      // Try enhanced WebSocket service first if it exists
-      const broadcastTaskUpdateFn = WebSocketService['broadcastTaskUpdate'];
+      // Use unified WebSocket broadcast system for task updates
+      // Maintains consistency with application's homogeneous broadcasting architecture
+      unifiedBroadcast('task_update', {
+        id: taskId,
+        status,
+        progress: data.progress || 100,
+        metadata: {
+          ...(data.metadata || {}),
+          lastUpdated: timestamp,
+          submissionDate: data.submissionDate || timestamp,
+          broadcastSource: data.source || 'form-submission-broadcaster'
+        }
+      });
       
-      if (typeof broadcastTaskUpdateFn === 'function') {
-        broadcastTaskUpdateFn({
-          id: taskId,
-          status,
-          progress: data.progress || 100,
-          metadata: {
-            ...(data.metadata || {}),
-            lastUpdated: timestamp,
-            submissionDate: data.submissionDate || timestamp,
-            broadcastSource: data.source || 'form-submission-broadcaster'
-          }
-        });
-        channels.push('task_update');
-        taskUpdateSuccess = true;
-        
-        logger.debug(`[Form Broadcaster] Sent task update using enhanced WebSocket service`, {
-          taskId,
-          formType
-        });
-      } else {
-        logger.debug(`[Form Broadcaster] Enhanced WebSocket service task update function not available, falling back`, {
-          taskId,
-          formType
-        });
-      }
-    } catch (enhancedError) {
+      channels.push('task_update');
+      taskUpdateSuccess = true;
+      
+      logger.debug(`[Form Broadcaster] Successfully broadcast task update via unified WebSocket`, {
+        taskId,
+        formType,
+        status,
+        progress: data.progress || 100
+      });
+    } catch (broadcastError) {
       logger.warn(`[Form Broadcaster] Error using enhanced WebSocket for task update, falling back to unified`, {
         error: enhancedError instanceof Error ? enhancedError.message : 'Unknown error',
         taskId,

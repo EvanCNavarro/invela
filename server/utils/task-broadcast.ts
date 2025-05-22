@@ -4,10 +4,13 @@
  * This module provides a centralized service for broadcasting task-related
  * updates to connected WebSocket clients, maintaining a clean separation
  * between task progress calculation logic and notification mechanisms.
+ * 
+ * Enterprise logging standardization applied following OODA methodology.
  */
 
 import { WebSocket, WebSocketServer } from 'ws';
 import { TaskStatus } from '../types';
+import { logger } from './logger';
 
 // Global reference to the WebSocket server
 let wssRef: WebSocketServer | null = null;
@@ -25,19 +28,24 @@ interface ExtendedWebSocket extends WebSocket {
  * @param wss WebSocket server instance
  */
 export function setWebSocketServer(wss: WebSocketServer): void {
+  const broadcastLogger = logger.child({ module: 'TaskBroadcast' });
+  
   if (!wss) {
-    console.warn('[TaskBroadcast] Attempt to set null WebSocket server reference');
+    broadcastLogger.warn('Attempt to set null WebSocket server reference');
     return;
   }
   
   wssRef = wss;
-  console.log('[TaskBroadcast] WebSocket server reference set up');
+  broadcastLogger.info('WebSocket server reference established');
   
   // Verify that the WebSocket server is active and has clients property
   // Some WebSocket servers might not expose clients until a connection is made
   try {
     if (wss.clients) {
-      console.log(`[TaskBroadcast] WebSocket server active with ${wss.clients.size} connected clients`);
+      broadcastLogger.info('WebSocket server initialized', { 
+        connectedClients: wss.clients.size,
+        status: 'active' 
+      });
     } else {
       // Create a dummy Set to prevent errors later
       Object.defineProperty(wss, 'clients', {
@@ -45,10 +53,10 @@ export function setWebSocketServer(wss: WebSocketServer): void {
         writable: false,
         configurable: true
       });
-      console.log('[TaskBroadcast] Added clients property to WebSocket server');
+      broadcastLogger.info('Added clients property to WebSocket server for compatibility');
     }
   } catch (error) {
-    console.warn('[TaskBroadcast] Error accessing WebSocket server clients:', error);
+    broadcastLogger.error('Error accessing WebSocket server clients', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 
@@ -59,8 +67,10 @@ export function setWebSocketServer(wss: WebSocketServer): void {
  * @param data Update data (status, progress, etc.)
  */
 export function broadcastTaskUpdate(taskId: number, data: Record<string, any>): void {
+  const broadcastLogger = logger.child({ module: 'TaskBroadcast' });
+  
   if (!wssRef) {
-    console.log('[TaskBroadcast] No WebSocket server available, skipping broadcast');
+    broadcastLogger.debug('No WebSocket server available, skipping broadcast', { taskId });
     return;
   }
   
@@ -81,16 +91,19 @@ export function broadcastTaskUpdate(taskId: number, data: Record<string, any>): 
           timestamp: new Date().toISOString()
         }));
       } catch (error) {
-        console.error('[TaskBroadcast] Error sending task update:', error);
+        broadcastLogger.error('Error sending task update', { 
+          taskId, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
       }
     }
   });
   
   // Log broadcast stats
-  console.log(`[TaskBroadcast] Task update broadcast to ${activeClientCount} clients:`, {
+  broadcastLogger.info('Task update broadcast completed', {
     taskId,
-    updatedFields: Object.keys(data),
-    timestamp: new Date().toISOString()
+    activeClients: activeClientCount,
+    updatedFields: Object.keys(data)
   });
 }
 
@@ -106,8 +119,10 @@ export function broadcastCompanyTaskUpdate(
   taskId: number,
   data: Record<string, any>
 ): void {
+  const broadcastLogger = logger.child({ module: 'TaskBroadcast' });
+  
   if (!wssRef) {
-    console.log('[TaskBroadcast] No WebSocket server available, skipping broadcast');
+    broadcastLogger.debug('No WebSocket server available, skipping company broadcast', { companyId, taskId });
     return;
   }
   
@@ -135,7 +150,11 @@ export function broadcastCompanyTaskUpdate(
             timestamp: new Date().toISOString()
           }));
         } catch (error) {
-          console.error('[TaskBroadcast] Error sending company task update:', error);
+          broadcastLogger.error('Error sending company task update', { 
+            companyId, 
+            taskId, 
+            error: error instanceof Error ? error.message : String(error) 
+          });
         }
       }
     }
@@ -143,14 +162,15 @@ export function broadcastCompanyTaskUpdate(
   
   // Log broadcast stats
   if (targetedClientCount > 0) {
-    console.log(`[TaskBroadcast] Company task update broadcast to ${targetedClientCount}/${totalClientCount} clients:`, {
+    broadcastLogger.info('Company task update broadcast completed', {
       companyId,
       taskId,
-      updatedFields: Object.keys(data),
-      timestamp: new Date().toISOString()
+      targetedClients: targetedClientCount,
+      totalClients: totalClientCount,
+      updatedFields: Object.keys(data)
     });
   } else {
-    console.log(`[TaskBroadcast] No clients for company ${companyId} connected, skipping broadcast`);
+    broadcastLogger.debug('No clients connected for company, skipping broadcast', { companyId });
   }
 }
 
