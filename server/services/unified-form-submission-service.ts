@@ -11,7 +11,7 @@ import { tasks, files, companies, kybResponses, ky3pResponses, openBankingRespon
 import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
-import * as FileCreationService from '../services/fileCreation.fixed';
+import * as FileCreationService from '../services/fileCreation';
 import * as UnifiedTabService from '../services/unified-tab-service';
 import * as TransactionManager from '../services/transaction-manager';
 import { synchronizeTasks } from '../services/synchronous-task-dependencies';

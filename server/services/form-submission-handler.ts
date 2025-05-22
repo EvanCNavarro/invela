@@ -16,7 +16,7 @@ import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcast, broadcastTaskUpdate } from '../utils/unified-websocket';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
-import * as fileCreationService from './fileCreation.fixed';
+import * as fileCreationService from './fileCreation';
 
 interface SubmitFormOptions {
   taskId: number;
