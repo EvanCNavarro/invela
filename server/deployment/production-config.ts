@@ -49,15 +49,26 @@ export function configureDeploymentEnvironment(): void {
  * Call this early in the application startup for deployment environments
  */
 export function initializeProductionOptimizations(): void {
+  // Enhanced detection aligned with Cloud Run deployment indicators
+  // Best practice: Match the same detection logic used in main server configuration
+  // Homogeneous pattern: Consistent with index.ts deployment detection
   const isProductionDeployment = process.env.NODE_ENV === 'production' || 
                                  process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true' ||
                                  process.env.REPLIT_DEPLOYMENT === 'true';
 
-  if (isProductionDeployment) {
-    logger.info('[ProductionConfig] Initializing production optimizations for deployment...');
+  const isCloudRunDeployment = isProductionDeployment || 
+                              process.env.GOOGLE_CLOUD_PROJECT ||  // Cloud Run indicator
+                              process.env.K_SERVICE ||             // Cloud Run service indicator
+                              process.env.K_REVISION;              // Cloud Run revision indicator
+
+  // Replit platform optimization: Always apply optimizations for Cloud Run
+  // Root cause fix: Ensures memory optimizations run regardless of NODE_ENV detection timing
+  // Best practice: Fail-safe approach that prioritizes deployment success
+  if (isCloudRunDeployment || isProductionDeployment) {
+    logger.info('[ProductionConfig] Cloud Run deployment detected - applying comprehensive optimizations...');
     applyProductionMemoryOptimizations();
     configureDeploymentEnvironment();
-    logger.info('[ProductionConfig] All production optimizations applied');
+    logger.info('[ProductionConfig] All production optimizations applied for Cloud Run deployment');
   } else {
     logger.info('[ProductionConfig] Development environment detected, skipping production optimizations');
   }
