@@ -56,7 +56,7 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     
     // Broadcast the update using the websocket
     try {
-      const { broadcastTaskUpdate } = await import('../services/websocket-new');
+      const { broadcastTaskUpdate } = await import('../services/websocket-enhanced.service');
       const status = progressPercent === 0 ? 'not_started' : 
                     progressPercent === 100 ? 'ready_for_submission' : 
                     'in_progress';
