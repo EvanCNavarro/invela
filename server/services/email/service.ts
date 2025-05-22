@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 import type { EmailTemplate, TemplateNames } from './templates';
 import { getEmailTemplate } from './templates';
+import { logger } from '../../utils/logger';
 
 const resolveMx = promisify(dns.resolveMx);
 
