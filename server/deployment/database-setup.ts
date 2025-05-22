@@ -53,7 +53,7 @@ function getDbSetupConfig(): DatabaseSetupConfig {
 async function checkDatabaseHealth(): Promise<boolean> {
   try {
     const result = await db.execute(sql`SELECT 1 as health_check`);
-    return result.length > 0;
+    return Array.isArray(result) && result.length > 0;
   } catch (error) {
     logger.error('[DatabaseSetup] Health check failed', { 
       error: error instanceof Error ? error.message : String(error) 
