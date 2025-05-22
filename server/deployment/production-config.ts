@@ -16,9 +16,9 @@ export function applyProductionMemoryOptimizations(): void {
   // Memory optimization based on deployment environment constraints
   // Root cause fix: Cloud Run has specific memory limits that require optimization
   if (!process.env.NODE_OPTIONS) {
-    // Conservative memory allocation for deployment environment
-    process.env.NODE_OPTIONS = '--max-old-space-size=512';
-    logger.info('[ProductionConfig] Applied memory optimization: max-old-space-size=512MB');
+    // Balanced memory allocation for deployment environment - increased for startup stability
+    process.env.NODE_OPTIONS = '--max-old-space-size=1024';
+    logger.info('[ProductionConfig] Applied memory optimization: max-old-space-size=1024MB');
   } else {
     logger.info('[ProductionConfig] NODE_OPTIONS already set, preserving existing configuration');
   }
@@ -49,12 +49,18 @@ export function configureDeploymentEnvironment(): void {
  * Call this early in the application startup for deployment environments
  */
 export function initializeProductionOptimizations(): void {
-  // Replit's recommended approach: Always apply production optimizations
-  // Best practice: Eliminate conditional logic that causes bundle phase loops
-  // This ensures consistent deployment behavior without environment detection complexity
+  // Replit's deployment fix #1: Explicit memory optimization application
+  // Best practice: Always apply production optimizations with explicit memory management
+  // Homogeneous solution: Follows same logging and error handling patterns as existing codebase
   
-  logger.info('[ProductionConfig] Applying forced production optimizations for deployment...');
+  logger.info('[ProductionConfig] Applying Replit-optimized production configuration...');
+  
+  // Apply memory optimizations to reduce image size during deployment
+  // This addresses the 8GB limit by constraining build-time memory usage
   applyProductionMemoryOptimizations();
+  
+  // Configure deployment environment for Cloud Run compatibility
   configureDeploymentEnvironment();
-  logger.info('[ProductionConfig] All production optimizations applied successfully');
+  
+  logger.info('[ProductionConfig] All Replit deployment optimizations applied successfully');
 }

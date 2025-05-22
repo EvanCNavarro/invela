@@ -202,16 +202,18 @@ import { initializeProductionOptimizations } from './deployment/production-confi
 initializeProductionOptimizations();
 
 // Configure server for proper deployment
-// Replit's recommended approach: Force production settings to eliminate conditional complexity
-// Best practice: Simple, definitive configuration prevents bundle phase loops
+// Replit's deployment fix #2: Use dynamic port configuration from environment
+// Best practice: Environment-aware configuration that adapts to deployment context
+// Homogeneous solution: Maintains same forced production approach while enabling flexibility
 const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
 
 // Set NODE_ENV based on deployment context - prioritize explicit production setting
 process.env.NODE_ENV = 'production';
 
-// Cloud Run port configuration - always use port 8080 for proper binding
-// Replit's recommendation: Eliminate conditional port logic that causes deployment confusion
-const PORT = 8080;  // Always use port 8080 for Cloud Run deployment
+// Replit's recommended dynamic port configuration
+// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+// Fallback ensures Cloud Run compatibility while respecting Replit's deployment environment
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
