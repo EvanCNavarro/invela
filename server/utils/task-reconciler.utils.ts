@@ -9,7 +9,7 @@ import { db } from '@db';
 import { eq } from 'drizzle-orm';
 import { tasks } from '@db/schema';
 import { logger } from './logger';
-import { calculateTaskProgressFixed, updateTaskProgressAndStatusFixed } from './fixed-field-progress';
+import { calculateTaskProgressFixed, updateTaskProgressAndStatusFixed } from './field-progress.utils';
 import { TaskStatus } from '../types';
 
 /**

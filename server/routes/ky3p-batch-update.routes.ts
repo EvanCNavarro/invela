@@ -11,7 +11,7 @@ import { ky3pFields, ky3pResponses, tasks } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
-import { updateKy3pProgressFixed } from '../utils/unified-progress-fixed';
+import { updateKy3pProgressFixed } from '../utils/ky3p-progress.utils';
 
 /**
  * Register KY3P batch update routes

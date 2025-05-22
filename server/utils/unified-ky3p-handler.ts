@@ -11,7 +11,7 @@ import { db } from '@db';
 import { ky3pResponses, ky3pFields, tasks } from '@db/schema';
 import { eq, and, sql, isNull } from 'drizzle-orm';
 import { logger } from './logger';
-import { updateKy3pProgressFixed } from './unified-progress-fixed';
+import { updateKy3pProgressFixed } from './ky3p-progress.utils';
 import { FieldStatus, normalizeFieldStatus } from './field-status';
 
 /**

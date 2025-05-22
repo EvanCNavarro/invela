@@ -389,7 +389,7 @@ export async function reconcileTaskProgress(
         
         // Import the fixed version of the progress calculator
         // Note: We're importing here to avoid circular dependencies
-        const { calculateAndUpdateTaskProgress } = await import('./unified-progress-fixed');
+        const { calculateAndUpdateTaskProgress } = await import('./ky3p-progress.utils');
         
         // Use the fixed implementation with proper transaction boundaries
         const result = await calculateAndUpdateTaskProgress(taskId, {
