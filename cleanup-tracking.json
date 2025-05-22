@@ -1,14 +1,14 @@
 {
   "analysis_metadata": {
     "total_files": 203,
-    "files_analyzed": 25,
-    "completion_percentage": 12.3,
-    "last_updated": "2025-05-22T17:23:00.000Z"
+    "files_analyzed": 35,
+    "completion_percentage": 17.2,
+    "last_updated": "2025-05-22T17:26:00.000Z"
   },
   "categories": {
     "safe_to_remove": {
       "description": "Files confirmed safe for removal through content analysis",
-      "count": 21,
+      "count": 31,
       "files": [
         {
           "filename": "apply_fix.js",
