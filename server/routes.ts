@@ -127,9 +127,31 @@ export function invalidateCompanyCache(companyId: number) {
   return false;
 }
 
+/**
+ * Smart Route Registration Tracker
+ * 
+ * Consolidates individual route registration logs into a clean summary,
+ * reducing startup noise while maintaining visibility of module initialization.
+ */
+const routeRegistrationTracker = {
+  modules: [] as string[],
+  
+  register(moduleName: string) {
+    this.modules.push(moduleName);
+  },
+  
+  getSummary() {
+    return `Route registration completed: ${this.modules.length} modules initialized [${this.modules.join(', ')}]`;
+  }
+};
+
 export function registerRoutes(app: Express): Express {
+  // Track core routes
   app.use(companySearchRouter);
+  routeRegistrationTracker.register('CompanySearch');
+  
   app.use(kybRouter);
+  routeRegistrationTracker.register('KYB');
   
   // Register KYB progress route with status update support
   const kybProgressRouter = Router();
@@ -403,34 +425,44 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
   // Register KY3P submission fix router to properly handle form submissions
   app.use(ky3pSubmissionFixRouter);
-  console.log('[Routes] Registered KY3P form submission fix routes');
+  routeRegistrationTracker.register('KY3P-SubmissionFix');
+  
   // Register task progress endpoints for testing and direct manipulation
   app.use(taskProgressRouter);
+  routeRegistrationTracker.register('TaskProgress');
+  
   // Register the unified form update API for all form types
   app.use(unifiedFormUpdateRouter);
+  routeRegistrationTracker.register('UnifiedFormUpdate');
+  
   // Use our unified fixed KY3P routes for batch update, demo autofill, and clear fields
   app.use(ky3pFixedRouter);
+  routeRegistrationTracker.register('KY3P-Fixed');
+  
   // Use our enhanced KY3P demo auto-fill routes
   app.use(ky3pDemoAutofillRouter);
+  routeRegistrationTracker.register('KY3P-DemoAutofill');
+  
   // Register the standardized KY3P batch update routes
   const ky3pBatchFixedRouter = registerKY3PBatchUpdateRoutes();
   app.use(ky3pBatchFixedRouter);
+  routeRegistrationTracker.register('KY3P-BatchUpdate');
   
   // Register the fully unified KY3P update routes
   const unifiedKy3pRouter = registerUnifiedKY3PUpdateRoutes();
   app.use(unifiedKy3pRouter);
+  routeRegistrationTracker.register('KY3P-UnifiedUpdate');
   
   // Register the KY3P field key router for string-based field key references
   registerKY3PFieldKeyRouter(app);
-  console.log('[Routes] Registered KY3P field key router');
+  routeRegistrationTracker.register('KY3P-FieldKey');
   // Removed reference to old KY3P batch update implementation
   // Register the standardized KY3P field update routes
   const ky3pFieldUpdateRouter = registerKY3PFieldUpdateRoutes();
   app.use(ky3pFieldUpdateRouter);
   // Register the unified clear fields router for all form types
-  console.log('[Routes] Setting up unified clear fields router');
   app.use(unifiedClearFieldsRouter);
-  console.log('[Routes] Successfully registered unified clear fields router');
+  routeRegistrationTracker.register('UnifiedClearFields');
   app.use(openBankingDemoAutofillRouter);
   // Register the KY3P files fix router
   app.use(fixKy3pFilesRouter);
@@ -446,9 +478,8 @@ export function registerRoutes(app: Express): Express {
   app.use(fixMissingFileRouter);
   
   // Register task broadcast router for WebSocket notifications
-  console.log('[Routes] Setting up task broadcast router');
   app.use('/api/tasks', taskBroadcastRouter);
-  console.log('[Routes] Successfully registered task broadcast router');
+  routeRegistrationTracker.register('TaskBroadcast');
   
   // Register Open Banking Survey routes with WebSocket support
   // Use getWebSocketServer from the unified implementation
@@ -4016,7 +4047,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  console.log('[Routes] Routes setup completed');  
+  // Output consolidated route registration summary
+  console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
   return app;
 }
 
