@@ -48,30 +48,60 @@ uploads/
 # Keep only essential uploads for production
 !uploads/.gitkeep
 
-# Development and Maintenance Scripts
-# These are not needed in production deployment
+# Development and Maintenance Scripts (226 files identified)
+# These are not needed in production deployment - significant size reduction
 *.js.map
 *.ts.map
+
+# Fix and maintenance scripts
 fix-*.js
 fix-*.ts
 fix-*.cjs
+fix_*.js
+*_fix.js
+apply_fix.js
+fixed-*.js
+fixed-*.ts
+fixed-*.tsx
+
+# Direct operation scripts
 direct-*.js
 direct-*.ts
 direct-*.cjs
+direct-*.mjs
+
+# Creation and test scripts
 create-*.js
 create-*.ts
 create-*.cjs
+create-*-sample.ts
+test-*.js
+debug-*.js
+demo-*.js
+broadcast-*.js
+extract-*.js
+
+# Database and maintenance utilities
 check-*.js
 check-*.ts
 check-*.cjs
+verify-*.js
+unlock-*.js
 cleanup-*.js
 cleanup-*.ts
 cleanup-*.cjs
-demo-*.js
-demo-*.ts
-demo-*.cjs
-browser-*.js
+database-cleanup.ts
+add-*-migration.sql
 *.sql
+
+# Browser and WebSocket test files
+browser-*.js
+websocket-test*.js
+
+# Tutorial and onboarding scripts
+*-tutorial-*.js
+*-tutorial-*.ts
+tutorial-*.js
 
 # Documentation and Planning Files
 *.md

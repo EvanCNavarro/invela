@@ -197,24 +197,31 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
 // Configure server for proper deployment
-// Always use port 8080 for Autoscale deployment, 5000 for local development
-const isDeployment = process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true';
+// Production-first port configuration for Cloud Run compatibility
+// Cloud Run requires port 8080 specifically, detected via multiple deployment indicators
+const isCloudRunDeployment = process.env.NODE_ENV === 'production' || 
+                             process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true' ||
+                             process.env.REPLIT_DEPLOYMENT === 'true' ||
+                             process.env.PORT === '8080';
 
-// Set NODE_ENV based on deployment context
-process.env.NODE_ENV = isDeployment ? 'production' : 'development';
+// Set NODE_ENV based on deployment context - prioritize explicit production setting
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = isCloudRunDeployment ? 'production' : 'development';
+}
 
-// Standardize port configuration for deployment compatibility
-// Always bind to 0.0.0.0 for proper network access
-const PORT = isDeployment ? 8080 : (parseInt(process.env.PORT, 10) || 5000);
+// Homogeneous port configuration strategy aligned with Cloud Run requirements
+// Priority: Explicit PORT env var → Cloud Run standard (8080) → Development fallback (5000)
+const PORT = isCloudRunDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Log deployment configuration for debugging
-logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isDeployment ? 'yes' : 'no'})`);
+// Log deployment configuration for debugging with improved error handling
+logger.info(`[ENV] Server will listen on PORT=${PORT} (deployment mode: ${isCloudRunDeployment ? 'yes' : 'no'})`);
 logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
+logger.info(`[ENV] Cloud Run deployment indicators checked: NODE_ENV=${process.env.NODE_ENV}, REPLIT_AUTOSCALE=${process.env.REPLIT_AUTOSCALE_DEPLOYMENT}`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
