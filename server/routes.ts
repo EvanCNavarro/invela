@@ -39,7 +39,7 @@ import ky3pFixedRouter from './routes/ky3p-enhanced.routes';
 import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
 // Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
-import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update-fixed';
+import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update.routes';
 // Import the new unified KY3P update routes
 import { registerUnifiedKY3PUpdateRoutes } from './routes/unified-ky3p-update';
 // Import the KY3P field key router for string-based field key references
@@ -53,7 +53,7 @@ import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
 import { fixTaskStatus, batchFixTasks } from './routes/task-fix';
 // Import manual KY3P fix route for direct recalculation of KY3P task progress
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
-import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
+import openBankingDemoAutofillRouter from './routes/open-banking-demo.routes';
 import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 // Import the fix-missing-file API route
 import fixMissingFileRouter from './routes/fix-missing-file-api';

@@ -12,7 +12,7 @@
  */
 
 import { KY3PFormService } from './ky3p-form-service';
-import { createFixedKY3PFormService } from './fixed-ky3p-form-service';
+import { createFixedKY3PFormService } from './ky3p-form-enhanced.service';
 import { FormServiceInterface, FormField, FormSection, FormSubmitOptions } from './formService';
 import getLogger from '@/utils/logger';
 
