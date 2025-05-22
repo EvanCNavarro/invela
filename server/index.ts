@@ -211,7 +211,7 @@ const isProductionDeployment = true;  // Force production mode for Cloud Run dep
 process.env.NODE_ENV = 'production';
 
 // Replit's recommended dynamic port configuration
-// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility
+// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 // Fallback ensures Cloud Run compatibility while respecting Replit's deployment environment
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
