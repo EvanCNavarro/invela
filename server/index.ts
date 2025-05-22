@@ -218,6 +218,8 @@ logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
+// Import production database setup for deployment readiness
+import { initializeProductionDatabase } from './deployment/database-setup';
 
 // Start the server with the standardized configuration and health checks
 server.listen(PORT, HOST, async () => {

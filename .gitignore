@@ -75,6 +75,42 @@ direct-*.js
 *.development.js
 *.test.js
 
+# Additional Deployment Size Optimization
+# Large development files that shouldn't be in production
+*.map
+*.map.js
+source-map-*
+.cache/
+.tmp/
+.temp/
+test-results/
+playwright-report/
+.nyc_output/
+coverage/
+
+# Large binary files and assets that may have been committed
+*.mov
+*.mp4
+*.avi
+*.wmv
+*.flv
+*.webm
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Development artifacts
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+
 # Replit Specific
 .replit.nix
 .upm/
