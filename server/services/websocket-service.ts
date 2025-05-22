@@ -49,8 +49,13 @@ export interface FormSubmissionPayload {
 
 /**
  * WebSocket Service for broadcasting messages to clients
+ * 
+ * This class provides both instance-based and static methods for WebSocket communication.
+ * The static methods delegate to a singleton instance for backward compatibility
+ * with existing code that expects static method access.
  */
 export class WebSocketService {
+  private static instance: WebSocketService | null = null;
   private wss: WebSocketServer | null;
   private clients: Set<WebSocket> = new Set();
   private isEnabled = false;
@@ -214,6 +219,88 @@ export class WebSocketService {
         timestamp: new Date().toISOString()
       }
     });
+  }
+
+  // =====================================================================
+  // SINGLETON PATTERN AND STATIC METHODS
+  // =====================================================================
+
+  /**
+   * Initialize the WebSocket service with a server instance
+   * Creates or updates the singleton instance for static method access
+   * 
+   * @param server The HTTP server to attach WebSocket to
+   * @returns The initialized WebSocket server
+   */
+  static initializeWebSocketServer(server: any): WebSocketServer | null {
+    try {
+      // Create WebSocket server instance
+      const wss = new WebSocketServer({ 
+        server, 
+        path: '/ws-enhanced',
+        clientTracking: true 
+      });
+
+      // Create or update singleton instance
+      WebSocketService.instance = new WebSocketService(wss);
+      
+      console.log('[WebSocketService] Static initialization completed successfully');
+      return wss;
+    } catch (error) {
+      console.error('[WebSocketService] Failed to initialize WebSocket server:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get the singleton instance, creating a fallback if none exists
+   * 
+   * @returns The WebSocket service instance
+   */
+  private static getInstance(): WebSocketService {
+    if (!WebSocketService.instance) {
+      console.log('[WebSocketService] No singleton instance found, creating fallback instance');
+      WebSocketService.instance = new WebSocketService(null);
+    }
+    return WebSocketService.instance;
+  }
+
+  /**
+   * Static method to broadcast a generic message
+   * Delegates to the singleton instance
+   * 
+   * @param type The message type
+   * @param payload The message payload
+   */
+  static broadcastMessage(type: string, payload: any): void {
+    const instance = WebSocketService.getInstance();
+    instance.broadcast({
+      type,
+      payload,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Static method to broadcast a task update
+   * Delegates to the singleton instance
+   * 
+   * @param taskData The task update data containing id, status, progress
+   */
+  static broadcastTaskUpdate(taskData: { id: number; status: string; progress: number; [key: string]: any }): void {
+    const instance = WebSocketService.getInstance();
+    instance.broadcastTaskUpdate(taskData.id, taskData.status, taskData.progress);
+  }
+
+  /**
+   * Static method to broadcast a form submission
+   * Delegates to the singleton instance
+   * 
+   * @param payload The form submission payload
+   */
+  static broadcastFormSubmission(payload: FormSubmissionPayload): void {
+    const instance = WebSocketService.getInstance();
+    instance.broadcastFormSubmission(payload);
   }
 }
 
