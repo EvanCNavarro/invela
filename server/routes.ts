@@ -32,8 +32,7 @@ import ky3pFieldsRouter from './routes/ky3p-fields';
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Import the KY3P progress test route
-import testKy3pProgressRouter from './routes/test-ky3p-progress';
+// Test route removed during cleanup
 // Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-fixed-routes';
 // Import KY3P submission fix to properly handle form submissions
@@ -59,7 +58,7 @@ import universalDemoAutofillRouter from './routes/universal-demo-autofill';
 // Import the fix-missing-file API route
 import fixMissingFileRouter from './routes/fix-missing-file-api';
 // Import WebSocket notification test router
-import testWebSocketNotificationsRouter from './routes/test-websocket-notifications';
+// Test router removed during cleanup
 import unifiedDemoAutofillRouter from './routes/unified-demo-autofill-api';
 import { registerKY3PFieldUpdateRoutes } from './routes/ky3p-field-update';
 import filesRouter from './routes/files';
@@ -73,9 +72,9 @@ import { router as debugRoutesTs } from './routes/debug-routes';
 // Import our new task broadcast router
 import taskBroadcastRouter from './routes/task-broadcast';
 // Import our KY3P progress fix test route
-import ky3pProgressFixTestRouter from './routes/ky3p-progress-fix-test';
+// Test router removed during cleanup
 // Import our test submission state router for testing submission state preservation
-import createTestSubmissionStateRouter from './routes/test-submission-state';
+// Test router removed during cleanup
 // Manual KY3P fix route already imported above
 // Temporarily disabled until module compatibility is fixed
 // import * as debugEndpoints from './routes/debug-endpoints';
@@ -381,9 +380,9 @@ export function registerRoutes(app: Express): Express {
   // Register debug-routes.ts
   app.use('/api/debug', debugRoutesTs);
   // Register test submission state router
-  app.use('/api/test-submission', createTestSubmissionStateRouter());
+  // Test router removed during cleanup
   // Register test WebSocket notifications router
-  app.use('/api/test/websocket', testWebSocketNotificationsRouter);
+  // Test router removed during cleanup
   // Temporarily disabled until module compatibility is fixed
   // app.use('/api/debug', debugEndpoints);
   
@@ -397,9 +396,9 @@ export function registerRoutes(app: Express): Express {
   // Register enhanced KY3P submission router with fixed progress handling
   app.use(enhancedKy3pSubmissionRouter);
   // Register KY3P progress test route
-  app.use(testKy3pProgressRouter);
+  // Test router removed during cleanup
   // Register KY3P progress fix test route
-  app.use(ky3pProgressFixTestRouter);
+  // Test router removed during cleanup
   // Register manual KY3P progress fix endpoint
   app.use('/api/ky3p/manual-fix', manualKy3pFix);
   // Register KY3P submission fix router to properly handle form submissions
