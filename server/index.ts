@@ -202,43 +202,27 @@ import { initializeProductionOptimizations } from './deployment/production-confi
 initializeProductionOptimizations();
 
 // Configure server for proper deployment
-// Production deployment detection with comprehensive indicators
-// Root cause fix: Addresses .replit port conflicts by using definitive deployment signals
-// Homogeneous with existing app patterns: Uses same detection logic as logging system
-const isProductionDeployment = process.env.NODE_ENV === 'production' || 
-                               process.env.REPLIT_AUTOSCALE_DEPLOYMENT === 'true' ||
-                               process.env.REPLIT_DEPLOYMENT === 'true' ||
-                               process.env.REPLIT_DISABLE_PACKAGE_LAYER === '1' ||  // Infrastructure optimization signal
-                               (process.env.PORT && parseInt(process.env.PORT) === 8080);
-
-// Replit platform optimization: Force production mode for Cloud Run deployment
-// Best practice: Eliminate conditional complexity that can cause deployment failures
-// Homogeneous with platform requirements: Ensures consistent behavior across environments
-const isCloudRunDeployment = isProductionDeployment || 
-                            process.env.GOOGLE_CLOUD_PROJECT ||  // Cloud Run indicator
-                            process.env.K_SERVICE ||             // Cloud Run service indicator
-                            process.env.K_REVISION;              // Cloud Run revision indicator
+// Replit's recommended approach: Force production settings to eliminate conditional complexity
+// Best practice: Simple, definitive configuration prevents bundle phase loops
+const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
 
 // Set NODE_ENV based on deployment context - prioritize explicit production setting
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = isCloudRunDeployment ? 'production' : 'development';
-}
+process.env.NODE_ENV = 'production';
 
-// Cloud Run port configuration with .replit conflict resolution
-// Root cause fix: Always use port 8080 for Cloud Run deployment to ensure proper binding
-// Best practice: Production-first configuration (8080) with development fallback (5000)
-const PORT = isCloudRunDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
+// Cloud Run port configuration - always use port 8080 for proper binding
+// Replit's recommendation: Eliminate conditional port logic that causes deployment confusion
+const PORT = 8080;  // Always use port 8080 for Cloud Run deployment
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Enhanced deployment logging with comprehensive indicator tracking
-// Best practice: Clear visibility into deployment detection logic for debugging
-logger.info(`[ENV] Server will listen on PORT=${PORT} (production mode: ${isProductionDeployment ? 'yes' : 'no'})`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV} (NODE_ENV explicitly set)`);
-logger.info(`[ENV] Production indicators: NODE_ENV=${process.env.NODE_ENV}, REPLIT_AUTOSCALE=${process.env.REPLIT_AUTOSCALE_DEPLOYMENT}, PACKAGE_LAYER=${process.env.REPLIT_DISABLE_PACKAGE_LAYER}`);
+// Simplified deployment logging for Replit's forced configuration approach
+// Best practice: Clear visibility into forced production settings
+logger.info(`[ENV] Server will listen on PORT=${PORT} (forced production mode)`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (forced production)`);
+logger.info(`[ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
