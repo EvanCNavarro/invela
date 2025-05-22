@@ -23,7 +23,7 @@ import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { broadcastFieldUpdate } from '../utils/progress';
 import { reconcileTaskFields } from '../utils/unified-task-reconciler';
-import { reconcileTaskFieldsFixed } from '../utils/fixed-task-reconciler';
+import { reconcileTaskFieldsFixed } from '../utils/task-reconciler.utils';
 
 const router = express.Router();
 
