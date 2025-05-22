@@ -194,7 +194,11 @@ export function startPeriodicTaskReconciliation(): void {
   // Stop any existing intervals
   stopPeriodicTaskReconciliation();
   
-  console.log(`[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: ${RECONCILIATION_INTERVAL}ms)`);
+  logger.child({ module: 'PeriodicTaskReconciliation' }).info('Periodic reconciliation system started', { 
+    intervalMs: RECONCILIATION_INTERVAL,
+    cacheCleanupIntervalMs: CACHE_CLEANUP_INTERVAL,
+    status: 'active'
+  });
   
   // Start reconciliation interval
   reconciliationInterval = setInterval(reconcileBatch, RECONCILIATION_INTERVAL);
@@ -220,7 +224,9 @@ export function stopPeriodicTaskReconciliation(): void {
     cacheCleanupInterval = null;
   }
   
-  console.log('[PeriodicTaskReconciliation] Stopped periodic reconciliation system');
+  logger.child({ module: 'PeriodicTaskReconciliation' }).info('Periodic reconciliation system stopped', { 
+    status: 'inactive'
+  });
 }
 
 /**
