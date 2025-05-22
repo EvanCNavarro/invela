@@ -1,0 +1,124 @@
+# Docker Deployment Size Optimization
+# This file excludes unnecessary files and directories from the Docker build context
+# to reduce deployment image size below the 8GB limit.
+
+# Development Dependencies and Build Artifacts
+node_modules/
+client/node_modules/
+dist/
+.cache/
+.parcel-cache/
+*.tar.gz
+*.tgz
+
+# Development and Testing Files
+.git/
+.gitignore
+README.md
+*.md
+docs/
+tests/
+test/
+spec/
+coverage/
+.nyc_output/
+
+# Development Environment Files
+.env.local
+.env.development.local
+.env.test.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large Asset Directories (Major Size Reduction)
+attached_assets/
+uploads/
+# Keep only essential uploads for production
+!uploads/.gitkeep
+
+# Development and Maintenance Scripts
+# These are not needed in production deployment
+*.js.map
+*.ts.map
+fix-*.js
+fix-*.ts
+fix-*.cjs
+direct-*.js
+direct-*.ts
+direct-*.cjs
+create-*.js
+create-*.ts
+create-*.cjs
+check-*.js
+check-*.ts
+check-*.cjs
+cleanup-*.js
+cleanup-*.ts
+cleanup-*.cjs
+demo-*.js
+demo-*.ts
+demo-*.cjs
+browser-*.js
+*.sql
+
+# Documentation and Planning Files
+*.md
+COLUMN_PRIORITIES.md
+FORM_*.md
+KY3P-*.md
+LOGGING-*.md
+ONBOARDING-*.md
+PROGRESS_*.md
+TAB-*.md
+TASK-*.md
+UNIFIED-*.md
+
+# Log Files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS Generated Files
+.DS_Store*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package Manager Files (Keep package.json but exclude locks for size)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build Configuration (Keep essential, exclude development)
+.eslintrc*
+.prettierrc*
+jest.config.*
+webpack.config.*
+rollup.config.*
