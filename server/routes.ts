@@ -3199,8 +3199,9 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
             const chunkAnswers = await analyzeDocument(chunkText, fields);
             answers.push(...chunkAnswers);
 
-            // Send progress update via WebSocket
-            WebSocketService.broadcastMessage('task_update', {
+            // Send progress update via unified WebSocket broadcast system
+            // Uses the same consistent broadcasting approach as the rest of the application
+            broadcast('task_update', {
               id: req.body.taskId, // Using the task ID from request body
               metadata: {
                 type: 'CLASSIFICATION_UPDATE',
