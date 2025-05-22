@@ -211,15 +211,23 @@ const isProductionDeployment = process.env.NODE_ENV === 'production' ||
                                process.env.REPLIT_DISABLE_PACKAGE_LAYER === '1' ||  // Infrastructure optimization signal
                                (process.env.PORT && parseInt(process.env.PORT) === 8080);
 
+// Replit platform optimization: Force production mode for Cloud Run deployment
+// Best practice: Eliminate conditional complexity that can cause deployment failures
+// Homogeneous with platform requirements: Ensures consistent behavior across environments
+const isCloudRunDeployment = isProductionDeployment || 
+                            process.env.GOOGLE_CLOUD_PROJECT ||  // Cloud Run indicator
+                            process.env.K_SERVICE ||             // Cloud Run service indicator
+                            process.env.K_REVISION;              // Cloud Run revision indicator
+
 // Set NODE_ENV based on deployment context - prioritize explicit production setting
 if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = isProductionDeployment ? 'production' : 'development';
+  process.env.NODE_ENV = isCloudRunDeployment ? 'production' : 'development';
 }
 
 // Cloud Run port configuration with .replit conflict resolution
-// Root cause fix: Overrides conflicting .replit port mappings with definitive production logic
+// Root cause fix: Always use port 8080 for Cloud Run deployment to ensure proper binding
 // Best practice: Production-first configuration (8080) with development fallback (5000)
-const PORT = isProductionDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
+const PORT = isCloudRunDeployment ? 8080 : (parseInt(process.env.PORT || '5000', 10));
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
