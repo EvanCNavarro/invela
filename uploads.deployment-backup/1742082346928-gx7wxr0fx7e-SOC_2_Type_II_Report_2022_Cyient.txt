@@ -1,9 +1,0 @@
-SOC 2 Type II Report 2022 Cyient
-
-Independent Service Auditor’s Report on a Description of Cyient’s Engineering Design 
-& Spatial Data Services Relevant to Security, Confidentiality, Availability and the 
-Suitability of the Design and Operating Effectiveness of Controls 
-
-November 01, 2020 to October 31, 2021
-
---- (Content continues from extracted text) ---
