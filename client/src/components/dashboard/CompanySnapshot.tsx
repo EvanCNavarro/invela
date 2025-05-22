@@ -41,10 +41,10 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
   const relationshipsCount = relationships?.length || 0;
 
   // Common styles
-  const cardClassName = "p-4 border rounded-lg shadow-sm flex flex-col items-center";
-  const labelClassName = "text-sm font-medium mb-2 text-foreground text-center";
-  const valueClassName = "text-3xl font-bold text-black";
-  const iconClassName = "h-5 w-5 mr-2 text-foreground";
+  const cardClassName = "p-3 sm:p-4 border rounded-lg shadow-sm flex flex-col items-center";
+  const labelClassName = "text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-foreground text-center";
+  const valueClassName = "text-2xl sm:text-3xl font-bold text-black";
+  const iconClassName = "h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 text-foreground";
 
   // Handle click on relationships card
   const handleRelationshipsClick = () => {
@@ -84,7 +84,7 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         </Card>
         
         {/* Top Stats Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Company Relationships Card */}
           <Card 
             className={cn(
@@ -123,18 +123,18 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
         </div>
         
         {/* Bottom Stats Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* S&P Business Data Risk Score Card */}
           <Card className={cn(
             cardClassName,
             "border-blue-500/50 border-2"
           )}>
-            <div className="flex flex-col items-center mb-2">
+            <div className="flex flex-col items-center mb-1 sm:mb-2">
               <div className="flex items-center justify-center">
                 <Award className={iconClassName} />
-                <span className="text-sm font-medium text-foreground">S&P DATA</span>
+                <span className="text-xs sm:text-sm font-medium text-foreground">S&P DATA</span>
               </div>
-              <span className="text-sm font-medium text-foreground text-center">ACCESS RISK SCORE</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground text-center">ACCESS RISK SCORE</span>
             </div>
             <div className={valueClassName}>
               {riskScore}
@@ -146,13 +146,13 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             cardClassName,
             "border-green-500/50 border-2"
           )}>
-            <div className="flex items-center justify-center mb-2">
+            <div className="flex items-center justify-center mb-1 sm:mb-2">
               <CheckCircle className={iconClassName} />
               <span className={labelClassName}>
                 ACCREDITATION
               </span>
             </div>
-            <div className="text-xl font-semibold text-black">
+            <div className="text-lg sm:text-xl font-semibold text-black">
               {displayStatus}
             </div>
           </Card>

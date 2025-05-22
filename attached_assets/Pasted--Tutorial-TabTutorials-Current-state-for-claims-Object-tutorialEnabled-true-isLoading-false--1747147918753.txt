@@ -1,0 +1,56 @@
+[Tutorial:TabTutorials] Current state for claims: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab claims (path: /claims, expected: /claims)
+[Tutorial:TutorialManager] Tutorial already completed for tab: claims
+[Tutorial:TutorialManager] 🚀 Initializing for tab: claims
+[Tutorial:TutorialManager] Normalizing tab name from 'claims' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'claims'
+[Tutorial:TabTutorials] Normalizing tab name from 'claims' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'claims'
+[Tutorial:TabTutorials] Normalizing tab name from 'claims' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'claims'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: claims (original: claims)
+[Tutorial:TabTutorials] Current state for claims: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab claims (path: /claims, expected: /claims)
+[Tutorial:TutorialManager] Tutorial already completed for tab: claims
+[ClaimsTable] Attempting to navigate to claim details: 
+Object {id: 5, claim_id: "CLM-2025-005", bank_id: "BNK-54321", bank_name: "Liberty Savings", fintech_name: "Financial Data Connect", …}
+[ClaimsTable] Navigating to path: /claims/5
+[Router] Current location: /claims/5
+[Router] Rendering claim details page for ID: 5
+[ClaimDetailsPage] Rendering with claimId param: 5
+[ClaimDetailsPage] Full params: 
+Object {0: "5", claimId: "5"}
+[Tutorial:ClaimsPage] Claims Management page unmounting
+[Tutorial:Claims] Claims tutorial component unmounting
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for claims
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/claims/5", …}
+[Sidebar] Tab state check: company=1, path=/claims/5, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[ONBOARDING DEBUG] WelcomeModal user data received: 
+Object {userId: 8, email: "evan.navarro@invela.com", onboardingCompleted: true, userObject: "{↵  "id": 8,↵  "email": "evan.navarro@invela.com",↵  "full_name": "Evan Navarro",↵ …"}
+[ONBOARDING DEBUG] User is already marked as onboarded in user object
+[WebSocketEventBridge] Initializing event bridge
+[TanStack Query] Fetching: /api/claims/5
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[TanStack Query] Response for /api/claims/5: Status 404
+API error 404: {"error":"Claim not found"}...
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+[TanStack Query] Error fetching /api/claims/5: 
+Error {}
+
+[ClaimDetailsPage] Rendering with claimId param: 5
+[ClaimDetailsPage] Full params: 
+Object {0: "5", claimId: "5"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:51:53.369Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:51:54.399Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-13T14:51:54.903Z", echo: {…}}

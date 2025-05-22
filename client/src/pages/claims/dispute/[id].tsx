@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function ClaimDisputePage() {
   const params = useParams();
@@ -72,14 +73,26 @@ export default function ClaimDisputePage() {
     });
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'MMM dd, yyyy');
     } catch (error) {
+      console.error('Error formatting date:', error);
       return dateString;
     }
+  };
+  
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
+  const formatCurrency = (amount: number) => {
+    return Math.round(amount).toLocaleString('en-US');
   };
 
   if (isLoading) {
@@ -120,13 +133,7 @@ export default function ClaimDisputePage() {
     );
   }
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  // Using formatCurrency from above - standardized across all pages
 
   // Mock data structured from the screenshot
   const disputeData = {
@@ -290,10 +297,10 @@ export default function ClaimDisputePage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="border rounded-md overflow-hidden">
-                      <div className="bg-muted font-medium p-3 border-b">Bank Documentation</div>
+                      <div className="bg-muted font-medium p-3 pl-4 border-b">Bank Documentation</div>
                       <div className="p-4 space-y-3">
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-blue-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-blue-600" />
                             </div>
@@ -302,10 +309,10 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">PDF · 1.2 MB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-blue-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-blue-600" />
                             </div>
@@ -314,10 +321,10 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">XLSX · 845 KB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-blue-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-blue-600" />
                             </div>
@@ -326,16 +333,16 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">PDF · 2.8 MB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
                       </div>
                     </div>
                     
                     <div className="border rounded-md overflow-hidden">
-                      <div className="bg-muted font-medium p-3 border-b">Fintech Documentation</div>
+                      <div className="bg-muted font-medium p-3 pl-4 border-b">Fintech Documentation</div>
                       <div className="p-4 space-y-3">
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-purple-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-purple-600" />
                             </div>
@@ -344,10 +351,10 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">PDF · 3.1 MB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-purple-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-purple-600" />
                             </div>
@@ -356,16 +363,16 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">DOCX · 520 KB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
                       </div>
                     </div>
                     
                     <div className="border rounded-md overflow-hidden">
-                      <div className="bg-muted font-medium p-3 border-b">Third-Party Analysis</div>
+                      <div className="bg-muted font-medium p-3 pl-4 border-b">Third-Party Analysis</div>
                       <div className="p-4 space-y-3">
-                        <div className="flex items-center justify-between p-2 border rounded-md">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => {}}>
+                          <div className="flex items-center space-x-3 pl-1">
                             <div className="h-8 w-8 bg-green-100 rounded flex items-center justify-center">
                               <FileText className="h-4 w-4 text-green-600" />
                             </div>
@@ -374,7 +381,7 @@ export default function ClaimDisputePage() {
                               <p className="text-xs text-muted-foreground">PDF · 5.7 MB</p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">View</Button>
+                          <Button variant="ghost" size="sm" className="mr-1" onClick={(e) => e.stopPropagation()}>View</Button>
                         </div>
                       </div>
                     </div>
@@ -523,15 +530,15 @@ export default function ClaimDisputePage() {
   );
 }
 
+/**
+ * Standardized loading state using Invela loading spinner
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6">
-      <Skeleton className="w-full h-[200px]" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Skeleton className="w-full h-[300px]" />
-        <Skeleton className="w-full h-[300px]" />
-      </div>
-      <Skeleton className="w-full h-[150px]" />
+    <div className="flex flex-col items-center justify-center min-h-[500px] w-full">
+      <LoadingSpinner size="lg" />
+      <p className="mt-4 text-muted-foreground">Loading dispute details...</p>
     </div>
   );
 }

@@ -1,108 +1,80 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "./schema";
 import * as timestampSchema from "./schema-timestamps";
+import { logger } from '../server/utils/logger';
 
-neonConfig.webSocketConstructor = ws;
+// Create a dedicated logger for database operations
+const dbLogger = logger.child({ module: 'Database' });
 
-// Connection pooling optimization to reduce the number of connections
-const MAX_CONNECTION_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-const POOL_SIZE = 3; // Further reduced pool size to minimize connection messages
-const IDLE_TIMEOUT = 60000; // Extended to 60 seconds to significantly reduce connection churn
-const MAX_USES = 7500; // Increased to reduce connection reuse frequency
-const CONNECTION_TIMEOUT = 60000; // Increased connection timeout to avoid quick timeouts
-
+// Check for DATABASE_URL environment variable
 if (!process.env.DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
-// Configure the pool with optimized settings
-export const pool = new Pool({ 
+// Connection settings optimized for Neon PostgreSQL's serverless architecture
+// These settings are designed to handle the unique behavior of Neon
+// including control plane rate limiting and connection pooling
+const POOL_SIZE = 3; // Small but sufficient pool size to reduce connection overhead
+const IDLE_TIMEOUT = 600000; // 10 minutes idle timeout
+const CONNECTION_TIMEOUT = 180000; // 3 minutes connection timeout
+
+dbLogger.info('Initializing database connection with optimized settings for Neon PostgreSQL');
+
+// Configure the pool with optimized settings for Neon
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: POOL_SIZE,
   idleTimeoutMillis: IDLE_TIMEOUT,
   connectionTimeoutMillis: CONNECTION_TIMEOUT,
-  maxUses: MAX_USES,
+  allowExitOnIdle: false
 });
 
-let retryCount = 0;
-
-// Enhanced error handling for the connection pool
-pool.on('error', (err, client) => {
-  const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] Database pool error:`, {
+// Add connection events with proper error handling
+pool.on('error', (err) => {
+  // Log the error but don't try to reconnect immediately
+  // This prevents cascading failures with Neon's rate limits
+  dbLogger.error('Database pool error:', {
     message: err.message,
-    stack: err.stack,
+    code: (err as any).code,
+    stack: err.stack
   });
-
-  // Attempt to reconnect if it's a connection error
-  if (err.message.includes('connection') || err.message.includes('timeout')) {
-    if (retryCount < MAX_CONNECTION_RETRIES) {
-      retryCount++;
-      const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1);
-      console.log(`Attempting to reconnect in ${delay}ms (attempt ${retryCount}/${MAX_CONNECTION_RETRIES})`);
-
-      setTimeout(async () => {
-        try {
-          await client.connect();
-          console.log('Successfully reconnected to database');
-          retryCount = 0;
-        } catch (error) {
-          const reconnectError = error as Error;
-          console.error('Failed to reconnect:', reconnectError.message);
-        }
-      }, delay);
-    } else {
-      console.error('Maximum connection retry attempts reached');
-    }
+  
+  // Check if this is a rate limit error
+  if (err.message.includes('rate limit') || 
+      err.message.includes('too many connections') ||
+      err.message.includes('connection terminated')) {
+    dbLogger.warn('Detected rate limiting or connection issue with Neon PostgreSQL');
   }
 });
 
-// Further reduced connection logging - only log first few connections and errors
-let connectCount = 0;
-const MAX_CONNECT_LOGS = 3; // Only log the first 3 connections
-
+// Add connect event for monitoring
 pool.on('connect', (client) => {
-  if (connectCount < MAX_CONNECT_LOGS) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] New client connected to the pool (${connectCount + 1}/${POOL_SIZE})`);
-    connectCount++;
-  } else if (connectCount === MAX_CONNECT_LOGS) {
-    console.log(`Suppressing further connection logs. Pool size: ${POOL_SIZE}`);
-    connectCount++;
-  }
-  retryCount = 0;
+  dbLogger.info('New database connection established');
+  
+  // Add per-client error handler
+  client.on('error', (err) => {
+    dbLogger.error('Client-specific error:', {
+      message: err.message,
+      code: (err as any).code
+    });
+  });
 });
 
-// Only enable detailed pool logging in development and when explicitly requested
-if (process.env.NODE_ENV === 'development' && process.env.DEBUG_POOL === 'true') {
-  pool.on('acquire', () => {
-    console.debug('Client acquired from pool');
-  });
-
-  pool.on('remove', () => {
-    console.debug('Client removed from pool');
-  });
-}
-
-// Create the drizzle db instance with the configured pool
-// Combine schema objects to include timestamp-related tables
+// Combine schema objects to include all tables
 const combinedSchema = {
   ...schema,
   ...timestampSchema
 };
 
-export const db = drizzle({ client: pool, schema: combinedSchema });
+// Create the drizzle ORM instance with our pool
+export const db = drizzle(pool, { schema: combinedSchema });
 
-// Migrations removed - database schema already established
-
-// Graceful shutdown handler with improved error handling
+// Graceful shutdown handler
 async function handleShutdown(signal: string) {
-  console.log(`Received ${signal}. Closing pool...`);
+  console.log(`Received ${signal}. Closing database pool...`);
   try {
     await pool.end();
     console.log('Database pool closed successfully');
@@ -122,11 +94,5 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Migrations are no longer automatically run on startup.
-// The database schema is already set up, so there's no need to run migrations each time.
-// 
-// If you need to run migrations manually, use:
-//   npm run migrations
-// 
-// Or import and call runMigrations() directly from another script.
+// Database migrations disabled - schema already established
 console.log('Database migrations disabled - schema already applied');

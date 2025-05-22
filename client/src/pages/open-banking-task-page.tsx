@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import useEnhancedFormSubmission from '@/hooks/use-enhanced-form-submission';
 import { Button } from '@/components/ui/button';
@@ -116,7 +117,7 @@ export default function OpenBankingTaskPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <LoadingSpinner size="md" className="text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Loading Open Banking task...</p>
           </div>
         </div>

@@ -1,9 +1,21 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { eq } from 'drizzle-orm';
-import { claims, disputes, resolutions, breaches } from '@db/schema';
+// Note: These schema imports are placeholders since they're not used yet
+// and will be properly implemented when the database schema is created
+import { claims } from '@db/schema';
 
 const router = Router();
+
+// We need to ensure specific routes come before parameter routes
+// Reordering Express routes to prevent route conflicts
+const ROUTE_PRIORITY = [
+  '/active',        // 1. Get active claims
+  '/disputed',      // 2. Get disputed claims  
+  '/resolved',      // 3. Get resolved claims
+  '/dispute/:id',   // 4. Get dispute details
+  '/:id'            // 5. Get claim by ID (lowest priority, most generic)
+];
 
 // Get all active claims
 router.get('/active', async (req, res) => {
@@ -231,70 +243,8 @@ router.get('/resolved', async (req, res) => {
   }
 });
 
-// Get a single claim by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const claimId = req.params.id;
-    
-    // In a real app, we would query the database
-    // This is mock data for the purpose of this demo
-    const allClaims = [
-      {
-        id: 1,
-        claim_id: 'CLM-2025-001',
-        bank_id: 'BNK-12009',
-        bank_name: 'First National Bank',
-        fintech_name: 'PayQuick Solutions',
-        account_number: 'ACCT-46550812',
-        claim_type: 'PII Data Loss',
-        claim_date: '2025-04-15T09:30:00Z',
-        claim_amount: 50.00,
-        status: 'in_review',
-        policy_number: 'POL-2025-88231',
-        is_disputed: false,
-        is_resolved: false,
-        breach_date: '2025-04-12T03:15:00Z',
-        affected_records: 250,
-        consent_id: 'f0759cbca31766de3d7398d8fb',
-        consent_scope: 'PII',
-        incident_description: 'Unauthorized access to customer PII data was detected in the system.'
-      },
-      {
-        id: 4,
-        claim_id: 'CLM-2025-004',
-        bank_id: 'BNK-67890',
-        bank_name: 'Metro Credit Union',
-        fintech_name: 'LendSecure Technologies',
-        account_number: 'ACCT-55578123',
-        claim_type: 'PII Data Loss',
-        claim_date: '2025-04-03T11:25:00Z',
-        claim_amount: 95.00,
-        status: 'under_review',
-        policy_number: 'POL-2025-45678',
-        is_disputed: true,
-        is_resolved: false,
-        breach_date: '2025-04-01T02:30:00Z',
-        affected_records: 175,
-        consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
-        consent_scope: 'PII',
-        incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.'
-      }
-    ];
-    
-    const claim = allClaims.find(c => c.id.toString() === claimId || c.claim_id === claimId);
-    
-    if (!claim) {
-      return res.status(404).json({ error: 'Claim not found' });
-    }
-    
-    res.json(claim);
-  } catch (error) {
-    console.error('Error fetching claim:', error);
-    res.status(500).json({ error: 'Failed to fetch claim' });
-  }
-});
-
 // Get dispute details for a claim
+// This route must be defined BEFORE the '/:id' route to ensure proper route matching
 router.get('/dispute/:id', async (req, res) => {
   try {
     const claimId = req.params.id;
@@ -408,6 +358,203 @@ router.get('/dispute/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching dispute details:', error);
     res.status(500).json({ error: 'Failed to fetch dispute details' });
+  }
+});
+
+// Get a single claim by ID
+// This is a generic catch-all route for any claim ID
+router.get('/:id', async (req, res) => {
+  try {
+    const claimId = req.params.id;
+    console.log('[API] Fetching claim by ID:', claimId);
+    console.log('[API] Request params:', req.params);
+    
+    // In a real app, we would query the database
+    // This is mock data for the purpose of this demo
+    const activeClaims = [
+      {
+        id: 1,
+        claim_id: 'CLM-2025-001',
+        bank_id: 'BNK-12009',
+        bank_name: 'First National Bank',
+        fintech_name: 'PayQuick Solutions',
+        account_number: 'ACCT-46550812',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-15T09:30:00Z',
+        claim_amount: 50.00,
+        status: 'in_review',
+        policy_number: 'POL-2025-88231',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-12T03:15:00Z',
+        affected_records: 250,
+        consent_id: 'f0759cbca31766de3d7398d8fb',
+        consent_scope: 'PII',
+        incident_description: 'Unauthorized access to customer PII data was detected in the system.'
+      },
+      {
+        id: 2,
+        claim_id: 'CLM-2025-002',
+        bank_id: 'BNK-13557',
+        bank_name: 'Commerce Trust Bank',
+        fintech_name: 'DataSecure App',
+        account_number: 'ACCT-77812345',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-10T14:15:00Z',
+        claim_amount: 75.50,
+        status: 'processing',
+        policy_number: 'POL-2025-77654',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-08T06:45:00Z',
+        affected_records: 120,
+        consent_id: 'b8741ecd92a5687fb143ce09ad',
+        consent_scope: 'PII',
+        incident_description: 'Security vulnerability exploited resulting in unauthorized data access.'
+      },
+      {
+        id: 3,
+        claim_id: 'CLM-2025-003',
+        bank_id: 'BNK-22190',
+        bank_name: 'Pacific Regional Bank',
+        fintech_name: 'FinFlow Tech',
+        account_number: 'ACCT-99123456',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-05T10:20:00Z',
+        claim_amount: 120.75,
+        status: 'pending_info',
+        policy_number: 'POL-2025-33219',
+        is_disputed: false,
+        is_resolved: false,
+        breach_date: '2025-04-03T13:15:00Z',
+        affected_records: 315,
+        consent_id: 'c6532a9b78d01ef4521ab63ec',
+        consent_scope: 'PII',
+        incident_description: 'Customer PII data exposed through insecure API implementation.'
+      },
+      {
+        id: 4,
+        claim_id: 'CLM-2025-004',
+        bank_id: 'BNK-67890',
+        bank_name: 'Metro Credit Union',
+        fintech_name: 'LendSecure Technologies',
+        account_number: 'ACCT-55578123',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-04-03T11:25:00Z',
+        claim_amount: 95.00,
+        status: 'under_review',
+        policy_number: 'POL-2025-45678',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-04-01T02:30:00Z',
+        affected_records: 175,
+        consent_id: 'a9b3451fd7124c8e9ef6ab49dc',
+        consent_scope: 'PII',
+        incident_description: 'Data breach through improperly secured API endpoints resulted in unauthorized access.'
+      }
+    ];
+    
+    // Include disputed claims (which were missing from the allClaims array)
+    const disputedClaims = [
+      {
+        id: 5,
+        claim_id: 'CLM-2025-005',
+        bank_id: 'BNK-54321',
+        bank_name: 'Liberty Savings',
+        fintech_name: 'Financial Data Connect',
+        account_number: 'ACCT-7891235',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-28T15:45:00Z',
+        claim_amount: 150.25,
+        status: 'escalated',
+        policy_number: 'POL-2025-98765',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-03-25T07:20:00Z',
+        affected_records: 290,
+        consent_id: 'd9e4231fa6c7890b3e56d72ab',
+        consent_scope: 'PII',
+        incident_description: 'API vulnerability exploited by unauthorized party, resulting in customer data exposure.',
+        dispute: {
+          id: 2,
+          dispute_date: '2025-03-30T13:20:00Z',
+          dispute_reason: 'Dispute over responsibility for security breach that led to data loss.',
+          status: 'escalated'
+        }
+      },
+      {
+        id: 6,
+        claim_id: 'CLM-2025-006',
+        bank_id: 'BNK-11223',
+        bank_name: 'Central State Bank',
+        fintech_name: 'SmartFunds Inc.',
+        account_number: 'ACCT-22334455',
+        claim_type: 'PII Data Loss',
+        claim_date: '2025-03-20T09:10:00Z',
+        claim_amount: 200.00,
+        status: 'escalated',
+        policy_number: 'POL-2025-55443',
+        is_disputed: true,
+        is_resolved: false,
+        breach_date: '2025-03-18T18:45:00Z',
+        affected_records: 420,
+        consent_id: 'e3d5620f1a9b7c84d25e97fb',
+        consent_scope: 'PII',
+        incident_description: 'Unauthorized database access resulted in customer PII data leak.',
+        dispute: {
+          id: 3,
+          dispute_date: '2025-03-22T14:35:00Z',
+          dispute_reason: 'Liability dispute based on contractual terms regarding data security responsibilities.',
+          status: 'under_review'
+        }
+      }
+    ];
+    
+    // Combine active and disputed claims to create a complete list
+    const allClaims = [...activeClaims, ...disputedClaims];
+    
+    // Important: Need to handle both number and string IDs
+    console.log('[API] Looking for claim with ID:', claimId);
+    console.log('[API] ID type:', typeof claimId);
+    
+    // First try exact match, then try string comparison
+    const claim = allClaims.find(c => {
+      const stringMatch = c.id.toString() === claimId;
+      const claimIdMatch = c.claim_id === claimId;
+      console.log(`[API] Checking claim ${c.id}: stringMatch=${stringMatch}, claimIdMatch=${claimIdMatch}`);
+      return stringMatch || claimIdMatch;
+    });
+    
+    if (!claim) {
+      console.log('[API] No matching claim found for ID:', claimId);
+      return res.status(404).json({ error: 'Claim not found' });
+    }
+    
+    console.log('[API] Found matching claim:', claim.id, claim.claim_id);
+    res.json(claim);
+  } catch (error) {
+    console.error('Error fetching claim:', error);
+    res.status(500).json({ error: 'Failed to fetch claim' });
+  }
+});
+
+// Create a new dispute
+router.post('/:id/dispute', async (req, res) => {
+  try {
+    const claimId = req.params.id;
+    const disputeData = req.body;
+    
+    // In a real app, we would insert into the database
+    // For now, just respond with success and a mock ID
+    
+    res.status(201).json({
+      success: true,
+      message: 'Dispute created successfully',
+      dispute_id: 5
+    });
+  } catch (error) {
+    console.error('Error creating dispute:', error);
+    res.status(500).json({ error: 'Failed to create dispute' });
   }
 });
 

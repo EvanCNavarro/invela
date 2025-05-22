@@ -12,7 +12,7 @@ export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWid
   return (
     <Widget
       title="Risk Radar"
-      subtitle="Vendor risk across six key metrics."
+      subtitle="Risk breakdown across six key dimensions."
       icon={<Shield className="h-5 w-5" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}

@@ -14,6 +14,8 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { ClaimsTutorial } from '@/components/tutorial/tabs/ClaimsTutorial';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ClaimsTableLoadingSkeleton } from '@/components/claims/ClaimsTableSkeleton';
 
 // Create a dedicated logger for the Claims page
 const logger = createTutorialLogger('ClaimsPage');
@@ -168,16 +170,12 @@ export default function ClaimsPage() {
   );
 }
 
+/**
+ * Standardized loading state using Invela skeleton loaders
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-8 w-24" />
-      </div>
-      <Skeleton className="h-[400px] w-full" />
-    </div>
-  );
+  return <ClaimsTableLoadingSkeleton />;
 }
 
 function ErrorCard({ message }: { message: string }) {

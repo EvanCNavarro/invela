@@ -2,13 +2,14 @@ import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
   return (
     <div className={cn(
       "flex items-center justify-center",
+      size === "xs" && "h-3 w-3",
       size === "sm" && "h-4 w-4",
       size === "md" && "h-8 w-8",
       size === "lg" && "h-12 w-12",

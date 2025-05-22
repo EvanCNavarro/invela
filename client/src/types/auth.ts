@@ -2,10 +2,11 @@ export type RegisterData = {
   email: string;
   password: string;
   fullName: string;
-  firstName: string;
-  lastName: string;
-  invitationCode: string;
-  company: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  companyId?: number;
+  invitationCode?: string;
 };
 
 export type LoginData = {
@@ -33,4 +34,7 @@ export type User = {
   onboarding_user_completed: boolean;
   created_at: string;
   updated_at: string;
+  // Additional fields for authentication status information
+  loginStatus?: 'success' | 'failed';
+  message?: string;
 };

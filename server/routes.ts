@@ -28,6 +28,8 @@ import securityRouter from './routes/security';
 import ky3pRouter from './routes/ky3p';
 // Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
+// Import enhanced KY3P submission handler for better progress handling
+import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
 // Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
 // Import the KY3P progress test route
@@ -48,6 +50,8 @@ import { registerKY3PFieldKeyRouter } from './routes/ky3p-keyfield-router';
 import ky3pDemoAutofillRouter from './routes/ky3p-demo-autofill';
 // Import enhanced Open Banking routes with improved reliability
 import enhancedOpenBankingRouter from './routes/enhanced-open-banking';
+// Import the task fix route to correct status/progress issues
+import { fixTaskStatus, batchFixTasks } from './routes/task-fix';
 // Import manual KY3P fix route for direct recalculation of KY3P task progress
 import { manualKy3pFix } from './routes/manual-ky3p-fix';
 import openBankingDemoAutofillRouter from './routes/fixed-open-banking-demo-autofill';
@@ -136,6 +140,10 @@ export function registerRoutes(app: Express): Express {
   // Register KYB timestamps route for field-level timestamp support
   app.use('/api/kyb/timestamps', kybTimestampRouter);
   
+  // Register task fix routes for fixing inconsistent task status/progress
+  app.get('/api/task-fix/:taskId', requireAuth, fixTaskStatus);
+  app.post('/api/task-fix/batch', requireAuth, batchFixTasks);
+
   // Critical fix: Add a redirect handler for KY3P tasks that are being queried 
   // through the KYB endpoint to resolve the form loading issue
   app.get('/api/kyb/progress/:taskId', requireAuth, async (req, res, next) => {
@@ -386,6 +394,8 @@ export function registerRoutes(app: Express): Express {
   app.use(ky3pFieldsRouter);
   // Register KY3P progress router for saved form data
   app.use(ky3pProgressRouter);
+  // Register enhanced KY3P submission router with fixed progress handling
+  app.use(enhancedKy3pSubmissionRouter);
   // Register KY3P progress test route
   app.use(testKy3pProgressRouter);
   // Register KY3P progress fix test route
@@ -740,6 +750,87 @@ export function registerRoutes(app: Express): Express {
 
   // Use the company cache exported from the top-level of this file
   
+  // PATCH endpoint for updating the current company's details
+  app.patch("/api/companies/current", requireAuth, async (req, res) => {
+    try {
+      const companyId = req.user.company_id;
+      
+      if (!companyId) {
+        return res.status(400).json({ 
+          message: "User is not associated with a company",
+          code: "NO_COMPANY"
+        });
+      }
+      
+      console.log(`[Company API] Updating company ${companyId} with data:`, req.body);
+      
+      // Get allowed fields from request body
+      const updateData: Partial<typeof companies.$inferInsert> = {};
+      
+      // Process and validate revenue - ensure it's a number
+      if (req.body.revenue !== undefined) {
+        // If revenue is already a number, use it directly
+        if (typeof req.body.revenue === 'number') {
+          updateData.revenue = req.body.revenue;
+        } 
+        // Otherwise try to convert it to a number
+        else {
+          const numericRevenue = Number(req.body.revenue);
+          if (!isNaN(numericRevenue)) {
+            updateData.revenue = numericRevenue;
+          } else {
+            console.warn(`[Company API] Invalid revenue value: ${req.body.revenue}, not updating revenue field`);
+          }
+        }
+      }
+      
+      // Set revenue tier as string for display/categorization purposes
+      if (req.body.revenue_tier !== undefined) {
+        updateData.revenue_tier = req.body.revenue_tier;
+      }
+      
+      // Process employee count
+      if (req.body.num_employees !== undefined) {
+        updateData.num_employees = req.body.num_employees;
+      }
+      
+      console.log(`[Company API] Processed update data:`, updateData);
+      
+      // Update company record
+      const [updatedCompany] = await db.update(companies)
+        .set({
+          ...updateData,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId))
+        .returning();
+        
+      if (!updatedCompany) {
+        return res.status(404).json({
+          message: "Company not found or update failed",
+          code: "UPDATE_FAILED"
+        });
+      }
+      
+      // Invalidate the company cache to ensure fresh data
+      invalidateCompanyCache(companyId);
+      
+      console.log(`[Company API] Successfully updated company ${companyId}`);
+      
+      return res.json({
+        success: true,
+        message: "Company updated successfully",
+        data: updatedCompany
+      });
+    } catch (error) {
+      console.error('[Company API] Error updating company:', error);
+      return res.status(500).json({
+        message: "Failed to update company",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+  
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       const now = Date.now();
@@ -799,15 +890,32 @@ export function registerRoutes(app: Express): Express {
         isDemo: company.is_demo
       });
 
+      // Get user's onboarding status to ensure consistent state across company and user
+      const userOnboardingStatus = req.user?.onboarding_user_completed || false;
+      
+      // Log detailed onboarding status for debugging
+      console.log('[Current Company] Onboarding status check:', {
+        userId: req.user?.id,
+        companyId: companyId,
+        userOnboardingStatus: userOnboardingStatus,
+        companyOnboardingStatus: company.onboarding_company_completed,
+        timestamp: new Date().toISOString()
+      });
+      
       // Transform response to include both risk_score and riskScore consistently
       // Also include isDemo for frontend usage (camelCase)
+      // And onboardingCompleted for the modal check
       const transformedCompany = {
         ...company,
-        risk_score: company.risk_score,       // Keep the original property
-        riskScore: company.risk_score,        // Add the frontend expected property name
-        chosen_score: company.chosen_score,   // Keep the original property
-        chosenScore: company.chosen_score,    // Add camelCase version for frontend
-        isDemo: company.is_demo               // Add camelCase version for frontend
+        risk_score: company.risk_score,                 // Keep the original property
+        riskScore: company.risk_score,                  // Add the frontend expected property name
+        chosen_score: company.chosen_score,             // Keep the original property
+        chosenScore: company.chosen_score,              // Add camelCase version for frontend
+        isDemo: company.is_demo,                        // Add camelCase version for frontend
+        onboarding_company_completed: company.onboarding_company_completed, // Original DB field
+        // CRITICAL FIX: Only use user's onboarding status, not company's
+        // This ensures onboarding modal only appears when the current user hasn't completed onboarding
+        onboardingCompleted: userOnboardingStatus
       };
       
       // Update the cache with the transformed data
@@ -1817,42 +1925,66 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         onboarding_completed: updatedUser.onboarding_user_completed
       });
 
-      // Update the related task
-      const [task] = await db.select()
+      // Update the related task - improved to handle all user onboarding tasks
+      // We now search for all user onboarding tasks for this email, not just those with EMAIL_SENT status
+      const onboardingTasks = await db.select()
         .from(tasks)
         .where(and(
           eq(tasks.user_email, email.toLowerCase()),
-          eq(tasks.status, TaskStatus.EMAIL_SENT)
+          eq(tasks.task_type, 'user_onboarding')
         ));
 
-      if (task) {
-        const [updatedTask] = await db.update(tasks)
-          .set({
-            status: TaskStatus.COMPLETED,
-            progress: 100, // Set directly to 100 for completed status
-            assigned_to: updatedUser.id,
-            metadata: {
-              ...task.metadata,
-              registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
-            }
-          })
-          .where(eq(tasks.id, task.id))
-          .returning();
+      console.log(`[Account Setup] Found ${onboardingTasks.length} onboarding tasks for email: ${email.toLowerCase()}`);
 
-        console.log('[Account Setup] Updated task status:', {
-          taskId: updatedTask.id,
-          status: updatedTask.status,
-          progress: updatedTask.progress
+      if (onboardingTasks.length > 0) {
+        // Update all associated tasks to ensure consistent state
+        for (const task of onboardingTasks) {
+          const [updatedTask] = await db.update(tasks)
+            .set({
+              status: TaskStatus.COMPLETED,
+              progress: 100, // Set directly to 100 for completed status
+              assigned_to: updatedUser.id, // Ensure user is properly assigned to the task
+              metadata: {
+                ...task.metadata,
+                registeredAt: new Date().toISOString(),
+                completed: true,
+                submission_date: new Date().toISOString(),
+                statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+              }
+            })
+            .where(eq(tasks.id, task.id))
+            .returning();
+            
+          // Get the updated task after the update operation
+          console.log(`[Account Setup] Updated task: ${task.id} for user: ${updatedUser.id}, status: 'completed', progress: 100%`);
+        }
+
+        // Log summary of the tasks that were updated
+        const lastUpdatedTask = onboardingTasks[onboardingTasks.length - 1];
+        console.log('[Account Setup] Updated task status summary:', {
+          taskCount: onboardingTasks.length,
+          lastTaskId: lastUpdatedTask.id,
+          status: TaskStatus.COMPLETED,
+          progress: 100 // Explicitly set to 100% for completed status
         });
 
         // Use the imported broadcast function from unified-websocket
         // This ensures we're using the standardized WebSocket implementation
-        broadcastTaskUpdate(updatedTask.id, {
-          status: updatedTask.status,
-          progress: updatedTask.progress,
-          metadata: updatedTask.metadata
-        });
+        // Broadcast update for each task that was modified
+        for (const task of onboardingTasks) {
+          // Broadcast a task update with corrected taskId parameter
+          broadcast('task_updated', {
+            taskId: task.id,
+            status: TaskStatus.COMPLETED,
+            progress: 100,
+            metadata: {
+              completed: true,
+              submission_date: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          });
+          console.log(`[Account Setup] Broadcast task update for task ${task.id}`);
+        }
       }
 
       // Update invitation status
@@ -1890,25 +2022,126 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Add new endpoint after account setup endpoint
   app.post("/api/user/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[User Onboarding] Completing onboarding for user:', req.user.id);
-
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, req.user.id))
-        .returning();
-
-      console.log('[User Onboarding] Updated user onboarding status:', {
-        id: updatedUser.id,
-        onboarding_completed: updatedUser.onboarding_user_completed
+      if (!req.user || !req.user.id) {
+        return res.status(400).json({ 
+          message: "Missing user information",
+          error: "User data is required for onboarding completion" 
+        });
+      }
+      
+      const userId = req.user.id;
+      const companyId = req.user.company_id;
+      const startTime = Date.now();
+      
+      console.log('[User Onboarding] Completing onboarding for user and company:', {
+        userId: userId,
+        companyId: companyId,
+        timestamp: new Date().toISOString()
       });
 
-      res.json(updatedUser);
+      // Variable to store updated user and company data
+      let updatedUserData = null;
+      let updatedCompanyData = null;
+      
+      // Create transaction to update the user record only
+      // We no longer update company onboarding status here to avoid premature company onboarding completion
+      await db.transaction(async (tx) => {
+        // Update only the user record to mark onboarding as completed
+        const [updatedUser] = await tx.update(users)
+          .set({
+            onboarding_user_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, userId))
+          .returning();
+          
+        if (!updatedUser) {
+          throw new Error(`Failed to update user ${userId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedUserData = updatedUser;
+        
+        // Get current company data without modifying it
+        const [company] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, companyId));
+          
+        if (!company) {
+          throw new Error(`Company ${companyId} not found`);
+        }
+        
+        // Save for use outside the transaction without modifying onboarding status
+        updatedCompanyData = company;
+        
+        console.log('[User Onboarding] Successfully updated user onboarding status:', {
+          userId: updatedUser.id,
+          companyId: company.id,
+          userOnboardingStatus: updatedUser.onboarding_user_completed,
+          companyOnboardingStatus: company.onboarding_company_completed, // Unchanged
+          elapsedMs: Date.now() - startTime
+        });
+      });
+
+      // After successful transaction, now try to update the onboarding task as well
+      try {
+        // Also update the onboarding task to mark it as completed
+        const updatedTask = await updateOnboardingTaskStatus(userId);
+        
+        console.log('[User Onboarding] Updated task status:', {
+          userId: userId,
+          taskUpdated: !!updatedTask,
+          taskId: updatedTask?.id,
+          elapsedMs: Date.now() - startTime
+        });
+        
+        // Invalidate company cache to ensure fresh data is returned
+        invalidateCompanyCache(companyId);
+        
+        // Return success response with appropriate details
+        return res.json({
+          success: true,
+          message: "Onboarding completed successfully",
+          user: updatedUserData,
+          company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
+            id: updatedCompanyData.id,
+            name: updatedCompanyData.name,
+            onboardingCompleted: true
+          } : null,
+          elapsedMs: Date.now() - startTime
+        });
+      } catch (taskError) {
+        console.error('[User Onboarding] Error updating task status:', taskError);
+        
+        // Still return success since the main transaction succeeded
+        return res.json({
+          success: true,
+          message: "Onboarding completed successfully, but task status update failed",
+          user: updatedUserData,
+          company: (updatedCompanyData && typeof updatedCompanyData === 'object') ? {
+            id: updatedCompanyData.id,
+            name: updatedCompanyData.name,
+            onboardingCompleted: true
+          } : null,
+          elapsedMs: Date.now() - startTime
+        });
+      }
     } catch (error) {
       console.error("[User Onboarding] Error updating onboarding status:", error);
-      res.status(500).json({ message: "Error updating onboarding status" });
+      
+      // Invalidate company cache to trigger a fresh fetch of data next time
+      try {
+        if (req.user && req.user.company_id) {
+          invalidateCompanyCache(req.user.company_id);
+        }
+      } catch (cacheError) {
+        console.error("[User Onboarding] Error invalidating cache:", cacheError);
+      }
+      
+      res.status(500).json({ 
+        message: "Error updating onboarding status",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -2332,10 +2565,16 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       const result = await db.transaction(async (tx) => {
         const txStartTime = Date.now();
         try {
+          // Validate user has a valid company_id
+          if (!req.user || !req.user.company_id) {
+            console.error('[FinTech Invite] User missing company_id:', { user: req.user });
+            throw new Error("User company ID not found");
+          }
+          
           // Get sender company
           const [userCompany] = await tx.select()
             .from(companies)
-            .where(eq(companies.id, req.user!.company_id));
+            .where(eq(companies.id, req.user.company_id));
 
           if (!userCompany) {
             throw new Error("Sender company not found");
@@ -2566,34 +2805,82 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
   // Add this endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[Complete Onboarding] Processing request for user:', req.user.id);
-
-      // Update user's onboarding status
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, req.user.id))
-        .returning();
-
-      if (!updatedUser) {
-        console.error('[Complete Onboarding] Failed to update user:', req.user.id);
-        return res.status(500).json({ message: "Failed to update user" });
+      if (!req.user || !req.user.id) {
+        return res.status(400).json({ 
+          message: "Missing user information",
+          error: "User data is required for onboarding completion" 
+        });
       }
-
-      // Try to update the onboarding task status
-      const updatedTask = await updateOnboardingTaskStatus(req.user.id);
-
-      console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
-        userId: updatedUser.id,
-        taskId: updatedTask?.id
+      
+      const userId = req.user.id;
+      const companyId = req.user.company_id;
+      const startTime = Date.now();
+      
+      console.log('[Complete Onboarding] Processing request for user:', {
+        userId: userId,
+        companyId: companyId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Variable to store updated user data
+      let updatedUserData = null;
+      
+      // Use transaction to update the user record
+      await db.transaction(async (tx) => {
+        // Update the user record to mark onboarding as completed
+        const [updatedUser] = await tx.update(users)
+          .set({
+            onboarding_user_completed: true,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, userId))
+          .returning();
+          
+        if (!updatedUser) {
+          throw new Error(`Failed to update user ${userId} onboarding status`);
+        }
+        
+        // Save for use outside the transaction
+        updatedUserData = updatedUser;
+        
+        console.log('[Complete Onboarding] Successfully updated user record:', {
+          userId: updatedUser.id,
+          companyId: companyId,
+          userOnboardingStatus: updatedUser.onboarding_user_completed,
+          elapsedMs: Date.now() - startTime
+        });
       });
 
+      // After successful transaction, try to update the onboarding task as well
+      const updatedTask = await updateOnboardingTaskStatus(userId);
+
+      console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
+        userId: updatedUserData.id,
+        taskId: updatedTask?.id,
+        elapsedMs: Date.now() - startTime
+      });
+      
+      // Invalidate company cache to ensure fresh data is returned
+      if (companyId) {
+        invalidateCompanyCache(companyId);
+      }
+
+      // Get current company information for response
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+        
       res.json({
         message: "Onboarding completed successfully",
-        user: updatedUser,
-        task: updatedTask
+        success: true,
+        user: updatedUserData,
+        company: company ? {
+          id: company.id,
+          name: company.name,
+          // Only return the user's onboarding status, not company's
+          onboardingCompleted: updatedUserData.onboarding_user_completed
+        } : null,
+        elapsedMs: Date.now() - startTime
       });
 
     } catch (error) {

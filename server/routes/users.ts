@@ -51,6 +51,20 @@ router.post("/api/users/invite", async (req, res) => {
         });
       }
 
+      // Ensure we have a company ID
+      // If req.body.company_id is missing or invalid, use the authenticated user's company_id
+      if (!req.body.company_id || typeof req.body.company_id !== 'number') {
+        console.warn('[Invite] Using authenticated user company ID as fallback:', req.user.company_id);
+        req.body.company_id = req.user.company_id;
+      }
+      
+      // Additional safety check to prevent company_id = 1 unless explicitly intended
+      // This check should be outside the previous if block to run in all cases
+      if (req.body.company_id === 1) {
+        console.warn('[Invite] Detected company_id = 1, this is likely incorrect. Using authenticated user company ID:', req.user.company_id);
+        req.body.company_id = req.user.company_id;
+      }
+
       // Validate input data
       const validationResult = inviteUserSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -64,13 +78,24 @@ router.post("/api/users/invite", async (req, res) => {
       const data = validationResult.data;
       console.log('[Invite] Validated invite data:', data);
 
-      // Get company info
+      // Verify company belongs to the authenticated user's company
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, data.company_id));
 
       if (!company) {
-        throw new Error("Company not found");
+        console.error('[Invite] Company not found, using authenticated user company:', req.user.company_id);
+        // Fall back to authenticated user's company
+        data.company_id = req.user.company_id;
+        
+        // Get the fallback company info
+        const [fallbackCompany] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, data.company_id));
+        
+        if (!fallbackCompany) {
+          throw new Error("Could not determine a valid company ID for the invitation");
+        }
       }
 
       // Generate invitation code

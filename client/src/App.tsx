@@ -20,11 +20,6 @@ import getLogger from "./utils/standardized-logger";
 // Legacy imports - will be eventually removed
 import { registerServices } from "./services/registerServices";
 import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
-import TaskStatusDebugger from "@/pages/debug/status-fixer";
-import WebSocketDebuggerPage from "@/pages/debug/websocket-debugger-page";
-import WebSocketTestPage from "@/pages/websocket-test";
-import WebSocketTestPageNew from "@/pages/websocket-test-page";
-import FormSubmissionTestPage from "@/pages/form-submission-test";
 import FormSubmissionWorkflowPage from "@/pages/form-submission-workflow";
 
 import DashboardPage from "@/pages/dashboard-page";
@@ -36,14 +31,15 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
-import PlaygroundPage from "@/pages/playground-page";
+// Removed playground page import
 import TaskPage from "@/pages/task-page";
 import KY3PTaskPage from "@/pages/ky3p-task-page";
 import OpenBankingTaskPage from "@/pages/open-banking-task-page";
 import DiagnosticPage from "@/pages/diagnostic-page";
-import FormDebugPage from "@/pages/form-debug-page";
 import RiskScorePage from "@/pages/risk-score-page";
 import ClaimsRiskPage from "@/pages/claims-risk-page";
+import TaskFix from "@/pages/TaskFix";
+import WebSocketDemoPage from "@/pages/websocket-demo-page";
 // Builder pages have been removed
 // Empty component definitions for type checking - these components are no longer used
 const BuilderPage = () => null;
@@ -52,16 +48,6 @@ const RiskRulesBuilderPage = () => null;
 const ReportingBuilderPage = () => null;
 const GroupsBuilderPage = () => null;
 import { ProtectedRoute } from "./lib/protected-route";
-import TestFormUpdate from "./test-form-update";
-import FormDbTestPage from "./form-db-test";
-import FormPerformancePage from "@/pages/FormPerformancePage";
-import ProgressiveLoadingDemo from "@/components/dev/ProgressiveLoadingDemo";
-import TestDemoAutoFill from "@/pages/test-demo-autofill";
-import TestKy3pPage from "@/pages/test-ky3p-page";
-import { TestStandardizedKy3pUpdate } from "@/components/test/TestStandardizedKy3pUpdate";
-import TestStandardizedServicePage from "@/pages/test-standardized-service-page";
-import TestStandardizedUniversalFormPage from "@/pages/test-standardized-universal-form";
-import KY3PTestPage from "@/pages/ky3p-test-page";
 
 // Landing pages
 import LandingPage from "@/pages/landing";
@@ -81,6 +67,7 @@ import LegalPage from "@/pages/landing/legal";
 import SiteMapPage from "@/pages/landing/site-map";
 import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 import ClaimsPage from "@/pages/claims";
+import ClaimDetailsPage from "@/pages/claims/[id]";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -251,13 +238,16 @@ function Router() {
         
         <ProtectedRoute 
           path="/claims/:claimId" 
-          component={({ params }: { params: { claimId: string } }) => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <ClaimsPage />
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
+          component={({ params }: { params: { claimId: string } }) => {
+            console.log('[Router] Rendering claim details page for ID:', params.claimId);
+            return (
+              <ProtectedLayout>
+                <OnboardingWrapper>
+                  <ClaimDetailsPage />
+                </OnboardingWrapper>
+              </ProtectedLayout>
+            );
+          }} 
         />
 
         <ProtectedRoute 
@@ -282,86 +272,21 @@ function Router() {
           )} 
         />
 
-        <ProtectedRoute 
-          path="/playground" 
-          component={() => (
-            <ProtectedLayout>
-              <OnboardingWrapper>
-                <div className={cn(
-                  "min-h-screen",
-                  location === "/playground" && "bg-emerald-950/5"
-                )}>
-                  <PlaygroundPage />
-                </div>
-              </OnboardingWrapper>
-            </ProtectedLayout>
-          )} 
-        />
+        {/* Playground route removed during cleanup */}
         
         {/* Diagnostic Page - For Developers */}
         <Route path="/diagnostic">
           <DiagnosticPage />
         </Route>
-        
-        {/* Form Update Test Page - For Debugging */}
-        <Route path="/test-form-update">
-          <TestFormUpdate />
+
+        {/* WebSocket Demo Page */}
+        <Route path="/websocket-demo">
+          <ProtectedLayout>
+            <WebSocketDemoPage />
+          </ProtectedLayout>
         </Route>
         
-        {/* Form Debug Page - For Troubleshooting Form Data Issues */}
-        <Route path="/form-debug">
-          <FormDebugPage />
-        </Route>
-        
-        {/* Form DB Test Page - For Testing Database Persistence */}
-        <Route path="/form-db-test">
-          <FormDbTestPage />
-        </Route>
-        
-        {/* Form Performance Testing Page - For Optimizing Large Forms */}
-        <Route path="/form-performance">
-          <FormPerformancePage />
-        </Route>
-        
-        {/* Progressive Loading Demo - For Testing Section-Based Loading */}
-        <Route path="/progressive-loading-demo">
-          <ProgressiveLoadingDemo />
-        </Route>
-        
-        {/* Demo Auto-Fill Test Page - For Testing Universal Demo Auto-Fill */}
-        <Route path="/test-demo-autofill">
-          <TestDemoAutoFill />
-        </Route>
-        
-        {/* KY3P Batch Update Test Page - For Testing KY3P Form Compatibility */}
-        <Route path="/test-ky3p-batch-update">
-          <TestKy3pPage />
-        </Route>
-        
-        {/* Standardized KY3P Update Test Page - For Testing String-Based Field Keys */}
-        <Route path="/test-standardized-ky3p-update">
-          <TestStandardizedKy3pUpdate />
-        </Route>
-        
-        {/* Standardized Form Service Test Page - For Testing the Complete FormServiceInterface Implementation */}
-        <Route path="/test-standardized-service">
-          <TestStandardizedServicePage />
-        </Route>
-        
-        {/* Standardized Universal Form Test Page - For Testing Across Different Form Types */}
-        <Route path="/test-standardized-universal-form">
-          <TestStandardizedUniversalFormPage />
-        </Route>
-        
-        {/* Enhanced KY3P Form Test Page - For Testing String-Based Field Keys and Batch Update */}
-        <Route path="/ky3p-test">
-          <KY3PTestPage />
-        </Route>
-        
-        {/* Form Submission Test Page - For Testing WebSocket Form Submission Events */}
-        <Route path="/form-submission-test">
-          <FormSubmissionTestPage />
-        </Route>
+        {/* Removed test route */}
         
         {/* Form Submission Workflow Page - For Full Submission Workflow Demo */}
         <Route path="/form-submission-workflow">
@@ -395,60 +320,21 @@ function Router() {
           )}
         />
         
-        {/* Task Status Debug Tool - For Fixing Submission Status Issues */}
-        <Route path="/debug/status-fixer">
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <Suspense fallback={<div>Loading status debugger...</div>}>
-                <TaskStatusDebugger />
-              </Suspense>
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        </Route>
+        {/* Debug routes removed */}
 
-        {/* WebSocket Debugger - For Testing Real-time Updates */}
-        <Route path="/debug/websocket">
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <Suspense fallback={<div>Loading WebSocket debugger...</div>}>
-                <WebSocketDebuggerPage />
-              </Suspense>
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        </Route>
-        
-        {/* WebSocket Form Submission Test Page */}
-        <Route path="/websocket-test">
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <Suspense fallback={<div>Loading WebSocket test page...</div>}>
-                <WebSocketTestPage />
-              </Suspense>
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        </Route>
-        
-        {/* New WebSocket Test Page for FormSubmissionListener */}
-        <Route path="/websocket-test-new">
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <Suspense fallback={<div>Loading WebSocket test page...</div>}>
-                <WebSocketTestPageNew />
-              </Suspense>
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        </Route>
-        
-        {/* Form Submission WebSocket Test - For Testing Deduplication */}
-        <Route path="/websocket-test-page">
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <Suspense fallback={<div>Loading WebSocket test page...</div>}>
-                <WebSocketTestPageNew />
-              </Suspense>
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        </Route>
+        {/* Task Fix utility page for fixing task status/progress issues */}
+        <ProtectedRoute 
+          path="/task-fix" 
+          component={() => (
+            <ProtectedLayout>
+              <DashboardLayout>
+                <OnboardingWrapper>
+                  <TaskFix />
+                </OnboardingWrapper>
+              </DashboardLayout>
+            </ProtectedLayout>
+          )} 
+        />
 
         <Route component={NotFound} />
       </Switch>
