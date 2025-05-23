@@ -1,3 +1,32 @@
+/**
+ * ========================================
+ * Card UI Component - Foundation Design System
+ * ========================================
+ * 
+ * Professional card component providing consistent visual hierarchy
+ * and layout structure throughout the application. Implements shadcn/ui
+ * design system patterns with enterprise-grade accessibility features.
+ * 
+ * Key Features:
+ * - Consistent visual hierarchy and spacing
+ * - Flexible composition with Header, Content, Footer
+ * - Accessible design with proper ARIA attributes
+ * - Professional styling with shadow and border systems
+ * - Responsive design patterns
+ * 
+ * Component Variants:
+ * - Card: Base container component
+ * - CardHeader: Top section for titles and actions
+ * - CardContent: Main content area
+ * - CardFooter: Bottom section for actions and metadata
+ * - CardTitle: Primary heading component
+ * - CardDescription: Secondary text component
+ * 
+ * @module components/ui/card
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

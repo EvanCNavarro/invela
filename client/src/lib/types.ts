@@ -1,5 +1,28 @@
 /**
- * Shared type definitions for the application
+ * ========================================
+ * Shared Type Definitions - Application Foundation
+ * ========================================
+ * 
+ * Central type definitions for the enterprise risk assessment platform.
+ * Provides core interfaces and type contracts used across components,
+ * services, and API communications throughout the application.
+ * 
+ * Key Features:
+ * - WebSocket message type definitions
+ * - Form submission and validation types
+ * - File vault and document management types
+ * - Real-time event messaging interfaces
+ * - Cross-component communication contracts
+ * 
+ * Type Categories:
+ * - Communication: WebSocket and messaging types
+ * - Form: Form submission and validation interfaces
+ * - File: File vault and document management
+ * - Event: Real-time event and update messages
+ * 
+ * @module lib/types
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 /**

@@ -1,3 +1,33 @@
+/**
+ * ========================================
+ * Task Center Page - Workflow Management
+ * ========================================
+ * 
+ * Comprehensive task management and workflow coordination page providing
+ * advanced task organization, assignment, and progress tracking capabilities.
+ * Features real-time updates, collaborative workflows, and enterprise-grade
+ * task management with integrated WebSocket communication.
+ * 
+ * Key Features:
+ * - Multi-tab task organization (All, My Tasks, Team Tasks)
+ * - Real-time task status updates via WebSocket
+ * - Advanced filtering and sorting capabilities
+ * - Task creation and assignment workflows
+ * - Progress tracking and status management
+ * - Collaborative team task coordination
+ * 
+ * Task Management:
+ * - Task lifecycle management (Created, In Progress, Completed)
+ * - User and team assignment capabilities
+ * - Real-time status synchronization
+ * - Interactive task creation modal
+ * - Comprehensive task filtering and search
+ * 
+ * @module pages/TaskCenterPage
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
