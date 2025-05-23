@@ -22,6 +22,7 @@ import {
   Activity
 } from "lucide-react";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
+import type { SelectTask, TaskStatus } from "@db/schema";
 
 interface TaskSummaryWidgetProps {
   onToggle: () => void;
@@ -39,8 +40,10 @@ interface TaskSummary {
 export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProps) {
   // Fetch task data using the existing tasks API
   const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ['/api/tasks'],
+    queryFn: () => fetch('/api/tasks').then(res => res.json()) as Promise<SelectTask[]>,
     ...getOptimizedQueryOptions('/api/tasks'),
-    select: (data) => data || []
+    select: (data: SelectTask[]) => data || []
   });
 
   // Calculate task summary metrics
@@ -48,7 +51,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     total: tasks.length,
     completed: tasks.filter(task => task.status === 'completed').length,
     pending: tasks.filter(task => task.status === 'pending' || task.status === 'in_progress').length,
-    overdue: tasks.filter(task => task.status === 'overdue').length,
+    overdue: tasks.filter(task => task.status === 'failed').length,
     completionRate: tasks.length > 0 ? Math.round((tasks.filter(task => task.status === 'completed').length / tasks.length) * 100) : 0
   };
 

@@ -67,6 +67,8 @@ This document provides a comprehensive map of the application's architecture, fi
 | File | Transformation Applied | Status |
 |------|----------------------|---------|
 | `ky3p-form-service.ts` | Enhanced documentation, improved error handling | 🔄 In Progress |
+| `TaskSummaryWidget.tsx` | Fixed TypeScript errors, added proper type imports, corrected query structure | ✅ Complete |
+| `TutorialManager.tsx` | Fixed TypeScript index signature error with Record<string, string> type | ✅ Complete |
 
 | File | Purpose | Dependencies | Critical Level | Status |
 |------|---------|--------------|----------------|---------|

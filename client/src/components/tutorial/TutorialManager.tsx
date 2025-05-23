@@ -655,7 +655,7 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
   // Generate the image URL based on the tab name and step
   const getImageUrl = () => {
     // Map tab names to their correct image prefix pattern based on available files
-    const tabToPrefix = {
+    const tabToPrefix: Record<string, string> = {
       'dashboard': 'modal_dash',
       'file-vault': 'modal_file',
       'risk-score': 'modal_risk',
