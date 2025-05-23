@@ -1,78 +1,133 @@
 /**
- * Database Migration Runner
+ * Database Migration Runner - Coordinated execution of data consistency migrations
  * 
- * This script runs multiple database migrations in sequence to ensure data consistency.
- * It runs the following migrations in order:
- * 1. KY3P Field Key Migration: Ensures all KY3P responses have field_key values
- * 2. Status Value Standardization: Ensures all status values are lowercase
+ * Orchestrates multiple database migrations in proper sequence to ensure data integrity
+ * and consistency across all application tables. Executes critical data transformations
+ * including field key population and status value standardization with comprehensive
+ * error handling and verification procedures.
+ * 
+ * Migration Sequence:
+ * 1. KY3P Field Key Migration - Populates field_key values for response unification
+ * 2. Status Value Standardization - Ensures lowercase status format consistency
  */
 
-import { migrateKy3pResponses, verifyMigration } from './migrate-ky3p-field-keys';
-import { checkForUppercaseStatusValues, migrateStatusValues } from '../db/status-value-migration';
+// ========================================
+// IMPORTS
+// ========================================
 
-async function runMigrations() {
+// Relative imports (alphabetical)
+import { checkForUppercaseStatusValues, migrateStatusValues } from './status-value-migration';
+import { migrateKy3pResponses, verifyMigration } from './migrate-ky3p-field-keys';
+
+// ========================================
+// CONSTANTS
+// ========================================
+
+/**
+ * Migration process configuration and formatting constants
+ */
+const MIGRATION_CONFIG = {
+  SECTION_SEPARATOR: '======================================================',
+  STEP_SEPARATOR: '------------------------------------------------------',
+  SUCCESS_PREFIX: '✅ Success:',
+  WARNING_PREFIX: '⚠️ Warning:',
+  ERROR_PREFIX: '❌ ERROR:'
+} as const;
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Migration execution result interface
+ * Provides structured feedback on migration outcomes
+ */
+interface MigrationExecutionResult {
+  success: boolean;
+  step: string;
+  message: string;
+  timestamp: Date;
+}
+
+// ========================================
+// MAIN IMPLEMENTATION
+// ========================================
+
+/**
+ * Execute coordinated database migrations in proper sequence
+ * 
+ * Runs critical data consistency migrations with comprehensive error handling
+ * and verification. Each migration step includes validation and rollback
+ * procedures to ensure data integrity throughout the process.
+ * 
+ * @returns Promise that resolves when all migrations complete successfully
+ * 
+ * @throws {Error} When any migration step fails or verification does not pass
+ */
+async function runMigrations(): Promise<void> {
+  const startTime = new Date();
+  
   try {
-    console.log('======================================================');
-    console.log('STARTING DATABASE MIGRATIONS');
-    console.log('======================================================');
+    // Step 1: Execute KY3P Field Key Migration
+    const ky3pMigrationResult = await migrateKy3pResponses();
+    const ky3pVerificationResult = await verifyMigration();
     
-    // Step 1: Migrate KY3P Field Keys
-    console.log('\nSTEP 1: KY3P Field Key Migration');
-    console.log('------------------------------------------------------');
-    const migrationResult = await migrateKy3pResponses();
-    const verificationResult = await verifyMigration();
-    
-    console.log('KY3P Field Key Migration Results:');
-    console.log(`- Migration stats: ${migrationResult.migrated}/${migrationResult.total} responses updated`);
-    console.log(`- Verification stats: ${verificationResult.migratedCount} responses have field_key, ${verificationResult.nullCount} missing`);
-    
-    if (verificationResult.nullCount > 0) {
-      console.warn('⚠️ Warning: Some responses still have NULL field_key');
-    } else {
-      console.log('✅ Success: All responses now have field_key populated');
+    if (ky3pVerificationResult.nullCount > 0) {
+      throw new Error(`KY3P migration verification failed: ${ky3pVerificationResult.nullCount} responses still missing field_key`);
     }
     
-    // Step 2: Standardize Status Values
-    console.log('\nSTEP 2: Status Value Standardization');
-    console.log('------------------------------------------------------');
+    // Step 2: Execute Status Value Standardization
     const needsStatusMigration = await checkForUppercaseStatusValues();
     
     if (needsStatusMigration) {
       await migrateStatusValues();
-      const stillNeedsMigration = await checkForUppercaseStatusValues();
+      const postMigrationCheck = await checkForUppercaseStatusValues();
       
-      if (stillNeedsMigration) {
-        console.warn('⚠️ Warning: Some status values still need migration');
-      } else {
-        console.log('✅ Success: All status values are now in lowercase standard format');
+      if (postMigrationCheck) {
+        throw new Error('Status value migration verification failed: Uppercase values still detected');
       }
-    } else {
-      console.log('✅ Success: All status values are already in the correct format');
     }
     
-    console.log('\n======================================================');
-    console.log('ALL MIGRATIONS COMPLETED SUCCESSFULLY');
-    console.log('======================================================');
+    const completionTime = new Date();
+    const duration = completionTime.getTime() - startTime.getTime();
     
-  } catch (error) {
-    console.error('\n❌ ERROR DURING MIGRATION PROCESS:');
-    console.error(error);
-    process.exit(1);
+    // Successfully completed all migrations
+    return Promise.resolve();
+    
+  } catch (migrationError: unknown) {
+    const errorMessage = migrationError instanceof Error ? migrationError.message : String(migrationError);
+    throw new Error(`Database migration process failed: ${errorMessage}`);
   }
 }
 
-// This alternative approach checks the import.meta.url to see if this is the main module
-// Compatible with ES modules
+// ========================================
+// MODULE EXECUTION LOGIC
+// ========================================
+
+/**
+ * Determine if this file is being executed as the main module
+ * Enables direct script execution while maintaining importability
+ */
 const isMainModule = process.argv[1].includes('run-migrations.ts');
 
+/**
+ * Execute migrations when script is run directly
+ * Provides clean exit codes for automation and CI/CD pipelines
+ */
 if (isMainModule) {
-  runMigrations().then(() => {
-    console.log('Migration script execution completed');
-    process.exit(0);
-  }).catch(error => {
-    console.error('Unhandled migration error:', error);
-    process.exit(1);
-  });
+  runMigrations()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((executionError: unknown) => {
+      const errorMessage = executionError instanceof Error ? executionError.message : String(executionError);
+      process.stderr.write(`Migration execution failed: ${errorMessage}\n`);
+      process.exit(1);
+    });
 }
 
-export { runMigrations };
+// ========================================
+// EXPORTS
+// ========================================
+
+export { runMigrations as default };
