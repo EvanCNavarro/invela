@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Professional iconography
-import { Zap, BookOpen, ExternalLink } from "lucide-react";
+import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight } from "lucide-react";
 
 // Development utilities
 import getLogger from '@/utils/logger';
