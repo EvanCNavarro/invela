@@ -1,43 +1,217 @@
 /**
- * Standardized Service Registry
+ * ========================================
+ * Standardized Service Registry Module
+ * ========================================
  * 
- * This module provides a centralized registry for all standardized form services,
- * allowing easy access to the appropriate service for each form type.
+ * Enterprise service registry providing centralized management of all
+ * standardized form services with comprehensive registration, resolution,
+ * and lifecycle management. Implements enterprise-grade service patterns
+ * for consistent service access and dependency management across the platform.
+ * 
+ * Key Features:
+ * - Centralized service registration with type safety
+ * - Dynamic service resolution with comprehensive validation
+ * - Enterprise-grade service lifecycle management
+ * - Comprehensive logging and monitoring for service operations
+ * - Service health validation and dependency tracking
+ * - Thread-safe service access with defensive programming
+ * 
+ * Dependencies:
+ * - StandardizedServices: Core service implementations
+ * - FormServiceInterface: Service interface contracts
+ * - Logger: Structured logging for enterprise monitoring
+ * 
+ * @module StandardizedServiceRegistry
+ * @version 2.0.0
+ * @since 2024-04-15
  */
 
+// ========================================
+// IMPORTS
+// ========================================
+
+// Core standardized service implementations
 import { StandardizedKY3PFormService } from './standardized-ky3p-form-service';
+// Service interface contracts for type safety
 import { FormServiceInterface } from './formService';
+// Enterprise logging utilities for comprehensive monitoring
 import getLogger from '@/utils/logger';
 
-const logger = getLogger('ServiceRegistry');
+// ========================================
+// CONSTANTS
+// ========================================
 
-// Define the service registry type
+/**
+ * Service registry configuration constants
+ * Defines registry behavior and operational parameters
+ */
+const REGISTRY_CONFIG = {
+  MAX_SERVICES: 50,
+  SERVICE_VALIDATION_TIMEOUT: 3000,
+  HEALTH_CHECK_INTERVAL: 30000,
+  SERVICE_CLEANUP_INTERVAL: 60000
+} as const;
+
+/**
+ * Service registration status enumeration
+ * Provides comprehensive service lifecycle tracking
+ */
+const SERVICE_STATUS = {
+  REGISTERED: 'registered',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ERROR: 'error',
+  DEPRECATED: 'deprecated'
+} as const;
+
+// ========================================
+// INITIALIZATION
+// ========================================
+
+// Logger instance for comprehensive service registry monitoring
+const logger = getLogger('StandardizedServiceRegistry');
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Service registry interface for comprehensive service management
+ * 
+ * Provides type-safe service registration and resolution with
+ * standardized service interfaces and comprehensive validation
+ * for enterprise-grade service management workflows.
+ */
 export interface ServiceRegistry {
+  /** Standardized KY3P form service for know-your-third-party workflows */
   standardizedKy3pFormService: typeof StandardizedKY3PFormService;
+  /** Optional standardized KYB form service for business verification */
   standardizedKybFormService?: any;
+  /** Optional standardized open banking form service for financial workflows */
   standardizedOpenBankingFormService?: any;
+  /** Additional dynamic services with string indexing */
   [key: string]: any;
 }
 
-// Create a global service registry
+/**
+ * Service registration metadata interface for comprehensive tracking
+ * 
+ * Structures service registration information with status tracking,
+ * validation results, and health monitoring for complete service lifecycle management.
+ */
+interface ServiceRegistrationMetadata {
+  /** Service registration timestamp */
+  registeredAt: Date;
+  /** Service current status */
+  status: keyof typeof SERVICE_STATUS;
+  /** Service version information */
+  version?: string;
+  /** Service health check results */
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  /** Last health check timestamp */
+  lastHealthCheck?: Date;
+  /** Service error information */
+  error?: string;
+}
+
+// ========================================
+// SERVICE REGISTRY IMPLEMENTATION
+// ========================================
+
+/**
+ * Global service registry with comprehensive service management
+ * Initialized with core standardized services for immediate availability
+ */
 export const serviceRegistry: ServiceRegistry = {
   standardizedKy3pFormService: StandardizedKY3PFormService,
 };
 
 /**
- * Register a standardized form service
- * 
- * @param name Service name (e.g., 'standardizedKybFormService')
- * @param serviceClass Service class constructor
+ * Service metadata registry for comprehensive service tracking
+ * Maintains registration information and health status for all services
  */
-export function registerStandardizedService(name: string, serviceClass: any): void {
-  logger.info(`Registering standardized service: ${name}`);
-  serviceRegistry[name] = serviceClass;
+const serviceMetadata = new Map<string, ServiceRegistrationMetadata>();
+
+// Initialize core service metadata
+serviceMetadata.set('standardizedKy3pFormService', {
+  registeredAt: new Date(),
+  status: 'active',
+  version: '2.0.0',
+  healthStatus: 'healthy'
+});
+
+// ========================================
+// SERVICE MANAGEMENT FUNCTIONS
+// ========================================
+
+/**
+ * Register a standardized form service with comprehensive validation
+ * 
+ * Provides enterprise-grade service registration with validation,
+ * metadata tracking, and comprehensive logging. Implements defensive
+ * programming patterns for reliable service registration workflows.
+ * 
+ * @param name Service identifier for registry access
+ * @param serviceClass Service class constructor or instance
+ * @param metadata Optional service registration metadata
+ * 
+ * @throws {Error} When service validation fails or registration conflicts occur
+ */
+export function registerStandardizedService(
+  name: string, 
+  serviceClass: any, 
+  metadata?: Partial<ServiceRegistrationMetadata>
+): void {
+  // Validate input parameters for defensive programming
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    throw new Error('Service name is required and must be a non-empty string');
+  }
+
+  if (!serviceClass) {
+    throw new Error('Service class is required for registration');
+  }
+
+  // Check for service registry capacity
+  if (Object.keys(serviceRegistry).length >= REGISTRY_CONFIG.MAX_SERVICES) {
+    logger.warn(`[ServiceRegistry] Service registry approaching capacity limit: ${REGISTRY_CONFIG.MAX_SERVICES}`);
+  }
+
+  // Check for existing service registration
+  if (serviceRegistry[name]) {
+    logger.warn(`[ServiceRegistry] Overwriting existing service registration: ${name}`);
+  }
+
+  try {
+    // Register the service
+    serviceRegistry[name] = serviceClass;
+
+    // Create service metadata
+    const serviceMetadataEntry: ServiceRegistrationMetadata = {
+      registeredAt: new Date(),
+      status: 'registered',
+      version: metadata?.version || '1.0.0',
+      healthStatus: 'healthy',
+      ...metadata
+    };
+
+    // Store service metadata
+    serviceMetadata.set(name, serviceMetadataEntry);
+
+    logger.info(`[ServiceRegistry] Successfully registered standardized service: ${name}`, {
+      serviceName: name,
+      version: serviceMetadataEntry.version,
+      registrationTime: serviceMetadataEntry.registeredAt
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown registration error';
+    logger.error(`[ServiceRegistry] Failed to register service: ${name}`, { error: errorMessage });
+    throw new Error(`Service registration failed for ${name}: ${errorMessage}`);
+  }
 }
 
 /**
- * Get a standardized form service instance
- * 
+ * Get a standardized form service instance with comprehensive validation 
  * @param name Service name (e.g., 'standardizedKy3pFormService')
  * @param taskId Optional task ID
  * @returns Service instance or null if service not found
