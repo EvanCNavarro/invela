@@ -2,7 +2,7 @@ import React, { useEffect, Suspense, useState } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-// import { AuthProvider } from "@/hooks/use-auth"; // Temporarily disabled
+import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
@@ -451,10 +451,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
+        <AuthProvider>
           <WebSocketProvider>
             <Router />
             <Toaster />
           </WebSocketProvider>
+        </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

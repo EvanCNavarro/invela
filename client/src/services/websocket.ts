@@ -1,122 +1,40 @@
 /**
- * ========================================
- * WebSocket Service Module
- * ========================================
+ * WebSocket Service
  * 
- * Enterprise WebSocket service providing comprehensive real-time communication
- * capabilities with automatic reconnection, message routing, and connection
- * management. Handles secure WebSocket connections, subscription management,
- * and reliable message delivery for enterprise-grade real-time applications.
- * 
- * Key Features:
- * - Automatic reconnection with exponential backoff
- * - Subscription-based message routing with type safety
- * - Connection state management and health monitoring
- * - Enterprise-grade error handling and recovery
- * - Secure connection management with proper cleanup
- * - Message queuing for reliable delivery
- * 
- * Dependencies:
- * - WebSocket API: Native browser WebSocket implementation
- * 
- * @module WebSocketService
- * @version 2.0.0
- * @since 2024-04-15
+ * Handles WebSocket connections and message processing.
  */
 
-// ========================================
-// CONSTANTS
-// ========================================
-
-/**
- * WebSocket service configuration constants
- * Defines connection behavior and reliability settings
- */
-const WEBSOCKET_CONFIG = {
-  RECONNECT_INTERVAL: 2000,
-  MAX_RECONNECT_ATTEMPTS: 5,
-  CONNECTION_TIMEOUT: 10000,
-  HEARTBEAT_INTERVAL: 30000,
-  MESSAGE_QUEUE_SIZE: 100
-} as const;
-
-/**
- * Connection state enumeration for comprehensive status tracking
- * Provides clear connection lifecycle management
- */
-const CONNECTION_STATE = {
-  DISCONNECTED: 'disconnected',
-  CONNECTING: 'connecting',
-  CONNECTED: 'connected',
-  RECONNECTING: 'reconnecting',
-  ERROR: 'error'
-} as const;
-
-// ========================================
-// SERVICE IMPLEMENTATION
-// ========================================
-
-/**
- * Enterprise WebSocket service for reliable real-time communication
- * 
- * Manages WebSocket connections with automatic reconnection, message routing,
- * and comprehensive error handling. Implements enterprise-grade patterns for
- * reliable real-time communication in production environments.
- */
 class WebSocketService {
-  /** Active WebSocket connection instance */
   private socket: WebSocket | null = null;
-  /** Message subscribers organized by event type */
   private readonly subscribers: Map<string, Set<(data: any) => void>> = new Map();
-  /** Unique connection identifier for tracking */
   private connectionId: string | null = null;
-  /** Reconnection interval in milliseconds */
-  private reconnectInterval: number = WEBSOCKET_CONFIG.RECONNECT_INTERVAL;
-  /** Current reconnection attempt count */
+  private reconnectInterval: number = 2000; // ms
   private reconnectAttempts: number = 0;
-  /** Maximum allowed reconnection attempts */
-  private maxReconnectAttempts: number = WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS;
-  /** Active connection promise for preventing duplicates */
+  private maxReconnectAttempts: number = 5;
   private connectionPromise: Promise<WebSocket> | null = null;
-  /** Connection promise resolver function */
   private connectionResolver: ((ws: WebSocket) => void) | null = null;
 
-  /**
-   * Generate secure WebSocket URL based on current protocol and host
-   * 
-   * Automatically determines the appropriate WebSocket protocol (ws/wss)
-   * based on the current page protocol for secure connections.
-   * 
-   * @returns WebSocket URL for connection establishment
-   */
+  // URL for WebSocket connection
   private get url(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${window.location.host}/ws`;
   }
 
   /**
-   * Initialize secure WebSocket connection with comprehensive error handling
-   * 
-   * Establishes WebSocket connection with automatic reconnection support,
-   * proper error handling, and connection state management. Implements
-   * enterprise-grade connection patterns for reliable real-time communication.
-   * 
-   * @returns Promise resolving to established WebSocket connection
-   * 
-   * @throws {Error} When connection establishment fails after max attempts
+   * Initialize the WebSocket connection
    */
   public connect(): Promise<WebSocket> {
-    // Return existing open connection
+    // If we already have an open connection, return it
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       return Promise.resolve(this.socket);
     }
     
-    // Return active connection promise if connecting
+    // If connection is in progress, return the existing promise
     if (this.connectionPromise && this.socket && this.socket.readyState === WebSocket.CONNECTING) {
       return this.connectionPromise;
     }
     
-    // Clean up existing socket if closed or closing
+    // If socket exists but is closing/closed, clean it up first
     if (this.socket) {
       this.socket = null;
     }

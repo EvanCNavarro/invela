@@ -1,162 +1,56 @@
-/**
- * ========================================
- * Task Template Service Module
- * ========================================
- * 
- * Enterprise task template management service providing comprehensive
- * template configuration, task type management, and component integration.
- * Handles dynamic task creation, configuration management, and template
- * lifecycle operations for scalable task management workflows.
- * 
- * Key Features:
- * - Task template lifecycle management with version control
- * - Configuration management with scoped settings support
- * - Component type integration for flexible task creation
- * - Comprehensive status tracking and template validation
- * - Real-time template updates and synchronization
- * 
- * Dependencies:
- * - QueryClient: API request management and caching infrastructure
- * 
- * @module TaskTemplateService
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// API request utilities for template data persistence and retrieval
 import { apiRequest } from '@/lib/queryClient';
 
-// ========================================
-// CONSTANTS
-// ========================================
-
 /**
- * Task template service configuration constants
- * Defines baseline values for template management and validation
- */
-const TASK_TEMPLATE_DEFAULTS = {
-  DEFAULT_STATUS: 'active',
-  DEFAULT_COMPONENT_TYPE: 'form',
-  CONFIGURATION_TIMEOUT: 30000,
-  MAX_CONFIGURATIONS_PER_TEMPLATE: 100
-} as const;
-
-/**
- * Template configuration scope types for organized settings management
- * Defines the hierarchy and organization of template configurations
- */
-const CONFIGURATION_SCOPES = {
-  GLOBAL: 'global',
-  SECTION: 'section', 
-  FIELD: 'field'
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Template configuration interface for comprehensive settings management
- * 
- * Defines structured configuration data for task templates with scoped
- * settings support, enabling flexible template customization at global,
- * section, and field levels for comprehensive task management workflows.
+ * Task template configuration
  */
 export interface TemplateConfiguration {
-  /** Unique configuration identifier */
   id: number;
-  /** Associated template identifier for relationship tracking */
   template_id: number;
-  /** Configuration key for setting identification */
   config_key: string;
-  /** Configuration value with flexible data type support */
   config_value: any;
-  /** Configuration scope level for hierarchical organization */
   scope: 'global' | 'section' | 'field';
-  /** Optional scope target for specific section or field targeting */
   scope_target?: string;
-  /** Configuration creation timestamp */
   created_at: Date | null;
-  /** Configuration last update timestamp */
   updated_at: Date | null;
 }
 
 /**
- * Task template interface for comprehensive template management
- * 
- * Provides complete task template structure with metadata, type
- * classification, and status tracking for dynamic task creation
- * and management workflows throughout the application lifecycle.
+ * Task template
  */
 export interface TaskTemplate {
-  /** Unique template identifier */
   id: number;
-  /** Human-readable template name */
   name: string;
-  /** Detailed template description and purpose */
   description: string;
-  /** Task type classification for workflow organization */
   task_type: string;
-  /** Component type for rendering and interaction specification */
   component_type: string;
-  /** Template status for lifecycle management */
   status: string;
-  /** Template creation timestamp */
   created_at: Date | null;
-  /** Template last update timestamp */
   updated_at: Date | null;
 }
 
 /**
- * Task template with configurations interface for complete template data
- * 
- * Extends base TaskTemplate with associated configuration array for
- * comprehensive template management including all settings and
- * customization options in a single data structure.
+ * Task template with configurations
  */
 export interface TaskTemplateWithConfigs extends TaskTemplate {
-  /** Array of associated template configurations */
   configurations: TemplateConfiguration[];
 }
 
-// ========================================
-// SERVICE IMPLEMENTATION
-// ========================================
-
 /**
- * Task Template Service for enterprise template management
+ * Task Template Service
  * 
- * Provides comprehensive task template operations including CRUD operations,
- * configuration management, and template lifecycle management. Implements
- * defensive programming patterns with proper error handling and logging
- * for production-ready template management workflows.
+ * This service handles task template operations
  */
 export class TaskTemplateService {
   /**
-   * Get a task template by ID with comprehensive error handling
-   * 
-   * Retrieves a complete task template including all associated configurations
-   * with proper authentication and request tracking for reliable template access.
-   * 
-   * @param id Template identifier for retrieval
-   * @returns Promise resolving to complete template with configurations
-   * 
-   * @throws {Error} When template retrieval fails or template not found
+   * Get a task template by ID
+   * @param id Template ID
+   * @returns Promise with template and configurations
    */
   static async getTemplate(id: number): Promise<TaskTemplateWithConfigs> {
     try {
-      // Validate input parameters for defensive programming
-      if (!id || typeof id !== 'number' || id <= 0) {
-        throw new Error(`Invalid template ID provided: ${id}`);
-      }
-
       console.log(`[TaskTemplateService] Fetching template by ID: ${id}`);
       
-      // Execute authenticated API request with comprehensive headers
+      // Use direct fetch with credentials to ensure cookies are sent
       const response = await fetch(`/api/task-templates/${id}`, {
         method: 'GET',
         credentials: 'include',
@@ -169,14 +63,12 @@ export class TaskTemplateService {
       
       console.log(`[TaskTemplateService] Template API response status: ${response.status} for template ID ${id}`);
       
-      // Handle error responses with detailed logging
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[TaskTemplateService] Error fetching template with ID ${id}: HTTP ${response.status}`, errorText);
         throw new Error(`Failed to fetch template: ${response.status} ${errorText}`);
       }
       
-      // Parse and validate response data
       const data = await response.json();
       console.log(`[TaskTemplateService] Successfully fetched template by ID:`, { 
         templateId: data.id,

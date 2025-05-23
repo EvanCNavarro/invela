@@ -1,64 +1,17 @@
-/**
- * ========================================
- * Dashboard Page Component
- * ========================================
- * 
- * Enterprise dashboard providing comprehensive risk assessment overview,
- * company insights, and real-time monitoring capabilities. Implements
- * responsive design patterns with interactive widgets, tutorial integration,
- * and comprehensive data visualization for executive decision-making support.
- * 
- * Key Features:
- * - Comprehensive risk assessment dashboard with real-time data
- * - Interactive widget system with responsive grid layout
- * - Company snapshot and performance monitoring capabilities
- * - Risk radar and network visualization components
- * - Tutorial integration for user onboarding and guidance
- * - Enterprise-grade authentication and authorization
- * 
- * Dependencies:
- * - DashboardLayout: Layout wrapper for consistent dashboard presentation
- * - Dashboard Widgets: Specialized components for data visualization
- * - UI Components: Professional button, dropdown, and page structure elements
- * - Auth System: User authentication and authorization management
- * - Query Management: React Query for efficient data fetching
- * 
- * @module DashboardPage
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// React core functionality for state and lifecycle management
 import { useState, useEffect } from "react";
-// Routing utilities for navigation management
 import { useLocation } from "wouter";
-
-// Layout components for consistent dashboard structure
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-
-// Specialized dashboard widget components for data visualization
 import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
-import { RiskMeter } from "@/components/dashboard/RiskMeter";
-
-// UI components for interactive elements and page structure
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
-
-// Tutorial system for user guidance and onboarding
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
-
-// Icon components for visual consistency and accessibility
 import {
   Settings,
   Check,
@@ -74,8 +27,6 @@ import {
   BarChart3,
   FileText
 } from "lucide-react";
-
-// Dropdown menu components for navigation and action menus
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,8 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-
-// Authentication and data management hooks
+import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
