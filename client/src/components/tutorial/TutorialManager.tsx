@@ -583,13 +583,13 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
     return null;
   }
   
-  // Do not render if tutorial is completed
+  // If tutorial is completed, just render children without tutorial modal
   if (isCompleted) {
     // Only log if we have data
     if (initializationComplete) {
       logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
     }
-    return null;
+    return <>{children}</>;
   }
   
   // Find the content for this tab
