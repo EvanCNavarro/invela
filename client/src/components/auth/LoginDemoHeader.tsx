@@ -38,6 +38,9 @@ import { cn } from "@/lib/utils";
 // Professional iconography
 import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight } from "lucide-react";
 
+// Modal components
+import ChangelogModal from "@/components/modals/ChangelogModal";
+
 // Development utilities
 import getLogger from '@/utils/logger';
 
@@ -87,6 +90,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   // ========================================
   
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
 
   // ========================================
   // EVENT HANDLERS
@@ -136,8 +140,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       action: 'changelog_access'
     });
 
-    // Future implementation: Changelog modal functionality
-    console.log('Changelog modal - coming soon!');
+    setIsChangelogOpen(true);
   };
 
   /**
@@ -240,6 +243,12 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
           </button>
         </div>
       </div>
+
+      {/* Changelog Modal */}
+      <ChangelogModal 
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
+      />
 
     </div>
   );
