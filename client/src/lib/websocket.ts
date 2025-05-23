@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * WebSocket Client - Real-time Communication
+ * ========================================
+ * 
+ * WebSocket client implementation for real-time communication in the enterprise
+ * risk assessment platform. Provides connection management, message handling,
+ * and automatic reconnection capabilities with comprehensive error handling.
+ * 
+ * @module lib/websocket
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import type { MessageHandler } from './types';
 import getLogger from '@/utils/logger';
 

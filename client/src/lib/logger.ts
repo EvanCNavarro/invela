@@ -1,5 +1,15 @@
 /**
- * Simple logger utility for the client application
+ * ========================================
+ * Logger Utility - Application Logging System
+ * ========================================
+ * 
+ * Centralized logging system for the enterprise risk assessment platform.
+ * Provides namespace-based logging with multiple severity levels and
+ * consistent output formatting for debugging and monitoring.
+ * 
+ * @module lib/logger
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 interface Logger {
