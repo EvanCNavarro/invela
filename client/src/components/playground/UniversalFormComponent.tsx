@@ -1,20 +1,53 @@
+/**
+ * Universal Form Component - Advanced form system for profile data collection
+ * 
+ * Provides comprehensive form management system with sophisticated validation,
+ * progress tracking, and multi-step workflow capabilities. Optimized for profile
+ * data collection interfaces with design system integration and accessibility
+ * compliance including proper form validation, step navigation, and real-time
+ * progress updates for various profile management and data collection use cases.
+ * 
+ * Features:
+ * - Multi-step form workflow with progress tracking and validation
+ * - Real-time WebSocket integration for live progress updates
+ * - Advanced field validation with custom validation rules
+ * - Tooltip system for comprehensive user guidance
+ * - Dynamic field rendering with multiple input types support
+ * - Form service integration for data persistence and retrieval
+ * - KYB (Know Your Business) compliance workflow integration
+ * - Responsive design with mobile-first approach
+ * - Accessibility compliance with proper ARIA attributes
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// React core functionality for component state and lifecycle management
 import { useState, useEffect, useRef, useCallback, useReducer } from "react";
+
+// React Query for data fetching, caching, and server state management
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+
+// UI Components for form interface elements
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+// Lucide React icons for navigation and visual indicators
 import { ArrowLeft, ArrowRight, HelpCircle, Check, Eye } from "lucide-react";
+
+// Tooltip system for user guidance and help content
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
-import { wsService } from "@/lib/websocket";
-import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
-import { Badge } from "@/components/ui/badge";
+
+// Select component for dropdown form fields
 import {
   Select,
   SelectContent,
@@ -23,7 +56,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Import the form utilities and interfaces
+// WebSocket service for real-time communication
+import { wsService } from "@/lib/websocket";
+
+// Toast notification hooks for user feedback
+import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+
+// Form utility functions and interfaces for comprehensive form management
 import { 
   FormField,
   formExtractTooltipContent,
@@ -39,8 +79,10 @@ import {
   formExtractDataFromMetadata
 } from "@/utils/formUtils";
 
-// Import form service interfaces
+// Form service interfaces for data persistence and business logic
 import { FormServiceInterface } from "@/services/formService";
+
+// KYB (Know Your Business) service integration for compliance workflows
 import { 
   kybService, 
   getKybFields, 
