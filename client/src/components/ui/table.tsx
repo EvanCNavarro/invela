@@ -112,7 +112,7 @@ interface EnhancedTableProps<T> {
  * Enhanced Table Component with Enterprise Features
  * Provides sorting, selection, search highlighting, and actions
  */
-export function EnhancedTable<T>({
+function EnhancedTable<T>({
   data,
   columns,
   searchResults,
@@ -439,5 +439,6 @@ export {
   TableCell,
   TableCaption,
   EnhancedTable,
-  Column,
 }
+
+export type { Column };
