@@ -38,7 +38,7 @@ const STORYBOOK_URLS = {
   // Production subdomain
   production: 'https://storybook.9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev',
   // Static build (if available)
-  static: '/storybook-static'
+  static: '/storybook-static/index.html'
 } as const;
 
 // ========================================
@@ -81,40 +81,33 @@ export function StorybookPage() {
    * Try different Storybook URLs in order of preference
    */
   const tryStorybookUrls = async (): Promise<void> => {
-    const urlsToTry = [
-      { url: STORYBOOK_URLS.static, name: 'Static Build' },
-      { url: STORYBOOK_URLS.local, name: 'Local Server' },
-      { url: STORYBOOK_URLS.production, name: 'Production' }
-    ];
-
-    for (const { url, name } of urlsToTry) {
-      try {
-        // For static build, try a simple fetch
-        if (url === STORYBOOK_URLS.static) {
-          const response = await fetch(`${url}/index.html`);
-          if (response.ok) {
-            setCurrentUrl(url);
-            setIsLoading(false);
-            setHasError(false);
-            return;
-          }
-        }
-        
-        // For other URLs, set them directly and let iframe handle loading
-        setCurrentUrl(url);
+    // Try static build first since we know it exists
+    try {
+      const response = await fetch('/storybook-static/index.html');
+      if (response.ok) {
+        setCurrentUrl('/storybook-static/index.html');
         setIsLoading(false);
         setHasError(false);
         return;
-      } catch (error) {
-        console.log(`${name} Storybook not available:`, error);
-        continue;
       }
+    } catch (error) {
+      console.log('Static build not available:', error);
+    }
+
+    // Try production subdomain as fallback
+    try {
+      setCurrentUrl(STORYBOOK_URLS.production);
+      setIsLoading(false);
+      setHasError(false);
+      return;
+    } catch (error) {
+      console.log('Production Storybook not available:', error);
     }
 
     // If all attempts fail
     setIsLoading(false);
     setHasError(true);
-    setErrorMessage('Storybook is not available. Please ensure it\'s running or built.');
+    setErrorMessage('Storybook is not available. The static build may not be properly served.');
   };
 
   // ========================================
