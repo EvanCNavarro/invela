@@ -146,47 +146,58 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full max-w-[980px] mx-auto mb-2",
+      "w-full max-w-[980px] mx-auto mb-1",
       className
     )}>
       {/* Main container with professional styling */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+      <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden p-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
           
           {/* Left Button - Storybook Access */}
           <button
             onClick={handleStorybookAccess}
             disabled={isStorybookLoading}
-            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group rounded-md"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-7 h-7 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
-                <BookOpen className="w-4 h-4 text-purple-600" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-7 h-7 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
+                  <BookOpen className="w-4 h-4 text-purple-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-purple-900">
+                    {isStorybookLoading ? 'Opening...' : 'View Component Library'}
+                  </h3>
+                </div>
               </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-sm font-semibold text-purple-900">
-                  {isStorybookLoading ? 'Opening...' : 'Component Library'}
-                </h3>
+              <div className="flex items-center">
+                {isStorybookLoading ? (
+                  <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                ) : (
+                  <ArrowUpRight className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+                )}
               </div>
-              {isStorybookLoading && (
-                <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
-              )}
             </div>
           </button>
 
           {/* Right Button - Demo Access */}
           <button
             onClick={handleDemoLogin}
-            className="p-3 bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset transition-all duration-200 group"
+            className="p-3 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 group rounded-md"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-7 h-7 bg-slate-200 group-hover:bg-slate-300 rounded-lg flex items-center justify-center transition-colors">
-                <Zap className="w-4 h-4 text-slate-600" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-7 h-7 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-blue-900">
+                    Login to Demo Account
+                  </h3>
+                </div>
               </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Demo Access
-                </h3>
+              <div className="flex items-center">
+                <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-0.5 transition-transform duration-200" />
               </div>
             </div>
           </button>
