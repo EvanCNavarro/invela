@@ -4,11 +4,12 @@
 This document provides a comprehensive map of the application's architecture, file dependencies, and functional relationships. It's built incrementally as we transform each file, creating a living reference for understanding the complete codebase structure.
 
 ## Atlas Statistics
-- **Files Analyzed**: 13
-- **Files Transformed**: 13  
+- **Files Analyzed**: 16
+- **Files Transformed**: 16  
 - **Database Files**: 9 (100% complete)
 - **Type Files**: 1 (100% complete)
 - **Client Utility Files**: 3 (100% complete)
+- **Client Hook Files**: 3 (50% complete - 3 remaining)
 - **Last Updated**: 2025-05-23
 
 ---
@@ -45,6 +46,18 @@ This document provides a comprehensive map of the application's architecture, fi
 | `client/src/utils/api.ts` | HTTP client utility | None | 🟡 IMPORTANT | ✅ Transformed |
 | `client/src/utils/confetti.ts` | Visual celebration effects | `canvas-confetti` | 🟢 ENHANCEMENT | ✅ Transformed |
 | `client/src/utils/tutorial-utils.ts` | Tutorial system utilities | None | 🟡 IMPORTANT | ✅ Transformed |
+
+### 🎣 Client Hooks
+**Status**: 🚧 IN PROGRESS - 1 of 6 files transformed
+
+| File | Purpose | Dependencies | Critical Level | Status |
+|------|---------|--------------|----------------|---------|
+| `client/src/hooks/use-tutorial-websocket.ts` | Real-time tutorial sync | `react`, `@/lib/tutorial-logger`, `@/utils/tutorial-utils` | 🟡 IMPORTANT | ✅ Transformed |
+| `client/src/hooks/use-mobile.tsx` | Mobile responsiveness detection | `react` | 🟡 IMPORTANT | 🔄 Pending |
+| `client/src/hooks/use-column-visibility.ts` | Table column management | `react` | 🟢 UTILITY | 🔄 Pending |
+| `client/src/hooks/use-playground-visibility.tsx` | Playground display logic | `react` | 🟢 ENHANCEMENT | 🔄 Pending |
+| `client/src/hooks/use-sidebar.ts` | Sidebar state management | `react` | 🟡 IMPORTANT | 🔄 Pending |
+| `client/src/hooks/use-user.ts` | User authentication state | `react`, auth dependencies | 🔴 CRITICAL | 🔄 Pending |
 
 ---
 

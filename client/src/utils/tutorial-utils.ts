@@ -112,13 +112,3 @@ export function getTutorialDebugInfo(tabName: string, tutorialState: unknown): T
   };
 }
 
-// ========================================
-// EXPORTS
-// ========================================
-
-export {
-  normalizeTabName as default,
-  shouldShowTutorial,
-  generateTutorialStepId,
-  getTutorialDebugInfo
-};
