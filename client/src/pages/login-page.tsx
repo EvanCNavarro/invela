@@ -145,9 +145,6 @@ export default function LoginPage() {
 
   return (
     <AuthLayout isLogin={true} isRegistrationValidated={false}>
-      {/* Demo Header Component - Development Tools Access */}
-      <LoginDemoHeader className="mb-8" />
-      
       <motion.div 
         className="mb-12"
         initial={{ opacity: 0, y: -5 }}
