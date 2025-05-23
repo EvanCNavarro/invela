@@ -249,8 +249,8 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 
 // Early production optimizations - must run before other configurations
 // Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
-// import { initializeProductionOptimizations } from './deployment/production-config';
-// initializeProductionOptimizations(); // Disabled for development mode
+import { initializeProductionOptimizations } from './deployment/production-config';
+initializeProductionOptimizations();
 
 // Configure server for proper deployment
 // Replit's deployment fix #2: Use dynamic port configuration from environment
@@ -258,8 +258,8 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 // Homogeneous solution: Maintains same forced production approach while enabling flexibility
 const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
 
-// Set NODE_ENV for development
-process.env.NODE_ENV = 'development';
+// Set NODE_ENV based on deployment context - prioritize explicit production setting
+process.env.NODE_ENV = 'production';
 
 // Replit's recommended dynamic port configuration
 // Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
