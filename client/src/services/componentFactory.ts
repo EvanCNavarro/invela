@@ -1,170 +1,36 @@
-/**
- * ========================================
- * Component Factory Service Module
- * ========================================
- * 
- * Enterprise component factory service providing comprehensive
- * dynamic component generation, form service management, and
- * template-based component configuration for scalable UI architectures.
- * Handles intelligent component creation based on task templates and
- * form configurations for enterprise compliance workflows.
- * 
- * Key Features:
- * - Dynamic component generation with template-based configuration
- * - Singleton pattern for centralized component factory management
- * - Multiple form service integration with intelligent routing
- * - Enterprise-grade component type resolution and validation
- * - Scalable architecture supporting various component frameworks
- * - Comprehensive logging and error handling for production stability
- * 
- * Dependencies:
- * - FormService: Form field and section management interfaces
- * - TaskTemplateService: Template configuration and management
- * - FormUtils: Component type resolution utilities
- * - Logger: Structured logging for enterprise monitoring
- * 
- * @module ComponentFactory
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// Form service interfaces for component integration
 import { FormField, FormSection } from '@/services/formService';
 import { FormServiceInterface } from './formService';
-// Utility functions for component type resolution
 import { getFieldComponentType } from '@/utils/formUtils';
-// Task template management for component configuration
 import { TaskTemplateWithConfigs } from './taskTemplateService';
-// Specialized form service factories for different compliance workflows
 import { enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { ky3pFormServiceFactory } from './ky3p-form-service';
 import { unifiedKy3pServiceFactory } from './unified-ky3p-form-service';
 import { openBankingFormServiceFactory } from './open-banking-form-service';
-// Enterprise logging utilities
 import getLogger from '@/utils/logger';
 
-// ========================================
-// CONSTANTS
-// ========================================
-
 /**
- * Component factory configuration constants
- * Defines factory behavior and component generation settings
- */
-const FACTORY_CONFIG = {
-  MAX_COMPONENT_CACHE_SIZE: 100,
-  COMPONENT_GENERATION_TIMEOUT: 5000,
-  DEFAULT_COMPONENT_TYPE: 'text',
-  SERVICE_INITIALIZATION_TIMEOUT: 3000
-} as const;
-
-/**
- * Supported component types for enterprise form generation
- * Ensures consistent component type validation and resolution
- */
-const SUPPORTED_COMPONENT_TYPES = {
-  TEXT: 'text',
-  NUMBER: 'number',
-  EMAIL: 'email',
-  SELECT: 'select',
-  CHECKBOX: 'checkbox',
-  RADIO: 'radio',
-  TEXTAREA: 'textarea',
-  DATE: 'date',
-  FILE: 'file'
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Component configuration interface for dynamic component generation
- * 
- * Provides comprehensive configuration structure for creating components
- * with proper type safety, property validation, and template integration
- * for enterprise-grade dynamic UI generation workflows.
+ * Interface for component configuration
  */
 export interface ComponentConfig {
-  /** Component type identifier for factory resolution */
   type: string;
-  /** Component properties and configuration data */
   props: Record<string, any>;
-  /** Optional task template for component configuration */
   template?: TaskTemplateWithConfigs;
 }
 
-// ========================================
-// SINGLETON FACTORY IMPLEMENTATION
-// ========================================
-
 /**
- * Singleton component factory for enterprise dynamic component generation
- * 
- * Manages component creation, form service integration, and template-based
- * configuration with comprehensive error handling and performance optimization.
- * Implements singleton pattern for centralized component management across
- * the entire application ecosystem.
+ * Factory for creating form components based on template configurations
  */
 export class ComponentFactory {
-  /** Singleton instance for centralized factory management */
   private static instance: ComponentFactory;
-  /** Form service registry for specialized component generation */
   private formServices: Record<string, FormServiceInterface> = {};
-  /** Component cache for performance optimization */
-  private componentCache: Map<string, ComponentConfig> = new Map();
-  /** Logger instance for enterprise monitoring */
-  private logger = getLogger('ComponentFactory');
 
   /**
-   * Private constructor for singleton pattern implementation
-   * 
-   * Initializes factory configuration and sets up component generation
-   * infrastructure with comprehensive logging and error handling.
+   * Private constructor for singleton pattern
    */
-  private constructor() {
-    this.logger.info('Component factory initializing with enterprise configuration');
-    this.initializeFormServices();
-  }
+  private constructor() {}
 
   /**
-   * Initialize form services for component generation
-   * 
-   * Sets up specialized form service factories for different compliance workflows
-   * with comprehensive error handling and service registration.
-   */
-  private initializeFormServices(): void {
-    try {
-      // Initialize KYB service factory
-      this.formServices['kyb'] = enhancedKybServiceFactory();
-      
-      // Initialize KY3P service factory  
-      this.formServices['ky3p'] = ky3pFormServiceFactory();
-      
-      // Initialize unified KY3P service factory
-      this.formServices['unified-ky3p'] = unifiedKy3pServiceFactory();
-      
-      // Initialize Open Banking service factory
-      this.formServices['open-banking'] = openBankingFormServiceFactory();
-      
-      this.logger.info('Form services initialized successfully', {
-        serviceCount: Object.keys(this.formServices).length,
-        services: Object.keys(this.formServices)
-      });
-    } catch (error) {
-      this.logger.error('Failed to initialize form services', { error });
-      // Continue with empty services registry to prevent complete failure
-    }
-  }
-
-  /**
-   * Get singleton instance with thread-safe initialization
-   * 
-   * @returns ComponentFactory singleton instance
+   * Gets the singleton instance
    */
   public static getInstance(): ComponentFactory {
     if (!ComponentFactory.instance) {

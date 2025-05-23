@@ -52,3 +52,12 @@ export const fireSuperConfetti = (): void => {
   // Function maintained for interface compatibility
   return;
 };
+
+// ========================================
+// EXPORTS
+// ========================================
+
+export {
+  fireEnhancedConfetti as default,
+  fireSuperConfetti
+};

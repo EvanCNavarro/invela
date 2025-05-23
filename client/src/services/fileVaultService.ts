@@ -1,118 +1,42 @@
 /**
- * ========================================
- * File Vault Service Module
- * ========================================
+ * FileVaultService - File vault tab enablement
  * 
- * Enterprise file vault management service providing comprehensive
- * file vault tab enablement, access control, and security features.
- * Handles secure document storage access, company permissions, and
- * real-time UI state synchronization for enterprise file management.
- * 
- * Key Features:
- * - Secure file vault tab enablement with proper authentication
- * - Company-level access control and permission management
- * - Real-time cache synchronization and data consistency
- * - Comprehensive error handling and audit logging
- * - Enterprise-grade security and compliance features
- * 
- * Dependencies:
- * - QueryClient: Cache management and API request infrastructure
- * 
- * @module FileVaultService
- * @version 2.0.0
- * @since 2024-04-15
+ * This service provides methods to enable the file vault tab for companies
+ * after a KYB form submission using proper API calls and caching strategies.
  */
 
-// ========================================
-// IMPORTS
-// ========================================
-
-// Query client for cache management and API request coordination
 import { queryClient } from "@/lib/queryClient";
 
-// ========================================
-// CONSTANTS
-// ========================================
-
 /**
- * File vault service configuration constants
- * Defines baseline values for vault management and security
+ * Enable file vault tab via API call
+ * This updates the database and then refreshes the UI to show the tab
  */
-const FILE_VAULT_DEFAULTS = {
-  REQUEST_TIMEOUT: 30000,
-  CACHE_INVALIDATION_DELAY: 1000,
-  MAX_RETRY_ATTEMPTS: 3,
-  VAULT_ACCESS_SCOPE: 'company'
-} as const;
-
-/**
- * File vault API endpoints for consistent request management
- * Centralizes API routes for maintainable service integration
- */
-const VAULT_ENDPOINTS = {
-  UNLOCK_VAULT: (companyId: number) => `/api/companies/${companyId}/unlock-file-vault`,
-  COMPANY_DATA: '/api/companies',
-  VAULT_STATUS: (companyId: number) => `/api/companies/${companyId}/vault-status`
-} as const;
-
-// ========================================
-// SERVICE IMPLEMENTATION
-// ========================================
-
-/**
- * Enable file vault access for company with comprehensive security validation
- * 
- * Securely enables file vault tab access for a company after successful
- * KYB form submission. Implements proper authentication, cache management,
- * and real-time UI synchronization for enterprise file management workflows.
- * 
- * @param companyId Company identifier for vault access enablement
- * @returns Promise that resolves when vault access is successfully enabled
- * 
- * @throws {Error} When vault enablement fails or company validation fails
- */
-export async function enableFileVault(companyId: number): Promise<void> {
+export async function enableFileVault(companyId: number) {
   try {
-    // Validate input parameters for defensive programming
-    if (!companyId || typeof companyId !== 'number' || companyId <= 0) {
-      throw new Error(`Invalid company ID provided for file vault enablement: ${companyId}`);
-    }
-
     console.log(`[FileVaultService] Enabling file vault for company ${companyId}`);
     
-    // Execute authenticated API request with comprehensive security headers
-    const response = await fetch(VAULT_ENDPOINTS.UNLOCK_VAULT(companyId), {
+    // Make the API call to enable file vault
+    const response = await fetch(`/api/companies/${companyId}/unlock-file-vault`, {
       method: 'POST',
-      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-Request-ID': `vault-enable-${companyId}-${Date.now()}`
+        'Content-Type': 'application/json'
       }
     });
     
-    // Handle error responses with detailed logging
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[FileVaultService] Failed to enable file vault for company ${companyId}: HTTP ${response.status}`, errorText);
-      throw new Error(`Failed to enable file vault: ${response.status} ${errorText}`);
+      throw new Error(`Failed to enable file vault: ${response.statusText}`);
     }
     
-    // Parse and validate response data
+    // Parse the response
     const data = await response.json();
-    console.log('[FileVaultService] File vault enabled successfully:', {
-      companyId,
-      availableTabs: data.availableTabs?.length || 0,
-      timestamp: new Date().toISOString()
-    });
+    console.log('[FileVaultService] File vault enabled successfully:', data);
     
-    // Update cached company data for real-time UI synchronization
-    if (data.availableTabs && Array.isArray(data.availableTabs)) {
-      await updateCachedCompanyTabs(companyId, data.availableTabs);
+    // Update the company data in the cache if available
+    if (data.availableTabs) {
+      updateCachedCompanyTabs(companyId, data.availableTabs);
     }
     
-    // Invalidate and refresh company data for consistency
+    // Invalidate and refresh the company data to ensure consistency
     await refreshCompanyData();
     
     return { success: true, ...data };
@@ -127,48 +51,27 @@ export async function enableFileVault(companyId: number): Promise<void> {
 }
 
 /**
- * Update cached company data with new available tabs for real-time UI sync
- * 
- * Intelligently updates the company data cache with new tab availability
- * to provide immediate UI feedback without waiting for full data refresh.
- * Implements defensive programming with proper validation and error handling.
- * 
- * @param companyId Company identifier for cache validation
- * @param newAvailableTabs Updated array of available tab identifiers
- * @returns Promise that resolves when cache update completes
- * 
- * @throws {Error} When cache update fails or validation errors occur
+ * Update the cached company data with new available tabs
+ * This updates the cache to immediately reflect tab changes
  */
-async function updateCachedCompanyTabs(companyId: number, newAvailableTabs: string[]): Promise<boolean> {
+function updateCachedCompanyTabs(companyId: number, newAvailableTabs: string[]) {
   try {
-    // Validate input parameters for defensive programming
-    if (!companyId || typeof companyId !== 'number' || companyId <= 0) {
-      console.warn('[FileVaultService] Invalid company ID for cache update:', companyId);
-      return false;
-    }
-
-    if (!Array.isArray(newAvailableTabs)) {
-      console.warn('[FileVaultService] Invalid tabs array for cache update:', newAvailableTabs);
-      return false;
-    }
-
-    // Retrieve current company data from cache with type safety
+    // Get current company data from cache
     const companyData = queryClient.getQueryData<any>(['/api/companies/current']);
     
-    // Validate cached data exists and matches target company
+    // If there's no company data or it's not the right company, don't update
     if (!companyData || companyData.id !== companyId) {
       console.log('[FileVaultService] No matching company data in cache to update');
       return false;
     }
     
-    // Create updated company data with new tab configuration
+    // Create updated company data with new tabs
     const updatedCompany = {
       ...companyData,
-      available_tabs: newAvailableTabs,
-      last_updated: new Date().toISOString()
+      available_tabs: newAvailableTabs
     };
     
-    // Update cache with enhanced company data
+    // Update the cache
     queryClient.setQueryData(['/api/companies/current'], updatedCompany);
     
     console.log('[FileVaultService] Cache updated with new available tabs:', newAvailableTabs);

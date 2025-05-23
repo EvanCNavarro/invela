@@ -1,53 +1,20 @@
-/**
- * Universal Form Component - Advanced form system for profile data collection
- * 
- * Provides comprehensive form management system with sophisticated validation,
- * progress tracking, and multi-step workflow capabilities. Optimized for profile
- * data collection interfaces with design system integration and accessibility
- * compliance including proper form validation, step navigation, and real-time
- * progress updates for various profile management and data collection use cases.
- * 
- * Features:
- * - Multi-step form workflow with progress tracking and validation
- * - Real-time WebSocket integration for live progress updates
- * - Advanced field validation with custom validation rules
- * - Tooltip system for comprehensive user guidance
- * - Dynamic field rendering with multiple input types support
- * - Form service integration for data persistence and retrieval
- * - KYB (Know Your Business) compliance workflow integration
- * - Responsive design with mobile-first approach
- * - Accessibility compliance with proper ARIA attributes
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// React core functionality for component state and lifecycle management
 import { useState, useEffect, useRef, useCallback, useReducer } from "react";
-
-// React Query for data fetching, caching, and server state management
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-
-// UI Components for form interface elements
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-
-// Lucide React icons for navigation and visual indicators
 import { ArrowLeft, ArrowRight, HelpCircle, Check, Eye } from "lucide-react";
-
-// Tooltip system for user guidance and help content
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-// Select component for dropdown form fields
+import { Input } from "@/components/ui/input";
+import { wsService } from "@/lib/websocket";
+import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -56,24 +23,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// WebSocket service for real-time communication
-import { wsService } from "@/lib/websocket";
-
-// Toast notification hooks for user feedback
-import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
-
-// Form utility functions for field sorting and component type determination
+// Import the form utilities and interfaces
 import { 
-  sortFields,
-  sortSections,
-  getFieldComponentType
+  FormField,
+  formExtractTooltipContent,
+  formIsEmptyValue,
+  formCalculateProgress,
+  formValidateStep,
+  formFindFirstIncompleteStep,
+  formFindFirstEmptyField,
+  formGetStatusFromProgress,
+  formProcessSuggestion,
+  formSendProgressUpdate,
+  formExtractFieldNames,
+  formExtractDataFromMetadata
 } from "@/utils/formUtils";
 
-// Form service interfaces for data persistence and business logic
-import { FormServiceInterface, FormField } from "@/services/formService";
-
-// KYB (Know Your Business) service integration for compliance workflows
+// Import form service interfaces
+import { FormServiceInterface } from "@/services/formService";
 import { 
   kybService, 
   getKybFields, 
@@ -84,261 +51,98 @@ import {
   submitKybForm
 } from "@/services/kybService";
 
-// ========================================
-// CONSTANTS
-// ========================================
-
-/**
- * Form loading state constants for state machine management
- * Defines all possible loading states for form lifecycle management
- */
-const FORM_LOADING_STATES = {
-  IDLE: 'idle',
-  LOADING_FIELDS: 'loading-fields',
-  LOADING_DATA: 'loading-data',
-  READY: 'ready',
-  ERROR: 'error'
-} as const;
-
-/**
- * Form loading action types for state transitions
- * Defines all possible actions that can trigger state changes
- */
-const FORM_LOADING_ACTIONS = {
-  START_LOADING_FIELDS: 'START_LOADING_FIELDS',
-  FIELDS_LOADED_SUCCESS: 'FIELDS_LOADED_SUCCESS',
-  START_LOADING_DATA: 'START_LOADING_DATA',
-  DATA_LOADED_SUCCESS: 'DATA_LOADED_SUCCESS',
-  LOADING_ERROR: 'LOADING_ERROR'
-} as const;
-
-/**
- * Form component logging context for structured debugging
- * Provides consistent logging context for form operations
- */
-const FORM_LOGGING_CONTEXT = '[UniversalFormComponent]';
-
-/**
- * Default progress calculation values for form completion tracking
- * Defines baseline values for progress percentage calculations
- */
-const FORM_PROGRESS_DEFAULTS = {
-  MINIMUM_PROGRESS: 0,
-  MAXIMUM_PROGRESS: 100,
-  STEP_WEIGHT: 1
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Form loading state interface for comprehensive state management
- * Defines all possible loading states with proper type safety and request tracking
- */
+// State machine approach for loading states
 type FormLoadingState = 
-  | { status: typeof FORM_LOADING_STATES.IDLE }
-  | { status: typeof FORM_LOADING_STATES.LOADING_FIELDS; requestId?: string }
-  | { status: typeof FORM_LOADING_STATES.LOADING_DATA; requestId?: string; hasFields: boolean }
-  | { status: typeof FORM_LOADING_STATES.READY; formInitialized: boolean }
-  | { status: typeof FORM_LOADING_STATES.ERROR; message: string; code: string };
+  | { status: 'idle' }
+  | { status: 'loading-fields'; requestId?: string }
+  | { status: 'loading-data'; requestId?: string; hasFields: boolean }
+  | { status: 'ready'; formInitialized: boolean }
+  | { status: 'error'; message: string; code: string };
 
-/**
- * Form loading action interface for state machine transitions
- * Defines all possible actions that can modify the form loading state
- */
+// Define actions for the state machine
 type FormLoadingAction = 
-  | { type: typeof FORM_LOADING_ACTIONS.START_LOADING_FIELDS; requestId?: string }
-  | { type: typeof FORM_LOADING_ACTIONS.FIELDS_LOADED_SUCCESS; hasFields: boolean; requestId?: string }
-  | { type: typeof FORM_LOADING_ACTIONS.START_LOADING_DATA; requestId?: string }
-  | { type: typeof FORM_LOADING_ACTIONS.DATA_LOADED_SUCCESS }
-  | { type: typeof FORM_LOADING_ACTIONS.LOADING_ERROR; message: string; code: string };
+  | { type: 'START_LOADING_FIELDS'; requestId?: string }
+  | { type: 'FIELDS_LOADED_SUCCESS'; hasFields: boolean; requestId?: string }
+  | { type: 'START_LOADING_DATA'; requestId?: string }
+  | { type: 'DATA_LOADED_SUCCESS' }
+  | { type: 'LOADING_ERROR'; message: string; code: string };
 
-// ========================================
-// STATE MANAGEMENT
-// ========================================
-
-/**
- * Form loading state reducer for comprehensive state transitions
- * 
- * Provides robust state management for form loading lifecycle with proper
- * request tracking, error handling, and state validation. Implements a
- * finite state machine pattern for predictable state transitions and
- * comprehensive debugging support with structured logging.
- * 
- * @param state Current form loading state
- * @param action Action to process for state transition
- * @returns New form loading state after processing the action
- */
+// Reducer function to handle state transitions
 function loadingReducer(state: FormLoadingState, action: FormLoadingAction): FormLoadingState {
-  // Structured logging for state transitions with debugging context
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`${FORM_LOGGING_CONTEXT} State Transition`, { 
-      currentState: state.status, 
-      action: action.type,
-      timestamp: new Date().toISOString(),
-      requestId: 'requestId' in action ? action.requestId : undefined
-    });
-  }
+  console.log('[Loading State Reducer]', { 
+    currentState: state.status, 
+    action: action.type,
+    timestamp: new Date().toISOString() 
+  });
 
-  // Process state transitions based on current state and action type
   switch (state.status) {
-    case FORM_LOADING_STATES.IDLE:
-      if (action.type === FORM_LOADING_ACTIONS.START_LOADING_FIELDS) {
-        return { 
-          status: FORM_LOADING_STATES.LOADING_FIELDS, 
-          requestId: action.requestId 
-        };
+    case 'idle':
+      if (action.type === 'START_LOADING_FIELDS') {
+        return { status: 'loading-fields', requestId: action.requestId };
       }
       break;
     
-    case FORM_LOADING_STATES.LOADING_FIELDS:
-      // Validate request ID to prevent race conditions
-      if (action.type === FORM_LOADING_ACTIONS.FIELDS_LOADED_SUCCESS && 
+    case 'loading-fields':
+      if (action.type === 'FIELDS_LOADED_SUCCESS' && 
           (!action.requestId || action.requestId === state.requestId)) {
         return { 
-          status: FORM_LOADING_STATES.LOADING_DATA, 
+          status: 'loading-data', 
           requestId: action.requestId, 
           hasFields: action.hasFields 
         };
-      } else if (action.type === FORM_LOADING_ACTIONS.LOADING_ERROR) {
+      } else if (action.type === 'LOADING_ERROR') {
         return { 
-          status: FORM_LOADING_STATES.ERROR, 
+          status: 'error', 
           message: action.message, 
           code: action.code 
         };
       }
       break;
 
-    case FORM_LOADING_STATES.LOADING_DATA:
-      // Validate request ID to prevent race conditions
-      if (action.type === FORM_LOADING_ACTIONS.DATA_LOADED_SUCCESS) {
+    case 'loading-data':
+      if (action.type === 'DATA_LOADED_SUCCESS') {
         return { 
-          status: FORM_LOADING_STATES.READY, 
+          status: 'ready', 
           formInitialized: true 
         };
-      } else if (action.type === FORM_LOADING_ACTIONS.LOADING_ERROR) {
+      } else if (action.type === 'LOADING_ERROR') {
         return { 
-          status: FORM_LOADING_STATES.ERROR, 
+          status: 'error', 
           message: action.message, 
           code: action.code 
         };
       }
       break;
 
-    case FORM_LOADING_STATES.READY:
-      // Once ready, only allow transition to error state for error handling
-      if (action.type === FORM_LOADING_ACTIONS.LOADING_ERROR) {
+    case 'ready':
+      // Once ready, we only transition to error
+      if (action.type === 'LOADING_ERROR') {
         return { 
-          status: FORM_LOADING_STATES.ERROR, 
+          status: 'error', 
           message: action.message, 
           code: action.code 
         };
       }
       break;
 
-    case FORM_LOADING_STATES.ERROR:
-      // Allow retrying from error state by restarting the loading process
-      if (action.type === FORM_LOADING_ACTIONS.START_LOADING_FIELDS) {
+    case 'error':
+      // Allow retrying from error state
+      if (action.type === 'START_LOADING_FIELDS') {
         return { 
-          status: FORM_LOADING_STATES.LOADING_FIELDS, 
+          status: 'loading-fields', 
           requestId: action.requestId 
         };
       }
       break;
   }
 
-  // Return current state if no valid transition is found (defensive programming)
+  // If no valid transition, return current state
   return state;
 }
 
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
+// We now use the FormField type imported from formUtils.ts
 
-/**
- * Extract tooltip content from form field configuration
- * 
- * @param field Form field with potential tooltip information
- * @returns Tooltip content string or undefined
- */
-const extractTooltipContent = (field: FormField): string | undefined => {
-  return field.tooltip || (field as any).description;
-};
-
-/**
- * Check if a form field value is empty or undefined
- * 
- * @param value Form field value to validate
- * @returns True if value is empty, false otherwise
- */
-const isEmptyValue = (value: any): boolean => {
-  if (value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim() === '';
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'object') return Object.keys(value).length === 0;
-  return false;
-};
-
-/**
- * Calculate form completion progress based on filled fields
- * 
- * @param formData Current form data
- * @param totalFields Total number of form fields
- * @returns Progress percentage (0-100)
- */
-const calculateProgress = (formData: Record<string, any>, totalFields: number): number => {
-  if (totalFields === 0) return FORM_PROGRESS_DEFAULTS.MINIMUM_PROGRESS;
-  
-  const filledFields = Object.values(formData).filter(value => !isEmptyValue(value)).length;
-  const progress = Math.round((filledFields / totalFields) * FORM_PROGRESS_DEFAULTS.MAXIMUM_PROGRESS);
-  
-  return Math.min(progress, FORM_PROGRESS_DEFAULTS.MAXIMUM_PROGRESS);
-};
-
-/**
- * Process suggestion data for form field population
- * 
- * @param suggestion Suggestion key from field configuration
- * @param companyData Available company data for suggestions
- * @returns Processed suggestion value or undefined
- */
-const processSuggestion = (suggestion: string, companyData: any): string | undefined => {
-  if (!suggestion || !companyData) return undefined;
-  
-  // Handle nested property access with dot notation
-  const keys = suggestion.split('.');
-  let value = companyData;
-  
-  for (const key of keys) {
-    if (value && typeof value === 'object' && key in value) {
-      value = value[key];
-    } else {
-      return undefined;
-    }
-  }
-  
-  return typeof value === 'string' ? value : undefined;
-};
-
-// ========================================
-// FORM CONFIGURATION
-// ========================================
-
-/**
- * Comprehensive KYB form steps configuration based on regulatory requirements
- * 
- * Defines multi-step form structure for Know Your Business compliance with
- * April 2025 requirements. Each step contains field definitions with proper
- * validation, tooltips, and suggestion mappings for authentic data population.
- * 
- * Steps are organized by business domain:
- * - Company Profile: Basic entity information and registration details
- * - Business Operations: Industry classification and operational structure
- * - Financial Information: Revenue, banking, and financial compliance data
- * - Ownership Structure: Beneficial ownership and control persons
- * - Compliance & Risk: Regulatory compliance and risk assessment
- */
+// Define the form steps based on April 2025 updated KYB requirements
 const FORM_STEPS: FormField[][] = [
   // Step 1: Company Profile - Basic information about the company (8 fields)
   [

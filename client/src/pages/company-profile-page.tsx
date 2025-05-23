@@ -1,258 +1,102 @@
-/**
- * Company Profile Page - Comprehensive profile management interface
- * 
- * Provides complete company profile viewing and management interface with sophisticated
- * data visualization, risk assessment integration, and team management capabilities.
- * Optimized for enterprise profile interfaces with design system integration and
- * accessibility compliance including proper navigation, data presentation, and
- * comprehensive user interaction for various company profile management use cases.
- * 
- * Features:
- * - Complete company profile data visualization and management
- * - Risk assessment integration with radar charts and scoring
- * - Team management with role-based access control
- * - Accreditation status tracking and display
- * - Financial information and business metrics presentation
- * - Document management and file attachment capabilities
- * - Relationship mapping and network visualization
- * - Tutorial integration for guided user experience
- * - Responsive design with mobile-first approach
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// React Router functionality for navigation
 import { useParams, Link } from "wouter";
-
-// React Query for data fetching and caching
 import { useQuery } from "@tanstack/react-query";
-
-// Layout components for page structure
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
-
-// Tutorial system for guided user experience
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
-
-// UI Components for interface elements
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Lucide React icons for visual indicators
-import { 
-  ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, 
-  FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, 
-  BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, 
-  Tag, Layers, LucideShieldAlert, AlertTriangle 
-} from "lucide-react";
-
-// Specialized UI components
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-// Dashboard and visualization components
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
-import { BentoOverview } from "@/components/company/BentoOverview";
-
-// Company-specific components
-import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
-
-// Network and relationship components
 import { companyTypeColors } from "@/components/network/types";
-
-// React core functionality
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { BentoOverview } from "@/components/company/BentoOverview";
+import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 import { useState, useEffect } from "react";
-
-// Authentication and utility hooks
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// ========================================
-// CONSTANTS
-// ========================================
-
-/**
- * Default tab configuration for profile navigation
- * Defines primary navigation tabs for company profile interface
- */
-const DEFAULT_PROFILE_TAB = "overview";
-
-/**
- * Risk cluster category mappings for comprehensive risk assessment
- * Defines standardized risk categories for enterprise risk evaluation
- */
-const RISK_CLUSTER_CATEGORIES = {
-  CYBER_SECURITY: 'Cyber Security',
-  FINANCIAL_STABILITY: 'Financial Stability',
-  POTENTIAL_LIABILITY: 'Potential Liability',
-  DARK_WEB_DATA: 'Dark Web Data',
-  PUBLIC_SENTIMENT: 'Public Sentiment',
-  DATA_ACCESS_SCOPE: 'Data Access Scope'
-} as const;
-
-/**
- * Legacy risk cluster mappings for backward compatibility
- * Maintains compatibility with older risk assessment data structures
- */
-const LEGACY_RISK_CATEGORIES = {
-  FINANCIAL: 'financial',
-  OPERATIONAL: 'operational',
-  COMPLIANCE: 'compliance',
-  STRATEGIC: 'strategic',
-  REPUTATIONAL: 'reputational',
-  CYBERSECURITY: 'cybersecurity'
-} as const;
-
-/**
- * Accreditation status property names for data normalization
- * Handles both camelCase and snake_case naming conventions
- */
-const ACCREDITATION_STATUS_PROPERTIES = {
-  CAMEL_CASE: 'accreditationStatus',
-  SNAKE_CASE: 'accreditation_status'
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Comprehensive company profile data interface
- * Defines complete data structure for company profile management with support
- * for both current and legacy data formats for maximum compatibility
- */
 interface CompanyProfileData {
-  /** Unique company identifier */
   id: number;
-  /** Company name for display and identification */
   name: string;
-  /** Optional company description for business overview */
   description: string | null;
-  /** Optional website URL for external company information */
   websiteUrl: string | null;
-  /** Optional employee count as string for flexible formatting */
   numEmployees: string | null;
-  /** Optional incorporation year for company history */
   incorporationYear: number | null;
-  /** Company category for industry classification */
   category: string;
-  /** Products and services offered - supports both array and string formats */
   productsServices: string[] | string;
-  /** Key clients and partners - supports both array and string formats */
   keyClientsPartners: string[] | string;
-  /** Investor information for funding details */
   investors: string;
-  /** Optional funding stage for investment classification */
   fundingStage: string | null;
-  /** Legal structure for corporate classification */
   legalStructure: string;
-  /** Headquarters address for location information */
   hqAddress: string;
-  /** Primary risk score for assessment display */
   riskScore: number;
-  /** Legacy risk score property for backward compatibility */
   risk_score?: number;
-  /** Optional chosen score for manual risk assessment */
   chosenScore?: number;
-  /** Legacy chosen score property for backward compatibility */
   chosen_score?: number;
-  /** Accreditation status in camelCase format */
+  // Support both naming conventions for accreditation status
   accreditationStatus?: string;
-  /** Accreditation status in snake_case format for legacy compatibility */
   accreditation_status?: string;
-  /** Revenue tier classification in camelCase format */
   revenueTier?: string;
-  /** Revenue tier classification in snake_case format for legacy compatibility */
   revenue_tier?: string;
-  /** Risk clusters for comprehensive risk assessment */
   risk_clusters?: {
-    /** Cyber security risk assessment score */
     'Cyber Security': number;
-    /** Financial stability risk assessment score */
     'Financial Stability': number;
-    /** Potential liability risk assessment score */
     'Potential Liability': number;
-    /** Dark web data exposure risk assessment score */
     'Dark Web Data': number;
-    /** Public sentiment risk assessment score */
     'Public Sentiment': number;
-    /** Data access scope risk assessment score */
     'Data Access Scope': number;
-    /** Legacy financial risk score for backward compatibility */
+    // For backward compatibility with older data
     financial?: number;
-    /** Legacy operational risk score for backward compatibility */
     operational?: number;
-    /** Legacy compliance risk score for backward compatibility */
     compliance?: number;
-    /** Legacy strategic risk score for backward compatibility */
     strategic?: number;
-    /** Legacy reputational risk score for backward compatibility */
     reputational?: number;
-    /** Legacy cybersecurity risk score for backward compatibility */
     cybersecurity?: number;
   };
-  /** Certifications and compliance information in snake_case format */
+  // Additional fields that may be in the data
   certifications_compliance?: string;
-  /** Founders and leadership information in camelCase format */
   foundersAndLeadership?: string;
-  /** Founders and leadership information in snake_case format for legacy compatibility */
   founders_and_leadership?: string;
-  /** Index signature for additional dynamic properties */
+  // Any other fields
   [key: string]: any;
 }
 
-/**
- * Company user interface for team management
- * Defines user data structure for company team member management
- */
 interface CompanyUser {
-  /** Unique user identifier */
   id: number;
-  /** User display name */
   name: string;
-  /** User email address for contact and authentication */
   email: string;
-  /** User role within the company for access control */
   role: string;
-  /** Date when user joined the company */
   joinedAt: string;
 }
 
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
-
 /**
- * Extract accreditation status from company data with naming convention flexibility
+ * Helper function to get the accreditation status from a company object
+ * regardless of which property naming convention is used
  * 
- * Provides robust accreditation status extraction supporting both camelCase and
- * snake_case property naming conventions for maximum compatibility with various
- * data sources and API formats. Prioritizes standardized camelCase format while
- * maintaining backward compatibility with legacy snake_case properties.
- * 
- * @param company Company data object with potential accreditation status properties
- * @returns Accreditation status string or undefined if not found in either format
+ * @param company The company data object
+ * @returns The accreditation status string or undefined if not found
  */
+// Extracts accreditation status from company data regardless of property naming convention
 function getCompanyAccreditationStatus(company: CompanyProfileData | any): string | undefined {
-  // Prioritize standardized camelCase property naming
-  if (company[ACCREDITATION_STATUS_PROPERTIES.CAMEL_CASE]) {
-    return company[ACCREDITATION_STATUS_PROPERTIES.CAMEL_CASE];
+  // First check for camelCase version (standardized)
+  if (company.accreditationStatus) {
+    return company.accreditationStatus;
   }
   
-  // Fallback to legacy snake_case property naming for backward compatibility
-  if (company[ACCREDITATION_STATUS_PROPERTIES.SNAKE_CASE]) {
-    return company[ACCREDITATION_STATUS_PROPERTIES.SNAKE_CASE];
+  // Then check for snake_case version (legacy API format)
+  // Using bracket notation to avoid TypeScript errors with dynamic properties
+  if (company['accreditation_status']) {
+    return company['accreditation_status'];
   }
   
   // Return undefined if neither property exists

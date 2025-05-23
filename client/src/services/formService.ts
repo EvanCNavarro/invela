@@ -1,108 +1,42 @@
 /**
- * ========================================
- * Form Service Module
- * ========================================
- * 
- * Enterprise form management service providing comprehensive
- * form field configuration, validation, and data processing.
- * Handles dynamic form generation, field validation, and
- * structured data collection for enterprise compliance workflows.
- * 
- * Key Features:
- * - Dynamic form field configuration with comprehensive validation
- * - Multi-section form management with ordering and organization
- * - Enterprise validation rules with custom message support
- * - Field guidance and demo data for enhanced user experience
- * - Flexible field types supporting various input requirements
- * - Metadata support for extensible form functionality
- * 
- * Dependencies:
- * - None: Pure TypeScript interfaces and utility functions
- * 
- * @module FormService
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Form field validation rules interface for comprehensive data validation
- * 
- * Provides extensive validation configuration supporting various field types
- * with custom validation messages and extensible rule definitions for
- * enterprise-grade form validation and data integrity enforcement.
+ * Interface for form field validation rules
  */
 export interface FormFieldValidation {
-  /** Field is required for form submission */
   required?: boolean;
-  /** Minimum character length for text inputs */
   minLength?: number;
-  /** Maximum character length for text inputs */
   maxLength?: number;
-  /** Minimum numeric value for number inputs */
   min?: number;
-  /** Maximum numeric value for number inputs */
   max?: number;
-  /** Regular expression pattern for input validation */
   pattern?: string;
-  /** Custom validation error message */
   message?: string;
-  /** Additional validation properties for extensibility */
   [key: string]: any;
 }
 
 /**
- * Form field configuration interface for dynamic form generation
- * 
- * Comprehensive field definition supporting various input types,
- * validation rules, section organization, and enhanced user guidance.
- * Enables enterprise-grade form generation with consistent structure
- * and professional user experience across all form implementations.
+ * Interface for form field
  */
 export interface FormField {
-  /** Unique field identifier for data mapping */
   key: string;
-  /** Human-readable field label for display */
   label: string;
-  /** Input field type (text, number, select, etc.) */
   type: string;
-  /** Section name for form organization */
   section: string;
-  /** Alternative section identifier for compatibility */
-  sectionId?: string;
-  /** Placeholder text for input guidance */
+  sectionId?: string;    // Alternative to section for compatibility
   placeholder?: string;
-  /** Detailed help text for field assistance */
   helpText?: string;
-  /** Alternative help text property for compatibility */
-  help_text?: string;
-  /** Tooltip text for contextual field help */
-  tooltip?: string;
-  /** Question text for form questionnaires */
+  help_text?: string;    // Alternative to helpText for compatibility
+  tooltip?: string;      // Tooltip text for field help
   question?: string;
-  /** Question number for ordered display */
-  questionNumber?: number;
-  /** Default field value */
+  questionNumber?: number; // Question number for display
   default?: any;
-  /** Available options for select/radio fields */
   options?: { label: string; value: any }[];
-  /** Validation rules configuration */
   validation?: FormFieldValidation;
-  /** Display order within section */
   order: number;
-  /** Additional field metadata for extensibility */
   metadata?: Record<string, any>;
   
-  /** Enhanced field guidance properties for user assistance */
-  /** Guidance text for expected answer format */
-  answerExpectation?: string;
-  /** Sample values for demonstration purposes */
-  demoAutofill?: string;
-  /** Type of validation/documentation required */
-  validationType?: string;
+  // Enhanced field guidance properties
+  answerExpectation?: string;   // Guidance text for what type of answer is expected
+  demoAutofill?: string;        // Sample values for demonstration purposes
+  validationType?: string;      // Type of validation/documentation required
   
   // Optimization properties
   saveImmediately?: boolean;    // Whether field should be saved immediately

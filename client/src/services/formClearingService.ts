@@ -1,149 +1,31 @@
-/**
- * ========================================
- * Form Clearing Service Module
- * ========================================
- * 
- * Enterprise form clearing service providing comprehensive
- * form state management, field clearing, and UI synchronization.
- * Handles secure form data clearing operations with proper validation,
- * state management, and user feedback for enterprise compliance workflows.
- * 
- * Key Features:
- * - Comprehensive form field clearing with state management
- * - Duplicate operation prevention with operation tracking
- * - Enterprise-grade error handling and user feedback
- * - Multi-form type support with consistent clearing patterns
- * - Real-time UI synchronization and status updates
- * - Professional logging for audit trails and debugging
- * 
- * Dependencies:
- * - Logger: Structured logging for enterprise monitoring
- * - Toast: User feedback and notification system
- * 
- * @module FormClearingService
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// Enterprise logging utilities for operation tracking
 import getLogger from '@/utils/logger';
-// User notification system for feedback
 import { toast } from '@/hooks/use-toast';
 
-// ========================================
-// CONSTANTS
-// ========================================
-
-/**
- * Form clearing configuration constants
- * Defines clearing behavior and operation parameters
- */
-const CLEARING_CONFIG = {
-  OPERATION_TIMEOUT: 10000,
-  MAX_RETRY_ATTEMPTS: 3,
-  DEBOUNCE_DELAY: 500,
-  BATCH_CLEAR_SIZE: 50
-} as const;
-
-/**
- * Clearing operation status enumeration
- * Provides clear operation lifecycle management
- */
-const CLEARING_STATUS = {
-  PENDING: 'pending',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
-  CANCELLED: 'cancelled'
-} as const;
-
-// ========================================
-// INITIALIZATION
-// ========================================
-
-// Logger instance for comprehensive service monitoring
+// Logger instance for this service
 const logger = getLogger('FormClearingService');
 
-// Track ongoing clear operations to prevent duplicates and race conditions
+// Track ongoing clear operations to prevent duplicates
 const ongoingClearOperations = new Set<number>();
 
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Form clearing options interface for comprehensive operation configuration
- * 
- * Provides complete configuration structure for form clearing operations
- * with proper type safety, callback support, and state management
- * for enterprise-grade form clearing workflows.
- */
 interface FormClearingOptions {
-  /** Task identifier for clearing operation tracking */
   taskId: number;
-  /** Task type for form-specific clearing logic */
   taskType: string;
-  /** React Hook Form instance for UI state management */
-  form: any;
-  /** Optional form service instance for advanced clearing */
-  formService?: any;
-  /** Array of form fields to be cleared */
+  form: any; // react-hook-form instance
+  formService?: any; // FormService instance
   fields: Array<{ key: string }>;
-  /** Success callback for post-clearing actions */
   onSuccess?: () => void;
-  /** Status refresh callback for UI synchronization */
   refreshStatus?: () => Promise<void>;
-  /** Active section setter for navigation management */
   setActiveSection?: (index: number) => void;
 }
 
 /**
- * Clearing operation result interface for comprehensive feedback
- * 
- * Structures clearing operation outcomes with status tracking,
- * field counts, and error handling for complete operation management.
- */
-interface ClearingResult {
-  /** Operation success status */
-  success: boolean;
-  /** Number of fields successfully cleared */
-  fieldsCleared: number;
-  /** Total number of fields processed */
-  totalFields: number;
-  /** Operation completion time */
-  completedAt: Date;
-  /** Error information for failed operations */
-  error?: string;
-  /** Additional operation metadata */
-  metadata?: Record<string, any>;
-}
-
-// ========================================
-// SERVICE IMPLEMENTATION
-// ========================================
-
-/**
- * Enterprise form clearing service with comprehensive operation management
- * 
- * Provides structured form clearing operations with duplicate prevention,
- * error handling, and comprehensive logging for enterprise workflows.
+ * A dedicated service for handling form clearing operations
+ * This helps ensure consistency across different form types
  */
 export const FormClearingService = {
   /**
-   * Clear all form fields for a task with comprehensive validation and tracking
-   * 
-   * Handles both UI state clearing and server-side synchronization with
-   * proper error handling, operation tracking, and user feedback.
-   * Implements enterprise-grade clearing workflows with audit trails.
-   * 
-   * @param options Comprehensive clearing configuration options
-   * @returns Promise resolving to clearing operation results
-   * 
-   * @throws {Error} When clearing validation fails or operation errors occur
+   * Clear all form fields for a task
+   * This function handles both UI state and server-side clearing
    */
   async clearFormFields({
     taskId,
@@ -154,24 +36,7 @@ export const FormClearingService = {
     onSuccess,
     refreshStatus,
     setActiveSection
-  }: FormClearingOptions): Promise<ClearingResult> {
-    // Validate input parameters for defensive programming
-    if (!taskId || typeof taskId !== 'number' || taskId <= 0) {
-      throw new Error('Invalid task ID provided for form clearing');
-    }
-
-    if (!taskType || typeof taskType !== 'string') {
-      throw new Error('Invalid task type provided for form clearing');
-    }
-
-    if (!form) {
-      throw new Error('Form instance is required for clearing operation');
-    }
-
-    if (!fields || !Array.isArray(fields) || fields.length === 0) {
-      throw new Error('Valid fields array is required for clearing');
-    }
-
+  }: FormClearingOptions): Promise<void> {
     // Prevent multiple simultaneous clear operations for the same task
     if (ongoingClearOperations.has(taskId)) {
       logger.warn(`[FormClearingService] Clear operation already in progress for task ${taskId}, preventing duplicate`);
@@ -180,13 +45,7 @@ export const FormClearingService = {
         description: "A clearing operation is already running, please wait...",
         variant: "default"
       });
-      return {
-        success: false,
-        fieldsCleared: 0,
-        totalFields: fields.length,
-        completedAt: new Date(),
-        error: 'Operation already in progress'
-      };
+      return;
     }
     
     // Track this operation to prevent duplicates

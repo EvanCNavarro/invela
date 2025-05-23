@@ -1,214 +1,79 @@
-/**
- * ========================================
- * Card Service Module
- * ========================================
- * 
- * Enterprise card form management service providing comprehensive data
- * handling for business card information collection and validation.
- * Implements FormServiceInterface to ensure consistent behavior across
- * all form services while providing specialized card-specific functionality.
- * 
- * Key Features:
- * - Card field management with wizard section organization
- * - Progress tracking and form completion status monitoring
- * - Real-time data persistence with change detection
- * - Comprehensive error handling and structured logging
- * - Integration with API request infrastructure
- * 
- * Dependencies:
- * - QueryClient: API request management and caching
- * - FormService: Core form interface and data structures
- * - Logger: Structured logging for debugging and monitoring
- * 
- * @module CardService
- * @version 2.0.0
- * @since 2024-04-15
- */
-
-// ========================================
-// IMPORTS
-// ========================================
-
-// API request utilities for data persistence and retrieval
 import { apiRequest } from "@/lib/queryClient";
-
-// Core form service interfaces and data structures
 import { FormServiceInterface, FormField, FormSection } from './formService';
-
-// Structured logging utilities for debugging and monitoring
 import getLogger from '@/utils/logger';
 
-// ========================================
-// CONSTANTS
-// ========================================
-
-/**
- * Card service logging context for structured debugging
- * Provides consistent logging context for all card operations
- */
-const CARD_SERVICE_LOGGING_CONTEXT = '[CardService]';
-
-/**
- * Card form configuration constants for validation and processing
- * Defines baseline values for card field management and validation
- */
-const CARD_FORM_DEFAULTS = {
-  MIN_PROGRESS: 0,
-  MAX_PROGRESS: 100,
-  DEFAULT_RISK_SCORE: 0,
-  INITIALIZATION_TIMEOUT: 5000
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Card field interface for business card information management
- * 
- * Defines the structure for card-specific fields with wizard section
- * organization, AI search capabilities, and risk scoring integration.
- * Used for comprehensive business card data collection and validation.
- */
 export interface CardField {
-  /** Unique identifier for the card field */
   id: number;
-  /** Field key for data mapping and identification */
   field_key: string;
-  /** Wizard section grouping for multi-step form organization */
   wizard_section: string;
-  /** Human-readable label for the field question */
   question_label: string;
-  /** Detailed question text for user guidance */
   question: string;
-  /** Example response to guide user input */
   example_response: string;
-  /** AI search instructions for intelligent data processing */
   ai_search_instructions: string;
-  /** Maximum partial risk score contribution for this field */
   partial_risk_score_max: number;
 }
 
-/**
- * Card progress response interface for form completion tracking
- * 
- * Provides comprehensive progress information including form data,
- * completion percentage, and optional status indicators for real-time
- * monitoring of card form completion workflows.
- */
 export interface CardProgressResponse {
-  /** Current form data values */
   formData: Record<string, any>;
-  /** Completion progress percentage (0-100) */
   progress: number;
-  /** Optional status indicator for form state */
   status?: string;
 }
 
-/**
- * Form submission options interface for card form processing
- * 
- * Defines configuration options for card form submission including
- * task identification and optional file naming for document management.
- */
 export interface FormSubmitOptions {
-  /** Task identifier for submission tracking */
   taskId: number;
-  /** Optional filename for document storage */
   fileName?: string;
 }
 
-// ========================================
-// SERVICE IMPLEMENTATION
-// ========================================
-
 /**
- * Card Form Service for comprehensive business card management
- * 
- * Provides enterprise-grade card form management with real-time progress
- * tracking, data persistence, and comprehensive validation. Implements
- * the FormServiceInterface to ensure consistent behavior across all
- * form services while providing specialized card-specific functionality.
- * 
- * Features include wizard section organization, AI-powered search
- * capabilities, risk scoring integration, and robust error handling
- * with structured logging throughout the service lifecycle.
+ * CardFormService: A comprehensive service for managing card form data
  */
 export class CardFormService implements FormServiceInterface {
-  /** Card form fields array for field management */
   private fields: FormField[] = [];
-  
-  /** Form sections array for wizard organization */
   private sections: FormSection[] = [];
-  
-  /** Current form data values */
   private formData: Record<string, any> = {};
-  
-  /** Service initialization status flag */
   private initialized: boolean = false;
-  
-  /** Last saved data hash for change detection */
   private lastSavedData: string = '';
-  
-  /** Structured logger instance for debugging and monitoring */
   private logger = getLogger('CardService');
   
-  /**
-   * Initialize Card Form Service with comprehensive setup
-   * 
-   * Creates a new card service instance with proper logging context
-   * and initialization tracking for reliable service operation.
-   */
   constructor() {
-    this.logger.info(`${CARD_SERVICE_LOGGING_CONTEXT} Service instance created`);
+    this.logger.info('CardService created');
   }
   
   /**
-   * Initialize card form service with comprehensive field and section setup
-   * 
-   * Performs complete service initialization including field loading, section
-   * organization, and validation setup. Implements defensive programming with
-   * proper error handling and structured logging for reliable service operation.
-   * 
-   * @returns Promise that resolves when initialization completes successfully
-   * 
-   * @throws {Error} When field loading or service setup fails
+   * Initialize the card form service with fields and sections
    */
   async initialize(): Promise<void> {
-    // Prevent duplicate initialization attempts
     if (this.initialized) {
-      this.logger.info(`${CARD_SERVICE_LOGGING_CONTEXT} Service already initialized`);
+      this.logger.info('CardService already initialized');
       return;
     }
     
     try {
-      // Load card fields from authentic data sources
+      // Load card fields
       const fields = await getCardFields();
-      this.logger.info(
-        `${CARD_SERVICE_LOGGING_CONTEXT} Loaded ${fields.length} card fields from database`
-      );
+      this.logger.info(`Loaded ${fields.length} card fields`);
       
-      // Group fields by wizard section for organized presentation
+      // Group fields by section
       const groupedFields = groupCardFieldsBySection(fields);
       
-      // Initialize service data structures
+      // Create sections and convert fields to form fields
       this.sections = [];
       this.fields = [];
       
-      // Track section creation for debugging and validation
+      // Track sections created for debugging
       const sectionIds: string[] = [];
       
-      // Create organized sections from grouped field data
+      // Create sections from grouped fields
       Object.entries(groupedFields).forEach(([sectionName, sectionFields], index) => {
-        // Generate unique section identifier for tracking
+        // Create a unique ID for the section
         const sectionId = `section-${index + 1}`;
         sectionIds.push(sectionId);
         
-        // Create section with comprehensive metadata
+        // Add the section
         this.sections.push({
           id: sectionId,
           title: sectionName,
-          description: `Card wizard section: ${sectionName}`,
+          description: '',
           order: index + 1,
           collapsed: false
         });
