@@ -100,22 +100,47 @@ import {
   FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
 
-// Create separate default widget sets based on company type
-const FINTECH_DEFAULT_WIDGETS = {
+// ========================================
+// WIDGET CONFIGURATION INTERFACES
+// ========================================
+
+/**
+ * Interface defining all available dashboard widgets
+ * Ensures type safety and consistent widget management across company types
+ */
+interface DashboardWidgets {
+  quickActions: boolean;
+  companySnapshot: boolean;
+  networkVisualization: boolean;
+  riskRadar: boolean;
+  riskMonitoring: boolean;
+  taskSummary: boolean;
+}
+
+/**
+ * Widget configuration for FinTech companies
+ * Simplified layout focusing on core risk assessment features
+ */
+const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
   quickActions: true,
   companySnapshot: true,
   networkVisualization: false,
   riskRadar: true,
-  riskMonitoring: false
+  riskMonitoring: false,
+  taskSummary: false, // FinTech companies use simplified task management
 };
 
-const OTHER_DEFAULT_WIDGETS = {
+/**
+ * Widget configuration for Bank and Invela companies
+ * Full feature set with comprehensive monitoring capabilities
+ */
+const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
   quickActions: true,
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: true,
   riskMonitoring: true,
-  taskSummary: true
+  taskSummary: true, // Enhanced task tracking for complex operations
 };
 
 // ========================================
@@ -147,8 +172,8 @@ export default function DashboardPage(): JSX.Element {
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [sideDrawerOpen, setSideDrawerOpen] = useState(false);
   
-  // Widget visibility state with default configuration based on company type
-  const [visibleWidgets, setVisibleWidgets] = useState(OTHER_DEFAULT_WIDGETS);
+  // Widget visibility state with proper type declaration and dynamic initialization
+  const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(OTHER_DEFAULT_WIDGETS);
   
   // ========================================
   // DATA FETCHING
@@ -185,10 +210,10 @@ export default function DashboardPage(): JSX.Element {
   // ========================================
 
   /**
-   * Toggle widget visibility
-   * @param {string} widgetKey - Key of the widget to toggle
+   * Toggle widget visibility with type-safe implementation
+   * @param {keyof DashboardWidgets} widgetKey - Key of the widget to toggle
    */
-  const toggleWidget = (widgetKey: keyof typeof visibleWidgets) => {
+  const toggleWidget = (widgetKey: keyof DashboardWidgets) => {
     setVisibleWidgets(prev => ({
       ...prev,
       [widgetKey]: !prev[widgetKey]
