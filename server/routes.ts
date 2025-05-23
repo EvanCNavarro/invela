@@ -1,43 +1,84 @@
+/**
+ * ========================================
+ * Central API Routes Configuration
+ * ========================================
+ * 
+ * Main routing configuration for the enterprise risk assessment platform API.
+ * This file orchestrates all API endpoints, middleware, and route handlers for
+ * comprehensive business logic across authentication, data management, and real-time features.
+ * 
+ * Key Responsibilities:
+ * - API route registration and organization
+ * - Authentication and authorization middleware integration
+ * - Database operations and data validation
+ * - WebSocket integration for real-time updates
+ * - File upload and company logo management
+ * - Risk assessment form routing (KYB, KY3P, Open Banking)
+ * 
+ * Route Categories:
+ * - Authentication: Login, registration, session management
+ * - Company Management: Profile, logo, relationships
+ * - Risk Assessment: KYB, KY3P, Security, Card processing
+ * - File Management: Upload, download, document handling
+ * - Real-time Features: WebSocket connections, live updates
+ * - Analytics: Tutorial tracking, progress monitoring
+ * 
+ * @module server/routes
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Express framework and routing
 import { Express, Router } from 'express';
+
+// Database ORM and query builders
 import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
+import { db } from '@db';
+import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
+
+// Authentication and security
 import * as bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { requireAuth, optionalAuth } from './middleware/auth';
+
+// File system and upload handling
 import path from 'path';
 import fs from 'fs';
-import { db } from '@db';
-import timestampRouter from './routes/kyb-timestamp-routes';
-import claimsRouter from './routes/claims';
-import tutorialRouter from './routes/tutorial';
-// Open Banking field update router is imported below
-import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
-import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
-import { emailService } from './services/email';
-import { requireAuth, optionalAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
+
+// Business logic and services
+import { emailService } from './services/email';
+import { createCompany } from "./services/company";
+import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
+
+// WebSocket services for real-time communication
 import * as LegacyWebSocketService from './services/websocket';
 import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
-import crypto from 'crypto';
+
+// Specialized route modules
+import timestampRouter from './routes/kyb-timestamp-routes';
+import claimsRouter from './routes/claims';
+import tutorialRouter from './routes/tutorial';
 import companySearchRouter from "./routes/company-search";
-import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import { checkAndUnlockSecurityTasks } from './routes/kyb';
 import { getKybProgress } from './routes/kyb-update';
 import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
+
+// KY3P assessment routing modules
 import ky3pRouter from './routes/ky3p';
-// Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
-// Import enhanced KY3P submission handler for better progress handling
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
-// Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Test route removed during cleanup
-// Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-enhanced.routes';
-// Import KY3P submission fix to properly handle form submissions
 import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
-// Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update.routes';
 // Import the new unified KY3P update routes
