@@ -180,7 +180,13 @@ export const FormClearingService = {
         description: "A clearing operation is already running, please wait...",
         variant: "default"
       });
-      return;
+      return {
+        success: false,
+        fieldsCleared: 0,
+        totalFields: fields.length,
+        completedAt: new Date(),
+        error: 'Operation already in progress'
+      };
     }
     
     // Track this operation to prevent duplicates

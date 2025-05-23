@@ -135,7 +135,7 @@ const serviceMetadata = new Map<string, ServiceRegistrationMetadata>();
 // Initialize core service metadata
 serviceMetadata.set('standardizedKy3pFormService', {
   registeredAt: new Date(),
-  status: 'active',
+  status: 'ACTIVE',
   version: '2.0.0',
   healthStatus: 'healthy'
 });
@@ -188,7 +188,7 @@ export function registerStandardizedService(
     // Create service metadata
     const serviceMetadataEntry: ServiceRegistrationMetadata = {
       registeredAt: new Date(),
-      status: 'registered',
+      status: 'REGISTERED',
       version: metadata?.version || '1.0.0',
       healthStatus: 'healthy',
       ...metadata
