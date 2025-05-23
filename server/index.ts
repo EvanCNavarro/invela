@@ -1,28 +1,101 @@
+/**
+ * ========================================
+ * Express Server Entry Point
+ * ========================================
+ * 
+ * The main server entry point for the enterprise risk assessment platform backend.
+ * This file orchestrates the complete server infrastructure including Express setup,
+ * WebSocket server initialization, authentication middleware, and API route registration.
+ * 
+ * Key Responsibilities:
+ * - Express application configuration and middleware setup
+ * - HTTP and WebSocket server initialization for real-time communication
+ * - Authentication and authorization middleware configuration
+ * - API route registration and request handling
+ * - File system setup for document uploads and storage
+ * - Error handling and logging infrastructure
+ * 
+ * Dependencies:
+ * - Express.js for HTTP server and middleware
+ * - HTTP server for WebSocket upgrade handling
+ * - Authentication system for secure API access
+ * - Database connection for data persistence
+ * - WebSocket infrastructure for real-time updates
+ * 
+ * @module server/index
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Express server framework and core types
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
+import cors from "cors";
+
+// File system operations for upload handling
+import fs from 'fs';
+import path from 'path';
+
+// Application infrastructure components
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { setupWebSocketServer } from "./websocket-setup";
-import cors from "cors";
-import fs from 'fs';
-import path from 'path';
 
-// Create required directories
-const uploadsDir = path.join(process.cwd(), 'uploads');
-const documentsDir = path.join(uploadsDir, 'documents');
+// ========================================
+// DIRECTORY INITIALIZATION
+// ========================================
 
-// Ensure upload directories exist
-[uploadsDir, documentsDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
-  }
-});
+/**
+ * Initialize Required File System Directories
+ * 
+ * Creates necessary directories for file uploads and document storage
+ * if they don't already exist. This ensures the server can handle
+ * file operations without filesystem errors.
+ */
+function initializeFileSystemDirectories(): void {
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const documentsDir = path.join(uploadsDir, 'documents');
+  
+  // Ensure upload directories exist
+  [uploadsDir, documentsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.info(`Created directory: ${dir}`);
+    }
+  });
+}
 
-// Custom error class for API errors
+// Initialize directories on server startup
+initializeFileSystemDirectories();
+
+// ========================================
+// ERROR HANDLING CLASSES
+// ========================================
+
+/**
+ * Custom API Error Class
+ * 
+ * Provides structured error handling for API endpoints with
+ * support for HTTP status codes, error codes, and additional details.
+ * This enables consistent error responses across the application.
+ * 
+ * @extends Error
+ */
 export class APIError extends Error {
+  /**
+   * Create a new API error
+   * 
+   * @param message - Human-readable error message
+   * @param status - HTTP status code (default: 500)
+   * @param code - Application-specific error code
+   * @param details - Additional error context or debugging information
+   */
   constructor(
     public message: string,
     public status: number = 500,
@@ -31,13 +104,35 @@ export class APIError extends Error {
   ) {
     super(message);
     this.name = 'APIError';
+    
+    // Maintain proper stack trace for debugging
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, APIError);
+    }
   }
 }
 
+// ========================================
+// SERVER INITIALIZATION
+// ========================================
+
+// Create Express application instance
 const app = express();
+
+// Create HTTP server for WebSocket upgrade capability
 const server = createServer(app);
 
-// Configure CORS for all environments
+// ========================================
+// MIDDLEWARE CONFIGURATION
+// ========================================
+
+/**
+ * Configure Cross-Origin Resource Sharing (CORS)
+ * 
+ * Enables secure communication between frontend and backend across
+ * different domains and ports. Configuration supports both development
+ * and production environments with appropriate security settings.
+ */
 app.use(cors({
   origin: true,
   credentials: true,
