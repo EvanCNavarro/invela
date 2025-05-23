@@ -46,6 +46,7 @@ import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { setupWebSocketServer } from "./websocket-setup";
+import { setupStorybookProxy } from "./storybook-proxy.js";
 
 // ========================================
 // DIRECTORY INITIALIZATION
@@ -149,6 +150,9 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Set up authentication before routes
 setupAuth(app);
+
+// Set up Storybook subdomain proxy
+setupStorybookProxy(app);
 
 /**
  * Enterprise-Grade Smart API Request Logging Middleware
