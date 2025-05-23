@@ -37,7 +37,7 @@
 // ========================================
 
 // Core service factories for dynamic component generation
-import { componentFactory } from './componentFactory';
+// import { componentFactory } from './componentFactory'; // Temporarily disabled
 // Enhanced KYB service factory for business verification workflows
 import { enhancedKybServiceFactory } from './enhanced-kyb-service-factory';
 // Unified KY3P form service for know-your-third-party workflows
@@ -188,8 +188,8 @@ export function registerAllServices(options: Partial<ServiceRegistrationOptions>
   // OODA: Act - Clear existing registrations if requested
   if (opts.clearExisting) {
     // Get existing services before clearing
-    const existingServices = componentFactory.getRegisteredFormServices();
-    const existingTypes = Object.keys(existingServices);
+    // const existingServices = componentFactory.getRegisteredFormServices();
+    const existingTypes: string[] = []; // Temporarily disabled
     
     // Check which service types are already registered
     if (existingTypes.length > 0) {
@@ -259,7 +259,8 @@ export function registerAllServices(options: Partial<ServiceRegistrationOptions>
   };
   
   // Get existing services before registering new ones
-  const existingServices = componentFactory.getRegisteredFormServices();
+  // const existingServices = componentFactory.getRegisteredFormServices();
+  const existingServices = {}; // Temporarily disabled
   
   // OODA: Decide - Register each task type with its appropriate service
   Object.entries(taskTypeRegistry).forEach(([taskType, serviceType]) => {

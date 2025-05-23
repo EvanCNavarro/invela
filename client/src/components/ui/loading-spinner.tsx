@@ -82,18 +82,13 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       <svg 
         viewBox="0 0 28 28" 
         fill="none" 
-        xmlns="http://www.w3.org/2000/svg" 
-        xmlns:anim="http://www.w3.org/2000/anim" 
-        anim="" 
-        anim:transform-origin="50% 50%" 
-        anim:duration="1" 
-        anim:ease="ease-in-out"
+        xmlns="http://www.w3.org/2000/svg"
         className="animate-spin"
         role="img"
         aria-label="Loading content"
       >
         <g id="Frame 427319720">
-          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
+          <g id="Invela Icon">
             <path 
               d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" 
               fill="#4965EC" 
