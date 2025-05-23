@@ -200,8 +200,15 @@ export default function DashboardPage(): JSX.Element {
     if (companyData) {
       const isFinTech = companyData.category === 'FinTech';
       const isInvela = companyData.category === 'Invela';
-      // Invela and FinTech companies use similar widget configurations
-      setVisibleWidgets((isFinTech || isInvela) ? FINTECH_DEFAULT_WIDGETS : OTHER_DEFAULT_WIDGETS);
+      
+      // Invela companies get the full widget set, FinTech gets simplified
+      if (isInvela) {
+        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Full feature set for Invela
+      } else if (isFinTech) {
+        setVisibleWidgets(FINTECH_DEFAULT_WIDGETS); // Simplified for FinTech
+      } else {
+        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Default full set for other companies
+      }
     }
   }, [companyData]);
 
