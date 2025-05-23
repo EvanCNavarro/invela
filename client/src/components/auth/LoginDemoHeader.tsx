@@ -146,7 +146,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full max-w-[980px] mx-auto mb-1",
+      "w-full max-w-[980px] mx-auto -mb-1",
       className
     )}>
       {/* Main container with professional styling */}
