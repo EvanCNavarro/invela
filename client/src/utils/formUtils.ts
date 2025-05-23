@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Form Utilities - Form Processing & Validation
+ * ========================================
+ * 
+ * Comprehensive form utility functions providing field sorting, validation,
+ * component type determination, and form processing helpers. Supports the
+ * enterprise form system with consistent field ordering and type resolution.
+ * 
+ * Key Features:
+ * - Field and section sorting by order property
+ * - Dynamic component type resolution
+ * - Form validation helpers with Zod integration
+ * - Consistent field processing across form types
+ * - Type-safe field operations
+ * 
+ * Supported Form Types:
+ * - KYB assessment forms
+ * - KY3P evaluation forms
+ * - Open Banking compliance forms
+ * - Custom enterprise form templates
+ * 
+ * @module utils/formUtils
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { z } from 'zod';
 import { FormField, FormSection } from '@/services/formService';
 
