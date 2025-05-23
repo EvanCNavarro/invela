@@ -1,0 +1,224 @@
+✅ Vite host restrictions override enabled
+[WebSocket] Smart WebSocket connection manager initialized
+[vite] connecting...
+[WebSocket] Connection to wss://localhost:undefined/ failed: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/' is invalid.
+[vite] failed to connect to websocket.
+your current setup:
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ <--[HTTP]--> localhost:undefined/ (server)
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ <--[WebSocket (failing)]--> localhost:undefined/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] Creating app-level EnhancedKybFormService instance
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-05-23T13:13:37.909Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+[WebSocket] Smart WebSocket connection manager initialized
+[WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection attempt initiated
+[App] WebSocket connection managers initialized
+[App] Application services initialized
+[Router] Current location: /
+[2025-05-23T13:13:38.223Z] [WebSocket] WebSocket connection manager initialized 
+[2025-05-23T13:13:38.224Z] [WebSocket] Scheduling initial WebSocket connection in 1000ms to ensure environment is ready 
+[2025-05-23T13:13:38.225Z] [App] Initializing application with phased startup approach 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Registering callback for phase: framework 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Registering callback for phase: context 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Registering callback for phase: services 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Registering callback for phase: communication 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Registering callback for phase: ready 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Starting phased application initialization 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Executing startup phase: framework 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Executing 1 callbacks for phase framework 
+[2025-05-23T13:13:38.225Z] [PhaseStartup] Executing callback 1/1 for phase framework 
+[2025-05-23T13:13:38.225Z] [App] Framework phase initializing 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Phase framework completed successfully 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing startup phase: context 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing 1 callbacks for phase context 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing callback 1/1 for phase context 
+[2025-05-23T13:13:38.227Z] [App] Context phase initializing 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Phase context completed successfully 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Phase services dependencies satisfied, executing... 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing startup phase: services 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing 1 callbacks for phase services 
+[2025-05-23T13:13:38.227Z] [PhaseStartup] Executing callback 1/1 for phase services 
+[2025-05-23T13:13:38.227Z] [App] Services phase initializing 
+[2025-05-23T13:13:38.227Z] [App] Initializing unified service registration 
+[2025-05-23T13:13:38.227Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+[2025-05-23T13:13:38.227Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-05-23T13:13:38.227Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-23T13:13:38.227Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-23T13:13:38.228Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-23T13:13:38.228Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-23T13:13:38.228Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-23T13:13:38.229Z] [App] Communication phase initializing 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-23T13:13:38.229Z] [App] Application ready for user interaction 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-23T13:13:38.229Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 8, email: "evan.navarro@invela.com", timestamp: "2025-05-23T13:13:38.465Z"}
+[2025-05-23T13:13:38.469Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748006018716-vstmehb", timestamp: "2025-05-23T13:13:38.716Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=1, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+[App] [SidebarTab] File Vault tab access changed 
+Object {isLocked: false, previousState: false, timestamp: "2025-05-23T13:13:38.712Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.751Z", id: 121, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.782Z", id: 338, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.813Z", id: 858, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-23T13:13:38.845Z", message: "Authentication successful"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.845Z", id: 123, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.875Z", id: 168, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.907Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.937Z", id: 720, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.969Z", id: 124, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:13:38.999Z", id: 188, status: "completed", progress: 100, …}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-05-23T13:08:26.717Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-05-23T13:08:26.717Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=2, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
