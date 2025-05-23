@@ -43,13 +43,6 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
         </motion.div>
       </div>
       
-      {/* Demo Header - Outside the login container */}
-      {isLogin && (
-        <div className="w-full flex justify-center px-6 mb-6">
-          <LoginDemoHeader />
-        </div>
-      )}
-      
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-6">
         {isRegistrationValidated ? (
@@ -66,23 +59,31 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
         ) : (
           // Login or initial registration (step 1) - wider width with two columns
           <motion.div 
-            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex w-full max-w-[980px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden h-auto flex flex-col w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             layout
           >
-            {isLogin ? (
-              // Login layout with hero on right
-              <>
-                <motion.div 
-                  className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {children}
-                </motion.div>
+            {/* Demo Header - Inside the login container */}
+            {isLogin && (
+              <div className="w-full">
+                <LoginDemoHeader className="rounded-t-lg" />
+              </div>
+            )}
+            
+            <div className="flex flex-1 min-h-[600px]">
+              {isLogin ? (
+                // Login layout with hero on right
+                <>
+                  <motion.div 
+                    className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {children}
+                  </motion.div>
                 <div className="hidden lg:block w-[45%] p-3">
                   <AuthHeroSection isLogin={true} />
                 </div>
@@ -103,6 +104,7 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
                 </motion.div>
               </>
             )}
+            </div>
           </motion.div>
         )}
       </div>

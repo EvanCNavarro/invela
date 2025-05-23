@@ -146,11 +146,11 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full max-w-[980px] mx-auto -mb-1",
+      "w-full",
       className
     )}>
       {/* Main container with professional styling */}
-      <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 overflow-hidden p-1">
+      <div className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden p-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
           
           {/* Left Button - Storybook Access */}
