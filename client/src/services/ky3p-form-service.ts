@@ -1,8 +1,25 @@
 /**
- * S&P KY3P Security Assessment Form Service
+ * KY3P Security Assessment Form Service
  * 
- * This service extends the EnhancedKybFormService to provide specialized 
- * functionality for the S&P KY3P Security Assessment form.
+ * Specialized service for managing KY3P (Know Your Third Party) security assessment forms.
+ * Extends the enhanced KYB service with KY3P-specific field management, validation,
+ * and submission logic.
+ * 
+ * @author Enterprise Risk Assessment Platform
+ * @version 1.0.0
+ * @since 2025-05-23
+ * 
+ * Dependencies:
+ * - EnhancedKybFormService: Base form service functionality
+ * - FormField, FormSection: Type definitions from formService
+ * - Enhanced logging system for comprehensive audit trails
+ * 
+ * Key Features:
+ * - KY3P-specific field management and validation
+ * - Template-based field loading with caching
+ * - Numeric field ID conversion for API compatibility
+ * - Progress tracking and completion status management
+ * - Enterprise-grade error handling and logging
  */
 
 import { EnhancedKybFormService } from './enhanced-kyb-service';
@@ -31,14 +48,36 @@ export class KY3PFormService extends EnhancedKybFormService {
   }
   
   /**
-   * Convert field ID to proper numeric format
-   * This ensures compatibility with the server-side API which expects numeric IDs
+   * Convert field ID to proper numeric format for API compatibility
+   * 
+   * Ensures compatibility with the server-side API which expects numeric field IDs.
+   * Handles string to number conversion with comprehensive validation and logging.
+   * 
+   * @param fieldId - The field ID to convert (string or number)
+   * @param key - Optional field key for enhanced error logging
+   * @returns Numeric field ID or null if conversion fails
+   * 
+   * @example
+   * ```typescript
+   * const numericId = this.ensureNumericFieldId("123", "company_name");
+   * if (numericId !== null) {
+   *   // Safe to use numeric ID
+   * }
+   * ```
    */
   private ensureNumericFieldId(fieldId: any, key?: string): number | null {
     const numericFieldId = typeof fieldId === 'string' ? parseInt(fieldId, 10) : fieldId;
     
     if (isNaN(numericFieldId)) {
-      logger.warn(`[KY3P Form Service] Invalid field ID format (not a number): ${fieldId}${key ? ` for key ${key}` : ''}`);
+      logger.warn(
+        '[KY3P Form Service] Invalid field ID format (not a number)',
+        { 
+          fieldId, 
+          key, 
+          type: typeof fieldId,
+          convertedValue: numericFieldId 
+        }
+      );
       return null;
     }
     
