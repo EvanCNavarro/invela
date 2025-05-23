@@ -146,90 +146,50 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full max-w-[980px] mx-auto mb-6",
+      "w-full max-w-[980px] mx-auto mb-2",
       className
     )}>
       {/* Main container with professional styling */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
           
-          {/* Left Section - Storybook Access */}
-          <div className="p-4 bg-purple-50">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-purple-600" />
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-purple-900 mb-1">
-                  Component Library
-                </h3>
-                <button
-                  onClick={handleStorybookAccess}
-                  disabled={isStorybookLoading}
-                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-white border border-purple-200 rounded-md hover:bg-purple-50 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isStorybookLoading ? (
-                    <>
-                      <div className="w-3 h-3 border border-purple-300 border-t-purple-600 rounded-full animate-spin mr-2" />
-                      Opening...
-                    </>
-                  ) : (
-                    <>
-                      <BookOpen className="w-3 h-3 mr-1.5" />
-                      View Components
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Box: Demo Login */}
-          <div className={cn(
-            "p-6 rounded-md border transition-all duration-200",
-            "bg-white/50 border-purple-100",
-            DEMO_THEME_STYLES.hover,
-            "cursor-pointer group"
-          )}
-          onClick={handleDemoLogin}
+          {/* Left Button - Storybook Access */}
+          <button
+            onClick={handleStorybookAccess}
+            disabled={isStorybookLoading}
+            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-md transition-colors",
-                  "bg-purple-100 group-hover:bg-purple-200"
-                )}>
-                  <Zap className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-purple-800">
-                    Demo Access
-                  </h3>
-                  <p className="text-sm text-purple-600">
-                    Quick Demo Login
-                  </p>
-                </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
+                <BookOpen className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="text-sm font-semibold text-purple-900">
+                  {isStorybookLoading ? 'Opening...' : 'Component Library'}
+                </h3>
+              </div>
+              {isStorybookLoading && (
+                <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+              )}
+            </div>
+          </button>
+
+          {/* Right Button - Demo Access */}
+          <button
+            onClick={handleDemoLogin}
+            className="p-3 bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset transition-all duration-200 group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 bg-slate-200 group-hover:bg-slate-300 rounded-lg flex items-center justify-center transition-colors">
+                <Zap className="w-4 h-4 text-slate-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Demo Access
+                </h3>
               </div>
             </div>
-            
-            <p className="text-sm text-purple-600 mb-4">
-              Quick access to demo functionality and testing features for development.
-            </p>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "w-full border-purple-200 text-purple-700",
-                "hover:bg-purple-100 hover:text-purple-800"
-              )}
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Demo Login
-            </Button>
-          </div>
+          </button>
         </div>
       </div>
 
