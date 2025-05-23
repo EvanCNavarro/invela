@@ -1,17 +1,100 @@
+/**
+ * ========================================
+ * Document Processing Service Module
+ * ========================================
+ * 
+ * Enterprise document processing service providing comprehensive
+ * file analysis, content extraction, and intelligent document workflows.
+ * Handles document uploads, AI-powered content processing, and
+ * real-time progress tracking for enterprise compliance workflows.
+ * 
+ * Key Features:
+ * - Queue-managed document processing with progress tracking
+ * - AI-powered content extraction and analysis
+ * - Enterprise-grade error handling and recovery
+ * - Real-time processing status updates and monitoring
+ * - Scalable architecture with singleton queue management
+ * 
+ * Dependencies:
+ * - QueryClient: API request management and caching infrastructure
+ * - CardService: Form field management and validation
+ * 
+ * @module DocumentProcessingService
+ * @version 2.0.0
+ * @since 2024-04-15
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// API request utilities for document processing coordination
 import { apiRequest } from '@/lib/queryClient';
+// Card field interfaces for form integration
 import type { CardField } from './cardService';
 
+// ========================================
+// CONSTANTS
+// ========================================
+
+/**
+ * Document processing configuration constants
+ * Defines baseline values for processing management and performance
+ */
+const PROCESSING_CONFIG = {
+  MAX_QUEUE_SIZE: 10,
+  PROCESSING_TIMEOUT: 300000, // 5 minutes
+  RETRY_ATTEMPTS: 3,
+  PROGRESS_UPDATE_INTERVAL: 1000
+} as const;
+
+/**
+ * Processing status types for comprehensive workflow management
+ * Ensures consistent status tracking across the processing pipeline
+ */
+const PROCESSING_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing', 
+  PROCESSED: 'processed',
+  ERROR: 'error',
+  CANCELLED: 'cancelled'
+} as const;
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Processing result interface for comprehensive status tracking
+ * 
+ * Provides complete processing outcome information including
+ * answer counts, status tracking, error details, and progress
+ * monitoring for real-time document processing workflows.
+ */
 interface ProcessingResult {
+  /** Number of answers successfully extracted from document */
   answersFound: number;
+  /** Current processing status for workflow tracking */
   status: 'processing' | 'processed' | 'error';
+  /** Error message for failed processing attempts */
   error?: string;
+  /** Processing progress information for real-time updates */
   progress?: {
+    /** Number of document chunks processed */
     chunksProcessed: number;
+    /** Total number of chunks for processing */
     totalChunks: number;
   };
+  /** Optional file identifier for tracking */
   fileId?: number;
 }
 
+/**
+ * Custom error class for document processing failures
+ * 
+ * Extends standard Error with additional context for debugging
+ * and comprehensive error tracking in enterprise workflows.
+ */
 class DocumentProcessingError extends Error {
   constructor(message: string, public details?: any) {
     super(message);
@@ -19,16 +102,37 @@ class DocumentProcessingError extends Error {
   }
 }
 
-// Singleton queue manager
+// ========================================
+// QUEUE MANAGEMENT
+// ========================================
+
+/**
+ * Singleton processing queue manager for enterprise document workflows
+ * 
+ * Manages document processing queue with thread-safe operations,
+ * progress tracking, and comprehensive error handling. Implements
+ * singleton pattern for centralized queue management across the application.
+ */
 class ProcessingQueueManager {
+  /** Singleton instance for centralized queue management */
   private static instance: ProcessingQueueManager;
+  /** Processing state flag for concurrency control */
   private isProcessing = false;
+  /** Document queue for ordered processing */
   private queue: number[] = [];
+  /** Currently processing file identifier */
   private currentFileId: number | null = null;
+  /** Progress callback for real-time updates */
   private onProgressCallback: ((result: ProcessingResult) => void) | null = null;
 
+  /** Private constructor for singleton pattern */
   private constructor() {}
 
+  /**
+   * Get singleton instance with thread-safe initialization
+   * 
+   * @returns ProcessingQueueManager singleton instance
+   */
   static getInstance(): ProcessingQueueManager {
     if (!ProcessingQueueManager.instance) {
       ProcessingQueueManager.instance = new ProcessingQueueManager();
@@ -36,11 +140,22 @@ class ProcessingQueueManager {
     return ProcessingQueueManager.instance;
   }
 
-  setProgressCallback(callback: (result: ProcessingResult) => void) {
+  /**
+   * Set progress callback for real-time processing updates
+   * 
+   * @param callback Function to receive processing progress updates
+   */
+  setProgressCallback(callback: (result: ProcessingResult) => void): void {
     this.onProgressCallback = callback;
   }
 
-  private emitProgress(status: ProcessingResult['status'], data: Partial<ProcessingResult> = {}) {
+  /**
+   * Emit progress updates to registered callback handlers
+   * 
+   * @param status Current processing status
+   * @param data Additional processing data for progress tracking
+   */
+  private emitProgress(status: ProcessingResult['status'], data: Partial<ProcessingResult> = {}): void {
     if (this.currentFileId && this.onProgressCallback) {
       this.onProgressCallback({
         fileId: this.currentFileId,
