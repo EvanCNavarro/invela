@@ -17,6 +17,7 @@ import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "./AuthHeroSection";
 import { AuthFooter } from "./AuthFooter";
+import { LoginDemoHeader } from "./LoginDemoHeader";
 import { motion } from "framer-motion";
 
 interface AuthLayoutProps {
@@ -41,6 +42,13 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
           {/* Back button removed as requested */}
         </motion.div>
       </div>
+      
+      {/* Demo Header - Outside the login container */}
+      {isLogin && (
+        <div className="w-full flex justify-center px-6 mb-6">
+          <LoginDemoHeader />
+        </div>
+      )}
       
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-6">
