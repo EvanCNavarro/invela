@@ -319,12 +319,12 @@ export function StorybookPage() {
                     Open Component Library
                   </Button>
                   <Button
-                    onClick={() => window.open(STORYBOOK_URLS.production, '_blank')}
+                    onClick={() => window.open('/storybook-static/index.html', '_blank')}
                     variant="outline"
                     className="w-full"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Open External Storybook
+                    Open in New Tab
                   </Button>
                 </div>
               </div>
