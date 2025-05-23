@@ -1,13 +1,74 @@
 /**
- * WebSocket Service
+ * ========================================
+ * WebSocket Service Module
+ * ========================================
  * 
- * This service provides real-time communication capabilities for the application,
- * particularly for tutorial progress updates and notifications.
+ * Enterprise real-time communication service providing comprehensive
+ * WebSocket management, message routing, and live data synchronization.
+ * Handles tutorial progress tracking, notifications, task updates, and
+ * real-time communication across the entire application ecosystem.
+ * 
+ * Key Features:
+ * - Real-time bidirectional communication with automatic reconnection
+ * - Comprehensive message type system with type safety
+ * - Tutorial progress tracking and live status updates
+ * - Enterprise notification system with variant support
+ * - Connection state management with health monitoring
+ * - Scalable architecture with event-driven messaging
+ * 
+ * Dependencies:
+ * - React: Hook-based state management and lifecycle handling
+ * 
+ * @module WebSocketService
+ * @version 2.0.0
+ * @since 2024-04-15
  */
 
+// ========================================
+// IMPORTS
+// ========================================
+
+// React hooks for component state and lifecycle management
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Types for WebSocket messages
+// ========================================
+// CONSTANTS
+// ========================================
+
+/**
+ * WebSocket connection configuration constants
+ * Defines connection behavior and reliability settings
+ */
+const WEBSOCKET_CONFIG = {
+  RECONNECT_INTERVAL: 3000,
+  MAX_RECONNECT_ATTEMPTS: 5,
+  HEARTBEAT_INTERVAL: 30000,
+  CONNECTION_TIMEOUT: 10000,
+  MESSAGE_QUEUE_SIZE: 100
+} as const;
+
+/**
+ * Connection state enumeration for comprehensive status tracking
+ * Provides clear connection lifecycle management
+ */
+const CONNECTION_STATE = {
+  DISCONNECTED: 'disconnected',
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  RECONNECTING: 'reconnecting',
+  ERROR: 'error'
+} as const;
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Message type enumeration for comprehensive communication protocol
+ * 
+ * Defines all supported message types for type-safe WebSocket communication
+ * including system messages, notifications, and application-specific events.
+ */
 export type MessageType = 
   | 'ping'
   | 'pong'
@@ -19,24 +80,55 @@ export type MessageType =
   | 'task_updated'
   | 'error';
 
+/**
+ * Base WebSocket message interface for all communication
+ * 
+ * Provides foundational structure for all WebSocket messages with
+ * type safety, timestamping, and extensible properties for
+ * comprehensive message handling across the application.
+ */
 export interface WebSocketMessage {
+  /** Message type for routing and handling */
   type: MessageType;
+  /** ISO timestamp for message tracking */
   timestamp: string;
+  /** Additional message properties for extensibility */
   [key: string]: any;
 }
 
+/**
+ * Notification message interface for user alerts and updates
+ * 
+ * Structured notification system supporting different variants
+ * and metadata for comprehensive user communication workflows.
+ */
 export interface NotificationMessage extends WebSocketMessage {
+  /** Notification message type identifier */
   type: 'notification';
+  /** Notification title for display */
   title: string;
+  /** Main notification message content */
   message: string;
+  /** Visual variant for appropriate styling */
   variant?: 'default' | 'destructive' | 'success';
+  /** Additional metadata for notification context */
   metadata?: Record<string, any>;
 }
 
+/**
+ * Tutorial progress message interface for educational workflows
+ * 
+ * Tracks user progress through tutorial sequences with detailed
+ * step information and completion status for educational features.
+ */
 export interface TutorialProgressMessage extends WebSocketMessage {
+  /** Tutorial progress message type identifier */
   type: 'tutorial_progress';
+  /** Tutorial tab or section identifier */
   tabName: string;
+  /** Detailed progress information */
   progress: {
+    /** Current step number in tutorial sequence */
     currentStep: number;
     totalSteps: number;
   };
