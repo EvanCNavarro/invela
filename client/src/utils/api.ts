@@ -1,104 +1,57 @@
 /**
- * API Request Utility - HTTP client for backend communication
+ * API Request Utility
  * 
- * Provides standardized HTTP request functionality with authentication support,
- * error handling, and consistent response processing. Includes automatic JSON
- * parsing, credential management, and comprehensive error reporting for
- * reliable frontend-backend communication.
- * 
- * Features:
- * - Automatic authentication credential inclusion
- * - Standardized error handling with detailed logging
- * - JSON content type defaults with header merging
- * - Empty response handling for 204 status codes
+ * This module provides a utility function for making API requests.
  */
-
-// ========================================
-// CONSTANTS
-// ========================================
 
 /**
- * Default HTTP request configuration for API communication
- * Ensures consistent authentication and content type handling
- */
-const DEFAULT_REQUEST_CONFIG: RequestInit = {
-  credentials: 'include',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-} as const;
-
-/**
- * HTTP status codes for response handling
- */
-const HTTP_STATUS = {
-  NO_CONTENT: 204
-} as const;
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * API response data type for generic HTTP responses
- * Uses unknown for type safety requiring explicit casting
- */
-type ApiResponseData = unknown;
-
-// ========================================
-// MAIN IMPLEMENTATION
-// ========================================
-
-/**
- * Execute HTTP API request with standardized configuration and error handling
+ * Make an API request
  * 
- * Performs HTTP requests to backend endpoints with automatic authentication,
- * error handling, and response parsing. Supports all HTTP methods with
- * customizable headers and request options.
- * 
- * @param url - Target endpoint URL for the HTTP request
- * @param options - HTTP request configuration options
- * @returns Promise resolving to parsed response data or null for empty responses
- * 
- * @throws {Error} When HTTP request fails or returns error status codes
+ * @param url The URL to fetch
+ * @param options The fetch options
+ * @returns Promise with the response data
  */
-export async function apiRequest(url: string, options: RequestInit = {}): Promise<ApiResponseData> {
+export async function apiRequest(url: string, options: RequestInit = {}): Promise<any> {
   try {
-    // Merge provided options with defaults
-    const requestConfig: RequestInit = {
-      ...DEFAULT_REQUEST_CONFIG,
-      ...options,
+    // Default options with credentials and JSON content type
+    const defaultOptions: RequestInit = {
+      credentials: 'include', // Include cookies for auth
       headers: {
-        ...DEFAULT_REQUEST_CONFIG.headers,
-        ...(options.headers || {})
-      }
+        'Content-Type': 'application/json',
+      },
+      ...options,
     };
     
-    // Execute HTTP request
-    const response = await fetch(url, requestConfig);
-    
-    // Handle error responses
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+    // Merge headers if provided in options
+    if (options.headers) {
+      defaultOptions.headers = {
+        ...defaultOptions.headers,
+        ...options.headers,
+      };
     }
     
-    // Handle empty content responses
-    if (response.status === HTTP_STATUS.NO_CONTENT) {
+    console.log(`[API] ${options.method || 'GET'} request to ${url}`);
+    
+    // Make the request
+    const response = await fetch(url, defaultOptions);
+    
+    // Check for error response
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API error ${response.status}: ${errorText}`);
+      throw new Error(`API error ${response.status}: ${response.statusText}`);
+    }
+    
+    // Handle empty response
+    if (response.status === 204) {
       return null;
     }
     
-    // Parse and return JSON response
-    return await response.json();
-    
-  } catch (requestError: unknown) {
-    const errorMessage = requestError instanceof Error ? requestError.message : String(requestError);
-    throw new Error(`API request failed: ${errorMessage}`);
+    // Parse JSON response
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`API error: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
   }
 }
-
-// ========================================
-// EXPORTS
-// ========================================
-
-export { apiRequest as default };

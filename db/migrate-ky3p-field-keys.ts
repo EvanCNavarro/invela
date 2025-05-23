@@ -1,67 +1,21 @@
 /**
- * KY3P Field Key Migration Script - Database migration for field key unification
+ * KY3P Field Key Migration Script
  * 
- * Populates field_key columns in ky3p_responses based on relationships between
- * field_id and ky3p_fields.id for data model unification. Part of comprehensive
- * strategy to align KY3P with KYB and Open Banking systems by standardizing
- * string-based field_key as primary identifier instead of numeric field_id.
+ * This script populates the field_key column in ky3p_responses based on
+ * the relationship between field_id in responses and id in ky3p_fields.
  * 
- * Migration Process:
- * 1. Identifies responses with NULL field_key values
- * 2. Executes bulk UPDATE using JOIN operation for performance
- * 3. Verifies migration completeness with comprehensive validation
+ * This is part of the unification strategy to align KY3P with KYB and Open Banking
+ * by using string-based field_key as the primary identifier instead of numeric field_id.
  */
 
-// ========================================
-// IMPORTS
-// ========================================
-
-// External library imports (alphabetical)
+import { db } from "@db";
 import { eq } from "drizzle-orm";
 
-// Internal absolute path imports (alphabetical)
-import { db } from "@db";
-
-// ========================================
-// TYPE DEFINITIONS
-// ========================================
-
-/**
- * Migration execution result interface
- * Provides structured feedback on migration outcomes
- */
-interface MigrationResult {
-  migrated: number;
-  total: number;
-}
-
-/**
- * Migration verification result interface
- * Tracks validation outcomes after migration execution
- */
-interface VerificationResult {
-  migratedCount: number;
-  nullCount: number;
-}
-
-// ========================================
-// MAIN IMPLEMENTATION
-// ========================================
-
-/**
- * Execute KY3P responses field key migration with bulk update operation
- * 
- * Performs efficient bulk update to populate field_key values in ky3p_responses
- * by joining with ky3p_fields table. Uses SQL JOIN for optimal performance
- * when processing large datasets.
- * 
- * @returns Promise resolving to migration statistics including counts
- * 
- * @throws {Error} When database operation fails or query execution encounters issues
- */
-async function migrateKy3pResponses(): Promise<MigrationResult> {
+async function migrateKy3pResponses() {
+  console.log('[KY3P-MIGRATION] Starting KY3P responses migration');
+  
   try {
-    // Count responses requiring migration
+    // Check how many responses need migration
     const countQuery = `
       SELECT COUNT(*) as count
       FROM ky3p_responses
@@ -69,13 +23,16 @@ async function migrateKy3pResponses(): Promise<MigrationResult> {
     `;
     
     const countResult = await db.execute(countQuery);
-    const totalRequiringMigration = parseInt(String(countResult.rows[0].count));
+    const count = parseInt(String(countResult.rows[0].count));
     
-    if (totalRequiringMigration === 0) {
+    console.log(`[KY3P-MIGRATION] Found ${count} responses needing migration`);
+    
+    if (count === 0) {
+      console.log('[KY3P-MIGRATION] No responses need migration, exiting');
       return { migrated: 0, total: 0 };
     }
     
-    // Execute bulk update with JOIN operation for performance
+    // Use a direct SQL UPDATE for all records at once - much more efficient
     const updateQuery = `
       UPDATE ky3p_responses AS r
       SET field_key = f.field_key
@@ -83,128 +40,98 @@ async function migrateKy3pResponses(): Promise<MigrationResult> {
       WHERE r.field_id = f.id AND r.field_key IS NULL
     `;
     
+    console.log('[KY3P-MIGRATION] Executing bulk update query...');
     await db.execute(updateQuery);
     
-    // Verify migration results
-    const verificationQuery = `
+    // Verify how many were updated
+    const verifyQuery = `
       SELECT COUNT(*) as count
       FROM ky3p_responses
       WHERE field_key IS NOT NULL
     `;
     
-    const verificationResult = await db.execute(verificationQuery);
-    const migratedCount = parseInt(String(verificationResult.rows[0].count));
+    const verifyResult = await db.execute(verifyQuery);
+    const updatedCount = parseInt(String(verifyResult.rows[0].count));
     
-    return { 
-      migrated: migratedCount, 
-      total: totalRequiringMigration 
-    };
+    console.log(`[KY3P-MIGRATION] Migration complete, migrated ${updatedCount} responses`);
+    return { migrated: updatedCount, total: count };
     
-  } catch (migrationError: unknown) {
-    const errorMessage = migrationError instanceof Error ? migrationError.message : String(migrationError);
-    throw new Error(`KY3P migration execution failed: ${errorMessage}`);
+  } catch (error) {
+    console.error('[KY3P-MIGRATION] Error during migration:', error);
+    throw error;
   }
 }
 
-/**
- * Verify KY3P migration completeness with comprehensive validation
- * 
- * Performs post-migration validation to ensure all ky3p_responses records
- * have been properly migrated with field_key values. Provides detailed
- * statistics for migration auditing and compliance verification.
- * 
- * @returns Promise resolving to verification statistics and counts
- * 
- * @throws {Error} When database validation queries fail
- */
-async function verifyMigration(): Promise<VerificationResult> {
+async function verifyMigration() {
   try {
-    // Count responses still missing field_key values
-    const nullKeyQuery = `
+    // Check if any responses still have NULL field_key
+    const nullKeyResponses = await db.execute(`
       SELECT COUNT(*) as count 
       FROM ky3p_responses 
       WHERE field_key IS NULL
-    `;
+    `);
     
-    const nullKeyResult = await db.execute(nullKeyQuery);
-    const nullCount = parseInt(String(nullKeyResult.rows[0].count));
+    const nullCount = parseInt(String(nullKeyResponses.rows[0].count));
     
-    // Count successfully migrated responses
-    const migratedQuery = `
+    // Check total migrated responses
+    const migratedResponses = await db.execute(`
       SELECT COUNT(*) as count 
       FROM ky3p_responses 
       WHERE field_key IS NOT NULL
-    `;
+    `);
     
-    const migratedResult = await db.execute(migratedQuery);
-    const migratedCount = parseInt(String(migratedResult.rows[0].count));
+    const migratedCount = parseInt(String(migratedResponses.rows[0].count));
+    
+    console.log(`[KY3P-MIGRATION] Verification results:`);
+    console.log(`- Total responses with field_key: ${migratedCount}`);
+    console.log(`- Responses still missing field_key: ${nullCount}`);
     
     return { migratedCount, nullCount };
     
-  } catch (verificationError: unknown) {
-    const errorMessage = verificationError instanceof Error ? verificationError.message : String(verificationError);
-    throw new Error(`Migration verification failed: ${errorMessage}`);
+  } catch (error) {
+    console.error('[KY3P-MIGRATION] Error during verification:', error);
+    throw error;
   }
 }
 
-/**
- * Execute complete KY3P migration process with verification
- * 
- * Orchestrates the full migration workflow including execution and validation.
- * Provides comprehensive error handling for production deployment scenarios.
- * 
- * @returns Promise that resolves when migration completes successfully
- * 
- * @throws {Error} When migration or verification fails
- */
-async function main(): Promise<void> {
+async function main() {
   try {
-    // Execute primary migration
+    console.log('[KY3P-MIGRATION] Starting migration process');
+    
+    // Run the migration
     const migrationResult = await migrateKy3pResponses();
     
-    // Perform verification
+    // Verify the results
     const verificationResult = await verifyMigration();
     
-    // Validate migration success
+    console.log('[KY3P-MIGRATION] Migration process completed');
+    console.log(`- Migration stats: ${migrationResult.migrated}/${migrationResult.total} responses updated`);
+    console.log(`- Verification stats: ${verificationResult.migratedCount} responses have field_key, ${verificationResult.nullCount} missing`);
+    
     if (verificationResult.nullCount > 0) {
-      throw new Error(`Migration incomplete: ${verificationResult.nullCount} responses still missing field_key`);
+      console.warn('[KY3P-MIGRATION] Warning: Some responses still have NULL field_key');
+    } else {
+      console.log('[KY3P-MIGRATION] Success: All responses now have field_key populated');
     }
     
-  } catch (mainError: unknown) {
-    const errorMessage = mainError instanceof Error ? mainError.message : String(mainError);
-    throw new Error(`KY3P migration process failed: ${errorMessage}`);
+  } catch (error) {
+    console.error('[KY3P-MIGRATION] Critical error during migration process:', error);
+    process.exit(1);
   }
 }
 
-// ========================================
-// MODULE EXECUTION LOGIC
-// ========================================
-
-/**
- * Determine if this file is being executed as the main module
- * Enables direct script execution while maintaining importability
- */
+// Run the migration if this is the main module
+// Using ESM detection method
 const isMainModule = import.meta.url.endsWith(process.argv[1]);
-
-/**
- * Execute migration when script is run directly
- * Provides clean exit codes for automation and CI/CD pipelines
- */
 if (isMainModule) {
-  main()
-    .then(() => {
-      process.exit(0);
-    })
-    .catch((executionError: unknown) => {
-      const errorMessage = executionError instanceof Error ? executionError.message : String(executionError);
-      process.stderr.write(`KY3P migration execution failed: ${errorMessage}\n`);
-      process.exit(1);
-    });
+  main().then(() => {
+    console.log('[KY3P-MIGRATION] Script execution completed');
+    process.exit(0);
+  }).catch(error => {
+    console.error('[KY3P-MIGRATION] Unhandled error:', error);
+    process.exit(1);
+  });
 }
-
-// ========================================
-// EXPORTS
-// ========================================
 
 export { migrateKy3pResponses, verifyMigration };
 
