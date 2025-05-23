@@ -23,15 +23,17 @@
 
 ## 🗂️ File Structure & Naming
 
-### **File Naming Conventions** (Based on Current Project Patterns)
-- **React Components:** `PascalCase.tsx` or `kebab-case-page.tsx` 
-- **API Routes:** `feature-name.ts` (simple) OR `feature-name.routes.ts` (complex)
-- **Services:** `featureService.ts` (camelCase) OR `feature-name-service.ts` (kebab-case)
-- **Utilities:** `kebab-case.ts` or `featureName.ts`
-- **Types:** `kebab-case-types.ts` or in main files
-- **Database:** `kebab-case.ts` for migrations, `schema.ts` for main schema
+### **File Naming Conventions** (RIGID BEST PRACTICE STANDARDS)
+- **React Components:** `PascalCase.tsx` (e.g., `DashboardPage.tsx`, `TaskCard.tsx`)
+- **React Pages:** `PascalCase.tsx` (e.g., `LoginPage.tsx`, `TaskCenterPage.tsx`)
+- **API Routes:** `kebab-case.routes.ts` (e.g., `company.routes.ts`, `task-management.routes.ts`)
+- **Services:** `kebab-case.service.ts` (e.g., `user-auth.service.ts`, `risk-calculation.service.ts`)
+- **Utilities:** `kebab-case.utils.ts` (e.g., `date-formatting.utils.ts`, `validation.utils.ts`)
+- **Types:** `kebab-case.types.ts` (e.g., `task.types.ts`, `company-profile.types.ts`)
+- **Constants:** `kebab-case.constants.ts` (e.g., `api-endpoints.constants.ts`)
+- **Database:** `kebab-case.ts` (e.g., `add-user-table.ts`, `update-task-status.ts`)
 
-**Priority**: Consistency within each folder > Perfect naming convention
+**RULE**: No exceptions. All files will be renamed to follow these exact patterns.
 
 ### **Directory Structure**
 ```
@@ -125,15 +127,19 @@ project/
 
 ## 🏗️ Code Organization
 
-### **File Structure Order**
-1. **File Header** - Documentation block
-2. **Imports** - External libraries first, then internal modules
-3. **Constants** - All constant declarations
-4. **Types & Interfaces** - TypeScript definitions
-5. **Main Logic** - Core functionality
-6. **Exports** - Named and default exports
+### **MANDATORY File Structure Order**
+**EVERY FILE MUST FOLLOW THIS EXACT ORDER:**
 
-### **Section Comments**
+1. **File Header** - REQUIRED documentation block using JSDoc format
+2. **Imports Section** - Grouped in specific order (see Import Standards)
+3. **Constants Section** - ALL constants declared here with section comment
+4. **Types & Interfaces Section** - ALL TypeScript definitions with section comment
+5. **Helper Functions Section** - Internal utilities with section comment
+6. **Main Implementation** - Primary logic with section comment
+7. **Exports Section** - ALL exports grouped at bottom with section comment
+
+### **MANDATORY Section Comments**
+**EVERY FILE MUST USE THESE EXACT SECTION DIVIDERS:**
 ```typescript
 // ========================================
 // CONSTANTS
@@ -155,6 +161,8 @@ project/
 // EXPORTS
 // ========================================
 ```
+
+**RULE**: Files missing proper sections or order will be restructured.
 
 ---
 
@@ -199,50 +207,69 @@ const apiEndpoints = { /* ... */ }
 
 ## 🏷️ Variable & Function Naming
 
-### **Variables**
-```typescript
-// ✅ Good - Descriptive and clear
-const userAuthenticationToken = generateToken();
-const companyRiskScoreCalculation = calculateRisk();
-const websocketConnectionStatus = 'connected';
+### **STRICT Variable Naming** (MANDATORY)
+**ALL VARIABLES MUST FOLLOW THESE EXACT PATTERNS:**
 
-// ❌ Avoid - Vague or abbreviated
-const token = generateToken();
-const calc = calculateRisk();
-const wsStatus = 'connected';
+```typescript
+// ✅ REQUIRED - Descriptive, action-oriented, no abbreviations
+const userAuthenticationToken = generateUserToken();
+const companyRiskScoreCalculation = calculateCompanyRiskScore();
+const websocketConnectionStatus = 'connected';
+const apiRequestTimeoutDuration = 30000;
+
+// ❌ FORBIDDEN - Abbreviations, vague names, unclear purpose
+const token = generateToken();           // TOO VAGUE
+const calc = calculateRisk();           // ABBREVIATION
+const wsStatus = 'connected';           // ABBREVIATION
+const timeout = 30000;                  // TOO GENERIC
 ```
 
-### **Functions**
+### **STRICT Function Naming** (MANDATORY)
+**ALL FUNCTIONS MUST FOLLOW THESE EXACT PATTERNS:**
+
 ```typescript
-// ✅ Good - Action-oriented, descriptive
+// ✅ REQUIRED - Verb + Noun + Specific Purpose
 function calculateCompanyRiskScore(data: RiskData): number { }
 function validateUserPermissions(userId: number): boolean { }
-function broadcastTaskUpdate(taskId: number, status: TaskStatus): void { }
+function broadcastTaskStatusUpdate(taskId: number, status: TaskStatus): void { }
+function generateUserAuthenticationToken(userId: number): string { }
 
-// ❌ Avoid - Vague or unclear purpose
-function calculate(data: any): number { }
-function check(id: number): boolean { }
-function broadcast(id: number, status: string): void { }
+// ❌ FORBIDDEN - Generic verbs, unclear purpose, abbreviations
+function calculate(data: any): number { }           // TOO GENERIC
+function check(id: number): boolean { }             // UNCLEAR PURPOSE
+function broadcast(id: number, status: string): void { }  // MISSING SPECIFICITY
+function genToken(id: number): string { }           // ABBREVIATION
 ```
+
+**RULES**:
+- ALL functions must start with action verbs (calculate, validate, generate, broadcast, etc.)
+- NO abbreviations allowed (gen, calc, auth, etc.)
+- ALL parameters must have explicit types
+- ALL return types must be explicitly declared
 
 ---
 
 ## 💬 Comment Standards
 
-### **Function Comments**
+### **MANDATORY Function Comments** 
+**ALL FUNCTIONS MUST HAVE COMPLETE JSDOC DOCUMENTATION:**
+
 ```typescript
 /**
- * Calculate risk score based on company data and form responses
+ * Calculate comprehensive risk score based on company data and form responses
  * 
- * @param companyData - Company profile and metadata
- * @param responses - Form response data for risk assessment
- * @param weights - Optional custom weighting factors
- * @returns Calculated risk score between 0-100
+ * @param companyData - Complete company profile and metadata object
+ * @param responses - Array of validated form response data for risk assessment
+ * @param weights - Optional custom weighting factors for risk calculation
+ * @returns Calculated risk score between 0-100 with decimal precision
+ * 
+ * @throws {ValidationError} When company data is incomplete
+ * @throws {CalculationError} When risk calculation fails
  * 
  * @example
- * const score = calculateRiskScore(company, responses, { security: 0.4 });
+ * const riskScore = calculateCompanyRiskScore(companyProfile, formResponses, { security: 0.4 });
  */
-function calculateRiskScore(
+function calculateCompanyRiskScore(
   companyData: CompanyProfile,
   responses: FormResponse[],
   weights?: RiskWeights
@@ -251,56 +278,87 @@ function calculateRiskScore(
 }
 ```
 
-### **Inline Comments**
-```typescript
-// Single-line comments for brief explanations
-const timeout = 30000; // 30 seconds timeout for API requests
+### **MANDATORY Inline Comments**
+**ALL COMPLEX LOGIC MUST BE EXPLAINED:**
 
-/* 
- * Multi-line comments for complex logic explanations
- * or important context that affects multiple lines
+```typescript
+// ✅ REQUIRED - Explain WHY, not just WHAT
+const apiRequestTimeoutDuration = 30000; // 30 seconds timeout prevents hanging requests in production
+
+// ✅ REQUIRED - Complex logic explanation
+/*
+ * Risk calculation uses weighted scoring algorithm:
+ * - Security responses: 40% weight (highest priority)
+ * - Financial data: 30% weight 
+ * - Operational metrics: 30% weight
  */
+
+// ❌ FORBIDDEN - Obvious or redundant comments
+const userId = 123; // Set user ID to 123
+let isValid = true; // Boolean variable
 ```
+
+**RULES**:
+- ALL functions require complete JSDoc with @param, @returns, @throws
+- ALL complex logic requires explanatory comments
+- NO obvious or redundant comments allowed
 
 ---
 
 ## 📦 Import/Export Organization
 
-### **Import Order**
+### **STRICT Import Order** (MANDATORY)
+**ALL FILES MUST FOLLOW THIS EXACT IMPORT ORDER:**
+
 ```typescript
-// 1. Node.js built-in modules
+// ========================================
+// IMPORTS
+// ========================================
+
+// 1. Node.js built-in modules (alphabetical)
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// 2. External library imports
+// 2. External library imports (alphabetical)
 import express from 'express';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 
-// 3. Internal imports - absolute paths with @
+// 3. Internal absolute path imports (alphabetical)
 import { db } from '@db';
-import { logger } from '@/server/utils/logger';
+import { logger } from '@/server/utils/logger.utils';
 
-// 4. Relative imports
-import { validateInput } from './validation';
-import { TaskStatus } from '../types/task';
+// 4. Relative imports (alphabetical)
+import { validateInput } from './validation.utils';
+import { TaskStatus } from '../types/task.types';
 ```
 
-### **Export Standards**
-```typescript
-// ✅ Preferred - Named exports for utilities
-export const calculateRisk = (data: RiskData) => { };
-export const validateForm = (form: FormData) => { };
+### **STRICT Export Standards** (MANDATORY)
+**EVERY FILE MUST FOLLOW THESE EXPORT RULES:**
 
-// ✅ Good - Default export for main component/service
+```typescript
+// ========================================
+// EXPORTS
+// ========================================
+
+// Rule 1: Named exports for utilities, functions, and constants
+export const calculateRiskScore = (data: RiskData): number => { };
+export const validateFormData = (form: FormData): boolean => { };
+
+// Rule 2: Default export ONLY for main component/service/class
 export default class RiskCalculationService {
   // Implementation...
 }
 
-// ✅ Combined approach when appropriate
-export { TaskStatus, TaskUpdate } from './types';
-export { default as RiskService } from './risk-service';
+// Rule 3: Re-exports grouped alphabetically
+export { TaskStatus, TaskUpdate } from './task.types';
+export { UserProfile } from './user.types';
 ```
+
+**RULES**: 
+- NO mixed default/named exports except for main classes
+- ALL exports must be at file bottom in EXPORTS section
+- ALL imports must use exact file extensions (.types.ts, .utils.ts, etc.)
 
 ---
 
@@ -454,4 +512,44 @@ export default TaskCard;
 
 ---
 
-**This guide should be referenced by all developers and AI agents working on this project to ensure consistency and maintainability.**
+---
+
+## ✅ MANDATORY ENFORCEMENT CHECKLIST
+
+**BEFORE ANY CODE IS COMMITTED, VERIFY 100% COMPLIANCE:**
+
+### **File-Level Requirements:**
+- [ ] File name follows EXACT naming convention for its type
+- [ ] File header uses proper JSDoc format with complete description
+- [ ] All sections present in correct order with proper dividers
+- [ ] All imports grouped and alphabetized correctly
+- [ ] All exports grouped at bottom with proper organization
+
+### **Code-Level Requirements:**
+- [ ] All functions have complete JSDoc documentation
+- [ ] All variables use descriptive, non-abbreviated names
+- [ ] All TypeScript types explicitly declared
+- [ ] All complex logic has explanatory comments
+- [ ] No console.log statements in production code
+- [ ] No unused imports or variables
+- [ ] No any types without explicit justification
+
+### **Standards Violations = IMMEDIATE FIX REQUIRED:**
+- **File naming violations**: Rename immediately
+- **Missing documentation**: Add complete headers and comments
+- **Poor organization**: Restructure to match mandatory sections
+- **Abbreviated names**: Expand to full descriptive names
+- **Missing types**: Add explicit TypeScript declarations
+
+---
+
+## 🎯 IMPLEMENTATION PRIORITY
+
+**Phase 1**: Database folder (8 files) - Apply all standards
+**Phase 2**: Types folder (1 file) - Validate compliance  
+**Phase 3**: Client folder (100+ files) - Systematic cleanup
+**Phase 4**: Server folder (100+ files) - Complete transformation
+
+---
+
+**This guide represents NON-NEGOTIABLE standards. ALL code must comply 100% with these requirements. No exceptions.**
