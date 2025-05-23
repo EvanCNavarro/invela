@@ -254,6 +254,17 @@ export default function DashboardPage(): JSX.Element {
    * - Maintain enterprise UX standards with proper skeleton display
    */
   const shouldShowLoading = isCompanyLoading && !companyData;
+
+  // Debug dashboard rendering
+  useEffect(() => {
+    console.log('🔍 DASHBOARD RENDER DEBUG:', {
+      companyData,
+      category: companyData?.category,
+      visibleWidgets,
+      shouldShowLoading,
+      isInvelaCompany: companyData?.category === 'Invela'
+    });
+  }, [companyData, visibleWidgets, shouldShowLoading]);
   
   if (shouldShowLoading) {
     return (
@@ -407,14 +418,7 @@ export default function DashboardPage(): JSX.Element {
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
-            {/* Debug logging for Invela widget state */}
-            {companyData?.category === 'Invela' && console.log('Invela Dashboard Debug:', {
-              companyData: companyData,
-              visibleWidgets: visibleWidgets,
-              companySnapshot: visibleWidgets.companySnapshot,
-              riskRadar: visibleWidgets.riskRadar,
-              taskSummary: visibleWidgets.taskSummary
-            })}
+            {/* Debug logging moved to useEffect for proper React rendering */}
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
