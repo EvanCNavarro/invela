@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Company Snapshot Widget - Executive Overview
+ * ========================================
+ * 
+ * Comprehensive company overview widget providing key business metrics,
+ * risk indicators, and network relationships for executive decision-making.
+ * Features real-time data integration and interactive navigation capabilities.
+ * 
+ * Key Features:
+ * - Real-time company performance metrics
+ * - Risk score and trending indicators
+ * - Network relationship visualization
+ * - Interactive navigation to detailed views
+ * - Responsive design with loading states
+ * 
+ * Data Sources:
+ * - Company profile and business information
+ * - Real-time risk assessment data
+ * - Network relationship analysis
+ * - Performance trend calculations
+ * 
+ * @module components/dashboard/CompanySnapshot
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useQuery } from "@tanstack/react-query";
 import { 
   Building2, 

@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Risk Score Page - S&P Data Access Assessment
+ * ========================================
+ * 
+ * Comprehensive risk score monitoring and analysis page for S&P Data Access
+ * assessments. Provides executive-level visibility into organizational risk
+ * metrics with integrated tutorial system and real-time score tracking.
+ * 
+ * Key Features:
+ * - Real-time risk score display and monitoring
+ * - S&P Data Access compliance tracking
+ * - Interactive tutorial integration for user guidance
+ * - Professional dashboard layout with responsive design
+ * - Executive-level risk assessment visualization
+ * 
+ * Risk Assessment Components:
+ * - Current score display with visual indicators
+ * - Historical trend analysis capabilities
+ * - Compliance status tracking and alerts
+ * - Detailed risk breakdown and metrics
+ * - Actionable insights and recommendations
+ * 
+ * @module pages/RiskScorePage
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-side-drawer";
