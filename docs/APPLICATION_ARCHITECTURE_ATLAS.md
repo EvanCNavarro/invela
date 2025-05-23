@@ -69,6 +69,9 @@ This document provides a comprehensive map of the application's architecture, fi
 | `ky3p-form-service.ts` | Enhanced documentation, improved error handling | 🔄 In Progress |
 | `TaskSummaryWidget.tsx` | Fixed TypeScript errors, added proper type imports, corrected query structure | ✅ Complete |
 | `TutorialManager.tsx` | Fixed TypeScript index signature error with Record<string, string> type | ✅ Complete |
+| `company-profile-page.tsx` | Fixed missing children prop in TutorialManager component | ✅ Complete |
+| `dashboard-page.tsx` | Fixed PageSideDrawer prop interface mismatch (open/onClose → defaultOpen/onOpenChange) | ✅ Complete |
+| `loading-spinner.tsx` | Fixed SVG animation attributes compatibility by removing unsupported custom animation props | ✅ Complete |
 
 | File | Purpose | Dependencies | Critical Level | Status |
 |------|---------|--------------|----------------|---------|

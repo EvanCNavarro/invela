@@ -379,10 +379,9 @@ export default function DashboardPage(): JSX.Element {
         >
           {/* Widget Customization Side Drawer */}
           <PageSideDrawer
-            open={sideDrawerOpen}
-            onClose={() => setSideDrawerOpen(false)}
+            defaultOpen={sideDrawerOpen}
+            onOpenChange={(open) => setSideDrawerOpen(open)}
             title="Customize Dashboard"
-            description="Choose which widgets to display on your dashboard"
           >
             <div className="space-y-4">
               <div className="space-y-3">
