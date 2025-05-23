@@ -1,4 +1,4 @@
-import { type Column } from "../playground/Table";
+import { type Column } from "@/components/ui/table";
 import { type FileItem } from "@/types/files";
 import { FileIcon } from "lucide-react";
 import { type FileStatus } from "@/types/files";
