@@ -1,15 +1,30 @@
 /**
- * Task Types Definition
+ * Task Types Definition - Centralized task-related type definitions and enums
  * 
- * This file contains shared type definitions for tasks across the application.
+ * Provides comprehensive type definitions for task management across the enterprise
+ * risk assessment platform. Includes status enumerations, progress mappings, and
+ * interface definitions for WebSocket messaging and task state management.
+ * 
+ * Features:
+ * - Task status enumeration with string value mapping
+ * - Progress percentage calculations for each status
+ * - WebSocket message interfaces for real-time updates
  */
 
+// ========================================
+// ENUMS
+// ========================================
+
 /**
- * Task Status Enum - represents the possible states of a task in the system
+ * Task Status Enumeration - Comprehensive task lifecycle states
+ * 
+ * Defines all possible states a task can have throughout its lifecycle from
+ * creation to completion. Used for task state management, progress tracking,
+ * and workflow automation across the platform.
  */
 export enum TaskStatus {
   PENDING = 'pending',
-  NOT_STARTED = 'not_started',
+  NOT_STARTED = 'not_started', 
   EMAIL_SENT = 'email_sent',
   COMPLETED = 'completed',
   FAILED = 'failed',
@@ -21,8 +36,15 @@ export enum TaskStatus {
   ARCHIVED = 'archived'
 }
 
+// ========================================
+// CONSTANTS
+// ========================================
+
 /**
- * Progress mapping for task statuses
+ * Task status progress mapping for percentage calculations
+ * 
+ * Maps each task status to its corresponding completion percentage for
+ * progress tracking and visual indicators throughout the application.
  */
 export const taskStatusToProgress: Record<TaskStatus, number> = {
   [TaskStatus.PENDING]: 0,
@@ -39,16 +61,11 @@ export const taskStatusToProgress: Record<TaskStatus, number> = {
 };
 
 /**
- * Task update interface for WebSocket messaging
+ * Task status string values for compatibility with legacy code
+ * 
+ * Provides typed string constants for components that require string
+ * values while maintaining type safety through TaskStatus casting.
  */
-export interface TaskUpdate {
-  id: number;
-  status: TaskStatus;
-  progress: number;
-  metadata?: Record<string, any>;
-}
-
-// Export a TaskStatusValues object for code that uses string values
 export const TaskStatusValues = {
   PENDING: 'pending' as TaskStatus,
   NOT_STARTED: 'not_started' as TaskStatus,
@@ -61,4 +78,37 @@ export const TaskStatusValues = {
   FAILED: 'failed' as TaskStatus,
   REJECTED: 'rejected' as TaskStatus,
   ARCHIVED: 'archived' as TaskStatus
+};
+
+// ========================================
+// INTERFACES
+// ========================================
+
+/**
+ * Task update interface for real-time WebSocket messaging
+ * 
+ * Defines the structure for task update messages broadcast through
+ * WebSocket connections for real-time task status synchronization.
+ * 
+ * @param id - Unique task identifier
+ * @param status - Current task status from TaskStatus enum
+ * @param progress - Completion percentage (0-100)
+ * @param metadata - Optional additional task-specific data
+ */
+export interface TaskUpdate {
+  id: number;
+  status: TaskStatus;
+  progress: number;
+  metadata?: Record<string, unknown>;
+}
+
+// ========================================
+// EXPORTS
+// ========================================
+
+export {
+  TaskStatus as default,
+  taskStatusToProgress,
+  TaskStatusValues,
+  type TaskUpdate
 };

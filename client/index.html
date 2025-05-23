@@ -89,7 +89,7 @@
               
               // Fix the URL with the correct port
               const oldUrl = connectionUrl;
-              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:8080');
+              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:5000');
               
               // Log the URL fix only once per unique URL pattern
               const logKey = `fixed-${oldUrl}-to-${connectionUrl}`;
