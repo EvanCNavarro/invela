@@ -4,11 +4,12 @@
 This document provides a comprehensive map of the application's architecture, file dependencies, and functional relationships. It's built incrementally as we transform each file, creating a living reference for understanding the complete codebase structure.
 
 ## Atlas Statistics
-- **Files Analyzed**: 13
-- **Files Transformed**: 13  
+- **Files Analyzed**: 16
+- **Files Transformed**: 16  
 - **Database Files**: 9 (100% complete)
 - **Type Files**: 1 (100% complete)
 - **Client Utility Files**: 3 (100% complete)
+- **Client Service Files**: 3 (100% complete - standardized)
 - **Last Updated**: 2025-05-23
 
 ---
