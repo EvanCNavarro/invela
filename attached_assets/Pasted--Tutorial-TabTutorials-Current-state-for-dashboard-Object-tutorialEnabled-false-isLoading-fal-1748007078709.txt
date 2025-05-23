@@ -1,0 +1,44 @@
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-05-23T13:30:35.075Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=2, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:31:03.613Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-23T13:31:03.645Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748007063767-rz0dt5q", timestamp: "2025-05-23T13:31:03.767Z", message: "Connection established"}
+[2025-05-23T13:31:03.811Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748007064256-cpz9szq", timestamp: "2025-05-23T13:31:04.256Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748007064750-qeabahk", timestamp: "2025-05-23T13:31:04.751Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-23T13:31:05.741Z] [WebSocket] WebSocket connection established 
+[2025-05-23T13:31:05.742Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-23T13:31:05.742Z] [WebSocket] Received message of type: connection_established 
+[2025-05-23T13:31:05.742Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748007065740-x3tpvig 
+[2025-05-23T13:31:06.168Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1748007063811_uw0tuyfi7", hasUserData: true, hasCompanyData: true}
+[2025-05-23T13:31:06.287Z] [WebSocket] Received message of type: authenticated 
+[2025-05-23T13:31:06.287Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
