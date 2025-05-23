@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Enhanced KYB Service - Know Your Business Enterprise Solution
+ * ========================================
+ * 
+ * Advanced Know Your Business (KYB) service providing comprehensive customer
+ * business verification and due diligence capabilities. Manages complex form
+ * workflows, field-level timestamping, and real-time data synchronization.
+ * 
+ * Key Features:
+ * - Enhanced form field management with timestamped data integrity
+ * - Progressive optimization and performance monitoring
+ * - Advanced conflict resolution for multi-user editing
+ * - Real-time form synchronization and validation
+ * - Comprehensive field mapping and type conversion
+ * 
+ * Business Verification Capabilities:
+ * - Corporate structure and ownership verification
+ * - Financial standing and compliance assessment
+ * - Risk scoring and regulatory compliance checking
+ * - Document validation and authentication
+ * - Real-time field-level timestamp synchronization
+ * 
+ * @module services/enhanced-kyb-service
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { FormServiceInterface, FormSubmitOptions, FormSubmitResponse } from './form-service.interface';
 import { FormData, TimestampedFormData, createTimestampedFormData, updateField, mergeTimestampedFormData, extractValues, getNewerClientFields } from '../types/form-data';
 import { FormField, FormSection } from '../components/forms/types';
