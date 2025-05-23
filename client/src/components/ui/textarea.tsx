@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Textarea Component - Multi-line Text Input
+ * ========================================
+ * 
+ * Professional textarea component providing consistent styling for multi-line
+ * text input throughout the enterprise platform. Built with accessibility
+ * features and responsive design patterns.
+ * 
+ * Key Features:
+ * - Multi-line text input with auto-resize capabilities
+ * - Consistent design system styling
+ * - Accessible focus management
+ * - Responsive layout adaptation
+ * - Type-safe React forwardRef implementation
+ * 
+ * Accessibility Features:
+ * - Proper focus indicators
+ * - Screen reader compatibility
+ * - Keyboard navigation support
+ * - High contrast mode support
+ * 
+ * @module components/ui/textarea
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

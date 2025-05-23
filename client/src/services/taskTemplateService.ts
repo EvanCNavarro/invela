@@ -1,7 +1,42 @@
+/**
+ * ========================================
+ * Task Template Service - Configuration Management
+ * ========================================
+ * 
+ * Enterprise task template and configuration management service providing
+ * comprehensive template orchestration, dynamic configuration handling,
+ * and workflow template management for the risk assessment platform.
+ * 
+ * Key Features:
+ * - Dynamic task template configuration management
+ * - Hierarchical configuration scoping (global, section, field)
+ * - Template lifecycle management and versioning
+ * - Type-safe configuration value handling
+ * - Real-time template updates and synchronization
+ * 
+ * Configuration Scopes:
+ * - Global: Application-wide template settings
+ * - Section: Section-specific configurations
+ * - Field: Individual field-level customizations
+ * 
+ * Template Types:
+ * - KYB assessment templates
+ * - KY3P evaluation templates  
+ * - Open Banking compliance templates
+ * - Custom workflow templates
+ * 
+ * @module services/taskTemplateService
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { apiRequest } from '@/lib/queryClient';
 
 /**
- * Task template configuration
+ * Task template configuration interface
+ * 
+ * Defines the structure for template configuration entries
+ * supporting hierarchical scoping and dynamic value types
  */
 export interface TemplateConfiguration {
   id: number;
