@@ -258,8 +258,8 @@ initializeProductionOptimizations();
 // Homogeneous solution: Maintains same forced production approach while enabling flexibility
 const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
 
-// Set NODE_ENV based on deployment context - prioritize explicit production setting
-process.env.NODE_ENV = 'production';
+// Set NODE_ENV for development
+process.env.NODE_ENV = 'development';
 
 // Replit's recommended dynamic port configuration
 // Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
