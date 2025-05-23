@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * Login Page Component
+ * ========================================
+ * 
+ * Enterprise-grade user authentication interface providing secure login
+ * functionality with form validation, visual feedback, and seamless
+ * navigation integration for the risk assessment platform.
+ * 
+ * @module pages/login-page
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
