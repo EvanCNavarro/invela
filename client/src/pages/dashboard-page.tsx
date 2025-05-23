@@ -155,7 +155,7 @@ export default function DashboardPage(): JSX.Element {
   // Company data retrieval with optimized caching
   const { data: companyData, isLoading: isCompanyLoading, error: companyError } = useQuery<Company>({
     queryKey: ['/api/companies/current'],
-    ...getOptimizedQueryOptions()
+    ...getOptimizedQueryOptions('/api/companies/current')
   });
 
   // ========================================

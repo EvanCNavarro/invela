@@ -224,7 +224,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchInterval: false,       // Don't poll automatically
       refetchOnWindowFocus: true,   // Always fetch when window gets focus
       staleTime: 0,                 // Always consider data stale - critical fix
-      cacheTime: 1000 * 60,         // 1 minute cache time
+      gcTime: 1000 * 60,           // 1 minute garbage collection time (React Query v5)
       retry: true,                  // Retry failed requests
       retryDelay: 1000,             // Retry after 1 second
       refetchOnReconnect: true,     // Always refetch on reconnect
@@ -239,7 +239,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: true,   // Fetch when tab becomes active to check for updated permissions
       staleTime: 60000,             // 1 minute - keep data fresh for less time to reflect permission changes
       retry: false,
-      cacheTime: 5 * 60 * 1000,     // 5 minutes - shorter cache time
+      gcTime: 5 * 60 * 1000,        // 5 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: true,     // Refetch on reconnect to ensure permissions are current
       refetchOnMount: true,         // Refetch on mount to ensure permissions are current
     };
@@ -252,7 +252,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
       staleTime: 300000,            // 5 minutes - consider data fresh for much longer
       retry: false,
-      cacheTime: 30 * 60 * 1000,    // 30 minutes - keep in cache much longer
+      gcTime: 30 * 60 * 1000,       // 30 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: false,    // Don't refetch on reconnect
       refetchOnMount: false,        // Don't refetch on mount
     };
@@ -265,7 +265,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 3600000,           // 1 hour - form fields basically never change
       retry: false,
-      cacheTime: 3600000,           // 1 hour
+      gcTime: 3600000,              // 1 hour garbage collection time (React Query v5)
       refetchOnReconnect: false,    // Don't refetch on reconnect
       refetchOnMount: false,        // Don't refetch on mount
     };
@@ -278,7 +278,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 5 * 60 * 1000,     // 5 minutes - form templates rarely change
       retry: false,
-      cacheTime: 10 * 60 * 1000,    // 10 minutes - keep in cache longer
+      gcTime: 10 * 60 * 1000,       // 10 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: true,
       refetchOnMount: true,
     };
