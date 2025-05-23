@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Table Component System - Enterprise Data Display
+ * ========================================
+ * 
+ * Professional data table system providing sortable, responsive tables
+ * with consistent styling and accessibility features. Supports complex
+ * data rendering with custom cell components and sorting capabilities.
+ * 
+ * Key Features:
+ * - Type-safe column definitions with custom renderers
+ * - Sortable columns with ascending/descending order
+ * - Responsive table layout with overflow handling
+ * - Accessible table structure with proper headers
+ * - Professional styling with design system tokens
+ * 
+ * Table Components:
+ * - Table: Main table container with data binding
+ * - TableHeader: Column header with sorting support
+ * - TableBody: Data rows container
+ * - TableRow: Individual table row
+ * - TableCell: Table cell with content rendering
+ * 
+ * @module components/ui/table
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 

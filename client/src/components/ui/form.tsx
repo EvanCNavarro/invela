@@ -1,3 +1,32 @@
+/**
+ * ========================================
+ * Form Component System - Enterprise Form Infrastructure
+ * ========================================
+ * 
+ * Comprehensive form system built with React Hook Form and Radix UI primitives
+ * providing type-safe, accessible form handling throughout the enterprise platform.
+ * Implements advanced validation, error handling, and field management.
+ * 
+ * Key Features:
+ * - Type-safe form field management with React Hook Form
+ * - Accessible form controls with proper ARIA attributes
+ * - Consistent error handling and validation feedback
+ * - Context-based field state management
+ * - Professional styling with design system integration
+ * 
+ * Form Components:
+ * - FormProvider: Root form context provider
+ * - FormField: Field controller with validation
+ * - FormItem: Field container with proper spacing
+ * - FormLabel: Accessible field labels
+ * - FormControl: Input control wrapper
+ * - FormMessage: Error and help text display
+ * 
+ * @module components/ui/form
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"

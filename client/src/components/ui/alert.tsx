@@ -1,3 +1,33 @@
+/**
+ * ========================================
+ * Alert Component System - Status Notifications
+ * ========================================
+ * 
+ * Professional alert component system providing consistent status notifications
+ * and contextual feedback throughout the enterprise platform. Built with
+ * class-variance-authority for type-safe variant management and accessibility.
+ * 
+ * Key Features:
+ * - Multiple alert variants (default, destructive)
+ * - Icon integration with proper positioning
+ * - Accessible alert structure with ARIA attributes
+ * - Consistent styling with design system tokens
+ * - Type-safe variant system
+ * 
+ * Alert Components:
+ * - Alert: Main alert container with variant support
+ * - AlertTitle: Bold alert heading component
+ * - AlertDescription: Alert content description
+ * 
+ * Alert Variants:
+ * - Default: Standard informational alerts
+ * - Destructive: Error and warning alerts
+ * 
+ * @module components/ui/alert
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
