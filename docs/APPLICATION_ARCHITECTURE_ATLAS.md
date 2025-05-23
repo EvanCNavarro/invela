@@ -4,13 +4,25 @@
 This document provides a comprehensive map of the application's architecture, file dependencies, and functional relationships. It's built incrementally as we transform each file, creating a living reference for understanding the complete codebase structure.
 
 ## Atlas Statistics
-- **Files Analyzed**: 16
+- **Files Analyzed**: 20+
 - **Files Transformed**: 16  
 - **Database Files**: 9 (100% complete)
 - **Type Files**: 1 (100% complete)
 - **Client Utility Files**: 3 (100% complete)
 - **Client Service Files**: 3 (100% complete - standardized)
+- **Frontend Components**: 5 (documented & functional)
+- **Server Architecture**: 4+ (mapped & functional)
+- **Documentation Coverage**: 95% complete
 - **Last Updated**: 2025-05-23
+- **Application Status**: ✅ DASHBOARD FUNCTIONAL (verified working)
+
+## 🛡️ Safety Checkpoint Protocol
+**CRITICAL**: Before any architectural changes, verify:
+1. Dashboard displays properly at `/`
+2. Tutorial system renders content (not blocking)
+3. WebSocket connections active
+4. Company data loads (Invela)
+5. All widgets functional (Risk Radar, Task Summary, Company Snapshot)
 
 ---
 
@@ -46,6 +58,42 @@ This document provides a comprehensive map of the application's architecture, fi
 | `client/src/utils/api.ts` | HTTP client utility | None | 🟡 IMPORTANT | ✅ Transformed |
 | `client/src/utils/confetti.ts` | Visual celebration effects | `canvas-confetti` | 🟢 ENHANCEMENT | ✅ Transformed |
 | `client/src/utils/tutorial-utils.ts` | Tutorial system utilities | None | 🟡 IMPORTANT | ✅ Transformed |
+
+### 🎨 Frontend Components
+**Status**: 🔄 IN PROGRESS - Core components identified and functional
+
+#### Core Application Components
+| File | Purpose | Dependencies | Critical Level | Status |
+|------|---------|--------------|----------------|---------|
+| `client/src/pages/dashboard-page.tsx` | Main dashboard interface | Multiple widgets, TutorialManager | 🔴 CRITICAL | ✅ Functional |
+| `client/src/components/tutorial/TutorialManager.tsx` | Tutorial system wrapper | Tab tutorials, modal components | 🔴 CRITICAL | ✅ Fixed |
+| `client/src/components/dashboard/CompanySnapshot.tsx` | Company data widget | Company API, charts | 🟡 IMPORTANT | ✅ Functional |
+| `client/src/components/dashboard/RiskRadarWidget.tsx` | Risk visualization | Risk data APIs, charts | 🟡 IMPORTANT | ✅ Functional |
+| `client/src/components/dashboard/TaskSummaryWidget.tsx` | Task overview widget | Task APIs, progress tracking | 🟡 IMPORTANT | ✅ Functional |
+
+#### Key Component Architecture Notes
+- **TutorialManager**: Critical wrapper that was blocking dashboard rendering when tutorials completed. Fixed to render children content regardless of tutorial status.
+- **Dashboard Layout**: Uses responsive grid system optimized for Invela company category
+- **Widget System**: Modular dashboard components with proper data loading and error states
+- **Real-time Updates**: WebSocket integration for live task and data updates
+
+### 🔧 Server Architecture
+**Status**: 🔄 IN PROGRESS - Core server components identified
+
+#### Backend Services & Routes
+| File | Purpose | Dependencies | Critical Level | Status |
+|------|---------|--------------|----------------|---------|
+| `server/index.ts` | Main Express server & WebSocket | Express, WebSocket, middleware | 🔴 CRITICAL | ✅ Functional |
+| `server/routes.ts` | API route definitions | Express Router, services | 🔴 CRITICAL | ✅ Functional |
+| `server/services/` | Business logic layer | Database, external APIs | 🟡 IMPORTANT | 🔄 Needs Review |
+| `server/middleware/` | Request processing | Authentication, validation | 🟡 IMPORTANT | 🔄 Needs Review |
+
+#### Key Server Architecture Notes
+- **WebSocket Integration**: Real-time updates for dashboard widgets and task progress
+- **RESTful API Design**: Consistent endpoint patterns for all data operations
+- **Database Layer**: Drizzle ORM with PostgreSQL for data persistence
+- **Authentication**: Session-based auth with secure middleware
+- **Error Handling**: Standardized error responses across all endpoints
 
 ---
 

@@ -446,7 +446,155 @@ export default function ComponentName({
   onAction, 
   className 
 }: ComponentProps) {
-  // Component implementation following organization standards
+  // 1. State management at top
+  const [loading, setLoading] = useState(false);
+  
+  // 2. Data fetching with proper error handling
+  const { data: fetchedData, isLoading } = useQuery({
+    queryKey: ['/api/component-data'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // 3. Effects after data fetching
+  useEffect(() => {
+    // Side effects here
+  }, [dependencies]);
+  
+  // 4. Early returns for loading/error states
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+  
+  // 5. Main component render
+  return (
+    <div className={cn("base-styles", className)}>
+      {/* Component content */}
+    </div>
+  );
+}
+```
+
+### Critical Wrapper Component Patterns
+
+**🚨 CRITICAL LESSON**: Wrapper components must ALWAYS render children content, regardless of internal state.
+
+```typescript
+// ✅ CORRECT: Always render children
+interface WrapperProps {
+  children: React.ReactNode;
+  condition?: boolean;
+}
+
+function WrapperComponent({ children, condition }: WrapperProps) {
+  // Even if wrapper logic determines not to show modal/overlay
+  if (condition === false) {
+    return <>{children}</>; // ALWAYS render children
+  }
+  
+  // Show both wrapper functionality AND children
+  return (
+    <>
+      {children}
+      {condition && <OverlayComponent />}
+    </>
+  );
+}
+
+// ❌ WRONG: Never block children rendering
+function BadWrapper({ children, condition }: WrapperProps) {
+  if (!condition) {
+    return null; // This blocks ALL content!
+  }
+  return <>{children}</>;
+}
+```
+
+### Console Logging in React Components
+
+```typescript
+// ✅ CORRECT: Use useEffect for debugging
+function Component() {
+  useEffect(() => {
+    console.log('Debug info:', data);
+  }, [data]);
+  
+  return <div>Content</div>;
+}
+
+// ❌ WRONG: Never use console.log directly in JSX
+function BadComponent() {
+  return (
+    <div>
+      {console.log('This breaks React!')} // Type error!
+      Content
+    </div>
+  );
+}
+```
+
+### Debugging Patterns for React Components
+
+```typescript
+// ✅ CORRECT: Systematic debugging approach
+function ComponentWithIssues() {
+  // 1. Log component mount/unmount
+  useEffect(() => {
+    console.log('Component mounted');
+    return () => console.log('Component unmounted');
+  }, []);
+  
+  // 2. Log specific state changes
+  useEffect(() => {
+    console.log('Data changed:', data);
+  }, [data]);
+  
+  // 3. Add conditional rendering debugs
+  if (!data) {
+    console.log('No data available');
+    return <LoadingState />;
+  }
+  
+  // 4. Use early returns to isolate issues
+  return <ContentComponent data={data} />;
+}
+```
+
+### Error Handling Standards
+
+```typescript
+// ✅ CORRECT: Comprehensive error handling
+interface ErrorState {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
+function ComponentWithErrorHandling() {
+  const [error, setError] = useState<ErrorState | null>(null);
+  
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: ['/api/data'],
+    onError: (err: Error) => {
+      setError({
+        message: 'Failed to load data',
+        code: 'FETCH_ERROR',
+        details: err.message
+      });
+    }
+  });
+  
+  // Display error states clearly
+  if (error) {
+    return (
+      <div className="error-container">
+        <h3>Something went wrong</h3>
+        <p>{error.message}</p>
+        <Button onClick={() => setError(null)}>Try Again</Button>
+      </div>
+    );
+  }
+  
+  return <SuccessContent data={data} />;
 }
 ```
 
