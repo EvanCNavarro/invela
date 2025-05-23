@@ -155,7 +155,13 @@ export default function DashboardPage(): JSX.Element {
   // Company data retrieval with optimized caching
   const { data: companyData, isLoading: isCompanyLoading, error: companyError } = useQuery<Company>({
     queryKey: ['/api/companies/current'],
-    ...getOptimizedQueryOptions('/api/companies/current')
+    refetchInterval: 180000,      // 3 minutes - poll for permission changes
+    refetchOnWindowFocus: true,   // Fetch when tab becomes active
+    staleTime: 60000,             // 1 minute - keep data fresh
+    retry: false,
+    gcTime: 5 * 60 * 1000,        // 5 minutes - garbage collection time
+    refetchOnReconnect: true,     // Refetch on reconnect
+    refetchOnMount: true,         // Refetch on mount
   });
 
   // ========================================
@@ -166,7 +172,9 @@ export default function DashboardPage(): JSX.Element {
   useEffect(() => {
     if (companyData) {
       const isFinTech = companyData.category === 'FinTech';
-      setVisibleWidgets(isFinTech ? FINTECH_DEFAULT_WIDGETS : OTHER_DEFAULT_WIDGETS);
+      const isInvela = companyData.category === 'Invela';
+      // Invela and FinTech companies use similar widget configurations
+      setVisibleWidgets((isFinTech || isInvela) ? FINTECH_DEFAULT_WIDGETS : OTHER_DEFAULT_WIDGETS);
     }
   }, [companyData]);
 

@@ -210,7 +210,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   
   // Default configuration (moderate caching)
   const defaultOptions = {
-    refetchInterval: false,
+    refetchInterval: false as const,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60, // 1 minute
     retry: false,
@@ -221,7 +221,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // Risk score data - critical to always fetch fresh from server
   if (urlStr.includes('/api/risk-score/')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: true,   // Always fetch when window gets focus
       staleTime: 0,                 // Always consider data stale - critical fix
       gcTime: 1000 * 60,           // 1 minute garbage collection time (React Query v5)
@@ -261,7 +261,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // KYB fields - aggressive caching since form fields rarely change
   if (urlStr.includes('/api/kyb/fields') || urlStr.includes('/api/form-fields/')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 3600000,           // 1 hour - form fields basically never change
       retry: false,
@@ -274,7 +274,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // Task form data - cache longer since it changes less frequently
   if (urlStr.includes('/api/task-templates')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 5 * 60 * 1000,     // 5 minutes - form templates rarely change
       retry: false,
