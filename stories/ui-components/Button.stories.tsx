@@ -17,6 +17,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { Play, Download, Trash2, Settings } from 'lucide-react';
 import { Button } from '../../client/src/components/ui/button';
+import { storybookLogger, performanceTimer } from '../../client/src/utils/storybook-logger';
 
 /**
  * Meta Configuration
@@ -161,7 +162,7 @@ export const Sizes: Story = {
       <Button size="sm" onClick={() => action('small-clicked')()}>
         Small
       </Button>
-      <Button size="md" onClick={() => action('medium-clicked')()}>
+      <Button size="default" onClick={() => action('medium-clicked')()}>
         Medium
       </Button>
       <Button size="lg" onClick={() => action('large-clicked')()}>
