@@ -407,6 +407,15 @@ export default function DashboardPage(): JSX.Element {
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
+            {/* Debug logging for Invela widget state */}
+            {companyData?.category === 'Invela' && console.log('Invela Dashboard Debug:', {
+              companyData: companyData,
+              visibleWidgets: visibleWidgets,
+              companySnapshot: visibleWidgets.companySnapshot,
+              riskRadar: visibleWidgets.riskRadar,
+              taskSummary: visibleWidgets.taskSummary
+            })}
+            
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
