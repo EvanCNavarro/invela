@@ -294,20 +294,41 @@ export function StorybookPage() {
         {/* Storybook Interface */}
         {!isLoading && !hasError && (
           <motion.div 
-            className="h-[calc(100vh-4rem)]"
+            className="h-[calc(100vh-4rem)] bg-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <iframe
-              src={currentUrl}
-              className="w-full h-full border-0"
-              title="Component Library - Storybook"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              allow="scripts"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-            />
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center max-w-md mx-auto p-8">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  Component Library Ready
+                </h3>
+                <p className="text-gray-600 mb-8">
+                  Your Storybook component library has been built successfully. Click below to access your interactive component documentation.
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => window.open('/storybook-static/index.html', '_blank')}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open Component Library
+                  </Button>
+                  <Button
+                    onClick={() => window.open(STORYBOOK_URLS.production, '_blank')}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open External Storybook
+                  </Button>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </main>
