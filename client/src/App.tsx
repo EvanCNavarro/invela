@@ -217,7 +217,9 @@ function Router(): JSX.Element {
         <Route path="/landing/site-map" component={SiteMapPage} />
 
         {/* Developer Tools */}
-        <Route path="/storybook" component={StorybookPage} />
+        <Route path="/storybook">
+          <StorybookPage />
+        </Route>
 
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
