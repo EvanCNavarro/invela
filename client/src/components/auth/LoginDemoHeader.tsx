@@ -146,72 +146,44 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full max-w-2xl mx-auto mb-8",
+      "w-full max-w-[980px] mx-auto mb-6",
       className
     )}>
       {/* Main container with professional styling */}
-      <div className={cn(
-        "rounded-lg border-2 p-1 shadow-sm",
-        DEMO_THEME_STYLES.container,
-        DEMO_THEME_STYLES.border
-      )}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
           
-          {/* Left Box: Storybook Access */}
-          <div className={cn(
-            "p-6 rounded-md border transition-all duration-200",
-            "bg-white/50 border-purple-100",
-            DEMO_THEME_STYLES.hover,
-            "cursor-pointer group"
-          )}
-          onClick={handleStorybookAccess}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-md transition-colors",
-                  "bg-purple-100 group-hover:bg-purple-200"
-                )}>
-                  <BookOpen className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-purple-800">
-                    Design System
-                  </h3>
-                  <p className="text-sm text-purple-600">
-                    Component Library
-                  </p>
+          {/* Left Section - Storybook Access */}
+          <div className="p-4 bg-purple-50">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-purple-600" />
                 </div>
               </div>
-              <ExternalLink className="h-4 w-4 text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-purple-900 mb-1">
+                  Component Library
+                </h3>
+                <button
+                  onClick={handleStorybookAccess}
+                  disabled={isStorybookLoading}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-purple-700 bg-white border border-purple-200 rounded-md hover:bg-purple-50 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isStorybookLoading ? (
+                    <>
+                      <div className="w-3 h-3 border border-purple-300 border-t-purple-600 rounded-full animate-spin mr-2" />
+                      Opening...
+                    </>
+                  ) : (
+                    <>
+                      <BookOpen className="w-3 h-3 mr-1.5" />
+                      View Components
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            
-            <p className="text-sm text-purple-600 mb-4">
-              Explore our comprehensive UI component library with interactive examples and documentation.
-            </p>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isStorybookLoading}
-              className={cn(
-                "w-full border-purple-200 text-purple-700",
-                "hover:bg-purple-100 hover:text-purple-800",
-                "disabled:opacity-50"
-              )}
-            >
-              {isStorybookLoading ? (
-                <>
-                  <Zap className="mr-2 h-4 w-4 animate-pulse" />
-                  Opening...
-                </>
-              ) : (
-                <>
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  View Components
-                </>
-              )}
-            </Button>
           </div>
 
           {/* Right Box: Demo Login */}
@@ -260,11 +232,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
           </div>
         </div>
       </div>
-      
-      {/* Subtle helper text */}
-      <p className="text-center text-xs text-purple-500 mt-3">
-        Development tools for testing and component exploration
-      </p>
+
     </div>
   );
 }
