@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Authentication Hook - User Session Management
+ * ========================================
+ * 
+ * Comprehensive authentication hook providing user session management,
+ * login/logout functionality, and user registration capabilities for the
+ * enterprise platform. Integrates with TanStack Query for efficient caching.
+ * 
+ * Key Features:
+ * - Secure user authentication with session management
+ * - Login/logout mutations with error handling
+ * - User registration with validation
+ * - Navigation integration with wouter
+ * - Toast notifications for user feedback
+ * 
+ * Authentication Flow:
+ * - User login with credentials validation
+ * - Session state management and persistence
+ * - Automatic logout on session expiry
+ * - Registration with company association
+ * - Navigation redirection based on auth state
+ * 
+ * @module hooks/use-auth
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import React, { useEffect } from "react";
 import {
   useQuery,

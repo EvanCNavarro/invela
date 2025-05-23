@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Toast Hook - User Notification Management
+ * ========================================
+ * 
+ * Advanced toast notification system providing consistent user feedback
+ * throughout the enterprise platform. Manages toast state, timing, and
+ * deduplication with professional UX patterns and accessibility features.
+ * 
+ * Key Features:
+ * - Intelligent toast deduplication to prevent spam
+ * - Configurable timeout management with standard durations
+ * - Toast limit enforcement for clean UI experience
+ * - Type-safe toast variants with consistent styling
+ * - Comprehensive logging and error tracking
+ * 
+ * Toast Management:
+ * - Auto-dismissal with configurable timeouts
+ * - Queue management with limit enforcement
+ * - Message deduplication within time windows
+ * - Action button support for interactive toasts
+ * - Accessibility-compliant notification patterns
+ * 
+ * @module hooks/use-toast
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 
 import type {
