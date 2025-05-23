@@ -25,8 +25,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { within, userEvent, expect } from '@storybook/testing-library';
-import { EnhancedTable, type Column } from '@/components/ui/table';
+import { within, userEvent } from '@storybook/testing-library';
+import { EnhancedTable, type Column } from '../../client/src/components/ui/table';
 
 /**
  * Enhanced Logger for Story Operations

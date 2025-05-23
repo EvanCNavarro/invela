@@ -16,8 +16,8 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { Search, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '../../client/src/components/ui/input';
+import { Label } from '../../client/src/components/ui/label';
 
 /**
  * Meta Configuration
