@@ -33,7 +33,7 @@
 // ========================================
 
 // Express framework and routing
-import { Express, Router } from 'express';
+import express, { Express, Router } from 'express';
 
 // Database ORM and query builders
 import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
@@ -4087,6 +4087,11 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       });
     }
   });
+
+  // Serve Storybook static files
+  const storybookPath = path.resolve(process.cwd(), 'storybook-static');
+  app.use('/storybook-static', express.static(storybookPath));
+  console.log('[Routes] Storybook static files served at /storybook-static');
 
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
