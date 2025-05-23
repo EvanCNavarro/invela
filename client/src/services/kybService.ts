@@ -1,31 +1,107 @@
+/**
+ * ========================================
+ * KYB Service Module
+ * ========================================
+ * 
+ * Enterprise KYB (Know Your Business) service implementation providing
+ * comprehensive business verification and compliance management. Handles
+ * multi-step form processing, field validation, progress tracking, and
+ * submission workflows for regulatory compliance requirements.
+ * 
+ * Key Features:
+ * - Multi-step form processing with field validation
+ * - Progress tracking and completion status management
+ * - Real-time field sorting and grouping capabilities
+ * - Comprehensive error handling and logging
+ * - Integration with form service interfaces and utilities
+ * 
+ * Dependencies:
+ * - FormService: Core form interface and data structures
+ * - FormUtils: Field component type determination and sorting
+ * - Logger: Structured logging for debugging and monitoring
+ * - FormStatusUtils: Task status calculation utilities
+ * 
+ * @module KYBService
+ * @version 2.0.0
+ * @since 2024-04-15
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Core form service interfaces and data structures
 import { FormData, FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
+
+// Form utility functions for component type determination
 import { getFieldComponentType } from '../utils/formUtils';
+
+// Structured logging utilities for debugging and monitoring
 import getLogger from '../utils/logger';
+
+// Task status calculation utilities for progress tracking
 import { calculateTaskStatus as calculateTaskStatusUtil } from '../utils/formStatusUtils';
 
+// ========================================
+// CONSTANTS
+// ========================================
+
 /**
- * Sort KYB fields by their group and then by order
- * @param fields Array of KYB fields to sort
- * @returns Sorted array of KYB fields
+ * KYB service logging context for structured debugging
+ * Provides consistent logging context for all KYB operations
+ */
+const KYB_LOGGING_CONTEXT = '[KYBService]';
+
+/**
+ * Default sorting and grouping configuration for KYB fields
+ * Defines baseline values for field organization and display
+ */
+const KYB_FIELD_DEFAULTS = {
+  DEFAULT_GROUP: '',
+  DEFAULT_ORDER: 0,
+  SORT_PRIORITY_GROUP: 1,
+  SORT_PRIORITY_ORDER: 2
+} as const;
+
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+
+/**
+ * Sort KYB fields by their group and order with comprehensive error handling
+ * 
+ * Provides robust field sorting functionality with proper validation and
+ * defensive programming practices. Ensures consistent field ordering across
+ * the application while handling potential data integrity issues gracefully.
+ * 
+ * @param fields Array of KYB fields to sort with group and order properties
+ * @returns Sorted array of KYB fields organized by group then by order
+ * 
+ * @throws {Error} Logs errors for invalid input but returns empty array
  */
 const sortFields = (fields: any[]): any[] => {
+  // Validate input parameter to prevent runtime errors
   if (!Array.isArray(fields)) {
-    console.error('[DEBUG] sortFields received non-array input:', fields);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`${KYB_LOGGING_CONTEXT} sortFields received non-array input:`, fields);
+    }
     return [];
   }
   
-  // Safe sorting - handle potential missing properties
+  // Perform safe sorting with comprehensive property validation
   return [...fields].sort((a, b) => {
-    // First sort by group name
-    const groupA = a?.group || '';
-    const groupB = b?.group || '';
+    // Primary sort: Group name with fallback to default
+    const groupA = a?.group || KYB_FIELD_DEFAULTS.DEFAULT_GROUP;
+    const groupB = b?.group || KYB_FIELD_DEFAULTS.DEFAULT_GROUP;
     
+    // Compare group names lexicographically
     if (groupA < groupB) return -1;
     if (groupA > groupB) return 1;
     
-    // Then sort by order within the same group
-    const orderA = a?.order || 0;
-    const orderB = b?.order || 0;
+    // Secondary sort: Order within the same group with fallback
+    const orderA = a?.order || KYB_FIELD_DEFAULTS.DEFAULT_ORDER;
+    const orderB = b?.order || KYB_FIELD_DEFAULTS.DEFAULT_ORDER;
+    
     return orderA - orderB;
   });
 };
