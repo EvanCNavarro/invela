@@ -16,7 +16,7 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { Play, Download, Trash2, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../client/src/components/ui/button';
 
 /**
  * Meta Configuration
