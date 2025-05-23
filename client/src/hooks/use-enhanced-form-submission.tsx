@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Enhanced Form Submission Hook - Advanced Multi-Stage Processing
+ * ========================================
+ * 
+ * Advanced form submission hook providing multi-stage form processing
+ * with preparation and submission phases for complex enterprise workflows.
+ * Manages sophisticated form states, validation, and recovery mechanisms.
+ * 
+ * Key Features:
+ * - Multi-stage submission with preparation and execution phases
+ * - Advanced state management for complex submission workflows
+ * - Intelligent retry logic with connection issue detection
+ * - Comprehensive error handling and recovery mechanisms
+ * - Toast notification system for real-time user feedback
+ * 
+ * Enhanced Processing:
+ * - Pre-submission data preparation and validation
+ * - Staged submission workflow with intermediate states
+ * - Connection resilience with automatic retry mechanisms
+ * - Success and error modal management for user guidance
+ * - Query cache synchronization for data consistency
+ * 
+ * @module hooks/use-enhanced-form-submission
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
