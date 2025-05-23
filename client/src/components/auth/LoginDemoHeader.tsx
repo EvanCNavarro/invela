@@ -40,6 +40,7 @@ import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, Square
 
 // Modal components
 import ChangelogModal from "@/components/modals/ChangelogModal";
+import StorybookModal from "@/components/modals/StorybookModal";
 
 // Development utilities
 import getLogger from '@/utils/logger';
@@ -91,6 +92,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isStorybookModalOpen, setIsStorybookModalOpen] = useState(false);
 
   // ========================================
   // EVENT HANDLERS
@@ -196,8 +198,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
           {/* Middle Button - Storybook Access */}
           <button
             onClick={handleStorybookAccess}
-            disabled={isStorybookLoading}
-            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group rounded-md"
+            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 group rounded-md"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -206,16 +207,12 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
                 </div>
                 <div className="text-left">
                   <h3 className="text-sm font-semibold text-purple-900">
-                    {isStorybookLoading ? 'Opening...' : 'Component Library'}
+                    Component Library
                   </h3>
                 </div>
               </div>
               <div className="flex items-center">
-                {isStorybookLoading ? (
-                  <div className="w-4 h-4 border-2 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
-                ) : (
-                  <ArrowUpRight className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
-                )}
+                <SquareArrowOutUpRight className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform duration-200" />
               </div>
             </div>
           </button>
@@ -248,6 +245,12 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       <ChangelogModal 
         isOpen={isChangelogOpen}
         onClose={() => setIsChangelogOpen(false)}
+      />
+
+      {/* Storybook Modal */}
+      <StorybookModal 
+        isOpen={isStorybookModalOpen}
+        onClose={() => setIsStorybookModalOpen(false)}
       />
 
     </div>
