@@ -850,10 +850,9 @@ export default function CompanyProfilePage() {
   return (
     <DashboardLayout>
       <PageTemplate>
-        <TutorialManager tabName="company-profile" />
-        
-        <div className="space-y-6">
-          {/* Breadcrumb navigation - using same pattern as claims tab */}
+        <TutorialManager tabName="company-profile">
+          <div className="space-y-6">
+            {/* Breadcrumb navigation - using same pattern as claims tab */}
           <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
             <Link href="/" className="hover:text-foreground">
               <div className="relative w-4 h-4">
@@ -952,6 +951,7 @@ export default function CompanyProfilePage() {
             </Tabs>
           </div>
         </div>
+        </TutorialManager>
       </PageTemplate>
     </DashboardLayout>
   );
