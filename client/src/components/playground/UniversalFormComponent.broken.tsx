@@ -263,7 +263,7 @@ function loadingReducer(state: FormLoadingState, action: FormLoadingAction): For
  * @returns Tooltip content string or undefined
  */
 const extractTooltipContent = (field: FormField): string | undefined => {
-  return field.tooltip || field.description;
+  return field.tooltip || (field as any).description;
 };
 
 /**
