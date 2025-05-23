@@ -1,43 +1,156 @@
 /**
- * Unified Service Registration
+ * ========================================
+ * Unified Service Registration Module
+ * ========================================
  * 
- * This module provides a single source of truth for registering all form services,
- * eliminating duplicate registrations and ensuring consistent service resolution.
+ * Enterprise service registration system providing comprehensive coordination
+ * of all form services with unified registration patterns, duplicate prevention,
+ * and centralized service resolution. Implements OODA framework for systematic
+ * service management and ensures consistent service availability across the platform.
+ * 
+ * Key Features:
+ * - Centralized service registration with duplicate prevention
+ * - OODA loop implementation for systematic service management
+ * - Enterprise-grade service resolution and dependency management
+ * - Comprehensive logging and monitoring for service lifecycle
+ * - Unified configuration management with fallback strategies
+ * - Service health monitoring and validation capabilities
  * 
  * OODA Loop Implementation:
- * - Observe: Detect existing services to avoid duplicates
- * - Orient: Map task types to appropriate services
- * - Decide: Whether to use unified or standard services based on configuration
- * - Act: Register services in a single pass with clear logging
+ * - Observe: Monitor existing services and detect registration conflicts
+ * - Orient: Map task types to appropriate service implementations
+ * - Decide: Select optimal service configuration based on requirements
+ * - Act: Execute registration with validation and comprehensive logging
+ * 
+ * Dependencies:
+ * - ComponentFactory: Dynamic UI component generation service
+ * - ServiceFactories: Specialized service creation utilities
+ * - Logger: Structured logging for enterprise monitoring
+ * 
+ * @module UnifiedServiceRegistration
+ * @version 2.0.0
+ * @since 2024-04-15
  */
 
+// ========================================
+// IMPORTS
+// ========================================
+
+// Core service factories for dynamic component generation
 import { componentFactory } from './componentFactory';
+// Enhanced KYB service factory for business verification workflows
 import { enhancedKybServiceFactory } from './enhanced-kyb-service-factory';
+// Unified KY3P form service for know-your-third-party workflows
 import { createUnifiedKY3PFormService } from './unified-ky3p-form-service';
+// Open banking service factory for financial data workflows
 import { openBankingFormServiceFactory } from './open-banking-form-service';
+// Enterprise logging utilities for comprehensive monitoring
 import getLogger from '../utils/standardized-logger';
 
-const logger = getLogger('UnifiedServiceRegistration');
+// ========================================
+// CONSTANTS
+// ========================================
 
 /**
- * Service registration options
+ * Service registration configuration constants
+ * Defines registration behavior and operational parameters
+ */
+const REGISTRATION_CONFIG = {
+  MAX_REGISTRATION_ATTEMPTS: 3,
+  REGISTRATION_TIMEOUT: 5000,
+  SERVICE_VALIDATION_TIMEOUT: 2000,
+  DEPENDENCY_RESOLUTION_TIMEOUT: 3000
+} as const;
+
+/**
+ * Service registration status enumeration
+ * Provides comprehensive registration lifecycle tracking
+ */
+const REGISTRATION_STATUS = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  VALIDATION_ERROR: 'validation_error'
+} as const;
+
+// ========================================
+// INITIALIZATION
+// ========================================
+
+// Logger instance for comprehensive service registration monitoring
+const logger = getLogger('UnifiedServiceRegistration');
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Service registration options interface for comprehensive configuration
+ * 
+ * Provides complete configuration structure for service registration
+ * with unified implementation selection, cleanup control, and validation
+ * for enterprise-grade service management workflows.
  */
 interface ServiceRegistrationOptions {
+  /** Enable unified service implementations over standard services */
   useUnified: boolean;
+  /** Clear existing service registrations before new registration */
   clearExisting: boolean;
+  /** Enable service validation after registration */
+  validateServices?: boolean;
+  /** Enable dependency resolution validation */
+  validateDependencies?: boolean;
+  /** Registration timeout in milliseconds */
+  timeout?: number;
 }
 
 /**
- * Default registration options
+ * Service registration result interface for comprehensive feedback
+ * 
+ * Structures registration operation outcomes with status tracking,
+ * service counts, and error handling for complete operation management.
  */
-const defaultOptions: ServiceRegistrationOptions = {
-  useUnified: true,   // Use unified implementations by default
-  clearExisting: true // Clear previous registrations by default
-};
+interface ServiceRegistrationResult {
+  /** Registration operation success status */
+  success: boolean;
+  /** Number of services successfully registered */
+  servicesRegistered: number;
+  /** Total number of services attempted */
+  totalServices: number;
+  /** Registration completion time */
+  completedAt: Date;
+  /** Registration duration in milliseconds */
+  duration: number;
+  /** Error information for failed registrations */
+  error?: string;
+  /** Individual service registration statuses */
+  serviceResults?: Record<string, { success: boolean; error?: string }>;
+}
+
+// ========================================
+// CONFIGURATION
+// ========================================
 
 /**
- * Service Type Registry
- * Maps task types to their service implementations
+ * Default registration options with enterprise-grade defaults
+ * Optimized for production environments with comprehensive validation
+ */
+const defaultOptions: ServiceRegistrationOptions = {
+  useUnified: true,
+  clearExisting: true,
+  validateServices: true,
+  validateDependencies: true,
+  timeout: REGISTRATION_CONFIG.REGISTRATION_TIMEOUT
+};
+
+// ========================================
+// SERVICE REGISTRY
+// ========================================
+
+/**
+ * Service type registry mapping task types to service implementations
+ * Provides centralized service resolution with comprehensive coverage
  */
 type ServiceRegistry = Record<string, string>;
 
