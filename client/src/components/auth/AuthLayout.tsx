@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * Authentication Layout Component
+ * ========================================
+ * 
+ * Responsive authentication layout providing consistent structure and styling
+ * for login and registration pages in the enterprise risk assessment platform.
+ * Features adaptive design with hero sections and professional branding.
+ * 
+ * @module components/auth/AuthLayout
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import React from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
