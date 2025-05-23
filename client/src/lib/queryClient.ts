@@ -1,5 +1,38 @@
+/**
+ * ========================================
+ * Query Client - API Communication Layer
+ * ========================================
+ * 
+ * Centralized API communication system for the enterprise risk assessment platform.
+ * Implements TanStack Query integration with custom error handling, request
+ * configuration, and response processing for all HTTP operations.
+ * 
+ * Key Features:
+ * - Type-safe API request functions
+ * - Automatic error handling and reporting
+ * - Multiple request method support (GET, POST, PUT, DELETE)
+ * - Response validation and error extraction
+ * - Debug logging for development
+ * 
+ * Request Methods:
+ * - GET: Data retrieval operations
+ * - POST: Data creation and submissions
+ * - PUT/PATCH: Data updates
+ * - DELETE: Resource removal
+ * 
+ * @module lib/queryClient
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+/**
+ * HTTP Response Validator
+ * 
+ * Validates HTTP responses and extracts error messages for user display.
+ * Provides clean error messages without exposing internal status codes.
+ */
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     // Get response text and use it directly for the error message without status code
