@@ -110,21 +110,10 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
     setIsStorybookLoading(true);
 
-    // Check if we're in development mode first
-    const isDevelopment = import.meta.env.DEV;
-    
-    if (isDevelopment) {
-      // In development, try to open localhost Storybook
-      const storybookUrl = 'http://localhost:6006';
-      logger.info('Opening development Storybook', { url: storybookUrl });
-      window.open(storybookUrl, '_blank');
-    } else {
-      // In production, use the subdomain
-      const currentDomain = window.location.hostname;
-      const storybookSubdomain = `https://storybook.${currentDomain}`;
-      logger.info('Opening production Storybook subdomain', { url: storybookSubdomain });
-      window.open(storybookSubdomain, '_blank');
-    }
+    // Open production Storybook subdomain
+    const storybookUrl = 'https://storybook.9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev';
+    logger.info('Opening production Storybook subdomain', { url: storybookUrl });
+    window.open(storybookUrl, '_blank', 'noopener,noreferrer');
 
     // Reset loading state after a brief delay
     setTimeout(() => {
