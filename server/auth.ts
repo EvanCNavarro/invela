@@ -1,19 +1,67 @@
+/**
+ * ========================================
+ * Authentication & Authorization System
+ * ========================================
+ * 
+ * Comprehensive authentication system for the enterprise risk assessment platform.
+ * Implements secure user authentication, session management, and authorization
+ * middleware with enterprise-grade security practices.
+ * 
+ * Key Features:
+ * - Passport.js integration for flexible authentication strategies
+ * - Secure password hashing with bcrypt and scrypt
+ * - PostgreSQL session storage for scalability
+ * - Local authentication strategy with email/password
+ * - Session-based authentication with CSRF protection
+ * - User registration and login workflows
+ * - Authorization middleware for protected routes
+ * 
+ * Security Measures:
+ * - Cryptographically secure password hashing
+ * - Timing-safe password comparison
+ * - Session rotation and secure cookie configuration
+ * - Input validation and sanitization
+ * - Comprehensive audit logging
+ * 
+ * @module server/auth
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Authentication framework and strategies
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
+
+// Session management and storage
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+
+// Cryptographic functions for secure password handling
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "bcrypt";
+
+// Database schema and operations
 import { users, insertUserSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
 import { eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
 
+// ========================================
+// LOGGING INFRASTRUCTURE
+// ========================================
+
 /**
- * Authentication system logging utility
- * Helps with debugging auth-related issues
+ * Authentication System Logger
+ * 
+ * Provides comprehensive logging for authentication operations,
+ * security events, and debugging information. Includes different
+ * log levels for proper monitoring and troubleshooting.
  */
 const authLogger = {
   info: (message: string, meta?: any) => {

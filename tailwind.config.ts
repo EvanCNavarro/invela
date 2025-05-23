@@ -1,3 +1,32 @@
+/**
+ * ========================================
+ * Tailwind CSS Configuration
+ * ========================================
+ * 
+ * Comprehensive design system configuration for the enterprise risk assessment platform.
+ * Defines the complete visual language including colors, typography, spacing, animations,
+ * and component styling patterns used throughout the application.
+ * 
+ * Key Features:
+ * - Dark/light mode support with CSS custom properties
+ * - Extended color palette with semantic color tokens
+ * - Custom animations for enhanced user experience
+ * - Responsive design utilities and breakpoints
+ * - Sidebar and navigation specific styling
+ * - Chart and data visualization color schemes
+ * 
+ * Design System Components:
+ * - Consistent border radius system
+ * - Semantic color naming convention
+ * - Accessible focus and interaction states
+ * - Custom keyframe animations
+ * - Typography scale integration
+ * 
+ * @module tailwind.config
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import type { Config } from "tailwindcss";
 
 export default {
