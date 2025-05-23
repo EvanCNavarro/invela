@@ -39,7 +39,7 @@ export class KY3PFormService extends EnhancedKybFormService {
   private static ky3pFieldsCache: Record<number, any[]> = {};
   
   constructor(companyId?: number, taskId?: number) {
-    super(companyId, taskId);
+    super(companyId);
     
     logger.info(
       '[KY3P Form Service] Initializing KY3P Form Service',
