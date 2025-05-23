@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Unified Toast Hook - Enterprise Notification System
+ * ========================================
+ * 
+ * Advanced unified toast notification system providing consistent user feedback
+ * across all enterprise platform interactions. Manages specialized toast types,
+ * file operations, and action-based notifications with professional UX patterns.
+ * 
+ * Key Features:
+ * - Unified toast API with consistent styling and timing
+ * - Specialized file operation notifications with progress tracking
+ * - Action-based toasts with interactive elements
+ * - Success, error, info, and warning toast variants
+ * - File upload/download progress indicators
+ * 
+ * Notification Management:
+ * - Standardized toast durations for optimal user experience
+ * - File operation status tracking with detailed feedback
+ * - Action button integration for interactive notifications
+ * - Toast queue management for non-intrusive messaging
+ * - Enterprise-grade notification consistency across platform
+ * 
+ * @module hooks/use-unified-toast
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import React, { useState, useEffect } from "react";
 import { useToast, toast as baseToast, Toast } from "@/hooks/use-toast";
 import type { ToastProps } from "@/components/ui/toast";
