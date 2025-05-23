@@ -239,8 +239,23 @@ export default function DashboardPage(): JSX.Element {
   // LOADING STATES
   // ========================================
 
-  // Company data loading state - enterprise standard loading display
-  if (isCompanyLoading) {
+  // ========================================
+  // LOADING STATE MANAGEMENT
+  // ========================================
+  
+  /**
+   * Enhanced loading state management following enterprise standards
+   * Implements proper data availability checks to ensure dashboard renders
+   * when company data is successfully loaded from authenticated sources
+   * 
+   * Loading Logic:
+   * - Show loading skeleton only when actively fetching AND no data exists
+   * - Prioritize data availability over loading state to prevent infinite loading
+   * - Maintain enterprise UX standards with proper skeleton display
+   */
+  const shouldShowLoading = isCompanyLoading && !companyData;
+  
+  if (shouldShowLoading) {
     return (
       <DashboardLayout>
         <PageTemplate
