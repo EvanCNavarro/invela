@@ -23,13 +23,15 @@
 
 ## 🗂️ File Structure & Naming
 
-### **File Naming Conventions**
-- **TypeScript Files:** `kebab-case.ts` or `kebab-case.tsx`
-- **Components:** `PascalCase.tsx` (React components)
-- **Utilities:** `kebab-case.ts`
-- **Services:** `kebab-case-service.ts`
-- **Types:** `kebab-case-types.ts`
-- **Constants:** `kebab-case-constants.ts`
+### **File Naming Conventions** (Based on Current Project Patterns)
+- **React Components:** `PascalCase.tsx` or `kebab-case-page.tsx` 
+- **API Routes:** `feature-name.ts` (simple) OR `feature-name.routes.ts` (complex)
+- **Services:** `featureService.ts` (camelCase) OR `feature-name-service.ts` (kebab-case)
+- **Utilities:** `kebab-case.ts` or `featureName.ts`
+- **Types:** `kebab-case-types.ts` or in main files
+- **Database:** `kebab-case.ts` for migrations, `schema.ts` for main schema
+
+**Priority**: Consistency within each folder > Perfect naming convention
 
 ### **Directory Structure**
 ```
