@@ -249,8 +249,8 @@ import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconcili
 
 // Early production optimizations - must run before other configurations
 // Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
-import { initializeProductionOptimizations } from './deployment/production-config';
-initializeProductionOptimizations();
+// import { initializeProductionOptimizations } from './deployment/production-config';
+// initializeProductionOptimizations(); // Disabled for development mode
 
 // Configure server for proper deployment
 // Replit's deployment fix #2: Use dynamic port configuration from environment
