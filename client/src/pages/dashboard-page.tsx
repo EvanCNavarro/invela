@@ -130,7 +130,7 @@ const OTHER_DEFAULT_WIDGETS = {
  * 
  * @returns {JSX.Element} Rendered dashboard page with full feature set
  */
-export function DashboardPage(): JSX.Element {
+export default function DashboardPage(): JSX.Element {
   // ========================================
   // STATE MANAGEMENT
   // ========================================
