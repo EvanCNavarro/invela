@@ -100,7 +100,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   /**
    * Handle Storybook access
-   * Opens the component library in a new tab for development use
+   * Navigates to the dedicated Storybook page within the application
    */
   const handleStorybookAccess = (): void => {
     logger.info('Accessing Storybook component library', {

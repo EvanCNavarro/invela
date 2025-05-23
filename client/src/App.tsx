@@ -130,6 +130,9 @@ import LegalPage from "@/pages/landing/legal";
 import SiteMapPage from "@/pages/landing/site-map";
 import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 
+// Developer tools and documentation
+import StorybookPage from "@/pages/storybook-page";
+
 // Claims management pages
 import ClaimsPage from "@/pages/claims";
 import ClaimDetailsPage from "@/pages/claims/[id]";
@@ -212,6 +215,9 @@ function Router(): JSX.Element {
         <Route path="/landing/legal/terms-of-use" component={TermsOfUsePage} />
         <Route path="/landing/legal/compliance" component={CompliancePage} />
         <Route path="/landing/site-map" component={SiteMapPage} />
+
+        {/* Developer Tools */}
+        <Route path="/storybook" component={StorybookPage} />
 
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
