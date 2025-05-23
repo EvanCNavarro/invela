@@ -205,7 +205,7 @@ export default function DashboardPage(): JSX.Element {
   // LOADING STATES
   // ========================================
 
-  // Company data loading state
+  // Company data loading state - enterprise standard loading display
   if (isCompanyLoading) {
     return (
       <DashboardLayout>
@@ -213,11 +213,30 @@ export default function DashboardPage(): JSX.Element {
           title="Dashboard"
           description="Enterprise risk assessment and monitoring overview"
         >
-          {companyData?.category === 'FinTech' ? (
-            <FinTechDashboardSkeleton />
-          ) : (
-            <DashboardSkeleton />
-          )}
+          <DashboardSkeleton />
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Handle error states with proper enterprise error display
+  if (companyError) {
+    return (
+      <DashboardLayout>
+        <PageTemplate
+          title="Dashboard"
+          description="Enterprise risk assessment and monitoring overview"
+        >
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Unable to load company data
+              </h3>
+              <p className="text-gray-600">
+                Please refresh the page or contact support if the issue persists.
+              </p>
+            </div>
+          </div>
         </PageTemplate>
       </DashboardLayout>
     );
@@ -339,8 +358,8 @@ export default function DashboardPage(): JSX.Element {
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
-            {/* FinTech Layout - Simplified for customer companies */}
-            {companyData?.category === 'FinTech' && (
+            {/* FinTech/Invela Layout - Simplified for customer companies */}
+            {(companyData?.category === 'FinTech' || companyData?.category === 'Invela') && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Company Snapshot */}
                 {visibleWidgets.companySnapshot && (
