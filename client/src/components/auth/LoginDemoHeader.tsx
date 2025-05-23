@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Professional iconography
-import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight } from "lucide-react";
+import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight } from "lucide-react";
 
 // Development utilities
 import getLogger from '@/utils/logger';
@@ -127,6 +127,20 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   };
 
   /**
+   * Handle changelog modal access
+   * Opens changelog modal to show recent feature updates
+   */
+  const handleChangelogAccess = (): void => {
+    logger.info('Changelog accessed', {
+      timestamp: new Date().toISOString(),
+      action: 'changelog_access'
+    });
+
+    // Future implementation: Changelog modal functionality
+    console.log('Changelog modal - coming soon!');
+  };
+
+  /**
    * Handle demo login preparation
    * Placeholder for future demo login functionality
    */
@@ -151,9 +165,32 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
     )}>
       {/* Main container with professional styling */}
       <div className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden p-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
           
-          {/* Left Button - Storybook Access */}
+          {/* Left Button - Changelog Access */}
+          <button
+            onClick={handleChangelogAccess}
+            className="p-3 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-inset transition-all duration-200 group rounded-md"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="relative w-7 h-7 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center transition-colors">
+                  <Activity className="w-4 h-4 text-green-600" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-green-900">
+                    View Changelog
+                  </h3>
+                </div>
+              </div>
+              <div className="flex items-center">
+                <SquareArrowOutUpRight className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform duration-200" />
+              </div>
+            </div>
+          </button>
+
+          {/* Middle Button - Storybook Access */}
           <button
             onClick={handleStorybookAccess}
             disabled={isStorybookLoading}
@@ -166,7 +203,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
                 </div>
                 <div className="text-left">
                   <h3 className="text-sm font-semibold text-purple-900">
-                    {isStorybookLoading ? 'Opening...' : 'View Component Library'}
+                    {isStorybookLoading ? 'Opening...' : 'Component Library'}
                   </h3>
                 </div>
               </div>
@@ -197,7 +234,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
                 </div>
               </div>
               <div className="flex items-center">
-                <ArrowRight className="w-4 h-4 text-blue-600 group-hover:translate-x-0.5 transition-transform duration-200" />
+                <SquareArrowOutUpRight className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
               </div>
             </div>
           </button>
