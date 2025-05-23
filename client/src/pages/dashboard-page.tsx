@@ -44,6 +44,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
+import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
@@ -113,7 +114,8 @@ const OTHER_DEFAULT_WIDGETS = {
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: true,
-  riskMonitoring: true
+  riskMonitoring: true,
+  taskSummary: true
 };
 
 // ========================================
