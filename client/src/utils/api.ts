@@ -1,7 +1,15 @@
 /**
- * API Request Utility
+ * ========================================
+ * API Request Utility Functions
+ * ========================================
  * 
- * This module provides a utility function for making API requests.
+ * Core HTTP client utilities for the enterprise risk assessment platform.
+ * Provides standardized API request handling with authentication, error
+ * management, and response processing for consistent server communication.
+ * 
+ * @module utils/api
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 /**

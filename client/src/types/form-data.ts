@@ -1,5 +1,15 @@
 /**
- * Enhanced form data types to support field-level timestamps
+ * ========================================
+ * Form Data Type Definitions
+ * ========================================
+ * 
+ * Enhanced form data types supporting field-level timestamps and metadata
+ * for the enterprise risk assessment platform. Provides structures for
+ * timestamped form data, conflict resolution, and synchronization.
+ * 
+ * @module types/form-data
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 // Basic form data type - simple key-value pairs

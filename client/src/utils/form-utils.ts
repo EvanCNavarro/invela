@@ -1,9 +1,15 @@
 /**
- * Utility functions for form handling, status calculation, and 
- * timestamp-based conflict resolution
+ * ========================================
+ * Form Management Utilities
+ * ========================================
  * 
- * The timestamp system ensures reliable data integrity across concurrent edits
- * by tracking when each field was last modified.
+ * Comprehensive form handling utilities for the enterprise risk assessment platform.
+ * Provides status calculation, timestamp-based conflict resolution, and form
+ * data integrity management across concurrent editing sessions.
+ * 
+ * @module utils/form-utils
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 /**
