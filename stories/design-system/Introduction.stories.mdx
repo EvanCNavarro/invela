@@ -1,0 +1,149 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Design System/Introduction" />
+
+# Enterprise Risk Assessment Design System
+
+Welcome to the comprehensive design system documentation for our enterprise risk assessment platform. This design system provides the foundation for building consistent, accessible, and professional user interfaces across the entire application.
+
+## 🎯 Purpose
+
+This design system serves as the single source of truth for:
+- **UI Components**: Reusable, tested components built with Radix UI
+- **Design Tokens**: Colors, typography, spacing, and other design decisions
+- **Patterns**: Common interface patterns and best practices
+- **Guidelines**: Accessibility, usability, and implementation standards
+
+## 🏗️ Architecture
+
+Our design system is built on these core principles:
+
+### **Consistency**
+Every component follows established patterns for styling, behavior, and API design.
+
+### **Accessibility**
+All components meet WCAG 2.1 AA standards with comprehensive keyboard navigation and screen reader support.
+
+### **Performance**
+Optimized for enterprise applications with efficient rendering and minimal bundle impact.
+
+### **Scalability**
+Designed to support complex business applications with thousands of users.
+
+## 🎨 Design Tokens
+
+### Colors
+- **Primary**: Professional blue palette for primary actions
+- **Secondary**: Neutral grays for supporting elements
+- **Semantic**: Success, warning, error, and info states
+- **Surface**: Background and surface color variations
+
+### Typography
+- **Headings**: Clear hierarchy with proper contrast ratios
+- **Body Text**: Optimized for readability in data-heavy interfaces
+- **UI Text**: Component labels, buttons, and interactive elements
+
+### Spacing
+- **Consistent Scale**: 4px base unit with logical progression
+- **Component Spacing**: Standardized padding and margins
+- **Layout Grid**: Responsive grid system for complex layouts
+
+## 📱 Component Categories
+
+### **UI Components**
+Basic building blocks for user interfaces:
+- Buttons, Inputs, Labels
+- Select, Checkbox, Radio
+- Dialog, Popover, Tooltip
+
+### **Data Display**
+Components for presenting information:
+- Tables, Cards, Lists
+- Charts, Metrics, Badges
+- Pagination, Filters, Search
+
+### **Forms**
+Comprehensive form building tools:
+- Form Fields, Validation
+- Multi-step Forms, Wizards
+- File Upload, Rich Text
+
+### **Layout**
+Structural components:
+- Navigation, Sidebars
+- Headers, Footers
+- Page Layouts, Containers
+
+## 🔧 Getting Started
+
+### Installation
+All components are available through the shared component library:
+
+```tsx
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table } from '@/components/ui/table';
+```
+
+### Usage Example
+```tsx
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+
+function RiskAssessmentCard() {
+  return (
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold mb-4">
+        Assessment Progress
+      </h3>
+      <div className="space-y-4">
+        <div className="text-sm text-gray-600">
+          Complete your risk assessment to continue
+        </div>
+        <Button onClick={handleContinue}>
+          Continue Assessment
+        </Button>
+      </div>
+    </Card>
+  );
+}
+```
+
+## 📋 Best Practices
+
+### **Component Usage**
+- Use semantic HTML elements
+- Follow established prop patterns
+- Implement proper error handling
+- Include loading states
+
+### **Styling**
+- Use design tokens instead of hardcoded values
+- Follow responsive design patterns
+- Maintain consistent spacing
+- Ensure proper contrast ratios
+
+### **Accessibility**
+- Include proper ARIA labels
+- Support keyboard navigation
+- Test with screen readers
+- Provide alternative text for images
+
+## 🚀 Contributing
+
+When adding new components or patterns:
+
+1. **Follow Existing Patterns**: Maintain consistency with established components
+2. **Document Thoroughly**: Include comprehensive Storybook stories
+3. **Test Accessibility**: Verify WCAG compliance
+4. **Performance Review**: Ensure optimal rendering performance
+
+## 📚 Resources
+
+- **Radix UI**: [radix-ui.com](https://radix-ui.com/) - Primitive components
+- **Tailwind CSS**: [tailwindcss.com](https://tailwindcss.com/) - Utility-first styling
+- **WCAG Guidelines**: [w3.org/WAI/WCAG21](https://w3.org/WAI/WCAG21/) - Accessibility standards
+
+---
+
+*This design system is actively maintained and continuously improved based on user feedback and evolving requirements.*
