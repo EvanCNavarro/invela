@@ -110,9 +110,9 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
     setIsStorybookLoading(true);
 
-    // Open production Storybook subdomain
-    const storybookUrl = 'https://storybook.9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev';
-    logger.info('Opening production Storybook subdomain', { url: storybookUrl });
+    // Open built Storybook static files
+    const storybookUrl = '/storybook-static/index.html';
+    logger.info('Opening Storybook component library', { url: storybookUrl });
     window.open(storybookUrl, '_blank', 'noopener,noreferrer');
 
     // Reset loading state after a brief delay

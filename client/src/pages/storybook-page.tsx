@@ -35,9 +35,7 @@ import { cn } from "@/lib/utils";
 const STORYBOOK_URLS = {
   // Local development server
   local: 'http://localhost:6006',
-  // Production subdomain
-  production: 'https://storybook.9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev',
-  // Static build (if available)
+  // Static build (working path)
   static: '/storybook-static/index.html'
 } as const;
 
@@ -78,14 +76,14 @@ export function StorybookPage() {
   // ========================================
 
   /**
-   * Try different Storybook URLs in order of preference
+   * Initialize Storybook with static build
    */
   const tryStorybookUrls = async (): Promise<void> => {
-    // Try static build first since we know it exists
+    // Use static build directly since we know it works
     try {
       const response = await fetch('/storybook-static/index.html');
       if (response.ok) {
-        setCurrentUrl('/storybook-static/index.html');
+        setCurrentUrl(STORYBOOK_URLS.static);
         setIsLoading(false);
         setHasError(false);
         return;
@@ -94,17 +92,7 @@ export function StorybookPage() {
       console.log('Static build not available:', error);
     }
 
-    // Try production subdomain as fallback
-    try {
-      setCurrentUrl(STORYBOOK_URLS.production);
-      setIsLoading(false);
-      setHasError(false);
-      return;
-    } catch (error) {
-      console.log('Production Storybook not available:', error);
-    }
-
-    // If all attempts fail
+    // If static build fails
     setIsLoading(false);
     setHasError(true);
     setErrorMessage('Storybook is not available. The static build may not be properly served.');
@@ -142,10 +130,10 @@ export function StorybookPage() {
   };
 
   /**
-   * Open external Storybook
+   * Open external Storybook in new tab
    */
   const openExternalStorybook = (): void => {
-    window.open(STORYBOOK_URLS.production, '_blank', 'noopener,noreferrer');
+    window.open(STORYBOOK_URLS.static, '_blank', 'noopener,noreferrer');
   };
 
   // ========================================
@@ -319,7 +307,7 @@ export function StorybookPage() {
                     Open Component Library
                   </Button>
                   <Button
-                    onClick={() => window.open('/storybook-static/index.html', '_blank')}
+                    onClick={() => window.open(STORYBOOK_URLS.static, '_blank')}
                     variant="outline"
                     className="w-full"
                   >
