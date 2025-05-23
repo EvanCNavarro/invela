@@ -1,15 +1,20 @@
 /**
- * @file layout.ts
- * This file defines the core layout types and standards for the application.
+ * ========================================
+ * Layout Type Definitions
+ * ========================================
  * 
- * IMPORTANT: All pages in the application MUST use the PageTemplate component
- * as their base layout structure. The only exceptions are:
- * - Authentication pages (login/register)
- * - Error pages (404, 500)
- * - Special landing pages
+ * Core layout types and standards for the enterprise risk assessment platform.
+ * Defines the standardized page template structure and component interfaces
+ * used throughout the application for consistent layout management.
  * 
- * Any customizations should be done through props and composition, not by
- * creating new template structures.
+ * Layout Standards:
+ * - All pages MUST use PageTemplate component as base structure
+ * - Exceptions: auth pages, error pages, special landing pages
+ * - Customizations through props and composition only
+ * 
+ * @module types/layout
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 import { ReactNode } from "react";
