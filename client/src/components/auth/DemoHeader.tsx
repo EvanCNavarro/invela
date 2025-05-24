@@ -55,13 +55,13 @@ export function DemoHeader({ className }: DemoHeaderProps) {
   return (
     <div className={cn("w-full", className)}>
       {/* Main container with professional styling matching LoginDemoHeader */}
-      <div className="bg-white rounded-t-lg overflow-hidden p-1">
+      <div className="bg-gray-100 rounded-t-lg overflow-hidden p-1">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
           
           {/* Back to Login Button - positioned in first column like changelog */}
           <button
             onClick={handleBackToLogin}
-            className="p-3 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-inset transition-all duration-200 group rounded-md"
+            className="p-3 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-inset transition-all duration-200 group rounded-md"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
