@@ -28,9 +28,10 @@ import {
   TrendingUp,
   FileText,
   Lock,
-  User,
+  UserPlus,
   Award,
-  Database
+  Database,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,120 +49,124 @@ const DemoNavigation = ({
   onBack, 
   onNext, 
   showBack = true, 
-  showNext = true 
+  showNext = true, 
+  nextDisabled = false,
+  nextText = "Continue"
 }: {
   onBack?: () => void;
   onNext?: () => void;
   showBack?: boolean;
   showNext?: boolean;
-}) => (
-  <div className="flex justify-between items-center pt-6">
-    {showBack && onBack ? (
-      <Button 
-        onClick={onBack}
-        variant="outline"
-        size="lg"
-        className="px-6 py-3 text-base font-semibold"
-      >
-        <ArrowLeft className="w-5 h-5 mr-2" />
-        Back
-      </Button>
-    ) : (
-      <div />
-    )}
-    
-    {showNext && onNext ? (
-      <Button 
-        onClick={onNext}
-        size="lg"
-        className="px-6 py-3 text-base font-semibold"
-      >
-        Next
-        <ArrowRight className="w-5 h-5 ml-2" />
-      </Button>
-    ) : (
-      <div />
-    )}
-  </div>
-);
+  nextDisabled?: boolean;
+  nextText?: string;
+}) => {
+  return (
+    <div className="flex justify-between items-center pt-8">
+      {/* Back Button */}
+      <div className="flex-1">
+        {showBack && onBack && (
+          <Button 
+            variant="outline" 
+            onClick={onBack}
+            className="px-6 py-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+        )}
+      </div>
+
+      {/* Next Button */}
+      <div className="flex-1 flex justify-end">
+        {showNext && onNext && (
+          <Button 
+            onClick={onNext}
+            disabled={nextDisabled}
+            size="lg"
+            className="px-8 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {nextText}
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // ========================================
-// DEMO STEP 1: PERSONA SELECTION
+// DEMO STEP CONTENT COMPONENTS
 // ========================================
 
 /**
- * First step: Interactive persona selection with visual feedback
+ * Step 1: Platform Overview
  */
 const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+  console.log('[DemoStep1] Rendering platform overview');
   
-  console.log('[DemoStep1] Rendering persona selection step');
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
 
   const personas = [
     {
-      id: 'new-recipient',
-      title: 'New Data Recipient',
-      description: 'Starting your compliance journey with basic verification needs',
-      icon: User,
-      color: 'gray',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200',
-      textColor: 'text-gray-700',
-      iconColor: 'text-gray-600'
+      id: "new-data-recipient",
+      title: "New Data Recipient",
+      description: "Explore initial onboarding and data access workflows",
+      icon: UserPlus,
+      color: "fintech" // Fintech user type
     },
     {
-      id: 'accredited-recipient',
-      title: 'Accredited Data Recipient',
-      description: 'Established organization with proven compliance track record',
+      id: "accredited-data-recipient", 
+      title: "Accredited Data Recipient",
+      description: "Experience advanced data management capabilities",
       icon: Award,
-      color: 'green',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-700',
-      iconColor: 'text-green-600'
+      color: "fintech" // Fintech user type
     },
     {
-      id: 'data-provider',
-      title: 'Data Provider',
-      description: 'Financial institution sharing customer data securely',
+      id: "data-provider",
+      title: "Data Provider",
+      description: "Discover data sharing and compliance features",
       icon: Database,
-      color: 'purple',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      textColor: 'text-purple-700',
-      iconColor: 'text-purple-600'
+      color: "bank" // Bank admin type
     },
     {
-      id: 'invela-admin',
-      title: 'Invela Admin',
-      description: 'Platform administrator managing the trust network',
-      icon: Shield,
-      color: 'blue',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-700',
-      iconColor: 'text-blue-600'
+      id: "invela-admin",
+      title: "Invela Admin",
+      description: "Access administrative controls and system management",
+      icon: Settings,
+      color: "umbrella" // Umbrella admin type
     }
   ];
 
-  const handlePersonaSelect = (personaId: string) => {
-    console.log(`[DemoStep1] Selected persona: ${personaId}`);
-    setSelectedPersona(personaId);
+  const getColorClasses = (color: string, isSelected: boolean) => {
+    const colorMap = {
+      fintech: isSelected 
+        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
+      bank: isSelected 
+        ? "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-purple-300",
+      umbrella: isSelected 
+        ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-blue-400"
+    };
+    return colorMap[color as keyof typeof colorMap];
   };
 
-  const handleContinue = () => {
-    if (selectedPersona) {
-      console.log(`[DemoStep1] Continuing with persona: ${selectedPersona}`);
-      onNext();
-    }
+  const getIconColor = (color: string) => {
+    const colorMap = {
+      fintech: "text-blue-600",
+      bank: "text-purple-600", 
+      umbrella: "text-blue-700"
+    };
+    return colorMap[color as keyof typeof colorMap];
   };
 
   return (
-    <div className="h-[760px] flex flex-col">
-      {/* TOP SPACER */}
+    <div className="h-full flex flex-col min-h-[760px]">
+      {/* TOP SPACER - same spacing used throughout */}
       <div className="flex-shrink-0 py-6"></div>
       
-      {/* HEADER SECTION */}
+      {/* TOP SECTION: Fixed height header */}
       <div className="flex-shrink-0 space-y-2">
         {/* Icon + Chips */}
         <div className="flex items-center gap-3">
@@ -172,7 +177,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
             </svg>
           </div>
           <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
-            Demo Persona Selection
+            Demo Login Setup
           </div>
           <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
             Step 1 of 3
@@ -181,144 +186,95 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">
-          Choose Your Experience
+          Select Demo Persona
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Select the persona that best matches your role to see a customized demo
+        
+        {/* Subtext */}
+        <p className="text-base text-gray-600">
+          Pick a role to experience the platform from their perspective.
         </p>
       </div>
-      
-      {/* MIDDLE SPACER */}
+
+      {/* MIDDLE SPACER - same spacing as top and bottom */}
       <div className="flex-shrink-0 py-6"></div>
-      
-      {/* MAIN BODY SECTION */}
-      <div className="flex-1 space-y-6">
-        {/* Persona Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {personas.map((persona) => {
+
+      {/* MIDDLE SECTION: Flex-grow content area - top aligned */}
+      <div className="flex-1">
+        <div className="space-y-3">
+          {personas.map((persona, index) => {
             const Icon = persona.icon;
             const isSelected = selectedPersona === persona.id;
             
             return (
-              <motion.div
-                key={persona.id}
-                className={cn(
-                  "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200",
-                  "hover:shadow-md hover:scale-[1.02]",
-                  isSelected 
-                    ? `${persona.borderColor} ${persona.bgColor} shadow-md` 
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                )}
-                onClick={() => handlePersonaSelect(persona.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {/* Selection Indicator */}
-                {isSelected && (
-                  <motion.div
-                    className="absolute top-4 right-4"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  >
-                    <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", persona.bgColor)}>
-                      <CheckCircle className={cn("w-5 h-5", persona.iconColor)} />
-                    </div>
-                  </motion.div>
-                )}
-                
-                {/* Content */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-12 h-12 rounded-lg flex items-center justify-center",
-                      isSelected ? persona.bgColor : "bg-gray-50"
-                    )}>
-                      <Icon className={cn(
-                        "w-6 h-6",
-                        isSelected ? persona.iconColor : "text-gray-600"
-                      )} />
-                    </div>
-                    <div>
-                      <h3 className={cn(
-                        "text-lg font-semibold",
-                        isSelected ? persona.textColor : "text-gray-900"
+              <div key={persona.id}>
+                <Card 
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 hover:shadow-md",
+                    getColorClasses(persona.color, isSelected)
+                  )}
+                  onClick={() => setSelectedPersona(persona.id)}
+                >
+                  <CardHeader className="p-4">
+                    <div className="flex items-center gap-4">
+                      {/* User Type Icon */}
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        isSelected ? "bg-white shadow-sm" : "bg-white/80"
                       )}>
-                        {persona.title}
-                      </h3>
+                        <Icon className={cn("w-5 h-5", getIconColor(persona.color))} />
+                      </div>
+                      
+                      {/* User Info */}
+                      <div className="flex-1">
+                        <CardTitle className="text-base font-semibold text-gray-900 mb-1">
+                          {persona.title}
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 text-sm">
+                          {persona.description}
+                        </CardDescription>
+                      </div>
+                      
+                      {/* Selection Indicator */}
+                      <div className="flex items-center">
+                        {isSelected ? (
+                          <div className="text-blue-600">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <p className={cn(
-                    "text-sm leading-relaxed",
-                    isSelected ? persona.textColor : "text-gray-600"
-                  )}>
-                    {persona.description}
-                  </p>
-                </div>
-              </motion.div>
+                  </CardHeader>
+                </Card>
+              </div>
             );
           })}
         </div>
       </div>
-      
-      {/* MIDDLE SPACER */}
-      <div className="flex-shrink-0 py-6"></div>
-      
-      {/* BUTTON SECTION */}
+
+      {/* BOTTOM SECTION: Fixed height button area */}
       <div className="flex-shrink-0">
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleContinue}
-            disabled={!selectedPersona}
-            size="lg"
-            className="px-8 py-3 text-base font-semibold"
-          >
-            Continue with Demo
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
+        <DemoNavigation
+          onNext={onNext}
+          showBack={false}
+          nextDisabled={!selectedPersona}
+          nextText="Continue Demo"
+        />
       </div>
       
-      {/* BOTTOM SPACER */}
+      {/* BOTTOM SPACER - same spacing as top and middle */}
       <div className="flex-shrink-0 py-6"></div>
     </div>
   );
 };
 
-// ========================================
-// DEMO STEP 2: PLATFORM OVERVIEW
-// ========================================
-
 /**
- * Second step: Platform capabilities overview with interactive elements
+ * Step 2: Interactive Demo Experience
  */
 const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
-  console.log('[DemoStep2] Rendering platform overview step');
-
-  const features = [
-    {
-      icon: BarChart3,
-      title: "Risk Analytics",
-      description: "Real-time risk assessment with intelligent monitoring"
-    },
-    {
-      icon: Shield,
-      title: "Security First",
-      description: "Enterprise-grade security and compliance controls"
-    },
-    {
-      icon: Users,
-      title: "Team Collaboration",
-      description: "Seamless workflows for distributed teams"
-    },
-    {
-      icon: TrendingUp,
-      title: "Business Intelligence",
-      description: "Actionable insights from comprehensive data analysis"
-    }
-  ];
-
+  console.log('[DemoStep2] Rendering interactive demo');
+  
   return (
     <div className="h-[760px] flex flex-col">
       {/* TOP SPACER */}
@@ -335,7 +291,7 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
             </svg>
           </div>
           <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
-            Platform Overview
+            Demo Login Setup
           </div>
           <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
             Step 2 of 3
@@ -344,10 +300,10 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
         
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">
-          Platform Capabilities
+          Interactive Platform Demo
         </h1>
         <p className="text-lg text-muted-foreground">
-          Discover the comprehensive features designed for your workflow
+          Explore key features with real-time simulated data
         </p>
       </div>
       
@@ -355,81 +311,69 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
       <div className="flex-shrink-0 py-6"></div>
       
       {/* MAIN BODY SECTION */}
-      <div className="flex-1 space-y-8">
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            
-            return (
+      <div className="flex-1 space-y-6">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold">Sample Company Assessment</h3>
+            <div className="flex items-center gap-2 text-green-600">
+              <TrendingUp className="w-5 h-5" />
+              <span className="font-medium">92% Complete</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">98%</div>
+              <div className="text-sm text-gray-600">KYB Score</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">95%</div>
+              <div className="text-sm text-gray-600">KY3P Score</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">91%</div>
+              <div className="text-sm text-gray-600">Banking Score</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-green-600">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Assessment Complete - Low Risk Profile</span>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            {[
+              { icon: FileText, text: "KYB documentation verified", time: "2 minutes ago" },
+              { icon: Shield, text: "Risk assessment completed", time: "5 minutes ago" },
+              { icon: Users, text: "Team member added review", time: "12 minutes ago" }
+            ].map((item, index) => (
               <motion.div
                 key={index}
-                className="group p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-                whileHover={{ scale: 1.02, y: -2 }}
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <Icon className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
+                <item.icon className="w-5 h-5 text-blue-600" />
+                <div className="flex-1">
+                  <span className="text-sm font-medium">{item.text}</span>
+                  <div className="text-xs text-gray-500">{item.time}</div>
                 </div>
               </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Demo Preview Card */}
-        <Card className="border-blue-200 bg-blue-50/30">
-          <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center gap-2">
-              <Play className="w-5 h-5" />
-              Interactive Demo Preview
-            </CardTitle>
-            <CardDescription className="text-blue-700">
-              Experience the platform in action with real-world scenarios
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                "Live Risk Dashboard",
-                "Compliance Workflows", 
-                "Team Collaboration"
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  className="flex items-center gap-3 p-3 bg-white/50 rounded-lg"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                >
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  <span className="text-blue-800 font-medium">{item}</span>
-                </motion.div>
-              ))}
-            </div>
-          </CardContent>
+            ))}
+          </div>
         </Card>
       </div>
-      
-      {/* MIDDLE SPACER */}
-      <div className="flex-shrink-0 py-6"></div>
-      
+
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
         <DemoNavigation
           onBack={onBack}
           onNext={onNext}
+          nextText="View Results & Next Steps"
         />
       </div>
       
@@ -439,21 +383,17 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
   );
 };
 
-// ========================================
-// DEMO STEP 3: COMPLETION & NEXT STEPS
-// ========================================
-
 /**
- * Third step: Demo completion with call-to-action
+ * Step 3: Results and Next Steps
  */
 const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
   const [, setLocation] = useLocation();
   
-  console.log('[DemoStep3] Rendering completion step');
-
+  console.log('[DemoStep3] Rendering results and next steps');
+  
   const handleGetStarted = () => {
-    console.log('[DemoStep3] User clicked Get Started');
-    setLocation('/dashboard');
+    console.log('[DemoStep3] User clicked Get Started - redirecting to registration');
+    setLocation('/register');
   };
 
   const handleBackToLogin = () => {
@@ -477,7 +417,7 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
             </svg>
           </div>
           <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
-            Demo Complete
+            Demo Login Setup
           </div>
           <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
             Step 3 of 3
@@ -500,45 +440,47 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
       <div className="flex-1 space-y-8">
         {/* Success Header */}
         <div className="text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
         
-          <h1 className="text-3xl font-bold mb-3">
-            Demo Complete!
-          </h1>
-          <p className="text-base text-muted-foreground">
-            You've seen how the platform works for your selected persona.
-          </p>
-        </div>
-
-        {/* Results Summary */}
-        <Card className="p-6 border-green-200 bg-green-50/30">
-          <h3 className="text-xl font-semibold mb-4 text-green-800">What You've Seen:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              "Comprehensive risk assessment tools",
-              "Real-time analytics and dashboards", 
-              "Automated compliance workflows",
-              "Enterprise-grade security features"
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="flex items-center gap-3"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-              >
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span className="text-green-800 font-medium">{feature}</span>
-              </motion.div>
-            ))}
-          </div>
-        </Card>
+        <h1 className="text-3xl font-bold mb-3">
+          Demo Complete!
+        </h1>
+        <p className="text-base text-muted-foreground">
+          You've seen how the platform works for your selected persona.
+        </p>
       </div>
 
-      {/* MIDDLE SPACER */}
-      <div className="flex-shrink-0 py-6"></div>
+      {/* Results Summary */}
+      <Card className="p-6 border-green-200 bg-green-50/30">
+        <h3 className="text-xl font-semibold mb-4 text-green-800">What You've Seen:</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            "Comprehensive risk assessment tools",
+            "Real-time analytics and dashboards", 
+            "Automated compliance workflows",
+            "Enterprise-grade security features"
+          ].map((feature, index) => (
+            <motion.div
+              key={index}
+              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 + index * 0.1 }}
+            >
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <span className="text-green-800 font-medium">{feature}</span>
+            </motion.div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Navigation */}
+      <DemoNavigation
+        onBack={onBack}
+        showNext={false}
+      />
       
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
