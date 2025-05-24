@@ -167,13 +167,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
-      className="h-full flex flex-col"
-    >
+    <div className="h-full flex flex-col">
       {/* SECTION 1: Header with no top/bottom spacing for edge-to-edge layout */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -284,7 +278,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           nextText="Continue Demo"
         />
       </div>
-    </motion.div>
+    </div>
   );
 };
 
