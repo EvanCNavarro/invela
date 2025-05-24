@@ -307,24 +307,6 @@ export default function LoginPage() {
             </Button>
           </motion.div>
 
-          {/* Demo Account Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.65, duration: 0.5, ease: "easeOut" }}
-            className="mt-4"
-          >
-            <Link href="/demo">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-14 text-base font-medium border-2 hover:bg-gray-50 transition-colors duration-200"
-              >
-                Login to Demo Account
-              </Button>
-            </Link>
-          </motion.div>
-
           <motion.div 
             className="text-center mt-6"
             initial={{ opacity: 0 }}

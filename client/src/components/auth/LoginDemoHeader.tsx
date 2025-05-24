@@ -31,6 +31,9 @@
 // React core functionality
 import { useState } from "react";
 
+// Navigation
+import { useLocation } from "wouter";
+
 // UI components and utilities
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -92,6 +95,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   // ========================================
   // EVENT HANDLERS
@@ -134,8 +138,8 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   };
 
   /**
-   * Handle demo login preparation
-   * Placeholder for future demo login functionality
+   * Handle demo login navigation
+   * Navigates to the demo page for 3-step demo experience
    */
   const handleDemoLogin = (): void => {
     logger.info('Demo login accessed', {
@@ -143,8 +147,8 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       action: 'demo_login_access'
     });
 
-    // Future implementation: Demo login functionality
-    console.log('Demo login functionality - coming soon!');
+    // Navigate to demo page
+    setLocation('/demo');
   };
 
   // ========================================
