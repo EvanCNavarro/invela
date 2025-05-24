@@ -169,12 +169,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   return (
     <div className="h-full flex flex-col">
       {/* SECTION 1: Header with no top/bottom spacing for edge-to-edge layout */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-        className="space-y-2"
-      >
+      <div className="space-y-2">
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
@@ -197,26 +192,16 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         <p className="text-base text-gray-600">
           Pick a role to experience the platform from their perspective.
         </p>
-      </motion.div>
+      </div>
 
       {/* SECTION 2: Body content - fixed height, no flex growth */}
-      <motion.div
-        className="space-y-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
+      <div className="space-y-3">
         {personas.map((persona, index) => {
           const Icon = persona.icon;
           const isSelected = selectedPersona === persona.id;
           
           return (
-            <motion.div
-              key={persona.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index, duration: 0.3 }}
-            >
+            <div key={persona.id}>
               <Card 
                 className={cn(
                   "cursor-pointer transition-all duration-200 hover:shadow-md",
@@ -247,13 +232,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
                     {/* Selection Indicator */}
                     <div className="flex items-center">
                       {isSelected ? (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="text-blue-600"
-                        >
+                        <div className="text-blue-600">
                           <CheckCircle className="w-5 h-5" />
-                        </motion.div>
+                        </div>
                       ) : (
                         <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
                       )}
@@ -261,10 +242,10 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
                   </div>
                 </CardHeader>
               </Card>
-            </motion.div>
+            </div>
           );
         })}
-      </motion.div>
+      </div>
 
       {/* FLEXIBLE SPACER: Expands to push buttons to bottom */}
       <div className="flex-1"></div>
