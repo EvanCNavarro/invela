@@ -197,12 +197,12 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           
           {/* Compact Title */}
           <h1 className="text-2xl font-bold text-gray-900">
-            Choose Your User Type
+            Choose Your Demo Persona
           </h1>
           
-          {/* Smaller Subtext */}
-          <p className="text-base text-gray-600">
-            Select the user type that matches your role to experience a tailored demonstration.
+          {/* Single Sentence Subtext */}
+          <p className="text-sm text-gray-600">
+            Select a role to experience a tailored demo of the platform.
           </p>
         </motion.div>
       </div>
@@ -417,8 +417,8 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
         <h1 className="text-3xl font-bold mb-3">
           Demo Complete!
         </h1>
-        <p className="text-lg text-muted-foreground">
-          You've experienced the power of Invela Trust Network
+        <p className="text-sm text-muted-foreground">
+          You've experienced the comprehensive capabilities of our platform.
         </p>
       </div>
 
