@@ -78,7 +78,7 @@ export function AuthLayout({
         ) : (
           // Login, register, or demo - wider width with two columns
           <motion.div 
-            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden h-auto flex flex-col w-full max-w-[980px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[700px] h-full flex flex-col w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -96,7 +96,7 @@ export function AuthLayout({
               </div>
             )}
             
-            <div className="flex flex-1 min-h-[600px]">
+            <div className="flex flex-1 h-full">
               {mode === 'login' ? (
                 // Login layout with hero on right
                 <>
