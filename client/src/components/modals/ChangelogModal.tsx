@@ -86,17 +86,18 @@ const changelogEntries: ChangelogEntry[] = [
     version: '1.3.0'
   },
   {
-    id: 'storybook-integration-2025-05-23',
-    date: '2025-05-23',
-    type: 'enhancement',
-    title: 'Storybook Integration & Component Library',
-    description: 'Implemented comprehensive Storybook setup with subdomain hosting for team accessibility',
+    id: 'component-library-v1-2025-05-24',
+    date: '2025-05-24',
+    type: 'feature',
+    title: 'Invela Trust Network Component Library v1.0',
+    description: 'Custom React-based component library with live documentation and authentic branding',
     details: [
-      'Storybook 7.x configuration with React/TypeScript support',
-      'Essential addons for accessibility and viewport testing',
-      'Stories for key UI components (Table, Button, Input)',
-      'Subdomain hosting with server proxy integration',
-      'Three-button developer header with animated interactions'
+      'Interactive documentation using actual Button, Input, and Table components',
+      'Live demos with authentic Invela Trust Network styling and branding',
+      'Professional blue theme design system documentation',
+      'Real component examples with risk assessment data',
+      'Accessible via Component Library button on login page',
+      'Zero maintenance overhead - always in sync with actual components'
     ],
     version: '1.2.0'
   },
