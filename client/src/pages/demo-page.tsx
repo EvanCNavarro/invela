@@ -163,8 +163,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
 
   return (
     <div className="h-full flex flex-col min-h-[760px]">
-      {/* TOP SPACING */}
-      <div className="flex-shrink-0 py-8"></div>
+      {/* TOP SPACER - same spacing used throughout */}
+      <div className="flex-shrink-0 py-6"></div>
       
       {/* TOP SECTION: Fixed height header */}
       <div className="flex-shrink-0 space-y-2">
@@ -192,8 +192,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </p>
       </div>
 
-      {/* HEADER TO BODY SPACING */}
-      <div className="flex-shrink-0 py-8"></div>
+      {/* MIDDLE SPACER - same spacing as top and bottom */}
+      <div className="flex-shrink-0 py-6"></div>
 
       {/* MIDDLE SECTION: Flex-grow content area - fills remaining space */}
       <div className="flex-1 flex flex-col justify-center">
@@ -260,8 +260,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         />
       </div>
       
-      {/* BOTTOM SPACING */}
-      <div className="flex-shrink-0 py-8"></div>
+      {/* BOTTOM SPACER - same spacing as top and middle */}
+      <div className="flex-shrink-0 py-6"></div>
     </div>
   );
 };
