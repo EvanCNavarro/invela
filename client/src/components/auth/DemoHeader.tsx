@@ -56,9 +56,9 @@ export function DemoHeader({ className }: DemoHeaderProps) {
     <div className={cn("w-full", className)}>
       {/* Main container with professional styling matching LoginDemoHeader */}
       <div className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden p-1">
-        <div className="grid grid-cols-1 gap-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
           
-          {/* Back to Login Button - styled like changelog button but greyed out */}
+          {/* Back to Login Button - positioned in first column like changelog */}
           <button
             onClick={handleBackToLogin}
             className="p-3 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-inset transition-all duration-200 group rounded-md"
@@ -79,6 +79,12 @@ export function DemoHeader({ className }: DemoHeaderProps) {
               </div>
             </div>
           </button>
+
+          {/* Empty middle column */}
+          <div></div>
+
+          {/* Empty right column */}
+          <div></div>
         </div>
       </div>
     </div>
