@@ -32,7 +32,8 @@ import {
   UserPlus,
   Award,
   Database,
-  Settings
+  Settings,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -459,9 +460,9 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
         </h1>
         <p className="text-base text-gray-600">
           {selectedPersona ? (
-            <>Review your demo configuration and login to experience the platform as <span className="font-semibold text-gray-900">{selectedPersona.title}</span>.</>
+            <>Your demo is configured for <span className="font-semibold text-gray-900">{selectedPersona.title}</span>. Sign in to explore the platform.</>
           ) : (
-            "Review your demo configuration and login to experience the platform."
+            "Your demo is ready. Sign in to explore the platform."
           )}
         </p>
       </div>
@@ -496,8 +497,8 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
           onBack={onBack}
           showNext={true}
           onNext={handleBackToLogin}
-          nextText="Login"
-          nextIcon={<CheckCircle className="w-4 h-4 ml-2" />}
+          nextText="Sign In"
+          nextIcon={<Check className="w-4 h-4 ml-2" />}
         />
       </div>
       
