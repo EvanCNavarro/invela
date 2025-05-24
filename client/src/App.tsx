@@ -100,6 +100,7 @@ import NotFound from "@/pages/not-found";
 // Development and testing utility pages
 import TaskFix from "@/pages/TaskFix";
 import WebSocketDemoPage from "@/pages/websocket-demo-page";
+import { ComponentLibrary } from "@/pages/component-library";
 
 // Route protection utilities
 import { ProtectedRoute } from "./lib/protected-route";
@@ -131,7 +132,7 @@ import SiteMapPage from "@/pages/landing/site-map";
 import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 
 // Developer tools and documentation
-import StorybookPage from "@/pages/storybook-page";
+// Removed Storybook - using custom component library
 
 // Claims management pages
 import ClaimsPage from "@/pages/claims";
@@ -217,8 +218,9 @@ function Router(): JSX.Element {
         <Route path="/landing/site-map" component={SiteMapPage} />
 
         {/* Developer Tools */}
-        <Route path="/storybook">
-          <StorybookPage />
+        {/* Component Library - Custom React-based documentation */}
+        <Route path="/component-library">
+          <ComponentLibrary />
         </Route>
 
         {/* Public routes */}

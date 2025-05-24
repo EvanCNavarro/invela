@@ -110,10 +110,10 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
     setIsStorybookLoading(true);
 
-    // Open standalone component library that works immediately
-    const storybookUrl = '/component-library.html';
-    logger.info('Opening Storybook component library', { url: storybookUrl });
-    window.open(storybookUrl, '_blank', 'noopener,noreferrer');
+    // Open React-based component library
+    const componentLibraryUrl = '/component-library';
+    logger.info('Opening React component library', { url: componentLibraryUrl });
+    window.open(componentLibraryUrl, '_blank', 'noopener,noreferrer');
 
     // Reset loading state after a brief delay
     setTimeout(() => {
