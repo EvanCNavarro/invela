@@ -20,6 +20,7 @@ import { AuthFooter } from "./AuthFooter";
 import { LoginDemoHeader } from "./LoginDemoHeader";
 import { DemoHeader } from "./DemoHeader";
 import { StepIndicator } from "./StepIndicator";
+import { DemoStepVisual } from "./DemoStepVisual";
 import { motion } from "framer-motion";
 
 // Temporary inline types until path resolution is fixed
@@ -122,16 +123,8 @@ export function AuthLayout({
                   >
                     {children}
                   </motion.div>
-                  <div className="hidden lg:block w-[30%] p-6 flex items-center justify-center">
-                    <StepIndicator
-                      steps={[
-                        { step: 1, title: "Overview", status: currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : 'pending' },
-                        { step: 2, title: "Interactive Demo", status: currentStep === 2 ? 'active' : currentStep > 2 ? 'completed' : 'pending' },
-                        { step: 3, title: "Results", status: currentStep === 3 ? 'active' : currentStep > 3 ? 'completed' : 'pending' }
-                      ]}
-                      currentStep={currentStep}
-                      orientation="vertical"
-                    />
+                  <div className="hidden lg:block w-[30%] bg-gradient-to-br from-blue-50 to-indigo-100 border-l border-blue-200">
+                    <DemoStepVisual currentStep={currentStep} />
                   </div>
                 </>
               ) : (
