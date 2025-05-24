@@ -27,7 +27,7 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
   
   return (
     <motion.div 
-      className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-gradient-to-b from-gray-100 to-blue-200' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
+      className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-[#0082FF]' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
       initial={{ opacity: 0, x: initialX }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ 

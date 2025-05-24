@@ -158,7 +158,7 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
   return (
     <div className={cn("h-full p-3", className)}>
       {/* Outer container with same padding as hero section */}
-      <div className="h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6">
+      <div className="h-full bg-gradient-to-b from-gray-100 to-blue-200 rounded-xl p-6">
         {/* Inner container with same spacing as hero section */}
         <div className="h-full flex flex-col items-center justify-center space-y-4">
           {DEMO_STEPS.map((stepConfig, index) => {
