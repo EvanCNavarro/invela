@@ -15,6 +15,7 @@ import React, { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { DemoHeader } from "@/components/auth/DemoHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -403,23 +404,32 @@ export default function DemoPage() {
   // ========================================
 
   return (
-    <AuthLayout
-      mode="demo"
-      currentStep={currentStep}
-      totalSteps={3}
-      onBack={handleBackToLogin}
-    >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {renderStepContent()}
-        </motion.div>
-      </AnimatePresence>
-    </AuthLayout>
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
+      {/* Demo Header with Back to Login */}
+      <div className="w-full flex justify-center pt-8">
+        <div className="w-full px-4 mb-4 transition-all duration-350 ease-out" style={{ maxWidth: '980px' }}>
+          <DemoHeader />
+        </div>
+      </div>
+
+      {/* Main Demo Content */}
+      <AuthLayout
+        mode="demo"
+        currentStep={currentStep}
+        totalSteps={3}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderStepContent()}
+          </motion.div>
+        </AnimatePresence>
+      </AuthLayout>
+    </div>
   );
 }
