@@ -28,10 +28,9 @@ import {
   TrendingUp,
   FileText,
   Lock,
-  UserPlus,
+  User,
   Award,
-  Database,
-  Settings
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -111,54 +110,58 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       id: "new-data-recipient",
       title: "New Data Recipient",
       description: "Explore initial onboarding and data access workflows",
-      icon: UserPlus,
-      color: "fintech" // Fintech user type
+      icon: User,
+      color: "gray" // Gray color for new users
     },
     {
       id: "accredited-data-recipient", 
       title: "Accredited Data Recipient",
       description: "Experience advanced data management capabilities",
       icon: Award,
-      color: "fintech" // Fintech user type
+      color: "green" // Green to emphasize accreditation
     },
     {
       id: "data-provider",
       title: "Data Provider",
       description: "Discover data sharing and compliance features",
       icon: Database,
-      color: "bank" // Bank admin type
+      color: "purple" // Purple for data providers
     },
     {
       id: "invela-admin",
       title: "Invela Admin",
       description: "Access administrative controls and system management",
-      icon: Settings,
-      color: "umbrella" // Umbrella admin type
+      icon: Shield,
+      color: "blue" // Blue for admin users
     }
   ];
 
   const getColorClasses = (color: string, isSelected: boolean) => {
     const colorMap = {
-      fintech: isSelected 
-        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
-      bank: isSelected 
+      gray: isSelected 
+        ? "border-gray-500 bg-gray-50 ring-2 ring-gray-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-gray-300",
+      green: isSelected 
+        ? "border-green-500 bg-green-50 ring-2 ring-green-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-green-300",
+      purple: isSelected 
         ? "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2" 
         : "border-gray-200 bg-gray-50/30 hover:border-purple-300",
-      umbrella: isSelected 
+      blue: isSelected 
         ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600 ring-offset-2" 
         : "border-gray-200 bg-gray-50/30 hover:border-blue-400"
     };
-    return colorMap[color as keyof typeof colorMap];
+    return colorMap[color as keyof typeof colorMap] || colorMap.gray;
   };
 
   const getIconColor = (color: string) => {
     const colorMap = {
-      fintech: "text-blue-600",
-      bank: "text-purple-600", 
-      umbrella: "text-blue-700"
+      gray: "text-gray-600",
+      green: "text-green-600", 
+      purple: "text-purple-600",
+      blue: "text-blue-600"
     };
-    return colorMap[color as keyof typeof colorMap];
+    return colorMap[color as keyof typeof colorMap] || "text-gray-600";
   };
 
   return (
