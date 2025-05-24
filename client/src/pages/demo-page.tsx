@@ -201,8 +201,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           </h1>
           
           {/* Single Sentence Subtext */}
-          <p className="text-sm text-gray-600">
-            Select a role to experience a tailored demo of the platform.
+          <p className="text-base text-gray-600">
+            Choose which persona you'll login as for this demo.
           </p>
         </motion.div>
       </div>
@@ -417,8 +417,8 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
         <h1 className="text-3xl font-bold mb-3">
           Demo Complete!
         </h1>
-        <p className="text-sm text-muted-foreground">
-          You've experienced the comprehensive capabilities of our platform.
+        <p className="text-base text-muted-foreground">
+          You've seen how the platform works for your selected persona.
         </p>
       </div>
 
