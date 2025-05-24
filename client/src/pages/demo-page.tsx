@@ -25,6 +25,7 @@ import {
   BarChart3, 
   Shield, 
   Users,
+  User,
   TrendingUp,
   FileText,
   Lock,
@@ -111,34 +112,45 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       id: "new-data-recipient",
       title: "New Data Recipient",
       description: "Explore initial onboarding and data access workflows",
-      icon: UserPlus,
-      color: "fintech" // Fintech user type
+      icon: User,
+      color: "grayscale" // Simple, low-level user - grayscale styling
     },
     {
       id: "accredited-data-recipient", 
       title: "Accredited Data Recipient",
       description: "Experience advanced data management capabilities",
       icon: Award,
-      color: "fintech" // Fintech user type
-    },
-    {
-      id: "data-provider",
-      title: "Data Provider",
-      description: "Discover data sharing and compliance features",
-      icon: Database,
-      color: "bank" // Bank admin type
+      color: "green" // Accredited user - green styling
     },
     {
       id: "invela-admin",
       title: "Invela Admin",
-      description: "Access administrative controls and system management",
-      icon: Settings,
-      color: "umbrella" // Umbrella admin type
+      description: "Discover administrative and compliance management features",
+      icon: Shield,
+      color: "blue" // Admin user - blue shield matching admin interface
     }
   ];
 
   const getColorClasses = (color: string, isSelected: boolean) => {
+    console.log(`[DemoStep1] Applying color scheme: ${color}, selected: ${isSelected}`);
+    
     const colorMap = {
+      // Grayscale for simple, low-level users
+      grayscale: isSelected 
+        ? "border-gray-500 bg-gray-50 ring-2 ring-gray-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-gray-400",
+      
+      // Green for accredited users  
+      green: isSelected 
+        ? "border-green-500 bg-green-50 ring-2 ring-green-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-green-300",
+        
+      // Blue for admin users (matching admin interface)
+      blue: isSelected 
+        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
+        
+      // Legacy fintech support for backward compatibility
       fintech: isSelected 
         ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
         : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
@@ -153,12 +165,20 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   };
 
   const getIconColor = (color: string) => {
+    console.log(`[DemoStep1] Setting icon color for: ${color}`);
+    
     const colorMap = {
+      // New persona color scheme
+      grayscale: "text-gray-500", // Simple, low-level user - muted gray
+      green: "text-green-600",    // Accredited user - vibrant green
+      blue: "text-blue-600",      // Admin user - blue matching admin interface
+      
+      // Legacy support for backward compatibility
       fintech: "text-blue-600",
       bank: "text-purple-600", 
       umbrella: "text-blue-700"
     };
-    return colorMap[color as keyof typeof colorMap];
+    return colorMap[color as keyof typeof colorMap] || "text-gray-500";
   };
 
   return (
