@@ -148,10 +148,10 @@ export function ComponentLibrary() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white py-16">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl font-bold mb-4">🎨 Enterprise Component Library</h1>
-          <p className="text-xl opacity-90">Live documentation of actual components from the Risk Assessment Platform</p>
+          <h1 className="text-4xl font-bold mb-4">🎨 Invela Trust Network Component Library</h1>
+          <p className="text-xl opacity-90">Live documentation of actual components from the Invela Trust Network Platform</p>
           <p className="text-sm opacity-75 mt-2">Real React components • TypeScript • Tailwind CSS • Accessible</p>
         </div>
       </div>
@@ -163,7 +163,7 @@ export function ComponentLibrary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                   🔘
                 </div>
                 Button Components
@@ -224,7 +224,7 @@ export function ComponentLibrary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                   📝
                 </div>
                 Input Components
@@ -304,7 +304,7 @@ export function ComponentLibrary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                   📊
                 </div>
                 Table Components
@@ -335,7 +335,7 @@ export function ComponentLibrary() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                   ⚡
                 </div>
                 Interactive Demo
@@ -401,9 +401,9 @@ export function ComponentLibrary() {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
-                  <h3 className="font-semibold text-purple-600 mb-3">🎨 Design System</h3>
+                  <h3 className="font-semibold text-blue-600 mb-3">🎨 Design System</h3>
                   <ul className="text-sm text-gray-600 space-y-2">
-                    <li>• Consistent purple theme (#8B5CF6)</li>
+                    <li>• Consistent blue theme (oklch(50% 0.1 240))</li>
                     <li>• Tailwind CSS utility classes</li>
                     <li>• Radix UI primitives</li>
                     <li>• Accessible color contrasts</li>
@@ -411,7 +411,7 @@ export function ComponentLibrary() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-purple-600 mb-3">⚡ Development</h3>
+                  <h3 className="font-semibold text-blue-600 mb-3">⚡ Development</h3>
                   <ul className="text-sm text-gray-600 space-y-2">
                     <li>• TypeScript for type safety</li>
                     <li>• React forwardRef patterns</li>
@@ -421,7 +421,7 @@ export function ComponentLibrary() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-purple-600 mb-3">🔧 Implementation</h3>
+                  <h3 className="font-semibold text-blue-600 mb-3">🔧 Implementation</h3>
                   <ul className="text-sm text-gray-600 space-y-2">
                     <li>• Import from @/components/ui/</li>
                     <li>• Use cn() utility for className merging</li>
@@ -440,7 +440,7 @@ export function ComponentLibrary() {
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 mt-16">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-lg font-semibold mb-2">Enterprise Risk Assessment Platform</p>
+          <p className="text-lg font-semibold mb-2">Invela Trust Network</p>
           <p className="text-gray-400">Component Library • Built with Real Components • Ready for Production</p>
         </div>
       </footer>
