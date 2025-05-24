@@ -174,13 +174,13 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       transition={{ duration: 0.5 }}
       className="flex flex-col h-full"
     >
-      {/* Compact Header - Moved closer to top */}
-      <div className="mb-6">
+      {/* Compact Header - Much closer to top */}
+      <div className="mb-4">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.4 }}
-          className="space-y-3"
+          className="space-y-2"
         >
           {/* Icon + Chip */}
           <div className="flex items-center gap-3">
@@ -207,9 +207,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </motion.div>
       </div>
 
-      {/* User Type Selection - Single Column with more breathing room */}
+      {/* User Type Selection - Single Column with tighter spacing */}
       <motion.div
-        className="flex-1 space-y-4"
+        className="flex-1 space-y-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
