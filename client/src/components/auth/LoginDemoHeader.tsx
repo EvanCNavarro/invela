@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Professional iconography
-import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight } from "lucide-react";
+import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight, Maximize2 } from "lucide-react";
 
 // Modal components
 import ChangelogModal from "@/components/modals/ChangelogModal";
@@ -178,7 +178,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
                 </div>
               </div>
               <div className="flex items-center">
-                <SquareArrowOutUpRight className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform duration-200" />
+                <Maximize2 className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform duration-200" />
               </div>
             </div>
           </button>
@@ -222,7 +222,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
                 </div>
               </div>
               <div className="flex items-center">
-                <SquareArrowOutUpRight className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
+                <ArrowRight className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
               </div>
             </div>
           </button>

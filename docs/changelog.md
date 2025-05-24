@@ -4,17 +4,7 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
-### Version 1.3.0 - 2025-05-23
-
-#### ✨ Features
-- **Changelog Modal Implementation**
-  - Beautiful modal interface with smooth animations
-  - Badge-based categorization system for different update types
-  - Chronological entry display with timeline visualization
-  - Responsive design with keyboard navigation support
-  - Integration with developer header for easy access
-
-### Version 1.2.0 - 2025-05-24
+### Version 1.3.0 - 2025-05-24
 
 #### ✨ Features
 - **Invela Trust Network Component Library v1.0**
@@ -24,6 +14,16 @@ This document tracks major development updates and feature releases for the ente
   - Professional blue theme design system documentation
   - Real component examples using actual risk assessment data
   - Accessible via Component Library button on login page
+
+### Version 1.2.0 - 2025-05-23
+
+#### ✨ Features
+- **Changelog Modal Implementation**
+  - Beautiful modal interface with smooth animations
+  - Badge-based categorization system for different update types
+  - Chronological entry display with timeline visualization
+  - Responsive design with keyboard navigation support
+  - Integration with developer header for easy access
 
 ### Version 1.1.0 - 2025-05-23
 
