@@ -101,7 +101,7 @@ const DemoNavigation = ({
 /**
  * Step 1: Platform Overview
  */
-const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
+const DemoStep1 = ({ onNext, currentStep }: { onNext: () => void; currentStep: number }) => {
   console.log('[DemoStep1] Rendering platform overview');
   
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
