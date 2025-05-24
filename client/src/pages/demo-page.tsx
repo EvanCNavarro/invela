@@ -105,6 +105,20 @@ const DEMO_PERSONAS: DemoPersona[] = [
   }
 ];
 
+/**
+ * Utility function to get icon color classes for persona display
+ * Centralizes color mapping logic for consistent styling across components
+ */
+const getIconColorForPersona = (color: 'gray' | 'green' | 'purple' | 'blue'): string => {
+  const colorMap = {
+    gray: "text-gray-500",
+    green: "text-green-600",
+    purple: "text-purple-600",
+    blue: "text-blue-600"
+  };
+  return colorMap[color] || "text-gray-500";
+};
+
 // ========================================
 // NAVIGATION COMPONENT
 // ========================================
@@ -320,9 +334,10 @@ const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) 
 
 /**
  * Step 2: Interactive Demo Experience
+ * Now displays the selected persona from Step 1 instead of generic form data
  */
-const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
-  console.log('[DemoStep2] Rendering interactive demo');
+const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
+  console.log('[DemoStep2] Rendering interactive demo', { selectedPersona: selectedPersona?.id });
   
   return (
     <div className="h-[760px] flex flex-col">
@@ -361,60 +376,50 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
       
       {/* MAIN BODY SECTION */}
       <div className="flex-1 space-y-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold">Sample Company Assessment</h3>
-            <div className="flex items-center gap-2 text-green-600">
-              <TrendingUp className="w-5 h-5" />
-              <span className="font-medium">92% Complete</span>
+        {selectedPersona ? (
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Selected Demo Persona</h3>
+              <div className="flex items-center gap-2 text-blue-600">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-medium">Ready to Experience</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">98%</div>
-              <div className="text-sm text-gray-600">KYB Score</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">95%</div>
-              <div className="text-sm text-gray-600">KY3P Score</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">91%</div>
-              <div className="text-sm text-gray-600">Banking Score</div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 text-green-600">
-            <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">Assessment Complete - Low Risk Profile</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {[
-              { icon: FileText, text: "KYB documentation verified", time: "2 minutes ago" },
-              { icon: Shield, text: "Risk assessment completed", time: "5 minutes ago" },
-              { icon: Users, text: "Team member added review", time: "12 minutes ago" }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <item.icon className="w-5 h-5 text-blue-600" />
-                <div className="flex-1">
-                  <span className="text-sm font-medium">{item.text}</span>
-                  <div className="text-xs text-gray-500">{item.time}</div>
+            
+            <div className="flex items-center gap-6 p-4 bg-blue-50 rounded-lg">
+              {/* Persona Icon */}
+              <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex items-center justify-center">
+                <selectedPersona.icon className={cn("w-8 h-8", getIconColorForPersona(selectedPersona.color))} />
+              </div>
+              
+              {/* Persona Details */}
+              <div className="flex-1">
+                <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                  {selectedPersona.title}
+                </h4>
+                <p className="text-gray-600 text-sm mb-3">
+                  {selectedPersona.description}
+                </p>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Active Persona
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </Card>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-6">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Persona Selected</h3>
+              <p className="text-gray-600 text-sm">
+                Please go back to Step 1 to select a demo persona
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* BUTTON SECTION */}
@@ -435,7 +440,7 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
 /**
  * Step 3: Results and Next Steps
  */
-const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
+const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
   const [, setLocation] = useLocation();
   
   console.log('[DemoStep3] Rendering results and next steps');
