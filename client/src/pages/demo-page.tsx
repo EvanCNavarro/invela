@@ -163,8 +163,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* SECTION 1: Header with no top/bottom spacing for edge-to-edge layout */}
-      <div className="space-y-2">
+      {/* TOP SECTION: Fixed height header */}
+      <div className="flex-shrink-0 space-y-2">
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
@@ -189,64 +189,63 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </p>
       </div>
 
-      {/* SECTION 2: Body content - fixed height, no flex growth */}
-      <div className="space-y-3">
-        {personas.map((persona, index) => {
-          const Icon = persona.icon;
-          const isSelected = selectedPersona === persona.id;
-          
-          return (
-            <div key={persona.id}>
-              <Card 
-                className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-md",
-                  getColorClasses(persona.color, isSelected)
-                )}
-                onClick={() => setSelectedPersona(persona.id)}
-              >
-                <CardHeader className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* User Type Icon */}
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      isSelected ? "bg-white shadow-sm" : "bg-white/80"
-                    )}>
-                      <Icon className={cn("w-5 h-5", getIconColor(persona.color))} />
+      {/* MIDDLE SECTION: Flex-grow content area that fills remaining space */}
+      <div className="flex-1 flex flex-col justify-center py-6">
+        <div className="space-y-3">
+          {personas.map((persona, index) => {
+            const Icon = persona.icon;
+            const isSelected = selectedPersona === persona.id;
+            
+            return (
+              <div key={persona.id}>
+                <Card 
+                  className={cn(
+                    "cursor-pointer transition-all duration-200 hover:shadow-md",
+                    getColorClasses(persona.color, isSelected)
+                  )}
+                  onClick={() => setSelectedPersona(persona.id)}
+                >
+                  <CardHeader className="p-4">
+                    <div className="flex items-center gap-4">
+                      {/* User Type Icon */}
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        isSelected ? "bg-white shadow-sm" : "bg-white/80"
+                      )}>
+                        <Icon className={cn("w-5 h-5", getIconColor(persona.color))} />
+                      </div>
+                      
+                      {/* User Info */}
+                      <div className="flex-1">
+                        <CardTitle className="text-base font-semibold text-gray-900 mb-1">
+                          {persona.title}
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 text-sm">
+                          {persona.description}
+                        </CardDescription>
+                      </div>
+                      
+                      {/* Selection Indicator */}
+                      <div className="flex items-center">
+                        {isSelected ? (
+                          <div className="text-blue-600">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
+                        )}
+                      </div>
                     </div>
-                    
-                    {/* User Info */}
-                    <div className="flex-1">
-                      <CardTitle className="text-base font-semibold text-gray-900 mb-1">
-                        {persona.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-600 text-sm">
-                        {persona.description}
-                      </CardDescription>
-                    </div>
-                    
-                    {/* Selection Indicator */}
-                    <div className="flex items-center">
-                      {isSelected ? (
-                        <div className="text-blue-600">
-                          <CheckCircle className="w-5 h-5" />
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </div>
-          );
-        })}
+                  </CardHeader>
+                </Card>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* FLEXIBLE SPACER: Expands to push buttons to bottom */}
-      <div className="flex-1"></div>
-
-      {/* SECTION 3: Button section with no bottom spacing for edge-to-edge layout */}
-      <div>
+      {/* BOTTOM SECTION: Fixed height button area at the very bottom */}
+      <div className="flex-shrink-0">
         <DemoNavigation
           onNext={onNext}
           showBack={false}
