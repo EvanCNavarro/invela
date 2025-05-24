@@ -190,7 +190,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
                 <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
               </svg>
             </div>
-            <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm font-medium">
+            <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
               Demo Login Setup
             </div>
           </div>
