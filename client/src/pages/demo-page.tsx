@@ -174,12 +174,12 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       transition={{ duration: 0.5 }}
       className="h-full flex flex-col"
     >
-      {/* SECTION 1: Header with breathing room from top */}
+      {/* SECTION 1: Header with edge-to-edge alignment */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
-        className="pt-6 pb-6 space-y-2"
+        className="pt-0 pb-0 space-y-2"
       >
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
@@ -272,8 +272,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         })}
       </motion.div>
 
-      {/* SECTION 3: Navigation buttons with matching bottom spacing */}
-      <div className="pt-6">
+      {/* SECTION 3: Navigation buttons with edge-to-edge alignment */}
+      <div className="pt-0">
         <DemoNavigation
           onNext={onNext}
           showBack={false}
