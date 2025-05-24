@@ -123,7 +123,7 @@ export function AuthLayout({
                   >
                     {children}
                   </motion.div>
-                  <div className="hidden lg:block w-[30%]">
+                  <div className="hidden lg:block w-[30%] h-full">
                     <DemoStepVisual currentStep={currentStep} />
                   </div>
                 </>
