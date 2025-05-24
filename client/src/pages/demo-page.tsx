@@ -369,9 +369,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         </h1>
         <p className="text-base text-gray-600">
           {selectedPersona ? (
-            <>Customize your experience as a <span className="font-semibold text-blue-600 underline decoration-blue-200">{selectedPersona.title}</span></>
+            <>Tailored for <span className="font-semibold text-gray-900">{selectedPersona.title}</span> workflows and requirements</>
           ) : (
-            "Customize your demo experience"
+            "Tailor your demo experience to your needs"
           )}
         </p>
       </div>
@@ -382,27 +382,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       {/* MAIN BODY SECTION */}
       <div className="flex-1 space-y-6">
         {selectedPersona ? (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Demo Customization</h3>
-              <div className="flex items-center gap-2 text-blue-600">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Ready to Customize</span>
-              </div>
-            </div>
-            
-            {/* Placeholder for persona-specific customization options */}
-            <div className="space-y-4">
-              <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
-                <p className="text-gray-500 text-sm">
-                  Persona-specific customization options will appear here
-                </p>
-                <p className="text-gray-400 text-xs mt-1">
-                  Different options based on {selectedPersona.title} role
-                </p>
-              </div>
-            </div>
-          </Card>
+          <div className="space-y-4">
+            {/* Space for persona-specific customization components */}
+          </div>
         ) : (
           <Card className="p-6">
             <div className="text-center py-8">
