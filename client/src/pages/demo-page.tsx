@@ -197,12 +197,12 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           
           {/* Compact Title */}
           <h1 className="text-2xl font-bold text-gray-900">
-            Choose Your Demo Persona
+            Select Demo Persona
           </h1>
           
           {/* Single Sentence Subtext */}
           <p className="text-base text-gray-600">
-            Choose which persona you'll login as for this demo.
+            Pick a role to experience the platform from their perspective.
           </p>
         </motion.div>
       </div>
