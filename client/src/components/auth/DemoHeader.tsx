@@ -74,9 +74,6 @@ export function DemoHeader({ className }: DemoHeaderProps) {
                   </h3>
                 </div>
               </div>
-              <div className="flex items-center">
-                <ArrowLeft className="w-4 h-4 text-gray-600 group-hover:scale-110 transition-transform duration-200" />
-              </div>
             </div>
           </button>
 
