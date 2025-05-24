@@ -73,6 +73,7 @@ import { registerStandardizedServices, useStandardizedServices } from "./service
 // Authentication and user management pages
 import LoginPage from "@/pages/login-page";
 import RegisterPage from "@/pages/register-page";
+import DemoPage from "@/pages/demo-page";
 
 // Core dashboard and navigation pages
 import DashboardPage from "@/pages/dashboard-page";
@@ -226,6 +227,7 @@ function Router(): JSX.Element {
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
+        <Route path="/demo" component={DemoPage} />
         <Route path="/auth">
           {(params) => {
             const searchParams = new URLSearchParams(window.location.search);

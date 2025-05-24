@@ -34,7 +34,16 @@ interface AuthLayoutProps {
   onBack?: () => void;
 }
 
-export function AuthLayout({ children, isLogin, isRegistrationValidated = false }: AuthLayoutProps) {
+export function AuthLayout({ 
+  children, 
+  mode, 
+  currentStep = 1, 
+  totalSteps = 3, 
+  onStepChange, 
+  onBack 
+}: AuthLayoutProps) {
+  
+  console.log(`[AuthLayout] Rendering with mode: ${mode}, step: ${currentStep}/${totalSteps}`);
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Header with spacing - no back button */}
@@ -42,18 +51,30 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
         <motion.div 
           className={`w-full px-4 mb-4 transition-all duration-350 ease-out`}
           style={{ 
-            maxWidth: isRegistrationValidated ? '800px' : '980px' 
+            maxWidth: mode === 'register-validated' ? '800px' : '980px' 
           }}
           layout
           transition={{ duration: 0.35, ease: "easeInOut" }}
         >
-          {/* Back button removed as requested */}
+          {/* Demo back button */}
+          {mode === 'demo' && onBack && (
+            <motion.button
+              onClick={onBack}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200 mb-4"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Back to Login</span>
+            </motion.button>
+          )}
         </motion.div>
       </div>
       
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-6">
-        {isRegistrationValidated ? (
+        {mode === 'register-validated' ? (
           // Account creation form (step 2 of registration) - narrow width
           <motion.div 
             className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]"
@@ -65,7 +86,7 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
             {children}
           </motion.div>
         ) : (
-          // Login or initial registration (step 1) - wider width with two columns
+          // Login, register, or demo - wider width with two columns
           <motion.div 
             className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden h-auto flex flex-col w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
@@ -73,15 +94,15 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
             transition={{ duration: 0.5, ease: "easeOut" }}
             layout
           >
-            {/* Demo Header - Inside the login container */}
-            {isLogin && (
+            {/* Demo Header - Only for login mode */}
+            {mode === 'login' && (
               <div className="w-full">
                 <LoginDemoHeader className="rounded-t-lg" />
               </div>
             )}
             
             <div className="flex flex-1 min-h-[600px]">
-              {isLogin ? (
+              {mode === 'login' ? (
                 // Login layout with hero on right
                 <>
                   <motion.div 
@@ -92,26 +113,49 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
                   >
                     {children}
                   </motion.div>
-                <div className="hidden lg:block w-[45%] p-3">
-                  <AuthHeroSection isLogin={true} />
-                </div>
-              </>
-            ) : (
-              // Registration initial layout with hero on left
-              <>
-                <div className="hidden lg:block w-[45%] p-3">
-                  <AuthHeroSection isLogin={false} />
-                </div>
-                <motion.div 
-                  className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
-                  initial={{ opacity: 0, x: -40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {children}
-                </motion.div>
-              </>
-            )}
+                  <div className="hidden lg:block w-[45%] p-3">
+                    <AuthHeroSection isLogin={true} />
+                  </div>
+                </>
+              ) : mode === 'demo' ? (
+                // Demo layout with step indicators on right
+                <>
+                  <motion.div 
+                    className="w-full lg:w-[70%] p-14 flex flex-col justify-center"
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {children}
+                  </motion.div>
+                  <div className="hidden lg:block w-[30%] p-6 flex items-center justify-center">
+                    <StepIndicator
+                      steps={[
+                        { step: 1, title: "Overview", status: currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : 'pending' },
+                        { step: 2, title: "Interactive Demo", status: currentStep === 2 ? 'active' : currentStep > 2 ? 'completed' : 'pending' },
+                        { step: 3, title: "Results", status: currentStep === 3 ? 'active' : currentStep > 3 ? 'completed' : 'pending' }
+                      ]}
+                      currentStep={currentStep}
+                      orientation="vertical"
+                    />
+                  </div>
+                </>
+              ) : (
+                // Register layout with hero on left
+                <>
+                  <div className="hidden lg:block w-[45%] p-3">
+                    <AuthHeroSection isLogin={false} />
+                  </div>
+                  <motion.div 
+                    className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
+                    initial={{ opacity: 0, x: -40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {children}
+                  </motion.div>
+                </>
+              )}
             </div>
           </motion.div>
         )}
