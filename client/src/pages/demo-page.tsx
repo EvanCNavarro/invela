@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   ArrowRight, 
+  ArrowLeft,
   Play, 
   CheckCircle, 
   BarChart3, 
@@ -26,11 +27,77 @@ import {
   Users,
   TrendingUp,
   FileText,
-  Lock
+  Lock,
+  UserPlus,
+  Award,
+  Database,
+  Settings
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
+
+// ========================================
+// NAVIGATION COMPONENT
+// ========================================
+
+/**
+ * Consistent navigation component for demo steps
+ */
+const DemoNavigation = ({ 
+  onBack, 
+  onNext, 
+  showBack = true, 
+  showNext = true, 
+  nextDisabled = false,
+  nextText = "Continue"
+}: {
+  onBack?: () => void;
+  onNext?: () => void;
+  showBack?: boolean;
+  showNext?: boolean;
+  nextDisabled?: boolean;
+  nextText?: string;
+}) => {
+  return (
+    <motion.div
+      className="flex justify-between items-center pt-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.5, duration: 0.4 }}
+    >
+      {/* Back Button */}
+      <div className="flex-1">
+        {showBack && onBack && (
+          <Button 
+            variant="outline" 
+            onClick={onBack}
+            className="px-6 py-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+        )}
+      </div>
+
+      {/* Next Button */}
+      <div className="flex-1 flex justify-end">
+        {showNext && onNext && (
+          <Button 
+            onClick={onNext}
+            disabled={nextDisabled}
+            size="lg"
+            className="px-8 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {nextText}
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 // ========================================
 // DEMO STEP CONTENT COMPONENTS
@@ -42,6 +109,67 @@ type AuthStep = 1 | 2 | 3 | 4 | 5;
 const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   console.log('[DemoStep1] Rendering platform overview');
   
+  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
+
+  const personas = [
+    {
+      id: "new-data-recipient",
+      title: "New Data Recipient",
+      description: "Explore initial onboarding and data access workflows",
+      icon: UserPlus,
+      color: "blue"
+    },
+    {
+      id: "accredited-data-recipient", 
+      title: "Accredited Data Recipient",
+      description: "Experience advanced data management capabilities",
+      icon: Award,
+      color: "green"
+    },
+    {
+      id: "data-provider",
+      title: "Data Provider",
+      description: "Discover data sharing and compliance features",
+      icon: Database,
+      color: "purple"
+    },
+    {
+      id: "invela-admin",
+      title: "Invela Admin",
+      description: "Access administrative controls and system management",
+      icon: Settings,
+      color: "orange"
+    }
+  ];
+
+  const getColorClasses = (color: string, isSelected: boolean) => {
+    const colorMap = {
+      blue: isSelected 
+        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
+        : "border-blue-200 bg-blue-50/30 hover:border-blue-300",
+      green: isSelected 
+        ? "border-green-500 bg-green-50 ring-2 ring-green-500 ring-offset-2" 
+        : "border-green-200 bg-green-50/30 hover:border-green-300",
+      purple: isSelected 
+        ? "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2" 
+        : "border-purple-200 bg-purple-50/30 hover:border-purple-300",
+      orange: isSelected 
+        ? "border-orange-500 bg-orange-50 ring-2 ring-orange-500 ring-offset-2" 
+        : "border-orange-200 bg-orange-50/30 hover:border-orange-300"
+    };
+    return colorMap[color as keyof typeof colorMap];
+  };
+
+  const getIconColor = (color: string) => {
+    const colorMap = {
+      blue: "text-blue-600",
+      green: "text-green-600", 
+      purple: "text-purple-600",
+      orange: "text-orange-600"
+    };
+    return colorMap[color as keyof typeof colorMap];
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -63,87 +191,79 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
             className="h-14 w-14 mb-6"
           />
           <h1 className="text-3xl font-bold mb-3">
-            Welcome to Invela Trust Network
+            Choose Your Demo Experience
           </h1>
           <p className="text-lg text-muted-foreground">
-            Experience our comprehensive risk assessment platform through this interactive demo
+            Select the persona that best matches your role to experience a tailored demonstration of Invela Trust Network.
           </p>
         </motion.div>
       </div>
 
-      {/* Feature Cards */}
+      {/* Persona Selection */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
       >
-        <Card className="border-blue-200 bg-blue-50/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-blue-600" />
-              <div>
-                <CardTitle className="text-lg">Risk Assessment</CardTitle>
-                <CardDescription>Comprehensive KYB, KY3P & Open Banking</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Card className="border-green-200 bg-green-50/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-green-600" />
-              <div>
-                <CardTitle className="text-lg">Real-time Analytics</CardTitle>
-                <CardDescription>Dynamic dashboards and reporting</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Card className="border-purple-200 bg-purple-50/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-purple-600" />
-              <div>
-                <CardTitle className="text-lg">Team Collaboration</CardTitle>
-                <CardDescription>Multi-user workflow management</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Card className="border-orange-200 bg-orange-50/50">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Lock className="w-8 h-8 text-orange-600" />
-              <div>
-                <CardTitle className="text-lg">Enterprise Security</CardTitle>
-                <CardDescription>Bank-grade security and compliance</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        {personas.map((persona, index) => {
+          const Icon = persona.icon;
+          const isSelected = selectedPersona === persona.id;
+          
+          return (
+            <motion.div
+              key={persona.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index, duration: 0.3 }}
+            >
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all duration-300 transform hover:scale-105",
+                  getColorClasses(persona.color, isSelected)
+                )}
+                onClick={() => setSelectedPersona(persona.id)}
+              >
+                <CardHeader className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      isSelected ? "bg-white shadow-sm" : "bg-white/70"
+                    )}>
+                      <Icon className={cn("w-8 h-8", getIconColor(persona.color))} />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
+                        {persona.title}
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 text-sm leading-relaxed">
+                        {persona.description}
+                      </CardDescription>
+                    </div>
+                    {isSelected && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="text-blue-600"
+                      >
+                        <CheckCircle className="w-6 h-6" />
+                      </motion.div>
+                    )}
+                  </div>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          );
+        })}
       </motion.div>
 
-      {/* Action Button */}
-      <motion.div
-        className="flex justify-center pt-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
-      >
-        <Button 
-          onClick={onNext}
-          size="lg"
-          className="px-8 py-3 text-base font-semibold"
-        >
-          <Play className="w-5 h-5 mr-2" />
-          Start Interactive Demo
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-      </motion.div>
+      {/* Navigation */}
+      <DemoNavigation
+        onNext={onNext}
+        showBack={false}
+        nextDisabled={!selectedPersona}
+        nextText="Continue Demo"
+      />
     </motion.div>
   );
 };
@@ -151,7 +271,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
 /**
  * Step 2: Interactive Demo Experience
  */
-const DemoStep2 = ({ onNext }: { onNext: () => void }) => {
+const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void }) => {
   console.log('[DemoStep2] Rendering interactive demo');
   
   return (
@@ -230,22 +350,12 @@ const DemoStep2 = ({ onNext }: { onNext: () => void }) => {
         </Card>
       </div>
 
-      {/* Action Button */}
-      <motion.div
-        className="flex justify-center pt-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-      >
-        <Button 
-          onClick={onNext}
-          size="lg"
-          className="px-8 py-3 text-base font-semibold"
-        >
-          View Results & Next Steps
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-      </motion.div>
+      {/* Navigation */}
+      <DemoNavigation
+        onBack={onBack}
+        onNext={onNext}
+        nextText="View Results & Next Steps"
+      />
     </motion.div>
   );
 };
@@ -253,7 +363,7 @@ const DemoStep2 = ({ onNext }: { onNext: () => void }) => {
 /**
  * Step 3: Results and Next Steps
  */
-const DemoStep3 = () => {
+const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
   const [, setLocation] = useLocation();
   
   console.log('[DemoStep3] Rendering results and next steps');
@@ -319,9 +429,15 @@ const DemoStep3 = () => {
         </div>
       </Card>
 
+      {/* Navigation */}
+      <DemoNavigation
+        onBack={onBack}
+        showNext={false}
+      />
+      
       {/* Action Buttons */}
       <motion.div
-        className="flex flex-col sm:flex-row gap-4 justify-center"
+        className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.4 }}
