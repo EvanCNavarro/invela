@@ -492,6 +492,12 @@ export default function DemoPage() {
     }
   }, [currentStep]);
 
+  const handlePreviousStep = useCallback(() => {
+    const prevStep = Math.max(1, currentStep - 1) as AuthStep;
+    console.log(`[DemoPage] Going back to step ${prevStep}`);
+    setCurrentStep(prevStep);
+  }, [currentStep]);
+
   const handleBackToLogin = useCallback(() => {
     console.log('[DemoPage] Returning to login page');
     setLocation('/login');
@@ -506,9 +512,9 @@ export default function DemoPage() {
       case 1:
         return <DemoStep1 onNext={handleNextStep} />;
       case 2:
-        return <DemoStep2 onNext={handleNextStep} />;
+        return <DemoStep2 onNext={handleNextStep} onBack={handlePreviousStep} />;
       case 3:
-        return <DemoStep3 />;
+        return <DemoStep3 onBack={handlePreviousStep} />;
       default:
         return <DemoStep1 onNext={handleNextStep} />;
     }
