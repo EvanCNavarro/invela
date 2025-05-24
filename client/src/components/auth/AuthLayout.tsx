@@ -18,12 +18,20 @@ import { ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "./AuthHeroSection";
 import { AuthFooter } from "./AuthFooter";
 import { LoginDemoHeader } from "./LoginDemoHeader";
+import { StepIndicator } from "./StepIndicator";
 import { motion } from "framer-motion";
+
+// Temporary inline types until path resolution is fixed
+type AuthMode = 'login' | 'register' | 'register-validated' | 'demo';
+type AuthStep = 1 | 2 | 3 | 4 | 5;
 
 interface AuthLayoutProps {
   children: React.ReactNode;
-  isLogin: boolean;
-  isRegistrationValidated?: boolean;
+  mode: AuthMode;
+  currentStep?: AuthStep;
+  totalSteps?: AuthStep;
+  onStepChange?: (step: AuthStep) => void;
+  onBack?: () => void;
 }
 
 export function AuthLayout({ children, isLogin, isRegistrationValidated = false }: AuthLayoutProps) {
