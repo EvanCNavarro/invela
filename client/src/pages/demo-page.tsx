@@ -168,7 +168,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       
       {/* TOP SECTION: Fixed height header */}
       <div className="flex-shrink-0 space-y-2">
-        {/* Icon + Chip */}
+        {/* Icon + Chips */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600">
@@ -178,6 +178,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           </div>
           <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
             Demo Login Setup
+          </div>
+          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
+            Step {currentStep} of 3
           </div>
         </div>
         
