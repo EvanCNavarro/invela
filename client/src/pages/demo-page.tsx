@@ -195,8 +195,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       {/* MIDDLE SPACER - same spacing as top and bottom */}
       <div className="flex-shrink-0 py-6"></div>
 
-      {/* MIDDLE SECTION: Flex-grow content area - fills remaining space */}
-      <div className="flex-1 flex flex-col justify-center">
+      {/* MIDDLE SECTION: Flex-grow content area - top aligned */}
+      <div className="flex-1">
         <div className="space-y-3">
           {personas.map((persona, index) => {
             const Icon = persona.icon;
