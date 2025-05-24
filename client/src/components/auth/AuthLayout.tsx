@@ -116,7 +116,7 @@ export function AuthLayout({
                 // Demo layout with step indicators on right
                 <>
                   <motion.div 
-                    className="w-full lg:w-[70%] p-14 flex flex-col justify-center"
+                    className="w-full lg:w-[70%] px-14 pt-6 pb-14 flex flex-col justify-center"
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
