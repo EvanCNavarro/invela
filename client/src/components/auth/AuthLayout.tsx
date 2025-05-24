@@ -123,7 +123,7 @@ export function AuthLayout({
                   >
                     {children}
                   </motion.div>
-                  <div className="hidden lg:block w-[30%] bg-gradient-to-br from-blue-50 to-indigo-100 border-l border-blue-200">
+                  <div className="hidden lg:block w-[30%]">
                     <DemoStepVisual currentStep={currentStep} />
                   </div>
                 </>
