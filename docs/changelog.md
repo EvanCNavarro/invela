@@ -14,16 +14,16 @@ This document tracks major development updates and feature releases for the ente
   - Responsive design with keyboard navigation support
   - Integration with developer header for easy access
 
-### Version 1.2.0 - 2025-05-23
+### Version 1.2.0 - 2025-05-24
 
-#### 🔧 Enhancements
-- **Storybook Integration & Component Library**
-  - Storybook 7.x configuration with React/TypeScript support
-  - Essential addons for accessibility and viewport testing
-  - Comprehensive stories for key UI components (Table, Button, Input)
-  - Subdomain hosting with server proxy integration
-  - Three-button developer header with animated interactions
-  - External link functionality to access component documentation
+#### ✨ Features
+- **Invela Trust Network Component Library v1.0**
+  - Custom React-based component library integrated within the application
+  - Interactive documentation showcasing actual Button, Input, and Table components
+  - Live demos with authentic styling matching Invela Trust Network branding
+  - Professional blue theme design system documentation
+  - Real component examples using actual risk assessment data
+  - Accessible via Component Library button on login page
 
 ### Version 1.1.0 - 2025-05-23
 
