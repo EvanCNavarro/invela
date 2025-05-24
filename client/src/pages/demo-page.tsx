@@ -149,9 +149,10 @@ const DemoNavigation = ({
           <Button 
             variant="outline" 
             onClick={onBack}
-            className="px-6 py-2"
+            size="lg"
+            className="px-8 py-3 text-base font-semibold"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             Previous
           </Button>
         )}
@@ -364,10 +365,14 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">
-          Interactive Platform Demo
+          Customize Demo Experience
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Explore key features with real-time simulated data
+        <p className="text-base text-gray-600">
+          {selectedPersona ? (
+            <>Customize your experience as a <span className="font-semibold text-blue-600 underline decoration-blue-200">{selectedPersona.title}</span></>
+          ) : (
+            "Customize your demo experience"
+          )}
         </p>
       </div>
       
@@ -378,32 +383,23 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       <div className="flex-1 space-y-6">
         {selectedPersona ? (
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold">Selected Demo Persona</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Demo Customization</h3>
               <div className="flex items-center gap-2 text-blue-600">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Ready to Experience</span>
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Ready to Customize</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-6 p-4 bg-blue-50 rounded-lg">
-              {/* Persona Icon */}
-              <div className="w-16 h-16 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                <selectedPersona.icon className={cn("w-8 h-8", getIconColorForPersona(selectedPersona.color))} />
-              </div>
-              
-              {/* Persona Details */}
-              <div className="flex-1">
-                <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                  {selectedPersona.title}
-                </h4>
-                <p className="text-gray-600 text-sm mb-3">
-                  {selectedPersona.description}
+            {/* Placeholder for persona-specific customization options */}
+            <div className="space-y-4">
+              <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
+                <p className="text-gray-500 text-sm">
+                  Persona-specific customization options will appear here
                 </p>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  Active Persona
-                </div>
+                <p className="text-gray-400 text-xs mt-1">
+                  Different options based on {selectedPersona.title} role
+                </p>
               </div>
             </div>
           </Card>
@@ -427,7 +423,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         <DemoNavigation
           onBack={onBack}
           onNext={onNext}
-          nextText="View Results & Next Steps"
+          nextText="Next Step"
         />
       </div>
       
