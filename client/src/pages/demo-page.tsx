@@ -132,7 +132,8 @@ const DemoNavigation = ({
   showBack = true, 
   showNext = true, 
   nextDisabled = false,
-  nextText = "Continue"
+  nextText = "Continue",
+  nextIcon
 }: {
   onBack?: () => void;
   onNext?: () => void;
@@ -140,6 +141,7 @@ const DemoNavigation = ({
   showNext?: boolean;
   nextDisabled?: boolean;
   nextText?: string;
+  nextIcon?: React.ReactNode;
 }) => {
   return (
     <div className="flex justify-between items-center pt-8">
@@ -168,7 +170,7 @@ const DemoNavigation = ({
             className="px-8 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {nextText}
-            <ArrowRight className="w-5 h-5 ml-2" />
+            {nextIcon || <ArrowRight className="w-5 h-5 ml-2" />}
           </Button>
         )}
       </div>
@@ -423,13 +425,8 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
   
   console.log('[DemoStep3] Rendering results and next steps');
   
-  const handleGetStarted = () => {
-    console.log('[DemoStep3] User clicked Get Started - redirecting to registration');
-    setLocation('/register');
-  };
-
   const handleBackToLogin = () => {
-    console.log('[DemoStep3] User clicked Back to Login');
+    console.log('[DemoStep3] User clicked Login');
     setLocation('/login');
   };
   
@@ -458,10 +455,14 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
         
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">
-          Demo Complete - Get Started
+          Review Demo Setup
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Ready to explore the full platform capabilities
+        <p className="text-base text-gray-600">
+          {selectedPersona ? (
+            <>Review your demo configuration and login to experience the platform as <span className="font-semibold text-gray-900">{selectedPersona.title}</span>.</>
+          ) : (
+            "Review your demo configuration and login to experience the platform."
+          )}
         </p>
       </div>
       
@@ -469,73 +470,35 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
       <div className="flex-shrink-0 py-6"></div>
       
       {/* MAIN BODY SECTION */}
-      <div className="flex-1 space-y-8">
-        {/* Success Header */}
-        <div className="text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+      <div className="flex-1 space-y-6">
+        {selectedPersona ? (
+          <div className="space-y-4">
+            {/* Space for demo summary and review components */}
           </div>
-        
-          <h1 className="text-3xl font-bold mb-3">
-            Demo Complete!
-          </h1>
-          <p className="text-base text-muted-foreground">
-            You've seen how the platform works for your selected persona.
-          </p>
-        </div>
-
-      {/* Results Summary */}
-      <Card className="p-6 border-green-200 bg-green-50/30">
-        <h3 className="text-xl font-semibold mb-4 text-green-800">What You've Seen:</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            "Comprehensive risk assessment tools",
-            "Real-time analytics and dashboards", 
-            "Automated compliance workflows",
-            "Enterprise-grade security features"
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + index * 0.1 }}
-            >
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <span className="text-green-800 font-medium">{feature}</span>
-            </motion.div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Navigation */}
-      <DemoNavigation
-        onBack={onBack}
-        showNext={false}
-      />
+        ) : (
+          <Card className="p-6">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Demo Configuration</h3>
+              <p className="text-gray-600 text-sm">
+                Please go back to Step 1 to configure your demo experience
+              </p>
+            </div>
+          </Card>
+        )}
       </div>
-      
+
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
-        <div className="flex flex-col gap-3">
-          <Button 
-            onClick={handleGetStarted}
-            size="lg"
-            className="px-8 py-3 text-base font-semibold"
-          >
-            Get Started Now
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-          
-          <Button 
-            onClick={handleBackToLogin}
-            variant="outline"
-            size="lg"
-            className="px-8 py-3 text-base font-semibold"
-          >
-            Back to Login
-          </Button>
-        </div>
+        <DemoNavigation
+          onBack={onBack}
+          showNext={true}
+          onNext={handleBackToLogin}
+          nextText="Login"
+          nextIcon={<CheckCircle className="w-4 h-4 ml-2" />}
+        />
       </div>
       
       {/* BOTTOM SPACER */}
@@ -618,6 +581,7 @@ export default function DemoPage() {
       case 3:
         return (
           <DemoStep3 
+            onNext={handleBackToLogin}
             onBack={handlePreviousStep}
             selectedPersona={selectedPersona}
           />
