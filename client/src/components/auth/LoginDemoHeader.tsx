@@ -110,8 +110,8 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
     setIsStorybookLoading(true);
 
-    // Open built Storybook static files
-    const storybookUrl = '/storybook-static/index.html';
+    // Open standalone component library that works immediately
+    const storybookUrl = '/component-library.html';
     logger.info('Opening Storybook component library', { url: storybookUrl });
     window.open(storybookUrl, '_blank', 'noopener,noreferrer');
 
