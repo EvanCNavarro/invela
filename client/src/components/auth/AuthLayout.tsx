@@ -63,7 +63,7 @@ export function AuthLayout({
       </div>
       
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-6 min-h-[calc(100vh-200px)]">
+      <div className="flex-1 flex items-center justify-center p-6">
         {mode === 'register-validated' ? (
           // Account creation form (step 2 of registration) - narrow width
           <motion.div 
@@ -78,7 +78,7 @@ export function AuthLayout({
         ) : (
           // Login, register, or demo - wider width with two columns
           <motion.div 
-            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[900px] h-full flex flex-col w-full max-w-[980px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[700px] h-full flex flex-col w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -116,14 +116,14 @@ export function AuthLayout({
                 // Demo layout with step indicators on right
                 <>
                   <motion.div 
-                    className="w-full lg:w-[70%] px-14 flex flex-col h-full"
+                    className="w-full lg:w-[70%] px-14 flex flex-col h-full min-h-[600px]"
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                   >
                     {children}
                   </motion.div>
-                  <div className="hidden lg:block w-[30%] h-full">
+                  <div className="hidden lg:block w-[30%] h-full min-h-[600px]">
                     <DemoStepVisual currentStep={currentStep} />
                   </div>
                 </>
