@@ -174,12 +174,12 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       transition={{ duration: 0.5 }}
       className="h-full flex flex-col"
     >
-      {/* SECTION 1: Header with edge-to-edge alignment */}
+      {/* SECTION 1: Header with consistent hero section spacing (24px = p-6) */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
-        className="pt-0 pb-0 space-y-2"
+        className="pt-6 pb-6 space-y-2"
       >
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
@@ -205,9 +205,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </p>
       </motion.div>
 
-      {/* SECTION 2: Content - Persona selection cards */}
+      {/* SECTION 2: Body content - fixed height, no flex growth */}
       <motion.div
-        className="flex-1 space-y-3"
+        className="space-y-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
@@ -272,8 +272,11 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         })}
       </motion.div>
 
-      {/* SECTION 3: Navigation buttons with edge-to-edge alignment */}
-      <div className="pt-0">
+      {/* FLEXIBLE SPACER: Expands to push buttons to bottom */}
+      <div className="flex-1"></div>
+
+      {/* SECTION 3: Button section with consistent hero spacing (24px = p-6) */}
+      <div className="pb-6">
         <DemoNavigation
           onNext={onNext}
           showBack={false}
