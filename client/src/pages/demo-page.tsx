@@ -440,17 +440,17 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
       <div className="flex-1 space-y-8">
         {/* Success Header */}
         <div className="text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
         
-        <h1 className="text-3xl font-bold mb-3">
-          Demo Complete!
-        </h1>
-        <p className="text-base text-muted-foreground">
-          You've seen how the platform works for your selected persona.
-        </p>
-      </div>
+          <h1 className="text-3xl font-bold mb-3">
+            Demo Complete!
+          </h1>
+          <p className="text-base text-muted-foreground">
+            You've seen how the platform works for your selected persona.
+          </p>
+        </div>
 
       {/* Results Summary */}
       <Card className="p-6 border-green-200 bg-green-50/30">
@@ -481,6 +481,7 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
         onBack={onBack}
         showNext={false}
       />
+      </div>
       
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
