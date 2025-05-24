@@ -25,6 +25,114 @@ interface DemoStepVisualProps {
   className?: string;
 }
 
+/**
+ * Asset configuration for each demo step
+ * Contains both static image and animated GIF paths
+ */
+interface StepAssets {
+  staticImage: string;
+  animatedGif: string;
+}
+
+/**
+ * Complete step configuration including metadata and assets
+ */
+interface StepConfig {
+  id: number;
+  title: string;
+  description: string;
+  assets: StepAssets;
+}
+
+// ========================================
+// CONSTANTS & CONFIGURATION
+// ========================================
+
+/**
+ * Demo step configuration with asset paths
+ * 
+ * Asset Path Convention:
+ * - Static images: /demo-assets/step-{number}-static.{ext}
+ * - Animated GIFs: /demo-assets/step-{number}-animated.gif
+ * 
+ * This provides a predictable, scalable naming convention for
+ * easy asset management and future step additions.
+ */
+const DEMO_STEPS: StepConfig[] = [
+  {
+    id: 1,
+    title: "Platform Overview",
+    description: "Introduction to the Invela Trust Network ecosystem",
+    assets: {
+      staticImage: "/demo-assets/step-1-static.png",
+      animatedGif: "/demo-assets/step-1-animated.gif"
+    }
+  },
+  {
+    id: 2,
+    title: "Interactive Experience", 
+    description: "Hands-on demonstration of key platform features",
+    assets: {
+      staticImage: "/demo-assets/step-2-static.png",
+      animatedGif: "/demo-assets/step-2-animated.gif"
+    }
+  },
+  {
+    id: 3,
+    title: "Results & Insights",
+    description: "Comprehensive view of assessment outcomes and next steps",
+    assets: {
+      staticImage: "/demo-assets/step-3-static.png",
+      animatedGif: "/demo-assets/step-3-animated.gif"
+    }
+  }
+];
+
+/**
+ * Visual configuration constants for consistent styling
+ */
+const VISUAL_CONFIG = {
+  containerSize: {
+    width: 220,
+    height: 220
+  },
+  animations: {
+    duration: 0.4,
+    glowDuration: 2,
+    staggerDelay: 0.1
+  },
+  spacing: {
+    betweenSteps: 16 // 4 * 4px (space-y-4)
+  }
+} as const;
+
+// ========================================
+// UTILITY FUNCTIONS  
+// ========================================
+
+/**
+ * Determines the appropriate asset source based on step state
+ * 
+ * @param stepConfig - Configuration for the step
+ * @param isActive - Whether this step is currently active
+ * @returns The path to the appropriate asset (static or animated)
+ */
+const getStepAssetSource = (stepConfig: StepConfig, isActive: boolean): string => {
+  return isActive ? stepConfig.assets.animatedGif : stepConfig.assets.staticImage;
+};
+
+/**
+ * Generates accessible alt text for step images
+ * 
+ * @param stepConfig - Configuration for the step  
+ * @param isActive - Whether this step is currently active
+ * @returns Descriptive alt text for screen readers
+ */
+const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
+  const state = isActive ? "Active" : "Inactive";
+  return `${state} demo step ${stepConfig.id}: ${stepConfig.title} - ${stepConfig.description}`;
+};
+
 // ========================================
 // MAIN COMPONENT
 // ========================================
@@ -32,28 +140,20 @@ interface DemoStepVisualProps {
 /**
  * DemoStepVisual Component
  * 
- * Renders three stacked 220x220 rounded images within the hero section
- * to visually indicate the current demo step. Active step shows in full
- * bluish color while others are grayscale/muted.
+ * Renders three stacked 220x220 dynamic images within the hero section
+ * to visually indicate the current demo step. Active steps display animated
+ * GIFs while inactive steps show static images. Maintains all existing
+ * animation behaviors and visual transitions.
+ * 
+ * Key Features:
+ * - Dynamic asset switching (static images ↔ animated GIFs)
+ * - Preserved Framer Motion animations and transitions
+ * - Accessibility support with descriptive alt text
+ * - Responsive image loading with proper error handling
+ * - Consistent visual hierarchy and styling
  */
 export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) {
-  const steps = [
-    {
-      id: 1,
-      title: "Overview",
-      color: "bg-blue-500"
-    },
-    {
-      id: 2,
-      title: "Interactive Demo",
-      color: "bg-blue-600"
-    },
-    {
-      id: 3,
-      title: "Results",
-      color: "bg-blue-700"
-    }
-  ];
+  console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}`);
 
   return (
     <div className={cn("h-full p-3", className)}>
@@ -61,50 +161,71 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
       <div className="h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6">
         {/* Inner container with same spacing as hero section */}
         <div className="h-full flex flex-col items-center justify-center space-y-4">
-          {steps.map((step) => {
-            const isActive = step.id === currentStep;
+          {DEMO_STEPS.map((stepConfig, index) => {
+            const isActive = stepConfig.id === currentStep;
+            const assetSource = getStepAssetSource(stepConfig, isActive);
+            const altText = getStepAltText(stepConfig, isActive);
+            
+            console.log(`[DemoStepVisual] Step ${stepConfig.id} - Active: ${isActive}, Asset: ${assetSource}`);
             
             return (
               <motion.div
-                key={step.id}
+                key={stepConfig.id}
                 className={cn(
-                  "w-[220px] h-[220px] rounded-xl border-2 flex items-center justify-center relative overflow-hidden",
+                  "w-[220px] h-[220px] rounded-xl border-2 relative overflow-hidden",
                   "transition-all duration-500 ease-in-out",
                   isActive 
                     ? "bg-white border-blue-200 shadow-xl" 
-                    : "bg-gray-300 border-gray-400 opacity-40"
+                    : "bg-gray-100 border-gray-300 opacity-40"
                 )}
                 initial={{ scale: 0.9, opacity: 0.6 }}
                 animate={{ 
                   scale: isActive ? 1 : 0.85,
                   opacity: isActive ? 1 : 0.4
                 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
+                transition={{ 
+                  duration: VISUAL_CONFIG.animations.duration, 
+                  ease: "easeInOut",
+                  delay: index * VISUAL_CONFIG.animations.staggerDelay
+                }}
               >
-                {/* Placeholder content - will be replaced with actual images */}
-                <div className="flex flex-col items-center justify-center text-center">
-                  <div className={cn(
-                    "w-16 h-16 rounded-full mb-3 flex items-center justify-center text-2xl font-bold",
-                    isActive ? "bg-blue-600 text-white" : "bg-gray-400 text-white"
-                  )}>
-                    {step.id}
-                  </div>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    isActive ? "text-blue-700" : "text-gray-500"
-                  )}>
-                    {step.title}
+                {/* Dynamic Image/GIF Content */}
+                <img
+                  src={assetSource}
+                  alt={altText}
+                  className={cn(
+                    "w-full h-full object-cover rounded-lg",
+                    "transition-all duration-300 ease-in-out"
+                  )}
+                  loading="lazy"
+                  onError={(e) => {
+                    console.warn(`[DemoStepVisual] Failed to load asset: ${assetSource}`);
+                    // Fallback to static image if GIF fails to load
+                    if (isActive && assetSource.includes('.gif')) {
+                      (e.target as HTMLImageElement).src = stepConfig.assets.staticImage;
+                    }
+                  }}
+                />
+                
+                {/* Step Title Overlay for Better Context */}
+                <div className={cn(
+                  "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent",
+                  "transition-opacity duration-300",
+                  isActive ? "opacity-100" : "opacity-60"
+                )}>
+                  <span className="text-white text-sm font-medium block text-center">
+                    {stepConfig.title}
                   </span>
                 </div>
                 
                 {/* Active step indicator glow effect */}
                 {isActive && (
                   <motion.div
-                    className="absolute inset-0 bg-blue-100 opacity-30 rounded-xl"
+                    className="absolute inset-0 bg-blue-100 opacity-20 rounded-xl pointer-events-none"
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: [0.2, 0.4, 0.2] }}
+                    animate={{ opacity: [0.1, 0.3, 0.1] }}
                     transition={{ 
-                      duration: 2, 
+                      duration: VISUAL_CONFIG.animations.glowDuration, 
                       repeat: Infinity, 
                       ease: "easeInOut" 
                     }}
