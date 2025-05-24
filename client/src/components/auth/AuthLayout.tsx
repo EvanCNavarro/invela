@@ -18,6 +18,7 @@ import { ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "./AuthHeroSection";
 import { AuthFooter } from "./AuthFooter";
 import { LoginDemoHeader } from "./LoginDemoHeader";
+import { DemoHeader } from "./DemoHeader";
 import { StepIndicator } from "./StepIndicator";
 import { motion } from "framer-motion";
 
@@ -56,19 +57,7 @@ export function AuthLayout({
           layout
           transition={{ duration: 0.35, ease: "easeInOut" }}
         >
-          {/* Demo back button */}
-          {mode === 'demo' && onBack && (
-            <motion.button
-              onClick={onBack}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200 mb-4"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back to Login</span>
-            </motion.button>
-          )}
+
         </motion.div>
       </div>
       
@@ -94,10 +83,15 @@ export function AuthLayout({
             transition={{ duration: 0.5, ease: "easeOut" }}
             layout
           >
-            {/* Demo Header - Only for login mode */}
+            {/* Headers for login and demo modes */}
             {mode === 'login' && (
               <div className="w-full">
                 <LoginDemoHeader className="rounded-t-lg" />
+              </div>
+            )}
+            {mode === 'demo' && (
+              <div className="w-full">
+                <DemoHeader className="rounded-t-lg" />
               </div>
             )}
             
