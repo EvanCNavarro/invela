@@ -172,11 +172,11 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
               <motion.div
                 key={stepConfig.id}
                 className={cn(
-                  "w-[220px] h-[220px] rounded-xl border-3 relative overflow-hidden",
+                  "w-[220px] h-[220px] rounded-xl relative overflow-hidden",
                   "transition-all duration-500 ease-in-out",
                   isActive 
-                    ? "bg-white border-blue-500 shadow-xl ring-2 ring-blue-200" 
-                    : "bg-gray-100 border-gray-400 opacity-30"
+                    ? "bg-white border-2 border-blue-400 shadow-xl" 
+                    : "bg-gray-100 opacity-60"
                 )}
                 initial={{ scale: 0.9, opacity: 0.6 }}
                 animate={{ 

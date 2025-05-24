@@ -47,7 +47,7 @@ export function AuthLayout({
   
   console.log(`[AuthLayout] Rendering with mode: ${mode}, step: ${currentStep}/${totalSteps}`);
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen flex flex-col justify-between bg-gray-100">
       {/* Header with spacing - no back button */}
       <div className="w-full flex justify-center pt-8">
         <motion.div 

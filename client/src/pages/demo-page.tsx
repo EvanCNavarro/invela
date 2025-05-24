@@ -369,9 +369,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         </h1>
         <p className="text-base text-gray-600">
           {selectedPersona ? (
-            <>Tailored for <span className="font-semibold text-gray-900">{selectedPersona.title}</span> workflows and requirements</>
+            <>Select preferences for <span className="font-semibold text-gray-900">{selectedPersona.title}</span> to personalize your demo experience.</>
           ) : (
-            "Tailor your demo experience to your needs"
+            "Select preferences to personalize your demo experience."
           )}
         </p>
       </div>
