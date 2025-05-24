@@ -189,7 +189,7 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
                   delay: index * VISUAL_CONFIG.animations.staggerDelay
                 }}
               >
-                {/* Dynamic Image/GIF Content */}
+                {/* Dynamic Image/GIF Content - Clean presentation without overlays */}
                 <img
                   src={assetSource}
                   alt={altText}
@@ -206,17 +206,6 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
                     }
                   }}
                 />
-                
-                {/* Step Title Overlay for Better Context */}
-                <div className={cn(
-                  "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent",
-                  "transition-opacity duration-300",
-                  isActive ? "opacity-100" : "opacity-60"
-                )}>
-                  <span className="text-white text-sm font-medium block text-center">
-                    {stepConfig.title}
-                  </span>
-                </div>
                 
                 {/* Active step indicator glow effect */}
                 {isActive && (
