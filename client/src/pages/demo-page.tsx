@@ -179,7 +179,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
-        className="pt-6 pb-8 space-y-2"
+        className="pt-6 pb-6 space-y-2"
       >
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
@@ -273,7 +273,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       </motion.div>
 
       {/* SECTION 3: Navigation buttons with matching bottom spacing */}
-      <div className="pt-8 pb-6">
+      <div className="pt-6">
         <DemoNavigation
           onNext={onNext}
           showBack={false}
