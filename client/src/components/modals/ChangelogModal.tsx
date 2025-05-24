@@ -72,6 +72,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'demo-flow-implementation-2025-05-24',
+    date: '2025-05-24',
+    type: 'feature',
+    title: 'Interactive Demo Flow Implementation',
+    description: 'Complete three-step demo journey with persona selection system and professional design enhancements',
+    details: [
+      'Professional persona cards: New Data Recipient, Accredited Data Recipient, Data Provider, and Consumer',
+      'Dynamic visual content that changes based on active step progression',
+      'Personalized experience with tailored content based on user persona selection',
+      'Seamless navigation between steps with consistent button styling',
+      'Review page (Step 3) with personalized summary and Sign In functionality',
+      'Enhanced visual hierarchy with clean gray backgrounds and proper styling',
+      'Professional "Back to Login" button with improved visibility'
+    ],
+    version: '1.4.0'
+  },
+  {
     id: 'component-library-v1-2025-05-24',
     date: '2025-05-24',
     type: 'feature',
