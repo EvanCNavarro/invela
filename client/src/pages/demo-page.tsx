@@ -61,12 +61,7 @@ const DemoNavigation = ({
   nextText?: string;
 }) => {
   return (
-    <motion.div
-      className="flex justify-between items-center pt-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.5, duration: 0.4 }}
-    >
+    <div className="flex justify-between items-center pt-8">
       {/* Back Button */}
       <div className="flex-1">
         {showBack && onBack && (
@@ -95,7 +90,7 @@ const DemoNavigation = ({
           </Button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -270,13 +265,7 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
   console.log('[DemoStep2] Rendering interactive demo');
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-3">
@@ -351,7 +340,7 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
         onNext={onNext}
         nextText="View Results & Next Steps"
       />
-    </motion.div>
+    </div>
   );
 };
 
@@ -526,17 +515,7 @@ export default function DemoPage() {
       totalSteps={3}
       onBack={handleBackToLogin}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {renderStepContent()}
-        </motion.div>
-      </AnimatePresence>
+      {renderStepContent()}
     </AuthLayout>
   );
 }
