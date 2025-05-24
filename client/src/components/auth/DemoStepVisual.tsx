@@ -51,12 +51,12 @@ interface StepConfig {
 /**
  * Demo step configuration with asset paths
  * 
- * Asset Path Convention:
- * - Static images: /demo-assets/step-{number}-static.{ext}
- * - Animated GIFs: /demo-assets/step-{number}-animated.gif
+ * Asset Path Convention (organized within /assets/demo/steps/):
+ * - Static images: /assets/demo/steps/step-{number}-static.{ext}
+ * - Animated GIFs: /assets/demo/steps/step-{number}-animated.gif
  * 
- * This provides a predictable, scalable naming convention for
- * easy asset management and future step additions.
+ * This provides a clean, organized structure within the existing
+ * assets directory for better maintainability and consistency.
  */
 const DEMO_STEPS: StepConfig[] = [
   {
@@ -64,8 +64,8 @@ const DEMO_STEPS: StepConfig[] = [
     title: "Platform Overview",
     description: "Introduction to the Invela Trust Network ecosystem",
     assets: {
-      staticImage: "/demo-assets/step-1-static.png",
-      animatedGif: "/demo-assets/step-1-animated.gif"
+      staticImage: "/assets/demo/steps/step-1-static.png",
+      animatedGif: "/assets/demo/steps/step-1-animated.gif"
     }
   },
   {
@@ -73,8 +73,8 @@ const DEMO_STEPS: StepConfig[] = [
     title: "Interactive Experience", 
     description: "Hands-on demonstration of key platform features",
     assets: {
-      staticImage: "/demo-assets/step-2-static.png",
-      animatedGif: "/demo-assets/step-2-animated.gif"
+      staticImage: "/assets/demo/steps/step-2-static.png",
+      animatedGif: "/assets/demo/steps/step-2-animated.gif"
     }
   },
   {
@@ -82,8 +82,8 @@ const DEMO_STEPS: StepConfig[] = [
     title: "Results & Insights",
     description: "Comprehensive view of assessment outcomes and next steps",
     assets: {
-      staticImage: "/demo-assets/step-3-static.png",
-      animatedGif: "/demo-assets/step-3-animated.gif"
+      staticImage: "/assets/demo/steps/step-3-static.png",
+      animatedGif: "/assets/demo/steps/step-3-animated.gif"
     }
   }
 ];
