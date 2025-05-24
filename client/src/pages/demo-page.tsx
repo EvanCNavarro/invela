@@ -40,6 +40,72 @@ import { cn } from "@/lib/utils";
 type AuthStep = 1 | 2 | 3 | 4 | 5;
 
 // ========================================
+// DEMO FLOW TYPES & INTERFACES
+// ========================================
+
+/**
+ * Persona type definition for demo flow state management
+ * Ensures type safety across demo steps and enables proper persona tracking
+ */
+interface DemoPersona {
+  id: string;
+  title: string;
+  description: string;
+  icon: typeof User | typeof Award | typeof Database | typeof Shield;
+  color: 'gray' | 'green' | 'purple' | 'blue';
+}
+
+/**
+ * Props interface for demo step components
+ * Standardizes prop structure across all demo steps for consistent data flow
+ */
+interface DemoStepProps {
+  onNext: () => void;
+  onBack?: () => void;
+  selectedPersona?: DemoPersona | null;
+  onPersonaSelect?: (persona: DemoPersona) => void;
+}
+
+// ========================================
+// DEMO FLOW CONSTANTS
+// ========================================
+
+/**
+ * Shared persona definitions for consistent usage across demo steps
+ * Centralized configuration enables easy maintenance and consistent behavior
+ */
+const DEMO_PERSONAS: DemoPersona[] = [
+  {
+    id: "new-data-recipient",
+    title: "New Data Recipient",
+    description: "Explore initial onboarding and data access workflows",
+    icon: User,
+    color: "gray"
+  },
+  {
+    id: "accredited-data-recipient", 
+    title: "Accredited Data Recipient",
+    description: "Experience advanced data management capabilities",
+    icon: Award,
+    color: "green"
+  },
+  {
+    id: "data-provider",
+    title: "Data Provider",
+    description: "Discover data sharing and compliance features",
+    icon: Database,
+    color: "purple"
+  },
+  {
+    id: "invela-admin",
+    title: "Invela Admin",
+    description: "Discover administrative and compliance management features",
+    icon: Shield,
+    color: "blue"
+  }
+];
+
+// ========================================
 // NAVIGATION COMPONENT
 // ========================================
 
@@ -101,42 +167,19 @@ const DemoNavigation = ({
 
 /**
  * Step 1: Platform Overview
+ * Updated to use shared state management for persona selection
  */
-const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
+const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) => {
   console.log('[DemoStep1] Rendering platform overview');
   
-  const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
-
-  const personas = [
-    {
-      id: "new-data-recipient",
-      title: "New Data Recipient",
-      description: "Explore initial onboarding and data access workflows",
-      icon: User,
-      color: "gray" // Gray icon styling
-    },
-    {
-      id: "accredited-data-recipient", 
-      title: "Accredited Data Recipient",
-      description: "Experience advanced data management capabilities",
-      icon: Award,
-      color: "green" // Green icon styling
-    },
-    {
-      id: "data-provider",
-      title: "Data Provider",
-      description: "Discover data sharing and compliance features",
-      icon: Database,
-      color: "purple" // Purple icon styling
-    },
-    {
-      id: "invela-admin",
-      title: "Invela Admin",
-      description: "Discover administrative and compliance management features",
-      icon: Shield,
-      color: "blue" // Blue icon styling
-    }
-  ];
+  /**
+   * Handle persona selection with proper state management
+   * Updates shared state that will be used in subsequent steps
+   */
+  const handlePersonaSelect = (persona: DemoPersona) => {
+    console.log('[DemoStep1] Persona selected:', persona.id);
+    onPersonaSelect?.(persona);
+  };
 
   const getColorClasses = (color: string, isSelected: boolean) => {
     console.log(`[DemoStep1] Applying color scheme: ${color}, selected: ${isSelected}`);
@@ -205,9 +248,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       {/* MIDDLE SECTION: Flex-grow content area - top aligned */}
       <div className="flex-1">
         <div className="space-y-3">
-          {personas.map((persona, index) => {
+          {DEMO_PERSONAS.map((persona, index) => {
             const Icon = persona.icon;
-            const isSelected = selectedPersona === persona.id;
+            const isSelected = selectedPersona?.id === persona.id;
             
             return (
               <div key={persona.id}>
@@ -218,7 +261,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
                     // Reduce opacity for unselected items when something is selected
                     selectedPersona && !isSelected ? "opacity-60" : "opacity-100"
                   )}
-                  onClick={() => setSelectedPersona(persona.id)}
+                  onClick={() => handlePersonaSelect(persona)}
                 >
                   <CardHeader className="p-4">
                     <div className="flex items-center gap-4">
@@ -532,7 +575,17 @@ export default function DemoPage() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState<AuthStep>(1);
   
-  console.log(`[DemoPage] Rendering step ${currentStep}/3`);
+  // ========================================
+  // DEMO FLOW STATE MANAGEMENT
+  // ========================================
+  
+  /**
+   * Shared persona selection state across demo steps
+   * Enables consistent data flow from step 1 selection to step 2 display and step 3 actions
+   */
+  const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
+  
+  console.log(`[DemoPage] Rendering step ${currentStep}/3`, { selectedPersona: selectedPersona?.id });
 
   // ========================================
   // NAVIGATION HANDLERS
@@ -564,13 +617,36 @@ export default function DemoPage() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <DemoStep1 onNext={handleNextStep} />;
+        return (
+          <DemoStep1 
+            onNext={handleNextStep} 
+            selectedPersona={selectedPersona}
+            onPersonaSelect={setSelectedPersona}
+          />
+        );
       case 2:
-        return <DemoStep2 onNext={handleNextStep} onBack={handlePreviousStep} />;
+        return (
+          <DemoStep2 
+            onNext={handleNextStep} 
+            onBack={handlePreviousStep}
+            selectedPersona={selectedPersona}
+          />
+        );
       case 3:
-        return <DemoStep3 onBack={handlePreviousStep} />;
+        return (
+          <DemoStep3 
+            onBack={handlePreviousStep}
+            selectedPersona={selectedPersona}
+          />
+        );
       default:
-        return <DemoStep1 onNext={handleNextStep} />;
+        return (
+          <DemoStep1 
+            onNext={handleNextStep} 
+            selectedPersona={selectedPersona}
+            onPersonaSelect={setSelectedPersona}
+          />
+        );
     }
   };
 
