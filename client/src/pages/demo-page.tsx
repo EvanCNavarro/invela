@@ -440,14 +440,9 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
       <div className="flex-1 space-y-8">
         {/* Success Header */}
         <div className="text-center">
-          <motion.div
-          className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
-        >
-          <CheckCircle className="w-12 h-12 text-green-600" />
-        </motion.div>
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-12 h-12 text-green-600" />
+          </div>
         
         <h1 className="text-3xl font-bold mb-3">
           Demo Complete!
@@ -486,33 +481,6 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
         onBack={onBack}
         showNext={false}
       />
-      
-      {/* Action Buttons */}
-      <motion.div
-        className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-      >
-        <Button 
-          onClick={handleGetStarted}
-          size="lg"
-          className="px-8 py-3 text-base font-semibold"
-        >
-          Get Started Now
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-        
-        <Button 
-          onClick={handleBackToLogin}
-          variant="outline"
-          size="lg"
-          className="px-8 py-3 text-base font-semibold"
-        >
-          Back to Login
-        </Button>
-        </div>
-      </div>
       
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
