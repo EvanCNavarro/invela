@@ -46,7 +46,7 @@ import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { setupWebSocketServer } from "./websocket-setup";
-import { setupStorybookProxy } from "./storybook-proxy.js";
+// Removed Storybook proxy - using custom component library
 
 // ========================================
 // DIRECTORY INITIALIZATION
@@ -152,7 +152,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 setupAuth(app);
 
 // Set up Storybook subdomain proxy
-setupStorybookProxy(app);
+// Removed Storybook proxy setup - using custom component library
 
 /**
  * Enterprise-Grade Smart API Request Logging Middleware

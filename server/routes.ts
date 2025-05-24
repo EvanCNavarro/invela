@@ -4088,10 +4088,7 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
-  // Serve Storybook static files
-  const storybookPath = path.resolve(process.cwd(), 'storybook-static');
-  app.use('/storybook-static', express.static(storybookPath));
-  console.log('[Routes] Storybook static files served at /storybook-static');
+  // Removed Storybook static files - using custom component library
 
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);

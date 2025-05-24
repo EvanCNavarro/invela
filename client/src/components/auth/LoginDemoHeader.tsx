@@ -40,7 +40,7 @@ import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, Square
 
 // Modal components
 import ChangelogModal from "@/components/modals/ChangelogModal";
-import StorybookModal from "@/components/modals/StorybookModal";
+// Removed Storybook modal import
 
 // Development utilities
 import getLogger from '@/utils/logger';
