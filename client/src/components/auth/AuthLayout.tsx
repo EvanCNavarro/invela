@@ -63,7 +63,7 @@ export function AuthLayout({
       </div>
       
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 min-h-[calc(100vh-200px)]">
         {mode === 'register-validated' ? (
           // Account creation form (step 2 of registration) - narrow width
           <motion.div 
@@ -78,7 +78,7 @@ export function AuthLayout({
         ) : (
           // Login, register, or demo - wider width with two columns
           <motion.div 
-            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[700px] h-full flex flex-col w-full max-w-[980px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[900px] h-full flex flex-col w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
