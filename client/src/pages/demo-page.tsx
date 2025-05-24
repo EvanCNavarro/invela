@@ -174,12 +174,12 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       transition={{ duration: 0.5 }}
       className="h-full flex flex-col"
     >
-      {/* SECTION 1: Header with double hero section spacing (48px = p-12) */}
+      {/* SECTION 1: Header with no top/bottom spacing for edge-to-edge layout */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
-        className="pt-12 pb-12 space-y-2"
+        className="space-y-2"
       >
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
@@ -275,8 +275,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       {/* FLEXIBLE SPACER: Expands to push buttons to bottom */}
       <div className="flex-1"></div>
 
-      {/* SECTION 3: Button section with double hero spacing (48px = p-12) */}
-      <div className="pb-12">
+      {/* SECTION 3: Button section with no bottom spacing for edge-to-edge layout */}
+      <div>
         <DemoNavigation
           onNext={onNext}
           showBack={false}
