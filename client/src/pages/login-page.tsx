@@ -144,7 +144,7 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout isLogin={true} isRegistrationValidated={false}>
+    <AuthLayout mode="login">
       <motion.div 
         className="mb-12"
         initial={{ opacity: 0, y: -5 }}
