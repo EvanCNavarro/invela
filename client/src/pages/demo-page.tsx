@@ -276,19 +276,42 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
   console.log('[DemoStep2] Rendering interactive demo');
   
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-3">
+    <div className="h-[760px] flex flex-col">
+      {/* TOP SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
+      
+      {/* HEADER SECTION */}
+      <div className="flex-shrink-0 space-y-2">
+        {/* Icon + Chips */}
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600">
+              <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
+            Demo Login Setup
+          </div>
+          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
+            Step 2 of 3
+          </div>
+        </div>
+        
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900">
           Interactive Platform Demo
         </h1>
         <p className="text-lg text-muted-foreground">
           Explore key features with real-time simulated data
         </p>
       </div>
-
-      {/* Interactive Elements */}
-      <div className="space-y-6">
+      
+      {/* MIDDLE SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
+      
+      {/* MAIN BODY SECTION */}
+      <div className="flex-1 space-y-6">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold">Sample Company Assessment</h3>
@@ -345,12 +368,17 @@ const DemoStep2 = ({ onNext, onBack }: { onNext: () => void; onBack: () => void 
         </Card>
       </div>
 
-      {/* Navigation */}
-      <DemoNavigation
-        onBack={onBack}
-        onNext={onNext}
-        nextText="View Results & Next Steps"
-      />
+      {/* BUTTON SECTION */}
+      <div className="flex-shrink-0">
+        <DemoNavigation
+          onBack={onBack}
+          onNext={onNext}
+          nextText="View Results & Next Steps"
+        />
+      </div>
+      
+      {/* BOTTOM SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
     </div>
   );
 };
@@ -374,16 +402,45 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
   };
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
-      {/* Success Header */}
-      <div className="text-center">
-        <motion.div
+    <div className="h-[760px] flex flex-col">
+      {/* TOP SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
+      
+      {/* HEADER SECTION */}
+      <div className="flex-shrink-0 space-y-2">
+        {/* Icon + Chips */}
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600">
+              <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm font-medium">
+            Demo Login Setup
+          </div>
+          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
+            Step 3 of 3
+          </div>
+        </div>
+        
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900">
+          Demo Complete - Get Started
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Ready to explore the full platform capabilities
+        </p>
+      </div>
+      
+      {/* MIDDLE SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
+      
+      {/* MAIN BODY SECTION */}
+      <div className="flex-1 space-y-8">
+        {/* Success Header */}
+        <div className="text-center">
+          <motion.div
           className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -454,8 +511,35 @@ const DemoStep3 = ({ onBack }: { onBack: () => void }) => {
         >
           Back to Login
         </Button>
-      </motion.div>
-    </motion.div>
+        </div>
+      </div>
+      
+      {/* BUTTON SECTION */}
+      <div className="flex-shrink-0">
+        <div className="flex flex-col gap-3">
+          <Button 
+            onClick={handleGetStarted}
+            size="lg"
+            className="px-8 py-3 text-base font-semibold"
+          >
+            Get Started Now
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+          
+          <Button 
+            onClick={handleBackToLogin}
+            variant="outline"
+            size="lg"
+            className="px-8 py-3 text-base font-semibold"
+          >
+            Back to Login
+          </Button>
+        </div>
+      </div>
+      
+      {/* BOTTOM SPACER */}
+      <div className="flex-shrink-0 py-6"></div>
+    </div>
   );
 };
 
