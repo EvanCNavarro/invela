@@ -92,7 +92,6 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
-  const [isStorybookModalOpen, setIsStorybookModalOpen] = useState(false);
 
   // ========================================
   // EVENT HANDLERS
@@ -236,11 +235,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
         onClose={() => setIsChangelogOpen(false)}
       />
 
-      {/* Storybook Modal */}
-      <StorybookModal 
-        isOpen={isStorybookModalOpen}
-        onClose={() => setIsStorybookModalOpen(false)}
-      />
+      {/* Removed Storybook Modal - using direct component library access */}
 
     </div>
   );
