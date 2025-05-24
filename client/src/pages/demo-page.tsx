@@ -184,8 +184,11 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         >
           {/* Icon + Chip */}
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
+            <div className="w-6 h-6 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600">
+                <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+                <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+              </svg>
             </div>
             <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
               Demo Account Setup
