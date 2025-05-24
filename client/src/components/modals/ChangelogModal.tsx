@@ -72,20 +72,6 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
-    id: 'changelog-modal-2025-05-23',
-    date: '2025-05-23',
-    type: 'feature',
-    title: 'Changelog Modal Implementation',
-    description: 'Added comprehensive changelog modal with tracking system for development updates',
-    details: [
-      'Beautiful modal interface with smooth animations',
-      'Badge-based categorization system',
-      'Chronological entry display',
-      'Responsive design with keyboard navigation'
-    ],
-    version: '1.3.0'
-  },
-  {
     id: 'component-library-v1-2025-05-24',
     date: '2025-05-24',
     type: 'feature',
@@ -98,6 +84,20 @@ const changelogEntries: ChangelogEntry[] = [
       'Real component examples with risk assessment data',
       'Accessible via Component Library button on login page',
       'Zero maintenance overhead - always in sync with actual components'
+    ],
+    version: '1.3.0'
+  },
+  {
+    id: 'changelog-modal-2025-05-23',
+    date: '2025-05-23',
+    type: 'feature',
+    title: 'Changelog Modal Implementation',
+    description: 'Added comprehensive changelog modal with tracking system for development updates',
+    details: [
+      'Beautiful modal interface with smooth animations',
+      'Badge-based categorization system',
+      'Chronological entry display',
+      'Responsive design with keyboard navigation'
     ],
     version: '1.2.0'
   },
