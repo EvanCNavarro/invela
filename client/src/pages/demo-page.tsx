@@ -113,67 +113,51 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       title: "New Data Recipient",
       description: "Explore initial onboarding and data access workflows",
       icon: User,
-      color: "grayscale" // Simple, low-level user - grayscale styling
+      color: "gray" // Gray icon styling
     },
     {
       id: "accredited-data-recipient", 
       title: "Accredited Data Recipient",
       description: "Experience advanced data management capabilities",
       icon: Award,
-      color: "green" // Accredited user - green styling
+      color: "green" // Green icon styling
+    },
+    {
+      id: "data-provider",
+      title: "Data Provider",
+      description: "Discover data sharing and compliance features",
+      icon: Database,
+      color: "purple" // Purple icon styling
     },
     {
       id: "invela-admin",
       title: "Invela Admin",
       description: "Discover administrative and compliance management features",
       icon: Shield,
-      color: "blue" // Admin user - blue shield matching admin interface
+      color: "blue" // Blue icon styling
     }
   ];
 
   const getColorClasses = (color: string, isSelected: boolean) => {
     console.log(`[DemoStep1] Applying color scheme: ${color}, selected: ${isSelected}`);
     
-    const colorMap = {
-      // Grayscale for simple, low-level users
-      grayscale: isSelected 
-        ? "border-gray-500 bg-gray-50 ring-2 ring-gray-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-gray-400",
-      
-      // Green for accredited users  
-      green: isSelected 
-        ? "border-green-500 bg-green-50 ring-2 ring-green-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-green-300",
-        
-      // Blue for admin users (matching admin interface)
-      blue: isSelected 
-        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
-        
-      // Legacy fintech support for backward compatibility
-      fintech: isSelected 
-        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
-      bank: isSelected 
-        ? "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-purple-300",
-      umbrella: isSelected 
-        ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600 ring-offset-2" 
-        : "border-gray-200 bg-gray-50/30 hover:border-blue-400"
-    };
-    return colorMap[color as keyof typeof colorMap];
+    // All personas use consistent blue selection color regardless of icon color
+    return isSelected 
+      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
+      : "border-gray-200 bg-gray-50/30 hover:border-blue-300";
   };
 
   const getIconColor = (color: string) => {
     console.log(`[DemoStep1] Setting icon color for: ${color}`);
     
     const colorMap = {
-      // New persona color scheme
-      grayscale: "text-gray-500", // Simple, low-level user - muted gray
-      green: "text-green-600",    // Accredited user - vibrant green
-      blue: "text-blue-600",      // Admin user - blue matching admin interface
+      gray: "text-gray-500",      // New Data Recipient - gray icon
+      green: "text-green-600",    // Accredited Data Recipient - green icon
+      purple: "text-purple-600",  // Data Provider - purple icon
+      blue: "text-blue-600",      // Invela Admin - blue icon
       
       // Legacy support for backward compatibility
+      grayscale: "text-gray-500",
       fintech: "text-blue-600",
       bank: "text-purple-600", 
       umbrella: "text-blue-700"
@@ -230,7 +214,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
                 <Card 
                   className={cn(
                     "cursor-pointer transition-all duration-200 hover:shadow-md",
-                    getColorClasses(persona.color, isSelected)
+                    getColorClasses(persona.color, isSelected),
+                    // Reduce opacity for unselected items when something is selected
+                    selectedPersona && !isSelected ? "opacity-60" : "opacity-100"
                   )}
                   onClick={() => setSelectedPersona(persona.id)}
                 >
@@ -279,7 +265,7 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
           onNext={onNext}
           showBack={false}
           nextDisabled={!selectedPersona}
-          nextText="Continue Demo"
+          nextText="Next Step"
         />
       </div>
       
