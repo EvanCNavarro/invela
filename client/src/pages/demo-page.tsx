@@ -172,10 +172,10 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
-      className="space-y-8"
+      className="flex flex-col h-full"
     >
-      {/* Compact Header */}
-      <div>
+      {/* Compact Header - Moved closer to top */}
+      <div className="mb-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,9 +207,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </motion.div>
       </div>
 
-      {/* User Type Selection - Single Column */}
+      {/* User Type Selection - Single Column with more breathing room */}
       <motion.div
-        className="space-y-3"
+        className="flex-1 space-y-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
