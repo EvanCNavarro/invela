@@ -117,55 +117,51 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       title: "New Data Recipient",
       description: "Explore initial onboarding and data access workflows",
       icon: UserPlus,
-      color: "blue"
+      color: "fintech" // Fintech user type
     },
     {
       id: "accredited-data-recipient", 
       title: "Accredited Data Recipient",
       description: "Experience advanced data management capabilities",
       icon: Award,
-      color: "green"
+      color: "fintech" // Fintech user type
     },
     {
       id: "data-provider",
       title: "Data Provider",
       description: "Discover data sharing and compliance features",
       icon: Database,
-      color: "purple"
+      color: "bank" // Bank admin type
     },
     {
       id: "invela-admin",
       title: "Invela Admin",
       description: "Access administrative controls and system management",
       icon: Settings,
-      color: "orange"
+      color: "umbrella" // Umbrella admin type
     }
   ];
 
   const getColorClasses = (color: string, isSelected: boolean) => {
     const colorMap = {
-      blue: isSelected 
+      fintech: isSelected 
         ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
-        : "border-blue-200 bg-blue-50/30 hover:border-blue-300",
-      green: isSelected 
-        ? "border-green-500 bg-green-50 ring-2 ring-green-500 ring-offset-2" 
-        : "border-green-200 bg-green-50/30 hover:border-green-300",
-      purple: isSelected 
+        : "border-gray-200 bg-gray-50/30 hover:border-blue-300",
+      bank: isSelected 
         ? "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2" 
-        : "border-purple-200 bg-purple-50/30 hover:border-purple-300",
-      orange: isSelected 
-        ? "border-orange-500 bg-orange-50 ring-2 ring-orange-500 ring-offset-2" 
-        : "border-orange-200 bg-orange-50/30 hover:border-orange-300"
+        : "border-gray-200 bg-gray-50/30 hover:border-purple-300",
+      umbrella: isSelected 
+        ? "border-blue-600 bg-blue-50 ring-2 ring-blue-600 ring-offset-2" 
+        : "border-gray-200 bg-gray-50/30 hover:border-blue-400"
     };
     return colorMap[color as keyof typeof colorMap];
   };
 
   const getIconColor = (color: string) => {
     const colorMap = {
-      blue: "text-blue-600",
-      green: "text-green-600", 
-      purple: "text-purple-600",
-      orange: "text-orange-600"
+      fintech: "text-blue-600",
+      bank: "text-purple-600", 
+      umbrella: "text-blue-700"
     };
     return colorMap[color as keyof typeof colorMap];
   };
@@ -178,30 +174,39 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      {/* Header */}
+      {/* Compact Header */}
       <div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.4 }}
+          className="space-y-3"
         >
-          <img
-            src="/invela-logo.svg"
-            alt="Invela"
-            className="h-14 w-14 mb-6"
-          />
-          <h1 className="text-3xl font-bold mb-3">
-            Choose Your Demo Experience
+          {/* Icon + Chip */}
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
+            </div>
+            <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              Demo Account Setup
+            </div>
+          </div>
+          
+          {/* Compact Title */}
+          <h1 className="text-2xl font-bold text-gray-900">
+            Choose Your User Type
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Select the persona that best matches your role to experience a tailored demonstration of Invela Trust Network.
+          
+          {/* Smaller Subtext */}
+          <p className="text-base text-gray-600">
+            Select the user type that matches your role to experience a tailored demonstration.
           </p>
         </motion.div>
       </div>
 
-      {/* Persona Selection */}
+      {/* User Type Selection - Single Column */}
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="space-y-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
@@ -219,36 +224,45 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
             >
               <Card 
                 className={cn(
-                  "cursor-pointer transition-all duration-300 transform hover:scale-105",
+                  "cursor-pointer transition-all duration-200 hover:shadow-md",
                   getColorClasses(persona.color, isSelected)
                 )}
                 onClick={() => setSelectedPersona(persona.id)}
               >
-                <CardHeader className="p-6">
-                  <div className="flex items-start gap-4">
+                <CardHeader className="p-4">
+                  <div className="flex items-center gap-4">
+                    {/* User Type Icon */}
                     <div className={cn(
-                      "p-3 rounded-lg",
-                      isSelected ? "bg-white shadow-sm" : "bg-white/70"
+                      "w-10 h-10 rounded-lg flex items-center justify-center",
+                      isSelected ? "bg-white shadow-sm" : "bg-white/80"
                     )}>
-                      <Icon className={cn("w-8 h-8", getIconColor(persona.color))} />
+                      <Icon className={cn("w-5 h-5", getIconColor(persona.color))} />
                     </div>
+                    
+                    {/* User Info */}
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
+                      <CardTitle className="text-base font-semibold text-gray-900 mb-1">
                         {persona.title}
                       </CardTitle>
-                      <CardDescription className="text-gray-600 text-sm leading-relaxed">
+                      <CardDescription className="text-gray-600 text-sm">
                         {persona.description}
                       </CardDescription>
                     </div>
-                    {isSelected && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="text-blue-600"
-                      >
-                        <CheckCircle className="w-6 h-6" />
-                      </motion.div>
-                    )}
+                    
+                    {/* Selection Indicator */}
+                    <div className="flex items-center">
+                      {isSelected ? (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="text-blue-600"
+                        >
+                          <CheckCircle className="w-5 h-5" />
+                        </motion.div>
+                      ) : (
+                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
