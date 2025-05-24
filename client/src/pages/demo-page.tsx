@@ -101,7 +101,7 @@ const DemoNavigation = ({
 /**
  * Step 1: Platform Overview
  */
-const DemoStep1 = ({ onNext, currentStep }: { onNext: () => void; currentStep: number }) => {
+const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   console.log('[DemoStep1] Rendering platform overview');
   
   const [selectedPersona, setSelectedPersona] = useState<string | null>(null);
@@ -180,7 +180,7 @@ const DemoStep1 = ({ onNext, currentStep }: { onNext: () => void; currentStep: n
             Demo Login Setup
           </div>
           <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium">
-            Step {currentStep} of 3
+            Step 1 of 3
           </div>
         </div>
         
