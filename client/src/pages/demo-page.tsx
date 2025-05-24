@@ -162,9 +162,9 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* TOP SECTION: Fixed height header */}
-      <div className="flex-shrink-0 space-y-2">
+    <div className="h-full flex flex-col min-h-[760px]">
+      {/* TOP SECTION: Fixed height header - about 120px */}
+      <div className="flex-shrink-0 space-y-2 py-4">
         {/* Icon + Chip */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
@@ -189,8 +189,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </p>
       </div>
 
-      {/* MIDDLE SECTION: Flex-grow content area that fills remaining space */}
-      <div className="flex-1 flex flex-col justify-center py-6">
+      {/* MIDDLE SECTION: Flex-grow content area - fills remaining space */}
+      <div className="flex-1 flex flex-col justify-center py-4">
         <div className="space-y-3">
           {personas.map((persona, index) => {
             const Icon = persona.icon;
@@ -244,8 +244,8 @@ const DemoStep1 = ({ onNext }: { onNext: () => void }) => {
         </div>
       </div>
 
-      {/* BOTTOM SECTION: Fixed height button area at the very bottom */}
-      <div className="flex-shrink-0">
+      {/* BOTTOM SECTION: Fixed height button area - about 80px */}
+      <div className="flex-shrink-0 py-4">
         <DemoNavigation
           onNext={onNext}
           showBack={false}
