@@ -58,6 +58,8 @@ interface DemoPersona {
   description: string;
   icon: typeof User | typeof Award | typeof Database | typeof Shield;
   color: 'gray' | 'green' | 'purple' | 'blue';
+  bgColor: string;
+  iconColor: string;
 }
 
 /**
@@ -86,28 +88,36 @@ const DEMO_PERSONAS: DemoPersona[] = [
     title: "New Data Recipient",
     description: "Explore initial onboarding and data access workflows",
     icon: User,
-    color: "gray"
+    color: "gray",
+    bgColor: "bg-gray-100",
+    iconColor: "text-gray-500"
   },
   {
     id: "accredited-data-recipient", 
     title: "Accredited Data Recipient",
     description: "Experience advanced data management capabilities",
     icon: Award,
-    color: "green"
+    color: "green",
+    bgColor: "bg-green-100",
+    iconColor: "text-green-600"
   },
   {
     id: "data-provider",
     title: "Data Provider",
     description: "Discover data sharing and compliance features",
     icon: Database,
-    color: "purple"
+    color: "purple",
+    bgColor: "bg-purple-100",
+    iconColor: "text-purple-600"
   },
   {
     id: "invela-admin",
     title: "Invela Admin",
     description: "Discover administrative and compliance management features",
     icon: Shield,
-    color: "blue"
+    color: "blue",
+    bgColor: "bg-blue-100",
+    iconColor: "text-blue-600"
   }
 ];
 
