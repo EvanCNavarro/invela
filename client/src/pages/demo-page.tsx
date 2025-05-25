@@ -627,15 +627,15 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
                 <div className="col-span-8 flex items-center">
-                  <div className="relative w-full">
+                  <div className="relative flex-1">
                     <input
                       type="text"
                       value={formData.persona}
                       disabled
-                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed h-[38px]"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600 cursor-not-allowed h-[32px]"
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Lock className="h-3 w-3 text-gray-400" />
+                      <Lock className="h-3 w-3 text-gray-500" />
                     </div>
                   </div>
                 </div>
@@ -646,13 +646,13 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
-                <div className="col-span-8 flex items-center space-x-2">
-                  {/* Integrated dropdown + input */}
+                <div className="col-span-8 flex items-center space-x-1">
+                  {/* Separate dropdown button */}
                   <div className="relative">
                     <select
                       value={formData.companyNameControl}
                       onChange={(e) => handleControlTypeChange('companyNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-7 h-[38px] shadow-sm"
+                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[32px] shadow-sm"
                     >
                       <option value="random">Random</option>
                       <option value="custom">Custom</option>
@@ -663,30 +663,30 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </svg>
                     </div>
                   </div>
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => handleFieldChange('companyName', e.target.value)}
-                      disabled={formData.companyNameControl === 'random'}
-                      placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
-                      className={cn(
-                        "w-full px-3 py-2 text-sm border rounded-r-md transition-all h-[38px]",
-                        formData.companyNameControl === 'random' 
-                          ? "border-gray-300 border-l-0 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
-                          : "border-gray-300 border-l-0 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      )}
-                    />
-                    {formData.companyNameControl === 'random' && (
-                      <button
-                        type="button"
-                        onClick={() => generateRandomValues(['companyName'])}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Shuffle className="h-3 w-3" />
-                      </button>
+                  {/* Input field */}
+                  <input
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => handleFieldChange('companyName', e.target.value)}
+                    disabled={formData.companyNameControl === 'random'}
+                    placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
+                    className={cn(
+                      "flex-1 px-3 py-2 text-sm border rounded transition-all h-[32px]",
+                      formData.companyNameControl === 'random' 
+                        ? "border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed" 
+                        : "border-blue-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     )}
-                  </div>
+                  />
+                  {/* Separate randomize button */}
+                  {formData.companyNameControl === 'random' && (
+                    <button
+                      type="button"
+                      onClick={() => generateRandomValues(['companyName'])}
+                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <Shuffle className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
               
@@ -695,13 +695,13 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
-                <div className="col-span-8 flex items-center space-x-2">
-                  {/* Integrated dropdown + input */}
+                <div className="col-span-8 flex items-center space-x-1">
+                  {/* Separate dropdown button */}
                   <div className="relative">
                     <select
                       value={formData.userFullNameControl}
                       onChange={(e) => handleControlTypeChange('userFullNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-7 h-[38px] shadow-sm"
+                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[32px] shadow-sm"
                     >
                       <option value="random">Random</option>
                       <option value="custom">Custom</option>
@@ -712,30 +712,30 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </svg>
                     </div>
                   </div>
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={formData.userFullName}
-                      onChange={(e) => handleFieldChange('userFullName', e.target.value)}
-                      disabled={formData.userFullNameControl === 'random'}
-                      placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
-                      className={cn(
-                        "w-full px-3 py-2 text-sm border rounded-r-md transition-all h-[38px]",
-                        formData.userFullNameControl === 'random' 
-                          ? "border-gray-300 border-l-0 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
-                          : "border-gray-300 border-l-0 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      )}
-                    />
-                    {formData.userFullNameControl === 'random' && (
-                      <button
-                        type="button"
-                        onClick={() => generateRandomValues(['userFullName'])}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Shuffle className="h-3 w-3" />
-                      </button>
+                  {/* Input field */}
+                  <input
+                    type="text"
+                    value={formData.userFullName}
+                    onChange={(e) => handleFieldChange('userFullName', e.target.value)}
+                    disabled={formData.userFullNameControl === 'random'}
+                    placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
+                    className={cn(
+                      "flex-1 px-3 py-2 text-sm border rounded transition-all h-[32px]",
+                      formData.userFullNameControl === 'random' 
+                        ? "border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed" 
+                        : "border-blue-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                     )}
-                  </div>
+                  />
+                  {/* Separate randomize button */}
+                  {formData.userFullNameControl === 'random' && (
+                    <button
+                      type="button"
+                      onClick={() => generateRandomValues(['userFullName'])}
+                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <Shuffle className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               </div>
               
@@ -745,15 +745,15 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
                 <div className="col-span-8 flex items-center">
-                  <div className="relative w-full">
+                  <div className="relative flex-1">
                     <input
                       type="email"
                       value={formData.userEmail}
                       disabled
-                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed h-[38px]"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-gray-100 text-gray-600 cursor-not-allowed h-[32px]"
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Lock className="h-3 w-3 text-gray-400" />
+                      <Lock className="h-3 w-3 text-gray-500" />
                     </div>
                   </div>
                 </div>
