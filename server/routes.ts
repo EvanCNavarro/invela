@@ -189,7 +189,7 @@ const routeRegistrationTracker = {
   }
 };
 
-export function registerRoutes(app: Express): Express {
+export async function registerRoutes(app: Express): Promise<Express> {
   // Track core routes
   app.use(companySearchRouter);
   routeRegistrationTracker.register('CompanySearch');
@@ -4093,12 +4093,15 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Removed Storybook static files - using custom component library
 
-  // Register demo API routes
-  import('./demo-api').then(({ default: demoApiRoutes }) => {
-    app.use('/api', demoApiRoutes);
+  // Register demo API routes synchronously
+  try {
+    const demoApiModule = await import('./demo-api');
+    app.use('/api', demoApiModule.default);
     routeRegistrationTracker.register('DemoAPI');
     console.log('[Routes] Demo API routes registered successfully');
-  });
+  } catch (error) {
+    console.error('[Routes] Failed to register demo API routes:', error);
+  }
 
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
