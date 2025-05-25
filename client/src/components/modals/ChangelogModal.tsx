@@ -72,6 +72,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'enhanced-demo-generation-2025-05-25',
+    date: '2025-05-25',
+    type: 'enhancement',
+    title: 'Enhanced Enterprise Demo Generation System',
+    description: 'Intelligent risk assessment and company data generation for realistic demo experiences',
+    details: [
+      'Smart risk cluster distribution that correlates with company risk profiles',
+      'Legal structure randomization with realistic business entity types',
+      'Risk categories that mathematically sum to the company\'s overall risk score',
+      'Premium business address generation for enterprise-grade companies',
+      'Enhanced company size mapping with realistic revenue and employee ranges',
+      'Improved API route priority for reliable JSON responses',
+      'Comprehensive error handling and database integration'
+    ],
+    version: '1.5.0'
+  },
+  {
     id: 'demo-flow-implementation-2025-05-24',
     date: '2025-05-24',
     type: 'feature',

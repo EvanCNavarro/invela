@@ -6,21 +6,17 @@ This document tracks major development updates and feature releases for the ente
 
 ### Version 1.5.0 - 2025-05-25
 
-#### 🚀 Features
+#### 🔧 Enhancements
 - **Enhanced Enterprise Demo Generation System**
   - Intelligent risk cluster distribution that correlates with company risk profiles
   - Legal structure randomization with realistic business entity types (LLC, Corporation, etc.)
   - Risk categories that mathematically sum to the company's overall risk score
   - Premium business address generation for enterprise-grade companies
-  - Comprehensive database integration with proper error handling and logging
-
-#### 🔧 Enhancements
-- **Demo Company Creation Improvements**
   - Enhanced company size mapping with realistic revenue and employee ranges
   - Intelligent risk assessment data generation for authentic risk profiles
   - Improved API route priority to ensure proper JSON responses
   - Robust error handling throughout the company and user creation process
-  - End-to-end verification of enterprise company generation workflow
+  - Comprehensive database integration with proper error handling and logging
 
 ### Version 1.4.0 - 2025-05-24
 
