@@ -1432,12 +1432,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         <h1 className="text-2xl font-bold text-gray-900">
           Review Demo Configuration
         </h1>
-        <p className="text-base text-gray-600">
-          {selectedPersona ? (
-            <>Review your settings and sign in to experience the platform as <span className="font-semibold text-gray-900">{selectedPersona.title}</span>.</>
-          ) : (
-            "Review your settings and sign in to explore the platform."
-          )}
+        <p className="text-sm text-gray-600">
+          Verify your settings below, then sign in to launch your personalized demo experience.
         </p>
       </div>
       
@@ -1448,46 +1444,46 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         <div className="flex-1 min-h-0">
           {selectedPersona && formData ? (
             <div className="bg-white rounded-lg border border-gray-200 h-full overflow-auto">
-              <div className="p-4 space-y-4">
+              <div className="p-3 space-y-3">
                 {/* Persona Summary */}
-                <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <selectedPersona.icon className="w-4 h-4 text-blue-600" />
+                <div className="flex items-center space-x-2 pb-3 border-b border-gray-200">
+                  <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                    <selectedPersona.icon className="w-3 h-3 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900">{selectedPersona.title}</h3>
-                    <p className="text-xs text-gray-600">{selectedPersona.description}</p>
+                    <h3 className="text-sm font-semibold text-gray-900">{selectedPersona.title}</h3>
+                    <p className="text-xs text-gray-500">{selectedPersona.description}</p>
                   </div>
                 </div>
 
                 {/* Configuration Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Company Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Building2 className="w-4 h-4 text-gray-600" />
-                      <h4 className="text-sm font-medium text-gray-900">Company</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-1 mb-2">
+                      <Building2 className="w-3 h-3 text-gray-500" />
+                      <h4 className="text-xs font-medium text-gray-700 uppercase tracking-wide">Company</h4>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Organization</div>
-                      <div className="text-sm font-semibold text-gray-900">{formData.companyName}</div>
+                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Organization</div>
+                      <div className="text-sm font-medium text-gray-900">{formData.companyName}</div>
                     </div>
                     
                     {/* Company Size for Accredited Data Recipients */}
                     {selectedPersona.id === 'accredited-data-recipient' && (
                       <>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <div className="text-xs text-gray-500 font-medium mb-1">Size</div>
-                          <div className="text-sm font-semibold text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</div>
+                        <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                          <div className="text-xs text-gray-500 mb-1">Size</div>
+                          <div className="text-sm font-medium text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</div>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <div className="text-xs text-gray-500 font-medium mb-1">Risk Profile</div>
+                        <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                          <div className="text-xs text-gray-500 mb-1">Risk Profile</div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-semibold text-gray-900">{formData.riskProfile}/100</span>
-                            <div className="flex-1 h-2 bg-gray-200 rounded">
+                            <span className="text-sm font-medium text-gray-900">{formData.riskProfile}/100</span>
+                            <div className="flex-1 h-1.5 bg-gray-200 rounded">
                               <div 
-                                className="h-2 bg-blue-500 rounded transition-all duration-500" 
+                                className="h-1.5 bg-blue-500 rounded transition-all duration-500" 
                                 style={{ width: `${formData.riskProfile}%` }}
                               ></div>
                             </div>
@@ -1498,9 +1494,9 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     
                     {/* Demo Company for New Data Recipients */}
                     {selectedPersona.id === 'new-data-recipient' && (
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <div className="text-xs text-gray-500 font-medium mb-1">Demo Data</div>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                      <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                        <div className="text-xs text-gray-500 mb-1">Demo Data</div>
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                           formData.isDemoCompany ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
                         }`}>
                           {formData.isDemoCompany ? 'Enabled' : 'Disabled'}
@@ -1510,30 +1506,30 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                   </div>
 
                   {/* User Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <User className="w-4 h-4 text-gray-600" />
-                      <h4 className="text-sm font-medium text-gray-900">User</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-1 mb-2">
+                      <User className="w-3 h-3 text-gray-500" />
+                      <h4 className="text-xs font-medium text-gray-700 uppercase tracking-wide">User</h4>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Full Name</div>
-                      <div className="text-sm font-semibold text-gray-900">{formData.userFullName}</div>
+                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Full Name</div>
+                      <div className="text-sm font-medium text-gray-900">{formData.userFullName}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Email</div>
-                      <div className="text-sm font-semibold text-gray-900 break-all">{formData.userEmail}</div>
+                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Email</div>
+                      <div className="text-sm font-medium text-gray-900 break-all">{formData.userEmail}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Access Level</div>
-                      <div className="text-sm font-semibold text-gray-900">{selectedPersona.title}</div>
+                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Access Level</div>
+                      <div className="text-sm font-medium text-gray-900">{selectedPersona.title}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Email Invitation</div>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className="text-xs text-gray-500 mb-1">Email Invitation</div>
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                         formData.emailInviteEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
                       }`}>
                         {formData.emailInviteEnabled ? 'Enabled' : 'Disabled'}
@@ -1558,60 +1554,53 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
           )}
         </div>
 
-        {/* BOTTOM SECTION: Individual Configuration Loading */}
-        <div className="flex-shrink-0 h-40">
+        {/* BOTTOM SECTION: Demo Preparation Loading */}
+        <div className="flex-shrink-0 h-32">
           {isLoading ? (
-            <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 p-6 h-full">
-              <div className="flex items-start justify-between h-full">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <h4 className="text-sm font-medium text-gray-900">Building Demo...</h4>
-                  </div>
-                  <div className="space-y-2 max-h-28 overflow-y-auto">
-                    {getLoadingSteps(formData).map((step: any, index: number) => (
-                      <div key={step.id} className={`flex items-center space-x-3 transition-all duration-300 ${
-                        index < loadingStep ? 'opacity-100' : 
-                        index === loadingStep ? 'opacity-100 bg-blue-50 -mx-2 px-2 py-1 rounded' : 
-                        'opacity-40'
+            <div className="bg-white rounded-lg border border-gray-200 p-3 h-full">
+              <div className="flex items-center space-x-2 mb-3">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <h4 className="text-sm font-medium text-gray-900">Launching Demo</h4>
+              </div>
+              <div className="space-y-1 max-h-20 overflow-y-auto">
+                {getLoadingSteps(formData).map((step: any, index: number) => (
+                  <div key={step.id} className={`flex items-center space-x-2 transition-all duration-300 ${
+                    index < loadingStep ? 'opacity-100' : 
+                    index === loadingStep ? 'opacity-100 bg-blue-50 -mx-1 px-1 py-0.5 rounded' : 
+                    'opacity-40'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      index < loadingStep ? 'bg-green-500' : 
+                      index === loadingStep ? 'bg-blue-500' : 
+                      'bg-gray-300'
+                    }`}>
+                      {index < loadingStep ? (
+                        <Check className="w-1 h-1 text-white" />
+                      ) : index === loadingStep ? (
+                        <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
+                      ) : null}
+                    </div>
+                    <div className="text-xs flex-1">
+                      <div className={`font-medium ${
+                        index === loadingStep ? 'text-blue-900' : 'text-gray-700'
+                      }`}>{step.label}</div>
+                    </div>
+                    {step.category && (
+                      <div className={`px-1 py-0.5 rounded text-xs font-medium ${
+                        step.category === 'company' ? 'bg-gray-100 text-gray-600' :
+                        step.category === 'user' ? 'bg-gray-100 text-gray-600' :
+                        'bg-gray-100 text-gray-600'
                       }`}>
-                        <div className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          index < loadingStep ? 'bg-green-500' : 
-                          index === loadingStep ? 'bg-blue-500' : 
-                          'bg-gray-300'
-                        }`}>
-                          {index < loadingStep ? (
-                            <Check className="w-2 h-2 text-white" />
-                          ) : index === loadingStep ? (
-                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                          ) : null}
-                        </div>
-                        <div className="text-xs flex-1">
-                          <div className={`font-medium ${
-                            index === loadingStep ? 'text-blue-900' : 'text-gray-900'
-                          }`}>{step.label}</div>
-                          <div className={`${
-                            index === loadingStep ? 'text-blue-700' : 'text-gray-600'
-                          }`}>{step.description}</div>
-                        </div>
-                        {step.category && (
-                          <div className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            step.category === 'company' ? 'bg-purple-100 text-purple-700' :
-                            step.category === 'user' ? 'bg-green-100 text-green-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {step.category}
-                          </div>
-                        )}
+                        {step.category}
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50/40 backdrop-blur-sm rounded-lg border border-gray-200/30 p-6 h-full flex items-center justify-center">
-              <p className="text-sm text-gray-500">Configuration review complete. Click "Sign In" to begin demo preparation.</p>
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 h-full flex items-center justify-center">
+              <p className="text-xs text-gray-500">Ready to launch your personalized demo experience.</p>
             </div>
           )}
         </div>
