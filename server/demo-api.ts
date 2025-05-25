@@ -31,7 +31,10 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
     'invela-admin': 'consulting'
   };
 
-  const type = companyTypes[persona] || 'fintech';
+  // Fix: Safely handle persona to company type mapping with proper fallback
+  const validPersonas = ['accredited-data-recipient', 'data-provider', 'new-data-recipient', 'invela-admin'] as const;
+  const type = validPersonas.includes(persona as any) ? companyTypes[persona as keyof typeof companyTypes] : 'fintech';
+  console.log(`[DemoAPI] Business Details - Persona: ${persona}, Mapped Type: ${type}`);
   
   // Generate realistic websites
   const websites = {
@@ -286,9 +289,13 @@ router.post('/demo/company/create', async (req, res) => {
        */
       console.log(`[DemoAPI] Processing company size: ${size}`);
       
+      // CRITICAL DEBUG: Log exact size value and comparison results
+      console.log(`[DemoAPI] DEBUGGING SIZE MATCH - size value: "${size}", type: ${typeof size}`);
+      console.log(`[DemoAPI] Condition checks: extra-large=${size === 'extra-large'}, xlarge=${size === 'xlarge'}`);
+      
       // Force enterprise-level generation for extra-large companies
       if (size === 'extra-large' || size === 'xlarge') {
-        console.log(`[DemoAPI] GENERATING ENTERPRISE-LEVEL COMPANY for size: ${size}`);
+        console.log(`[DemoAPI] ✅ MATCH FOUND - GENERATING ENTERPRISE-LEVEL COMPANY for size: ${size}`);
         // Enterprise-level companies ($500M-$2B)
         const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
         const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
@@ -348,8 +355,33 @@ router.post('/demo/company/create', async (req, res) => {
     };
 
     console.log('[DemoAPI] Generating company data for:', { persona, companySize });
-    // Fix: Use the enhanced company generation that properly handles extra-large
-    const companyData = getCompanyData(persona, companySize || 'medium');
+    
+    let companyData;
+    
+    // CRITICAL FIX: Force enterprise-level generation for extra-large companies
+    if (companySize === 'extra-large') {
+      console.log('[DemoAPI] FORCING ENTERPRISE-LEVEL GENERATION for extra-large company');
+      // Generate enterprise data directly here
+      const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
+      const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+      
+      console.log(`[DemoAPI] Generated enterprise company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: revenueAmount >= 1000000000 
+          ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
+          : `$${(revenueAmount / 1000000).toFixed(0)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'xlarge'
+      };
+    } else {
+      companyData = getCompanyData(persona, companySize || 'medium');
+    }
+    
     console.log('[DemoAPI] Generated company data:', companyData);
     
     // Generate risk score and clusters
