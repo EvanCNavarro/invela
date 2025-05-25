@@ -946,18 +946,25 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <ValidationIcon status={getFieldValidationStatus('companyName')} />
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
-                  {/* Custom dropdown button */}
+                  {/* Control button - locked for Invela Admin, dropdown for others */}
                   <div className="relative dropdown-container">
-                    <button
-                      type="button"
-                      onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)}
-                      className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
-                    >
-                      <span>{formData.companyNameControl === 'random' ? 'Random' : 'Custom'}</span>
-                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${companyDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
-                      </svg>
-                    </button>
+                    {isFieldLocked('companyName') ? (
+                      <div className="text-xs px-3 py-2 rounded border border-gray-300 bg-gray-100 text-gray-600 h-[32px] shadow-sm flex items-center justify-between min-w-[80px]">
+                        <span>Locked</span>
+                        <Lock className="h-3 w-3 text-gray-500" />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)}
+                        className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
+                      >
+                        <span>{formData.companyNameControl === 'random' ? 'Random' : 'Custom'}</span>
+                        <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${companyDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                    )}
                     {companyDropdownOpen && (
                       <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
                         <button
@@ -993,22 +1000,31 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </div>
                     )}
                   </div>
-                  {/* Input field - increased space */}
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) => handleFieldChange('companyName', e.target.value)}
-                    disabled={formData.companyNameControl === 'random'}
-                    placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
-                    className={cn(
-                      "flex-1 px-3 py-2 text-sm border rounded transition-all h-[32px]",
-                      formData.companyNameControl === 'random' 
-                        ? "border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed" 
-                        : "border-blue-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  {/* Input field - locked for Invela Admin, editable for others */}
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={formData.companyName}
+                      onChange={(e) => handleFieldChange('companyName', e.target.value)}
+                      disabled={isFieldLocked('companyName') || formData.companyNameControl === 'random'}
+                      placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
+                      className={cn(
+                        "w-full px-3 py-2 text-sm border rounded transition-all h-[32px]",
+                        isFieldLocked('companyName') 
+                          ? "border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed"
+                          : formData.companyNameControl === 'random' 
+                            ? "border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed" 
+                            : "border-blue-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      )}
+                    />
+                    {isFieldLocked('companyName') && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Lock className="h-3 w-3 text-gray-500" />
+                      </div>
                     )}
-                  />
-                  {/* Separate randomize button */}
-                  {formData.companyNameControl === 'random' && (
+                  </div>
+                  {/* Separate randomize button - hidden for locked fields */}
+                  {!isFieldLocked('companyName') && formData.companyNameControl === 'random' && (
                     <button
                       type="button"
                       onClick={() => generateRandomValues(['companyName'])}
