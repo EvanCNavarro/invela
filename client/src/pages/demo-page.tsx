@@ -404,6 +404,18 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
    * Includes default values and persona-specific configurations
    */
   const [formData, setFormData] = useState<DemoCustomizationForm>(() => {
+    // Helper function needs to be defined before use
+    function generateEmailFromDataInit(firstName: string, lastName: string, companyName: string): string {
+      const firstLetter = firstName.charAt(0).toLowerCase();
+      const cleanLastName = lastName.toLowerCase();
+      const cleanCompany = companyName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
+        .replace(/financial|capital|partners|banking|analytics/g, '')
+        .trim();
+      
+      return `${firstLetter}${cleanLastName}@${cleanCompany}.com`;
+    }
     const randomCompany = DEMO_DATA_GENERATORS.companyNames[
       Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
     ];
@@ -420,7 +432,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       companyNameControl: 'random',
       userFullName: `${randomFirstName} ${randomLastName}`,
       userFullNameControl: 'random',
-      userEmail: generateEmailFromData(randomFirstName, randomLastName, randomCompany),
+      userEmail: generateEmailFromDataInit(randomFirstName, randomLastName, randomCompany),
       emailInviteEnabled: false, // Default to off for persona-specific features
       isDemoCompany: true        // Default to on as specified
     };
