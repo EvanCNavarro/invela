@@ -1467,8 +1467,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         {/* THREE-TIERED STEP WIZARD */}
         <div className="bg-white rounded-lg border border-gray-200 mb-4">
           <div className="p-3">
-            <div className="flex items-center justify-center space-x-4">
-              {/* Step 1: Review */}
+            <div className="flex items-center w-full">
+              {/* Step 1: Review - Left */}
               <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 wizardStep === 'review' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
                 wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-100 text-green-700 border border-green-200' : 
@@ -1477,12 +1477,12 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                 Review
               </div>
 
-              {/* Connector */}
-              <div className={`h-0.5 w-8 transition-colors ${
+              {/* Left Connector - Fills space */}
+              <div className={`h-0.5 flex-1 mx-4 transition-colors ${
                 wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-300' : 'bg-gray-300'
               }`}></div>
 
-              {/* Step 2: System Setup */}
+              {/* Step 2: System Setup - Center */}
               <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 wizardStep === 'setup' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
                 wizardStep === 'launch' ? 'bg-green-100 text-green-700 border border-green-200' : 
@@ -1491,12 +1491,12 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                 System Setup
               </div>
 
-              {/* Connector */}
-              <div className={`h-0.5 w-8 transition-colors ${
+              {/* Right Connector - Fills space */}
+              <div className={`h-0.5 flex-1 mx-4 transition-colors ${
                 wizardStep === 'launch' ? 'bg-green-300' : 'bg-gray-300'
               }`}></div>
 
-              {/* Step 3: Launch */}
+              {/* Step 3: Launch - Right */}
               <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
                 wizardStep === 'launch' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
               }`}>
