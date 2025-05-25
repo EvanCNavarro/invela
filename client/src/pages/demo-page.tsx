@@ -617,8 +617,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
             <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 overflow-hidden">
               
               {/* 1. Persona Field (System Generated) */}
-              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center justify-end">
+              <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors">
+                <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -637,8 +637,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               </div>
               
               {/* 2. Company Name Field */}
-              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center justify-end">
+              <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors">
+                <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -686,8 +686,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               </div>
               
               {/* 3. User Full Name Field */}
-              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center justify-end">
+              <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors">
+                <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -735,8 +735,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               </div>
               
               {/* 4. User Email Field */}
-              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center justify-end">
+              <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors">
+                <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -756,8 +756,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 5. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
-                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-4 flex items-center justify-end">
+                <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors">
+                  <div className="col-span-4 flex items-center justify-end pr-2">
                     <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
                   </div>
                   <div className="col-span-8 flex items-center">
@@ -776,8 +776,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 6. Demo Company Toggle */}
               {shouldShowPersonaSpecificField('demoCompany') && (
-                <div className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-4 flex items-center justify-end">
+                <div className="grid grid-cols-12 gap-3 pl-4 pr-6 py-3 hover:bg-gray-50/30 transition-colors">
+                  <div className="col-span-4 flex items-center justify-end pr-2">
                     <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
                   </div>
                   <div className="col-span-8 flex items-center">
