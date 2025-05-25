@@ -16,6 +16,7 @@ import bcrypt from 'bcrypt';
 import { db } from '@db';
 import { companies, users } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { broadcastMessage } from './services/websocket';
 
 const router = Router();
 
@@ -28,6 +29,14 @@ router.post('/demo/company/create', async (req, res) => {
     const { name, type, persona, riskProfile, companySize } = req.body;
 
     console.log('[DemoAPI] Creating company:', { name, type, persona });
+
+    // Broadcast start event to connected clients
+    broadcastMessage({
+      type: 'demo_action_start',
+      actionId: 'create-company',
+      actionName: `Creating "${name}" organization`,
+      timestamp: new Date().toISOString()
+    });
 
     // Create company record
     const [company] = await db.insert(companies).values({
@@ -44,6 +53,19 @@ router.post('/demo/company/create', async (req, res) => {
       }
     }).returning();
 
+    // Broadcast completion event
+    broadcastMessage({
+      type: 'demo_action_complete',
+      actionId: 'create-company',
+      actionName: `Creating "${name}" organization`,
+      success: true,
+      result: {
+        companyId: company.id,
+        companyName: company.name
+      },
+      timestamp: new Date().toISOString()
+    });
+
     res.json({
       success: true,
       companyId: company.id,
@@ -57,6 +79,16 @@ router.post('/demo/company/create', async (req, res) => {
 
   } catch (error) {
     console.error('[DemoAPI] Company creation error:', error);
+    
+    // Broadcast error event
+    broadcastToClients({
+      type: 'demo_action_error',
+      actionId: 'create-company',
+      actionName: 'Creating company organization',
+      error: 'Failed to create company',
+      timestamp: new Date().toISOString()
+    });
+
     res.status(500).json({
       success: false,
       error: 'Failed to create company',
