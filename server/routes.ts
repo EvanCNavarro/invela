@@ -190,6 +190,29 @@ const routeRegistrationTracker = {
 };
 
 export async function registerRoutes(app: Express): Promise<Express> {
+  // ========================================
+  // PRIORITY API ROUTES - REGISTER FIRST
+  // ========================================
+  
+  /**
+   * Demo API Route Registration - Critical Priority
+   * 
+   * Registers demo API endpoints before any other routes to ensure proper
+   * middleware precedence. This prevents frontend catch-all routes from
+   * intercepting API calls and returning HTML instead of JSON responses.
+   * 
+   * Following best practice: API routes must be registered before frontend
+   * routes in the Express middleware stack to ensure proper request routing.
+   */
+  console.log('[Routes] Registering demo API routes with priority...');
+  app.use('/api', demoApiRoutes);
+  routeRegistrationTracker.register('DemoAPI');
+  console.log('[Routes] Demo API routes registered successfully with priority');
+  
+  // ========================================
+  // CORE APPLICATION ROUTES
+  // ========================================
+  
   // Track core routes
   app.use(companySearchRouter);
   routeRegistrationTracker.register('CompanySearch');
@@ -4093,15 +4116,8 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Removed Storybook static files - using custom component library
 
-  // Register demo API routes synchronously
-  try {
-    const demoApiModule = await import('./demo-api');
-    app.use('/api', demoApiModule.default);
-    routeRegistrationTracker.register('DemoAPI');
-    console.log('[Routes] Demo API routes registered successfully');
-  } catch (error) {
-    console.error('[Routes] Failed to register demo API routes:', error);
-  }
+  // Demo API routes are now registered early in the process via synchronous import
+  // This ensures API endpoints have proper priority over frontend catch-all routes
 
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
