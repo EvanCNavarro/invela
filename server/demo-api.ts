@@ -66,6 +66,53 @@ function generateBusinessAddress(companySize: string, companyType: string): stri
 }
 
 /**
+ * Generate risk cluster distribution that adds up to the risk score
+ */
+function generateRiskClusters(totalRiskScore: number) {
+  const clusters = [
+    "Dark Web Data",
+    "Cyber Security", 
+    "Public Sentiment",
+    "Data Access Scope",
+    "Financial Stability",
+    "Potential Liability"
+  ];
+
+  // Create a realistic distribution with some randomness
+  const distribution: Record<string, number> = {};
+  let remaining = totalRiskScore;
+  
+  // Assign values ensuring they add up to the total
+  for (let i = 0; i < clusters.length - 1; i++) {
+    const maxValue = Math.floor(remaining / (clusters.length - i));
+    const minValue = Math.max(1, Math.floor(totalRiskScore * 0.05)); // At least 5% of total
+    const value = Math.min(maxValue, Math.max(minValue, Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue));
+    distribution[clusters[i]] = value;
+    remaining -= value;
+  }
+  
+  // Assign remaining to the last cluster
+  distribution[clusters[clusters.length - 1]] = Math.max(1, remaining);
+  
+  return distribution;
+}
+
+/**
+ * Select random legal structure from realistic options
+ */
+function generateLegalStructure(): string {
+  const legalStructures = [
+    'LLC',
+    'Corporation', 
+    'Private Limited Company',
+    'Limited Partnership',
+    'Professional Corporation'
+  ];
+  
+  return legalStructures[Math.floor(Math.random() * legalStructures.length)];
+}
+
+/**
  * Generate realistic company details based on persona and size
  */
 function generateRealisticCompanyDetails(persona: string, size: string) {
@@ -356,6 +403,14 @@ router.post('/demo/company/create', async (req, res) => {
       }
 
       console.log('[DemoAPI] Preparing company data for database insertion...');
+      
+      // Generate realistic risk cluster distribution and legal structure
+      const riskClusters = generateRiskClusters(riskProfile);
+      const legalStructure = generateLegalStructure();
+      
+      console.log(`[DemoAPI] Generated risk clusters that sum to ${riskProfile}:`, riskClusters);
+      console.log(`[DemoAPI] Selected legal structure: ${legalStructure}`);
+      
       const companyData = {
         name,
         description: `Enterprise FinTech specializing in advanced financial technology solutions`,
@@ -371,6 +426,8 @@ router.post('/demo/company/create', async (req, res) => {
         website_url: `https://${name.toLowerCase().replace(/\s+/g, '')}.com`,
         hq_address: generateBusinessAddress('extra-large', 'FinTech'),
         founders_and_leadership: "Enterprise Leadership Team",
+        legal_structure: legalStructure,
+        risk_clusters: riskClusters,
         key_clients_partners: "Fortune 500 Companies",
         investors: "Institutional Investors",
         certifications_compliance: "SOC 2 Type II, ISO 27001",
