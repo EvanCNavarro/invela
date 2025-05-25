@@ -34,7 +34,8 @@ import {
   Database,
   Settings,
   Check,
-  Shuffle
+  Shuffle,
+  ChevronDown
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -601,11 +602,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
           Customize Demo Experience
         </h1>
         <p className="text-base text-gray-600">
-          {selectedPersona ? (
-            <>Select preferences for <span className="font-semibold text-gray-900">{selectedPersona.title}</span> to personalize your demo experience.</>
-          ) : (
-            "Select preferences to personalize your demo experience."
-          )}
+          Configure your demo settings and preferences below.
         </p>
       </div>
       
@@ -616,14 +613,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       <div className="flex-1 space-y-6">
         {selectedPersona ? (
           <div className="space-y-6">
-            {/* Demo Customization Form - Clean 4-Column Layout */}
+            {/* Demo Customization Form - Clean Layout */}
             <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 overflow-hidden">
-              
-              {/* Header Row */}
-              <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/30 border-b border-gray-100/50 text-xs font-medium text-gray-600 uppercase tracking-wide">
-                <div className="col-span-4">Field</div>
-                <div className="col-span-8">Value</div>
-              </div>
               
               {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
@@ -663,7 +654,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     </select>
                     <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
                       <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
                     </div>
                   </div>
@@ -712,7 +703,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     </select>
                     <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
                       <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
                     </div>
                   </div>
