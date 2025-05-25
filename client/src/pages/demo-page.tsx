@@ -1363,37 +1363,18 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
   // Individual configuration loading steps with field targeting for highlighting
   const getLoadingSteps = (formData: any) => {
     const steps = [
-      // Company Configuration
-      { id: 'company-profile', label: `Creating "${formData?.companyName}" profile`, category: 'company', targetField: 'companyName', description: 'Setting up organizational structure' },
-      { id: 'company-settings', label: 'Applying company preferences', category: 'company', targetField: null, description: 'Configuring organizational settings' },
+      // Company Setup
+      { id: 'company-setup', label: `Setting up "${formData?.companyName}" organization`, category: 'company', targetField: 'companyName', description: 'Creating company profile and preferences' },
+      
+      // User Setup
+      { id: 'user-setup', label: `Creating account for ${formData?.userFullName}`, category: 'user', targetField: 'userFullName', description: 'Setting up user profile and permissions' },
+      
+      // Authentication
+      { id: 'authentication', label: 'Configuring authentication', category: 'auth', targetField: 'userEmail', description: 'Setting up secure access' },
+      
+      // Final Launch
+      { id: 'launch-prep', label: 'Finalizing demo environment', category: 'system', targetField: null, description: 'Preparing platform access' }
     ];
-
-    // Add persona-specific company steps
-    if (selectedPersona?.id === 'accredited-data-recipient') {
-      steps.push(
-        { id: 'company-size', label: `Setting company size to ${formData?.companySize?.replace('-', ' ')}`, category: 'company', targetField: 'companySize', description: 'Configuring organizational scale' },
-        { id: 'risk-profile', label: `Applying risk profile (${formData?.riskProfile}/100)`, category: 'company', targetField: 'riskProfile', description: 'Setting risk tolerance levels' }
-      );
-    }
-
-    if (selectedPersona?.id === 'new-data-recipient' && formData?.isDemoCompany) {
-      steps.push({ id: 'demo-data', label: 'Loading demo company data', category: 'company', targetField: 'demoData', description: 'Pre-populating sample information' });
-    }
-
-    // User Account Configuration
-    steps.push(
-      { id: 'user-account', label: `Creating account for ${formData?.userFullName}`, category: 'user', targetField: 'userFullName', description: 'Setting up user profile' },
-      { id: 'user-permissions', label: `Applying ${selectedPersona?.title} permissions`, category: 'user', targetField: 'accessLevel', description: 'Configuring access levels' },
-      { id: 'user-email', label: `Setting up ${formData?.userEmail}`, category: 'user', targetField: 'userEmail', description: 'Configuring email preferences' }
-    );
-
-    // Email invitation if enabled
-    if (formData?.emailInviteEnabled) {
-      steps.push({ id: 'email-invite', label: 'Sending welcome email', category: 'user', targetField: 'emailInvitation', description: 'Delivering access credentials' });
-    }
-
-    // Final environment setup
-    steps.push({ id: 'environment', label: 'Initializing demo environment', category: 'system', targetField: null, description: 'Preparing platform access' });
 
     return steps;
   };
