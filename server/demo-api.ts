@@ -31,8 +31,7 @@ router.post('/demo/company/create', async (req, res) => {
     console.log('[DemoAPI] Creating company:', { name, type, persona });
 
     // Broadcast start event to connected clients
-    broadcastMessage({
-      type: 'demo_action_start',
+    broadcastMessage('demo_action_start', {
       actionId: 'create-company',
       actionName: `Creating "${name}" organization`,
       timestamp: new Date().toISOString()
@@ -54,8 +53,7 @@ router.post('/demo/company/create', async (req, res) => {
     }).returning();
 
     // Broadcast completion event
-    broadcastMessage({
-      type: 'demo_action_complete',
+    broadcastMessage('demo_action_complete', {
       actionId: 'create-company',
       actionName: `Creating "${name}" organization`,
       success: true,
@@ -81,8 +79,7 @@ router.post('/demo/company/create', async (req, res) => {
     console.error('[DemoAPI] Company creation error:', error);
     
     // Broadcast error event
-    broadcastToClients({
-      type: 'demo_action_error',
+    broadcastMessage('demo_action_error', {
       actionId: 'create-company',
       actionName: 'Creating company organization',
       error: 'Failed to create company',
