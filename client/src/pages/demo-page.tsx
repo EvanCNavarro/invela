@@ -1444,115 +1444,100 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       {/* MAIN CONTENT AREA - Two Section Layout */}
       <div className="flex-1 flex flex-col space-y-6 py-6">
         
-        {/* TOP SECTION: Visual Configuration Review with Floating Cards */}
+        {/* TOP SECTION: Compact Configuration Review */}
         <div className="flex-1 min-h-0">
           {selectedPersona && formData ? (
-            <div className="h-full overflow-auto">
-              <div className="space-y-6">
-                {/* Persona Hero Card */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-2xl p-6 text-white shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-8 -translate-y-8"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full transform -translate-x-4 translate-y-4"></div>
-                  <div className="relative flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
-                      <selectedPersona.icon className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">{selectedPersona.title}</h3>
-                      <p className="text-blue-100 text-sm mt-1">{selectedPersona.description}</p>
-                    </div>
+            <div className="bg-white rounded-lg border border-gray-200 h-full overflow-auto">
+              <div className="p-4 space-y-4">
+                {/* Persona Summary */}
+                <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <selectedPersona.icon className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900">{selectedPersona.title}</h3>
+                    <p className="text-xs text-gray-600">{selectedPersona.description}</p>
                   </div>
                 </div>
 
-                {/* Configuration Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Company Configuration Card */}
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:rotate-1">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <Building2 className="w-6 h-6 text-white" />
-                      </div>
-                      <h4 className="text-xl font-bold text-gray-900">Company</h4>
+                {/* Configuration Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Company Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Building2 className="w-4 h-4 text-gray-600" />
+                      <h4 className="text-sm font-medium text-gray-900">Company</h4>
                     </div>
-                    <div className="space-y-4">
-                      {/* Company Name */}
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200/50 hover:shadow-md transition-all duration-200">
-                        <div className="text-xs text-purple-600 uppercase tracking-wide font-bold mb-2">Organization</div>
-                        <div className="text-lg font-bold text-gray-900">{formData.companyName}</div>
-                      </div>
-                      
-                      {/* Company Size for Accredited Data Recipients */}
-                      {selectedPersona.id === 'accredited-data-recipient' && (
-                        <>
-                          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200/50 hover:shadow-md transition-all duration-200">
-                            <div className="text-xs text-purple-600 uppercase tracking-wide font-bold mb-2">Company Size</div>
-                            <div className="text-lg font-bold text-purple-900 capitalize">{formData.companySize?.replace('-', ' ')}</div>
-                          </div>
-                          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200/50 hover:shadow-md transition-all duration-200">
-                            <div className="text-xs text-blue-600 uppercase tracking-wide font-bold mb-2">Risk Profile</div>
-                            <div className="flex items-center space-x-3">
-                              <div className="text-lg font-bold text-blue-900">{formData.riskProfile}/100</div>
-                              <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-3 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full transition-all duration-1000 ease-out" 
-                                  style={{ width: `${formData.riskProfile}%` }}
-                                ></div>
-                              </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Organization</div>
+                      <div className="text-sm font-semibold text-gray-900">{formData.companyName}</div>
+                    </div>
+                    
+                    {/* Company Size for Accredited Data Recipients */}
+                    {selectedPersona.id === 'accredited-data-recipient' && (
+                      <>
+                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="text-xs text-gray-500 font-medium mb-1">Size</div>
+                          <div className="text-sm font-semibold text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="text-xs text-gray-500 font-medium mb-1">Risk Profile</div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-semibold text-gray-900">{formData.riskProfile}/100</span>
+                            <div className="flex-1 h-2 bg-gray-200 rounded">
+                              <div 
+                                className="h-2 bg-blue-500 rounded transition-all duration-500" 
+                                style={{ width: `${formData.riskProfile}%` }}
+                              ></div>
                             </div>
                           </div>
-                        </>
-                      )}
-                      
-                      {/* Demo Company for New Data Recipients */}
-                      {selectedPersona.id === 'new-data-recipient' && (
-                        <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200/50 hover:shadow-md transition-all duration-200">
-                          <div className="text-xs text-green-600 uppercase tracking-wide font-bold mb-2">Demo Data</div>
-                          <div className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-bold ${
-                            formData.isDemoCompany ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700'
-                          }`}>
-                            {formData.isDemoCompany ? '✓ Enabled' : '✗ Disabled'}
-                          </div>
                         </div>
-                      )}
-                    </div>
+                      </>
+                    )}
+                    
+                    {/* Demo Company for New Data Recipients */}
+                    {selectedPersona.id === 'new-data-recipient' && (
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="text-xs text-gray-500 font-medium mb-1">Demo Data</div>
+                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                          formData.isDemoCompany ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {formData.isDemoCompany ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* User Configuration Card */}
-                  <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:-rotate-1">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <User className="w-6 h-6 text-white" />
-                      </div>
-                      <h4 className="text-xl font-bold text-gray-900">User</h4>
+                  {/* User Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <User className="w-4 h-4 text-gray-600" />
+                      <h4 className="text-sm font-medium text-gray-900">User</h4>
                     </div>
-                    <div className="space-y-4">
-                      {/* Full Name */}
-                      <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200/50 hover:shadow-md transition-all duration-200">
-                        <div className="text-xs text-green-600 uppercase tracking-wide font-bold mb-2">Full Name</div>
-                        <div className="text-lg font-bold text-green-900">{formData.userFullName}</div>
-                      </div>
-                      
-                      {/* Email */}
-                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200/50 hover:shadow-md transition-all duration-200">
-                        <div className="text-xs text-blue-600 uppercase tracking-wide font-bold mb-2">Email Address</div>
-                        <div className="text-sm font-bold text-blue-900 break-all">{formData.userEmail}</div>
-                      </div>
-                      
-                      {/* Access Level */}
-                      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200/50 hover:shadow-md transition-all duration-200">
-                        <div className="text-xs text-indigo-600 uppercase tracking-wide font-bold mb-2">Access Level</div>
-                        <div className="text-lg font-bold text-indigo-900">{selectedPersona.title}</div>
-                      </div>
-                      
-                      {/* Email Invitation */}
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200/50 hover:shadow-md transition-all duration-200">
-                        <div className="text-xs text-gray-600 uppercase tracking-wide font-bold mb-2">Email Invitation</div>
-                        <div className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-bold ${
-                          formData.emailInviteEnabled ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-200 text-gray-700'
-                        }`}>
-                          {formData.emailInviteEnabled ? '✓ Enabled' : '✗ Disabled'}
-                        </div>
-                      </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Full Name</div>
+                      <div className="text-sm font-semibold text-gray-900">{formData.userFullName}</div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Email</div>
+                      <div className="text-sm font-semibold text-gray-900 break-all">{formData.userEmail}</div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Access Level</div>
+                      <div className="text-sm font-semibold text-gray-900">{selectedPersona.title}</div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Email Invitation</div>
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                        formData.emailInviteEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {formData.emailInviteEnabled ? 'Enabled' : 'Disabled'}
+                      </span>
                     </div>
                   </div>
                 </div>
