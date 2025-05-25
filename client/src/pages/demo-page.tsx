@@ -1466,74 +1466,42 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         
         {/* THREE-TIERED STEP WIZARD */}
         <div className="bg-white rounded-lg border border-gray-200 mb-4">
-          <div className="p-4">
-            <div className="flex items-center justify-center space-x-8">
+          <div className="p-3">
+            <div className="flex items-center justify-center space-x-4">
               {/* Step 1: Review */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'review' ? 'bg-blue-500 text-white' : 
-                  wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  {wizardStep === 'setup' || wizardStep === 'launch' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'review' ? 'text-blue-600' : 
-                  wizardStep === 'setup' || wizardStep === 'launch' ? 'text-green-600' : 
-                  'text-gray-500'
-                }`}>
-                  Review
-                </span>
+              <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                wizardStep === 'review' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
+                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-100 text-green-700 border border-green-200' : 
+                'bg-gray-100 text-gray-600 border border-gray-200'
+              }`}>
+                Review
               </div>
 
               {/* Connector */}
-              <div className={`h-0.5 w-16 transition-colors ${
-                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+              <div className={`h-0.5 w-8 transition-colors ${
+                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-300' : 'bg-gray-300'
               }`}></div>
 
               {/* Step 2: System Setup */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'setup' ? 'bg-blue-500 text-white' : 
-                  wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  {wizardStep === 'launch' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Settings className="w-4 h-4" />
-                  )}
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'setup' ? 'text-blue-600' : 
-                  wizardStep === 'launch' ? 'text-green-600' : 
-                  'text-gray-500'
-                }`}>
-                  System Setup
-                </span>
+              <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                wizardStep === 'setup' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 
+                wizardStep === 'launch' ? 'bg-green-100 text-green-700 border border-green-200' : 
+                'bg-gray-100 text-gray-600 border border-gray-200'
+              }`}>
+                System Setup
               </div>
 
               {/* Connector */}
-              <div className={`h-0.5 w-16 transition-colors ${
-                wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+              <div className={`h-0.5 w-8 transition-colors ${
+                wizardStep === 'launch' ? 'bg-green-300' : 'bg-gray-300'
               }`}></div>
 
               {/* Step 3: Launch */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'launch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  <Rocket className="w-4 h-4" />
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'launch' ? 'text-blue-600' : 'text-gray-500'
-                }`}>
-                  Launch
-                </span>
+              <div className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
+                wizardStep === 'launch' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
+              }`}>
+                <Rocket className="w-3.5 h-3.5" />
+                <span>Launch</span>
               </div>
             </div>
           </div>
