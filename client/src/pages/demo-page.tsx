@@ -366,23 +366,76 @@ interface DemoCustomizationForm {
 
 /**
  * Random data generators for demo values
- * Provides realistic sample data for the demo experience
+ * Provides 100 diverse, professional options for realistic demo experiences
+ * Focused on financial services, consulting, and enterprise sectors
  */
 const DEMO_DATA_GENERATORS = {
   companyNames: [
-    "WealthWave Financial",
-    "SecureVault Capital", 
-    "TrustLink Partners",
-    "NextGen Banking",
-    "RiskShield Analytics"
+    // Original favorites
+    "WealthWave Financial", "SecureVault Capital", "TrustLink Partners", "NextGen Banking", "RiskShield Analytics",
+    
+    // Financial Services (25 total)
+    "Apex Capital Management", "Sterling Trust Solutions", "Meridian Wealth Advisors", "Cornerstone Financial Group", "Pinnacle Investment Partners",
+    "Quantum Risk Management", "Elite Capital Ventures", "Sovereign Asset Management", "Premier Banking Solutions", "Vanguard Credit Union",
+    "Precision Lending Group", "Optimal Finance Partners", "Dynamic Capital Holdings", "Strategic Investment Bank", "Integrity Financial Services",
+    "Summit Wealth Management", "Horizon Capital Group", "Catalyst Investment Partners", "Nexus Financial Solutions", "Premier Trust Company",
+    
+    // Technology & Analytics (25 total)
+    "DataVault Technologies", "CloudSecure Systems", "InnovateTech Solutions", "DigitalEdge Analytics", "CyberGuard Technologies",
+    "AlphaTech Innovations", "SmartData Corporation", "TechFlow Solutions", "DataBridge Analytics", "SecureCloud Partners",
+    "IntelliSoft Systems", "NexGen Data Solutions", "ProTech Analytics", "DataSync Technologies", "TechVantage Group",
+    "QuantumTech Solutions", "DataForge Corporation", "CyberShield Systems", "InnoData Technologies", "TechCore Solutions",
+    "DataPlex Analytics", "CloudWave Technologies", "TechNova Solutions", "DataStream Corporation", "CyberTech Partners",
+    
+    // Consulting & Advisory (25 total)
+    "Strategic Consulting Group", "Elite Advisory Partners", "Pinnacle Business Solutions", "Summit Strategy Advisors", "Vanguard Consulting",
+    "Meridian Advisory Group", "Cornerstone Consulting", "Apex Business Partners", "Premier Strategy Group", "Quantum Advisory Solutions",
+    "Dynamic Consulting Partners", "Strategic Solutions Group", "Elite Business Advisors", "Pinnacle Strategy Partners", "Nexus Consulting",
+    "Optimal Advisory Group", "Sterling Business Solutions", "Catalyst Consulting Partners", "Horizon Strategy Advisors", "Premier Advisory",
+    "Summit Business Group", "Vanguard Strategy Partners", "Meridian Consulting Solutions", "Cornerstone Advisory Group", "Apex Strategy",
+    
+    // Healthcare & Life Sciences (25 total)
+    "MedTech Innovations", "HealthSecure Systems", "BioVantage Solutions", "MedCore Technologies", "LifeScience Partners",
+    "HealthGuard Analytics", "MedData Corporation", "BioTech Solutions Group", "HealthTech Innovations", "MedSecure Systems",
+    "LifeTech Analytics", "HealthVault Technologies", "MedPlex Solutions", "BioSecure Systems", "HealthTech Partners",
+    "MedFlow Corporation", "LifeGuard Technologies", "HealthCore Solutions", "MedVantage Group", "BioTech Analytics",
+    "HealthStream Systems", "MedTech Partners", "LifeSecure Solutions", "HealthTech Corporation", "MedGuard Analytics"
   ],
+  
   firstNames: [
-    "Alex", "Jordan", "Casey", "Morgan", "Riley",
-    "Taylor", "Cameron", "Jamie", "Quinn", "Sage"
+    // Classic Professional Names (50 total)
+    "Alex", "Jordan", "Casey", "Morgan", "Riley", "Taylor", "Cameron", "Jamie", "Quinn", "Sage",
+    "Michael", "Jennifer", "David", "Sarah", "Robert", "Lisa", "Christopher", "Michelle", "Matthew", "Amanda",
+    "Daniel", "Elizabeth", "Andrew", "Jessica", "Ryan", "Ashley", "Jonathan", "Emily", "Nicholas", "Nicole",
+    "Anthony", "Stephanie", "Kevin", "Rachel", "Steven", "Lauren", "Joshua", "Megan", "Brandon", "Samantha",
+    "Benjamin", "Hannah", "Samuel", "Victoria", "Gregory", "Olivia", "Patrick", "Emma", "Frank", "Grace",
+    
+    // Modern Professional Names (50 total) 
+    "Aiden", "Sophia", "Lucas", "Isabella", "Mason", "Ava", "Noah", "Mia", "Ethan", "Charlotte",
+    "Oliver", "Amelia", "William", "Harper", "James", "Evelyn", "Liam", "Abigail", "Henry", "Ella",
+    "Sebastian", "Madison", "Jack", "Scarlett", "Owen", "Victoria", "Theodore", "Aria", "Caleb", "Chloe",
+    "Nathan", "Layla", "Isaac", "Penelope", "Eli", "Riley", "Thomas", "Zoey", "Charles", "Nora",
+    "Connor", "Lily", "Jeremiah", "Eleanor", "Cameron", "Hannah", "Adrian", "Lillian", "Christian", "Addison"
   ],
+  
   lastNames: [
-    "Anderson", "Chen", "Johnson", "Williams", "Brown",
-    "Davis", "Miller", "Wilson", "Moore", "Taylor"
+    // Original classics
+    "Anderson", "Chen", "Johnson", "Williams", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor",
+    
+    // European Heritage (30 total)
+    "Thompson", "Garcia", "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee", "Walker", "Hall",
+    "Allen", "Young", "Hernandez", "King", "Wright", "Lopez", "Hill", "Scott", "Green", "Adams",
+    "Baker", "Gonzalez", "Nelson", "Carter", "Mitchell", "Perez", "Roberts", "Turner", "Phillips", "Campbell",
+    
+    // International Professional (30 total)
+    "Zhang", "Kumar", "Patel", "Singh", "Kim", "Liu", "Wang", "Nakamura", "Tanaka", "Suzuki",
+    "Rahman", "Hassan", "Ali", "Ahmad", "Mohammed", "Hussein", "Malik", "Shah", "Khan", "Gupta",
+    "Sharma", "Mehta", "Joshi", "Agarwal", "Verma", "Kapoor", "Bhatia", "Chopra", "Sinha", "Mishra",
+    
+    // Modern American (30 total)
+    "Parker", "Cooper", "Reed", "Bailey", "Bell", "Murphy", "Rivera", "Cook", "Rogers", "Morgan",
+    "Peterson", "Cox", "Ward", "Richardson", "Watson", "Brooks", "Chavez", "Wood", "James", "Bennett",
+    "Gray", "Mendoza", "Ruiz", "Hughes", "Price", "Alvarez", "Castillo", "Sanders", "Patel", "Myers"
   ]
 } as const;
 
