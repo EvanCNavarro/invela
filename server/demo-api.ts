@@ -21,6 +21,51 @@ import { broadcastMessage } from './services/websocket';
 const router = Router();
 
 /**
+ * Generate comprehensive company address based on size and type
+ * Enterprise companies get premium business district addresses
+ * 
+ * @param companySize - The size category of the company
+ * @param companyType - The type/category of the company
+ * @returns Formatted business address string
+ */
+function generateBusinessAddress(companySize: string, companyType: string): string {
+  const enterpriseAddresses = [
+    "1 Wall Street, Financial District, New York, NY 10005",
+    "500 Montgomery Street, Financial District, San Francisco, CA 94111", 
+    "200 West Street, Tribeca, New York, NY 10013",
+    "101 California Street, Financial District, San Francisco, CA 94111",
+    "1345 Avenue of the Americas, Midtown Manhattan, New York, NY 10105",
+    "555 Mission Street, SOMA, San Francisco, CA 94105",
+    "300 Park Avenue, Midtown East, New York, NY 10022",
+    "One Embarcadero Center, Financial District, San Francisco, CA 94111"
+  ];
+
+  const corporateAddresses = [
+    "1000 Corporate Boulevard, Suite 500, Charlotte, NC 28202",
+    "2500 Business Center Drive, Austin, TX 78759",
+    "750 Technology Square, Cambridge, MA 02139",
+    "400 Innovation Way, Seattle, WA 98109",
+    "1200 Financial Plaza, Chicago, IL 60606",
+    "850 Enterprise Drive, Denver, CO 80202"
+  ];
+
+  const standardAddresses = [
+    "100 Main Street, Suite 200, Boston, MA 02101",
+    "250 Business Park Drive, Atlanta, GA 30309", 
+    "500 Commerce Street, Dallas, TX 75202",
+    "150 Technology Lane, Raleigh, NC 27603"
+  ];
+
+  if (companySize === 'extra-large' || companySize === 'xlarge') {
+    return enterpriseAddresses[Math.floor(Math.random() * enterpriseAddresses.length)];
+  } else if (companySize === 'large') {
+    return corporateAddresses[Math.floor(Math.random() * corporateAddresses.length)];
+  } else {
+    return standardAddresses[Math.floor(Math.random() * standardAddresses.length)];
+  }
+}
+
+/**
  * Generate realistic company details based on persona and size
  */
 function generateRealisticCompanyDetails(persona: string, size: string) {
@@ -177,21 +222,25 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
 }
 
 /**
- * Generate risk clusters based on risk score
+ * Generate risk clusters based on risk score with intelligent correlation
+ * Implements realistic risk distribution where clusters align with overall risk profile
+ * 
+ * @param riskScore - The company's overall risk score (0-100)
+ * @returns Object with risk cluster scores that correlate with the input score
  */
 function generateRiskClusters(riskScore: number) {
-  // Higher risk scores (80-100) = lower actual risk values
-  // Lower risk scores (0-50) = higher actual risk values
-  const baseRisk = Math.max(5, 100 - riskScore);
-  const variation = 15;
+  // Risk clusters should logically correlate with the overall risk score
+  // Higher company risk score = higher individual cluster risk scores
+  const baseClusterRisk = riskScore;
+  const variation = 20; // Allow some natural variation between clusters
   
   return {
-    "PII Data": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
-    "Account Data": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
-    "Data Transfers": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
-    "Certifications Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
-    "Security Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
-    "Financial Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation))
+    "PII Data": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
+    "Account Data": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
+    "Data Transfers": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
+    "Certifications Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
+    "Security Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
+    "Financial Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation)))
   };
 }
 
@@ -218,7 +267,9 @@ router.post('/demo/company/create', async (req, res) => {
       });
       
       const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
-      const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+      // Generate rounded employee count for professional enterprise reporting
+      const baseEmployeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+      const employeeCount = Math.round(baseEmployeeCount / 100) * 100; // Round to nearest 100
       
       console.log(`[DemoAPI] Immediate enterprise generated: $${revenueAmount >= 1000000000 ? (revenueAmount / 1000000000).toFixed(1) + 'B' : (revenueAmount / 1000000).toFixed(0) + 'M'}, ${employeeCount} employees`);
       
@@ -236,7 +287,7 @@ router.post('/demo/company/create', async (req, res) => {
         available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
         accreditation_status: 'APPROVED',
         website_url: `https://${name.toLowerCase().replace(/\s+/g, '')}.com`,
-        hq_address: "New York, NY",
+        hq_address: generateBusinessAddress('extra-large', 'FinTech'),
         founders_and_leadership: "Enterprise Leadership Team",
         key_clients_partners: "Fortune 500 Companies",
         investors: "Institutional Investors",
@@ -250,6 +301,7 @@ router.post('/demo/company/create', async (req, res) => {
       res.json({
         success: true,
         company: insertResult[0],
+        companyId: insertResult[0].id,
         message: `Enterprise company "${name}" created successfully with ${insertResult[0].revenue} revenue and ${insertResult[0].num_employees} employees`
       });
       return;
@@ -759,6 +811,15 @@ router.post('/demo/user/create', async (req, res) => {
     const { fullName, email, role, permissions, companyId } = req.body;
 
     console.log('[DemoAPI] Creating user:', { fullName, email, role, companyId });
+    
+    // Validate required company ID
+    if (!companyId || companyId === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        error: 'Company ID is required for user creation',
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Generate temporary password for demo
     const tempPassword = 'demo123'; // In production, use secure random generation
