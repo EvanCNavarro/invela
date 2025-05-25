@@ -1710,7 +1710,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className={`rounded p-2 border transition-all duration-500 ${
                       isLoading && getCurrentTargetField() === 'companyName' 
                         ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'companyName') < loadingStep - 1
+                        : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'companyName') < loadingStep - 1
                         ? 'bg-green-50 border-green-200'
                         : 'bg-gray-50 border-gray-100'
                     }`}>
@@ -1724,7 +1724,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                         <div className={`rounded p-2 border transition-all duration-500 ${
                           isLoading && getCurrentTargetField() === 'companySize' 
                             ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                            : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'companySize') < loadingStep - 1
+                            : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'companySize') < loadingStep - 1
                             ? 'bg-green-50 border-green-200'
                             : 'bg-gray-50 border-gray-100'
                         }`}>
@@ -1734,7 +1734,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                         <div className={`rounded p-2 border transition-all duration-500 ${
                           isLoading && getCurrentTargetField() === 'riskProfile' 
                             ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                            : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'riskProfile') < loadingStep - 1
+                            : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'riskProfile') < loadingStep - 1
                             ? 'bg-green-50 border-green-200'
                             : 'bg-gray-50 border-gray-100'
                         }`}>
@@ -1757,7 +1757,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                       <div className={`rounded p-2 border transition-all duration-500 ${
                         isLoading && getCurrentTargetField() === 'demoData' 
                           ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                          : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'demoData') < loadingStep - 1
+                          : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'demoData') < loadingStep - 1
                           ? 'bg-green-50 border-green-200'
                           : 'bg-gray-50 border-gray-100'
                       }`}>
@@ -1781,7 +1781,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className={`rounded p-2 border transition-all duration-500 ${
                       isLoading && getCurrentTargetField() === 'userFullName' 
                         ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'userFullName') < loadingStep - 1
+                        : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'userFullName') < loadingStep - 1
                         ? 'bg-green-50 border-green-200'
                         : 'bg-gray-50 border-gray-100'
                     }`}>
@@ -1792,7 +1792,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className={`rounded p-2 border transition-all duration-500 ${
                       isLoading && getCurrentTargetField() === 'userEmail' 
                         ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'userEmail') < loadingStep - 1
+                        : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'userEmail') < loadingStep - 1
                         ? 'bg-green-50 border-green-200'
                         : 'bg-gray-50 border-gray-100'
                     }`}>
@@ -1814,7 +1814,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className={`rounded p-2 border transition-all duration-500 ${
                       isLoading && getCurrentTargetField() === 'emailInvitation' 
                         ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'emailInvitation') < loadingStep - 1
+                        : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'emailInvitation') < loadingStep - 1
                         ? 'bg-green-50 border-green-200'
                         : 'bg-gray-50 border-gray-100'
                     }`}>
@@ -1847,8 +1847,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
               <div className="p-4 flex-1">
                 <div className="space-y-3">
-                  {getLoadingSteps(formData).map((step: any, index: number) => (
-                    <div key={step.id} className={`flex items-center space-x-3 transition-all duration-500 px-3 py-2 rounded-lg ${
+                  {getDemoActions(formData, selectedPersona).map((action: any, index: number) => (
+                    <div key={action.id} className={`flex items-center space-x-3 transition-all duration-500 px-3 py-2 rounded-lg ${
                       index < loadingStep ? 'opacity-100 bg-green-50 border border-green-200' : 
                       index === loadingStep ? 'opacity-100 bg-blue-50 border border-blue-200' : 
                       'opacity-50 bg-gray-50 border border-gray-200'
