@@ -1461,84 +1461,84 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         </p>
       </div>
       
-      {/* THREE-TIERED STEP WIZARD */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-4">
-        <div className="p-4">
-          <div className="flex items-center justify-center space-x-8">
-            {/* Step 1: Review */}
-            <div className="flex items-center space-x-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                wizardStep === 'review' ? 'bg-blue-500 text-white' : 
-                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                'bg-gray-200 text-gray-500'
-              }`}>
-                {wizardStep === 'setup' || wizardStep === 'launch' ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+      {/* MAIN CONTENT AREA - Two Section Layout */}
+      <div className="flex-1 flex flex-col space-y-3 pt-6">
+        
+        {/* THREE-TIERED STEP WIZARD */}
+        <div className="bg-white rounded-lg border border-gray-200 mb-4">
+          <div className="p-4">
+            <div className="flex items-center justify-center space-x-8">
+              {/* Step 1: Review */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  wizardStep === 'review' ? 'bg-blue-500 text-white' : 
+                  wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500 text-white' : 
+                  'bg-gray-200 text-gray-500'
+                }`}>
+                  {wizardStep === 'setup' || wizardStep === 'launch' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </div>
+                <span className={`text-sm font-medium ${
+                  wizardStep === 'review' ? 'text-blue-600' : 
+                  wizardStep === 'setup' || wizardStep === 'launch' ? 'text-green-600' : 
+                  'text-gray-500'
+                }`}>
+                  Review
+                </span>
               </div>
-              <span className={`text-sm font-medium ${
-                wizardStep === 'review' ? 'text-blue-600' : 
-                wizardStep === 'setup' || wizardStep === 'launch' ? 'text-green-600' : 
-                'text-gray-500'
-              }`}>
-                Review
-              </span>
-            </div>
 
-            {/* Connector */}
-            <div className={`h-0.5 w-16 transition-colors ${
-              wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
-            }`}></div>
+              {/* Connector */}
+              <div className={`h-0.5 w-16 transition-colors ${
+                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+              }`}></div>
 
-            {/* Step 2: System Setup */}
-            <div className="flex items-center space-x-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                wizardStep === 'setup' ? 'bg-blue-500 text-white' : 
-                wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                'bg-gray-200 text-gray-500'
-              }`}>
-                {wizardStep === 'launch' ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Settings className="w-4 h-4" />
-                )}
+              {/* Step 2: System Setup */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  wizardStep === 'setup' ? 'bg-blue-500 text-white' : 
+                  wizardStep === 'launch' ? 'bg-green-500 text-white' : 
+                  'bg-gray-200 text-gray-500'
+                }`}>
+                  {wizardStep === 'launch' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Settings className="w-4 h-4" />
+                  )}
+                </div>
+                <span className={`text-sm font-medium ${
+                  wizardStep === 'setup' ? 'text-blue-600' : 
+                  wizardStep === 'launch' ? 'text-green-600' : 
+                  'text-gray-500'
+                }`}>
+                  System Setup
+                </span>
               </div>
-              <span className={`text-sm font-medium ${
-                wizardStep === 'setup' ? 'text-blue-600' : 
-                wizardStep === 'launch' ? 'text-green-600' : 
-                'text-gray-500'
-              }`}>
-                System Setup
-              </span>
-            </div>
 
-            {/* Connector */}
-            <div className={`h-0.5 w-16 transition-colors ${
-              wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
-            }`}></div>
+              {/* Connector */}
+              <div className={`h-0.5 w-16 transition-colors ${
+                wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+              }`}></div>
 
-            {/* Step 3: Launch */}
-            <div className="flex items-center space-x-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                wizardStep === 'launch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                <Rocket className="w-4 h-4" />
+              {/* Step 3: Launch */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  wizardStep === 'launch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
+                }`}>
+                  <Rocket className="w-4 h-4" />
+                </div>
+                <span className={`text-sm font-medium ${
+                  wizardStep === 'launch' ? 'text-blue-600' : 'text-gray-500'
+                }`}>
+                  Launch
+                </span>
               </div>
-              <span className={`text-sm font-medium ${
-                wizardStep === 'launch' ? 'text-blue-600' : 'text-gray-500'
-              }`}>
-                Launch
-              </span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* MAIN CONTENT AREA - Dynamic Based on Wizard Step */}
-      <div className="flex-1 flex flex-col space-y-3">
-        
         {/* DYNAMIC CONTENT SECTION */}
         <div className="flex-1 min-h-0">
           {wizardStep === 'review' ? (
@@ -1747,8 +1747,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
 
       </div>
 
-      {/* BUTTON SECTION - Consistent across all wizard steps */}
-      <div className="flex-shrink-0">
+      {/* BUTTON SECTION */}
+      <div className="flex-shrink-0 pt-6">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
@@ -1766,8 +1766,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
             disabled={isLoading}
             className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700"
           >
-            Sign In
-            <ArrowRight className="w-3 h-3 ml-1" />
+            {wizardStep === 'review' ? 'Sign In' : wizardStep === 'setup' ? 'Setting Up...' : 'Launching...'}
+            {wizardStep === 'review' && <ArrowRight className="w-3 h-3 ml-1" />}
           </Button>
         </div>
       </div>
