@@ -33,8 +33,10 @@ import {
   Award,
   Database,
   Settings,
-  Check
+  Check,
+  Shuffle
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 // Temporary inline types until path resolution is fixed
@@ -336,12 +338,228 @@ const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) 
   );
 };
 
+// ========================================
+// DEMO CUSTOMIZATION TYPES & INTERFACES
+// ========================================
+
 /**
- * Step 2: Interactive Demo Experience
- * Now displays the selected persona from Step 1 instead of generic form data
+ * Form field control types for demo customization
+ * Defines how each field can be controlled by the user
+ */
+type FieldControlType = 'locked' | 'random' | 'custom';
+
+/**
+ * Demo customization form state interface
+ * Manages all user preferences for the demo experience
+ */
+interface DemoCustomizationForm {
+  persona: string;
+  companyName: string;
+  companyNameControl: 'random' | 'custom';
+  userFullName: string;
+  userFullNameControl: 'random' | 'custom';
+  userEmail: string;
+  emailInviteEnabled: boolean;
+  isDemoCompany: boolean;
+}
+
+/**
+ * Random data generators for demo values
+ * Provides realistic sample data for the demo experience
+ */
+const DEMO_DATA_GENERATORS = {
+  companyNames: [
+    "WealthWave Financial",
+    "SecureVault Capital", 
+    "TrustLink Partners",
+    "NextGen Banking",
+    "RiskShield Analytics"
+  ],
+  firstNames: [
+    "Alex", "Jordan", "Casey", "Morgan", "Riley",
+    "Taylor", "Cameron", "Jamie", "Quinn", "Sage"
+  ],
+  lastNames: [
+    "Anderson", "Chen", "Johnson", "Williams", "Brown",
+    "Davis", "Miller", "Wilson", "Moore", "Taylor"
+  ]
+} as const;
+
+/**
+ * Step 2: Interactive Demo Customization
+ * 
+ * Comprehensive form for personalizing the demo experience based on
+ * the selected persona from Step 1. Implements field-level control
+ * with random/custom toggles and persona-specific options.
  */
 const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   console.log('[DemoStep2] Rendering interactive demo', { selectedPersona: selectedPersona?.id });
+  
+  // ========================================
+  // STATE MANAGEMENT
+  // ========================================
+  
+  /**
+   * Form state management with proper TypeScript typing
+   * Includes default values and persona-specific configurations
+   */
+  const [formData, setFormData] = useState<DemoCustomizationForm>(() => {
+    const randomCompany = DEMO_DATA_GENERATORS.companyNames[
+      Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
+    ];
+    const randomFirstName = DEMO_DATA_GENERATORS.firstNames[
+      Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
+    ];
+    const randomLastName = DEMO_DATA_GENERATORS.lastNames[
+      Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
+    ];
+    
+    return {
+      persona: selectedPersona?.title || '',
+      companyName: randomCompany,
+      companyNameControl: 'random',
+      userFullName: `${randomFirstName} ${randomLastName}`,
+      userFullNameControl: 'random',
+      userEmail: generateEmailFromData(randomFirstName, randomLastName, randomCompany),
+      emailInviteEnabled: false, // Default to off for persona-specific features
+      isDemoCompany: true        // Default to on as specified
+    };
+  });
+  
+  // ========================================
+  // UTILITY FUNCTIONS
+  // ========================================
+  
+  /**
+   * Generates email address from user name and company
+   * Follows the pattern: firstletter + lastname @ companydomain.com
+   * 
+   * @param firstName - User's first name
+   * @param lastName - User's last name  
+   * @param companyName - Company name for domain generation
+   * @returns Generated email address
+   */
+  function generateEmailFromData(firstName: string, lastName: string, companyName: string): string {
+    const firstLetter = firstName.charAt(0).toLowerCase();
+    const cleanLastName = lastName.toLowerCase();
+    const cleanCompany = companyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .replace(/financial|capital|partners|banking|analytics/g, '')
+      .trim();
+    
+    return `${firstLetter}${cleanLastName}@${cleanCompany}.com`;
+  }
+  
+  /**
+   * Generates new random values for specified fields
+   * Updates form state with fresh random data
+   */
+  function generateRandomValues(fields: Array<'companyName' | 'userFullName'>): void {
+    const updates: Partial<DemoCustomizationForm> = {};
+    
+    if (fields.includes('companyName')) {
+      updates.companyName = DEMO_DATA_GENERATORS.companyNames[
+        Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
+      ];
+    }
+    
+    if (fields.includes('userFullName')) {
+      const firstName = DEMO_DATA_GENERATORS.firstNames[
+        Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
+      ];
+      const lastName = DEMO_DATA_GENERATORS.lastNames[
+        Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
+      ];
+      updates.userFullName = `${firstName} ${lastName}`;
+    }
+    
+    setFormData(prev => {
+      const newData = { ...prev, ...updates };
+      
+      // Auto-update email when name or company changes
+      if (updates.companyName || updates.userFullName) {
+        const [firstName, lastName] = newData.userFullName.split(' ');
+        newData.userEmail = generateEmailFromData(firstName, lastName, newData.companyName);
+      }
+      
+      return newData;
+    });
+  }
+  
+  /**
+   * Determines if persona-specific fields should be displayed
+   * Different personas have different available options
+   */
+  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany'): boolean {
+    if (!selectedPersona) return false;
+    
+    // All personas currently support both fields
+    // This can be customized based on persona requirements
+    return true;
+  }
+  
+  // ========================================
+  // EVENT HANDLERS
+  // ========================================
+  
+  /**
+   * Handles field control type changes (random/custom toggles)
+   * Manages the transition between random and custom field states
+   */
+  const handleControlTypeChange = (
+    field: 'companyNameControl' | 'userFullNameControl',
+    newType: 'random' | 'custom'
+  ) => {
+    setFormData(prev => {
+      const updates = { ...prev, [field]: newType };
+      
+      // When switching to custom, clear the field for user input
+      if (newType === 'custom') {
+        if (field === 'companyNameControl') {
+          updates.companyName = '';
+        } else if (field === 'userFullNameControl') {
+          updates.userFullName = '';
+        }
+      }
+      // When switching to random, generate new random value
+      else if (newType === 'random') {
+        if (field === 'companyNameControl') {
+          generateRandomValues(['companyName']);
+          return prev; // generateRandomValues will update state
+        } else if (field === 'userFullNameControl') {
+          generateRandomValues(['userFullName']);
+          return prev; // generateRandomValues will update state
+        }
+      }
+      
+      return updates;
+    });
+  };
+  
+  /**
+   * Handles direct field value changes for custom inputs
+   * Updates form state and auto-generates dependent fields
+   */
+  const handleFieldChange = (field: keyof DemoCustomizationForm, value: string | boolean) => {
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Auto-update email when name or company changes
+      if (field === 'companyName' || field === 'userFullName') {
+        const [firstName, lastName] = newData.userFullName.split(' ');
+        if (firstName && lastName) {
+          newData.userEmail = generateEmailFromData(firstName, lastName, newData.companyName);
+        }
+      }
+      
+      return newData;
+    });
+  };
+  
+  // ========================================
+  // RENDER
+  // ========================================
   
   return (
     <div className="h-[760px] flex flex-col">
@@ -386,7 +604,199 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       <div className="flex-1 space-y-6">
         {selectedPersona ? (
           <div className="space-y-4">
-            {/* Space for persona-specific customization components */}
+            {/* Demo Customization Form */}
+            <Card className="p-6">
+              <div className="space-y-6">
+                
+                {/* 1. Persona Field (Locked) */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Selected Persona
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.persona}
+                        disabled
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-20 flex justify-end">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Locked</span>
+                  </div>
+                </div>
+                
+                {/* 2. Company Name Field (Random/Custom) */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.companyName}
+                        onChange={(e) => handleFieldChange('companyName', e.target.value)}
+                        disabled={formData.companyNameControl === 'random'}
+                        placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
+                        className={cn(
+                          "w-full px-3 py-2 border border-gray-300 rounded-md",
+                          formData.companyNameControl === 'random' 
+                            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
+                            : "bg-white text-gray-900"
+                        )}
+                      />
+                      {formData.companyNameControl === 'random' && (
+                        <button
+                          type="button"
+                          onClick={() => generateRandomValues(['companyName'])}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <Shuffle className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-20 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleControlTypeChange('companyNameControl', 
+                        formData.companyNameControl === 'random' ? 'custom' : 'random'
+                      )}
+                      className={cn(
+                        "text-xs px-2 py-1 rounded transition-colors",
+                        formData.companyNameControl === 'random'
+                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      )}
+                    >
+                      {formData.companyNameControl === 'random' ? 'Random' : 'Custom'}
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 3. User Full Name Field (Random/Custom) */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      User Full Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.userFullName}
+                        onChange={(e) => handleFieldChange('userFullName', e.target.value)}
+                        disabled={formData.userFullNameControl === 'random'}
+                        placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
+                        className={cn(
+                          "w-full px-3 py-2 border border-gray-300 rounded-md",
+                          formData.userFullNameControl === 'random' 
+                            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
+                            : "bg-white text-gray-900"
+                        )}
+                      />
+                      {formData.userFullNameControl === 'random' && (
+                        <button
+                          type="button"
+                          onClick={() => generateRandomValues(['userFullName'])}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <Shuffle className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-20 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleControlTypeChange('userFullNameControl', 
+                        formData.userFullNameControl === 'random' ? 'custom' : 'random'
+                      )}
+                      className={cn(
+                        "text-xs px-2 py-1 rounded transition-colors",
+                        formData.userFullNameControl === 'random'
+                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      )}
+                    >
+                      {formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 4. User Email Field (Auto-generated, Locked) */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      User Email
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={formData.userEmail}
+                        disabled
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-generated from name and company
+                    </p>
+                  </div>
+                  <div className="w-20 flex justify-end">
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Auto</span>
+                  </div>
+                </div>
+                
+                {/* 5. Email Invite Toggle (Persona-specific) */}
+                {shouldShowPersonaSpecificField('emailInvite') && (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Send Email Invite
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Send demo invitation email to the generated address
+                      </p>
+                    </div>
+                    <div className="w-20 flex justify-end">
+                      <Switch
+                        checked={formData.emailInviteEnabled}
+                        onCheckedChange={(checked) => handleFieldChange('emailInviteEnabled', checked)}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* 6. Demo Company Toggle (Persona-specific) */}
+                {shouldShowPersonaSpecificField('demoCompany') && (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Use Demo Company
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Use pre-configured demo company data for the experience
+                      </p>
+                    </div>
+                    <div className="w-20 flex justify-end">
+                      <Switch
+                        checked={formData.isDemoCompany}
+                        onCheckedChange={(checked) => handleFieldChange('isDemoCompany', checked)}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            </Card>
           </div>
         ) : (
           <Card className="p-6">
