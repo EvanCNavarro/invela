@@ -1678,7 +1678,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     <span className="text-lg font-medium text-gray-700">Setting up your demo environment...</span>
                   </div>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                  <div className="space-y-2 flex-1 overflow-y-auto">
                     {getLoadingSteps(formData).map((step: any, index: number) => (
                       <div key={step.id} className={`flex items-center space-x-3 transition-all duration-500 px-2 py-1 rounded ${
                         index < loadingStep ? 'opacity-100' : 
