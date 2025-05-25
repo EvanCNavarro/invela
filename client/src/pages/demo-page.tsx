@@ -519,7 +519,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       emailInviteEnabled: false, // Default to off for persona-specific features
       isDemoCompany: true,       // Default to on as specified
       riskProfile: randomRiskProfile,
-      riskProfileControl: 'random'
+      riskProfileControl: 'random',
+      companySize: 'medium' as const // Default company size for accredited recipients
     };
   });
   
@@ -733,8 +734,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     
     // Persona-specific fields with multiple tags
     emailInvite: ['new-data-recipient', 'accredited-data-recipient', 'data-provider', 'invela-admin'],
-    demoCompany: ['new-data-recipient', 'accredited-data-recipient'],
-    riskProfile: ['accredited-data-recipient']  // Risk assessment exclusive to advanced data recipients
+    demoCompany: ['new-data-recipient'],  // Removed accredited-data-recipient
+    riskProfile: ['accredited-data-recipient'],  // Risk assessment exclusive to advanced data recipients
+    companySize: ['accredited-data-recipient']   // Company size selection for accredited recipients
   };
 
   /**
@@ -1217,7 +1219,40 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 </div>
               )}
               
-              {/* 6. Email Invite Toggle */}
+              {/* 6. Company Size Toggle - Accredited Data Recipients Only */}
+              {shouldShowPersonaSpecificField('companySize') && (
+                <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
+                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Company Size</span>
+                    <ValidationIcon status="valid" />
+                  </div>
+                  <div className="col-span-8 flex items-center">
+                    <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                      {[
+                        { value: 'small', label: 'Small' },
+                        { value: 'medium', label: 'Medium' },
+                        { value: 'large', label: 'Large' },
+                        { value: 'extra-large', label: 'XL' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => handleFieldChange('companySize', option.value)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                            formData.companySize === option.value
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'bg-transparent text-gray-600 hover:bg-white hover:shadow-sm'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* 7. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                   <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
