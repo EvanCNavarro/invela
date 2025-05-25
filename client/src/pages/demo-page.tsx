@@ -1347,42 +1347,49 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
   
   console.log('[DemoStep3] Rendering results and next steps');
   
-  // Individual configuration loading steps - each data point gets its own loading indicator
+  // Individual configuration loading steps with field targeting for highlighting
   const getLoadingSteps = (formData: any) => {
     const steps = [
       // Company Configuration
-      { id: 'company-profile', label: `Creating "${formData?.companyName}" profile`, category: 'company', description: 'Setting up organizational structure' },
-      { id: 'company-settings', label: 'Applying company preferences', category: 'company', description: 'Configuring organizational settings' },
+      { id: 'company-profile', label: `Creating "${formData?.companyName}" profile`, category: 'company', targetField: 'companyName', description: 'Setting up organizational structure' },
+      { id: 'company-settings', label: 'Applying company preferences', category: 'company', targetField: null, description: 'Configuring organizational settings' },
     ];
 
     // Add persona-specific company steps
     if (selectedPersona?.id === 'accredited-data-recipient') {
       steps.push(
-        { id: 'company-size', label: `Setting company size to ${formData?.companySize?.replace('-', ' ')}`, category: 'company', description: 'Configuring organizational scale' },
-        { id: 'risk-profile', label: `Applying risk profile (${formData?.riskProfile}/100)`, category: 'company', description: 'Setting risk tolerance levels' }
+        { id: 'company-size', label: `Setting company size to ${formData?.companySize?.replace('-', ' ')}`, category: 'company', targetField: 'companySize', description: 'Configuring organizational scale' },
+        { id: 'risk-profile', label: `Applying risk profile (${formData?.riskProfile}/100)`, category: 'company', targetField: 'riskProfile', description: 'Setting risk tolerance levels' }
       );
     }
 
     if (selectedPersona?.id === 'new-data-recipient' && formData?.isDemoCompany) {
-      steps.push({ id: 'demo-data', label: 'Loading demo company data', category: 'company', description: 'Pre-populating sample information' });
+      steps.push({ id: 'demo-data', label: 'Loading demo company data', category: 'company', targetField: 'demoData', description: 'Pre-populating sample information' });
     }
 
     // User Account Configuration
     steps.push(
-      { id: 'user-account', label: `Creating account for ${formData?.userFullName}`, category: 'user', description: 'Setting up user profile' },
-      { id: 'user-permissions', label: `Applying ${selectedPersona?.title} permissions`, category: 'user', description: 'Configuring access levels' },
-      { id: 'user-email', label: `Setting up ${formData?.userEmail}`, category: 'user', description: 'Configuring email preferences' }
+      { id: 'user-account', label: `Creating account for ${formData?.userFullName}`, category: 'user', targetField: 'userFullName', description: 'Setting up user profile' },
+      { id: 'user-permissions', label: `Applying ${selectedPersona?.title} permissions`, category: 'user', targetField: 'accessLevel', description: 'Configuring access levels' },
+      { id: 'user-email', label: `Setting up ${formData?.userEmail}`, category: 'user', targetField: 'userEmail', description: 'Configuring email preferences' }
     );
 
     // Email invitation if enabled
     if (formData?.emailInviteEnabled) {
-      steps.push({ id: 'email-invite', label: 'Sending welcome email', category: 'user', description: 'Delivering access credentials' });
+      steps.push({ id: 'email-invite', label: 'Sending welcome email', category: 'user', targetField: 'emailInvitation', description: 'Delivering access credentials' });
     }
 
     // Final environment setup
-    steps.push({ id: 'environment', label: 'Initializing demo environment', category: 'system', description: 'Preparing platform access' });
+    steps.push({ id: 'environment', label: 'Initializing demo environment', category: 'system', targetField: null, description: 'Preparing platform access' });
 
     return steps;
+  };
+
+  // Get the currently active target field for highlighting
+  const getCurrentTargetField = () => {
+    const steps = getLoadingSteps(formData);
+    const currentStep = steps[loadingStep - 1];
+    return currentStep?.targetField || null;
   };
   
   const handleStartDemo = async () => {
@@ -1465,7 +1472,13 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                       <h4 className="text-xs font-medium text-gray-700 uppercase tracking-wide">Company</h4>
                     </div>
                     
-                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                    <div className={`rounded p-2 border transition-all duration-500 ${
+                      isLoading && getCurrentTargetField() === 'companyName' 
+                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'companyName') < loadingStep - 1
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
                       <div className="text-xs text-gray-500 mb-1">Organization</div>
                       <div className="text-sm font-medium text-gray-900">{formData.companyName}</div>
                     </div>
@@ -1473,11 +1486,23 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     {/* Company Size for Accredited Data Recipients */}
                     {selectedPersona.id === 'accredited-data-recipient' && (
                       <>
-                        <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                        <div className={`rounded p-2 border transition-all duration-500 ${
+                          isLoading && getCurrentTargetField() === 'companySize' 
+                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                            : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'companySize') < loadingStep - 1
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-gray-50 border-gray-100'
+                        }`}>
                           <div className="text-xs text-gray-500 mb-1">Size</div>
                           <div className="text-sm font-medium text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</div>
                         </div>
-                        <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                        <div className={`rounded p-2 border transition-all duration-500 ${
+                          isLoading && getCurrentTargetField() === 'riskProfile' 
+                            ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                            : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'riskProfile') < loadingStep - 1
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-gray-50 border-gray-100'
+                        }`}>
                           <div className="text-xs text-gray-500 mb-1">Risk Profile</div>
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-medium text-gray-900">{formData.riskProfile}/100</span>
@@ -1494,7 +1519,13 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     
                     {/* Demo Company for New Data Recipients */}
                     {selectedPersona.id === 'new-data-recipient' && (
-                      <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                      <div className={`rounded p-2 border transition-all duration-500 ${
+                        isLoading && getCurrentTargetField() === 'demoData' 
+                          ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                          : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'demoData') < loadingStep - 1
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-gray-50 border-gray-100'
+                      }`}>
                         <div className="text-xs text-gray-500 mb-1">Demo Data</div>
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                           formData.isDemoCompany ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
@@ -1512,22 +1543,46 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                       <h4 className="text-xs font-medium text-gray-700 uppercase tracking-wide">User</h4>
                     </div>
                     
-                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                    <div className={`rounded p-2 border transition-all duration-500 ${
+                      isLoading && getCurrentTargetField() === 'userFullName' 
+                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'userFullName') < loadingStep - 1
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
                       <div className="text-xs text-gray-500 mb-1">Full Name</div>
                       <div className="text-sm font-medium text-gray-900">{formData.userFullName}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                    <div className={`rounded p-2 border transition-all duration-500 ${
+                      isLoading && getCurrentTargetField() === 'userEmail' 
+                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'userEmail') < loadingStep - 1
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
                       <div className="text-xs text-gray-500 mb-1">Email</div>
                       <div className="text-sm font-medium text-gray-900 break-all">{formData.userEmail}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                    <div className={`rounded p-2 border transition-all duration-500 ${
+                      isLoading && getCurrentTargetField() === 'accessLevel' 
+                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'accessLevel') < loadingStep - 1
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
                       <div className="text-xs text-gray-500 mb-1">Access Level</div>
                       <div className="text-sm font-medium text-gray-900">{selectedPersona.title}</div>
                     </div>
                     
-                    <div className="bg-gray-50 rounded p-2 border border-gray-100">
+                    <div className={`rounded p-2 border transition-all duration-500 ${
+                      isLoading && getCurrentTargetField() === 'emailInvitation' 
+                        ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
+                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'emailInvitation') < loadingStep - 1
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-100'
+                    }`}>
                       <div className="text-xs text-gray-500 mb-1">Email Invitation</div>
                       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                         formData.emailInviteEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
@@ -1554,52 +1609,39 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
           )}
         </div>
 
-        {/* BOTTOM SECTION: Demo Preparation Loading */}
-        <div className="flex-shrink-0 h-32">
+        {/* BOTTOM SECTION: Demo Launch Preparation */}
+        <div className="flex-shrink-0 h-20">
           {isLoading ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-3 h-full">
-              <div className="flex items-center space-x-2 mb-3">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <h4 className="text-sm font-medium text-gray-900">Launching Demo</h4>
+            <div className="bg-white rounded-lg border border-gray-200 p-2 h-full">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <h4 className="text-xs font-medium text-gray-900">Launching Demo</h4>
               </div>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
+              <div className="space-y-0.5 max-h-12 overflow-y-auto">
                 {getLoadingSteps(formData).map((step: any, index: number) => (
-                  <div key={step.id} className={`flex items-center space-x-2 transition-all duration-300 ${
+                  <div key={step.id} className={`flex items-center space-x-1.5 transition-all duration-300 ${
                     index < loadingStep ? 'opacity-100' : 
-                    index === loadingStep ? 'opacity-100 bg-blue-50 -mx-1 px-1 py-0.5 rounded' : 
-                    'opacity-40'
+                    index === loadingStep ? 'opacity-100 bg-blue-50 -mx-0.5 px-0.5 py-0.5 rounded' : 
+                    'opacity-30'
                   }`}>
-                    <div className={`w-2 h-2 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-1.5 h-1.5 rounded-full flex items-center justify-center flex-shrink-0 ${
                       index < loadingStep ? 'bg-green-500' : 
-                      index === loadingStep ? 'bg-blue-500' : 
+                      index === loadingStep ? 'bg-blue-500 animate-pulse' : 
                       'bg-gray-300'
                     }`}>
-                      {index < loadingStep ? (
-                        <Check className="w-1 h-1 text-white" />
-                      ) : index === loadingStep ? (
-                        <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
-                      ) : null}
                     </div>
                     <div className="text-xs flex-1">
                       <div className={`font-medium ${
-                        index === loadingStep ? 'text-blue-900' : 'text-gray-700'
+                        index === loadingStep ? 'text-blue-900' : 
+                        index < loadingStep ? 'text-green-700' : 'text-gray-500'
                       }`}>{step.label}</div>
                     </div>
-                    {step.category && (
-                      <div className={`px-1 py-0.5 rounded text-xs font-medium ${
-                        step.category === 'company' ? 'bg-gray-100 text-gray-600' :
-                        step.category === 'user' ? 'bg-gray-100 text-gray-600' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {step.category}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 h-full flex items-center justify-center">
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-2 h-full flex items-center justify-center">
               <p className="text-xs text-gray-500">Ready to launch your personalized demo experience.</p>
             </div>
           )}
