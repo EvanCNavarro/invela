@@ -463,36 +463,93 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   
   /**
    * Validates individual field values and returns validation status
+   * Real-time validation that responds to actual form state changes
    */
   const getFieldValidationStatus = (fieldName: string): 'valid' | 'invalid' | 'in-progress' => {
+    console.log(`[DemoStep2] Validating field: ${fieldName}`, { 
+      value: formData[fieldName as keyof DemoCustomizationForm],
+      formData 
+    });
+
     switch (fieldName) {
       case 'persona':
-        return formData.persona ? 'valid' : 'invalid';
+        const personaValid = formData.persona && formData.persona.length > 0;
+        console.log(`[DemoStep2] Persona validation: ${personaValid ? 'valid' : 'invalid'}`);
+        return personaValid ? 'valid' : 'invalid';
+        
       case 'companyName':
-        if (!formData.companyName) return 'invalid';
-        if (formData.companyName.length < 2) return 'in-progress';
+        const companyName = formData.companyName?.trim() || '';
+        if (companyName.length === 0) {
+          console.log(`[DemoStep2] Company name validation: invalid (empty)`);
+          return 'invalid';
+        }
+        if (companyName.length < 2) {
+          console.log(`[DemoStep2] Company name validation: in-progress (${companyName.length} chars)`);
+          return 'in-progress';
+        }
+        console.log(`[DemoStep2] Company name validation: valid (${companyName.length} chars)`);
         return 'valid';
+        
       case 'userFullName':
-        if (!formData.userFullName) return 'invalid';
-        if (formData.userFullName.length < 3 || !formData.userFullName.includes(' ')) return 'in-progress';
+        const fullName = formData.userFullName?.trim() || '';
+        if (fullName.length === 0) {
+          console.log(`[DemoStep2] Full name validation: invalid (empty)`);
+          return 'invalid';
+        }
+        const nameParts = fullName.split(' ').filter(part => part.length > 0);
+        if (fullName.length < 3 || nameParts.length < 2) {
+          console.log(`[DemoStep2] Full name validation: in-progress (${fullName.length} chars, ${nameParts.length} parts)`);
+          return 'in-progress';
+        }
+        console.log(`[DemoStep2] Full name validation: valid (${fullName.length} chars, ${nameParts.length} parts)`);
         return 'valid';
+        
       case 'userEmail':
-        return formData.userEmail && formData.userEmail.includes('@') ? 'valid' : 'invalid';
+        const email = formData.userEmail?.trim() || '';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email.length === 0) {
+          console.log(`[DemoStep2] Email validation: invalid (empty)`);
+          return 'invalid';
+        }
+        if (email.includes('@') && emailRegex.test(email)) {
+          console.log(`[DemoStep2] Email validation: valid (${email})`);
+          return 'valid';
+        }
+        console.log(`[DemoStep2] Email validation: in-progress (${email})`);
+        return 'in-progress';
+        
       default:
+        console.log(`[DemoStep2] Unknown field validation: ${fieldName} - defaulting to invalid`);
         return 'invalid';
     }
   };
   
   /**
    * Checks if the entire form is valid for progression
+   * Uses real-time validation status for all required fields
    */
   const isFormValid = (): boolean => {
-    return (
-      getFieldValidationStatus('persona') === 'valid' &&
-      getFieldValidationStatus('companyName') === 'valid' &&
-      getFieldValidationStatus('userFullName') === 'valid' &&
-      getFieldValidationStatus('userEmail') === 'valid'
-    );
+    const validationResults = {
+      persona: getFieldValidationStatus('persona'),
+      companyName: getFieldValidationStatus('companyName'),
+      userFullName: getFieldValidationStatus('userFullName'),
+      userEmail: getFieldValidationStatus('userEmail')
+    };
+    
+    const allValid = Object.values(validationResults).every(status => status === 'valid');
+    
+    console.log('[DemoStep2] Form validation check:', {
+      validationResults,
+      allValid,
+      formData: {
+        persona: formData.persona,
+        companyName: formData.companyName,
+        userFullName: formData.userFullName,
+        userEmail: formData.userEmail
+      }
+    });
+    
+    return allValid;
   };
   
   /**
@@ -556,9 +613,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   
   /**
    * Generates new random values for specified fields
-   * Updates form state with fresh random data
+   * Updates form state with fresh random data and triggers validation
    */
   function generateRandomValues(fields: Array<'companyName' | 'userFullName'>): void {
+    console.log(`[DemoStep2] Generating random values for fields:`, fields);
     const updates: Partial<DemoCustomizationForm> = {};
     
     if (fields.includes('companyName')) {
@@ -660,8 +718,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   /**
    * Handles direct field value changes for custom inputs
    * Updates form state and auto-generates dependent fields
+   * Triggers real-time validation updates
    */
   const handleFieldChange = (field: keyof DemoCustomizationForm, value: string | boolean) => {
+    console.log(`[DemoStep2] Field change: ${field} = ${value}`);
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
@@ -670,8 +730,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         const [firstName, lastName] = newData.userFullName.split(' ');
         if (firstName && lastName) {
           newData.userEmail = generateEmailFromData(firstName, lastName, newData.companyName);
+          console.log(`[DemoStep2] Auto-generated email: ${newData.userEmail}`);
         }
       }
+      
+      // Log the updated form state for validation tracking
+      console.log(`[DemoStep2] Form state updated:`, {
+        field,
+        newValue: value,
+        updatedFormData: newData
+      });
       
       return newData;
     });
