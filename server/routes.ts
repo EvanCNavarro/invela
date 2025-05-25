@@ -48,6 +48,9 @@ import { requireAuth, optionalAuth } from './middleware/auth';
 // File system and upload handling
 import path from 'path';
 import fs from 'fs';
+
+// Demo API routes
+import demoApiRoutes from './demo-api';
 import { logoUpload } from './middleware/upload';
 
 // Business logic and services
