@@ -511,13 +511,21 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     
     if (status === 'in-progress') {
       return (
-        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-yellow-100">
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-yellow-100 border border-yellow-200">
           <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
         </div>
       );
     }
     
-    return null; // No icon for invalid state
+    if (status === 'invalid') {
+      return (
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-yellow-100 border border-yellow-200">
+          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+        </div>
+      );
+    }
+    
+    return null;
   };
   
   /**
@@ -922,8 +930,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 5. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
-                  <div className="col-span-4 flex items-center justify-end pr-2">
+                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
                     <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
+                    <ValidationIcon status="valid" />
                   </div>
                   <div className="col-span-8 flex items-center">
                     <div className="flex items-center space-x-3">
@@ -942,8 +951,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 6. Demo Company Toggle */}
               {shouldShowPersonaSpecificField('demoCompany') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 hover:bg-gray-50/30 transition-colors h-[64px]">
-                  <div className="col-span-4 flex items-center justify-end pr-2">
+                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
                     <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
+                    <ValidationIcon status="valid" />
                   </div>
                   <div className="col-span-8 flex items-center">
                     <div className="flex items-center space-x-3">
