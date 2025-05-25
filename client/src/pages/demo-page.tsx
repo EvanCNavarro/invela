@@ -498,13 +498,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
     ];
     
+    // Invela Admin gets locked company name
+    const finalCompanyName = selectedPersona?.id === 'invela-admin' ? 'Invela' : randomCompany;
+    
     return {
       persona: selectedPersona?.title || '',
-      companyName: randomCompany,
+      companyName: finalCompanyName,
       companyNameControl: 'random',
       userFullName: `${randomFirstName} ${randomLastName}`,
       userFullNameControl: 'random',
-      userEmail: generateEmailFromDataInit(randomFirstName, randomLastName, randomCompany),
+      userEmail: generateEmailFromDataInit(randomFirstName, randomLastName, finalCompanyName),
       emailInviteEnabled: false, // Default to off for persona-specific features
       isDemoCompany: true        // Default to on as specified
     };
@@ -716,6 +719,42 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     emailInvite: ['new-data-recipient', 'accredited-data-recipient', 'data-provider', 'invela-admin'],
     demoCompany: ['new-data-recipient', 'accredited-data-recipient']
   };
+
+  /**
+   * Determines if a field should be locked (non-editable) for specific personas
+   */
+  function isFieldLocked(fieldName: string): boolean {
+    if (!selectedPersona) return false;
+    
+    // Invela Admin has locked company name (umbrella company)
+    if (fieldName === 'companyName' && selectedPersona.id === 'invela-admin') {
+      return true;
+    }
+    
+    // Persona field is always locked
+    if (fieldName === 'persona') {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Gets the locked value for a field if it should be locked
+   */
+  function getLockedFieldValue(fieldName: string): string {
+    if (!selectedPersona) return '';
+    
+    if (fieldName === 'companyName' && selectedPersona.id === 'invela-admin') {
+      return 'Invela';
+    }
+    
+    if (fieldName === 'persona') {
+      return selectedPersona.title;
+    }
+    
+    return '';
+  }
 
   /**
    * Determines if any field should be displayed based on persona tags
