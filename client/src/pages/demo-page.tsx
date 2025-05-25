@@ -1446,7 +1446,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       <div className="flex-1 flex flex-col space-y-3 pt-6">
         
         {/* THREE-TIERED STEP WIZARD */}
-        <div className="bg-white rounded-lg border border-gray-200 mb-4">
+        <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-3">
             <div className="flex items-center w-full">
               {/* Step 1: Review - Left */}
@@ -1489,7 +1489,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         </div>
 
         {/* DYNAMIC CONTENT SECTION */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 mt-3">
           {wizardStep === 'review' ? (
             // Review Stage - Show Configuration Details
             selectedPersona && formData ? (
