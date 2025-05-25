@@ -263,8 +263,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes (including demo API)
-await registerRoutes(app);
+// Register API routes (including demo API) - wrap in async function
+(async () => {
+  await registerRoutes(app);
+})();
 
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
