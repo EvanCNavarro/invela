@@ -14,7 +14,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { db } from '@db';
-import { companies, users, sessions } from '@db/schema';
+import { companies, users } from '@db/schema';
 import { eq } from 'drizzle-orm';
 
 const router = Router();
