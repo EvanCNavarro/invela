@@ -4093,6 +4093,13 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Removed Storybook static files - using custom component library
 
+  // Register demo API routes
+  import('./demo-api').then(({ default: demoApiRoutes }) => {
+    app.use('/api', demoApiRoutes);
+    routeRegistrationTracker.register('DemoAPI');
+    console.log('[Routes] Demo API routes registered successfully');
+  });
+
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
   return app;

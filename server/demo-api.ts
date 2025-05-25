@@ -37,19 +37,15 @@ router.post('/demo/company/create', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create company record
+    // Create company record using actual database fields
     const [company] = await db.insert(companies).values({
       name,
-      status: 'active',
-      // Add demo-specific fields based on persona
-      ...(type === 'demo' && { isDemoAccount: true }),
-      ...(riskProfile && { riskProfile }),
-      ...(companySize && { size: companySize }),
-      metadata: {
-        createdViaDemo: true,
-        persona,
-        setupTimestamp: new Date().toISOString()
-      }
+      description: `Demo company created for ${persona} persona`,
+      category: 'FinTech', // Default category for demo companies
+      is_demo: type === 'demo',
+      available_tabs: ['task-center'], // Basic tab access
+      revenue_tier: companySize === 'large' ? 'large' : companySize === 'medium' ? 'medium' : 'small',
+      accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING'
     }).returning();
 
     // Broadcast completion event
@@ -113,21 +109,16 @@ router.post('/demo/user/create', async (req, res) => {
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || firstName;
 
-    // Create user record
+    // Create user record using actual database fields
     const [user] = await db.insert(users).values({
       email,
       password: hashedPassword,
-      firstName,
-      lastName,
-      companyId: parseInt(companyId.replace('comp_', '')), // Convert from demo ID format
-      role: role || 'user',
-      status: 'active',
-      metadata: {
-        createdViaDemo: true,
-        permissions,
-        tempPassword,
-        setupTimestamp: new Date().toISOString()
-      }
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      company_id: typeof companyId === 'string' && companyId.startsWith('comp_') 
+        ? parseInt(companyId.replace('comp_', '')) 
+        : parseInt(companyId)
     }).returning();
 
     res.json({
