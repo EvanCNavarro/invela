@@ -1461,27 +1461,104 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         </p>
       </div>
       
-      {/* MAIN CONTENT AREA - Two Section Layout */}
-      <div className="flex-1 flex flex-col space-y-3 pt-6">
-        
-        {/* TOP SECTION: Compact Configuration Review */}
-        <div className="flex-1 min-h-0">
-          {selectedPersona && formData ? (
-            <div className="bg-white rounded-lg border border-gray-200 h-full overflow-auto">
-              <div className="p-3 space-y-3">
-                {/* Persona Summary with larger icon */}
-                <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
-                  <div className={`w-8 h-8 ${selectedPersona.bgColor} rounded flex items-center justify-center`}>
-                    <selectedPersona.icon className={`w-4 h-4 ${selectedPersona.iconColor}`} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900">{selectedPersona.title}</h3>
-                    <p className="text-sm text-gray-500">{selectedPersona.description}</p>
-                  </div>
-                </div>
+      {/* THREE-TIERED STEP WIZARD */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-4">
+        <div className="p-4">
+          <div className="flex items-center justify-center space-x-8">
+            {/* Step 1: Review */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                wizardStep === 'review' ? 'bg-blue-500 text-white' : 
+                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500 text-white' : 
+                'bg-gray-200 text-gray-500'
+              }`}>
+                {wizardStep === 'setup' || wizardStep === 'launch' ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </div>
+              <span className={`text-sm font-medium ${
+                wizardStep === 'review' ? 'text-blue-600' : 
+                wizardStep === 'setup' || wizardStep === 'launch' ? 'text-green-600' : 
+                'text-gray-500'
+              }`}>
+                Review
+              </span>
+            </div>
 
-                {/* Configuration Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Connector */}
+            <div className={`h-0.5 w-16 transition-colors ${
+              wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+            }`}></div>
+
+            {/* Step 2: System Setup */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                wizardStep === 'setup' ? 'bg-blue-500 text-white' : 
+                wizardStep === 'launch' ? 'bg-green-500 text-white' : 
+                'bg-gray-200 text-gray-500'
+              }`}>
+                {wizardStep === 'launch' ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Settings className="w-4 h-4" />
+                )}
+              </div>
+              <span className={`text-sm font-medium ${
+                wizardStep === 'setup' ? 'text-blue-600' : 
+                wizardStep === 'launch' ? 'text-green-600' : 
+                'text-gray-500'
+              }`}>
+                System Setup
+              </span>
+            </div>
+
+            {/* Connector */}
+            <div className={`h-0.5 w-16 transition-colors ${
+              wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
+            }`}></div>
+
+            {/* Step 3: Launch */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                wizardStep === 'launch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                <Rocket className="w-4 h-4" />
+              </div>
+              <span className={`text-sm font-medium ${
+                wizardStep === 'launch' ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Launch
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA - Dynamic Based on Wizard Step */}
+      <div className="flex-1 flex flex-col space-y-3">
+        
+        {/* DYNAMIC CONTENT SECTION */}
+        <div className="flex-1 min-h-0">
+          {wizardStep === 'review' ? (
+            // Review Stage - Show Configuration Details
+            selectedPersona && formData ? (
+              <div className="bg-white rounded-lg border border-gray-200 h-full overflow-auto">
+                <div className="p-3 space-y-3">
+                  {/* Persona Summary with larger icon */}
+                  <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
+                    <div className={`w-8 h-8 ${selectedPersona.bgColor} rounded flex items-center justify-center`}>
+                      <selectedPersona.icon className={`w-4 h-4 ${selectedPersona.iconColor}`} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-900">{selectedPersona.title}</h3>
+                      <p className="text-sm text-gray-500">{selectedPersona.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Configuration Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Company Section */}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-1 mb-2">
@@ -1611,203 +1688,87 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                 </div>
               </div>
             </div>
-          ) : (
-            <Card className="h-full flex items-center justify-center">
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-gray-400" />
+            ) : (
+              <Card className="h-full flex items-center justify-center">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Demo Configuration</h3>
+                  <p className="text-gray-600 text-sm">
+                    Please go back to configure your demo experience
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Demo Configuration</h3>
-                <p className="text-gray-600 text-sm">
-                  Please go back to configure your demo experience
-                </p>
+              </Card>
+            )
+          ) : wizardStep === 'setup' ? (
+            // Setup Stage - Show Loading Progress
+            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+              <div className="p-4 flex-1 flex flex-col justify-center">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-lg font-medium text-gray-700">Setting up your demo environment...</span>
+                  </div>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {getLoadingSteps(formData).map((step: any, index: number) => (
+                      <div key={step.id} className={`flex items-center space-x-3 transition-all duration-500 px-2 py-1 rounded ${
+                        index < loadingStep ? 'opacity-100' : 
+                        index === loadingStep ? 'opacity-100 bg-blue-50' : 
+                        'opacity-50'
+                      }`}>
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                          index < loadingStep ? 'bg-green-500' : 
+                          index === loadingStep ? 'bg-blue-500 animate-pulse' : 
+                          'bg-gray-300'
+                        }`}></div>
+                        <div className={`text-sm font-medium ${
+                          index === loadingStep ? 'text-blue-900' : 
+                          index < loadingStep ? 'text-green-700' : 'text-gray-500'
+                        }`}>{step.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </Card>
+            </div>
+          ) : (
+            // Launch Stage - Brief rocket display
+            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+              <div className="p-4 flex-1 flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+                  <Rocket className="w-8 h-8 text-white" />
+                </div>
+                <span className="text-lg font-medium text-gray-700">Launching demo...</span>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* BOTTOM SECTION: Demo Launch Preparation */}
-        <div className="flex-shrink-0 h-20">
-          {isLoading ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-2 h-full">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <h4 className="text-xs font-medium text-gray-900">Launching Demo</h4>
-              </div>
-              <div className="space-y-0.5 max-h-12 overflow-y-auto">
-                {getLoadingSteps(formData).map((step: any, index: number) => (
-                  <div key={step.id} className={`flex items-center space-x-1.5 transition-all duration-300 ${
-                    index < loadingStep ? 'opacity-100' : 
-                    index === loadingStep ? 'opacity-100 bg-blue-50 -mx-0.5 px-0.5 py-0.5 rounded' : 
-                    'opacity-30'
-                  }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      index < loadingStep ? 'bg-green-500' : 
-                      index === loadingStep ? 'bg-blue-500 animate-pulse' : 
-                      'bg-gray-300'
-                    }`}>
-                    </div>
-                    <div className="text-xs flex-1">
-                      <div className={`font-medium ${
-                        index === loadingStep ? 'text-blue-900' : 
-                        index < loadingStep ? 'text-green-700' : 'text-gray-500'
-                      }`}>{step.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-2 h-full flex items-center justify-center">
-              <p className="text-xs text-gray-500">Ready to launch your personalized demo experience.</p>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* INTEGRATED WIZARD SECTION */}
+      {/* BUTTON SECTION - Consistent across all wizard steps */}
       <div className="flex-shrink-0">
-        <div className="bg-white rounded-lg border border-gray-200">
-          {/* Three-Tiered Step Wizard */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-center space-x-8">
-              {/* Step 1: Review */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'review' ? 'bg-blue-500 text-white' : 
-                  wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  {wizardStep === 'setup' || wizardStep === 'launch' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'review' ? 'text-blue-600' : 
-                  wizardStep === 'setup' || wizardStep === 'launch' ? 'text-green-600' : 
-                  'text-gray-500'
-                }`}>
-                  Review
-                </span>
-              </div>
-
-              {/* Connector */}
-              <div className={`h-0.5 w-16 transition-colors ${
-                wizardStep === 'setup' || wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
-              }`}></div>
-
-              {/* Step 2: System Setup */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'setup' ? 'bg-blue-500 text-white' : 
-                  wizardStep === 'launch' ? 'bg-green-500 text-white' : 
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  {wizardStep === 'launch' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Settings className="w-4 h-4" />
-                  )}
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'setup' ? 'text-blue-600' : 
-                  wizardStep === 'launch' ? 'text-green-600' : 
-                  'text-gray-500'
-                }`}>
-                  System Setup
-                </span>
-              </div>
-
-              {/* Connector */}
-              <div className={`h-0.5 w-16 transition-colors ${
-                wizardStep === 'launch' ? 'bg-green-500' : 'bg-gray-200'
-              }`}></div>
-
-              {/* Step 3: Launch */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  wizardStep === 'launch' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  <Rocket className="w-4 h-4" />
-                </div>
-                <span className={`text-sm font-medium ${
-                  wizardStep === 'launch' ? 'text-blue-600' : 'text-gray-500'
-                }`}>
-                  Launch
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Dynamic Content Based on Wizard Step */}
-          <div className="p-4">
-            {wizardStep === 'review' ? (
-              // Review Stage - Ready to Launch with Navigation
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Ready to launch your personalized demo experience.</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onBack}
-                    disabled={isLoading}
-                    className="h-8 px-3 text-xs"
-                  >
-                    <ArrowLeft className="w-3 h-3 mr-1" />
-                    Back
-                  </Button>
-                  <Button
-                    onClick={handleStartDemo}
-                    size="sm"
-                    disabled={isLoading}
-                    className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700"
-                  >
-                    Sign In
-                    <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            ) : wizardStep === 'setup' ? (
-              // Setup Stage - Show Loading Progress
-              <div className="space-y-3">
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium text-gray-700">Setting up your demo environment...</span>
-                </div>
-                <div className="space-y-1 max-h-20 overflow-y-auto">
-                  {getLoadingSteps(formData).map((step: any, index: number) => (
-                    <div key={step.id} className={`flex items-center space-x-2 transition-all duration-500 ${
-                      index < loadingStep ? 'opacity-100' : 
-                      index === loadingStep ? 'opacity-100 bg-blue-50 -mx-1 px-1 py-1 rounded' : 
-                      'opacity-40'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        index < loadingStep ? 'bg-green-500' : 
-                        index === loadingStep ? 'bg-blue-500 animate-pulse' : 
-                        'bg-gray-300'
-                      }`}></div>
-                      <div className={`text-xs font-medium ${
-                        index === loadingStep ? 'text-blue-900' : 
-                        index < loadingStep ? 'text-green-700' : 'text-gray-500'
-                      }`}>{step.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // Launch Stage - Brief rocket display
-              <div className="flex flex-col items-center space-y-2">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Rocket className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">Launching demo...</span>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            disabled={isLoading}
+            className="h-8 px-3 text-xs"
+          >
+            <ArrowLeft className="w-3 h-3 mr-1" />
+            Back
+          </Button>
+          <Button
+            onClick={handleStartDemo}
+            size="sm"
+            disabled={isLoading}
+            className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700"
+          >
+            Sign In
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
         </div>
       </div>
       
