@@ -561,11 +561,28 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       // When switching to random, generate new random value
       else if (newType === 'random') {
         if (field === 'companyNameControl') {
-          generateRandomValues(['companyName']);
-          return prev; // generateRandomValues will update state
+          const randomCompany = DEMO_DATA_GENERATORS.companyNames[
+            Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
+          ];
+          updates.companyName = randomCompany;
+          
+          // Also update email if needed
+          const firstPart = updates.userFullName.split(' ')[0] || '';
+          const lastPart = updates.userFullName.split(' ')[1] || '';
+          if (firstPart && lastPart) {
+            updates.userEmail = generateEmailFromData(firstPart, lastPart, randomCompany);
+          }
         } else if (field === 'userFullNameControl') {
-          generateRandomValues(['userFullName']);
-          return prev; // generateRandomValues will update state
+          const randomFirstName = DEMO_DATA_GENERATORS.firstNames[
+            Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
+          ];
+          const randomLastName = DEMO_DATA_GENERATORS.lastNames[
+            Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
+          ];
+          updates.userFullName = `${randomFirstName} ${randomLastName}`;
+          
+          // Also update email
+          updates.userEmail = generateEmailFromData(randomFirstName, randomLastName, updates.companyName);
         }
       }
       
