@@ -15,6 +15,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useDemoAssetPreloader } from "@/hooks/use-demo-asset-preloader";
 
 // ========================================
 // TYPE DEFINITIONS
@@ -154,6 +155,19 @@ const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
  */
 export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) {
   console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}`);
+  
+  // ========================================
+  // ASSET PRELOADING
+  // ========================================
+  
+  /**
+   * Initialize asset preloading for optimal step transition performance
+   * 
+   * This preloads the next step's animated GIF to eliminate loading delays
+   * when users navigate through the demo flow. The preloader automatically
+   * handles edge cases and cleanup.
+   */
+  useDemoAssetPreloader(currentStep);
 
   return (
     <div className={cn("h-full p-3", className)}>
