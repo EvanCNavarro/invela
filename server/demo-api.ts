@@ -15,7 +15,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { db } from '@db';
 import { companies, users } from '@db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { broadcastMessage } from './services/websocket';
 
 const router = Router();
@@ -249,11 +249,67 @@ function generateRiskClusters(riskScore: number) {
  * Creates a new company for demo purposes with specified configuration
  */
 router.post('/demo/company/create', async (req, res) => {
+  // ========================================
+  // REQUEST LOGGING & INITIAL VALIDATION
+  // ========================================
+  
+  console.log('[DemoAPI] Company creation request received at:', new Date().toISOString());
+  console.log('[DemoAPI] Request method:', req.method);
+  console.log('[DemoAPI] Request headers:', {
+    'content-type': req.headers['content-type'],
+    'content-length': req.headers['content-length'],
+    'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
+    'origin': req.headers.origin
+  });
+  console.log('[DemoAPI] Full request body received:', JSON.stringify(req.body, null, 2));
+  
   try {
     const { name, type, persona, riskProfile, companySize, metadata } = req.body;
 
-    console.log('[DemoAPI] Creating company with full payload:', JSON.stringify(req.body, null, 2));
-    console.log('[DemoAPI] Extracted fields:', { name, type, persona, companySize, riskProfile });
+    // ========================================
+    // INPUT VALIDATION WITH DETAILED LOGGING
+    // ========================================
+    
+    console.log('[DemoAPI] Validating input parameters...');
+    
+    if (!name || typeof name !== 'string') {
+      const errorDetails = {
+        field: 'name',
+        received: name,
+        type: typeof name,
+        expected: 'non-empty string'
+      };
+      console.error('[DemoAPI] Validation failed for name field:', errorDetails);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid company name',
+        details: 'Company name must be a non-empty string',
+        code: 'VALIDATION_ERROR',
+        field: 'name',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (!companySize || typeof companySize !== 'string') {
+      const errorDetails = {
+        field: 'companySize',
+        received: companySize,
+        type: typeof companySize,
+        expected: 'non-empty string'
+      };
+      console.error('[DemoAPI] Validation failed for companySize field:', errorDetails);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid company size',
+        details: 'Company size must be specified',
+        code: 'VALIDATION_ERROR',
+        field: 'companySize',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log('[DemoAPI] Input validation passed successfully');
+    console.log('[DemoAPI] Extracted and validated fields:', { name, type, persona, companySize, riskProfile });
 
     // IMMEDIATE ENTERPRISE CHECK - MUST BE FIRST
     if (companySize === 'extra-large') {
@@ -273,8 +329,34 @@ router.post('/demo/company/create', async (req, res) => {
       
       console.log(`[DemoAPI] Immediate enterprise generated: $${revenueAmount >= 1000000000 ? (revenueAmount / 1000000000).toFixed(1) + 'B' : (revenueAmount / 1000000).toFixed(0) + 'M'}, ${employeeCount} employees`);
       
-      // Create enterprise company directly
-      const insertResult = await db.insert(companies).values({
+      // ========================================
+      // DATABASE OPERATION WITH ERROR HANDLING
+      // ========================================
+      
+      console.log('[DemoAPI] Starting database insert operation for enterprise company');
+      console.log('[DemoAPI] Database connection status check...');
+      
+      try {
+        // Test database connection first
+        await db.execute(sql`SELECT 1 as test`);
+        console.log('[DemoAPI] Database connection verified successfully');
+      } catch (dbTestError: any) {
+        console.error('[DemoAPI] Database connection test failed:', {
+          message: dbTestError?.message || 'Unknown error',
+          code: dbTestError?.code || 'UNKNOWN',
+          stack: dbTestError?.stack || 'No stack trace'
+        });
+        return res.status(500).json({
+          success: false,
+          error: 'Database Connection Error',
+          details: 'Unable to connect to database',
+          code: 'DB_CONNECTION_FAILED',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      console.log('[DemoAPI] Preparing company data for database insertion...');
+      const companyData = {
         name,
         description: `Enterprise FinTech specializing in advanced financial technology solutions`,
         category: 'FinTech',
@@ -294,7 +376,50 @@ router.post('/demo/company/create', async (req, res) => {
         certifications_compliance: "SOC 2 Type II, ISO 27001",
         incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 10) - 5,
         risk_score: riskProfile || Math.floor(Math.random() * 40) + 60
-      }).returning();
+      };
+      
+      console.log('[DemoAPI] Company data prepared:', JSON.stringify(companyData, null, 2));
+      
+      // Execute database insertion with comprehensive error handling
+      let insertResult;
+      try {
+        console.log('[DemoAPI] Executing database insert...');
+        insertResult = await db.insert(companies).values(companyData).returning();
+        console.log('[DemoAPI] Database insert completed successfully');
+      } catch (dbInsertError) {
+        console.error('[DemoAPI] Database insert operation failed:', {
+          message: dbInsertError.message,
+          code: dbInsertError.code,
+          constraint: dbInsertError.constraint,
+          detail: dbInsertError.detail,
+          table: dbInsertError.table,
+          column: dbInsertError.column,
+          stack: dbInsertError.stack?.substring(0, 500) + '...'
+        });
+        return res.status(500).json({
+          success: false,
+          error: 'Database Insert Failed',
+          details: `Failed to create company: ${dbInsertError.message}`,
+          code: 'DB_INSERT_FAILED',
+          dbError: {
+            code: dbInsertError.code,
+            constraint: dbInsertError.constraint,
+            detail: dbInsertError.detail
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      if (!insertResult || insertResult.length === 0) {
+        console.error('[DemoAPI] Database insert returned no results');
+        return res.status(500).json({
+          success: false,
+          error: 'Database Insert Failed',
+          details: 'Insert operation completed but returned no data',
+          code: 'DB_INSERT_NO_RESULT',
+          timestamp: new Date().toISOString()
+        });
+      }
       
       console.log('[DemoAPI] ✅ Enterprise company created successfully:', insertResult[0]);
       
