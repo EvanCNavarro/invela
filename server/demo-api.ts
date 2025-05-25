@@ -21,6 +21,156 @@ import { broadcastMessage } from './services/websocket';
 const router = Router();
 
 /**
+ * Generate realistic company details based on persona and size
+ */
+function generateRealisticCompanyDetails(persona: string, size: string) {
+  const companyTypes = {
+    'accredited-data-recipient': 'fintech',
+    'data-provider': 'bank',
+    'new-data-recipient': 'fintech',
+    'invela-admin': 'consulting'
+  };
+
+  const type = companyTypes[persona] || 'fintech';
+  
+  // Generate realistic websites
+  const websites = {
+    fintech: ['securepay.com', 'dataflow.io', 'quantumfinance.net', 'techsecure.co', 'nexusfintech.com'],
+    bank: ['firstnational.com', 'centralbank.org', 'premierbank.net', 'trustbank.com', 'globalbank.co'],
+    consulting: ['strategycorp.com', 'advisorygroup.net', 'consultpro.io', 'expertadvisors.com', 'strategicpartners.co']
+  };
+
+  // Generate realistic addresses
+  const addresses = [
+    '1250 Broadway, Suite 2700, New York, NY 10001',
+    '555 California Street, 45th Floor, San Francisco, CA 94104',
+    '200 West Street, 31st Floor, New York, NY 10282',
+    '100 Federal Street, 37th Floor, Boston, MA 02110',
+    '1201 Third Avenue, Suite 4900, Seattle, WA 98101',
+    '2100 McKinney Avenue, Suite 1600, Dallas, TX 75201',
+    '71 South Wacker Drive, Suite 4400, Chicago, IL 60606'
+  ];
+
+  // Generate products and services
+  const products = {
+    fintech: [
+      'Digital payment processing, fraud detection systems, compliance automation platform',
+      'Real-time transaction monitoring, risk assessment tools, regulatory reporting solutions',
+      'API-driven financial services, secure data analytics, automated compliance workflows',
+      'Payment gateway solutions, identity verification, AML/KYC automation platform'
+    ],
+    bank: [
+      'Commercial banking services, treasury management, corporate lending solutions',
+      'Investment banking, wealth management, institutional financial services',
+      'Digital banking platform, payment processing, credit risk management',
+      'Corporate finance, trade finance, cash management solutions'
+    ],
+    consulting: [
+      'Risk management consulting, regulatory compliance advisory, financial technology integration',
+      'Digital transformation services, compliance automation, cybersecurity consulting',
+      'Financial services consulting, regulatory advisory, technology implementation'
+    ]
+  };
+
+  // Generate leadership teams
+  const leadership = [
+    'Sarah Chen (CEO, Former Goldman Sachs VP), Michael Rodriguez (CTO, Ex-Google Engineering), Jennifer Park (CFO, Former JPMorgan Director)',
+    'David Thompson (CEO, Former Bank of America SVP), Lisa Wang (CTO, Ex-Microsoft Principal), Robert Kim (CFO, Former Citigroup VP)',
+    'Amanda Foster (CEO, Former Morgan Stanley MD), James Liu (CTO, Ex-Amazon Senior Director), Maria Gonzalez (CFO, Former Wells Fargo VP)',
+    'Thomas Anderson (CEO, Former Stripe VP), Rachel Davis (CTO, Ex-Meta Engineering Manager), Kevin Zhang (CFO, Former BlackRock Director)'
+  ];
+
+  // Generate key clients and partners
+  const clients = {
+    fintech: [
+      'JPMorgan Chase, Wells Fargo, American Express, Mastercard, Visa',
+      'Bank of America, Goldman Sachs, Morgan Stanley, Charles Schwab, Fidelity',
+      'Citigroup, Capital One, PayPal, Square, Stripe',
+      'PNC Bank, US Bank, TD Bank, HSBC, Barclays'
+    ],
+    bank: [
+      'Fortune 500 corporations, institutional investors, government agencies, multinational enterprises',
+      'Private equity firms, hedge funds, insurance companies, pension funds',
+      'Technology companies, healthcare organizations, energy sector clients, retail chains',
+      'Real estate investment trusts, asset management firms, sovereign wealth funds'
+    ],
+    consulting: [
+      'Regional banks, credit unions, fintech startups, insurance companies',
+      'Investment firms, payment processors, cryptocurrency exchanges, regulatory bodies',
+      'Financial technology companies, compliance departments, risk management teams'
+    ]
+  };
+
+  // Generate investors
+  const investors = {
+    large: [
+      'Sequoia Capital, Andreessen Horowitz, Goldman Sachs Principal Strategic Investments, JPMorgan Strategic Investments',
+      'Kleiner Perkins, Accel Partners, Bessemer Venture Partners, General Atlantic',
+      'Tiger Global Management, Coatue Management, Insight Partners, GV (Google Ventures)',
+      'Blackstone Strategic Partners, KKR, Carlyle Group, Apollo Global Management'
+    ],
+    medium: [
+      'Index Ventures, Lightspeed Venture Partners, FirstMark Capital, Ribbit Capital',
+      'QED Investors, Nyca Partners, FinTech Collective, Commerce Ventures',
+      'Matrix Partners, Redpoint Ventures, Foundation Capital, NEA',
+      'Bain Capital Ventures, General Catalyst, Spark Capital, CRV'
+    ],
+    small: [
+      'Local angel investors, regional venture capital, strategic industry partners',
+      'Seed funding from financial services veterans, early-stage VC firms',
+      'Angel networks, accelerator programs, strategic corporate investors',
+      'Family offices, regional investment groups, industry-focused funds'
+    ]
+  };
+
+  // Generate certifications
+  const certifications = [
+    'SOC 2 Type II, ISO 27001, PCI DSS Level 1, GDPR Compliant, CCPA Compliant',
+    'SOX Compliance, FISMA Moderate, FedRAMP Authorized, NIST Cybersecurity Framework',
+    'ISO 9001, ISO 14001, SSAE 18, ISAE 3402, CSA STAR Level 2',
+    'HIPAA Compliant, SOC 1 Type II, ISO 22301, COBIT 5, COSO Framework'
+  ];
+
+  // Select random data
+  const randomWebsite = websites[type][Math.floor(Math.random() * websites[type].length)];
+  const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
+  const randomProducts = products[type][Math.floor(Math.random() * products[type].length)];
+  const randomLeadership = leadership[Math.floor(Math.random() * leadership.length)];
+  const randomClients = clients[type][Math.floor(Math.random() * clients[type].length)];
+  const randomInvestors = investors[size][Math.floor(Math.random() * investors[size].length)];
+  const randomCertifications = certifications[Math.floor(Math.random() * certifications.length)];
+
+  return {
+    website: `https://www.${randomWebsite}`,
+    address: randomAddress,
+    products: randomProducts,
+    leadership: randomLeadership,
+    clients: randomClients,
+    investors: randomInvestors,
+    certifications: randomCertifications
+  };
+}
+
+/**
+ * Generate risk clusters based on risk score
+ */
+function generateRiskClusters(riskScore: number) {
+  // Higher risk scores (80-100) = lower actual risk values
+  // Lower risk scores (0-50) = higher actual risk values
+  const baseRisk = Math.max(5, 100 - riskScore);
+  const variation = 15;
+  
+  return {
+    "PII Data": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
+    "Account Data": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
+    "Data Transfers": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
+    "Certifications Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
+    "Security Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation)),
+    "Financial Risk": Math.max(5, Math.min(95, baseRisk + (Math.random() - 0.5) * variation))
+  };
+}
+
+/**
  * Demo Company Creation
  * Creates a new company for demo purposes with specified configuration
  */
@@ -40,13 +190,15 @@ router.post('/demo/company/create', async (req, res) => {
 
     // Create realistic company data based on persona and size
     const getCompanyData = (persona: string, size: string) => {
+      // Generate realistic business details
+      const companyDetails = generateRealisticCompanyDetails(persona, size);
+      
       const baseData = {
         category: persona === 'accredited-data-recipient' ? 'FinTech' : 
                  persona === 'data-provider' ? 'Bank' : 'FinTech',
         accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING',
         is_demo: true,
-        available_tabs: persona === 'accredited-data-recipient' ? 
-          ['task-center', 'security', 'analytics', 'reports'] : ['task-center']
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights']
       };
 
       // Set realistic revenue and employee data based on company size
@@ -81,12 +233,24 @@ router.post('/demo/company/create', async (req, res) => {
     const companyData = getCompanyData(persona, companySize || 'medium');
     console.log('[DemoAPI] Generated company data:', companyData);
     
+    // Generate risk score and clusters
+    const finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+    const riskClusters = generateRiskClusters(finalRiskScore);
+
     // Create comprehensive company values
     const insertValues = {
       name,
       description: `Professional ${companyData.category.toLowerCase()} company specializing in secure data management and compliance`,
       ...companyData,
-      risk_score: riskProfile || Math.floor(Math.random() * 40) + 60, // 60-100 for good companies
+      risk_score: finalRiskScore,
+      risk_clusters: riskClusters,
+      website_url: companyDetails.website,
+      hq_address: companyDetails.address,
+      products_services: companyDetails.products,
+      founders_and_leadership: companyDetails.leadership,
+      key_clients_partners: companyDetails.clients,
+      investors: companyDetails.investors,
+      certifications_compliance: companyDetails.certifications,
       legal_structure: 'Corporation',
       market_position: companyData.revenue_tier === 'large' ? 'Market Leader' : 
                       companyData.revenue_tier === 'medium' ? 'Established Player' : 'Growing Business',
