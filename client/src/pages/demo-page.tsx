@@ -11,7 +11,7 @@
  * @since 2025-05-24
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -404,6 +404,20 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [userNameDropdownOpen, setUserNameDropdownOpen] = useState(false);
   
+  // Click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.dropdown-container')) {
+        setCompanyDropdownOpen(false);
+        setUserNameDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+  
   /**
    * Form state management with proper TypeScript typing
    * Includes default values and persona-specific configurations
@@ -650,16 +664,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
-                <div className="col-span-8 flex items-center space-x-1">
+                <div className="col-span-8 flex items-center space-x-2">
                   {/* Custom dropdown button */}
-                  <div className="relative">
+                  <div className="relative dropdown-container">
                     <button
                       type="button"
                       onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)}
-                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[70px]"
+                      className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
                     >
                       <span>{formData.companyNameControl === 'random' ? 'Random' : 'Custom'}</span>
-                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${companyDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${companyDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
                     </button>
@@ -671,7 +685,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                             handleControlTypeChange('companyNameControl', 'random');
                             setCompanyDropdownOpen(false);
                           }}
-                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                          className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                         >
                           Random
                           {formData.companyNameControl === 'random' && (
@@ -686,7 +700,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                             handleControlTypeChange('companyNameControl', 'custom');
                             setCompanyDropdownOpen(false);
                           }}
-                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                          className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                         >
                           Custom
                           {formData.companyNameControl === 'custom' && (
@@ -698,7 +712,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </div>
                     )}
                   </div>
-                  {/* Input field */}
+                  {/* Input field - increased space */}
                   <input
                     type="text"
                     value={formData.companyName}
@@ -717,7 +731,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <button
                       type="button"
                       onClick={() => generateRandomValues(['companyName'])}
-                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
                     >
                       <Shuffle className="h-3 w-3" />
                     </button>
@@ -730,16 +744,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 <div className="col-span-4 flex items-center justify-end pr-2">
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
-                <div className="col-span-8 flex items-center space-x-1">
+                <div className="col-span-8 flex items-center space-x-2">
                   {/* Custom dropdown button */}
-                  <div className="relative">
+                  <div className="relative dropdown-container">
                     <button
                       type="button"
                       onClick={() => setUserNameDropdownOpen(!userNameDropdownOpen)}
-                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[70px]"
+                      className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
                     >
                       <span>{formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}</span>
-                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${userNameDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${userNameDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
                     </button>
@@ -751,7 +765,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                             handleControlTypeChange('userFullNameControl', 'random');
                             setUserNameDropdownOpen(false);
                           }}
-                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                          className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                         >
                           Random
                           {formData.userFullNameControl === 'random' && (
@@ -766,7 +780,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                             handleControlTypeChange('userFullNameControl', 'custom');
                             setUserNameDropdownOpen(false);
                           }}
-                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                          className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                         >
                           Custom
                           {formData.userFullNameControl === 'custom' && (
@@ -778,7 +792,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </div>
                     )}
                   </div>
-                  {/* Input field */}
+                  {/* Input field - increased space */}
                   <input
                     type="text"
                     value={formData.userFullName}
@@ -797,7 +811,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <button
                       type="button"
                       onClick={() => generateRandomValues(['userFullName'])}
-                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
                     >
                       <Shuffle className="h-3 w-3" />
                     </button>
