@@ -459,6 +459,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   // Dropdown states for custom UI components
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [userNameDropdownOpen, setUserNameDropdownOpen] = useState(false);
+  const [riskProfileDropdownOpen, setRiskProfileDropdownOpen] = useState(false);
   
   // Click outside handler for dropdowns
   useEffect(() => {
@@ -467,6 +468,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       if (!target.closest('.dropdown-container')) {
         setCompanyDropdownOpen(false);
         setUserNameDropdownOpen(false);
+        setRiskProfileDropdownOpen(false);
       }
     };
     
@@ -811,7 +813,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
    * Manages the transition between random and custom field states
    */
   const handleControlTypeChange = (
-    field: 'companyNameControl' | 'userFullNameControl',
+    field: 'companyNameControl' | 'userFullNameControl' | 'riskProfileControl',
     newType: 'random' | 'custom'
   ) => {
     setFormData(prev => {
@@ -823,6 +825,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
           updates.companyName = '';
         } else if (field === 'userFullNameControl') {
           updates.userFullName = '';
+        } else if (field === 'riskProfileControl') {
+          // For risk profile, start at mid-range (50) for custom mode
+          updates.riskProfile = 50;
+          console.log('[DemoStep2] Risk profile switched to custom mode, set to default 50');
         }
       }
       // When switching to random, generate new random value
@@ -850,6 +856,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
           
           // Also update email
           updates.userEmail = generateEmailFromData(randomFirstName, randomLastName, updates.companyName);
+        } else if (field === 'riskProfileControl') {
+          // Generate new random risk profile value
+          updates.riskProfile = Math.floor(Math.random() * 101);
+          console.log(`[DemoStep2] Risk profile switched to random mode, generated: ${updates.riskProfile}`);
         }
       }
       
@@ -862,7 +872,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
    * Updates form state and auto-generates dependent fields
    * Triggers real-time validation updates
    */
-  const handleFieldChange = (field: keyof DemoCustomizationForm, value: string | boolean) => {
+  const handleFieldChange = (field: keyof DemoCustomizationForm, value: string | boolean | number) => {
     console.log(`[DemoStep2] Field change: ${field} = ${value}`);
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
@@ -1154,7 +1164,113 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                 </div>
               </div>
               
-              {/* 5. Email Invite Toggle */}
+              {/* 5. Risk Profile Field - Accredited Data Recipients Only */}
+              {shouldShowPersonaSpecificField('riskProfile') && (
+                <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
+                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Risk Profile</span>
+                    <ValidationIcon status="valid" />
+                  </div>
+                  <div className="col-span-8 flex items-center">
+                    <div className="flex items-center space-x-2 w-full">
+                      {/* Random/Custom Control Dropdown */}
+                      <div className="relative dropdown-container">
+                        <button
+                          type="button"
+                          onClick={() => setRiskProfileDropdownOpen(!riskProfileDropdownOpen)}
+                          className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
+                        >
+                          <span>{formData.riskProfileControl === 'random' ? 'Random' : 'Custom'}</span>
+                          <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${riskProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                        {riskProfileDropdownOpen && (
+                          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleControlTypeChange('riskProfileControl', 'random');
+                                setRiskProfileDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.riskProfileControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                            >
+                              Random
+                              {formData.riskProfileControl === 'random' && (
+                                <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleControlTypeChange('riskProfileControl', 'custom');
+                                setRiskProfileDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.riskProfileControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                            >
+                              Custom
+                              {formData.riskProfileControl === 'custom' && (
+                                <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Risk Profile Display - Number or Slider */}
+                      {formData.riskProfileControl === 'random' ? (
+                        /* Random Mode: Show number with shuffle button */
+                        <>
+                          <div className="relative flex-1">
+                            <div className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-500 h-[32px] flex items-center">
+                              <span className="font-medium">{formData.riskProfile}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => generateRandomValues(['riskProfile'])}
+                            className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                          >
+                            <Shuffle className="h-3 w-3" />
+                          </button>
+                        </>
+                      ) : (
+                        /* Custom Mode: Interactive Slider */
+                        <div className="relative flex-1">
+                          <div className="px-3 py-2 h-[32px] flex items-center">
+                            <div className="flex items-center space-x-3 w-full">
+                              {/* Slider Track */}
+                              <div className="relative flex-1 h-2">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={formData.riskProfile}
+                                  onChange={(e) => handleFieldChange('riskProfile', parseInt(e.target.value))}
+                                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                  style={{
+                                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${formData.riskProfile}%, #e5e7eb ${formData.riskProfile}%, #e5e7eb 100%)`
+                                  }}
+                                />
+                              </div>
+                              {/* Value Display */}
+                              <div className="text-sm font-medium text-gray-700 min-w-[2.5rem] text-center">
+                                {formData.riskProfile}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* 6. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                   <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
