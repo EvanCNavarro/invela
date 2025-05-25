@@ -233,14 +233,14 @@ router.post('/demo/company/create', async (req, res) => {
         num_employees: employeeCount,
         revenue_tier: 'xlarge',
         is_demo: true,
-        available_tabs: JSON.stringify(['dashboard', 'task-center', 'file-vault', 'insights']),
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
         accreditation_status: 'APPROVED',
         website_url: `https://${name.toLowerCase().replace(/\s+/g, '')}.com`,
         hq_address: "New York, NY",
         founders_and_leadership: "Enterprise Leadership Team",
         key_clients_partners: "Fortune 500 Companies",
         investors: "Institutional Investors",
-        certifications: "SOC 2 Type II, ISO 27001",
+        certifications_compliance: "SOC 2 Type II, ISO 27001",
         incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 10) - 5,
         risk_score: riskProfile || Math.floor(Math.random() * 40) + 60
       }).returning();
