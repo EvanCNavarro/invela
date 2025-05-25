@@ -1221,49 +1221,41 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                         )}
                       </div>
                       
-                      {/* Risk Profile Display - Number or Slider */}
-                      {formData.riskProfileControl === 'random' ? (
-                        /* Random Mode: Show number with shuffle button */
-                        <>
-                          <div className="relative flex-1">
-                            <div className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 text-gray-500 h-[32px] flex items-center">
-                              <span className="font-medium">{formData.riskProfile}</span>
+                      {/* Risk Profile Display - Always Interactive Slider */}
+                      <div className="relative flex-1">
+                        <div className="px-3 py-2 h-[32px] flex items-center">
+                          <div className="flex items-center space-x-3 w-full">
+                            {/* Interactive Slider Track - Always Present */}
+                            <div className="relative flex-1 h-2">
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={formData.riskProfile}
+                                onChange={(e) => handleFieldChange('riskProfile', parseInt(e.target.value))}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                style={{
+                                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${formData.riskProfile}%, #e5e7eb ${formData.riskProfile}%, #e5e7eb 100%)`
+                                }}
+                              />
                             </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => generateRandomValues(['riskProfile'])}
-                            className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
-                          >
-                            <Shuffle className="h-3 w-3" />
-                          </button>
-                        </>
-                      ) : (
-                        /* Custom Mode: Interactive Slider */
-                        <div className="relative flex-1">
-                          <div className="px-3 py-2 h-[32px] flex items-center">
-                            <div className="flex items-center space-x-3 w-full">
-                              {/* Slider Track */}
-                              <div className="relative flex-1 h-2">
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  value={formData.riskProfile}
-                                  onChange={(e) => handleFieldChange('riskProfile', parseInt(e.target.value))}
-                                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                                  style={{
-                                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${formData.riskProfile}%, #e5e7eb ${formData.riskProfile}%, #e5e7eb 100%)`
-                                  }}
-                                />
-                              </div>
-                              {/* Value Display */}
-                              <div className="text-sm font-medium text-gray-700 min-w-[2.5rem] text-center">
-                                {formData.riskProfile}
-                              </div>
+                            {/* Value Display - Always Present */}
+                            <div className="text-sm font-medium text-gray-700 min-w-[2.5rem] text-center">
+                              {formData.riskProfile}
                             </div>
                           </div>
                         </div>
+                      </div>
+                      
+                      {/* Shuffle Button - Only in Random Mode */}
+                      {formData.riskProfileControl === 'random' && (
+                        <button
+                          type="button"
+                          onClick={() => generateRandomValues(['riskProfile'])}
+                          className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                        >
+                          <Shuffle className="h-3 w-3" />
+                        </button>
                       )}
                     </div>
                   </div>
