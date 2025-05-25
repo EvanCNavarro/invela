@@ -1172,10 +1172,23 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <ValidationIcon status="valid" />
                   </div>
                   <div className="col-span-8 flex items-center space-x-3">
-                    {/* Risk Profile Value Display */}
-                    <div className="w-12 h-[32px] flex items-center justify-center text-sm font-medium text-gray-700 border border-gray-300 rounded bg-gray-50">
-                      {formData.riskProfile}
-                    </div>
+                    {/* Risk Profile Value Input - Editable */}
+                    <input
+                      type="text"
+                      value={formData.riskProfile}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numeric input up to 3 digits
+                        if (/^\d{0,3}$/.test(value)) {
+                          const numValue = Math.min(parseInt(value) || 0, 100);
+                          handleFieldChange('riskProfile', numValue);
+                          console.log(`[DemoStep2] Risk profile value typed: ${numValue}`);
+                        }
+                      }}
+                      className="w-12 h-[32px] text-center text-sm font-medium text-gray-700 border border-blue-300 rounded bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      maxLength={3}
+                      placeholder="0"
+                    />
                     
                     {/* Interactive Slider - Horizontally Aligned */}
                     <div className="flex-1 h-[32px] flex items-center px-3">
