@@ -1748,28 +1748,13 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       </div>
 
       {/* BUTTON SECTION */}
-      <div className="flex-shrink-0 pt-6">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            disabled={isLoading}
-            className="h-8 px-3 text-xs"
-          >
-            <ArrowLeft className="w-3 h-3 mr-1" />
-            Back
-          </Button>
-          <Button
-            onClick={handleStartDemo}
-            size="sm"
-            disabled={isLoading}
-            className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700"
-          >
-            {wizardStep === 'review' ? 'Sign In' : wizardStep === 'setup' ? 'Setting Up...' : 'Launching...'}
-            {wizardStep === 'review' && <ArrowRight className="w-3 h-3 ml-1" />}
-          </Button>
-        </div>
+      <div className="flex-shrink-0">
+        <DemoNavigation
+          onBack={onBack}
+          onNext={handleStartDemo}
+          nextText={wizardStep === 'review' ? 'Sign In' : wizardStep === 'setup' ? 'Setting Up...' : 'Launching...'}
+          nextDisabled={isLoading}
+        />
       </div>
       
       {/* BOTTOM SPACER */}
