@@ -289,12 +289,8 @@ router.post('/demo/company/create', async (req, res) => {
        */
       console.log(`[DemoAPI] Processing company size: ${size}`);
       
-      // CRITICAL DEBUG: Log exact size value and comparison results
-      console.log(`[DemoAPI] DEBUGGING SIZE MATCH - size value: "${size}", type: ${typeof size}`);
-      console.log(`[DemoAPI] Condition checks: extra-large=${size === 'extra-large'}, xlarge=${size === 'xlarge'}`);
-      
-      // Force enterprise-level generation for extra-large companies
-      if (size === 'extra-large' || size === 'xlarge') {
+      // ENTERPRISE GENERATION - IMMEDIATE CHECK FOR EXTRA-LARGE
+      if (size === 'extra-large') {
         console.log(`[DemoAPI] ✅ MATCH FOUND - GENERATING ENTERPRISE-LEVEL COMPANY for size: ${size}`);
         // Enterprise-level companies ($500M-$2B)
         const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
@@ -441,6 +437,25 @@ router.post('/demo/company/create', async (req, res) => {
         num_employees: employeeCount,
         revenue_tier: 'medium'
       };
+      
+    } else if (companySize === 'extra-large') {
+      // ENTERPRISE COMPANIES - FINAL SAFETY CHECK
+      console.log('[DemoAPI] ✅ FINAL SAFETY CHECK - GENERATING ENTERPRISE for extra-large');
+      const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
+      const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: revenueAmount >= 1000000000 
+          ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
+          : `$${(revenueAmount / 1000000).toFixed(0)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'xlarge'
+      };
+      console.log(`[DemoAPI] Final safety check generated enterprise: ${companyData.revenue}, ${companyData.num_employees} employees`);
       
     } else {
       // Small company (default)
