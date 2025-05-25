@@ -830,16 +830,35 @@ router.post('/demo/user/create', async (req, res) => {
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || firstName;
 
-    // Create user record using actual database fields
+    // Parse and validate company ID with comprehensive type safety
+    let parsedCompanyId: number;
+    if (typeof companyId === 'number') {
+      parsedCompanyId = companyId;
+    } else if (typeof companyId === 'string') {
+      if (companyId.startsWith('comp_')) {
+        parsedCompanyId = parseInt(companyId.replace('comp_', ''));
+      } else {
+        parsedCompanyId = parseInt(companyId);
+      }
+    } else {
+      throw new Error('Invalid company ID format');
+    }
+
+    // Ensure we have a valid numeric company ID
+    if (isNaN(parsedCompanyId) || parsedCompanyId <= 0) {
+      throw new Error('Company ID must be a valid positive number');
+    }
+
+    console.log('[DemoAPI] Parsed company ID:', parsedCompanyId);
+
+    // Create user record using actual database fields with validated company ID
     const [user] = await db.insert(users).values({
       email,
       password: hashedPassword,
       first_name: firstName,
       last_name: lastName,
       full_name: fullName,
-      company_id: typeof companyId === 'string' && companyId.startsWith('comp_') 
-        ? parseInt(companyId.replace('comp_', '')) 
-        : parseInt(companyId)
+      company_id: parsedCompanyId
     }).returning();
 
     res.json({
