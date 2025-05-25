@@ -621,21 +621,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* Header Row */}
               <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/30 border-b border-gray-100/50 text-xs font-medium text-gray-600 uppercase tracking-wide">
-                <div className="col-span-3">Field</div>
-                <div className="col-span-2">Source</div>
-                <div className="col-span-6">Value</div>
-                <div className="col-span-1"></div>
+                <div className="col-span-4">Field</div>
+                <div className="col-span-8">Value</div>
               </div>
               
               {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-3 flex items-center">
+                <div className="col-span-4 flex items-center">
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
-                <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">System</span>
-                </div>
-                <div className="col-span-6 flex items-center">
+                <div className="col-span-8 flex items-center">
                   <div className="relative w-full">
                     <input
                       type="text"
@@ -648,22 +643,22 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     </div>
                   </div>
                 </div>
-                <div className="col-span-1"></div>
               </div>
               
               {/* 2. Company Name Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-3 flex items-center">
+                <div className="col-span-4 flex items-center">
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
-                <div className="col-span-2 flex items-center">
+                <div className="col-span-8 flex items-center space-x-2">
+                  {/* Integrated dropdown + input */}
                   <div className="relative">
                     <select
                       value={formData.companyNameControl}
                       onChange={(e) => handleControlTypeChange('companyNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-1 rounded-full border border-gray-200/60 bg-white/80 text-gray-700 hover:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none pr-6"
+                      className="text-xs px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[38px]"
                     >
-                      <option value="random">Random (default)</option>
+                      <option value="random">Random</option>
                       <option value="custom">Custom</option>
                     </select>
                     <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -672,9 +667,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </svg>
                     </div>
                   </div>
-                </div>
-                <div className="col-span-6 flex items-center">
-                  <div className="relative w-full">
+                  <div className="relative flex-1">
                     <input
                       type="text"
                       value={formData.companyName}
@@ -682,10 +675,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       disabled={formData.companyNameControl === 'random'}
                       placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
                       className={cn(
-                        "w-full px-3 py-2 text-sm border rounded-md transition-all",
+                        "w-full px-3 py-2 text-sm border rounded-r-md transition-all h-[38px]",
                         formData.companyNameControl === 'random' 
-                          ? "border-gray-200/60 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
-                          : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          ? "border-gray-300 border-l-0 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
+                          : "border-gray-300 border-l-0 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       )}
                     />
                     {formData.companyNameControl === 'random' && (
@@ -699,22 +692,22 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     )}
                   </div>
                 </div>
-                <div className="col-span-1"></div>
               </div>
               
               {/* 3. User Full Name Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-3 flex items-center">
+                <div className="col-span-4 flex items-center">
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
-                <div className="col-span-2 flex items-center">
+                <div className="col-span-8 flex items-center space-x-2">
+                  {/* Integrated dropdown + input */}
                   <div className="relative">
                     <select
                       value={formData.userFullNameControl}
                       onChange={(e) => handleControlTypeChange('userFullNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-1 rounded-full border border-gray-200/60 bg-white/80 text-gray-700 hover:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none pr-6"
+                      className="text-xs px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[38px]"
                     >
-                      <option value="random">Random (default)</option>
+                      <option value="random">Random</option>
                       <option value="custom">Custom</option>
                     </select>
                     <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -723,9 +716,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </svg>
                     </div>
                   </div>
-                </div>
-                <div className="col-span-6 flex items-center">
-                  <div className="relative w-full">
+                  <div className="relative flex-1">
                     <input
                       type="text"
                       value={formData.userFullName}
@@ -733,10 +724,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       disabled={formData.userFullNameControl === 'random'}
                       placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
                       className={cn(
-                        "w-full px-3 py-2 text-sm border rounded-md transition-all",
+                        "w-full px-3 py-2 text-sm border rounded-r-md transition-all h-[38px]",
                         formData.userFullNameControl === 'random' 
-                          ? "border-gray-200/60 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
-                          : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          ? "border-gray-300 border-l-0 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
+                          : "border-gray-300 border-l-0 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       )}
                     />
                     {formData.userFullNameControl === 'random' && (
@@ -750,18 +741,14 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     )}
                   </div>
                 </div>
-                <div className="col-span-1"></div>
               </div>
               
               {/* 4. User Email Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-3 flex items-center">
+                <div className="col-span-4 flex items-center">
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
-                <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">System</span>
-                </div>
-                <div className="col-span-6 flex items-center">
+                <div className="col-span-8 flex items-center">
                   <div className="relative w-full">
                     <input
                       type="email"
@@ -774,19 +761,15 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     </div>
                   </div>
                 </div>
-                <div className="col-span-1"></div>
               </div>
               
               {/* 5. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-3 flex items-center">
+                  <div className="col-span-4 flex items-center">
                     <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
                   </div>
-                  <div className="col-span-2 flex items-center">
-                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">User Choice</span>
-                  </div>
-                  <div className="col-span-6 flex items-center">
+                  <div className="col-span-8 flex items-center">
                     <div className="flex items-center space-x-3">
                       <Switch
                         checked={formData.emailInviteEnabled}
@@ -797,20 +780,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </span>
                     </div>
                   </div>
-                  <div className="col-span-1"></div>
                 </div>
               )}
               
               {/* 6. Demo Company Toggle */}
               {shouldShowPersonaSpecificField('demoCompany') && (
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-3 flex items-center">
+                  <div className="col-span-4 flex items-center">
                     <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
                   </div>
-                  <div className="col-span-2 flex items-center">
-                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">User Choice</span>
-                  </div>
-                  <div className="col-span-6 flex items-center">
+                  <div className="col-span-8 flex items-center">
                     <div className="flex items-center space-x-3">
                       <Switch
                         checked={formData.isDemoCompany}
@@ -821,7 +800,6 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       </span>
                     </div>
                   </div>
-                  <div className="col-span-1"></div>
                 </div>
               )}
               
