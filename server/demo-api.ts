@@ -26,9 +26,10 @@ const router = Router();
  */
 router.post('/demo/company/create', async (req, res) => {
   try {
-    const { name, type, persona, riskProfile, companySize } = req.body;
+    const { name, type, persona, riskProfile, companySize, metadata } = req.body;
 
-    console.log('[DemoAPI] Creating company:', { name, type, persona });
+    console.log('[DemoAPI] Creating company with full payload:', JSON.stringify(req.body, null, 2));
+    console.log('[DemoAPI] Extracted fields:', { name, type, persona, companySize, riskProfile });
 
     // Broadcast start event to connected clients
     broadcastMessage('demo_action_start', {
@@ -76,7 +77,9 @@ router.post('/demo/company/create', async (req, res) => {
       }
     };
 
+    console.log('[DemoAPI] Generating company data for:', { persona, companySize });
     const companyData = getCompanyData(persona, companySize || 'medium');
+    console.log('[DemoAPI] Generated company data:', companyData);
     
     // Create comprehensive company values
     const insertValues = {
@@ -92,7 +95,7 @@ router.post('/demo/company/create', async (req, res) => {
                     companyData.revenue_tier === 'medium' ? 'Series C' : 'Series B'
     };
 
-    console.log('[DemoAPI] Company insert values:', insertValues);
+    console.log('[DemoAPI] Final insert values:', JSON.stringify(insertValues, null, 2));
     
     // Create company record with comprehensive data
     const company = await db.insert(companies).values(insertValues).returning().then(rows => rows[0]);
