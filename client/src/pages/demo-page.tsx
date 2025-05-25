@@ -1328,16 +1328,39 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
 };
 
 /**
- * Step 3: Results and Next Steps
+ * Step 3: Demo Configuration Review & Preparation
  */
-const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
+const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { formData?: any }) => {
   const [, setLocation] = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   
   console.log('[DemoStep3] Rendering results and next steps');
   
-  const handleBackToLogin = () => {
-    console.log('[DemoStep3] User clicked Login');
-    setLocation('/login');
+  // Loading steps for demo preparation
+  const loadingSteps = [
+    { id: 1, label: 'Creating company profile', description: 'Setting up organizational structure' },
+    { id: 2, label: 'Configuring user account', description: 'Applying persona-specific settings' },
+    { id: 3, label: 'Applying customizations', description: 'Personalizing demo experience' },
+    { id: 4, label: 'Preparing demo environment', description: 'Initializing platform access' },
+    { id: 5, label: 'Sending email invitation', description: 'Delivering access credentials' }
+  ];
+  
+  const handleStartDemo = async () => {
+    console.log('[DemoStep3] Starting demo preparation');
+    setIsLoading(true);
+    setLoadingStep(0);
+    
+    // Simulate demo preparation process
+    for (let i = 0; i < loadingSteps.length; i++) {
+      setLoadingStep(i + 1);
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing time
+    }
+    
+    // Navigate to login after preparation
+    setTimeout(() => {
+      setLocation('/login');
+    }, 1000);
   };
   
   return (
@@ -1365,49 +1388,157 @@ const DemoStep3 = ({ onBack, selectedPersona }: DemoStepProps) => {
         
         {/* Title */}
         <h1 className="text-2xl font-bold text-gray-900">
-          Review Demo Setup
+          Review Demo Configuration
         </h1>
         <p className="text-base text-gray-600">
           {selectedPersona ? (
-            <>Your demo is configured for <span className="font-semibold text-gray-900">{selectedPersona.title}</span>. Sign in to explore the platform.</>
+            <>Review your settings and sign in to experience the platform as <span className="font-semibold text-gray-900">{selectedPersona.title}</span>.</>
           ) : (
-            "Your demo is ready. Sign in to explore the platform."
+            "Review your settings and sign in to explore the platform."
           )}
         </p>
       </div>
       
-      {/* MIDDLE SPACER */}
-      <div className="flex-shrink-0 py-6"></div>
-      
-      {/* MAIN BODY SECTION */}
-      <div className="flex-1 space-y-6">
-        {selectedPersona ? (
-          <div className="space-y-4">
-            {/* Space for demo summary and review components */}
-          </div>
-        ) : (
-          <Card className="p-6">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-gray-400" />
+      {/* MAIN CONTENT AREA - Two Section Layout */}
+      <div className="flex-1 flex flex-col space-y-6 py-6">
+        
+        {/* TOP SECTION: Configuration Review - Takes majority of space */}
+        <div className="flex-1 min-h-0">
+          {selectedPersona && formData ? (
+            <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 h-full overflow-auto">
+              <div className="p-6 space-y-6">
+                {/* Persona Summary */}
+                <div className="flex items-center space-x-4 pb-6 border-b border-gray-200/50">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{selectedPersona.title}</h3>
+                    <p className="text-sm text-gray-600">{selectedPersona.description}</p>
+                  </div>
+                </div>
+
+                {/* Configuration Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Core Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Core Information</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Company Name</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.companyName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">User Name</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.userFullName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Email Address</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.userEmail}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Persona-Specific Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Demo Settings</h4>
+                    <div className="space-y-3">
+                      {/* Risk Profile for Accredited Data Recipients */}
+                      {selectedPersona.id === 'accredited-data-recipient' && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Risk Profile</span>
+                            <span className="text-sm font-medium text-gray-900">{formData.riskProfile}/100</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Company Size</span>
+                            <span className="text-sm font-medium text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</span>
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Demo Company for New Data Recipients */}
+                      {selectedPersona.id === 'new-data-recipient' && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Demo Company</span>
+                          <span className="text-sm font-medium text-gray-900">{formData.isDemoCompany ? 'Enabled' : 'Disabled'}</span>
+                        </div>
+                      )}
+                      
+                      {/* Email Invitation */}
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Email Invitation</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.emailInviteEnabled ? 'Enabled' : 'Disabled'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Demo Configuration</h3>
-              <p className="text-gray-600 text-sm">
-                Please go back to Step 1 to configure your demo experience
-              </p>
             </div>
-          </Card>
-        )}
+          ) : (
+            <Card className="h-full flex items-center justify-center">
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Demo Configuration</h3>
+                <p className="text-gray-600 text-sm">
+                  Please go back to configure your demo experience
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* BOTTOM SECTION: Loading/Preparation Area */}
+        <div className="flex-shrink-0 h-32">
+          {isLoading ? (
+            <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 p-6 h-full">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">Preparing Demo Environment</h4>
+                  <div className="space-y-2">
+                    {loadingSteps.map((step, index) => (
+                      <div key={step.id} className={`flex items-center space-x-3 ${index < loadingStep ? 'opacity-100' : 'opacity-40'}`}>
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                          index < loadingStep ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}>
+                          {index < loadingStep ? (
+                            <Check className="w-2 h-2 text-white" />
+                          ) : (
+                            <div className={`w-2 h-2 rounded-full ${index === loadingStep ? 'bg-white animate-pulse' : 'bg-gray-500'}`} />
+                          )}
+                        </div>
+                        <div className="text-xs">
+                          <div className="font-medium text-gray-900">{step.label}</div>
+                          <div className="text-gray-600">{step.description}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="ml-6">
+                  <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50/40 backdrop-blur-sm rounded-lg border border-gray-200/30 p-6 h-full flex items-center justify-center">
+              <p className="text-sm text-gray-500">Demo preparation will begin when you click "Start Demo"</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* BUTTON SECTION */}
       <div className="flex-shrink-0">
         <DemoNavigation
-          onBack={onBack}
+          onBack={!isLoading ? onBack : undefined}
           showNext={true}
-          onNext={handleBackToLogin}
-          nextText="Sign In"
-          nextIcon={<Check className="w-4 h-4 ml-2" />}
+          onNext={handleStartDemo}
+          nextText={isLoading ? "Preparing..." : "Start Demo"}
+          nextDisabled={isLoading}
+          nextIcon={isLoading ? <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin ml-2" /> : <Check className="w-4 h-4 ml-2" />}
         />
       </div>
       
@@ -1440,6 +1571,7 @@ export default function DemoPage() {
    * Enables consistent data flow from step 1 selection to step 2 display and step 3 actions
    */
   const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
+  const [formData, setFormData] = useState<any>(null);
   
   console.log(`[DemoPage] Rendering step ${currentStep}/3`, { selectedPersona: selectedPersona?.id });
 
