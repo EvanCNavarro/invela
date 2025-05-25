@@ -702,15 +702,41 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   }
   
   /**
+   * Field-to-persona mapping configuration
+   * Each field can have multiple persona tags for flexible control
+   */
+  const FIELD_PERSONA_MAPPING = {
+    // Core fields - always show (tagged as 'default')
+    persona: ['default'],
+    companyName: ['default'],
+    userFullName: ['default'],
+    userEmail: ['default'],
+    
+    // Persona-specific fields with multiple tags
+    emailInvite: ['accredited-data-recipient', 'data-provider', 'invela-admin'],
+    demoCompany: ['new-data-recipient', 'accredited-data-recipient', 'invela-admin']
+  };
+
+  /**
    * Determines if persona-specific fields should be displayed
-   * Different personas have different available options
+   * Uses flexible tagging system for granular control
    */
   function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany'): boolean {
     if (!selectedPersona) return false;
     
-    // All personas currently support both fields
-    // This can be customized based on persona requirements
-    return true;
+    const fieldTags = FIELD_PERSONA_MAPPING[fieldName] || [];
+    const personaId = selectedPersona.id;
+    
+    // Show field if current persona is in the field's tag list
+    const shouldShow = fieldTags.includes(personaId);
+    
+    console.log(`[DemoStep2] Field visibility check: ${fieldName} for ${personaId} = ${shouldShow}`, {
+      fieldTags,
+      personaId,
+      shouldShow
+    });
+    
+    return shouldShow;
   }
   
   // ========================================
