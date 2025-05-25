@@ -1445,7 +1445,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       </div>
       
       {/* MAIN CONTENT AREA - Two Section Layout */}
-      <div className="flex-1 flex flex-col space-y-6 py-6">
+      <div className="flex-1 flex flex-col space-y-3 pt-6">
         
         {/* TOP SECTION: Compact Configuration Review */}
         <div className="flex-1 min-h-0">
