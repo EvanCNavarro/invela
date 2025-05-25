@@ -193,37 +193,131 @@ router.post('/demo/company/create', async (req, res) => {
       // Generate realistic business details
       const companyDetails = generateRealisticCompanyDetails(persona, size);
       
+      // ========================================
+      // PERSONA-SPECIFIC CONFIGURATION
+      // ========================================
+      
+      /**
+       * Configure company category, accreditation status, and available tabs 
+       * based on the selected persona type.
+       * 
+       * Persona Tab Access:
+       * - Non-accredited FinTech: ["task-center"]
+       * - Accredited FinTech: ["dashboard", "task-center", "file-vault", "insights"]
+       * - Bank Admin: ["dashboard", "task-center", "network", "file-vault", "insights", "claims", "risk-score"]
+       * - Invela Admin: ["task-center", "dashboard", "network", "file-vault", "insights", "playground", "claims", "risk-score"]
+       */
+      console.log(`[DemoAPI] Configuring persona: ${persona}`);
+      
+      let category: string;
+      let accreditationStatus: string;
+      let availableTabs: string[];
+      
+      switch (persona) {
+        case 'accredited-data-recipient':
+          category = 'FinTech';
+          accreditationStatus = 'APPROVED';
+          availableTabs = ['dashboard', 'task-center', 'file-vault', 'insights'];
+          console.log('[DemoAPI] Configured accredited FinTech with full business access');
+          break;
+          
+        case 'data-provider':
+          category = 'Bank';
+          accreditationStatus = 'APPROVED'; // Banks are typically pre-approved
+          availableTabs = ['dashboard', 'task-center', 'network', 'file-vault', 'insights', 'claims', 'risk-score'];
+          console.log('[DemoAPI] Configured bank admin with full administrative access');
+          break;
+          
+        case 'invela-admin':
+          category = 'FinTech'; // Invela is a FinTech platform
+          accreditationStatus = 'APPROVED';
+          availableTabs = ['task-center', 'dashboard', 'network', 'file-vault', 'insights', 'playground', 'claims', 'risk-score'];
+          console.log('[DemoAPI] Configured Invela admin with complete platform access');
+          break;
+          
+        default: // 'new-data-recipient' and any other persona
+          category = 'FinTech';
+          accreditationStatus = 'PENDING';
+          availableTabs = ['task-center'];
+          console.log('[DemoAPI] Configured non-accredited FinTech with basic access');
+          break;
+      }
+      
       const baseData = {
-        category: persona === 'accredited-data-recipient' ? 'FinTech' : 
-                 persona === 'data-provider' ? 'Bank' : 'FinTech',
-        accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING',
+        category,
+        accreditation_status: accreditationStatus,
         is_demo: true,
-        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights']
+        available_tabs: availableTabs
       };
 
-      // Set realistic revenue and employee data based on company size
-      if (size === 'large') {
-        const revenueAmount = Math.floor(Math.random() * 500000000) + 100000000;
+      // ========================================
+      // COMPANY SIZE MAPPING
+      // ========================================
+      
+      /**
+       * Generate realistic revenue and employee data based on company size selection.
+       * Ensures revenue_tier matches the selected size parameter exactly.
+       * 
+       * Size Ranges:
+       * - xlarge: $500M-$2B revenue, 10,000-50,000 employees
+       * - large: $100M-$500M revenue, 1,000-10,000 employees  
+       * - medium: $10M-$100M revenue, 100-1,000 employees
+       * - small: $1M-$10M revenue, 10-100 employees
+       */
+      console.log(`[DemoAPI] Processing company size: ${size}`);
+      
+      if (size === 'xlarge') {
+        // Enterprise-level companies ($500M-$2B)
+        const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
+        const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+        
+        console.log(`[DemoAPI] Generated xlarge company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+        
         return {
           ...baseData,
-          revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`, // Format as "$150M"
-          num_employees: Math.floor(Math.random() * 9000) + 1000, // 1,000-10,000
+          revenue: revenueAmount >= 1000000000 
+            ? `$${(revenueAmount / 1000000000).toFixed(1)}B` // Format as "$1.2B"
+            : `$${(revenueAmount / 1000000).toFixed(0)}M`,   // Format as "$750M"
+          num_employees: employeeCount,
+          revenue_tier: 'xlarge'
+        };
+      } else if (size === 'large') {
+        // Large corporations ($100M-$500M)
+        const revenueAmount = Math.floor(Math.random() * 400000000) + 100000000; // $100M-$500M
+        const employeeCount = Math.floor(Math.random() * 9000) + 1000; // 1K-10K employees
+        
+        console.log(`[DemoAPI] Generated large company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+        
+        return {
+          ...baseData,
+          revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`, // Format as "$250M"
+          num_employees: employeeCount,
           revenue_tier: 'large'
         };
       } else if (size === 'medium') {
-        const revenueAmount = Math.floor(Math.random() * 90000000) + 10000000;
+        // Mid-size companies ($10M-$100M)
+        const revenueAmount = Math.floor(Math.random() * 90000000) + 10000000; // $10M-$100M
+        const employeeCount = Math.floor(Math.random() * 900) + 100; // 100-1K employees
+        
+        console.log(`[DemoAPI] Generated medium company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+        
         return {
           ...baseData,
           revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`, // Format as "$45M"
-          num_employees: Math.floor(Math.random() * 900) + 100, // 100-1,000
+          num_employees: employeeCount,
           revenue_tier: 'medium'
         };
       } else {
-        const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000;
+        // Small businesses ($1M-$10M) - default case including 'small'
+        const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000; // $1M-$10M
+        const employeeCount = Math.floor(Math.random() * 90) + 10; // 10-100 employees
+        
+        console.log(`[DemoAPI] Generated small company: $${(revenueAmount / 1000000).toFixed(1)}M revenue, ${employeeCount} employees`);
+        
         return {
           ...baseData,
           revenue: `$${(revenueAmount / 1000000).toFixed(1)}M`, // Format as "$5.5M"
-          num_employees: Math.floor(Math.random() * 90) + 10, // 10-100
+          num_employees: employeeCount,
           revenue_tier: 'small'
         };
       }
@@ -237,27 +331,71 @@ router.post('/demo/company/create', async (req, res) => {
     const finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
     const riskClusters = generateRiskClusters(finalRiskScore);
 
-    // Create comprehensive company values
+    // ========================================
+    // BUSINESS DETAILS GENERATION
+    // ========================================
+    
+    /**
+     * Generate comprehensive business details including website, address,
+     * leadership team, clients, investors, and certifications.
+     */
+    console.log('[DemoAPI] Generating comprehensive business details...');
+    const businessDetails = generateRealisticCompanyDetails(persona, companySize || 'medium');
+    console.log('[DemoAPI] Generated business details:', {
+      website: businessDetails.website,
+      hasAddress: !!businessDetails.address,
+      hasLeadership: !!businessDetails.leadership,
+      hasClients: !!businessDetails.clients,
+      hasInvestors: !!businessDetails.investors,
+      hasCertifications: !!businessDetails.certifications
+    });
+
+    // ========================================
+    // COMPREHENSIVE COMPANY DATA ASSEMBLY
+    // ========================================
+    
+    /**
+     * Assemble all company data including generated details, risk assessment,
+     * and business information for database insertion.
+     */
     const insertValues = {
       name,
       description: `Professional ${companyData.category.toLowerCase()} company specializing in secure data management and compliance`,
       ...companyData,
       risk_score: finalRiskScore,
       risk_clusters: riskClusters,
-      website_url: companyDetails.website,
-      hq_address: companyDetails.address,
-      products_services: companyDetails.products,
-      founders_and_leadership: companyDetails.leadership,
-      key_clients_partners: companyDetails.clients,
-      investors: companyDetails.investors,
-      certifications_compliance: companyDetails.certifications,
+      
+      // Business Details
+      website_url: businessDetails.website,
+      hq_address: businessDetails.address,
+      products_services: businessDetails.products,
+      founders_and_leadership: businessDetails.leadership,
+      key_clients_partners: businessDetails.clients,
+      investors: businessDetails.investors,
+      certifications_compliance: businessDetails.certifications,
+      
+      // Corporate Structure
       legal_structure: 'Corporation',
-      market_position: companyData.revenue_tier === 'large' ? 'Market Leader' : 
+      market_position: companyData.revenue_tier === 'xlarge' ? 'Market Dominator' :
+                      companyData.revenue_tier === 'large' ? 'Market Leader' : 
                       companyData.revenue_tier === 'medium' ? 'Established Player' : 'Growing Business',
       incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 15) - 5, // 5-20 years old
-      funding_stage: companyData.revenue_tier === 'large' ? 'Public' : 
+      funding_stage: companyData.revenue_tier === 'xlarge' ? 'Public' :
+                    companyData.revenue_tier === 'large' ? 'Public' : 
                     companyData.revenue_tier === 'medium' ? 'Series C' : 'Series B'
     };
+    
+    console.log('[DemoAPI] Assembled complete company data for insertion');
+    console.log('[DemoAPI] Business details verification:', {
+      websiteIncluded: !!insertValues.website_url,
+      addressIncluded: !!insertValues.hq_address,
+      productsIncluded: !!insertValues.products_services,
+      leadershipIncluded: !!insertValues.founders_and_leadership,
+      clientsIncluded: !!insertValues.key_clients_partners,
+      investorsIncluded: !!insertValues.investors,
+      certificationsIncluded: !!insertValues.certifications_compliance,
+      riskClustersIncluded: !!insertValues.risk_clusters
+    });
 
     console.log('[DemoAPI] Final insert values:', JSON.stringify(insertValues, null, 2));
     
