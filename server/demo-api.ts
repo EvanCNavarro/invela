@@ -268,28 +268,7 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
   };
 }
 
-/**
- * Generate risk clusters based on risk score with intelligent correlation
- * Implements realistic risk distribution where clusters align with overall risk profile
- * 
- * @param riskScore - The company's overall risk score (0-100)
- * @returns Object with risk cluster scores that correlate with the input score
- */
-function generateRiskClusters(riskScore: number) {
-  // Risk clusters should logically correlate with the overall risk score
-  // Higher company risk score = higher individual cluster risk scores
-  const baseClusterRisk = riskScore;
-  const variation = 20; // Allow some natural variation between clusters
-  
-  return {
-    "PII Data": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
-    "Account Data": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
-    "Data Transfers": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
-    "Certifications Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
-    "Security Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation))),
-    "Financial Risk": Math.round(Math.max(5, Math.min(95, baseClusterRisk + (Math.random() - 0.5) * variation)))
-  };
-}
+
 
 /**
  * Demo Company Creation
@@ -408,7 +387,7 @@ router.post('/demo/company/create', async (req, res) => {
       const riskClusters = generateRiskClusters(riskProfile);
       const legalStructure = generateLegalStructure();
       
-      console.log(`[DemoAPI] Generated risk clusters that sum to ${riskProfile}:`, riskClusters);
+      console.log(`[DemoAPI] Generated risk clusters that sum to ${riskProfile}:`, JSON.stringify(riskClusters));
       console.log(`[DemoAPI] Selected legal structure: ${legalStructure}`);
       
       const companyData = {
