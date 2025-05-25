@@ -143,9 +143,15 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
     'HIPAA Compliant, SOC 1 Type II, ISO 22301, COBIT 5, COSO Framework'
   ];
 
-  // Normalize size for investor mapping
-  const normalizedSize = size === 'extra-large' ? 'xlarge' : size;
-  const investorSize = investors[normalizedSize] ? normalizedSize : 'medium'; // fallback to medium
+  // Map size to investors - ensure perfect mapping for all scenarios
+  const investorMapping = {
+    'xlarge': 'xlarge',
+    'extra-large': 'xlarge', 
+    'large': 'large',
+    'medium': 'medium',
+    'small': 'small'
+  };
+  const investorSize = investorMapping[size] || 'large';
   
   // Select random data
   const randomWebsite = websites[type][Math.floor(Math.random() * websites[type].length)];
@@ -326,7 +332,8 @@ router.post('/demo/company/create', async (req, res) => {
         const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000; // $1M-$10M
         const employeeCount = Math.floor(Math.random() * 90) + 10; // 10-100 employees
         
-        console.log(`[DemoAPI] Generated small company: $${(revenueAmount / 1000000).toFixed(1)}M revenue, ${employeeCount} employees`);
+        console.log(`[DemoAPI] Generated small company (default): $${(revenueAmount / 1000000).toFixed(1)}M revenue, ${employeeCount} employees`);
+        console.log(`[DemoAPI] WARNING: Unrecognized size "${size}" - falling back to small company defaults`);
         
         return {
           ...baseData,
