@@ -350,8 +350,8 @@ const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) 
 type FieldControlType = 'locked' | 'random' | 'custom';
 
 /**
- * Demo customization form state interface
- * Manages all user preferences for the demo experience
+ * Demo customization form data structure
+ * Extended to include risk profile field for advanced persona capabilities
  */
 interface DemoCustomizationForm {
   persona: string;
@@ -362,6 +362,9 @@ interface DemoCustomizationForm {
   userEmail: string;
   emailInviteEnabled: boolean;
   isDemoCompany: boolean;
+  // Risk Profile field - specific to Accredited Data Recipients
+  riskProfile: number;
+  riskProfileControl: 'random' | 'custom';
 }
 
 /**
@@ -501,6 +504,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     // Invela Admin gets locked company name
     const finalCompanyName = selectedPersona?.id === 'invela-admin' ? 'Invela' : randomCompany;
     
+    // Generate random risk profile (0-100) for initial state
+    const randomRiskProfile = Math.floor(Math.random() * 101);
+    
     return {
       persona: selectedPersona?.title || '',
       companyName: finalCompanyName,
@@ -509,7 +515,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       userFullNameControl: 'random',
       userEmail: generateEmailFromDataInit(randomFirstName, randomLastName, finalCompanyName),
       emailInviteEnabled: false, // Default to off for persona-specific features
-      isDemoCompany: true        // Default to on as specified
+      isDemoCompany: true,       // Default to on as specified
+      riskProfile: randomRiskProfile,
+      riskProfileControl: 'random'
     };
   });
   
@@ -671,7 +679,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
    * Generates new random values for specified fields
    * Updates form state with fresh random data and triggers validation
    */
-  function generateRandomValues(fields: Array<'companyName' | 'userFullName'>): void {
+  function generateRandomValues(fields: Array<'companyName' | 'userFullName' | 'riskProfile'>): void {
     console.log(`[DemoStep2] Generating random values for fields:`, fields);
     const updates: Partial<DemoCustomizationForm> = {};
     
@@ -689,6 +697,12 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
       ];
       updates.userFullName = `${firstName} ${lastName}`;
+    }
+    
+    if (fields.includes('riskProfile')) {
+      // Generate random risk score between 0-100
+      updates.riskProfile = Math.floor(Math.random() * 101);
+      console.log(`[DemoStep2] Generated random risk profile: ${updates.riskProfile}`);
     }
     
     setFormData(prev => {
@@ -717,7 +731,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     
     // Persona-specific fields with multiple tags
     emailInvite: ['new-data-recipient', 'accredited-data-recipient', 'data-provider', 'invela-admin'],
-    demoCompany: ['new-data-recipient', 'accredited-data-recipient']
+    demoCompany: ['new-data-recipient', 'accredited-data-recipient'],
+    riskProfile: ['accredited-data-recipient']  // Risk assessment exclusive to advanced data recipients
   };
 
   /**
@@ -783,7 +798,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   /**
    * Legacy function for persona-specific fields (backwards compatibility)
    */
-  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany'): boolean {
+  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany' | 'riskProfile'): boolean {
     return shouldShowField(fieldName);
   }
   
