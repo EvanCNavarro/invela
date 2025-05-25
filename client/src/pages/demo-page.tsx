@@ -453,6 +453,11 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
    * @returns Generated email address
    */
   function generateEmailFromData(firstName: string, lastName: string, companyName: string): string {
+    // Handle undefined or empty values safely
+    if (!firstName || !lastName || !companyName) {
+      return '';
+    }
+    
     const firstLetter = firstName.charAt(0).toLowerCase();
     const cleanLastName = lastName.toLowerCase();
     const cleanCompany = companyName
@@ -647,7 +652,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <select
                       value={formData.companyNameControl}
                       onChange={(e) => handleControlTypeChange('companyNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[38px]"
+                      className="text-xs px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-7 h-[38px] shadow-sm"
                     >
                       <option value="random">Random</option>
                       <option value="custom">Custom</option>
@@ -696,7 +701,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <select
                       value={formData.userFullNameControl}
                       onChange={(e) => handleControlTypeChange('userFullNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[38px]"
+                      className="text-xs px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-7 h-[38px] shadow-sm"
                     >
                       <option value="random">Random</option>
                       <option value="custom">Custom</option>
