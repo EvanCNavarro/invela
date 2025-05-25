@@ -528,14 +528,14 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     const initialData = {
       persona: selectedPersona?.title || '',
       companyName: finalCompanyName,
-      companyNameControl: 'random',
+      companyNameControl: 'random' as 'random' | 'custom',
       userFullName: `${randomFirstName} ${randomLastName}`,
-      userFullNameControl: 'random',
+      userFullNameControl: 'random' as 'random' | 'custom',
       userEmail: generateEmailFromDataInit(randomFirstName, randomLastName, finalCompanyName),
       emailInviteEnabled: false, // Default to off for persona-specific features
       isDemoCompany: true,       // Default to on as specified
       riskProfile: randomRiskProfile,
-      riskProfileControl: 'random',
+      riskProfileControl: 'random' as 'random' | 'custom',
       companySize: 'medium' as const // Default company size for accredited recipients
     };
     
@@ -823,7 +823,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
   /**
    * Legacy function for persona-specific fields (backwards compatibility)
    */
-  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany' | 'riskProfile'): boolean {
+  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany' | 'riskProfile' | 'companySize'): boolean {
     return shouldShowField(fieldName);
   }
   
@@ -1561,7 +1561,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
   const handleStartDemo = async () => {
     console.log('[DemoStep3] Starting demo preparation with real API actions');
     const actions = getDemoActions(formData, selectedPersona);
-    const results = {};
+    const results: any = {};
     
     setIsLoading(true);
     setLoadingStep(0);
@@ -1575,7 +1575,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       
       try {
         const result = await executeAction(action, results);
-        results[action.id] = result;
+        (results as any)[action.id] = result;
         setActionResults(prev => ({ ...prev, [action.id]: result }));
         
         // If any action fails, stop the process
@@ -1803,7 +1803,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                     <div className={`rounded p-2 border transition-all duration-500 ${
                       isLoading && getCurrentTargetField() === 'accessLevel' 
                         ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-100' 
-                        : loadingStep > 0 && getLoadingSteps(formData).findIndex(step => step.targetField === 'accessLevel') < loadingStep - 1
+                        : loadingStep > 0 && getDemoActions(formData, selectedPersona).findIndex(action => action.targetField === 'accessLevel') < loadingStep - 1
                         ? 'bg-green-50 border-green-200'
                         : 'bg-gray-50 border-gray-100'
                     }`}>
@@ -1867,7 +1867,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                       <div className={`text-sm font-medium ${
                         index === loadingStep ? 'text-blue-900' : 
                         index < loadingStep ? 'text-green-800' : 'text-gray-500'
-                      }`}>{step.label}</div>
+                      }`}>{action.label}</div>
                     </div>
                   ))}
                 </div>
