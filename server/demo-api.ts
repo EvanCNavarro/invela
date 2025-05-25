@@ -38,7 +38,7 @@ router.post('/demo/company/create', async (req, res) => {
     });
 
     // Create company record using actual database fields
-    const [company] = await db.insert(companies).values({
+    const company = await db.insert(companies).values({
       name,
       description: `Demo company created for ${persona} persona`,
       category: 'FinTech', // Default category for demo companies
@@ -46,7 +46,7 @@ router.post('/demo/company/create', async (req, res) => {
       available_tabs: ['task-center'], // Basic tab access
       revenue_tier: companySize === 'large' ? 'large' : companySize === 'medium' ? 'medium' : 'small',
       accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING'
-    }).returning();
+    }).returning().then(rows => rows[0]);
 
     // Broadcast completion event
     broadcastMessage('demo_action_complete', {
