@@ -360,13 +360,28 @@ router.post('/demo/company/create', async (req, res) => {
         const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000; // $1M-$10M
         const employeeCount = Math.floor(Math.random() * 90) + 10; // 10-100 employees
         
+        // Check if this is extra-large that wasn't caught by earlier conditions
+        if (size === 'extra-large') {
+          console.log(`[DemoAPI] ✅ FINAL CATCH - GENERATING ENTERPRISE for ${size}`);
+          const enterpriseRevenue = Math.floor(Math.random() * 1500000000) + 500000000;
+          const enterpriseEmployees = Math.floor(Math.random() * 40000) + 10000;
+          
+          return {
+            ...baseData,
+            revenue: enterpriseRevenue >= 1000000000 
+              ? `$${(enterpriseRevenue / 1000000000).toFixed(1)}B`
+              : `$${(enterpriseRevenue / 1000000).toFixed(0)}M`,
+            num_employees: enterpriseEmployees,
+            revenue_tier: 'xlarge'
+          };
+        }
+        
         console.log(`[DemoAPI] Generated small company (default): $${(revenueAmount / 1000000).toFixed(1)}M revenue, ${employeeCount} employees`);
         console.log(`[DemoAPI] WARNING: Unrecognized size "${size}" - falling back to small company defaults`);
-        console.log(`[DemoAPI] DEBUG: Available size conditions checked - xlarge: ${size === 'xlarge'}, extra-large: ${size === 'extra-large'}, large: ${size === 'large'}, medium: ${size === 'medium'}`);
         
         return {
           ...baseData,
-          revenue: `$${(revenueAmount / 1000000).toFixed(1)}M`, // Format as "$5.5M"
+          revenue: `$${(revenueAmount / 1000000).toFixed(1)}M`,
           num_employees: employeeCount,
           revenue_tier: 'small'
         };
@@ -375,10 +390,73 @@ router.post('/demo/company/create', async (req, res) => {
 
     console.log('[DemoAPI] Generating company data for:', { persona, companySize });
     
+    // DIRECT FIX: Generate company data based on selected size
+    console.log(`[DemoAPI] IMPLEMENTING DIRECT FIX for size: ${companySize}`);
+    
     let companyData;
     
-    // Generate company data using enhanced logic
-    companyData = getCompanyData(persona, companySize || 'medium');
+    // Size-based revenue and employee generation
+    if (companySize === 'extra-large') {
+      console.log('[DemoAPI] ✅ GENERATING ENTERPRISE COMPANY');
+      const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
+      const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: revenueAmount >= 1000000000 
+          ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
+          : `$${(revenueAmount / 1000000).toFixed(0)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'xlarge'
+      };
+      console.log(`[DemoAPI] Generated enterprise: ${companyData.revenue}, ${companyData.num_employees} employees`);
+      
+    } else if (companySize === 'large') {
+      const revenueAmount = Math.floor(Math.random() * 400000000) + 100000000; // $100M-$500M
+      const employeeCount = Math.floor(Math.random() * 9000) + 1000; // 1K-10K employees
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'large'
+      };
+      
+    } else if (companySize === 'medium') {
+      const revenueAmount = Math.floor(Math.random() * 90000000) + 10000000; // $10M-$100M
+      const employeeCount = Math.floor(Math.random() * 900) + 100; // 100-1K employees
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'medium'
+      };
+      
+    } else {
+      // Small company (default)
+      const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000; // $1M-$10M
+      const employeeCount = Math.floor(Math.random() * 90) + 10; // 10-100 employees
+      
+      companyData = {
+        category: 'FinTech',
+        accreditation_status: 'APPROVED',
+        is_demo: true,
+        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        revenue: `$${(revenueAmount / 1000000).toFixed(1)}M`,
+        num_employees: employeeCount,
+        revenue_tier: 'small'
+      };
+    }
     
     console.log('[DemoAPI] Generated company data:', companyData);
     
