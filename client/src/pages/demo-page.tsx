@@ -713,8 +713,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     userEmail: ['default'],
     
     // Persona-specific fields with multiple tags
-    emailInvite: ['accredited-data-recipient', 'data-provider', 'invela-admin'],
-    demoCompany: ['new-data-recipient', 'accredited-data-recipient', 'invela-admin']
+    emailInvite: ['new-data-recipient', 'accredited-data-recipient', 'data-provider', 'invela-admin'],
+    demoCompany: ['new-data-recipient', 'accredited-data-recipient']
   };
 
   /**
