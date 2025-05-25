@@ -1346,30 +1346,62 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
   
   console.log('[DemoStep3] Rendering results and next steps');
   
-  // Loading steps for demo preparation
-  const loadingSteps = [
-    { id: 1, label: 'Creating company profile', description: 'Setting up organizational structure' },
-    { id: 2, label: 'Configuring user account', description: 'Applying persona-specific settings' },
-    { id: 3, label: 'Applying customizations', description: 'Personalizing demo experience' },
-    { id: 4, label: 'Preparing demo environment', description: 'Initializing platform access' },
-    { id: 5, label: 'Sending email invitation', description: 'Delivering access credentials' }
-  ];
+  // Individual configuration loading steps - each data point gets its own loading indicator
+  const getLoadingSteps = (formData: any) => {
+    const steps = [
+      // Company Configuration
+      { id: 'company-profile', label: `Creating "${formData?.companyName}" profile`, category: 'company', description: 'Setting up organizational structure' },
+      { id: 'company-settings', label: 'Applying company preferences', category: 'company', description: 'Configuring organizational settings' },
+    ];
+
+    // Add persona-specific company steps
+    if (selectedPersona?.id === 'accredited-data-recipient') {
+      steps.push(
+        { id: 'company-size', label: `Setting company size to ${formData?.companySize?.replace('-', ' ')}`, category: 'company', description: 'Configuring organizational scale' },
+        { id: 'risk-profile', label: `Applying risk profile (${formData?.riskProfile}/100)`, category: 'company', description: 'Setting risk tolerance levels' }
+      );
+    }
+
+    if (selectedPersona?.id === 'new-data-recipient' && formData?.isDemoCompany) {
+      steps.push({ id: 'demo-data', label: 'Loading demo company data', category: 'company', description: 'Pre-populating sample information' });
+    }
+
+    // User Account Configuration
+    steps.push(
+      { id: 'user-account', label: `Creating account for ${formData?.userFullName}`, category: 'user', description: 'Setting up user profile' },
+      { id: 'user-permissions', label: `Applying ${selectedPersona?.title} permissions`, category: 'user', description: 'Configuring access levels' },
+      { id: 'user-email', label: `Setting up ${formData?.userEmail}`, category: 'user', description: 'Configuring email preferences' }
+    );
+
+    // Email invitation if enabled
+    if (formData?.emailInviteEnabled) {
+      steps.push({ id: 'email-invite', label: 'Sending welcome email', category: 'user', description: 'Delivering access credentials' });
+    }
+
+    // Final environment setup
+    steps.push({ id: 'environment', label: 'Initializing demo environment', category: 'system', description: 'Preparing platform access' });
+
+    return steps;
+  };
   
   const handleStartDemo = async () => {
     console.log('[DemoStep3] Starting demo preparation');
+    const steps = getLoadingSteps(formData);
     setIsLoading(true);
     setLoadingStep(0);
     
-    // Simulate demo preparation process
-    for (let i = 0; i < loadingSteps.length; i++) {
+    // Process each configuration step individually
+    for (let i = 0; i < steps.length; i++) {
       setLoadingStep(i + 1);
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing time
+      console.log(`[DemoStep3] Processing: ${steps[i].label}`);
+      await new Promise(resolve => setTimeout(resolve, 1200)); // Realistic processing time per step
     }
     
-    // Navigate to login after preparation
+    // Brief completion delay before navigation
     setTimeout(() => {
+      console.log('[DemoStep3] Demo preparation complete, navigating to login');
       setLocation('/login');
-    }, 1000);
+    }, 800);
   };
   
   return (
@@ -1427,41 +1459,27 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                   </div>
                 </div>
 
-                {/* Configuration Details */}
+                {/* Configuration Details - Company and User Sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Core Information */}
+                  {/* Company Information */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Core Information</h4>
+                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Company Configuration</h4>
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Company Name</span>
                         <span className="text-sm font-medium text-gray-900">{formData.companyName}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">User Name</span>
-                        <span className="text-sm font-medium text-gray-900">{formData.userFullName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Email Address</span>
-                        <span className="text-sm font-medium text-gray-900">{formData.userEmail}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Persona-Specific Settings */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">Demo Settings</h4>
-                    <div className="space-y-3">
-                      {/* Risk Profile for Accredited Data Recipients */}
+                      
+                      {/* Company Size for Accredited Data Recipients */}
                       {selectedPersona.id === 'accredited-data-recipient' && (
                         <>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Risk Profile</span>
-                            <span className="text-sm font-medium text-gray-900">{formData.riskProfile}/100</span>
-                          </div>
-                          <div className="flex justify-between">
                             <span className="text-sm text-gray-600">Company Size</span>
                             <span className="text-sm font-medium text-gray-900 capitalize">{formData.companySize?.replace('-', ' ')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Risk Profile</span>
+                            <span className="text-sm font-medium text-gray-900">{formData.riskProfile}/100</span>
                           </div>
                         </>
                       )}
@@ -1469,12 +1487,29 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
                       {/* Demo Company for New Data Recipients */}
                       {selectedPersona.id === 'new-data-recipient' && (
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Demo Company</span>
+                          <span className="text-sm text-gray-600">Demo Company Data</span>
                           <span className="text-sm font-medium text-gray-900">{formData.isDemoCompany ? 'Enabled' : 'Disabled'}</span>
                         </div>
                       )}
-                      
-                      {/* Email Invitation */}
+                    </div>
+                  </div>
+
+                  {/* User Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 uppercase tracking-wide">User Configuration</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Full Name</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.userFullName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Email Address</span>
+                        <span className="text-sm font-medium text-gray-900">{formData.userEmail}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Access Level</span>
+                        <span className="text-sm font-medium text-gray-900">{selectedPersona.title}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Email Invitation</span>
                         <span className="text-sm font-medium text-gray-900">{formData.emailInviteEnabled ? 'Enabled' : 'Disabled'}</span>
@@ -1499,41 +1534,60 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
           )}
         </div>
 
-        {/* BOTTOM SECTION: Loading/Preparation Area */}
-        <div className="flex-shrink-0 h-32">
+        {/* BOTTOM SECTION: Individual Configuration Loading */}
+        <div className="flex-shrink-0 h-40">
           {isLoading ? (
             <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 p-6 h-full">
-              <div className="flex items-center justify-between h-full">
+              <div className="flex items-start justify-between h-full">
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Preparing Demo Environment</h4>
-                  <div className="space-y-2">
-                    {loadingSteps.map((step, index) => (
-                      <div key={step.id} className={`flex items-center space-x-3 ${index < loadingStep ? 'opacity-100' : 'opacity-40'}`}>
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                          index < loadingStep ? 'bg-blue-600' : 'bg-gray-300'
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <h4 className="text-sm font-medium text-gray-900">Building Demo...</h4>
+                  </div>
+                  <div className="space-y-2 max-h-28 overflow-y-auto">
+                    {getLoadingSteps(formData).map((step: any, index: number) => (
+                      <div key={step.id} className={`flex items-center space-x-3 transition-all duration-300 ${
+                        index < loadingStep ? 'opacity-100' : 
+                        index === loadingStep ? 'opacity-100 bg-blue-50 -mx-2 px-2 py-1 rounded' : 
+                        'opacity-40'
+                      }`}>
+                        <div className={`w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          index < loadingStep ? 'bg-green-500' : 
+                          index === loadingStep ? 'bg-blue-500' : 
+                          'bg-gray-300'
                         }`}>
                           {index < loadingStep ? (
                             <Check className="w-2 h-2 text-white" />
-                          ) : (
-                            <div className={`w-2 h-2 rounded-full ${index === loadingStep ? 'bg-white animate-pulse' : 'bg-gray-500'}`} />
-                          )}
+                          ) : index === loadingStep ? (
+                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                          ) : null}
                         </div>
-                        <div className="text-xs">
-                          <div className="font-medium text-gray-900">{step.label}</div>
-                          <div className="text-gray-600">{step.description}</div>
+                        <div className="text-xs flex-1">
+                          <div className={`font-medium ${
+                            index === loadingStep ? 'text-blue-900' : 'text-gray-900'
+                          }`}>{step.label}</div>
+                          <div className={`${
+                            index === loadingStep ? 'text-blue-700' : 'text-gray-600'
+                          }`}>{step.description}</div>
                         </div>
+                        {step.category && (
+                          <div className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            step.category === 'company' ? 'bg-purple-100 text-purple-700' :
+                            step.category === 'user' ? 'bg-green-100 text-green-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {step.category}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
-                </div>
-                <div className="ml-6">
-                  <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="bg-gray-50/40 backdrop-blur-sm rounded-lg border border-gray-200/30 p-6 h-full flex items-center justify-center">
-              <p className="text-sm text-gray-500">Demo preparation will begin when you click "Start Demo"</p>
+              <p className="text-sm text-gray-500">Configuration review complete. Click "Sign In" to begin demo preparation.</p>
             </div>
           )}
         </div>
@@ -1545,7 +1599,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
           onBack={!isLoading ? onBack : undefined}
           showNext={true}
           onNext={handleStartDemo}
-          nextText={isLoading ? "Preparing..." : "Start Demo"}
+          nextText={isLoading ? "Building Demo..." : "Sign In"}
           nextDisabled={isLoading}
           nextIcon={isLoading ? <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin ml-2" /> : <Check className="w-4 h-4 ml-2" />}
         />
