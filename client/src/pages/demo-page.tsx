@@ -632,7 +632,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       type="text"
                       value={formData.persona}
                       disabled
-                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed"
+                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed h-[38px]"
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <Lock className="h-3 w-3 text-gray-400" />
@@ -750,7 +750,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                       type="email"
                       value={formData.userEmail}
                       disabled
-                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed"
+                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed h-[38px]"
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <Lock className="h-3 w-3 text-gray-400" />
