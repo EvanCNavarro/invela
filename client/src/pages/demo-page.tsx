@@ -718,25 +718,34 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   };
 
   /**
-   * Determines if persona-specific fields should be displayed
+   * Determines if any field should be displayed based on persona tags
    * Uses flexible tagging system for granular control
    */
-  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany'): boolean {
+  function shouldShowField(fieldName: keyof typeof FIELD_PERSONA_MAPPING): boolean {
     if (!selectedPersona) return false;
     
     const fieldTags = FIELD_PERSONA_MAPPING[fieldName] || [];
     const personaId = selectedPersona.id;
     
-    // Show field if current persona is in the field's tag list
-    const shouldShow = fieldTags.includes(personaId);
+    // Show field if it's tagged as 'default' OR if current persona is in the field's tag list
+    const shouldShow = fieldTags.includes('default') || fieldTags.includes(personaId);
     
     console.log(`[DemoStep2] Field visibility check: ${fieldName} for ${personaId} = ${shouldShow}`, {
       fieldTags,
       personaId,
+      isDefault: fieldTags.includes('default'),
+      hasPersonaTag: fieldTags.includes(personaId),
       shouldShow
     });
     
     return shouldShow;
+  }
+
+  /**
+   * Legacy function for persona-specific fields (backwards compatibility)
+   */
+  function shouldShowPersonaSpecificField(fieldName: 'emailInvite' | 'demoCompany'): boolean {
+    return shouldShowField(fieldName);
   }
   
   // ========================================
