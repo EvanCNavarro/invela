@@ -68,6 +68,7 @@ interface DemoStepProps {
   onBack?: () => void;
   selectedPersona?: DemoPersona | null;
   onPersonaSelect?: (persona: DemoPersona) => void;
+  onFormDataChange?: (formData: any) => void;
 }
 
 // ========================================
@@ -449,7 +450,7 @@ const DEMO_DATA_GENERATORS = {
  * the selected persona from Step 1. Implements field-level control
  * with random/custom toggles and persona-specific options.
  */
-const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
+const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoStepProps) => {
   console.log('[DemoStep2] Rendering interactive demo', { selectedPersona: selectedPersona?.id });
   
   // ========================================
@@ -509,7 +510,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
     // Generate random risk profile (0-100) for initial state
     const randomRiskProfile = Math.floor(Math.random() * 101);
     
-    return {
+    const initialData = {
       persona: selectedPersona?.title || '',
       companyName: finalCompanyName,
       companyNameControl: 'random',
@@ -522,6 +523,11 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       riskProfileControl: 'random',
       companySize: 'medium' as const // Default company size for accredited recipients
     };
+    
+    // Immediately notify parent of initial form data
+    setTimeout(() => onFormDataChange?.(initialData), 0);
+    
+    return initialData;
   });
   
   // ========================================
@@ -894,6 +900,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         newValue: value,
         updatedFormData: newData
       });
+      
+      // Notify parent component of form data changes
+      onFormDataChange?.(newData);
       
       return newData;
     });
@@ -1571,7 +1580,7 @@ export default function DemoPage() {
    * Enables consistent data flow from step 1 selection to step 2 display and step 3 actions
    */
   const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
-  const [formData, setFormData] = useState<any>(null);
+  const [step2FormData, setStep2FormData] = useState<any>(null);
   
   console.log(`[DemoPage] Rendering step ${currentStep}/3`, { selectedPersona: selectedPersona?.id });
 
@@ -1618,6 +1627,7 @@ export default function DemoPage() {
             onNext={handleNextStep} 
             onBack={handlePreviousStep}
             selectedPersona={selectedPersona}
+            onFormDataChange={setStep2FormData}
           />
         );
       case 3:
@@ -1626,6 +1636,7 @@ export default function DemoPage() {
             onNext={handleBackToLogin}
             onBack={handlePreviousStep}
             selectedPersona={selectedPersona}
+            formData={step2FormData}
           />
         );
       default:
