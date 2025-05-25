@@ -1171,93 +1171,35 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <span className="text-sm font-medium text-gray-700">Risk Profile</span>
                     <ValidationIcon status="valid" />
                   </div>
-                  <div className="col-span-8 flex items-center">
-                    <div className="flex items-center space-x-2 w-full">
-                      {/* Random/Custom Control Dropdown */}
-                      <div className="relative dropdown-container">
-                        <button
-                          type="button"
-                          onClick={() => setRiskProfileDropdownOpen(!riskProfileDropdownOpen)}
-                          className="text-xs px-3 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[80px]"
-                        >
-                          <span>{formData.riskProfileControl === 'random' ? 'Random' : 'Custom'}</span>
-                          <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ml-1 ${riskProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
-                        {riskProfileDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleControlTypeChange('riskProfileControl', 'random');
-                                setRiskProfileDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.riskProfileControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
-                            >
-                              Random
-                              {formData.riskProfileControl === 'random' && (
-                                <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleControlTypeChange('riskProfileControl', 'custom');
-                                setRiskProfileDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.riskProfileControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
-                            >
-                              Custom
-                              {formData.riskProfileControl === 'custom' && (
-                                <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Risk Profile Display - Always Interactive Slider */}
-                      <div className="relative flex-1">
-                        <div className="px-3 py-2 h-[32px] flex items-center">
-                          <div className="flex items-center space-x-3 w-full">
-                            {/* Interactive Slider Track - Always Present */}
-                            <div className="relative flex-1 h-2">
-                              <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={formData.riskProfile}
-                                onChange={(e) => handleFieldChange('riskProfile', parseInt(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                                style={{
-                                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${formData.riskProfile}%, #e5e7eb ${formData.riskProfile}%, #e5e7eb 100%)`
-                                }}
-                              />
-                            </div>
-                            {/* Value Display - Always Present */}
-                            <div className="text-sm font-medium text-gray-700 min-w-[2.5rem] text-center">
-                              {formData.riskProfile}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Shuffle Button - Only in Random Mode */}
-                      {formData.riskProfileControl === 'random' && (
-                        <button
-                          type="button"
-                          onClick={() => generateRandomValues(['riskProfile'])}
-                          className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
-                        >
-                          <Shuffle className="h-3 w-3" />
-                        </button>
-                      )}
+                  <div className="col-span-8 flex items-center space-x-3">
+                    {/* Risk Profile Value Display */}
+                    <div className="w-12 h-[32px] flex items-center justify-center text-sm font-medium text-gray-700 border border-gray-300 rounded bg-gray-50">
+                      {formData.riskProfile}
                     </div>
+                    
+                    {/* Interactive Slider - Horizontally Aligned */}
+                    <div className="flex-1 h-[32px] flex items-center px-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={formData.riskProfile}
+                        onChange={(e) => handleFieldChange('riskProfile', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${formData.riskProfile}%, #e5e7eb ${formData.riskProfile}%, #e5e7eb 100%)`
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Shuffle Button - Always Present */}
+                    <button
+                      type="button"
+                      onClick={() => generateRandomValues(['riskProfile'])}
+                      className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0"
+                    >
+                      <Shuffle className="h-3 w-3" />
+                    </button>
                   </div>
                 </div>
               )}
