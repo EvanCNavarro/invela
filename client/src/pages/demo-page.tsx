@@ -718,8 +718,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                 <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                  <ValidationIcon status={getFieldValidationStatus('persona')} />
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
+                  <ValidationIcon status={getFieldValidationStatus('persona')} />
                 </div>
                 <div className="col-span-8 flex items-center">
                   <div className="relative flex-1">
@@ -739,8 +739,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 2. Company Name Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                 <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                  <ValidationIcon status={getFieldValidationStatus('companyName')} />
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
+                  <ValidationIcon status={getFieldValidationStatus('companyName')} />
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
                   {/* Custom dropdown button */}
@@ -820,8 +820,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 3. User Full Name Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                 <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                  <ValidationIcon status={getFieldValidationStatus('userFullName')} />
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
+                  <ValidationIcon status={getFieldValidationStatus('userFullName')} />
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
                   {/* Custom dropdown button */}
@@ -901,8 +901,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 4. User Email Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                 <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                  <ValidationIcon status={getFieldValidationStatus('userEmail')} />
                   <span className="text-sm font-medium text-gray-700">User Email</span>
+                  <ValidationIcon status={getFieldValidationStatus('userEmail')} />
                 </div>
                 <div className="col-span-8 flex items-center">
                   <div className="relative flex-1">
