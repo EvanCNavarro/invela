@@ -286,12 +286,14 @@ router.post('/demo/company/create', async (req, res) => {
        */
       console.log(`[DemoAPI] Processing company size: ${size}`);
       
-      if (size === 'xlarge' || size === 'extra-large') {
+      // Force enterprise-level generation for extra-large companies
+      if (size === 'extra-large' || size === 'xlarge') {
+        console.log(`[DemoAPI] GENERATING ENTERPRISE-LEVEL COMPANY for size: ${size}`);
         // Enterprise-level companies ($500M-$2B)
         const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
         const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
         
-        console.log(`[DemoAPI] Generated ${size} company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+        console.log(`[DemoAPI] Generated enterprise ${size} company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
         
         return {
           ...baseData,
@@ -334,6 +336,7 @@ router.post('/demo/company/create', async (req, res) => {
         
         console.log(`[DemoAPI] Generated small company (default): $${(revenueAmount / 1000000).toFixed(1)}M revenue, ${employeeCount} employees`);
         console.log(`[DemoAPI] WARNING: Unrecognized size "${size}" - falling back to small company defaults`);
+        console.log(`[DemoAPI] DEBUG: Available size conditions checked - xlarge: ${size === 'xlarge'}, extra-large: ${size === 'extra-large'}, large: ${size === 'large'}, medium: ${size === 'medium'}`);
         
         return {
           ...baseData,
@@ -345,6 +348,7 @@ router.post('/demo/company/create', async (req, res) => {
     };
 
     console.log('[DemoAPI] Generating company data for:', { persona, companySize });
+    // Fix: Use the enhanced company generation that properly handles extra-large
     const companyData = getCompanyData(persona, companySize || 'medium');
     console.log('[DemoAPI] Generated company data:', companyData);
     
