@@ -37,16 +37,65 @@ router.post('/demo/company/create', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Create company record using actual database fields
-    const company = await db.insert(companies).values({
+    // Create realistic company data based on persona and size
+    const getCompanyData = (persona: string, size: string) => {
+      const baseData = {
+        category: persona === 'accredited-data-recipient' ? 'FinTech' : 
+                 persona === 'data-provider' ? 'Bank' : 'FinTech',
+        accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING',
+        is_demo: true,
+        available_tabs: persona === 'accredited-data-recipient' ? 
+          ['task-center', 'security', 'analytics', 'reports'] : ['task-center']
+      };
+
+      // Set realistic revenue and employee data based on company size
+      if (size === 'large') {
+        const revenueAmount = Math.floor(Math.random() * 500000000) + 100000000;
+        return {
+          ...baseData,
+          revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`, // Format as "$150M"
+          num_employees: Math.floor(Math.random() * 9000) + 1000, // 1,000-10,000
+          revenue_tier: 'large'
+        };
+      } else if (size === 'medium') {
+        const revenueAmount = Math.floor(Math.random() * 90000000) + 10000000;
+        return {
+          ...baseData,
+          revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`, // Format as "$45M"
+          num_employees: Math.floor(Math.random() * 900) + 100, // 100-1,000
+          revenue_tier: 'medium'
+        };
+      } else {
+        const revenueAmount = Math.floor(Math.random() * 9000000) + 1000000;
+        return {
+          ...baseData,
+          revenue: `$${(revenueAmount / 1000000).toFixed(1)}M`, // Format as "$5.5M"
+          num_employees: Math.floor(Math.random() * 90) + 10, // 10-100
+          revenue_tier: 'small'
+        };
+      }
+    };
+
+    const companyData = getCompanyData(persona, companySize || 'medium');
+    
+    // Create comprehensive company values
+    const insertValues = {
       name,
-      description: `Demo company created for ${persona} persona`,
-      category: 'FinTech', // Default category for demo companies
-      is_demo: type === 'demo',
-      available_tabs: ['task-center'], // Basic tab access
-      revenue_tier: companySize === 'large' ? 'large' : companySize === 'medium' ? 'medium' : 'small',
-      accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING'
-    }).returning().then(rows => rows[0]);
+      description: `Professional ${companyData.category.toLowerCase()} company specializing in secure data management and compliance`,
+      ...companyData,
+      risk_score: riskProfile || Math.floor(Math.random() * 40) + 60, // 60-100 for good companies
+      legal_structure: 'Corporation',
+      market_position: companyData.revenue_tier === 'large' ? 'Market Leader' : 
+                      companyData.revenue_tier === 'medium' ? 'Established Player' : 'Growing Business',
+      incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 15) - 5, // 5-20 years old
+      funding_stage: companyData.revenue_tier === 'large' ? 'Public' : 
+                    companyData.revenue_tier === 'medium' ? 'Series C' : 'Series B'
+    };
+
+    console.log('[DemoAPI] Company insert values:', insertValues);
+    
+    // Create company record with comprehensive data
+    const company = await db.insert(companies).values(insertValues).returning().then(rows => rows[0]);
 
     // Broadcast completion event
     broadcastMessage('demo_action_complete', {
