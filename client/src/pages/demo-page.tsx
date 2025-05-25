@@ -1508,11 +1508,9 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
         return result;
 
       } catch (apiError) {
-        // Fallback to simulation for demo purposes when API isn't ready
-        console.log(`[DemoAPI] API not available, using simulation for: ${action.label}`);
-        
-        // Simulate realistic processing time
-        await new Promise(resolve => setTimeout(resolve, action.estimatedDuration));
+        // NO MORE SIMULATIONS - Force real API calls only
+        console.error(`[DemoAPI] REAL API FAILED for: ${action.label}`, apiError);
+        throw new Error(`Demo API failed: ${apiError.message}`);
 
         // Generate realistic mock response based on action type
         const mockResult = {
