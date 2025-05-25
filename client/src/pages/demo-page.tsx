@@ -1672,31 +1672,31 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
           ) : wizardStep === 'setup' ? (
             // Setup Stage - Show Loading Progress
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-              <div className="p-4 flex-1 flex flex-col justify-center">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-lg font-medium text-gray-700">Setting up your demo environment...</span>
-                  </div>
-                  <div className="space-y-2 flex-1 overflow-y-auto">
-                    {getLoadingSteps(formData).map((step: any, index: number) => (
-                      <div key={step.id} className={`flex items-center space-x-3 transition-all duration-500 px-2 py-1 rounded ${
-                        index < loadingStep ? 'opacity-100' : 
-                        index === loadingStep ? 'opacity-100 bg-blue-50' : 
-                        'opacity-50'
+              <div className="p-4 flex-1">
+                <div className="space-y-3">
+                  {getLoadingSteps(formData).map((step: any, index: number) => (
+                    <div key={step.id} className={`flex items-center space-x-3 transition-all duration-500 px-3 py-2 rounded-lg ${
+                      index < loadingStep ? 'opacity-100 bg-green-50 border border-green-200' : 
+                      index === loadingStep ? 'opacity-100 bg-blue-50 border border-blue-200' : 
+                      'opacity-50 bg-gray-50 border border-gray-200'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        index < loadingStep ? 'bg-green-500' : 
+                        index === loadingStep ? 'bg-blue-500' : 
+                        'bg-gray-300'
                       }`}>
-                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                          index < loadingStep ? 'bg-green-500' : 
-                          index === loadingStep ? 'bg-blue-500 animate-pulse' : 
-                          'bg-gray-300'
-                        }`}></div>
-                        <div className={`text-sm font-medium ${
-                          index === loadingStep ? 'text-blue-900' : 
-                          index < loadingStep ? 'text-green-700' : 'text-gray-500'
-                        }`}>{step.label}</div>
+                        {index < loadingStep ? (
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        ) : index === loadingStep ? (
+                          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        ) : null}
                       </div>
-                    ))}
-                  </div>
+                      <div className={`text-sm font-medium ${
+                        index === loadingStep ? 'text-blue-900' : 
+                        index < loadingStep ? 'text-green-800' : 'text-gray-500'
+                      }`}>{step.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
