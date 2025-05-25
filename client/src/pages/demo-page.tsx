@@ -462,6 +462,65 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   // ========================================
   
   /**
+   * Validates individual field values and returns validation status
+   */
+  const getFieldValidationStatus = (fieldName: string): 'valid' | 'invalid' | 'in-progress' => {
+    switch (fieldName) {
+      case 'persona':
+        return formData.persona ? 'valid' : 'invalid';
+      case 'companyName':
+        if (!formData.companyName) return 'invalid';
+        if (formData.companyName.length < 2) return 'in-progress';
+        return 'valid';
+      case 'userFullName':
+        if (!formData.userFullName) return 'invalid';
+        if (formData.userFullName.length < 3 || !formData.userFullName.includes(' ')) return 'in-progress';
+        return 'valid';
+      case 'userEmail':
+        return formData.userEmail && formData.userEmail.includes('@') ? 'valid' : 'invalid';
+      default:
+        return 'invalid';
+    }
+  };
+  
+  /**
+   * Checks if the entire form is valid for progression
+   */
+  const isFormValid = (): boolean => {
+    return (
+      getFieldValidationStatus('persona') === 'valid' &&
+      getFieldValidationStatus('companyName') === 'valid' &&
+      getFieldValidationStatus('userFullName') === 'valid' &&
+      getFieldValidationStatus('userEmail') === 'valid'
+    );
+  };
+  
+  /**
+   * Renders validation indicator icon
+   */
+  const ValidationIcon = ({ status }: { status: 'valid' | 'invalid' | 'in-progress' }) => {
+    if (status === 'valid') {
+      return (
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-green-100">
+          <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        </div>
+      );
+    }
+    
+    if (status === 'in-progress') {
+      return (
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-yellow-100">
+          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+        </div>
+      );
+    }
+    
+    return null; // No icon for invalid state
+  };
+  
+  /**
    * Generates email address from user name and company
    * Follows the pattern: firstletter + lastname @ companydomain.com
    * 
@@ -658,7 +717,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
-                <div className="col-span-4 flex items-center justify-end pr-2">
+                <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                  <ValidationIcon status={getFieldValidationStatus('persona')} />
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -678,7 +738,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 2. Company Name Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
-                <div className="col-span-4 flex items-center justify-end pr-2">
+                <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                  <ValidationIcon status={getFieldValidationStatus('companyName')} />
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -758,7 +819,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 3. User Full Name Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
-                <div className="col-span-4 flex items-center justify-end pr-2">
+                <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                  <ValidationIcon status={getFieldValidationStatus('userFullName')} />
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -838,7 +900,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 4. User Email Field */}
               <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
-                <div className="col-span-4 flex items-center justify-end pr-2">
+                <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                  <ValidationIcon status={getFieldValidationStatus('userEmail')} />
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -919,6 +982,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
           onBack={onBack}
           onNext={onNext}
           nextText="Next Step"
+          nextDisabled={!isFormValid()}
         />
       </div>
       
