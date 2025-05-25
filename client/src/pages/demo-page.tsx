@@ -615,200 +615,215 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
       {/* MAIN BODY SECTION */}
       <div className="flex-1 space-y-6">
         {selectedPersona ? (
-          <div className="space-y-4">
-            {/* Demo Customization Form */}
-            <Card className="p-6">
-              <div className="space-y-6">
-                
-                {/* 1. Persona Field (Locked) */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Selected Persona
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.persona}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
-                      />
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <Lock className="h-4 w-4 text-gray-400" />
-                      </div>
+          <div className="space-y-6">
+            {/* Demo Customization Form - Clean 4-Column Layout */}
+            <div className="bg-white/40 backdrop-blur-sm rounded-lg border border-gray-100/50 overflow-hidden">
+              
+              {/* Header Row */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/30 border-b border-gray-100/50 text-xs font-medium text-gray-600 uppercase tracking-wide">
+                <div className="col-span-3">Field</div>
+                <div className="col-span-2">Control</div>
+                <div className="col-span-6">Value</div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* 1. Persona Field (Locked) */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
+                <div className="col-span-3 flex items-center">
+                  <span className="text-sm font-medium text-gray-700">Selected Persona</span>
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Locked</span>
+                </div>
+                <div className="col-span-6 flex items-center">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      value={formData.persona}
+                      disabled
+                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed"
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Lock className="h-3 w-3 text-gray-400" />
                     </div>
-                  </div>
-                  <div className="w-20 flex justify-end">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Locked</span>
                   </div>
                 </div>
-                
-                {/* 2. Company Name Field (Random/Custom) */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Name
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.companyName}
-                        onChange={(e) => handleFieldChange('companyName', e.target.value)}
-                        disabled={formData.companyNameControl === 'random'}
-                        placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
-                        className={cn(
-                          "w-full px-3 py-2 border border-gray-300 rounded-md",
-                          formData.companyNameControl === 'random' 
-                            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
-                            : "bg-white text-gray-900"
-                        )}
-                      />
-                      {formData.companyNameControl === 'random' && (
-                        <button
-                          type="button"
-                          onClick={() => generateRandomValues(['companyName'])}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          <Shuffle className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="w-20 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleControlTypeChange('companyNameControl', 
-                        formData.companyNameControl === 'random' ? 'custom' : 'random'
-                      )}
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* 2. Company Name Field */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
+                <div className="col-span-3 flex items-center">
+                  <span className="text-sm font-medium text-gray-700">Company Name</span>
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleControlTypeChange('companyNameControl', 
+                      formData.companyNameControl === 'random' ? 'custom' : 'random'
+                    )}
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-full transition-colors font-medium",
+                      formData.companyNameControl === 'random'
+                        ? "bg-blue-100/70 text-blue-700 hover:bg-blue-200/70"
+                        : "bg-amber-100/70 text-amber-700 hover:bg-amber-200/70"
+                    )}
+                  >
+                    {formData.companyNameControl === 'random' ? 'Random' : 'Custom'}
+                  </button>
+                </div>
+                <div className="col-span-6 flex items-center">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      value={formData.companyName}
+                      onChange={(e) => handleFieldChange('companyName', e.target.value)}
+                      disabled={formData.companyNameControl === 'random'}
+                      placeholder={formData.companyNameControl === 'custom' ? "Enter company name..." : ""}
                       className={cn(
-                        "text-xs px-2 py-1 rounded transition-colors",
-                        formData.companyNameControl === 'random'
-                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        "w-full px-3 py-2 text-sm border rounded-md transition-all",
+                        formData.companyNameControl === 'random' 
+                          ? "border-gray-200/60 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
+                          : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       )}
-                    >
-                      {formData.companyNameControl === 'random' ? 'Random' : 'Custom'}
-                    </button>
+                    />
+                    {formData.companyNameControl === 'random' && (
+                      <button
+                        type="button"
+                        onClick={() => generateRandomValues(['companyName'])}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Shuffle className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
-                
-                {/* 3. User Full Name Field (Random/Custom) */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      User Full Name
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.userFullName}
-                        onChange={(e) => handleFieldChange('userFullName', e.target.value)}
-                        disabled={formData.userFullNameControl === 'random'}
-                        placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
-                        className={cn(
-                          "w-full px-3 py-2 border border-gray-300 rounded-md",
-                          formData.userFullNameControl === 'random' 
-                            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
-                            : "bg-white text-gray-900"
-                        )}
-                      />
-                      {formData.userFullNameControl === 'random' && (
-                        <button
-                          type="button"
-                          onClick={() => generateRandomValues(['userFullName'])}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          <Shuffle className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="w-20 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleControlTypeChange('userFullNameControl', 
-                        formData.userFullNameControl === 'random' ? 'custom' : 'random'
-                      )}
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* 3. User Full Name Field */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
+                <div className="col-span-3 flex items-center">
+                  <span className="text-sm font-medium text-gray-700">User Full Name</span>
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleControlTypeChange('userFullNameControl', 
+                      formData.userFullNameControl === 'random' ? 'custom' : 'random'
+                    )}
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-full transition-colors font-medium",
+                      formData.userFullNameControl === 'random'
+                        ? "bg-blue-100/70 text-blue-700 hover:bg-blue-200/70"
+                        : "bg-amber-100/70 text-amber-700 hover:bg-amber-200/70"
+                    )}
+                  >
+                    {formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}
+                  </button>
+                </div>
+                <div className="col-span-6 flex items-center">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      value={formData.userFullName}
+                      onChange={(e) => handleFieldChange('userFullName', e.target.value)}
+                      disabled={formData.userFullNameControl === 'random'}
+                      placeholder={formData.userFullNameControl === 'custom' ? "Enter full name..." : ""}
                       className={cn(
-                        "text-xs px-2 py-1 rounded transition-colors",
-                        formData.userFullNameControl === 'random'
-                          ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        "w-full px-3 py-2 text-sm border rounded-md transition-all",
+                        formData.userFullNameControl === 'random' 
+                          ? "border-gray-200/60 bg-gray-50/50 text-gray-600 cursor-not-allowed" 
+                          : "border-gray-300 bg-white text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       )}
-                    >
-                      {formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}
-                    </button>
+                    />
+                    {formData.userFullNameControl === 'random' && (
+                      <button
+                        type="button"
+                        onClick={() => generateRandomValues(['userFullName'])}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Shuffle className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
-                
-                {/* 4. User Email Field (Auto-generated, Locked) */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      User Email
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="email"
-                        value={formData.userEmail}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500 cursor-not-allowed"
-                      />
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <Lock className="h-4 w-4 text-gray-400" />
-                      </div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* 4. User Email Field */}
+              <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
+                <div className="col-span-3 flex items-center">
+                  <span className="text-sm font-medium text-gray-700">User Email</span>
+                </div>
+                <div className="col-span-2 flex items-center">
+                  <span className="text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-full">Auto</span>
+                </div>
+                <div className="col-span-6 flex items-center">
+                  <div className="relative w-full">
+                    <input
+                      type="email"
+                      value={formData.userEmail}
+                      disabled
+                      className="w-full px-3 py-2 text-sm border border-gray-200/60 rounded-md bg-gray-50/50 text-gray-600 cursor-not-allowed"
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Lock className="h-3 w-3 text-gray-400" />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Auto-generated from name and company
-                    </p>
-                  </div>
-                  <div className="w-20 flex justify-end">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Auto</span>
                   </div>
                 </div>
-                
-                {/* 5. Email Invite Toggle (Persona-specific) */}
-                {shouldShowPersonaSpecificField('emailInvite') && (
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Send Email Invite
-                      </label>
-                      <p className="text-sm text-gray-500">
-                        Send demo invitation email to the generated address
-                      </p>
-                    </div>
-                    <div className="w-20 flex justify-end">
+                <div className="col-span-1"></div>
+              </div>
+              
+              {/* 5. Email Invite Toggle */}
+              {shouldShowPersonaSpecificField('emailInvite') && (
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
+                  <div className="col-span-3 flex items-center">
+                    <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
+                  </div>
+                  <div className="col-span-2 flex items-center">
+                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Toggle</span>
+                  </div>
+                  <div className="col-span-6 flex items-center">
+                    <div className="flex items-center space-x-3">
                       <Switch
                         checked={formData.emailInviteEnabled}
                         onCheckedChange={(checked) => handleFieldChange('emailInviteEnabled', checked)}
                       />
+                      <span className="text-sm text-gray-500">
+                        {formData.emailInviteEnabled ? 'Enabled' : 'Disabled'}
+                      </span>
                     </div>
                   </div>
-                )}
-                
-                {/* 6. Demo Company Toggle (Persona-specific) */}
-                {shouldShowPersonaSpecificField('demoCompany') && (
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Use Demo Company
-                      </label>
-                      <p className="text-sm text-gray-500">
-                        Use pre-configured demo company data for the experience
-                      </p>
-                    </div>
-                    <div className="w-20 flex justify-end">
+                  <div className="col-span-1"></div>
+                </div>
+              )}
+              
+              {/* 6. Demo Company Toggle */}
+              {shouldShowPersonaSpecificField('demoCompany') && (
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50/20 transition-colors">
+                  <div className="col-span-3 flex items-center">
+                    <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
+                  </div>
+                  <div className="col-span-2 flex items-center">
+                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Toggle</span>
+                  </div>
+                  <div className="col-span-6 flex items-center">
+                    <div className="flex items-center space-x-3">
                       <Switch
                         checked={formData.isDemoCompany}
                         onCheckedChange={(checked) => handleFieldChange('isDemoCompany', checked)}
                       />
+                      <span className="text-sm text-gray-500">
+                        {formData.isDemoCompany ? 'Enabled' : 'Disabled'}
+                      </span>
                     </div>
                   </div>
-                )}
-                
-              </div>
-            </Card>
+                  <div className="col-span-1"></div>
+                </div>
+              )}
+              
+            </div>
           </div>
         ) : (
           <Card className="p-6">
