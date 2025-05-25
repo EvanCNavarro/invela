@@ -103,6 +103,18 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
 
   // Generate investors
   const investors = {
+    'xlarge': [
+      'Sequoia Capital, Andreessen Horowitz, Goldman Sachs Principal Strategic Investments, JPMorgan Strategic Investments',
+      'Kleiner Perkins, Accel Partners, Bessemer Venture Partners, General Atlantic',
+      'Tiger Global Management, Coatue Management, Insight Partners, GV (Google Ventures)',
+      'Blackstone Strategic Partners, KKR, Carlyle Group, Apollo Global Management'
+    ],
+    'extra-large': [
+      'Sequoia Capital, Andreessen Horowitz, Goldman Sachs Principal Strategic Investments, JPMorgan Strategic Investments',
+      'Kleiner Perkins, Accel Partners, Bessemer Venture Partners, General Atlantic',
+      'Tiger Global Management, Coatue Management, Insight Partners, GV (Google Ventures)',
+      'Blackstone Strategic Partners, KKR, Carlyle Group, Apollo Global Management'
+    ],
     large: [
       'Sequoia Capital, Andreessen Horowitz, Goldman Sachs Principal Strategic Investments, JPMorgan Strategic Investments',
       'Kleiner Perkins, Accel Partners, Bessemer Venture Partners, General Atlantic',
@@ -131,13 +143,17 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
     'HIPAA Compliant, SOC 1 Type II, ISO 22301, COBIT 5, COSO Framework'
   ];
 
+  // Normalize size for investor mapping
+  const normalizedSize = size === 'extra-large' ? 'xlarge' : size;
+  const investorSize = investors[normalizedSize] ? normalizedSize : 'medium'; // fallback to medium
+  
   // Select random data
   const randomWebsite = websites[type][Math.floor(Math.random() * websites[type].length)];
   const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
   const randomProducts = products[type][Math.floor(Math.random() * products[type].length)];
   const randomLeadership = leadership[Math.floor(Math.random() * leadership.length)];
   const randomClients = clients[type][Math.floor(Math.random() * clients[type].length)];
-  const randomInvestors = investors[size][Math.floor(Math.random() * investors[size].length)];
+  const randomInvestors = investors[investorSize][Math.floor(Math.random() * investors[investorSize].length)];
   const randomCertifications = certifications[Math.floor(Math.random() * certifications.length)];
 
   return {
@@ -190,8 +206,6 @@ router.post('/demo/company/create', async (req, res) => {
 
     // Create realistic company data based on persona and size
     const getCompanyData = (persona: string, size: string) => {
-      // Generate realistic business details
-      const companyDetails = generateRealisticCompanyDetails(persona, size);
       
       // ========================================
       // PERSONA-SPECIFIC CONFIGURATION
@@ -266,12 +280,12 @@ router.post('/demo/company/create', async (req, res) => {
        */
       console.log(`[DemoAPI] Processing company size: ${size}`);
       
-      if (size === 'xlarge') {
+      if (size === 'xlarge' || size === 'extra-large') {
         // Enterprise-level companies ($500M-$2B)
         const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
         const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
         
-        console.log(`[DemoAPI] Generated xlarge company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
+        console.log(`[DemoAPI] Generated ${size} company: $${(revenueAmount / 1000000).toFixed(0)}M revenue, ${employeeCount} employees`);
         
         return {
           ...baseData,
@@ -279,7 +293,7 @@ router.post('/demo/company/create', async (req, res) => {
             ? `$${(revenueAmount / 1000000000).toFixed(1)}B` // Format as "$1.2B"
             : `$${(revenueAmount / 1000000).toFixed(0)}M`,   // Format as "$750M"
           num_employees: employeeCount,
-          revenue_tier: 'xlarge'
+          revenue_tier: size === 'extra-large' ? 'xlarge' : 'xlarge' // Normalize to xlarge
         };
       } else if (size === 'large') {
         // Large corporations ($100M-$500M)
