@@ -622,18 +622,18 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* Header Row */}
               <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50/30 border-b border-gray-100/50 text-xs font-medium text-gray-600 uppercase tracking-wide">
                 <div className="col-span-3">Field</div>
-                <div className="col-span-2">Control</div>
+                <div className="col-span-2">Source</div>
                 <div className="col-span-6">Value</div>
                 <div className="col-span-1"></div>
               </div>
               
-              {/* 1. Persona Field (Locked) */}
+              {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
                 <div className="col-span-3 flex items-center">
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Locked</span>
+                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">System</span>
                 </div>
                 <div className="col-span-6 flex items-center">
                   <div className="relative w-full">
@@ -657,20 +657,21 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleControlTypeChange('companyNameControl', 
-                      formData.companyNameControl === 'random' ? 'custom' : 'random'
-                    )}
-                    className={cn(
-                      "text-xs px-2 py-1 rounded-full transition-colors font-medium",
-                      formData.companyNameControl === 'random'
-                        ? "bg-blue-100/70 text-blue-700 hover:bg-blue-200/70"
-                        : "bg-amber-100/70 text-amber-700 hover:bg-amber-200/70"
-                    )}
-                  >
-                    {formData.companyNameControl === 'random' ? 'Random' : 'Custom'}
-                  </button>
+                  <div className="relative">
+                    <select
+                      value={formData.companyNameControl}
+                      onChange={(e) => handleControlTypeChange('companyNameControl', e.target.value as 'random' | 'custom')}
+                      className="text-xs px-2 py-1 rounded-full border border-gray-200/60 bg-white/80 text-gray-700 hover:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none pr-6"
+                    >
+                      <option value="random">Random (default)</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
                 <div className="col-span-6 flex items-center">
                   <div className="relative w-full">
@@ -707,20 +708,21 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleControlTypeChange('userFullNameControl', 
-                      formData.userFullNameControl === 'random' ? 'custom' : 'random'
-                    )}
-                    className={cn(
-                      "text-xs px-2 py-1 rounded-full transition-colors font-medium",
-                      formData.userFullNameControl === 'random'
-                        ? "bg-blue-100/70 text-blue-700 hover:bg-blue-200/70"
-                        : "bg-amber-100/70 text-amber-700 hover:bg-amber-200/70"
-                    )}
-                  >
-                    {formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}
-                  </button>
+                  <div className="relative">
+                    <select
+                      value={formData.userFullNameControl}
+                      onChange={(e) => handleControlTypeChange('userFullNameControl', e.target.value as 'random' | 'custom')}
+                      className="text-xs px-2 py-1 rounded-full border border-gray-200/60 bg-white/80 text-gray-700 hover:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none pr-6"
+                    >
+                      <option value="random">Random (default)</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
                 <div className="col-span-6 flex items-center">
                   <div className="relative w-full">
@@ -757,7 +759,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
                 <div className="col-span-2 flex items-center">
-                  <span className="text-xs text-green-600 bg-green-100/50 px-2 py-1 rounded-full">Auto</span>
+                  <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">System</span>
                 </div>
                 <div className="col-span-6 flex items-center">
                   <div className="relative w-full">
@@ -782,7 +784,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
                   </div>
                   <div className="col-span-2 flex items-center">
-                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Toggle</span>
+                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">User Choice</span>
                   </div>
                   <div className="col-span-6 flex items-center">
                     <div className="flex items-center space-x-3">
@@ -806,7 +808,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                     <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
                   </div>
                   <div className="col-span-2 flex items-center">
-                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full">Toggle</span>
+                    <span className="text-xs text-gray-500 bg-gray-100/50 px-2 py-1 rounded-full border border-gray-200/40">User Choice</span>
                   </div>
                   <div className="col-span-6 flex items-center">
                     <div className="flex items-center space-x-3">
