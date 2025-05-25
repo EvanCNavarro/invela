@@ -400,6 +400,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
   // STATE MANAGEMENT
   // ========================================
   
+  // Dropdown states for custom UI components
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const [userNameDropdownOpen, setUserNameDropdownOpen] = useState(false);
+  
   /**
    * Form state management with proper TypeScript typing
    * Includes default values and persona-specific configurations
@@ -647,21 +651,52 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-1">
-                  {/* Separate dropdown button */}
+                  {/* Custom dropdown button */}
                   <div className="relative">
-                    <select
-                      value={formData.companyNameControl}
-                      onChange={(e) => handleControlTypeChange('companyNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[32px] shadow-sm"
+                    <button
+                      type="button"
+                      onClick={() => setCompanyDropdownOpen(!companyDropdownOpen)}
+                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[70px]"
                     >
-                      <option value="random">Random</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span>{formData.companyNameControl === 'random' ? 'Random' : 'Custom'}</span>
+                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${companyDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
-                    </div>
+                    </button>
+                    {companyDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleControlTypeChange('companyNameControl', 'random');
+                            setCompanyDropdownOpen(false);
+                          }}
+                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                        >
+                          Random
+                          {formData.companyNameControl === 'random' && (
+                            <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleControlTypeChange('companyNameControl', 'custom');
+                            setCompanyDropdownOpen(false);
+                          }}
+                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.companyNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                        >
+                          Custom
+                          {formData.companyNameControl === 'custom' && (
+                            <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {/* Input field */}
                   <input
@@ -696,21 +731,52 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-1">
-                  {/* Separate dropdown button */}
+                  {/* Custom dropdown button */}
                   <div className="relative">
-                    <select
-                      value={formData.userFullNameControl}
-                      onChange={(e) => handleControlTypeChange('userFullNameControl', e.target.value as 'random' | 'custom')}
-                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer appearance-none pr-6 h-[32px] shadow-sm"
+                    <button
+                      type="button"
+                      onClick={() => setUserNameDropdownOpen(!userNameDropdownOpen)}
+                      className="text-xs px-2 py-2 rounded border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer h-[32px] shadow-sm flex items-center justify-between min-w-[70px]"
                     >
-                      <option value="random">Random</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                    <div className="absolute right-1 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span>{formData.userFullNameControl === 'random' ? 'Random' : 'Custom'}</span>
+                      <svg className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${userNameDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 9 6 6 6-6" />
                       </svg>
-                    </div>
+                    </button>
+                    {userNameDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleControlTypeChange('userFullNameControl', 'random');
+                            setUserNameDropdownOpen(false);
+                          }}
+                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'random' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                        >
+                          Random
+                          {formData.userFullNameControl === 'random' && (
+                            <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleControlTypeChange('userFullNameControl', 'custom');
+                            setUserNameDropdownOpen(false);
+                          }}
+                          className={`w-full px-2 py-2 text-xs text-left hover:bg-blue-50 transition-colors flex items-center justify-between ${formData.userFullNameControl === 'custom' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                        >
+                          Custom
+                          {formData.userFullNameControl === 'custom' && (
+                            <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {/* Input field */}
                   <input
