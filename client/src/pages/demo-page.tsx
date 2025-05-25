@@ -606,8 +606,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
         </p>
       </div>
       
-      {/* MIDDLE SPACER */}
-      <div className="flex-shrink-0 py-6"></div>
+      {/* MIDDLE SPACER - 75% of standard spacing */}
+      <div className="flex-shrink-0 py-4"></div>
       
       {/* MAIN BODY SECTION */}
       <div className="flex-1 space-y-6">
@@ -618,7 +618,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 1. Persona Field (System Generated) */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center">
+                <div className="col-span-4 flex items-center justify-end">
                   <span className="text-sm font-medium text-gray-700">Selected Persona</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -638,7 +638,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 2. Company Name Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center">
+                <div className="col-span-4 flex items-center justify-end">
                   <span className="text-sm font-medium text-gray-700">Company Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -687,7 +687,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 3. User Full Name Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center">
+                <div className="col-span-4 flex items-center justify-end">
                   <span className="text-sm font-medium text-gray-700">User Full Name</span>
                 </div>
                 <div className="col-span-8 flex items-center space-x-2">
@@ -736,7 +736,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               
               {/* 4. User Email Field */}
               <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                <div className="col-span-4 flex items-center">
+                <div className="col-span-4 flex items-center justify-end">
                   <span className="text-sm font-medium text-gray-700">User Email</span>
                 </div>
                 <div className="col-span-8 flex items-center">
@@ -757,7 +757,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 5. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100/30 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-4 flex items-center">
+                  <div className="col-span-4 flex items-center justify-end">
                     <span className="text-sm font-medium text-gray-700">Send Email Invite</span>
                   </div>
                   <div className="col-span-8 flex items-center">
@@ -777,7 +777,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona }: DemoStepProps) => {
               {/* 6. Demo Company Toggle */}
               {shouldShowPersonaSpecificField('demoCompany') && (
                 <div className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50/20 transition-colors">
-                  <div className="col-span-4 flex items-center">
+                  <div className="col-span-4 flex items-center justify-end">
                     <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
                   </div>
                   <div className="col-span-8 flex items-center">
