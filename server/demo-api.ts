@@ -1069,11 +1069,11 @@ router.post('/demo/user/create', async (req, res) => {
     // Determine onboarding status directly from the role parameter
     let shouldCompleteOnboarding: boolean;
     
-    if (role === 'New Data Recipient') {
-      // Non-Accredited FinTech: Should see onboarding modal
+    if (role === 'user') {
+      // New Data Recipient (role='user'): Should see onboarding modal
       shouldCompleteOnboarding = false;
     } else {
-      // All other personas (Accredited Data Recipient, Data Provider, Invela Admin): Skip onboarding
+      // All other roles (accredited_user, provider, admin): Skip onboarding
       shouldCompleteOnboarding = true;
     }
 
