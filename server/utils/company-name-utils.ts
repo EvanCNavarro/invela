@@ -188,7 +188,7 @@ const DEFAULT_GENERATION_OPTIONS: Required<NameGenerationOptions> = {
  * @param attempt - Generation attempt number for strategy variation
  * @returns Promise that resolves with a professionally crafted company name
  */
-export export async function generateAdvancedCompanyName(
+export async function generateAdvancedCompanyName(
   baseName: string,
   attempt: number
 ): Promise<string> {
