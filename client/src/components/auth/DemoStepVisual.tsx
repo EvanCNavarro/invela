@@ -24,6 +24,7 @@ import { useDemoAssetPreloader } from "@/hooks/use-demo-asset-preloader";
 interface DemoStepVisualProps {
   currentStep: 1 | 2 | 3 | 4 | 5;
   className?: string;
+  isSystemSetup?: boolean; // Enhanced: Fade previous steps during system setup
 }
 
 /**
@@ -112,13 +113,19 @@ const VISUAL_CONFIG = {
 // ========================================
 
 /**
- * Determines the appropriate asset source based on step state
+ * Determines the appropriate asset source based on step state and system setup status
  * 
  * @param stepConfig - Configuration for the step
  * @param isActive - Whether this step is currently active
- * @returns The path to the appropriate asset (static or animated)
+ * @param isSystemSetup - Whether system setup is in progress (Step 3 only)
+ * @returns The path to the appropriate asset (static, animated, or launch GIF)
  */
-const getStepAssetSource = (stepConfig: StepConfig, isActive: boolean): string => {
+const getStepAssetSource = (stepConfig: StepConfig, isActive: boolean, isSystemSetup: boolean = false): string => {
+  // Enhanced: Use launch GIF for active Step 3 during system setup
+  if (isActive && stepConfig.id === 3 && isSystemSetup) {
+    return "/assets/demo/steps/step-3-launch.gif";
+  }
+  
   return isActive ? stepConfig.assets.animatedGif : stepConfig.assets.staticImage;
 };
 
@@ -153,7 +160,7 @@ const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
  * - Responsive image loading with proper error handling
  * - Consistent visual hierarchy and styling
  */
-export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) {
+export function DemoStepVisual({ currentStep, className, isSystemSetup = false }: DemoStepVisualProps) {
   console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}`);
   
   // ========================================
@@ -177,28 +184,34 @@ export function DemoStepVisual({ currentStep, className }: DemoStepVisualProps) 
         <div className="h-full flex flex-col items-center justify-center space-y-4">
           {DEMO_STEPS.map((stepConfig, index) => {
             const isActive = stepConfig.id === currentStep;
-            const assetSource = getStepAssetSource(stepConfig, isActive);
+            const assetSource = getStepAssetSource(stepConfig, isActive, isSystemSetup);
             const altText = getStepAltText(stepConfig, isActive);
             
             console.log(`[DemoStepVisual] Step ${stepConfig.id} - Active: ${isActive}, Asset: ${assetSource}`);
+            
+            // Enhanced: Sophisticated fade logic for system setup stage
+            const isPreviousStep = stepConfig.id < currentStep;
+            const shouldFadePrevious = isSystemSetup && isPreviousStep;
             
             return (
               <motion.div
                 key={stepConfig.id}
                 className={cn(
                   "w-[220px] h-[220px] rounded-xl relative overflow-hidden",
-                  "transition-all duration-500 ease-in-out",
+                  "transition-all duration-800 ease-in-out", // Longer duration for elegance
                   isActive 
                     ? "bg-white border-2 border-blue-400 shadow-xl" 
+                    : shouldFadePrevious 
+                    ? "bg-gray-100 opacity-30" // Enhanced: Fade to 30% during system setup
                     : "bg-gray-100 opacity-60"
                 )}
                 initial={{ scale: 0.9, opacity: 0.6 }}
                 animate={{ 
-                  scale: isActive ? 1 : 0.85,
-                  opacity: isActive ? 1 : 0.4
+                  scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85, // Enhanced: More fade for previous steps
+                  opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4 // Enhanced: Elegant fade to 30%
                 }}
                 transition={{ 
-                  duration: VISUAL_CONFIG.animations.duration, 
+                  duration: VISUAL_CONFIG.animations.duration * 1.5, // Enhanced: Smoother animation
                   ease: "easeInOut",
                   delay: index * VISUAL_CONFIG.animations.staggerDelay
                 }}
