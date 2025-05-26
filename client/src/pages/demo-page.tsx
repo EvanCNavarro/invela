@@ -1402,7 +1402,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         email: formData?.userEmail,
         role: selectedPersona?.title,
         permissions: selectedPersona?.id,
-        companyId: 'COMPANY_ID_FROM_STEP_1' // Will be replaced with actual ID from previous step
+        companyId: selectedPersona?.id === 'invela-admin' ? 1 : 'COMPANY_ID_FROM_STEP_1'
       },
       estimatedDuration: 1500,
       description: 'Setting up user profile and access permissions'
