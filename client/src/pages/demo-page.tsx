@@ -2156,13 +2156,13 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
                   <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                </motion.div>
+                </div>
                 
                 {/* Launch Text - no animations */}
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-semibold text-gray-800">Demo Environment Ready</h3>
                   <p className="text-sm text-gray-600">Launching your personalized experience...</p>
-                </motion.div>
+                </div>
               </div>
             </div>
           )}
@@ -2302,6 +2302,6 @@ export default function DemoPage() {
     >
       {renderStepContent()}
     </AuthLayout>
-    </motion.div>
+    </div>
   );
 }
