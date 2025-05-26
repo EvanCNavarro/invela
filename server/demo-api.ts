@@ -649,12 +649,13 @@ router.post('/demo/company/create', async (req, res) => {
           }
         }
         
-        // Strategy 3: Timestamp-based guaranteed uniqueness (fallback)
+        // Strategy 3: Clean professional suffix (fallback)
         if (!nameIsUnique) {
-          const timestamp = Date.now().toString().slice(-6); // Last 6 digits
-          finalCompanyName = `${companyData.name} ${timestamp}`;
+          const professionalSuffixes = ['Solutions', 'Technologies', 'Systems', 'Ventures', 'Group', 'Partners'];
+          const randomSuffix = professionalSuffixes[Math.floor(Math.random() * professionalSuffixes.length)];
+          finalCompanyName = `${companyData.name} ${randomSuffix}`;
           nameIsUnique = true;
-          console.log(`[DemoAPI] ✅ Using timestamp-based unique name: ${finalCompanyName}`);
+          console.log(`[DemoAPI] ✅ Using professional suffix for unique name: ${finalCompanyName}`);
         }
       }
       
@@ -1241,6 +1242,20 @@ router.post('/demo/company/create', async (req, res) => {
       risk_clusters: riskClusters,
       onboarding_company_completed: onboardingCompleted,
       
+      // ========================================
+      // DEMO TRACKING & PERSONA STORAGE
+      // ========================================
+      
+      /**
+       * CRITICAL FIX: Store persona type for proper access control
+       * This was the missing piece causing all personas to get full access
+       */
+      demo_persona_type: persona,
+      demo_session_id: demoSessionId,
+      demo_created_at: new Date(),
+      demo_expires_at: new Date(Date.now() + (72 * 60 * 60 * 1000)), // 72 hours
+      demo_cleanup_eligible: true,
+      
       // Business Details
       website_url: businessDetails.website,
       hq_address: businessDetails.address,
@@ -1438,6 +1453,21 @@ router.post('/demo/user/create', async (req, res) => {
       full_name: fullName,
       company_id: parsedCompanyId,
       onboarding_user_completed: shouldCompleteOnboarding,  // Set based on persona classification
+      
+      // ========================================
+      // DEMO USER TRACKING & PERSONA STORAGE
+      // ========================================
+      
+      /**
+       * CRITICAL FIX: Store persona type and demo user status
+       * This ensures proper access control based on persona selection
+       */
+      is_demo_user: true,
+      demo_persona_type: persona,
+      demo_session_id: req.body.demoSessionId || `user_${Date.now()}`,
+      demo_created_at: new Date(),
+      demo_expires_at: new Date(Date.now() + (72 * 60 * 60 * 1000)), // 72 hours
+      demo_cleanup_eligible: true,
     }).returning();
 
     // Log successful user creation with onboarding status
