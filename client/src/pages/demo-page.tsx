@@ -1898,16 +1898,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       </div>
       
       {/* MAIN CONTENT AREA - Two Section Layout */}
-      <motion.div 
-        className="flex-1 flex flex-col space-y-3 pt-6"
-        initial={{ opacity: 1 }}
-        animate={wizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
-        transition={{ 
-          delay: wizardStep === 'launch' ? 2.5 : 0, 
-          duration: 0.8, 
-          ease: "easeOut" 
-        }}
-      >
+      <div className="flex-1 flex flex-col space-y-3 pt-6">
         
         {/* THREE-TIERED STEP WIZARD */}
         <div className="bg-white rounded-lg border border-gray-200">
