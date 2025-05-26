@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
@@ -1374,6 +1375,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
  */
 const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: DemoStepProps & { formData?: any; onWizardStepChange?: (step: 'review' | 'setup' | 'launch') => void }) => {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [wizardStep, setWizardStep] = useState<'review' | 'setup' | 'launch'>('review');
@@ -1617,6 +1619,15 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     setLoadingStep(actions.length + 1);
     setWizardStep('launch');
     onWizardStepChange?.('launch'); // ✅ FIX: Communicate launch stage to parent
+    
+    // Show success toast when launch stage begins
+    console.log('[DemoStep3] Demo setup completed successfully - showing success toast');
+    toast({
+      title: "Demo Setup Complete",
+      description: "Logging you in now...",
+      variant: "default",
+    });
+    
     await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
     
     // All actions completed successfully - automatically proceed to dashboard
@@ -2158,7 +2169,16 @@ export default function DemoPage() {
   // ========================================
 
   return (
-    <AuthLayout
+    <motion.div
+      initial={{ opacity: 1 }}
+      animate={currentStep === 3 && step3WizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
+      transition={{ 
+        delay: currentStep === 3 && step3WizardStep === 'launch' ? 0.3 : 0, 
+        duration: 0.4, 
+        ease: "easeOut" 
+      }}
+    >
+      <AuthLayout
       mode="demo"
       currentStep={currentStep}
       totalSteps={3}
@@ -2168,5 +2188,6 @@ export default function DemoPage() {
     >
       {renderStepContent()}
     </AuthLayout>
+    </motion.div>
   );
 }
