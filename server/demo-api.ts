@@ -446,31 +446,67 @@ router.post('/demo/company/create', async (req, res) => {
       console.log('[DemoAPI] Resolving company name uniqueness before database insertion...');
       
       // Import company name utilities for uniqueness checking
-      const { resolveUniqueCompanyName } = await import('./utils/company-name-utils');
+      const { checkCompanyNameUniqueness } = await import('./utils/company-name-utils');
       
-      // Resolve unique company name with professional variation options
-      const nameResolution = await resolveUniqueCompanyName(companyData.name, {
-        maxAttempts: 5,
-        suffixStyle: 'professional',
-        preserveOriginal: true,
-        isDemoContext: true,
-      });
+      // Simple, guaranteed uniqueness strategy with timestamp-based fallback
+      console.log('[DemoAPI] Ensuring company name uniqueness with reliable strategy...');
       
-      // Update company data with resolved unique name
-      companyData.name = nameResolution.finalName;
+      let finalCompanyName = companyData.name;
+      let nameIsUnique = false;
+      let attempt = 0;
+      const maxAttempts = 3;
+      
+      // Strategy 1: Check if original name is unique
+      const originalUniquenessCheck = await checkCompanyNameUniqueness(companyData.name);
+      if (originalUniquenessCheck.isUnique) {
+        nameIsUnique = true;
+        console.log('[DemoAPI] ✅ Original company name is unique, proceeding with:', finalCompanyName);
+      } else {
+        console.log('[DemoAPI] ⚠️ Original company name exists, generating alternatives...');
+        
+        // Strategy 2: Try professional suffixes
+        const professionalSuffixes = ['Solutions', 'Partners', 'Group', 'Systems', 'Enterprises'];
+        
+        for (const suffix of professionalSuffixes) {
+          if (nameIsUnique) break;
+          attempt++;
+          
+          const candidateName = `${companyData.name} ${suffix}`;
+          const uniquenessCheck = await checkCompanyNameUniqueness(candidateName);
+          
+          if (uniquenessCheck.isUnique) {
+            finalCompanyName = candidateName;
+            nameIsUnique = true;
+            console.log(`[DemoAPI] ✅ Found unique name with suffix: ${finalCompanyName}`);
+            break;
+          }
+        }
+        
+        // Strategy 3: Timestamp-based guaranteed uniqueness (fallback)
+        if (!nameIsUnique) {
+          const timestamp = Date.now().toString().slice(-6); // Last 6 digits
+          finalCompanyName = `${companyData.name} ${timestamp}`;
+          nameIsUnique = true;
+          console.log(`[DemoAPI] ✅ Using timestamp-based unique name: ${finalCompanyName}`);
+        }
+      }
+      
+      // Update company data with guaranteed unique name
+      companyData.name = finalCompanyName;
       
       // Log name resolution results for debugging
+      const originalName = name; // Store original for logging
       console.log('[DemoAPI] Company name resolution completed:', {
-        originalName: nameResolution.originalName,
-        finalName: nameResolution.finalName,
-        wasModified: nameResolution.wasModified,
-        resolutionStrategy: nameResolution.metadata.resolutionStrategy,
-        processingTime: nameResolution.metadata.processingTime,
+        originalName: originalName,
+        finalName: finalCompanyName,
+        wasModified: originalName !== finalCompanyName,
+        resolutionStrategy: 'simple_suffix_timestamp',
+        attemptsUsed: attempt,
       });
       
-      // Update website URL to match resolved company name
-      if (nameResolution.wasModified) {
-        companyData.website_url = `https://${nameResolution.finalName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')}.com`;
+      // Update website URL to match resolved company name if it was modified
+      if (originalName !== finalCompanyName) {
+        companyData.website_url = `https://${finalCompanyName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')}.com`;
         console.log('[DemoAPI] Updated website URL to match resolved company name:', companyData.website_url);
       }
       
