@@ -25,6 +25,7 @@ interface DemoStepVisualProps {
   currentStep: 1 | 2 | 3 | 4 | 5;
   className?: string;
   isSystemSetup?: boolean; // Enhanced: Fade previous steps during system setup
+  step3WizardStage?: 'review' | 'setup' | 'launch'; // Enhanced: Stage-aware GIF switching
 }
 
 /**
@@ -113,19 +114,48 @@ const VISUAL_CONFIG = {
 // ========================================
 
 /**
- * Determines the appropriate asset source based on step state and system setup status
+ * Determines the appropriate asset source based on step state and wizard stage
+ * 
+ * Enhanced stage-aware logic for Step 3:
+ * - Review stage: Uses regular step 3 animated GIF
+ * - Setup stage: Uses launch GIF in hero section
+ * - Launch stage: Continues with launch GIF during final transitions
  * 
  * @param stepConfig - Configuration for the step
  * @param isActive - Whether this step is currently active
  * @param isSystemSetup - Whether system setup is in progress (Step 3 only)
+ * @param step3WizardStage - Current stage within Step 3 wizard
  * @returns The path to the appropriate asset (static, animated, or launch GIF)
  */
-const getStepAssetSource = (stepConfig: StepConfig, isActive: boolean, isSystemSetup: boolean = false): string => {
-  // Enhanced: Use launch GIF for active Step 3 during system setup
-  if (isActive && stepConfig.id === 3 && isSystemSetup) {
-    return "/assets/demo/steps/step-3-launch.gif";
+const getStepAssetSource = (
+  stepConfig: StepConfig, 
+  isActive: boolean, 
+  isSystemSetup: boolean = false,
+  step3WizardStage?: 'review' | 'setup' | 'launch'
+): string => {
+  // Enhanced: Stage-aware GIF switching for Step 3
+  if (isActive && stepConfig.id === 3) {
+    // During setup or launch stages, show the launch GIF in hero section
+    if (step3WizardStage === 'setup' || step3WizardStage === 'launch') {
+      console.log('[DemoStepVisual] Step 3 stage-aware switching:', {
+        stage: step3WizardStage,
+        asset: 'launch-gif',
+        location: 'hero-section'
+      });
+      return "/assets/demo/steps/step-3-launch.gif";
+    }
+    
+    // During review stage, use regular step 3 animated GIF
+    if (step3WizardStage === 'review') {
+      console.log('[DemoStepVisual] Step 3 review stage:', {
+        stage: step3WizardStage,
+        asset: 'regular-animated-gif'
+      });
+      return stepConfig.assets.animatedGif;
+    }
   }
   
+  // Standard logic for all other steps and states
   return isActive ? stepConfig.assets.animatedGif : stepConfig.assets.staticImage;
 };
 
@@ -160,7 +190,7 @@ const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
  * - Responsive image loading with proper error handling
  * - Consistent visual hierarchy and styling
  */
-export function DemoStepVisual({ currentStep, className, isSystemSetup = false }: DemoStepVisualProps) {
+export function DemoStepVisual({ currentStep, className, isSystemSetup = false, step3WizardStage }: DemoStepVisualProps) {
   console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}`);
   
   // ========================================
@@ -184,7 +214,7 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false }
         <div className="h-full flex flex-col items-center justify-center space-y-4">
           {DEMO_STEPS.map((stepConfig, index) => {
             const isActive = stepConfig.id === currentStep;
-            const assetSource = getStepAssetSource(stepConfig, isActive, isSystemSetup);
+            const assetSource = getStepAssetSource(stepConfig, isActive, isSystemSetup, step3WizardStage);
             const altText = getStepAltText(stepConfig, isActive);
             
             console.log(`[DemoStepVisual] Step ${stepConfig.id} - Active: ${isActive}, Asset: ${assetSource}`);
