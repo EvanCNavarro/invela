@@ -2178,7 +2178,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           )}
         </div>
 
-      </motion.div>
+      </div>
 
       {/* BUTTON SECTION - no animations */}
       <div className="flex-shrink-0">
