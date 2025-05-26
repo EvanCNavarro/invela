@@ -756,11 +756,27 @@ router.post('/demo/company/create', async (req, res) => {
       const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
       const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
       
+      // ========================================
+      // PERSONA-BASED COMPANY CONFIGURATION
+      // ========================================
+      
+      let accreditationStatus = 'APPROVED';
+      let availableTabs = ['dashboard', 'task-center', 'file-vault', 'insights'];
+      
+      // Configure based on persona type
+      if (persona === 'new-data-recipient') {
+        accreditationStatus = 'PENDING';
+        availableTabs = ['task-center'];
+        console.log(`[DemoAPI] ✅ Configured non-accredited user (${persona}) with PENDING status and basic access`);
+      } else {
+        console.log(`[DemoAPI] ✅ Configured accredited user (${persona}) with APPROVED status and full access`);
+      }
+      
       const companyData = {
         category: 'FinTech',
-        accreditation_status: 'APPROVED',
+        accreditation_status: accreditationStatus,
         is_demo: true,
-        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        available_tabs: availableTabs,
         revenue: revenueAmount >= 1000000000 
           ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
           : `$${(revenueAmount / 1000000).toFixed(0)}M`,
@@ -771,9 +787,29 @@ router.post('/demo/company/create', async (req, res) => {
       console.log(`[DemoAPI] Direct enterprise generation: ${companyData.revenue}, ${companyData.num_employees} employees`);
       console.log('[DemoAPI] Generated company data:', companyData);
       
-      // Generate risk score and clusters
-      const finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
-      const riskClusters = generateRiskClusters(finalRiskScore);
+      // ========================================
+      // PERSONA-BASED RISK SCORE GENERATION
+      // ========================================
+      
+      /**
+       * Risk score and clusters are only generated for APPROVED users.
+       * Non-accredited users (PENDING status) should not have risk data
+       * until they complete their accreditation process.
+       */
+      
+      let finalRiskScore = null;
+      let riskClusters = null;
+      let onboardingCompleted = false;
+      
+      // Only generate risk data for accredited (APPROVED) personas
+      if (accreditationStatus === 'APPROVED') {
+        finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+        riskClusters = generateRiskClusters(finalRiskScore);
+        onboardingCompleted = true;
+        console.log(`[DemoAPI] ✅ Generated risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
+      } else {
+        console.log(`[DemoAPI] ⏳ Skipping risk data for PENDING persona ${persona} - awaiting accreditation`);
+      }
 
       // Generate business details and complete company creation
       console.log('[DemoAPI] Generating comprehensive business details...');
@@ -962,11 +998,23 @@ router.post('/demo/company/create', async (req, res) => {
       const revenueAmount = Math.floor(Math.random() * 1500000000) + 500000000; // $500M-$2B
       const employeeCount = Math.floor(Math.random() * 40000) + 10000; // 10K-50K employees
       
+      // Configure persona-based accreditation for enterprise path
+      let enterpriseAccreditation = 'APPROVED';
+      let enterpriseTabs = ['dashboard', 'task-center', 'file-vault', 'insights'];
+      
+      if (persona === 'new-data-recipient') {
+        enterpriseAccreditation = 'PENDING';
+        enterpriseTabs = ['task-center'];
+        console.log(`[DemoAPI] ✅ Enterprise path: Configured non-accredited user (${persona}) with PENDING status`);
+      } else {
+        console.log(`[DemoAPI] ✅ Enterprise path: Configured accredited user (${persona}) with APPROVED status`);
+      }
+      
       const enterpriseData = {
         category: 'FinTech',
-        accreditation_status: 'APPROVED',
+        accreditation_status: enterpriseAccreditation,
         is_demo: true,
-        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        available_tabs: enterpriseTabs,
         revenue: revenueAmount >= 1000000000 
           ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
           : `$${(revenueAmount / 1000000).toFixed(0)}M`,
@@ -977,8 +1025,21 @@ router.post('/demo/company/create', async (req, res) => {
       console.log(`[DemoAPI] Enterprise bypass generated: ${enterpriseData.revenue}, ${enterpriseData.num_employees} employees`);
       console.log('[DemoAPI] Generated company data:', enterpriseData);
       
-      // Complete the company creation with enterprise data
-      const finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+      // ========================================
+      // PERSONA-BASED RISK SCORE GENERATION (Enterprise Path)
+      // ========================================
+      
+      let finalRiskScore = null;
+      let onboardingCompleted = false;
+      
+      // Only generate risk data for accredited (APPROVED) personas
+      if (enterpriseData.accreditation_status === 'APPROVED') {
+        finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+        onboardingCompleted = true;
+        console.log(`[DemoAPI] ✅ Generated enterprise risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
+      } else {
+        console.log(`[DemoAPI] ⏳ Skipping enterprise risk data for PENDING persona ${persona} - awaiting accreditation`);
+      }
       
       // Skip complex business details generation for now
       const simpleBusinessDetails = {
@@ -1121,9 +1182,29 @@ router.post('/demo/company/create', async (req, res) => {
     
     console.log('[DemoAPI] Generated company data:', companyData);
     
-    // Generate risk score and clusters
-    const finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
-    const riskClusters = generateRiskClusters(finalRiskScore);
+    // ========================================
+    // PERSONA-BASED RISK SCORE GENERATION (Main Path)
+    // ========================================
+    
+    /**
+     * Risk score and clusters are only generated for APPROVED users.
+     * Non-accredited users (PENDING status) should not have risk data
+     * until they complete their accreditation process.
+     */
+    
+    let finalRiskScore = null;
+    let riskClusters = null;
+    let onboardingCompleted = false;
+    
+    // Only generate risk data for accredited (APPROVED) personas
+    if (companyData.accreditation_status === 'APPROVED') {
+      finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+      riskClusters = generateRiskClusters(finalRiskScore);
+      onboardingCompleted = true;
+      console.log(`[DemoAPI] ✅ Generated risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
+    } else {
+      console.log(`[DemoAPI] ⏳ Skipping risk data for PENDING persona ${persona} - awaiting accreditation`);
+    }
 
     // ========================================
     // BUSINESS DETAILS GENERATION
@@ -1158,6 +1239,7 @@ router.post('/demo/company/create', async (req, res) => {
       ...companyData,
       risk_score: finalRiskScore,
       risk_clusters: riskClusters,
+      onboarding_company_completed: onboardingCompleted,
       
       // Business Details
       website_url: businessDetails.website,
