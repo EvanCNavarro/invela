@@ -34,6 +34,7 @@ interface AuthLayoutProps {
   totalSteps?: AuthStep;
   onStepChange?: (step: AuthStep) => void;
   onBack?: () => void;
+  isSystemSetup?: boolean; // Enhanced: Track system setup for step fading
 }
 
 export function AuthLayout({ 
@@ -42,7 +43,8 @@ export function AuthLayout({
   currentStep = 1, 
   totalSteps = 3, 
   onStepChange, 
-  onBack 
+  onBack,
+  isSystemSetup = false 
 }: AuthLayoutProps) {
   
   console.log(`[AuthLayout] Rendering with mode: ${mode}, step: ${currentStep}/${totalSteps}`);
@@ -124,7 +126,7 @@ export function AuthLayout({
                     {children}
                   </motion.div>
                   <div className="hidden lg:block w-[30%] h-full min-h-[760px]">
-                    <DemoStepVisual currentStep={currentStep} />
+                    <DemoStepVisual currentStep={currentStep} isSystemSetup={isSystemSetup} />
                   </div>
                 </>
               ) : (

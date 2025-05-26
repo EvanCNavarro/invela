@@ -1925,46 +1925,117 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
               </Card>
             )
           ) : wizardStep === 'setup' ? (
-            // Setup Stage - Show Loading Progress
+            // System Setup Stage - Enhanced with launch GIF and elegant animations
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-              <div className="p-4 flex-1">
-                <div className="space-y-3">
-                  {getDemoActions(formData, selectedPersona).map((action: any, index: number) => (
-                    <div key={action.id} className={`flex items-center space-x-3 transition-all duration-500 px-3 py-2 rounded-lg ${
-                      index < loadingStep ? 'opacity-100 bg-green-50 border border-green-200' : 
-                      index === loadingStep ? 'opacity-100 bg-blue-50 border border-blue-200' : 
-                      'opacity-50 bg-gray-50 border border-gray-200'
-                    }`}>
-                      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        index < loadingStep ? 'bg-green-500' : 
-                        index === loadingStep ? 'bg-blue-500' : 
-                        'bg-gray-300'
-                      }`}>
-                        {index < loadingStep ? (
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        ) : index === loadingStep ? (
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                        ) : null}
-                      </div>
-                      <div className={`text-sm font-medium ${
-                        index === loadingStep ? 'text-blue-900' : 
-                        index < loadingStep ? 'text-green-800' : 'text-gray-500'
-                      }`}>{action.label}</div>
-                    </div>
-                  ))}
+              <div className="p-4 flex-1 flex">
+                {/* Left Side - Progress Actions */}
+                <div className="flex-1 pr-4">
+                  <div className="space-y-3">
+                    {getDemoActions(formData, selectedPersona).map((action: any, index: number) => (
+                      <motion.div 
+                        key={action.id} 
+                        className={`flex items-center space-x-3 transition-all duration-500 px-3 py-2 rounded-lg ${
+                          index < loadingStep ? 'opacity-100 bg-green-50 border border-green-200' : 
+                          index === loadingStep ? 'opacity-100 bg-blue-50 border border-blue-200' : 
+                          'opacity-50 bg-gray-50 border border-gray-200'
+                        }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          index < loadingStep ? 'bg-green-500' : 
+                          index === loadingStep ? 'bg-blue-500' : 
+                          'bg-gray-300'
+                        }`}>
+                          {index < loadingStep ? (
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          ) : index === loadingStep ? (
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                          ) : null}
+                        </div>
+                        <div className={`text-sm font-medium ${
+                          index === loadingStep ? 'text-blue-900' : 
+                          index < loadingStep ? 'text-green-800' : 'text-gray-500'
+                        }`}>{action.label}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Right Side - Launch Visual */}
+                <div className="w-48 flex items-center justify-center">
+                  <motion.div
+                    className="w-40 h-40 rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  >
+                    <img
+                      src="/assets/demo/step3_launch.gif"
+                      alt="System launching with rocket animation"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.warn('[DemoPage] Failed to load launch GIF, using fallback');
+                        (e.target as HTMLImageElement).src = "/assets/demo/steps/step-3-animated.gif";
+                      }}
+                    />
+                  </motion.div>
                 </div>
               </div>
             </div>
           ) : (
-            // Launch Stage - Brief rocket display
-            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-              <div className="p-4 flex-1 flex flex-col items-center justify-center space-y-4">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-                  <Rocket className="w-8 h-8 text-white" />
-                </div>
-                <span className="text-lg font-medium text-gray-700">Launching demo...</span>
+            // Launch Stage - Bento box exit animation
+            <motion.div 
+              className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <div className="p-4 flex-1 flex flex-col items-center justify-center space-y-6">
+                {/* Launch Success Visual */}
+                <motion.div
+                  className="w-32 h-32 rounded-2xl overflow-hidden bg-gradient-to-br from-green-50 to-emerald-100 shadow-lg"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <img
+                    src="/assets/demo/steps/step-3-launch.gif"
+                    alt="Demo launching successfully"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </motion.div>
+                
+                {/* Launch Text */}
+                <motion.div
+                  className="text-center space-y-2"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <h3 className="text-xl font-semibold text-gray-800">Demo Environment Ready</h3>
+                  <p className="text-sm text-gray-600">Transitioning to your personalized experience...</p>
+                </motion.div>
+                
+                {/* Elegant Progress Indicator */}
+                <motion.div
+                  className="w-24 h-1 bg-gray-200 rounded-full overflow-hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ delay: 0.7, duration: 1.5, ease: "easeInOut" }}
+                  />
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
@@ -2010,6 +2081,9 @@ export default function DemoPage() {
    */
   const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
   const [step2FormData, setStep2FormData] = useState<any>(null);
+  
+  // Enhanced: Track Step 3 wizard state for system setup visual integration
+  const [step3WizardStep, setStep3WizardStep] = useState<'review' | 'setup' | 'launch'>('review');
   
   console.log(`[DemoPage] Rendering step ${currentStep}/3`, { selectedPersona: selectedPersona?.id });
 
