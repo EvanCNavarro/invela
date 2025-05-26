@@ -1317,25 +1317,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
               )}
               
               {/* 6. Demo Company Toggle */}
-              {shouldShowPersonaSpecificField('demoCompany') && (
-                <div className="grid grid-cols-12 gap-3 pr-6 hover:bg-gray-50/30 transition-colors h-[64px]">
-                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                    <span className="text-sm font-medium text-gray-700">Use Demo Company</span>
-                    <ValidationIcon status="valid" />
-                  </div>
-                  <div className="col-span-8 flex items-center">
-                    <div className="flex items-center space-x-3">
-                      <Switch
-                        checked={formData.isDemoCompany}
-                        onCheckedChange={(checked) => handleFieldChange('isDemoCompany', checked)}
-                      />
-                      <span className="text-sm text-gray-500">
-                        {formData.isDemoCompany ? 'Enabled' : 'Disabled'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+
               
             </div>
           </div>
