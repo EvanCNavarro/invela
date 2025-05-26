@@ -224,31 +224,51 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false, 
             const shouldFadePrevious = isSystemSetup && isPreviousStep;
             const isLaunchStage = step3WizardStage === 'launch';
             
-            // Launch stage: Different elements fade at different times
+            // Launch stage: Different elements fade at different times - BUT ONLY AFTER launch starts
             const getLaunchAnimations = () => {
-              if (!isLaunchStage) return { opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4, scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85 };
+              // Default animations for non-launch stages
+              if (!isLaunchStage) {
+                return { 
+                  opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4, 
+                  scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85 
+                };
+              }
               
-              // Step 3 (rocket) fades last at 0.8s to remain visible longest
+              // Launch stage: All elements fade out, but at different times
+              // Step 3 (rocket) fades last to remain visible longest
               if (stepConfig.id === 3) {
                 return { opacity: 0, scale: 0.8 };
               }
-              // Steps 1 & 2 fade at 0.6s  
+              // Steps 1 & 2 fade earlier
               return { opacity: 0, scale: 0.8 };
             };
             
             const getLaunchTransition = () => {
-              if (!isLaunchStage) return { 
-                duration: VISUAL_CONFIG.animations.duration * 1.5,
-                ease: "easeInOut",
-                delay: index * VISUAL_CONFIG.animations.staggerDelay
-              };
-              
-              // Step 3 (rocket) gets delayed fade to remain visible longest
-              if (stepConfig.id === 3) {
-                return { delay: 0.8, duration: 0.2, ease: "easeOut" };
+              // Default transitions for non-launch stages
+              if (!isLaunchStage) {
+                return { 
+                  duration: VISUAL_CONFIG.animations.duration * 1.5,
+                  ease: "easeInOut",
+                  delay: index * VISUAL_CONFIG.animations.staggerDelay
+                };
               }
-              // Steps 1 & 2 fade earlier
-              return { delay: 0.6, duration: 0.4, ease: "easeOut" };
+              
+              // Launch stage: Delayed fade animations that start AFTER launch begins
+              // Step 3 (rocket) gets longest delay to remain visible
+              if (stepConfig.id === 3) {
+                return { 
+                  delay: 1.0, // Start fading 1 second after launch begins
+                  duration: 0.2, 
+                  ease: "easeOut" 
+                };
+              }
+              
+              // Steps 1 & 2 fade earlier but still delayed
+              return { 
+                delay: 0.8, // Start fading 0.8 seconds after launch begins
+                duration: 0.4, 
+                ease: "easeOut" 
+              };
             };
             
             return (
