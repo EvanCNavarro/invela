@@ -1406,34 +1406,266 @@ router.post('/demo/email/send-invitation', async (req, res) => {
 });
 
 /**
+ * ========================================
  * Demo Environment Finalization
- * Completes the demo setup and prepares the environment for access
+ * ========================================
+ * 
+ * Completes the demo setup and automatically authenticates the user for seamless access.
+ * This endpoint handles the final step of demo account creation by establishing an
+ * authenticated session and preparing the environment for immediate dashboard access.
+ * 
+ * Key Features:
+ * - Automatic user authentication after demo completion
+ * - Session establishment using Passport.js integration
+ * - Environment preparation for demo data access
+ * - Seamless redirect to dashboard instead of login page
+ * - Comprehensive error handling and logging
+ * 
+ * Authentication Flow:
+ * 1. Validates user exists and belongs to specified company
+ * 2. Establishes authenticated session via req.login()
+ * 3. Configures demo environment permissions
+ * 4. Returns success response with authentication status
+ * 
+ * @endpoint POST /api/demo/environment/finalize
+ * @version 2.0.0
+ * @since 2025-05-26
  */
 router.post('/demo/environment/finalize', async (req, res) => {
+  const startTime = Date.now();
+  
   try {
+    // ========================================
+    // INPUT VALIDATION & LOGGING
+    // ========================================
+    
     const { userId, companyId, demoType } = req.body;
 
-    console.log('[DemoAPI] Finalizing environment:', { userId, companyId, demoType });
-
-    // Set up demo data and environment based on persona type
-    const environmentId = `env_${Date.now()}`;
-    
-    // In production, this would initialize demo datasets, 
-    // configure permissions, and prepare the dashboard
-
-    res.json({
-      success: true,
-      demoReady: true,
-      accessUrl: '/dashboard',
-      environmentId,
+    console.log('[DemoAPI] [Finalize] Starting demo environment finalization:', {
+      userId,
+      companyId,
+      demoType,
       timestamp: new Date().toISOString()
     });
 
+    // Validate required parameters
+    if (!userId || !companyId) {
+      console.error('[DemoAPI] [Finalize] Missing required parameters:', {
+        hasUserId: !!userId,
+        hasCompanyId: !!companyId,
+        duration: Date.now() - startTime
+      });
+      
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameters: userId and companyId are required',
+        code: 'MISSING_PARAMETERS',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // ========================================
+    // USER VERIFICATION & DATA RETRIEVAL
+    // ========================================
+    
+    console.log('[DemoAPI] [Finalize] Verifying user and company data...');
+    
+    // Fetch user data for authentication
+    const [userData] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userData) {
+      console.error('[DemoAPI] [Finalize] User not found for authentication:', {
+        userId,
+        duration: Date.now() - startTime
+      });
+      
+      return res.status(404).json({
+        success: false,
+        error: 'User account not found for demo finalization',
+        code: 'USER_NOT_FOUND',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Verify user belongs to the specified company
+    if (userData.company_id !== companyId) {
+      console.error('[DemoAPI] [Finalize] Company mismatch for user:', {
+        userId,
+        userCompanyId: userData.company_id,
+        requestedCompanyId: companyId,
+        duration: Date.now() - startTime
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: 'User does not belong to the specified company',
+        code: 'COMPANY_MISMATCH',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log('[DemoAPI] [Finalize] User verification successful:', {
+      userId: userData.id,
+      email: userData.email,
+      companyId: userData.company_id,
+      fullName: userData.full_name,
+      duration: Date.now() - startTime
+    });
+
+    // ========================================
+    // ENVIRONMENT SETUP
+    // ========================================
+    
+    console.log('[DemoAPI] [Finalize] Setting up demo environment...');
+    
+    // Generate unique environment identifier
+    const environmentId = `env_demo_${Date.now()}_${userId}`;
+    
+    // Configure demo environment based on persona type
+    const environmentConfig = {
+      type: demoType || 'standard',
+      features: {
+        demoDataAccess: true,
+        tutorialMode: true,
+        limitedFunctionality: false
+      },
+      permissions: {
+        canInviteUsers: true,
+        canModifySettings: true,
+        canAccessAllTabs: true
+      }
+    };
+
+    console.log('[DemoAPI] [Finalize] Environment configuration prepared:', {
+      environmentId,
+      config: environmentConfig,
+      duration: Date.now() - startTime
+    });
+
+    // ========================================
+    // AUTOMATIC AUTHENTICATION
+    // ========================================
+    
+    console.log('[DemoAPI] [Finalize] Initiating automatic user authentication...');
+    
+    // Establish authenticated session using Passport.js pattern
+    // This follows the same pattern as the registration endpoint (lines 355-384 in auth.ts)
+    req.login(userData, (authError) => {
+      const authDuration = Date.now() - startTime;
+      
+      if (authError) {
+        // Authentication failed - log error but don't fail the entire demo
+        console.error('[DemoAPI] [Finalize] Automatic authentication failed:', {
+          userId: userData.id,
+          email: userData.email,
+          error: authError instanceof Error ? authError.message : 'Unknown authentication error',
+          duration: authDuration,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Broadcast authentication failure event
+        broadcastMessage('demo_auth_failed', {
+          actionId: 'auto-login',
+          actionName: 'Automatic demo login',
+          userId: userData.id,
+          error: 'Authentication failed after demo completion',
+          timestamp: new Date().toISOString()
+        });
+        
+        // Return success for demo setup but indicate manual login required
+        return res.status(200).json({
+          success: true,
+          demoReady: true,
+          authenticated: false,
+          loginRequired: true,
+          accessUrl: '/login',
+          environmentId,
+          environment: environmentConfig,
+          user: {
+            id: userData.id,
+            email: userData.email,
+            fullName: userData.full_name
+          },
+          message: 'Demo environment created successfully. Please log in manually to access the dashboard.',
+          processingTime: authDuration,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // ========================================
+      // SUCCESSFUL AUTHENTICATION RESPONSE
+      // ========================================
+      
+      console.log('[DemoAPI] [Finalize] Demo finalization completed successfully:', {
+        userId: userData.id,
+        email: userData.email,
+        companyId: userData.company_id,
+        environmentId,
+        authenticated: true,
+        totalDuration: authDuration,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Broadcast successful completion event
+      broadcastMessage('demo_completed', {
+        actionId: 'finalize-demo',
+        actionName: 'Demo environment finalized',
+        userId: userData.id,
+        userEmail: userData.email,
+        companyId: userData.company_id,
+        environmentId,
+        authenticated: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Return comprehensive success response
+      res.status(200).json({
+        success: true,
+        demoReady: true,
+        authenticated: true,
+        loginRequired: false,
+        accessUrl: '/dashboard',
+        environmentId,
+        environment: environmentConfig,
+        user: {
+          id: userData.id,
+          email: userData.email,
+          fullName: userData.full_name,
+          companyId: userData.company_id
+        },
+        message: 'Demo environment created and user authenticated successfully. Redirecting to dashboard...',
+        processingTime: authDuration,
+        timestamp: new Date().toISOString()
+      });
+    });
+
   } catch (error) {
-    console.error('[DemoAPI] Environment finalization error:', error);
+    const errorDuration = Date.now() - startTime;
+    
+    console.error('[DemoAPI] [Finalize] Demo finalization failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+
+    // Broadcast error event
+    broadcastMessage('demo_action_error', {
+      actionId: 'finalize-demo',
+      actionName: 'Demo environment finalization',
+      error: 'Failed to finalize demo environment',
+      timestamp: new Date().toISOString()
+    });
+
     res.status(500).json({
       success: false,
       error: 'Failed to finalize demo environment',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      code: 'FINALIZATION_FAILED',
+      processingTime: errorDuration,
       timestamp: new Date().toISOString()
     });
   }
