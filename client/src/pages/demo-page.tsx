@@ -2152,24 +2152,14 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
             <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden">
               <div className="p-4 flex-1 flex flex-col items-center justify-center space-y-6">
                 {/* Launch Icon - fades out first (0.2s) */}
-                <motion.div
-                  className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center"
-                  initial={{ scale: 1, opacity: 1 }}
-                  animate={{ scale: 0.9, opacity: 0 }}
-                  transition={{ delay: 0.1, duration: 0.2, ease: "easeOut" }}
-                >
+                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
                   <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </motion.div>
                 
-                {/* Launch Text - fades out second (0.4s) */}
-                <motion.div
-                  className="text-center space-y-2"
-                  initial={{ y: 0, opacity: 1 }}
-                  animate={{ y: -10, opacity: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
-                >
+                {/* Launch Text - no animations */}
+                <div className="text-center space-y-2">
                   <h3 className="text-xl font-semibold text-gray-800">Demo Environment Ready</h3>
                   <p className="text-sm text-gray-600">Launching your personalized experience...</p>
                 </motion.div>
@@ -2300,14 +2290,7 @@ export default function DemoPage() {
   // ========================================
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={currentStep === 3 && step3WizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
-      transition={{ 
-        delay: currentStep === 3 && step3WizardStep === 'launch' ? 0 : 0, 
-        duration: 1.0, 
-        ease: "easeOut" 
-      }}
+    <div
     >
       <AuthLayout
       mode="demo"
