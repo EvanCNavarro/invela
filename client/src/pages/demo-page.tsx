@@ -1590,14 +1590,46 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       }
     }
     
+    // ========================================
+    // DEMO COMPLETION WITH AUTO-LOGIN SUPPORT
+    // ========================================
+    
     // All actions completed successfully
     setWizardStep('launch');
     console.log('[DemoStep3] All demo actions completed successfully', results);
     
-    // Brief pause on rocket icon then redirect to login
-    setTimeout(() => {
-      setLocation('/login');
-    }, 1500);
+    // Extract finalization result to check authentication status
+    const finalizationResult = results['finalize-environment'];
+    const isAuthenticated = finalizationResult?.authenticated === true;
+    const loginRequired = finalizationResult?.loginRequired === true;
+    const accessUrl = finalizationResult?.accessUrl || '/dashboard';
+    
+    console.log('[DemoStep3] Authentication analysis:', {
+      isAuthenticated,
+      loginRequired,
+      accessUrl,
+      finalizationResult: finalizationResult ? 'present' : 'missing'
+    });
+    
+    // Intelligent routing based on authentication status
+    if (isAuthenticated && !loginRequired) {
+      // SUCCESS: Automatic authentication worked - redirect to dashboard
+      console.log('[DemoStep3] Auto-login successful - redirecting to dashboard');
+      
+      setTimeout(() => {
+        console.log('[DemoStep3] Navigating to authenticated dashboard');
+        setLocation(accessUrl);
+      }, 1500);
+      
+    } else {
+      // FALLBACK: Manual login required - redirect to login page
+      console.log('[DemoStep3] Manual login required - redirecting to login page');
+      
+      setTimeout(() => {
+        console.log('[DemoStep3] Navigating to login page for manual authentication');
+        setLocation('/login');
+      }, 1500);
+    }
   };
   
   return (
