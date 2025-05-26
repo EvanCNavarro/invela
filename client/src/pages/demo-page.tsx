@@ -1611,14 +1611,66 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
       finalizationResult: finalizationResult ? 'present' : 'missing'
     });
     
-    // Intelligent routing based on authentication status
+    // ========================================
+    // INTELLIGENT ROUTING WITH CACHE SYNCHRONIZATION
+    // ========================================
+    
     if (isAuthenticated && !loginRequired) {
-      // SUCCESS: Automatic authentication worked - redirect to dashboard
-      console.log('[DemoStep3] Auto-login successful - redirecting to dashboard');
+      // SUCCESS: Automatic authentication worked - refresh auth cache and redirect
+      console.log('[DemoStep3] Auto-login successful - synchronizing authentication state');
       
-      setTimeout(() => {
-        console.log('[DemoStep3] Navigating to authenticated dashboard');
-        setLocation(accessUrl);
+      /**
+       * Critical: Invalidate React Query auth cache to synchronize frontend state
+       * Backend authentication succeeded but frontend cache still shows "not authenticated"
+       * This forces immediate refetch of /api/user to update authentication state
+       */
+      setTimeout(async () => {
+        try {
+          // Use comprehensive authentication synchronization utility
+          const { performAuthSync } = await import('@/lib/auth-sync-utils');
+          
+          console.log('[DemoStep3] Initiating comprehensive authentication state synchronization');
+          
+          // Perform complete authentication synchronization workflow
+          const syncResult = await performAuthSync({
+            retryAttempts: 2,
+            delayMs: 300, // Slightly longer delay for demo stability
+            fallbackNavigation: true,
+          });
+          
+          if (syncResult.success) {
+            console.log('[DemoStep3] Authentication synchronization successful - navigating to dashboard', {
+              action: syncResult.action,
+              duration: syncResult.duration,
+            });
+            
+            // Navigate to authenticated dashboard with synchronized state
+            setTimeout(() => {
+              console.log('[DemoStep3] Navigating to authenticated dashboard with refreshed state');
+              setLocation(accessUrl);
+            }, 100);
+            
+          } else {
+            // Graceful fallback with detailed error logging
+            console.warn('[DemoStep3] Authentication synchronization failed, using fallback navigation:', {
+              error: syncResult.error,
+              action: syncResult.action,
+              fallbackRoute: accessUrl,
+            });
+            
+            // Still attempt navigation as fallback
+            setLocation(accessUrl);
+          }
+          
+        } catch (syncError) {
+          // Ultimate fallback: If entire sync utility fails, still attempt navigation
+          console.error('[DemoStep3] Authentication sync utility failed, proceeding with direct navigation:', {
+            error: syncError instanceof Error ? syncError.message : 'Unknown sync utility error',
+            fallbackAction: 'Direct navigation to dashboard',
+          });
+          
+          setLocation(accessUrl);
+        }
       }, 1500);
       
     } else {
