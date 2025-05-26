@@ -1136,11 +1136,14 @@ router.post('/demo/company/create', async (req, res) => {
       const revenueAmount = Math.floor(Math.random() * 90000000) + 10000000; // $10M-$100M
       const employeeCount = Math.floor(Math.random() * 900) + 100; // 100-1K employees
       
+      // CRITICAL FIX: Use persona-based configuration instead of hardcoded values
+      const personaConfig = getCompanyData(persona, 'medium');
+      
       companyData = {
-        category: 'FinTech',
-        accreditation_status: 'APPROVED',
+        category: personaConfig.category,
+        accreditation_status: personaConfig.accreditation_status,
         is_demo: true,
-        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+        available_tabs: personaConfig.available_tabs,
         revenue: `$${(revenueAmount / 1000000).toFixed(0)}M`,
         num_employees: employeeCount,
         revenue_tier: 'medium'
