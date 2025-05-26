@@ -528,8 +528,8 @@ router.post('/demo/company/create', async (req, res) => {
           table: error?.table || 'Unknown table',
           column: error?.column || 'Unknown column',
           resolvedCompanyName: companyData.name,
-          originalCompanyName: nameResolution.originalName,
-          nameWasModified: nameResolution.wasModified,
+          originalCompanyName: originalName,
+          nameWasModified: originalName !== finalCompanyName,
           stack: error?.stack?.substring(0, 500) + '...'
         });
         
@@ -545,10 +545,10 @@ router.post('/demo/company/create', async (req, res) => {
             detail: error?.detail || 'No details available'
           },
           nameResolution: {
-            originalName: nameResolution.originalName,
-            finalName: nameResolution.finalName,
-            wasModified: nameResolution.wasModified,
-            strategy: nameResolution.metadata.resolutionStrategy
+            originalName: originalName,
+            finalName: finalCompanyName,
+            wasModified: originalName !== finalCompanyName,
+            strategy: 'simple_suffix_timestamp'
           },
           timestamp: new Date().toISOString()
         });
