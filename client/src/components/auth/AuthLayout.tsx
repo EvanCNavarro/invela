@@ -35,6 +35,7 @@ interface AuthLayoutProps {
   onStepChange?: (step: AuthStep) => void;
   onBack?: () => void;
   isSystemSetup?: boolean; // Enhanced: Track system setup for step fading
+  step3WizardStage?: 'review' | 'setup' | 'launch'; // Enhanced: Stage-aware GIF switching
 }
 
 export function AuthLayout({ 
@@ -44,7 +45,8 @@ export function AuthLayout({
   totalSteps = 3, 
   onStepChange, 
   onBack,
-  isSystemSetup = false 
+  isSystemSetup = false,
+  step3WizardStage
 }: AuthLayoutProps) {
   
   console.log(`[AuthLayout] Rendering with mode: ${mode}, step: ${currentStep}/${totalSteps}`);
@@ -126,7 +128,11 @@ export function AuthLayout({
                     {children}
                   </motion.div>
                   <div className="hidden lg:block w-[30%] h-full min-h-[760px]">
-                    <DemoStepVisual currentStep={currentStep} isSystemSetup={isSystemSetup} />
+                    <DemoStepVisual 
+                      currentStep={currentStep} 
+                      isSystemSetup={isSystemSetup} 
+                      step3WizardStage={step3WizardStage}
+                    />
                   </div>
                 </>
               ) : (
