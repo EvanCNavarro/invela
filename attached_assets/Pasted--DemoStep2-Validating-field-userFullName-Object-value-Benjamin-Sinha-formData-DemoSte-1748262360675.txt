@@ -1,0 +1,58 @@
+[DemoStep2] Validating field: userFullName 
+Object {value: "Benjamin Sinha", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "bsinha@sterlingbusinesssolutions.com", formData: {…}}
+[DemoStep2] Email validation: valid (bsinha@sterlingbusinesssolutions.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "new-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoStep3] Starting demo preparation with real API actions
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "new-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T12:25:50.619Z", echo: {…}}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T12:25:51.667Z", echo: {…}}
+echo: Object
+timestamp: "2025-05-26T12:25:51.667Z"
+type: "pong"
+[[Prototype]]: Object
+[DemoAPI] Executing: Creating "Sterling Business Solutions" organization 
+Object {id: "create-company", label: "Creating "Sterling Business Solutions" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T12:25:52.537Z", echo: {…}}
+[DemoAPI] REAL API FAILED for: Creating &quot;Sterling Business Solutions&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;Sterling Business Solutions&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "Sterling Business Solutions" organization
+[DemoStep3] Rendering results and next steps
