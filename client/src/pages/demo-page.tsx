@@ -1368,25 +1368,27 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
   const getDemoActions = (formData: any, selectedPersona: any) => {
     const actions = [];
 
-    // 1. Company Creation Action
-    actions.push({
-      id: 'create-company',
-      label: `Creating "${formData?.companyName}" organization`,
-      category: 'company',
-      targetField: 'companyName',
-      apiEndpoint: '/api/demo/company/create',
-      payload: {
-        name: formData?.companyName,
-        type: 'demo', // All companies created through demo flow are demo companies
-        persona: selectedPersona?.id,
-        companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
-        ...(selectedPersona?.id === 'accredited-data-recipient' && {
-          riskProfile: formData?.riskProfile
-        })
-      },
-      estimatedDuration: 2000,
-      description: 'Setting up organizational structure and preferences'
-    });
+    // 1. Company Creation Action (skip for Invela Admin - they use existing Invela company)
+    if (selectedPersona?.id !== 'invela-admin') {
+      actions.push({
+        id: 'create-company',
+        label: `Creating "${formData?.companyName}" organization`,
+        category: 'company',
+        targetField: 'companyName',
+        apiEndpoint: '/api/demo/company/create',
+        payload: {
+          name: formData?.companyName,
+          type: 'demo', // All companies created through demo flow are demo companies
+          persona: selectedPersona?.id,
+          companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
+          ...(selectedPersona?.id === 'accredited-data-recipient' && {
+            riskProfile: formData?.riskProfile
+          })
+        },
+        estimatedDuration: 2000,
+        description: 'Setting up organizational structure and preferences'
+      });
+    }
 
     // 2. User Account Creation Action
     actions.push({
