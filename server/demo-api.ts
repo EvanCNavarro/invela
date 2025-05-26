@@ -1627,7 +1627,7 @@ router.post('/demo/environment/finalize', async (req, res) => {
         demoReady: true,
         authenticated: true,
         loginRequired: false,
-        accessUrl: '/dashboard',
+        accessUrl: '/',
         environmentId,
         environment: environmentConfig,
         user: {
