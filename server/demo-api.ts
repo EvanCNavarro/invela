@@ -1062,15 +1062,87 @@ router.post('/demo/user/create', async (req, res) => {
 
     console.log('[DemoAPI] Parsed company ID:', parsedCompanyId);
 
-    // Create user record using actual database fields with validated company ID
+    // ========================================
+    // PERSONA-BASED ONBOARDING STATUS LOGIC
+    // ========================================
+    
+    console.log('[DemoAPI] [UserCreate] Fetching company data to determine persona-based onboarding status...');
+    
+    // Fetch company data to determine persona type and onboarding behavior
+    const companyData = await db.query.companies.findFirst({
+      where: eq(companies.id, parsedCompanyId),
+      columns: {
+        id: true,
+        name: true,
+        category: true,
+        accreditation_status: true,
+        is_demo: true,
+      },
+    });
+
+    if (!companyData) {
+      throw new Error(`Company not found with ID: ${parsedCompanyId}`);
+    }
+
+    // Determine onboarding status based on persona classification
+    let shouldCompleteOnboarding: boolean;
+    let personaType: string;
+
+    if (companyData.category === 'FinTech' && companyData.accreditation_status === 'PENDING') {
+      // Non-Accredited FinTech: Should see onboarding modal
+      shouldCompleteOnboarding = false;
+      personaType = 'Non-Accredited FinTech';
+    } else if (companyData.category === 'FinTech' && companyData.accreditation_status === 'APPROVED') {
+      // Accredited FinTech: Should skip onboarding modal
+      shouldCompleteOnboarding = true;
+      personaType = 'Accredited FinTech';
+    } else if (companyData.category === 'Bank') {
+      // Bank Admin: Should skip onboarding modal
+      shouldCompleteOnboarding = true;
+      personaType = 'Bank Admin';
+    } else if (companyData.category === 'Invela') {
+      // Invela Admin: Should skip onboarding modal
+      shouldCompleteOnboarding = true;
+      personaType = 'Invela Admin';
+    } else {
+      // Default case: Other persona types skip onboarding
+      shouldCompleteOnboarding = true;
+      personaType = 'Other';
+    }
+
+    console.log('[DemoAPI] [UserCreate] Persona-based onboarding status determined:', {
+      companyId: parsedCompanyId,
+      companyName: companyData.name,
+      category: companyData.category,
+      accreditationStatus: companyData.accreditation_status,
+      personaType,
+      onboardingUserCompleted: shouldCompleteOnboarding,
+      expectedBehavior: shouldCompleteOnboarding ? 'Skip onboarding modal' : 'Show onboarding modal',
+      timestamp: new Date().toISOString(),
+    });
+
+    // Create user record with persona-based onboarding status
     const [user] = await db.insert(users).values({
       email,
       password: hashedPassword,
       first_name: firstName,
       last_name: lastName,
       full_name: fullName,
-      company_id: parsedCompanyId
+      company_id: parsedCompanyId,
+      onboarding_user_completed: shouldCompleteOnboarding,  // Set based on persona classification
     }).returning();
+
+    // Log successful user creation with onboarding status
+    console.log('[DemoAPI] [UserCreate] User created successfully with persona-based onboarding status:', {
+      userId: user.id,
+      userEmail: user.email,
+      companyId: parsedCompanyId,
+      companyName: companyData.name,
+      personaType,
+      onboardingUserCompleted: shouldCompleteOnboarding,
+      expectedModalBehavior: shouldCompleteOnboarding ? '❌ Should NOT see onboarding modal' : '✅ Should see onboarding modal',
+      timestamp: new Date().toISOString(),
+    });
 
     res.json({
       success: true,
@@ -1079,6 +1151,11 @@ router.post('/demo/user/create', async (req, res) => {
         fullName,
         email,
         role
+      },
+      metadata: {
+        personaType,
+        onboardingUserCompleted: shouldCompleteOnboarding,
+        expectedBehavior: shouldCompleteOnboarding ? 'Skip onboarding modal' : 'Show onboarding modal'
       },
       timestamp: new Date().toISOString()
     });
