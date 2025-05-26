@@ -1,0 +1,140 @@
+[2025-05-26T08:36:43.639Z] [App] Communication phase initializing 
+[2025-05-26T08:36:43.639Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-26T08:36:43.639Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-26T08:36:43.639Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-26T08:36:43.639Z] [App] Application ready for user interaction 
+[2025-05-26T08:36:43.639Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-26T08:36:43.639Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[2025-05-26T08:36:43.845Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 413, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 413, email: "cgray@premiertrustcompany.com", timestamp: "2025-05-26T08:36:43.863Z"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(4), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=371, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 371
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748248604154-qb73ad3", timestamp: "2025-05-26T08:36:44.154Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-26T08:36:44.182Z", id: 1007, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-26T08:36:44.272Z", message: "Authentication successful"}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 371
+[RiskRadarChart] Setting selected company ID from companyId prop 371
+[RiskRadarChart] Company category check: 
+Object {category: "FinTech", isBankOrInvela: false, isFintech: true, showDropdownProp: false}
+[CurrentCompany] Setting company context: 371
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Setting selected company ID from companyId prop 371
+[RiskRadarChart] Display company updated: 
+Object {id: 371, name: "Premier Trust Company", category: "FinTech"}
+[RiskRadarChart] Updated cached risk clusters 
+Object {companyId: 371, companyName: "Premier Trust Company", hasData: true}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: true, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Premier Trust Company", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 371, networkCompaniesCount: 0, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748248604667-nqnxl3i", timestamp: "2025-05-26T08:36:44.668Z", message: "Connection established"}
+[2025-05-26T08:36:44.635Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748248605168-yalctca", timestamp: "2025-05-26T08:36:45.168Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748248605672-scgp5lk", timestamp: "2025-05-26T08:36:45.672Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-26T08:36:46.641Z] [WebSocket] WebSocket connection established 
