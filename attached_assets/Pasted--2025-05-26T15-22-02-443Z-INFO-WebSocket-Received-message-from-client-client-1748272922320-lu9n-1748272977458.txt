@@ -1,0 +1,154 @@
+[2025-05-26T15:22:02.443Z] [INFO] [WebSocket] Received message from client client-1748272922320-lu9n1e4 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-26T15:22:02.291Z"}}
+[2025-05-26T15:22:02.444Z] [INFO] [WebSocket] Authentication from client client-1748272922320-lu9n1e4 {"module":"WebSocket","hasToken":true}
+[2025-05-26T15:22:02.816Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748272922816-537nu9h","clients":2}
+[2025-05-26T15:22:03.316Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748272923316-8mkmh3g","clients":3}
+[2025-05-26T15:22:03.822Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748272923822-mt679z9","clients":4}
+[2025-05-26T15:22:04.400Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748272924400-7a5jqdy","clients":5}
+[2025-05-26T15:22:04.741Z] [INFO] [WebSocket] Received message from client client-1748272924400-7a5jqdy {"module":"WebSocket","type":"authenticate","userId":"427","companyId":"387","clientId":"ws_1748272923029_gjf6xm2l6","timestamp":"2025-05-26T15:22:04.592Z"}
+[2025-05-26T15:22:04.741Z] [INFO] [WebSocket] Authentication from client client-1748272924400-7a5jqdy {"module":"WebSocket","userId":"427","companyId":"387","hasToken":true}
+[2025-05-26T15:22:16.140Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,963,1000,964,968,969,973,967,1001]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1000 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[2025-05-26T15:22:25.581Z] [INFO] [WebSocket] Received message from client client-1748272924400-7a5jqdy {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T15:22:25.433Z","connectionId":"ws_1748272923029_gjf6xm2l6"}
+[2025-05-26T15:22:32.440Z] [INFO] [WebSocket] Received message from client client-1748272922320-lu9n1e4 {"module":"WebSocket","type":"ping"}
+[2025-05-26T15:22:33.441Z] [INFO] [WebSocket] Received message from client client-1748272923316-8mkmh3g {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T15:22:33.293Z","connectionId":"ws_1748272923291_nihxw7yd1"}
+[2025-05-26T15:22:33.943Z] [INFO] [WebSocket] Received message from client client-1748272923822-mt679z9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T15:22:33.796Z","connectionId":"ws_1748272922788_ewy8apm8l"}
+[DemoAPI] Company creation request received at: 2025-05-26T15:22:36.633Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '99',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "HealthCore Solutions",
+  "type": "demo",
+  "persona": "new-data-recipient",
+  "companySize": "medium"
+}
+[DemoAPI] Creating demo session for tracking...
+[DemoSessionService] Creating new demo session: {
+  sessionId: 'demo_337a881b-5972-4ba0-855b-8194ff456642',
+  personaType: 'new-data-recipient',
+  expiresAt: '2025-05-29T15:22:36.636Z',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.',
+  ipAddress: '10.81.3.20'
+}
+[DemoSessionService] ✅ Demo session created successfully: demo_337a881b-5972-4ba0-855b-8194ff456642
+[DemoAPI] ✅ Demo session created: demo_337a881b-5972-4ba0-855b-8194ff456642
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'HealthCore Solutions',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium',
+  riskProfile: undefined
+}
+[2025-05-26T15:22:36.675Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748272956676_42m2m9x1m' }
+[2025-05-26T15:22:36.677Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Generating company data for: { persona: 'new-data-recipient', companySize: 'medium' }
+[DemoAPI] IMPLEMENTING DIRECT FIX for size: medium
+[DemoAPI] Generated company data: {
+  category: 'FinTech',
+  accreditation_status: 'APPROVED',
+  is_demo: true,
+  available_tabs: [ 'dashboard', 'task-center', 'file-vault', 'insights' ],
+  revenue: '$61M',
+  num_employees: 381,
+  revenue_tier: 'medium'
+}
+[DemoAPI] Generating comprehensive business details...
+[DemoAPI] Business Details - Persona: new-data-recipient, Mapped Type: fintech
+[DemoAPI] Generated business details: {
+  website: 'https://www.securepay.com',
+  hasAddress: true,
+  hasLeadership: true,
+  hasClients: true,
+  hasInvestors: true,
+  hasCertifications: true
+}
+[DemoAPI] Assembled complete company data for insertion
+[DemoAPI] Business details verification: {
+  websiteIncluded: true,
+  addressIncluded: true,
+  productsIncluded: true,
+  leadershipIncluded: true,
+  clientsIncluded: true,
+  investorsIncluded: true,
+  certificationsIncluded: true,
+  riskClustersIncluded: true
+}
+[DemoAPI] Final insert values: {
+  "name": "HealthCore Solutions",
+  "description": "Professional fintech company specializing in secure data management and compliance",
+  "category": "FinTech",
+  "accreditation_status": "APPROVED",
+  "is_demo": true,
+  "available_tabs": [
+    "dashboard",
+    "task-center",
+    "file-vault",
+    "insights"
+  ],
+  "revenue": "$61M",
+  "num_employees": 381,
+  "revenue_tier": "medium",
+  "risk_score": 81,
+  "risk_clusters": {
+    "Dark Web Data": 8,
+    "Cyber Security": 4,
+    "Public Sentiment": 10,
+    "Data Access Scope": 7,
+    "Financial Stability": 25,
+    "Potential Liability": 27
+  },
+  "website_url": "https://www.securepay.com",
+  "hq_address": "100 Federal Street, 37th Floor, Boston, MA 02110",
+  "products_services": "API-driven financial services, secure data analytics, automated compliance workflows",
+  "founders_and_leadership": "Thomas Anderson (CEO, Former Stripe VP), Rachel Davis (CTO, Ex-Meta Engineering Manager), Kevin Zhang (CFO, Former BlackRock Director)",
+  "key_clients_partners": "Citigroup, Capital One, PayPal, Square, Stripe",
+  "investors": "Matrix Partners, Redpoint Ventures, Foundation Capital, NEA",
+  "certifications_compliance": "HIPAA Compliant, SOC 1 Type II, ISO 22301, COBIT 5, COSO Framework",
+  "legal_structure": "Corporation",
+  "market_position": "Established Player",
+  "incorporation_year": 2017,
+  "funding_stage": "Series C"
+}
+[DemoAPI] Company creation error: error: duplicate key value violates unique constraint "idx_companies_name_lower"
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+    at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1197:21) {
+  length: 240,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (lower(name))=(healthcore solutions) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'companies',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'idx_companies_name_lower',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+[WebSocket] Broadcast demo_action_error to 5 clients (0 errors) { messageId: 'msg_1748272956744_ejg31jftz' }
+[2025-05-26T15:22:36.745Z] [INFO] [App] Successfully broadcasted demo_action_error message 
+[2025-05-26T15:22:36.779Z] [ERROR] [App] POST /api/demo/company/create 500 in 148ms :: {"success":false,"error":"Failed to create company","timestamp":"2025-05-26T1... 
+[2025-05-26T15:22:44.581Z] [INFO] [WebSocket] Received message from client client-1748272924400-7a5jqdy {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T15:22:44.411Z","connectionId":"ws_1748272923029_gjf6xm2l6"}
