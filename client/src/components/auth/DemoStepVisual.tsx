@@ -219,9 +219,37 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false, 
             
             console.log(`[DemoStepVisual] Step ${stepConfig.id} - Active: ${isActive}, Asset: ${assetSource}`);
             
-            // Enhanced: Sophisticated fade logic for system setup stage
+            // Enhanced: Sophisticated fade logic for system setup and launch stages
             const isPreviousStep = stepConfig.id < currentStep;
             const shouldFadePrevious = isSystemSetup && isPreviousStep;
+            const isLaunchStage = step3WizardStage === 'launch';
+            
+            // Launch stage: Different elements fade at different times
+            const getLaunchAnimations = () => {
+              if (!isLaunchStage) return { opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4, scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85 };
+              
+              // Step 3 (rocket) fades last at 0.8s to remain visible longest
+              if (stepConfig.id === 3) {
+                return { opacity: 0, scale: 0.8 };
+              }
+              // Steps 1 & 2 fade at 0.6s  
+              return { opacity: 0, scale: 0.8 };
+            };
+            
+            const getLaunchTransition = () => {
+              if (!isLaunchStage) return { 
+                duration: VISUAL_CONFIG.animations.duration * 1.5,
+                ease: "easeInOut",
+                delay: index * VISUAL_CONFIG.animations.staggerDelay
+              };
+              
+              // Step 3 (rocket) gets delayed fade to remain visible longest
+              if (stepConfig.id === 3) {
+                return { delay: 0.8, duration: 0.2, ease: "easeOut" };
+              }
+              // Steps 1 & 2 fade earlier
+              return { delay: 0.6, duration: 0.4, ease: "easeOut" };
+            };
             
             return (
               <motion.div
@@ -236,15 +264,8 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false, 
                     : "bg-gray-100 opacity-60"
                 )}
                 initial={{ scale: 0.9, opacity: 0.6 }}
-                animate={{ 
-                  scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85, // Enhanced: More fade for previous steps
-                  opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4 // Enhanced: Elegant fade to 30%
-                }}
-                transition={{ 
-                  duration: VISUAL_CONFIG.animations.duration * 1.5, // Enhanced: Smoother animation
-                  ease: "easeInOut",
-                  delay: index * VISUAL_CONFIG.animations.staggerDelay
-                }}
+                animate={getLaunchAnimations()}
+                transition={getLaunchTransition()}
               >
                 {/* Dynamic Image/GIF Content - Clean presentation without overlays */}
                 <img

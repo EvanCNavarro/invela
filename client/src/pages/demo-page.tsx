@@ -1625,7 +1625,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     toast({
       title: "Demo Setup Complete",
       description: "Logging you in now...",
-      variant: "default",
+      variant: "success",
     });
     
     await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
@@ -1729,7 +1729,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         className="flex-shrink-0 space-y-2"
         initial={{ opacity: 1, y: 0 }}
         animate={wizardStep === 'launch' ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
-        transition={{ delay: wizardStep === 'launch' ? 0.6 : 0, duration: 0.4, ease: "easeOut" }}
+        transition={{ delay: wizardStep === 'launch' ? 0.2 : 0, duration: 0.8, ease: "easeOut" }}
       >
         {/* Icon + Chips */}
         <div className="flex items-center gap-3">
@@ -2173,8 +2173,8 @@ export default function DemoPage() {
       initial={{ opacity: 1 }}
       animate={currentStep === 3 && step3WizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
       transition={{ 
-        delay: currentStep === 3 && step3WizardStep === 'launch' ? 0.3 : 0, 
-        duration: 0.4, 
+        delay: currentStep === 3 && step3WizardStep === 'launch' ? 0 : 0, 
+        duration: 1.0, 
         ease: "easeOut" 
       }}
     >
