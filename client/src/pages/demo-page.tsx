@@ -1895,7 +1895,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         <p className="text-sm text-gray-600">
           Verify your settings below, then sign in to launch your personalized demo experience.
         </p>
-      </motion.div>
+      </div>
       
       {/* MAIN CONTENT AREA - Two Section Layout */}
       <motion.div 
