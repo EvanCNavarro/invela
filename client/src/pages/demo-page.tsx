@@ -1870,17 +1870,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       {/* TOP SPACER */}
       <div className="flex-shrink-0 py-6"></div>
       
-      {/* HEADER SECTION - fades out synchronized with setup completion */}
-      <motion.div 
-        className="flex-shrink-0 space-y-2"
-        initial={{ opacity: 1, y: 0 }}
-        animate={wizardStep === 'launch' ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
-        transition={{ 
-          delay: wizardStep === 'launch' ? 2.0 : 0, 
-          duration: 1.0, 
-          ease: "easeOut" 
-        }}
-      >
+      {/* HEADER SECTION - no animations */}
+      <div className="flex-shrink-0 space-y-2">
         {/* Icon + Chips */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
@@ -2198,13 +2189,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
 
       </motion.div>
 
-      {/* BUTTON SECTION - fades out last */}
-      <motion.div 
-        className="flex-shrink-0"
-        initial={{ opacity: 1, y: 0 }}
-        animate={wizardStep === 'launch' ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
-        transition={{ delay: wizardStep === 'launch' ? 0.8 : 0, duration: 0.2, ease: "easeOut" }}
-      >
+      {/* BUTTON SECTION - no animations */}
+      <div className="flex-shrink-0">
         <DemoNavigation
           onBack={onBack}
           onNext={handleStartDemo}
@@ -2213,7 +2199,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           backDisabled={wizardStep === 'setup' || wizardStep === 'launch'}
           nextIcon={wizardStep === 'review' ? 'check' : wizardStep === 'setup' ? 'spinner' : 'arrow'}
         />
-      </motion.div>
+      </div>
       
       {/* BOTTOM SPACER */}
       <div className="flex-shrink-0 py-6"></div>
