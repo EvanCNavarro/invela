@@ -1617,7 +1617,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     setLoadingStep(actions.length + 1);
     setWizardStep('launch');
     onWizardStepChange?.('launch'); // ✅ FIX: Communicate launch stage to parent
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
     
     // All actions completed successfully - automatically proceed to dashboard
     console.log('[DemoStep3] All demo actions completed successfully', results);
@@ -1713,8 +1713,13 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       {/* TOP SPACER */}
       <div className="flex-shrink-0 py-6"></div>
       
-      {/* HEADER SECTION */}
-      <div className="flex-shrink-0 space-y-2">
+      {/* HEADER SECTION - fades out early in launch stage */}
+      <motion.div 
+        className="flex-shrink-0 space-y-2"
+        initial={{ opacity: 1, y: 0 }}
+        animate={wizardStep === 'launch' ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
+        transition={{ delay: wizardStep === 'launch' ? 0.6 : 0, duration: 0.4, ease: "easeOut" }}
+      >
         {/* Icon + Chips */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 flex items-center justify-center">
@@ -1738,7 +1743,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         <p className="text-sm text-gray-600">
           Verify your settings below, then sign in to launch your personalized demo experience.
         </p>
-      </div>
+      </motion.div>
       
       {/* MAIN CONTENT AREA - Two Section Layout */}
       <div className="flex-1 flex flex-col space-y-3 pt-6">
@@ -1991,45 +1996,45 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
               </div>
             </div>
           ) : (
-            // Launch Stage - Fade out animation to transition to login
-            <motion.div 
-              className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden"
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-            >
+            // Launch Stage - Beautiful staggered fade-out animations
+            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden">
               <div className="p-4 flex-1 flex flex-col items-center justify-center space-y-6">
-                {/* Simple Launch Visual */}
+                {/* Launch Icon - fades out first (0.2s) */}
                 <motion.div
                   className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center"
                   initial={{ scale: 1, opacity: 1 }}
-                  animate={{ scale: 0.8, opacity: 0 }}
-                  transition={{ duration: 1.0, ease: "easeOut" }}
+                  animate={{ scale: 0.9, opacity: 0 }}
+                  transition={{ delay: 0.1, duration: 0.2, ease: "easeOut" }}
                 >
                   <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </motion.div>
                 
-                {/* Launch Text with fade out */}
+                {/* Launch Text - fades out second (0.4s) */}
                 <motion.div
                   className="text-center space-y-2"
                   initial={{ y: 0, opacity: 1 }}
                   animate={{ y: -10, opacity: 0 }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
+                  transition={{ delay: 0.2, duration: 0.4, ease: "easeOut" }}
                 >
                   <h3 className="text-xl font-semibold text-gray-800">Demo Environment Ready</h3>
                   <p className="text-sm text-gray-600">Launching your personalized experience...</p>
                 </motion.div>
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 
       </div>
 
-      {/* BUTTON SECTION */}
-      <div className="flex-shrink-0">
+      {/* BUTTON SECTION - fades out last */}
+      <motion.div 
+        className="flex-shrink-0"
+        initial={{ opacity: 1, y: 0 }}
+        animate={wizardStep === 'launch' ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
+        transition={{ delay: wizardStep === 'launch' ? 0.8 : 0, duration: 0.2, ease: "easeOut" }}
+      >
         <DemoNavigation
           onBack={onBack}
           onNext={handleStartDemo}
@@ -2038,7 +2043,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           backDisabled={wizardStep === 'setup' || wizardStep === 'launch'}
           nextIcon={wizardStep === 'review' ? 'check' : wizardStep === 'setup' ? 'spinner' : 'arrow'}
         />
-      </div>
+      </motion.div>
       
       {/* BOTTOM SPACER */}
       <div className="flex-shrink-0 py-6"></div>
