@@ -1,0 +1,32 @@
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.294Z", messageId: "msg_1748276076294_cp2ls7crk"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.294Z", messageId: "msg_1748276076294_cp2ls7crk"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.294Z", messageId: "msg_1748276076294_cp2ls7crk"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.294Z", messageId: "msg_1748276076294_cp2ls7crk"}
+[2025-05-26T16:14:36.244Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_complete", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.336Z", messageId: "msg_1748276076336_gy6jf3wte"}
+[WebSocket] Received message: 
+Object {type: "demo_action_complete", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.336Z", messageId: "msg_1748276076336_gy6jf3wte"}
+[WebSocket] Received message: 
+Object {type: "demo_action_complete", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.336Z", messageId: "msg_1748276076336_gy6jf3wte"}
+[WebSocket] Received message: 
+Object {type: "demo_action_complete", payload: {…}, data: {…}, timestamp: "2025-05-26T16:14:36.336Z", messageId: "msg_1748276076336_gy6jf3wte"}
+[2025-05-26T16:14:36.283Z] [WebSocket] Received message of type: demo_action_complete 
+[DemoAPI] Success: Creating "SmartData Corporation" organization 
+Object {success: true, companyId: 411, companyData: {…}, timestamp: "2025-05-26T16:14:36.336Z"}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Creating account for Matthew Malik 
+Object {id: "create-user", label: "Creating account for Matthew Malik", category: "user", targetField: "userFullName", apiEndpoint: "/api/demo/user/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] REAL API FAILED for: Creating account for Matthew Malik 
+Error {}
+
+[DemoAPI] Error executing Creating account for Matthew Malik: 
+Error {}
+
+[DemoStep3] Action failed: Creating account for Matthew Malik
+[DemoStep3] Rendering results and next steps
