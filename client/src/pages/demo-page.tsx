@@ -947,6 +947,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
           companyName: result.companyName,
         }));
 
+        // Also force immediate synchronization for Step 3 submission
+        window.validatedCompanyName = result.companyName;
+
         setNameValidationState({
           isValidating: false,
           isUnique: true,
@@ -1529,7 +1532,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         targetField: 'companyName',
         apiEndpoint: '/api/demo/company/create',
         payload: {
-          name: formData?.companyName,
+          name: window.validatedCompanyName || formData?.companyName,
           type: 'demo', // All companies created through demo flow are demo companies
           persona: selectedPersona?.id,
           companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
