@@ -1,0 +1,365 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-26T14:31:21.687Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-26T14:31:21.692Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-26T14:31:21.692Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-26T14:31:22.143Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-26T14:31:22.358Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-26T14:31:22.358Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-26T14:31:22.358Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-26T14:31:22.359Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-26T14:31:22.360Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-26T14:31:22.362Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-26T14:31:22.363Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"7aar6u","timestamp":"2025-05-26T14:31:22.363Z"}
+[2025-05-26T14:31:22.363Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-26T14:31:22.363Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-26T14:31:22.363Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-26T14:31:22.363Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-26T14:31:22.363Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-26T14:31:22.363Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-26T14:31:22.363Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-26T14:31:22.363Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-26T14:31:22.363Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-26T14:31:22.364Z] [INFO] [App] Setting up Vite development server 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-26T14:31:22.366Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-26T14:31:22.367Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-26T14:31:22.367Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-26T14:31:22.367Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-26T14:31:22.382Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-26T14:31:22.382Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-26T14:31:22.383Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-26T14:31:22.383Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-26T14:31:22.383Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-26T14:31:22.383Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-26T14:31:23.379Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-26T14:31:25.937Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-26T14:31:29.291Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-26T14:31:29.499Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-26T14:31:32.384Z] [INFO] [App] Running background health checks... 
+[2025-05-26T14:31:32.384Z] [StartupChecks] Running application startup health checks... 
+[2025-05-26T14:31:32.384Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-26T14:31:32.385Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-26T14:31:32.609Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-26T14:31:32.652Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-26T14:31:32.682Z] [DBConnectionService] Database connection check successful 
+[2025-05-26T14:31:32.682Z] [StartupChecks] Database health check passed 
+[2025-05-26T14:31:32.682Z] [StartupChecks] All startup health checks passed! 
+[2025-05-26T14:31:32.682Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-26T14:31:37.744Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748269897744-sap6rid","clients":1}
+[2025-05-26T14:31:37.865Z] [INFO] [WebSocket] Received message from client client-1748269897744-sap6rid {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-26T14:31:37.630Z"}}
+[2025-05-26T14:31:37.865Z] [INFO] [WebSocket] Authentication from client client-1748269897744-sap6rid {"module":"WebSocket","hasToken":true}
+[2025-05-26T14:31:38.244Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748269898244-r5koz6o","clients":2}
+[2025-05-26T14:31:38.767Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748269898767-war9mcz","clients":3}
+[2025-05-26T14:31:39.267Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748269899267-t3m9be6","clients":4}
+[2025-05-26T14:31:39.830Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748269899830-jtfbd5b","clients":5}
+[2025-05-26T14:31:40.178Z] [INFO] [WebSocket] Received message from client client-1748269899830-jtfbd5b {"module":"WebSocket","type":"authenticate","userId":"427","companyId":"387","clientId":"ws_1748269898016_7wrxoy45t","timestamp":"2025-05-26T14:31:39.943Z"}
+[2025-05-26T14:31:40.178Z] [INFO] [WebSocket] Authentication from client client-1748269899830-jtfbd5b {"module":"WebSocket","userId":"427","companyId":"387","hasToken":true}
+[2025-05-26T14:31:52.468Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,1000,999,963,964,969,972,1001,973,968]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1000 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 968 (ky3p): 0/0 = 0%
+[DemoAPI] Company name validation request received {
+  timestamp: '2025-05-26T14:31:57.192Z',
+  module: 'DemoAPI',
+  operation: 'Company name validation request received',
+  requestId: 'val_1748269917192_2kbjlz5ua',
+  companyName: 'Invela',
+  generateAlternative: true
+}
+[DemoAPI] Checking company name uniqueness {
+  timestamp: '2025-05-26T14:31:57.193Z',
+  module: 'DemoAPI',
+  operation: 'Checking company name uniqueness',
+  requestId: 'val_1748269917192_2kbjlz5ua',
+  cleanedName: 'Invela'
+}
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-26T14:31:57.194Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Invela',
+  nameLength: 6
+}
+[CompanyNameUtils] Company name conflict detected {
+  timestamp: '2025-05-26T14:31:57.241Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name conflict detected',
+  companyName: 'Invela',
+  conflictWith: 'Invela',
+  conflictId: 1,
+  isExistingDemo: null,
+  duration: 47
+}
+[DemoAPI] Company name conflict detected {
+  timestamp: '2025-05-26T14:31:57.242Z',
+  module: 'DemoAPI',
+  operation: 'Company name conflict detected',
+  requestId: 'val_1748269917192_2kbjlz5ua',
+  conflictingName: 'Invela',
+  conflictDetails: {
+    existingCompanyId: 1,
+    existingCompanyName: 'Invela',
+    isDemo: false
+  }
+}
+[DemoAPI] Generating unique alternative company name {
+  timestamp: '2025-05-26T14:31:57.242Z',
+  module: 'DemoAPI',
+  operation: 'Generating unique alternative company name',
+  requestId: 'val_1748269917192_2kbjlz5ua',
+  originalName: 'Invela'
+}
+[CompanyNameUtils] Starting unique company name generation {
+  timestamp: '2025-05-26T14:31:57.242Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting unique company name generation',
+  baseName: 'Invela',
+  options: {
+    maxAttempts: 5,
+    suffixStyle: 'professional',
+    preserveOriginal: false,
+    isDemoContext: true
+  }
+}
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-26T14:31:57.242Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Invela',
+  nameLength: 6
+}
+[CompanyNameUtils] Company name conflict detected {
+  timestamp: '2025-05-26T14:31:57.271Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name conflict detected',
+  companyName: 'Invela',
+  conflictWith: 'Invela',
+  conflictId: 1,
+  isExistingDemo: null,
+  duration: 29
+}
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-26T14:31:57.272Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Invela',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-26T14:31:57.272Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Invela',
+  generatedName: 'Sovereign Analytics Technologies',
+  components: { prefix: 'Sovereign', core: 'Analytics', suffix: 'Technologies' }
+}
+[CompanyNameUtils] Testing candidate name (attempt 1) {
+  timestamp: '2025-05-26T14:31:57.272Z',
+  module: 'CompanyNameUtils',
+  operation: 'Testing candidate name (attempt 1)',
+  baseName: 'Invela',
+  candidateName: 'Sovereign Analytics Technologies',
+  attempt: 1,
+  maxAttempts: 5
+}
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-26T14:31:57.272Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Sovereign Analytics Technologies',
+  nameLength: 32
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-26T14:31:57.303Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Sovereign Analytics Technologies',
+  duration: 31
+}
+[CompanyNameUtils] Successfully generated unique company name {
+  timestamp: '2025-05-26T14:31:57.303Z',
+  module: 'CompanyNameUtils',
+  operation: 'Successfully generated unique company name',
+  baseName: 'Invela',
+  finalName: 'Sovereign Analytics Technologies',
+  attemptsRequired: 1,
+  duration: 61
+}
+[DemoAPI] Successfully generated unique company name alternative {
+  timestamp: '2025-05-26T14:31:57.304Z',
+  module: 'DemoAPI',
+  operation: 'Successfully generated unique company name alternative',
+  requestId: 'val_1748269917192_2kbjlz5ua',
+  originalName: 'Invela',
+  alternativeName: 'Sovereign Analytics Technologies',
+  duration: 111
+}
+[2025-05-26T14:31:57.335Z] [INFO] [App] POST /api/demo/company/validate-name 200 in 144ms :: {"success":true,"isUnique":false,"originalName":"Invela","companyName":"Sover... 
+[2025-05-26T14:31:59.967Z] [INFO] [WebSocket] Received message from client client-1748269899830-jtfbd5b {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T14:31:59.729Z","connectionId":"ws_1748269898016_7wrxoy45t"}
+[2025-05-26T14:32:07.866Z] [INFO] [WebSocket] Received message from client client-1748269897744-sap6rid {"module":"WebSocket","type":"ping"}
+[DemoAPI] Company creation request received at: 2025-05-26T14:32:08.118Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '107',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "Integrity Financial Services",
+  "type": "demo",
+  "persona": "new-data-recipient",
+  "companySize": "medium"
+}
+[DemoAPI] Creating demo session for tracking...
+[DemoSessionService] Creating new demo session: {
+  sessionId: 'demo_34a67f7b-1c56-4e72-a2b1-dcb552948334',
+  personaType: 'new-data-recipient',
+  expiresAt: '2025-05-29T14:32:08.119Z',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.',
+  ipAddress: '10.81.4.117'
+}
+[DemoSessionService] ✅ Demo session created successfully: demo_34a67f7b-1c56-4e72-a2b1-dcb552948334
+[DemoAPI] ✅ Demo session created: demo_34a67f7b-1c56-4e72-a2b1-dcb552948334
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'Integrity Financial Services',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium',
+  riskProfile: undefined
+}
+[2025-05-26T14:32:08.178Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748269928178_dd7j4vhgp' }
+[2025-05-26T14:32:08.179Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Generating company data for: { persona: 'new-data-recipient', companySize: 'medium' }
+[DemoAPI] IMPLEMENTING DIRECT FIX for size: medium
+[DemoAPI] Generated company data: {
+  category: 'FinTech',
+  accreditation_status: 'APPROVED',
+  is_demo: true,
+  available_tabs: [ 'dashboard', 'task-center', 'file-vault', 'insights' ],
+  revenue: '$91M',
+  num_employees: 436,
+  revenue_tier: 'medium'
+}
+[DemoAPI] Generating comprehensive business details...
+[DemoAPI] Business Details - Persona: new-data-recipient, Mapped Type: fintech
+[DemoAPI] Generated business details: {
+  website: 'https://www.dataflow.io',
+  hasAddress: true,
+  hasLeadership: true,
+  hasClients: true,
+  hasInvestors: true,
+  hasCertifications: true
+}
+[DemoAPI] Assembled complete company data for insertion
+[DemoAPI] Business details verification: {
+  websiteIncluded: true,
+  addressIncluded: true,
+  productsIncluded: true,
+  leadershipIncluded: true,
+  clientsIncluded: true,
+  investorsIncluded: true,
+  certificationsIncluded: true,
+  riskClustersIncluded: true
+}
+[DemoAPI] Final insert values: {
+  "name": "Integrity Financial Services",
+  "description": "Professional fintech company specializing in secure data management and compliance",
+  "category": "FinTech",
+  "accreditation_status": "APPROVED",
+  "is_demo": true,
+  "available_tabs": [
+    "dashboard",
+    "task-center",
+    "file-vault",
+    "insights"
+  ],
+  "revenue": "$91M",
+  "num_employees": 436,
+  "revenue_tier": "medium",
+  "risk_score": 84,
+  "risk_clusters": {
+    "Dark Web Data": 11,
+    "Cyber Security": 6,
+    "Public Sentiment": 7,
+    "Data Access Scope": 5,
+    "Financial Stability": 16,
+    "Potential Liability": 39
+  },
+  "website_url": "https://www.dataflow.io",
+  "hq_address": "71 South Wacker Drive, Suite 4400, Chicago, IL 60606",
+  "products_services": "Digital payment processing, fraud detection systems, compliance automation platform",
+  "founders_and_leadership": "Thomas Anderson (CEO, Former Stripe VP), Rachel Davis (CTO, Ex-Meta Engineering Manager), Kevin Zhang (CFO, Former BlackRock Director)",
+  "key_clients_partners": "PNC Bank, US Bank, TD Bank, HSBC, Barclays",
+  "investors": "QED Investors, Nyca Partners, FinTech Collective, Commerce Ventures",
+  "certifications_compliance": "SOC 2 Type II, ISO 27001, PCI DSS Level 1, GDPR Compliant, CCPA Compliant",
+  "legal_structure": "Corporation",
+  "market_position": "Established Player",
+  "incorporation_year": 2012,
+  "funding_stage": "Series C"
+}
+[DemoAPI] Company creation error: error: duplicate key value violates unique constraint "idx_companies_name_lower"
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+    at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1197:21) {
+  length: 248,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (lower(name))=(integrity financial services) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'companies',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'idx_companies_name_lower',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+[WebSocket] Broadcast demo_action_error to 5 clients (0 errors) { messageId: 'msg_1748269928240_f9y8u7bks' }
+[2025-05-26T14:32:08.242Z] [INFO] [App] Successfully broadcasted demo_action_error message 
+[2025-05-26T14:32:08.273Z] [ERROR] [App] POST /api/demo/company/create 500 in 157ms :: {"success":false,"error":"Failed to create company","timestamp":"2025-05-26T1... 
+[2025-05-26T14:32:08.890Z] [INFO] [WebSocket] Received message from client client-1748269898767-war9mcz {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T14:32:08.654Z","connectionId":"ws_1748269898654_6bwyydo8z"}
+[2025-05-26T14:32:09.412Z] [INFO] [WebSocket] Received message from client client-1748269899267-t3m9be6 {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T14:32:09.158Z","connectionId":"ws_1748269898129_2ad46j32l"}
+[2025-05-26T14:32:19.967Z] [INFO] [WebSocket] Received message from client client-1748269899830-jtfbd5b {"module":"WebSocket","type":"ping","timestamp":"2025-05-26T14:32:19.730Z","connectionId":"ws_1748269898016_7wrxoy45t"}
