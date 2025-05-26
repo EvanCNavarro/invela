@@ -19,6 +19,8 @@ import { companies, users, invitations, tasks, TaskStatus } from '@db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { broadcastMessage } from './services/websocket';
 import { DemoSessionService } from './services/demo-session-service';
+import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/company-name-utils';
+import { logDemoOperation } from './utils/demo-helpers';
 
 const router = Router();
 
@@ -271,6 +273,171 @@ function generateRealisticCompanyDetails(persona: string, size: string) {
 }
 
 
+
+/**
+ * ========================================
+ * Demo Company Name Validation
+ * ========================================
+ * 
+ * Real-time validation endpoint for company name uniqueness during Step 2 form input.
+ * Prevents duplicate names from reaching Step 3 setup, ensuring smooth demo flow.
+ * 
+ * Key Features:
+ * - Real-time uniqueness checking during form input
+ * - Automatic name regeneration for conflicts
+ * - Professional logging for debugging
+ * - Fast response times for seamless UX
+ * 
+ * @endpoint POST /api/demo/company/validate-name
+ * @version 1.0.0
+ * @since 2025-05-26
+ */
+router.post('/demo/company/validate-name', async (req, res) => {
+  const startTime = Date.now();
+  const requestId = `val_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    // ========================================
+    // INPUT VALIDATION & LOGGING
+    // ========================================
+    
+    const { companyName, generateAlternativeIfTaken = true } = req.body;
+    
+    logDemoOperation('info', 'Company name validation request received', {
+      requestId,
+      companyName,
+      generateAlternative: generateAlternativeIfTaken,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!companyName || typeof companyName !== 'string' || companyName.trim().length === 0) {
+      logDemoOperation('warn', 'Invalid company name provided for validation', {
+        requestId,
+        providedName: companyName,
+        nameType: typeof companyName,
+      });
+      
+      return res.status(400).json({
+        success: false,
+        error: 'Company name is required and must be a valid string',
+        code: 'INVALID_INPUT',
+        requestId,
+      });
+    }
+
+    const cleanedName = companyName.trim();
+    
+    // ========================================
+    // UNIQUENESS CHECK
+    // ========================================
+    
+    logDemoOperation('info', 'Checking company name uniqueness', {
+      requestId,
+      cleanedName,
+    });
+
+    const uniquenessResult = await checkCompanyNameUniqueness(cleanedName);
+    
+    // ========================================
+    // UNIQUE NAME - RETURN SUCCESS
+    // ========================================
+    
+    if (uniquenessResult.isUnique) {
+      const duration = Date.now() - startTime;
+      
+      logDemoOperation('info', 'Company name is unique and available', {
+        requestId,
+        companyName: cleanedName,
+        duration,
+      });
+
+      return res.json({
+        success: true,
+        isUnique: true,
+        companyName: cleanedName,
+        message: 'Company name is available',
+        requestId,
+        duration,
+      });
+    }
+
+    // ========================================
+    // NAME CONFLICT - GENERATE ALTERNATIVE
+    // ========================================
+    
+    logDemoOperation('warn', 'Company name conflict detected', {
+      requestId,
+      conflictingName: cleanedName,
+      conflictDetails: uniquenessResult.conflictDetails,
+    });
+
+    if (!generateAlternativeIfTaken) {
+      return res.json({
+        success: true,
+        isUnique: false,
+        companyName: cleanedName,
+        conflictDetails: uniquenessResult.conflictDetails,
+        message: 'Company name is already taken',
+        requestId,
+      });
+    }
+
+    // ========================================
+    // GENERATE UNIQUE ALTERNATIVE
+    // ========================================
+    
+    logDemoOperation('info', 'Generating unique alternative company name', {
+      requestId,
+      originalName: cleanedName,
+    });
+
+    const uniqueAlternative = await generateUniqueCompanyName(cleanedName, {
+      maxAttempts: 5,
+      suffixStyle: 'professional',
+      preserveOriginal: false,
+      isDemoContext: true,
+    });
+
+    const finalDuration = Date.now() - startTime;
+    
+    logDemoOperation('info', 'Successfully generated unique company name alternative', {
+      requestId,
+      originalName: cleanedName,
+      alternativeName: uniqueAlternative,
+      duration: finalDuration,
+    });
+
+    return res.json({
+      success: true,
+      isUnique: false,
+      originalName: cleanedName,
+      companyName: uniqueAlternative,
+      conflictDetails: uniquenessResult.conflictDetails,
+      message: 'Generated unique alternative name',
+      requestId,
+      duration: finalDuration,
+    });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown validation error';
+    
+    logDemoOperation('error', 'Company name validation failed', {
+      requestId,
+      error: errorMessage,
+      duration,
+      companyName: req.body?.companyName,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to validate company name',
+      details: errorMessage,
+      code: 'VALIDATION_ERROR',
+      requestId,
+    });
+  }
+});
 
 /**
  * Demo Company Creation

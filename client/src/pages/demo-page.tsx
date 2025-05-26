@@ -847,6 +847,158 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
   }
   
   // ========================================
+  // COMPANY NAME VALIDATION STATE
+  // ========================================
+  
+  const [nameValidationState, setNameValidationState] = useState<{
+    isValidating: boolean;
+    isUnique: boolean | null;
+    originalName?: string;
+    suggestedName?: string;
+    lastValidatedName?: string;
+  }>({
+    isValidating: false,
+    isUnique: null,
+  });
+
+  // ========================================
+  // REAL-TIME COMPANY NAME VALIDATION
+  // ========================================
+  
+  /**
+   * Validates company name uniqueness in real-time during Step 2 form input
+   * Prevents duplicate names from reaching Step 3, ensuring smooth demo flow
+   */
+  const validateCompanyNameUniqueness = async (companyName: string): Promise<void> => {
+    const cleanedName = companyName.trim();
+    
+    // Skip validation for empty or very short names
+    if (cleanedName.length < 2) {
+      setNameValidationState({
+        isValidating: false,
+        isUnique: null,
+      });
+      return;
+    }
+
+    // Skip if we already validated this exact name
+    if (nameValidationState.lastValidatedName === cleanedName) {
+      return;
+    }
+
+    console.log('[DemoStep2] Starting real-time company name validation:', cleanedName);
+    
+    setNameValidationState(prev => ({
+      ...prev,
+      isValidating: true,
+      lastValidatedName: cleanedName,
+    }));
+
+    try {
+      const response = await fetch('/api/demo/company/validate-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName: cleanedName,
+          generateAlternativeIfTaken: true,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('[DemoStep2] Company name validation API error:', result);
+        setNameValidationState(prev => ({
+          ...prev,
+          isValidating: false,
+          isUnique: null,
+        }));
+        return;
+      }
+
+      console.log('[DemoStep2] Company name validation result:', {
+        isUnique: result.isUnique,
+        originalName: result.originalName,
+        suggestedName: result.companyName,
+      });
+
+      // Handle unique name
+      if (result.isUnique) {
+        setNameValidationState({
+          isValidating: false,
+          isUnique: true,
+          lastValidatedName: cleanedName,
+        });
+        return;
+      }
+
+      // Handle name conflict with auto-generated alternative
+      if (!result.isUnique && result.companyName !== cleanedName) {
+        console.log('[DemoStep2] Auto-replacing duplicate name:', {
+          original: cleanedName,
+          suggested: result.companyName,
+        });
+
+        // Auto-update the form with the unique alternative
+        setFormData(prev => ({
+          ...prev,
+          companyName: result.companyName,
+        }));
+
+        setNameValidationState({
+          isValidating: false,
+          isUnique: true,
+          originalName: cleanedName,
+          suggestedName: result.companyName,
+          lastValidatedName: result.companyName,
+        });
+
+        // Show user-friendly notification about the change
+        toast({
+          title: "Company name updated",
+          description: `"${cleanedName}" was already taken. Updated to "${result.companyName}"`,
+          duration: 4000,
+        });
+      } else {
+        // Handle case where name is taken but no alternative generated
+        setNameValidationState({
+          isValidating: false,
+          isUnique: false,
+          lastValidatedName: cleanedName,
+        });
+      }
+
+    } catch (error) {
+      console.error('[DemoStep2] Company name validation failed:', error);
+      setNameValidationState(prev => ({
+        ...prev,
+        isValidating: false,
+        isUnique: null,
+      }));
+    }
+  };
+
+  // ========================================
+  // DEBOUNCED VALIDATION EFFECT
+  // ========================================
+  
+  useEffect(() => {
+    // Only validate when company name control is set to 'custom' (user input)
+    if (formData.companyNameControl !== 'custom' || !formData.companyName) {
+      return;
+    }
+
+    // Debounce validation to avoid excessive API calls
+    const validationTimer = setTimeout(() => {
+      validateCompanyNameUniqueness(formData.companyName);
+    }, 800); // 800ms delay after user stops typing
+
+    return () => clearTimeout(validationTimer);
+  }, [formData.companyName, formData.companyNameControl]);
+
+  // ========================================
   // EVENT HANDLERS
   // ========================================
   
