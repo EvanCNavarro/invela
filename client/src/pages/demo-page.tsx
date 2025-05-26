@@ -150,17 +150,34 @@ const DemoNavigation = ({
   showBack = true, 
   showNext = true, 
   nextDisabled = false,
+  backDisabled = false,
   nextText = "Continue",
-  nextIcon
+  nextIcon = 'arrow'
 }: {
   onBack?: () => void;
   onNext?: () => void;
   showBack?: boolean;
   showNext?: boolean;
   nextDisabled?: boolean;
+  backDisabled?: boolean;
   nextText?: string;
-  nextIcon?: React.ReactNode;
+  nextIcon?: 'arrow' | 'check' | 'spinner';
 }) => {
+  // Render the appropriate icon based on state
+  const renderNextIcon = () => {
+    switch (nextIcon) {
+      case 'check':
+        return <Check className="w-5 h-5 ml-2" />;
+      case 'spinner':
+        return (
+          <div className="w-5 h-5 ml-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        );
+      case 'arrow':
+      default:
+        return <ArrowRight className="w-5 h-5 ml-2" />;
+    }
+  };
+
   return (
     <div className="flex justify-between items-center pt-8">
       {/* Back Button */}
@@ -169,8 +186,9 @@ const DemoNavigation = ({
           <Button 
             variant="outline" 
             onClick={onBack}
+            disabled={backDisabled}
             size="lg"
-            className="px-8 py-3 text-base font-semibold"
+            className="px-8 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Previous
@@ -188,7 +206,7 @@ const DemoNavigation = ({
             className="px-8 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {nextText}
-            {nextIcon || <ArrowRight className="w-5 h-5 ml-2" />}
+            {renderNextIcon()}
           </Button>
         )}
       </div>
@@ -1566,10 +1584,16 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     setWizardStep('setup');
     setActionResults({});
     
+    // Add initial delay for smoother visual loading
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     // Execute each action sequentially, passing results to subsequent actions
     for (let i = 0; i < actions.length; i++) {
       setLoadingStep(i + 1);
       const action = actions[i];
+      
+      // Add delay before starting each action for better visual pacing
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       try {
         const result = await executeAction(action, results);
@@ -1579,23 +1603,20 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         // If any action fails, stop the process
         if (!result.success) {
           console.error(`[DemoStep3] Action failed: ${action.label}`);
-          // TODO: Handle failure state in UI
           return;
         }
         
       } catch (error) {
         console.error(`[DemoStep3] Failed to execute action: ${action.label}`, error);
-        // TODO: Handle error state in UI
         return;
       }
     }
     
-    // ========================================
-    // DEMO COMPLETION WITH AUTO-LOGIN SUPPORT
-    // ========================================
+    // Add final step: Demo Environment Ready
+    setLoadingStep(actions.length + 1);
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // All actions completed successfully
-    setWizardStep('launch');
+    // All actions completed successfully - automatically proceed to dashboard
     console.log('[DemoStep3] All demo actions completed successfully', results);
     
     // Extract finalization result to check authentication status
@@ -2048,6 +2069,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           onNext={handleStartDemo}
           nextText={wizardStep === 'review' ? 'Sign In' : wizardStep === 'setup' ? 'Setting Up...' : 'Launching...'}
           nextDisabled={isLoading}
+          backDisabled={wizardStep === 'setup' || wizardStep === 'launch'}
+          nextIcon={wizardStep === 'review' ? 'check' : wizardStep === 'setup' ? 'spinner' : 'arrow'}
         />
       </div>
       
