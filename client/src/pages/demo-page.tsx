@@ -1582,6 +1582,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     setIsLoading(true);
     setLoadingStep(0);
     setWizardStep('setup');
+    onWizardStepChange?.('setup'); // ✅ FIX: Communicate stage change to parent
     setActionResults({});
     
     // Add initial delay for smoother visual loading
@@ -1614,6 +1615,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     
     // Add final step: Demo Environment Ready
     setLoadingStep(actions.length + 1);
+    setWizardStep('launch');
+    onWizardStepChange?.('launch'); // ✅ FIX: Communicate launch stage to parent
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     // All actions completed successfully - automatically proceed to dashboard
