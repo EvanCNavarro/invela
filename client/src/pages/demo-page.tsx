@@ -1354,7 +1354,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
 /**
  * Step 3: Demo Configuration Review & Preparation
  */
-const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { formData?: any }) => {
+const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: DemoStepProps & { formData?: any; onWizardStepChange?: (step: 'review' | 'setup' | 'launch') => void }) => {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -2140,6 +2140,7 @@ export default function DemoPage() {
             onBack={handlePreviousStep}
             selectedPersona={selectedPersona}
             formData={step2FormData}
+            onWizardStepChange={setStep3WizardStep}
           />
         );
       default:
@@ -2163,6 +2164,7 @@ export default function DemoPage() {
       currentStep={currentStep}
       totalSteps={3}
       onBack={handleBackToLogin}
+      isSystemSetup={currentStep === 3 && step3WizardStep === 'setup'}
     >
       {renderStepContent()}
     </AuthLayout>
