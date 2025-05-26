@@ -2353,4 +2353,330 @@ router.get('/demo/generate-company-name', async (req, res) => {
   }
 });
 
+// ========================================
+// EMAIL INVITATION ENDPOINT
+// ========================================
+
+/**
+ * POST /api/demo/email/send-invitation
+ * Sends demo invitation email with login credentials
+ * 
+ * Integrates with existing Nodemailer infrastructure for seamless email delivery.
+ * Creates invitation records and onboarding tasks for comprehensive tracking.
+ * 
+ * @route POST /api/demo/email/send-invitation
+ * @access Demo flow only
+ * @version 1.0.0
+ * @since 2025-05-26
+ */
+router.post('/email/send-invitation', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    console.log('[DemoAPI] [EmailInvite] Starting email invitation process');
+    
+    // ========================================
+    // INPUT VALIDATION & EXTRACTION
+    // ========================================
+    
+    const { userEmail, userName, companyName, loginCredentials } = req.body;
+    
+    // Validate required fields
+    const requiredFields = {
+      userEmail: 'User email address',
+      userName: 'User full name', 
+      companyName: 'Company name',
+      loginCredentials: 'Login credentials'
+    };
+    
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key]) => !req.body[key])
+      .map(([, description]) => description);
+    
+    if (missingFields.length > 0) {
+      console.error('[DemoAPI] [EmailInvite] Missing required fields:', missingFields);
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields',
+        details: `Required fields: ${missingFields.join(', ')}`,
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      console.error('[DemoAPI] [EmailInvite] Invalid email format:', userEmail);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+        code: 'INVALID_EMAIL',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    console.log('[DemoAPI] [EmailInvite] Input validation passed for:', {
+      userEmail: userEmail.toLowerCase(),
+      userName,
+      companyName,
+      hasCredentials: !!loginCredentials
+    });
+    
+    // ========================================
+    // USER DATA RETRIEVAL
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Retrieving user data for email:', userEmail.toLowerCase());
+    
+    const userResults = await db.select({
+      id: users.id,
+      email: users.email,
+      full_name: users.full_name,
+      company_id: users.company_id
+    })
+    .from(users)
+    .where(eq(users.email, userEmail.toLowerCase()));
+    
+    if (!userResults || userResults.length === 0) {
+      console.error('[DemoAPI] [EmailInvite] User not found:', userEmail.toLowerCase());
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        details: 'No user found with the provided email address',
+        code: 'USER_NOT_FOUND',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    const userData = userResults[0];
+    console.log('[DemoAPI] [EmailInvite] User data retrieved:', {
+      userId: userData.id,
+      companyId: userData.company_id,
+      fullName: userData.full_name
+    });
+    
+    // ========================================
+    // INVITATION RECORD CREATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Creating invitation record...');
+    
+    const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    
+    const [invitationRecord] = await db.insert(invitations)
+      .values({
+        email: userEmail.toLowerCase(),
+        company_id: userData.company_id,
+        code: invitationCode,
+        status: 'pending',
+        invitee_name: userName,
+        invitee_company: companyName,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        metadata: {
+          sender_name: 'Invela Demo System',
+          sender_company: 'Invela',
+          invitation_type: 'demo',
+          user_id: userData.id,
+          created_via: 'demo_flow',
+          login_credentials: loginCredentials
+        }
+      })
+      .returning();
+    
+    console.log('[DemoAPI] [EmailInvite] Invitation record created:', {
+      invitationId: invitationRecord.id,
+      code: invitationRecord.code,
+      expiresAt: invitationRecord.expires_at,
+      duration: Date.now() - startTime
+    });
+    
+    // ========================================
+    // ONBOARDING TASK CREATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Creating onboarding task...');
+    
+    const [onboardingTask] = await db.insert(tasks)
+      .values({
+        title: `Demo Invitation: ${userEmail.toLowerCase()}`,
+        description: 'Complete demo account setup and begin platform exploration.',
+        task_type: 'user_onboarding',
+        task_scope: 'user',
+        status: TaskStatus.EMAIL_SENT,
+        priority: 'medium',
+        progress: 25, // EMAIL_SENT status progress
+        company_id: userData.company_id,
+        user_email: userEmail.toLowerCase(),
+        assigned_to: userData.id,
+        created_by: userData.id, // Demo system creates task for the user
+        due_date: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() + 14); // 14 days for demo completion
+          return date;
+        })(),
+        metadata: {
+          user_id: userData.id,
+          company_id: userData.company_id,
+          invitation_id: invitationRecord.id,
+          created_via: 'demo_email_invite',
+          created_at: new Date().toISOString(),
+          email_sent_at: new Date().toISOString(),
+          statusFlow: [TaskStatus.EMAIL_SENT],
+          userEmail: userEmail.toLowerCase(),
+          companyName: companyName,
+          invitation_code: invitationCode,
+          demo_credentials: loginCredentials
+        }
+      })
+      .returning();
+    
+    console.log('[DemoAPI] [EmailInvite] Onboarding task created:', {
+      taskId: onboardingTask.id,
+      status: onboardingTask.status,
+      assignedTo: onboardingTask.assigned_to,
+      duration: Date.now() - startTime
+    });
+    
+    // ========================================
+    // EMAIL TEMPLATE PREPARATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Preparing email template...');
+    
+    // Import email service dynamically to avoid loading issues
+    const { emailService } = await import('./services/email/service');
+    
+    // Prepare invitation URL with credentials
+    const inviteUrl = `${process.env.APP_URL || 'http://localhost:3000'}/login?invite=${invitationCode}&email=${encodeURIComponent(userEmail)}`;
+    
+    const templateData = {
+      recipientName: userName,
+      recipientEmail: userEmail.toLowerCase(),
+      senderName: 'Invela Demo System',
+      senderCompany: 'Invela',
+      targetCompany: companyName,
+      inviteUrl: inviteUrl,
+      code: invitationCode,
+      inviteType: 'fintech' as const // Demo invitations use fintech template
+    };
+    
+    console.log('[DemoAPI] [EmailInvite] Email template data prepared:', {
+      recipientEmail: templateData.recipientEmail,
+      targetCompany: templateData.targetCompany,
+      inviteUrl: templateData.inviteUrl,
+      code: templateData.code
+    });
+    
+    // ========================================
+    // EMAIL SENDING
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Sending invitation email...');
+    
+    const emailResult = await emailService.sendInvitation(templateData);
+    
+    if (!emailResult.success) {
+      console.error('[DemoAPI] [EmailInvite] Email sending failed:', emailResult.error);
+      
+      // Update invitation status to failed
+      await db.update(invitations)
+        .set({ 
+          status: 'failed',
+          metadata: {
+            ...invitationRecord.metadata,
+            email_error: emailResult.error,
+            failed_at: new Date().toISOString()
+          }
+        })
+        .where(eq(invitations.id, invitationRecord.id));
+      
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send invitation email',
+        details: emailResult.error,
+        code: 'EMAIL_SEND_FAILED',
+        invitationId: invitationRecord.id,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // ========================================
+    // SUCCESS PROCESSING
+    // ========================================
+    
+    // Update invitation status to sent
+    await db.update(invitations)
+      .set({ 
+        status: 'sent',
+        metadata: {
+          ...invitationRecord.metadata,
+          email_sent_at: new Date().toISOString(),
+          email_success: true
+        }
+      })
+      .where(eq(invitations.id, invitationRecord.id));
+    
+    // Broadcast WebSocket notification about email sent
+    broadcastMessage({
+      type: 'demo_email_sent',
+      payload: {
+        userEmail: userEmail.toLowerCase(),
+        companyName: companyName,
+        invitationId: invitationRecord.id,
+        taskId: onboardingTask.id
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    const processingTime = Date.now() - startTime;
+    
+    console.log('[DemoAPI] [EmailInvite] Email invitation completed successfully:', {
+      userEmail: userEmail.toLowerCase(),
+      invitationId: invitationRecord.id,
+      taskId: onboardingTask.id,
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+    
+    // ========================================
+    // SUCCESS RESPONSE
+    // ========================================
+    
+    res.json({
+      success: true,
+      message: 'Demo invitation email sent successfully',
+      data: {
+        invitationId: invitationRecord.id,
+        taskId: onboardingTask.id,
+        code: invitationCode,
+        email: userEmail.toLowerCase(),
+        company: companyName,
+        expiresAt: invitationRecord.expires_at
+      },
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    const errorDuration = Date.now() - startTime;
+    
+    console.error('[DemoAPI] [EmailInvite] Email invitation failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during email invitation',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      code: 'INTERNAL_ERROR',
+      processingTime: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 export default router;
