@@ -1626,6 +1626,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       title: "Demo Setup Complete",
       description: "Logging you in now...",
       variant: "success",
+      duration: 4000, // Auto-dismiss after 4 seconds
     });
     
     await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
