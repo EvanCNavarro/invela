@@ -51,6 +51,7 @@ import fs from 'fs';
 
 // Demo API routes
 import demoApiRoutes from './demo-api';
+import companyNameValidationRouter from './routes/company-name-validation';
 import { logoUpload } from './middleware/upload';
 
 // Business logic and services
@@ -208,6 +209,12 @@ export async function registerRoutes(app: Express): Promise<Express> {
   app.use('/api', demoApiRoutes);
   routeRegistrationTracker.register('DemoAPI');
   console.log('[Routes] Demo API routes registered successfully with priority');
+  
+  // Register company name validation API for real-time form feedback
+  console.log('[Routes] Registering company name validation API...');
+  app.use('/api/company-name', companyNameValidationRouter);
+  routeRegistrationTracker.register('CompanyNameValidation');
+  console.log('[Routes] Company name validation API registered successfully');
   
   // ========================================
   // CORE APPLICATION ROUTES

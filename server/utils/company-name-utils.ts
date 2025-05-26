@@ -61,37 +61,111 @@ interface NameGenerationOptions {
 // CONSTANTS
 // ========================================
 
-/** Professional business suffixes for maintaining enterprise credibility */
-const PROFESSIONAL_SUFFIXES = [
-  'Solutions',
-  'Systems', 
-  'Technologies',
-  'Enterprises',
-  'Group',
-  'Partners',
-  'Holdings',
-  'Capital',
-  'Ventures',
-  'Services',
-  'Consulting',
-  'Corporation',
-  'Industries',
-  'International',
-  'Global'
+// ========================================
+// ADVANCED NAME GENERATION POOLS
+// ========================================
+
+/**
+ * Comprehensive company name component pools for generating unique, professional names.
+ * Architecture: PREFIX + CORE + SUFFIX combinations providing 10,000+ unique possibilities.
+ * 
+ * Design Philosophy:
+ * - Maintain enterprise credibility and professional appearance
+ * - Support persona-specific generation (FinTech, Banking, etc.)
+ * - Enable contextual combinations that make business sense
+ * - Provide fallback compatibility with existing generation logic
+ */
+
+/**
+ * Industry-focused prefix pool (50+ options)
+ * Conveys scale, quality, innovation, and market position
+ */
+const ADVANCED_NAME_PREFIXES = [
+  // Premium Scale & Authority
+  'Apex', 'Summit', 'Pinnacle', 'Zenith', 'Crown', 'Elite', 'Premier',
+  'Sovereign', 'Paramount', 'Supreme', 'Platinum', 'Diamond', 'Sterling',
+  
+  // Innovation & Technology
+  'Quantum', 'Digital', 'Smart', 'Intelligent', 'Advanced', 'NextGen',
+  'Future', 'Progressive', 'Dynamic', 'Adaptive', 'Neural', 'Cyber',
+  
+  // Geographic & Network Scale
+  'Global', 'International', 'Continental', 'Metropolitan', 'Regional',
+  'Central', 'National', 'United', 'Allied', 'Network', 'Consortium',
+  
+  // Trust & Quality Indicators
+  'Meridian', 'Cornerstone', 'Foundation', 'Keystone', 'Benchmark',
+  'Optimal', 'Precision', 'Integrity', 'Verified', 'Certified', 'Standard',
+  
+  // Modern Business Connectivity
+  'Nexus', 'Catalyst', 'Synergy', 'Momentum', 'Velocity', 'Bridge',
+  'Connect', 'Link', 'Flow', 'Stream', 'Wave', 'Edge', 'Core'
 ] as const;
 
-/** Geographic/descriptive modifiers for professional variation */
+/**
+ * Core business domain pool (60+ options)
+ * Represents primary business focus, industry vertical, and service domain
+ */
+const ADVANCED_NAME_CORES = [
+  // Financial Services & Investment
+  'Capital', 'Wealth', 'Asset', 'Investment', 'Finance', 'Funding',
+  'Credit', 'Banking', 'Treasury', 'Portfolio', 'Equity', 'Securities',
+  'Trust', 'Reserve', 'Exchange', 'Market', 'Trading', 'Broker',
+  
+  // Technology & Data Intelligence
+  'Data', 'Analytics', 'Intelligence', 'Insights', 'Systems', 'Platform',
+  'Technology', 'Cloud', 'Security', 'Protection', 'Shield', 'Guard',
+  'Network', 'Infrastructure', 'Architecture', 'Framework', 'Engine',
+  
+  // Professional & Advisory Services
+  'Advisory', 'Consulting', 'Strategy', 'Management', 'Operations',
+  'Performance', 'Excellence', 'Quality', 'Standards', 'Compliance',
+  'Governance', 'Risk', 'Audit', 'Assessment', 'Evaluation',
+  
+  // Innovation & Development
+  'Solutions', 'Innovation', 'Research', 'Development', 'Engineering',
+  'Design', 'Creation', 'Build', 'Forge', 'Lab', 'Studio', 'Works'
+] as const;
+
+/**
+ * Professional suffix pool (40+ options)
+ * Provides business structure classification and industry context
+ */
+const ADVANCED_NAME_SUFFIXES = [
+  // Traditional Corporate Structures
+  'Corporation', 'Enterprises', 'Holdings', 'Industries', 'International',
+  'Worldwide', 'Global', 'Consolidated', 'Integrated', 'United',
+  
+  // Professional Service Organizations
+  'Partners', 'Associates', 'Advisors', 'Consultants', 'Specialists',
+  'Professionals', 'Experts', 'Authorities', 'Leaders', 'Champions',
+  
+  // Modern Business Collectives
+  'Group', 'Collective', 'Alliance', 'Network', 'Consortium',
+  'Federation', 'Union', 'Council', 'Institute', 'Foundation',
+  
+  // Technology & Innovation Focus
+  'Systems', 'Technologies', 'Solutions', 'Platforms', 'Labs',
+  'Studios', 'Works', 'Hub', 'Center', 'Core', 'Base', 'Edge'
+] as const;
+
+/**
+ * Legacy professional suffixes for backward compatibility
+ * Maintained for existing generation logic and gradual migration
+ */
+const PROFESSIONAL_SUFFIXES = [
+  'Solutions', 'Systems', 'Technologies', 'Enterprises', 'Group',
+  'Partners', 'Holdings', 'Capital', 'Ventures', 'Services',
+  'Consulting', 'Corporation', 'Industries', 'International', 'Global'
+] as const;
+
+/**
+ * Legacy professional modifiers for backward compatibility
+ * Maintained for existing generation logic and gradual migration
+ */
 const PROFESSIONAL_MODIFIERS = [
-  'Advanced',
-  'Premier', 
-  'Elite',
-  'Strategic',
-  'Dynamic',
-  'Innovative',
-  'Integrated',
-  'Digital',
-  'NextGen',
-  'Pro'
+  'Advanced', 'Premier', 'Elite', 'Strategic', 'Dynamic',
+  'Innovative', 'Integrated', 'Digital', 'NextGen', 'Pro'
 ] as const;
 
 /** Default configuration for name generation */
@@ -101,6 +175,142 @@ const DEFAULT_GENERATION_OPTIONS: Required<NameGenerationOptions> = {
   preserveOriginal: true,
   isDemoContext: true,
 };
+
+// ========================================
+// ADVANCED NAME GENERATION FUNCTIONS
+// ========================================
+
+/**
+ * Generates sophisticated company names using combinatorial approach
+ * Leverages expanded name pools for maximum variety and professional appearance
+ * 
+ * @param baseName - Original company name for context and fallback
+ * @param attempt - Generation attempt number for strategy variation
+ * @returns Promise that resolves with a professionally crafted company name
+ */
+export async function generateAdvancedCompanyName(
+  baseName: string,
+  attempt: number
+): Promise<string> {
+  logCompanyNameOperation('info', 'Generating advanced company name', {
+    baseName,
+    attempt,
+    strategy: 'combinatorial',
+  });
+
+  // Strategy 1: Full combinatorial generation (PREFIX + CORE + SUFFIX)
+  if (attempt === 1) {
+    const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+    const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+    const suffix = ADVANCED_NAME_SUFFIXES[Math.floor(Math.random() * ADVANCED_NAME_SUFFIXES.length)];
+    
+    const generatedName = `${prefix} ${core} ${suffix}`;
+    
+    logCompanyNameOperation('info', 'Generated full combinatorial name', {
+      baseName,
+      generatedName,
+      components: { prefix, core, suffix },
+    });
+    
+    return generatedName;
+  }
+
+  // Strategy 2: Preserve original core with professional prefix/suffix
+  if (attempt === 2) {
+    const originalCore = extractCoreFromName(baseName);
+    const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+    
+    const hybridName = `${prefix} ${originalCore}`;
+    
+    logCompanyNameOperation('info', 'Generated hybrid name preserving original core', {
+      baseName,
+      hybridName,
+      originalCore,
+      prefix,
+    });
+    
+    return hybridName;
+  }
+
+  // Strategy 3: Core + Suffix combination
+  if (attempt === 3) {
+    const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+    const suffix = ADVANCED_NAME_SUFFIXES[Math.floor(Math.random() * ADVANCED_NAME_SUFFIXES.length)];
+    
+    const coreSuffixName = `${core} ${suffix}`;
+    
+    logCompanyNameOperation('info', 'Generated core+suffix combination', {
+      baseName,
+      coreSuffixName,
+      components: { core, suffix },
+    });
+    
+    return coreSuffixName;
+  }
+
+  // Strategy 4: Prefix + Original name
+  if (attempt === 4) {
+    const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+    const cleanedBase = cleanCompanyName(baseName);
+    
+    const prefixedName = `${prefix} ${cleanedBase}`;
+    
+    logCompanyNameOperation('info', 'Generated prefixed original name', {
+      baseName,
+      prefixedName,
+      cleanedBase,
+      prefix,
+    });
+    
+    return prefixedName;
+  }
+
+  // Strategy 5: Fallback to legacy approach with professional modifier
+  const modifier = PROFESSIONAL_MODIFIERS[Math.floor(Math.random() * PROFESSIONAL_MODIFIERS.length)];
+  const fallbackName = `${modifier} ${baseName}`;
+  
+  logCompanyNameOperation('info', 'Generated fallback name with professional modifier', {
+    baseName,
+    fallbackName,
+    modifier,
+    attempt,
+  });
+  
+  return fallbackName;
+}
+
+/**
+ * Extracts the core business concept from an existing company name
+ * Removes common business suffixes and modifiers to isolate the essential concept
+ * 
+ * @param companyName - The original company name
+ * @returns The extracted core concept
+ */
+function extractCoreFromName(companyName: string): string {
+  // Remove common business terms to isolate the core concept
+  const cleaned = companyName
+    .replace(/\b(Advanced|Premier|Elite|Strategic|Global|Digital|Professional|Innovative|Dynamic|Smart|Intelligent)\b/gi, '')
+    .replace(/\b(Solutions|Systems|Technologies|Corporation|Enterprises|Holdings|Partners|Group|Services|Consulting|International|Global|Inc|LLC|Corp)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // If cleaning removed everything, return original
+  return cleaned || companyName;
+}
+
+/**
+ * Cleans company name by removing redundant business terms
+ * Prepares name for combination with new professional components
+ * 
+ * @param companyName - The company name to clean
+ * @returns Cleaned version suitable for combination
+ */
+function cleanCompanyName(companyName: string): string {
+  return companyName
+    .replace(/\b(Solutions|Systems|Technologies|Corp|Inc|LLC)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // ========================================
 // UTILITY FUNCTIONS
@@ -249,29 +459,19 @@ export async function generateUniqueCompanyName(
     return baseName;
   }
 
-  // Generate variations using professional approaches
+  // Generate variations using advanced combinatorial approach
   for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
     let candidateName: string;
 
     if (config.suffixStyle === 'professional') {
-      if (attempt <= 2) {
-        // First attempts: Add professional modifier + original name
-        const modifier = PROFESSIONAL_MODIFIERS[Math.floor(Math.random() * PROFESSIONAL_MODIFIERS.length)];
-        candidateName = `${modifier} ${baseName}`;
-      } else {
-        // Later attempts: Replace/add professional suffix
-        const suffix = PROFESSIONAL_SUFFIXES[Math.floor(Math.random() * PROFESSIONAL_SUFFIXES.length)];
-        // Remove common business words from original name first
-        const cleanedBase = baseName.replace(/\b(Solutions|Systems|Technologies|Corp|Inc|LLC)\b/gi, '').trim();
-        candidateName = `${cleanedBase} ${suffix}`;
-      }
+      // Use advanced name generation for professional variations
+      candidateName = await generateAdvancedCompanyName(baseName, attempt);
     } else if (config.suffixStyle === 'numeric') {
       candidateName = `${baseName} ${attempt}`;
     } else {
-      // Hybrid approach
+      // Hybrid approach - mix advanced and simple generation
       if (attempt % 2 === 1) {
-        const modifier = PROFESSIONAL_MODIFIERS[Math.floor(Math.random() * PROFESSIONAL_MODIFIERS.length)];
-        candidateName = `${modifier} ${baseName}`;
+        candidateName = await generateAdvancedCompanyName(baseName, attempt);
       } else {
         candidateName = `${baseName} ${Math.floor(attempt / 2)}`;
       }
