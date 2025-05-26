@@ -18,6 +18,7 @@ import { db } from '@db';
 import { companies, users, invitations, tasks, TaskStatus } from '@db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { broadcastMessage } from './services/websocket';
+import { DemoSessionService } from './services/demo-session-service';
 
 const router = Router();
 
@@ -292,6 +293,27 @@ router.post('/demo/company/create', async (req, res) => {
   
   try {
     const { name, type, persona, riskProfile, companySize, metadata } = req.body;
+
+    // ========================================
+    // DEMO SESSION CREATION & TRACKING
+    // ========================================
+    
+    console.log('[DemoAPI] Creating demo session for tracking...');
+    
+    // Create demo session for this company creation
+    let demoSessionId: string;
+    try {
+      demoSessionId = await DemoSessionService.createSession({
+        personaType: persona || 'unknown',
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip || req.connection.remoteAddress,
+        expirationHours: 72 // 3 days default
+      });
+      console.log('[DemoAPI] ✅ Demo session created:', demoSessionId);
+    } catch (sessionError) {
+      console.error('[DemoAPI] ⚠️ Demo session creation failed, continuing without tracking:', sessionError);
+      demoSessionId = `fallback_${Date.now()}`; // Fallback session ID
+    }
 
     // ========================================
     // INPUT VALIDATION WITH DETAILED LOGGING
