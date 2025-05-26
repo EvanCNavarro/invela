@@ -191,7 +191,7 @@ const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
  * - Consistent visual hierarchy and styling
  */
 export function DemoStepVisual({ currentStep, className, isSystemSetup = false, step3WizardStage }: DemoStepVisualProps) {
-  console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}`);
+  console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}, isSystemSetup: ${isSystemSetup}, step3WizardStage: ${step3WizardStage}`);
   
   // ========================================
   // ASSET PRELOADING
