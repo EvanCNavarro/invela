@@ -1377,11 +1377,11 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       apiEndpoint: '/api/demo/company/create',
       payload: {
         name: formData?.companyName,
-        type: selectedPersona?.id === 'new-data-recipient' && formData?.isDemoCompany ? 'demo' : 'live',
+        type: 'demo', // All companies created through demo flow are demo companies
         persona: selectedPersona?.id,
+        companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
         ...(selectedPersona?.id === 'accredited-data-recipient' && {
-          riskProfile: formData?.riskProfile,
-          companySize: formData?.companySize
+          riskProfile: formData?.riskProfile
         })
       },
       estimatedDuration: 2000,
