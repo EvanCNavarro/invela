@@ -224,50 +224,19 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false, 
             const shouldFadePrevious = isSystemSetup && isPreviousStep;
             const isLaunchStage = step3WizardStage === 'launch';
             
-            // Launch stage: Different elements fade at different times - BUT ONLY AFTER launch starts
+            // Simplified: No complex launch animations - just standard display
             const getLaunchAnimations = () => {
-              // Default animations for non-launch stages
-              if (!isLaunchStage) {
-                return { 
-                  opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4, 
-                  scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85 
-                };
-              }
-              
-              // Launch stage: All elements fade out, but at different times
-              // Step 3 (rocket) fades last to remain visible longest
-              if (stepConfig.id === 3) {
-                return { opacity: 0, scale: 0.8 };
-              }
-              // Steps 1 & 2 fade earlier
-              return { opacity: 0, scale: 0.8 };
+              return { 
+                opacity: isActive ? 1 : shouldFadePrevious ? 0.3 : 0.4, 
+                scale: isActive ? 1 : shouldFadePrevious ? 0.8 : 0.85 
+              };
             };
             
             const getLaunchTransition = () => {
-              // Default transitions for non-launch stages
-              if (!isLaunchStage) {
-                return { 
-                  duration: VISUAL_CONFIG.animations.duration * 1.5,
-                  ease: "easeInOut",
-                  delay: index * VISUAL_CONFIG.animations.staggerDelay
-                };
-              }
-              
-              // Launch stage: Delayed fade animations that start AFTER launch begins
-              // Step 3 (rocket) gets longest delay to remain visible
-              if (stepConfig.id === 3) {
-                return { 
-                  delay: 1.0, // Start fading 1 second after launch begins
-                  duration: 0.2, 
-                  ease: "easeOut" 
-                };
-              }
-              
-              // Steps 1 & 2 fade earlier but still delayed
               return { 
-                delay: 0.8, // Start fading 0.8 seconds after launch begins
-                duration: 0.4, 
-                ease: "easeOut" 
+                duration: VISUAL_CONFIG.animations.duration * 1.5,
+                ease: "easeInOut",
+                delay: index * VISUAL_CONFIG.animations.staggerDelay
               };
             };
             
