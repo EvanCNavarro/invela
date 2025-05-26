@@ -1379,7 +1379,7 @@ router.post('/demo/company/create', async (req, res) => {
  */
 router.post('/demo/user/create', async (req, res) => {
   try {
-    const { fullName, email, role, permissions, companyId } = req.body;
+    const { fullName, email, role, permissions, companyId, persona } = req.body;
 
     console.log('[DemoAPI] Creating user:', { fullName, email, role, companyId });
     
@@ -1463,7 +1463,7 @@ router.post('/demo/user/create', async (req, res) => {
        * This ensures proper access control based on persona selection
        */
       is_demo_user: true,
-      demo_persona_type: persona,
+      demo_persona_type: persona || 'unknown',
       demo_session_id: req.body.demoSessionId || `user_${Date.now()}`,
       demo_created_at: new Date(),
       demo_expires_at: new Date(Date.now() + (72 * 60 * 60 * 1000)), // 72 hours
