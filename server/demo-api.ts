@@ -417,31 +417,80 @@ router.post('/demo/company/create', async (req, res) => {
       
       console.log('[DemoAPI] Company data prepared:', JSON.stringify(companyData, null, 2));
       
+      // ========================================
+      // COMPANY NAME UNIQUENESS RESOLUTION
+      // ========================================
+      
+      console.log('[DemoAPI] Resolving company name uniqueness before database insertion...');
+      
+      // Import company name utilities for uniqueness checking
+      const { resolveUniqueCompanyName } = await import('./utils/company-name-utils');
+      
+      // Resolve unique company name with professional variation options
+      const nameResolution = await resolveUniqueCompanyName(companyData.name, {
+        maxAttempts: 5,
+        suffixStyle: 'professional',
+        preserveOriginal: true,
+        isDemoContext: true,
+      });
+      
+      // Update company data with resolved unique name
+      companyData.name = nameResolution.finalName;
+      
+      // Log name resolution results for debugging
+      console.log('[DemoAPI] Company name resolution completed:', {
+        originalName: nameResolution.originalName,
+        finalName: nameResolution.finalName,
+        wasModified: nameResolution.wasModified,
+        resolutionStrategy: nameResolution.metadata.resolutionStrategy,
+        processingTime: nameResolution.metadata.processingTime,
+      });
+      
+      // Update website URL to match resolved company name
+      if (nameResolution.wasModified) {
+        companyData.website_url = `https://${nameResolution.finalName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')}.com`;
+        console.log('[DemoAPI] Updated website URL to match resolved company name:', companyData.website_url);
+      }
+      
       // Execute database insertion with comprehensive error handling
       let insertResult;
       try {
-        console.log('[DemoAPI] Executing database insert...');
+        console.log('[DemoAPI] Executing database insert with unique company name...');
         insertResult = await db.insert(companies).values(companyData).returning();
         console.log('[DemoAPI] Database insert completed successfully');
       } catch (dbInsertError) {
-        console.error('[DemoAPI] Database insert operation failed:', {
-          message: dbInsertError.message,
-          code: dbInsertError.code,
-          constraint: dbInsertError.constraint,
-          detail: dbInsertError.detail,
-          table: dbInsertError.table,
-          column: dbInsertError.column,
-          stack: dbInsertError.stack?.substring(0, 500) + '...'
+        // Enhanced error handling with proper TypeScript typing
+        const error = dbInsertError as any;
+        
+        console.error('[DemoAPI] Database insert operation failed after uniqueness resolution:', {
+          message: error?.message || 'Unknown database error',
+          code: error?.code || 'UNKNOWN_CODE',
+          constraint: error?.constraint || 'Unknown constraint',
+          detail: error?.detail || 'No details available',
+          table: error?.table || 'Unknown table',
+          column: error?.column || 'Unknown column',
+          resolvedCompanyName: companyData.name,
+          originalCompanyName: nameResolution.originalName,
+          nameWasModified: nameResolution.wasModified,
+          stack: error?.stack?.substring(0, 500) + '...'
         });
+        
+        // Provide more informative error response
         return res.status(500).json({
           success: false,
-          error: 'Database Insert Failed',
-          details: `Failed to create company: ${dbInsertError.message}`,
-          code: 'DB_INSERT_FAILED',
+          error: 'Company Creation Failed',
+          details: `Failed to create company "${companyData.name}": ${error?.message || 'Unknown database error'}`,
+          code: 'COMPANY_CREATION_FAILED',
           dbError: {
-            code: dbInsertError.code,
-            constraint: dbInsertError.constraint,
-            detail: dbInsertError.detail
+            code: error?.code || 'UNKNOWN_CODE',
+            constraint: error?.constraint || 'Unknown constraint',
+            detail: error?.detail || 'No details available'
+          },
+          nameResolution: {
+            originalName: nameResolution.originalName,
+            finalName: nameResolution.finalName,
+            wasModified: nameResolution.wasModified,
+            strategy: nameResolution.metadata.resolutionStrategy
           },
           timestamp: new Date().toISOString()
         });
