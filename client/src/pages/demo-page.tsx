@@ -1465,6 +1465,12 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
   // API execution state
   const [actionResults, setActionResults] = useState<Record<string, any>>({});
   const [currentActionId, setCurrentActionId] = useState<string | null>(null);
+  
+  // Calculate total setup duration for animation synchronization
+  const getTotalSetupDuration = () => {
+    const actions = getDemoActions(formData, selectedPersona);
+    return actions.reduce((total, action) => total + action.estimatedDuration, 0);
+  };
 
   // Get the currently active target field for highlighting
   const getCurrentTargetField = () => {
@@ -1709,12 +1715,16 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       {/* TOP SPACER */}
       <div className="flex-shrink-0 py-6"></div>
       
-      {/* HEADER SECTION - fades out early in launch stage */}
+      {/* HEADER SECTION - fades out synchronized with setup completion */}
       <motion.div 
         className="flex-shrink-0 space-y-2"
         initial={{ opacity: 1, y: 0 }}
         animate={wizardStep === 'launch' ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
-        transition={{ delay: wizardStep === 'launch' ? 0.2 : 0, duration: 0.8, ease: "easeOut" }}
+        transition={{ 
+          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) - 1.0 : 0, 
+          duration: 0.8, 
+          ease: "easeOut" 
+        }}
       >
         {/* Icon + Chips */}
         <div className="flex items-center gap-3">
@@ -1746,7 +1756,11 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         className="flex-1 flex flex-col space-y-3 pt-6"
         initial={{ opacity: 1 }}
         animate={wizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
-        transition={{ delay: wizardStep === 'launch' ? 0.7 : 0, duration: 0.3, ease: "easeOut" }}
+        transition={{ 
+          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) - 0.5 : 0, 
+          duration: 0.3, 
+          ease: "easeOut" 
+        }}
       >
         
         {/* THREE-TIERED STEP WIZARD */}
