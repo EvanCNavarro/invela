@@ -2188,6 +2188,7 @@ export default function DemoPage() {
       totalSteps={3}
       onBack={handleBackToLogin}
       isSystemSetup={currentStep === 3 && step3WizardStep === 'setup'}
+      step3WizardStage={step3WizardStep}
     >
       {renderStepContent()}
     </AuthLayout>
