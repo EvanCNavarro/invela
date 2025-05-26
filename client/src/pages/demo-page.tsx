@@ -1657,10 +1657,10 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           
           console.log('[DemoStep3] Initiating comprehensive authentication state synchronization');
           
-          // Perform complete authentication synchronization workflow
+          // Perform complete authentication synchronization workflow  
           const syncResult = await performAuthSync({
             retryAttempts: 2,
-            delayMs: 300, // Slightly longer delay for demo stability
+            delayMs: 100, // Reduced delay for seamless transition
             fallbackNavigation: true,
           });
           
@@ -1697,7 +1697,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           
           setLocation(accessUrl);
         }
-      }, 1500);
+      }, 1500); // Should match animation completion timing
       
     } else {
       // FALLBACK: Manual login required - redirect to login page
