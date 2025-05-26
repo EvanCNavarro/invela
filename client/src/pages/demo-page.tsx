@@ -1532,7 +1532,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         targetField: 'companyName',
         apiEndpoint: '/api/demo/company/create',
         payload: {
-          name: window.validatedCompanyName || formData?.companyName,
+          name: formData?.companyName,
           type: 'demo', // All companies created through demo flow are demo companies
           persona: selectedPersona?.id,
           companySize: formData?.companySize || 'medium', // Always include companySize with default fallback

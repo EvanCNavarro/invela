@@ -1193,8 +1193,46 @@ router.post('/demo/company/create', async (req, res) => {
 
     console.log('[DemoAPI] Final insert values:', JSON.stringify(insertValues, null, 2));
     
-    // Create company record with comprehensive data
-    const company = await db.insert(companies).values(insertValues).returning().then(rows => rows[0]);
+    // BULLETPROOF DUPLICATE PROTECTION: Try insert with automatic unique name generation
+    let company;
+    let finalName = insertValues.name;
+    let attempt = 0;
+    const maxAttempts = 5;
+    
+    while (attempt < maxAttempts) {
+      try {
+        console.log(`[DemoAPI] Attempting company creation with name: "${finalName}" (attempt ${attempt + 1})`);
+        
+        const insertData = { ...insertValues, name: finalName };
+        company = await db.insert(companies).values(insertData).returning().then(rows => rows[0]);
+        
+        console.log(`[DemoAPI] ✅ Company created successfully: "${finalName}" with ID ${company.id}`);
+        break;
+        
+      } catch (error: any) {
+        if (error.code === '23505' && error.constraint === 'idx_companies_name_lower') {
+          // Duplicate name detected - generate unique alternative
+          attempt++;
+          console.log(`[DemoAPI] ⚠️ Duplicate name detected: "${finalName}". Generating unique alternative...`);
+          
+          // Generate unique name using timestamp and random suffix
+          const timestamp = Date.now().toString().slice(-4);
+          const randomSuffix = Math.random().toString(36).substring(2, 5);
+          finalName = `${insertValues.name} ${timestamp}${randomSuffix}`;
+          
+          console.log(`[DemoAPI] 🔄 Trying with unique name: "${finalName}"`);
+          
+          if (attempt >= maxAttempts) {
+            console.error(`[DemoAPI] ❌ Failed to create unique name after ${maxAttempts} attempts`);
+            throw new Error(`Failed to generate unique company name after ${maxAttempts} attempts`);
+          }
+        } else {
+          // Different error - rethrow
+          console.error('[DemoAPI] Company creation error:', error);
+          throw error;
+        }
+      }
+    }
 
     // Broadcast completion event
     broadcastMessage('demo_action_complete', {
