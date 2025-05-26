@@ -1599,6 +1599,21 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
     }
 
     // 5. Final Environment Preparation
+    // ========================================
+    // PERSONA-AWARE COMPANY ID HANDLING
+    // ========================================
+    
+    /**
+     * For Invela Admin persona, use the existing Invela company (ID: 1) 
+     * instead of expecting a company from Step 1 (which was skipped).
+     * For all other personas, use the company created in Step 1.
+     */
+    const finalizeCompanyId = selectedPersona?.id === 'invela-admin' 
+      ? '1'  // Hardcoded Invela company ID for internal users
+      : 'COMPANY_ID_FROM_STEP_1';  // Company created in Step 1 for external users
+    
+    console.log(`[DemoPage] Finalize payload: Using companyId "${finalizeCompanyId}" for persona "${selectedPersona?.id}"`);
+    
     actions.push({
       id: 'finalize-environment',
       label: 'Finalizing demo environment',
@@ -1607,7 +1622,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
       apiEndpoint: '/api/demo/environment/finalize',
       payload: {
         userId: 'USER_ID_FROM_STEP_2',
-        companyId: 'COMPANY_ID_FROM_STEP_1',
+        companyId: finalizeCompanyId,
         demoType: selectedPersona?.id
       },
       estimatedDuration: 1200,

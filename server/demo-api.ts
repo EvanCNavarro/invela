@@ -1914,18 +1914,44 @@ router.post('/demo/environment/finalize', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Validate required parameters
-    if (!userId || !companyId) {
-      console.error('[DemoAPI] [Finalize] Missing required parameters:', {
+    // ========================================
+    // PERSONA-AWARE PARAMETER VALIDATION
+    // ========================================
+    
+    /**
+     * Validate required parameters with persona-specific handling.
+     * Invela Admin persona uses existing company, others expect created company.
+     */
+    if (!userId) {
+      console.error('[DemoAPI] [Finalize] Missing userId parameter:', {
         hasUserId: !!userId,
         hasCompanyId: !!companyId,
+        demoType,
         duration: Date.now() - startTime
       });
       
       return res.status(400).json({
         success: false,
-        error: 'Missing required parameters: userId and companyId are required',
-        code: 'MISSING_PARAMETERS',
+        error: 'Missing required parameter: userId is required',
+        code: 'MISSING_USER_ID',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // For Invela Admin, companyId should be numeric (existing company)
+    // For other personas, companyId might be placeholder string initially
+    if (!companyId) {
+      console.error('[DemoAPI] [Finalize] Missing companyId parameter:', {
+        hasUserId: !!userId,
+        hasCompanyId: !!companyId,
+        demoType,
+        duration: Date.now() - startTime
+      });
+      
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: companyId is required',
+        code: 'MISSING_COMPANY_ID',
         timestamp: new Date().toISOString()
       });
     }
@@ -1956,19 +1982,52 @@ router.post('/demo/environment/finalize', async (req, res) => {
       });
     }
 
-    // Verify user belongs to the specified company
-    if (userData.company_id !== companyId) {
-      console.error('[DemoAPI] [Finalize] Company mismatch for user:', {
+    // ========================================
+    // PERSONA-AWARE COMPANY VALIDATION
+    // ========================================
+    
+    /**
+     * Validate user-company relationship with persona-specific logic.
+     * 
+     * For Invela Admin: User should belong to company ID 1 (Invela)
+     * For other personas: User should belong to the company created in demo flow
+     */
+    const expectedCompanyId = parseInt(companyId.toString(), 10);
+    
+    console.log('[DemoAPI] [Finalize] Company validation check:', {
+      userId,
+      userCompanyId: userData.company_id,
+      requestedCompanyId: companyId,
+      expectedCompanyId,
+      demoType,
+      isInvelaAdmin: demoType === 'invela-admin'
+    });
+    
+    if (userData.company_id !== expectedCompanyId) {
+      // Enhanced error logging for persona-specific debugging
+      const errorContext = {
         userId,
         userCompanyId: userData.company_id,
         requestedCompanyId: companyId,
+        expectedCompanyId,
+        demoType,
+        userName: userData.full_name,
+        userEmail: userData.email,
         duration: Date.now() - startTime
-      });
+      };
+      
+      console.error('[DemoAPI] [Finalize] Company mismatch for user:', errorContext);
+      
+      // Provide persona-specific error messages
+      const errorMessage = demoType === 'invela-admin' 
+        ? 'Invela Admin user must belong to the Invela company (ID: 1)'
+        : 'User does not belong to the specified company from demo creation';
       
       return res.status(403).json({
         success: false,
-        error: 'User does not belong to the specified company',
+        error: errorMessage,
         code: 'COMPANY_MISMATCH',
+        details: errorContext,
         timestamp: new Date().toISOString()
       });
     }
