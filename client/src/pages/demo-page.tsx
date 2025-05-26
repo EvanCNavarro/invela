@@ -1602,7 +1602,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData }: DemoStepProps & { form
     const finalizationResult = results['finalize-environment'];
     const isAuthenticated = finalizationResult?.authenticated === true;
     const loginRequired = finalizationResult?.loginRequired === true;
-    const accessUrl = finalizationResult?.accessUrl || '/dashboard';
+    const accessUrl = finalizationResult?.accessUrl || '/';
     
     console.log('[DemoStep3] Authentication analysis:', {
       isAuthenticated,
