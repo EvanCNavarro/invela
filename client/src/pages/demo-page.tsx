@@ -1721,8 +1721,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         initial={{ opacity: 1, y: 0 }}
         animate={wizardStep === 'launch' ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
         transition={{ 
-          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) - 1.0 : 0, 
-          duration: 0.8, 
+          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) + 0.3 : 0, 
+          duration: 1.2, 
           ease: "easeOut" 
         }}
       >
@@ -1757,8 +1757,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
         initial={{ opacity: 1 }}
         animate={wizardStep === 'launch' ? { opacity: 0 } : { opacity: 1 }}
         transition={{ 
-          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) - 0.5 : 0, 
-          duration: 0.3, 
+          delay: wizardStep === 'launch' ? (getTotalSetupDuration() / 1000) + 0.5 : 0, 
+          duration: 1.0, 
           ease: "easeOut" 
         }}
       >
