@@ -559,7 +559,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       riskProfile: randomRiskProfile,
       riskProfileControl: 'random' as 'random' | 'custom',
       companySize: 'medium' as const, // Default company size for accredited recipients
-      networkSize: Math.floor(Math.random() * (100 - 5 + 1)) + 5, // Random between 5-100 FinTechs
+      networkSize: Math.floor(Math.random() * (86 - 5 + 1)) + 5, // Random between 5-86 FinTechs
       networkSizeControl: 'random' as 'random' | 'custom'
     };
     
