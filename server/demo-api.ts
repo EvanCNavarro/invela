@@ -21,6 +21,7 @@ import { broadcastMessage } from './services/websocket';
 import { DemoSessionService } from './services/demo-session-service';
 import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/company-name-utils';
 import { logDemoOperation } from './utils/demo-helpers';
+import { emailService } from './services/email';
 
 const router = Router();
 
@@ -1767,30 +1768,45 @@ router.post('/demo/email/send-invitation', async (req, res) => {
     // EMAIL PREPARATION & SENDING
     // ========================================
     
-    console.log('[DemoAPI] [EmailInvite] Preparing email content...');
+    console.log('[DemoAPI] [EmailInvite] Preparing email content using emailService...');
     
-    // Prepare email content with invitation details
-    const emailContent = {
-      to: userEmail,
-      subject: `Welcome to Invela Trust Network - Your Demo Access is Ready!`,
-      personalizedData: {
-        userName: userName,
-        companyName: companyName,
-        invitationCode: invitationCode,
-        loginUrl: loginCredentials?.loginUrl || '/login',
-        tempPassword: loginCredentials?.tempPassword || 'demo123',
-        expiryDate: invitationRecord.expires_at
-      }
-    };
+    // Build invitation URL with proper protocol and host detection
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers.host;
+    const inviteUrl = `${protocol}://${host}/login?code=${invitationCode}&email=${encodeURIComponent(userEmail)}`;
+    
+    console.log('[DemoAPI] [EmailInvite] Built invitation URL:', inviteUrl);
 
-    // Email sending simulation (ready for SendGrid integration)
-    const emailSent = true; // In production, implement actual SendGrid call
-    const messageId = `demo_invite_${Date.now()}_${invitationRecord.id}`;
+    // Send email using the same proven infrastructure as FinTech invitations
+    const emailResult = await emailService.sendTemplateEmail({
+      to: userEmail.toLowerCase(),
+      from: process.env.GMAIL_USER!,
+      template: 'demo_invite',
+      templateData: {
+        recipientName: userName,
+        recipientEmail: userEmail.toLowerCase(),
+        senderName: 'Invela Demo System',
+        senderCompany: 'Invela',
+        targetCompany: companyName,
+        inviteUrl,
+        code: invitationCode
+      }
+    });
+
+    // Handle email sending results with proper error checking
+    const emailSent = emailResult.success;
+    const messageId = emailSent ? `demo_invite_${Date.now()}_${invitationRecord.id}` : null;
     
-    console.log('[DemoAPI] [EmailInvite] Email prepared:', {
-      recipientEmail: emailContent.to,
-      subject: emailContent.subject,
-      invitationCode: emailContent.personalizedData.invitationCode,
+    if (!emailResult.success) {
+      console.error('[DemoAPI] [EmailInvite] Email sending failed:', emailResult.error);
+      // Continue with process but log the failure
+    } else {
+      console.log('[DemoAPI] [EmailInvite] Demo invitation email sent successfully');
+    }
+    
+    console.log('[DemoAPI] [EmailInvite] Email process completed:', {
+      recipientEmail: userEmail,
+      invitationCode: invitationCode,
       messageId: messageId,
       emailSent: emailSent,
       duration: Date.now() - startTime
@@ -2354,22 +2370,10 @@ router.get('/demo/generate-company-name', async (req, res) => {
 });
 
 // ========================================
-// EMAIL INVITATION ENDPOINT
+// EXPORT ROUTER
 // ========================================
 
-/**
- * POST /api/demo/email/send-invitation
- * Sends demo invitation email with login credentials
- * 
- * Integrates with existing Nodemailer infrastructure for seamless email delivery.
- * Creates invitation records and onboarding tasks for comprehensive tracking.
- * 
- * @route POST /api/demo/email/send-invitation
- * @access Demo flow only
- * @version 1.0.0
- * @since 2025-05-26
- */
-router.post('/email/send-invitation', async (req, res) => {
+export default router;
   const startTime = Date.now();
   
   try {

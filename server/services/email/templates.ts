@@ -49,10 +49,10 @@ const getSteps = (inviteType: "user" | "fintech" | "demo") => `
   </ol>
 </div>`;
 
-const getButton = (inviteUrl: string) => `
+const getButton = (inviteUrl: string, inviteType: "user" | "fintech" | "demo") => `
 <a href="${inviteUrl}" 
    style="display: inline-block; background: #4965EC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
-  Create Your Account
+  ${inviteType === "demo" ? "Access Your Demo" : "Create Your Account"}
 </a>`;
 
 // Unified invitation template
@@ -98,10 +98,16 @@ Hello ${recipientName},
 ${intro}
 
 Getting Started:
-1. Click the button below to Create Your Account
+${inviteType === "demo" 
+  ? `1. Click the button below to access your demo environment
+2. Explore the complete platform functionality with pre-populated data  
+3. Experience the dashboard, risk assessments, and reporting features
+4. See how Invela can streamline your risk management process`
+  : `1. Click the button below to Create Your Account
 2. ${inviteType === "fintech" ? "Complete your Company Profile setup" : "Finish updating your Profile"}
 3. Upload the requested files to our secure system
-4. Acquire an Invela Accreditation & Risk Score${inviteType === "fintech" ? " for your company" : ""}
+4. Acquire an Invela Accreditation & Risk Score${inviteType === "fintech" ? " for your company" : ""}`
+}
 
 ${code ? `Your Invitation Code: ${code}` : ""}
 
@@ -134,7 +140,7 @@ Click here to get started: ${inviteUrl}
         : ""
     }
 
-    ${getButton(inviteUrl)}
+    ${getButton(inviteUrl, inviteType)}
     ${getFooter(year)}
   </body>
 </html>
@@ -145,6 +151,7 @@ Click here to get started: ${inviteUrl}
 const templates = {
   user_invite: invitationTemplate,
   fintech_invite: invitationTemplate,
+  demo_invite: invitationTemplate,
 };
 
 export type TemplateNames = keyof typeof templates;
@@ -165,7 +172,9 @@ export function getEmailTemplate(
     // Set the invite type based on the template name
     const templateData = {
       ...data,
-      inviteType: templateName === "fintech_invite" ? "fintech" : "user",
+      inviteType: templateName === "fintech_invite" ? "fintech" as const : 
+                  templateName === "demo_invite" ? "demo" as const : 
+                  "user" as const,
     };
 
     const emailTemplate = template(templateData);
