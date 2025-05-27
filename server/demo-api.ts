@@ -15,8 +15,8 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { db } from '@db';
-import { companies, users, invitations, tasks, TaskStatus } from '@db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { companies, users, invitations, tasks, relationships, TaskStatus } from '@db/schema';
+import { eq, sql, and } from 'drizzle-orm';
 import { broadcastMessage } from './services/websocket';
 import { DemoSessionService } from './services/demo-session-service';
 import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/company-name-utils';
@@ -1398,6 +1398,91 @@ router.post('/demo/company/create', async (req, res) => {
         }
         
         console.log(`[DemoAPI] ✅ Company creation completed: "${finalName}" with ID ${company.id}`);
+        
+        // ========================================
+        // DATA PROVIDER NETWORK CREATION
+        // ========================================
+        
+        /**
+         * For Data Provider (Bank Admin) personas, automatically create network relationships
+         * with a specified number of FinTech companies based on the networkSize parameter.
+         * This provides banks with an instant, realistic network to manage.
+         */
+        if (persona === 'data-provider' && metadata?.networkSize) {
+          console.log(`[DemoAPI] 🏦 Creating bank network with ${metadata.networkSize} FinTech partners...`);
+          
+          try {
+            // Get available FinTech companies (APPROVED only for realistic bank networks)
+            const availableFinTechs = await db.select({
+              id: companies.id,
+              name: companies.name,
+              accreditation_status: companies.accreditation_status
+            })
+            .from(companies)
+            .where(
+              and(
+                eq(companies.category, 'FinTech'),
+                eq(companies.demo_cleanup_eligible, false),
+                eq(companies.accreditation_status, 'APPROVED') // Banks only partner with approved FinTechs
+              )
+            )
+            .limit(metadata.networkSize);
+            
+            console.log(`[DemoAPI] Found ${availableFinTechs.length} APPROVED FinTechs for network creation`);
+            
+            if (availableFinTechs.length < metadata.networkSize) {
+              console.log(`[DemoAPI] ⚠️ Requested ${metadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
+            }
+            
+            // Create network relationships
+            const networkRelationships = availableFinTechs.map(fintech => ({
+              company_id: company.id, // The bank is the primary company
+              related_company_id: fintech.id, // The FinTech is the related company
+              relationship_type: 'network_member' as const,
+              status: 'active' as const,
+              metadata: {
+                created_via: 'demo_data_provider_network',
+                auto_created: true,
+                bank_name: company.name,
+                fintech_name: fintech.name,
+                network_size: metadata.networkSize,
+                creation_date: new Date().toISOString(),
+                demo_relationship: true
+              }
+            }));
+            
+            // Insert relationships in batches for performance
+            const batchSize = 10;
+            for (let i = 0; i < networkRelationships.length; i += batchSize) {
+              const batch = networkRelationships.slice(i, i + batchSize);
+              await db.insert(relationships).values(batch);
+              console.log(`[DemoAPI] Created network batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(networkRelationships.length/batchSize)}`);
+            }
+            
+            console.log(`[DemoAPI] ✅ Successfully created ${networkRelationships.length} network relationships for bank "${company.name}"`);
+            
+            // Broadcast network creation success
+            broadcastMessage('demo_network_created', {
+              bankId: company.id,
+              bankName: company.name,
+              networkSize: networkRelationships.length,
+              requestedSize: metadata.networkSize,
+              partnerNames: availableFinTechs.map(f => f.name),
+              timestamp: new Date().toISOString()
+            });
+            
+          } catch (networkError) {
+            console.error('[DemoAPI] ❌ Network creation failed:', networkError);
+            // Don't fail the entire company creation for network issues
+            broadcastMessage('demo_network_warning', {
+              bankId: company.id,
+              bankName: company.name,
+              error: 'Network creation failed, but company was created successfully',
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+        
         break;
         
       } catch (error: any) {
