@@ -464,35 +464,56 @@ router.post('/demo/company/create', async (req, res) => {
     const { name, type, persona, riskProfile, companySize, metadata } = req.body;
     
     // ========================================
-    // RISK PROFILE CONVERSION FOR DATABASE COMPATIBILITY
+    // PERSONA-SPECIFIC BRANCHING LOGIC
     // ========================================
     
     /**
-     * Convert string risk profiles to numeric values for database insertion.
-     * This ensures compatibility with the database schema which expects integer values.
+     * Determine if this persona requires risk profile assessment.
+     * Data Providers (banks) assess others' risk - they don't get assessed themselves.
+     * Invela Admins are platform administrators - they don't get risk-scored.
      */
-    const convertRiskProfileToNumber = (profile: any): number => {
-      if (typeof profile === 'number') {
-        return profile;
-      }
-      
-      const riskMapping: Record<string, number> = {
-        'low': 25,
-        'medium': 65,
-        'high': 85
+    const personasRequiringRiskProfile = ['new-data-recipient', 'accredited-data-recipient'];
+    const requiresRiskProfile = personasRequiringRiskProfile.includes(persona);
+    
+    console.log(`[DemoAPI] 🎯 Persona analysis: ${persona} ${requiresRiskProfile ? 'REQUIRES' : 'SKIPS'} risk profile assessment`);
+    
+    // ========================================
+    // RISK PROFILE CONVERSION (ONLY FOR COMPANIES BEING EVALUATED)
+    // ========================================
+    
+    let numericRiskProfile: number | null = null;
+    
+    if (requiresRiskProfile) {
+      /**
+       * Convert string risk profiles to numeric values for database insertion.
+       * This ensures compatibility with the database schema which expects integer values.
+       */
+      const convertRiskProfileToNumber = (profile: any): number => {
+        if (typeof profile === 'number') {
+          return profile;
+        }
+        
+        const riskMapping: Record<string, number> = {
+          'low': 25,
+          'medium': 65,
+          'high': 85
+        };
+        
+        if (typeof profile === 'string' && riskMapping[profile.toLowerCase()]) {
+          console.log(`[DemoAPI] 🔄 Converting risk profile "${profile}" to numeric value: ${riskMapping[profile.toLowerCase()]}`);
+          return riskMapping[profile.toLowerCase()];
+        }
+        
+        // Default to medium risk if unrecognized
+        console.log(`[DemoAPI] ⚠️ Unrecognized risk profile "${profile}", defaulting to medium (65)`);
+        return 65;
       };
       
-      if (typeof profile === 'string' && riskMapping[profile.toLowerCase()]) {
-        console.log(`[DemoAPI] 🔄 Converting risk profile "${profile}" to numeric value: ${riskMapping[profile.toLowerCase()]}`);
-        return riskMapping[profile.toLowerCase()];
-      }
-      
-      // Default to medium risk if unrecognized
-      console.log(`[DemoAPI] ⚠️ Unrecognized risk profile "${profile}", defaulting to medium (65)`);
-      return 65;
-    };
-    
-    const numericRiskProfile = convertRiskProfileToNumber(riskProfile);
+      numericRiskProfile = convertRiskProfileToNumber(riskProfile);
+      console.log(`[DemoAPI] ✅ Risk profile processed for ${persona}: ${numericRiskProfile}`);
+    } else {
+      console.log(`[DemoAPI] ✅ Skipping risk profile for ${persona} - they evaluate others, not themselves`);
+    }
 
     // ========================================
     // DEMO SESSION CREATION & TRACKING
@@ -606,35 +627,80 @@ router.post('/demo/company/create', async (req, res) => {
 
       console.log('[DemoAPI] Preparing company data for database insertion...');
       
-      // Generate realistic risk cluster distribution and legal structure
-      const riskClusters = generateRiskClusters(numericRiskProfile);
-      const legalStructure = generateLegalStructure();
+      // ========================================
+      // PERSONA-SPECIFIC DATA GENERATION
+      // ========================================
       
-      console.log(`[DemoAPI] Generated risk clusters that sum to ${numericRiskProfile}:`, JSON.stringify(riskClusters));
+      // Generate legal structure (all companies need this)
+      const legalStructure = generateLegalStructure();
       console.log(`[DemoAPI] Selected legal structure: ${legalStructure}`);
+      
+      // Generate risk-related data only for personas that need risk assessment
+      let riskClusters = null;
+      let finalRiskScore = null;
+      
+      if (requiresRiskProfile && numericRiskProfile) {
+        riskClusters = generateRiskClusters(numericRiskProfile);
+        finalRiskScore = numericRiskProfile;
+        console.log(`[DemoAPI] Generated risk clusters for ${persona} that sum to ${numericRiskProfile}:`, JSON.stringify(riskClusters));
+      } else {
+        console.log(`[DemoAPI] Skipping risk cluster generation for ${persona} - they don't get risk-assessed`);
+      }
+      
+      // Determine company category and access based on persona
+      const getPersonaConfiguration = (persona: string) => {
+        switch (persona) {
+          case 'data-provider':
+            return {
+              category: 'Bank',
+              accreditation_status: 'APPROVED',
+              available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'claims', 'risk-score'],
+              description: `Enterprise banking institution specializing in financial risk assessment and network management`
+            };
+          case 'invela-admin':
+            return {
+              category: 'Platform',
+              accreditation_status: 'ADMIN',
+              available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'playground', 'claims', 'risk-score'],
+              description: `Platform administration with full system access and configuration capabilities`
+            };
+          default: // new-data-recipient, accredited-data-recipient
+            return {
+              category: 'FinTech',
+              accreditation_status: persona === 'accredited-data-recipient' ? 'APPROVED' : 'PENDING',
+              available_tabs: persona === 'accredited-data-recipient' 
+                ? ['dashboard', 'task-center', 'file-vault', 'insights'] 
+                : ['task-center'],
+              description: `Enterprise FinTech specializing in advanced financial technology solutions`
+            };
+        }
+      };
+      
+      const personaConfig = getPersonaConfiguration(persona);
+      console.log(`[DemoAPI] ✅ Configured ${persona} as ${personaConfig.category} with ${personaConfig.available_tabs.length} available tabs`);
       
       const companyData = {
         name,
-        description: `Enterprise FinTech specializing in advanced financial technology solutions`,
-        category: 'FinTech',
+        description: personaConfig.description,
+        category: personaConfig.category,
         revenue: revenueAmount >= 1000000000 
           ? `$${(revenueAmount / 1000000000).toFixed(1)}B` 
           : `$${(revenueAmount / 1000000).toFixed(0)}M`,
         num_employees: employeeCount,
         revenue_tier: 'xlarge',
         is_demo: true,
-        available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
-        accreditation_status: 'APPROVED',
+        available_tabs: personaConfig.available_tabs,
+        accreditation_status: personaConfig.accreditation_status,
         website_url: `https://${name.toLowerCase().replace(/\s+/g, '')}.com`,
-        hq_address: generateBusinessAddress('extra-large', 'FinTech'),
+        hq_address: generateBusinessAddress('extra-large', personaConfig.category),
         founders_and_leadership: "Enterprise Leadership Team",
         legal_structure: legalStructure,
-        risk_clusters: riskClusters,
-        key_clients_partners: "Fortune 500 Companies",
+        ...(riskClusters && { risk_clusters: riskClusters }),
+        key_clients_partners: personaConfig.category === 'Bank' ? "FinTech Companies" : "Fortune 500 Companies",
         investors: "Institutional Investors",
         certifications_compliance: "SOC 2 Type II, ISO 27001",
         incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 10) - 5,
-        risk_score: numericRiskProfile || Math.floor(Math.random() * 40) + 60
+        ...(finalRiskScore && { risk_score: finalRiskScore })
       };
       
       console.log('[DemoAPI] Company data prepared:', JSON.stringify(companyData, null, 2));
