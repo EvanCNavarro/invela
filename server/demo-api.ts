@@ -1831,117 +1831,36 @@ router.post('/demo/email/send-invitation', async (req, res) => {
       willCreateTasks: isNewDataRecipient
     });
 
+    // ========================================
+    // DUPLICATE TASK CREATION LOGIC REMOVED
+    // ========================================
+    
+    /**
+     * REMOVED: Duplicate Task Creation Logic
+     * 
+     * Previously, this section created company tasks during the email invitation flow,
+     * which resulted in duplicate tasks for New Data Recipients. This violated the
+     * DRY principle and created data inconsistencies.
+     * 
+     * CURRENT APPROACH:
+     * - Company tasks are created ONLY during company creation (createCompanyWithTasks service)
+     * - Uses the same proven service pattern as FinTech invitations
+     * - Ensures single source of truth for task assignment
+     * - Eliminates duplicate task creation across different user flows
+     * 
+     * @see server/services/company.ts - Unified task creation service
+     * @see server/demo-api.ts (createCompanyWithTasks call) - Primary task creation during company setup
+     * @see server/routes.ts (FinTech invite) - Reference implementation pattern
+     * 
+     * @removed 2025-05-27 - Duplicate task creation logic in email invitation flow
+     * @rationale DRY principle compliance and data integrity
+     */
+    
     if (isNewDataRecipient) {
-      console.log('[DemoAPI] [EmailInvite] 🎯 Creating company tasks for New Data Recipient directly');
-      
-      try {
-        // Create the 3 standard company tasks directly using the database
-        const taskCreationDate = new Date();
-        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
-
-        // Get admin user for task creation (using existing admin user)
-        const adminUser = await db.query.users.findFirst({
-          where: eq(users.email, 'admin@invela-demo.com')
-        });
-
-        if (!adminUser) {
-          throw new Error('Admin user not found for task creation');
-        }
-
-        // Create KYB task (unlocked first)
-        const [kybTask] = await db.insert(tasks).values({
-          title: `Know Your Business (KYB) - ${companyData.name}`,
-          description: 'Complete comprehensive business verification and compliance documentation.',
-          task_type: 'company_kyb',
-          task_scope: 'company',
-          status: TaskStatus.NOT_STARTED,
-          priority: 'high',
-          progress: 0,
-          assigned_to: null,
-          created_by: adminUser.id,
-          company_id: companyData.id,
-          due_date: dueDate,
-          metadata: {
-            locked: false,
-            created_via: 'demo_email_invite',
-            task_category: 'kyb',
-            persona: 'new-data-recipient',
-            unlock_dependency: null,
-            creation_timestamp: taskCreationDate.toISOString()
-          }
-        }).returning();
-
-        // Create KY3P task (locked until KYB completion)
-        const [ky3pTask] = await db.insert(tasks).values({
-          title: `Know Your Third Party (KY3P) - ${companyData.name}`,
-          description: 'Assess and verify all third-party relationships and vendor compliance.',
-          task_type: 'ky3p',
-          task_scope: 'company',
-          status: TaskStatus.NOT_STARTED,
-          priority: 'medium',
-          progress: 0,
-          assigned_to: null,
-          created_by: adminUser.id,
-          company_id: companyData.id,
-          due_date: dueDate,
-          metadata: {
-            locked: true,
-            created_via: 'demo_email_invite',
-            task_category: 'ky3p',
-            persona: 'new-data-recipient',
-            unlock_dependency: kybTask.id,
-            creation_timestamp: taskCreationDate.toISOString()
-          }
-        }).returning();
-
-        // Create Open Banking task (locked until KY3P completion)
-        const [openBankingTask] = await db.insert(tasks).values({
-          title: `Open Banking Integration - ${companyData.name}`,
-          description: 'Configure secure open banking connections and data sharing protocols.',
-          task_type: 'open_banking',
-          task_scope: 'company',
-          status: TaskStatus.NOT_STARTED,
-          priority: 'medium',
-          progress: 0,
-          assigned_to: null,
-          created_by: adminUser.id,
-          company_id: companyData.id,
-          due_date: dueDate,
-          metadata: {
-            locked: true,
-            created_via: 'demo_email_invite',
-            task_category: 'open_banking',
-            persona: 'new-data-recipient',
-            unlock_dependency: ky3pTask.id,
-            creation_timestamp: taskCreationDate.toISOString()
-          }
-        }).returning();
-
-        console.log('[DemoAPI] [EmailInvite] ✅ Successfully created 3 company tasks for New Data Recipient:', {
-          companyId: companyData.id,
-          companyName: companyData.name,
-          kybTaskId: kybTask.id,
-          ky3pTaskId: ky3pTask.id,
-          openBankingTaskId: openBankingTask.id,
-          taskCreationMethod: 'direct_database_insert',
-          taskChain: 'KYB (unlocked) → KY3P (locked) → Open Banking (locked)',
-          duration: Date.now() - startTime
-        });
-
-      } catch (taskError) {
-        // Log the error but don't fail the invitation process
-        console.error('[DemoAPI] [EmailInvite] ⚠️ Failed to create company tasks (non-critical):', {
-          error: (taskError as Error).message,
-          companyId: companyData.id,
-          companyName: companyData.name,
-          duration: Date.now() - startTime
-        });
-        
-        // Continue with invitation process despite task creation failure
-        console.log('[DemoAPI] [EmailInvite] Continuing with invitation process despite task creation failure');
-      }
+      console.log('[DemoAPI] [EmailInvite] ✅ Company tasks already created during company setup - no additional task creation needed');
+      console.log('[DemoAPI] [EmailInvite] Task creation handled by Company Service during createCompanyWithTasks call');
     } else {
-      console.log('[DemoAPI] [EmailInvite] 📋 Skipping company task creation (not a New Data Recipient persona)');
+      console.log('[DemoAPI] [EmailInvite] 📋 No company task creation needed (not a New Data Recipient persona)');
     }
 
     // ========================================
