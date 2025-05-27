@@ -54,7 +54,7 @@ interface FinTechCompany {
   funding_stage: string;
   exit_strategy_history: string | null;
   certifications_compliance: string;
-  risk_score: number;
+  risk_score: number | null; // Only populated for APPROVED companies
   risk_clusters: {
     "Dark Web Data": number;
     "Cyber Security": number;
@@ -62,7 +62,7 @@ interface FinTechCompany {
     "Data Access Scope": number;
     "Financial Stability": number;
     "Potential Liability": number;
-  };
+  } | null; // Only populated for APPROVED companies
   accreditation_status: 'APPROVED' | 'PENDING';
   onboarding_company_completed: boolean;
   files_public: string[];
@@ -287,17 +287,19 @@ function generateFinTechCompany(index: number, isApproved: boolean): FinTechComp
     certifications_compliance: isApproved
       ? `PCI DSS Level 1, SOC 2 Type II, ${randomChoice(['ISO 27001', 'GDPR compliant', 'FedRAMP certified'])}`
       : `Basic PCI compliance, ${randomChoice(['SOC 2 in progress', 'ISO 27001 planned', 'GDPR compliant'])}`,
-    risk_score: riskScore,
-    risk_clusters: generateRiskClusters(riskScore),
+    risk_score: isApproved ? riskScore : null, // Only APPROVED companies have risk scores
+    risk_clusters: isApproved ? generateRiskClusters(riskScore) : null, // Only APPROVED companies have risk clusters
     accreditation_status: isApproved ? 'APPROVED' : 'PENDING',
-    onboarding_company_completed: true,
+    onboarding_company_completed: isApproved, // Only APPROVED companies have completed onboarding
     files_public: isApproved 
       ? ['compliance_report_2024.pdf', 'audit_summary.pdf', 'security_overview.pdf']
       : ['business_overview.pdf', 'compliance_basic.pdf'],
     files_private: isApproved
       ? ['internal_audit_2024.pdf', 'security_assessment.pdf', 'financial_statements.pdf', 'risk_analysis.pdf']
       : ['risk_assessment.pdf', 'technical_architecture.pdf', 'financial_projections.pdf'],
-    available_tabs: ['task-center'], // Consistent with existing pattern
+    available_tabs: isApproved 
+      ? ['dashboard', 'task-center', 'file-vault', 'insights'] // APPROVED companies get all tabs
+      : ['task-center'], // PENDING companies only get task-center
     is_demo: false, // Production companies for network selection
     demo_cleanup_eligible: false // Protect from deletion
   };

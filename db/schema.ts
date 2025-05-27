@@ -109,16 +109,16 @@ export const companies = pgTable("companies", {
   funding_stage: text("funding_stage"),
   exit_strategy_history: text("exit_strategy_history"),
   certifications_compliance: text("certifications_compliance"),
-  risk_score: integer("risk_score"),
+  risk_score: integer("risk_score"), // Only populated for APPROVED/accredited companies
   chosen_score: integer("chosen_score"),
   risk_clusters: jsonb("risk_clusters").$type<{
-    "PII Data": number,
-    "Account Data": number,
-    "Data Transfers": number,
-    "Certifications Risk": number,
-    "Security Risk": number,
-    "Financial Risk": number
-  }>(),
+    "Dark Web Data": number,
+    "Cyber Security": number,
+    "Public Sentiment": number,
+    "Data Access Scope": number,
+    "Financial Stability": number,
+    "Potential Liability": number
+  }>(), // Only populated for APPROVED/accredited companies
   risk_configuration: jsonb("risk_configuration").$type<{
     dimensions: {
       id: string;
