@@ -1823,53 +1823,106 @@ router.post('/demo/email/send-invitation', async (req, res) => {
     });
 
     if (isNewDataRecipient) {
-      console.log('[DemoAPI] [EmailInvite] 🎯 Creating company tasks for New Data Recipient using FinTech pattern');
+      console.log('[DemoAPI] [EmailInvite] 🎯 Creating company tasks for New Data Recipient directly');
       
       try {
-        // Import the same task creation service that FinTech invites use
-        const { createCompany: createCompanyWithTasks } = await import('./services/company');
+        // Create the 3 standard company tasks directly using the database
+        const taskCreationDate = new Date();
+        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
-        // Prepare company data for task creation service (following FinTech pattern)
-        const companyDataForTasks = {
-          id: companyData.id,
-          name: companyData.name,
-          category: companyData.category,
-          is_demo: companyData.is_demo,
-          accreditation_status: companyData.accreditation_status,
-          available_tabs: companyData.available_tabs,
+        // Get admin user for task creation (using existing admin user)
+        const adminUser = await db.query.users.findFirst({
+          where: eq(users.email, 'admin@invela-demo.com')
+        });
+
+        if (!adminUser) {
+          throw new Error('Admin user not found for task creation');
+        }
+
+        // Create KYB task (unlocked first)
+        const [kybTask] = await db.insert(tasks).values({
+          title: `Know Your Business (KYB) - ${companyData.name}`,
+          description: 'Complete comprehensive business verification and compliance documentation.',
+          task_type: 'company_kyb',
+          task_scope: 'company',
+          status: TaskStatus.NOT_STARTED,
+          priority: 'high',
+          progress: 0,
+          assigned_to: null,
+          created_by: adminUser.id,
+          company_id: companyData.id,
+          due_date: dueDate,
           metadata: {
+            locked: false,
             created_via: 'demo_email_invite',
-            created_by_id: userData.id,
-            invited_by: userData.id,
+            task_category: 'kyb',
             persona: 'new-data-recipient',
-            demo_creation: true,
-            task_assignment_enabled: true,
-            invitation_code: crypto.randomBytes(3).toString('hex').toUpperCase(),
-            setup_timestamp: new Date().toISOString()
+            unlock_dependency: null,
+            creation_timestamp: taskCreationDate.toISOString()
           }
-        };
+        }).returning();
 
-        console.log('[DemoAPI] [EmailInvite] Invoking task creation service with company data');
+        // Create KY3P task (locked until KYB completion)
+        const [ky3pTask] = await db.insert(tasks).values({
+          title: `Know Your Third Party (KY3P) - ${companyData.name}`,
+          description: 'Assess and verify all third-party relationships and vendor compliance.',
+          task_type: 'ky3p',
+          task_scope: 'company',
+          status: TaskStatus.NOT_STARTED,
+          priority: 'medium',
+          progress: 0,
+          assigned_to: null,
+          created_by: adminUser.id,
+          company_id: companyData.id,
+          due_date: dueDate,
+          metadata: {
+            locked: true,
+            created_via: 'demo_email_invite',
+            task_category: 'ky3p',
+            persona: 'new-data-recipient',
+            unlock_dependency: kybTask.id,
+            creation_timestamp: taskCreationDate.toISOString()
+          }
+        }).returning();
 
-        // Use the same service that FinTech invites use to create tasks
-        const companyWithTasks = await createCompanyWithTasks(companyDataForTasks);
+        // Create Open Banking task (locked until KY3P completion)
+        const [openBankingTask] = await db.insert(tasks).values({
+          title: `Open Banking Integration - ${companyData.name}`,
+          description: 'Configure secure open banking connections and data sharing protocols.',
+          task_type: 'open_banking',
+          task_scope: 'company',
+          status: TaskStatus.NOT_STARTED,
+          priority: 'medium',
+          progress: 0,
+          assigned_to: null,
+          created_by: adminUser.id,
+          company_id: companyData.id,
+          due_date: dueDate,
+          metadata: {
+            locked: true,
+            created_via: 'demo_email_invite',
+            task_category: 'open_banking',
+            persona: 'new-data-recipient',
+            unlock_dependency: ky3pTask.id,
+            creation_timestamp: taskCreationDate.toISOString()
+          }
+        }).returning();
 
-        console.log('[DemoAPI] [EmailInvite] ✅ Successfully created company tasks using FinTech pattern:', {
-          companyId: companyWithTasks.id,
-          companyName: companyWithTasks.name,
-          kybTaskId: companyWithTasks.kyb_task_id,
-          ky3pTaskId: companyWithTasks.security_task_id,
-          openBankingTaskId: companyWithTasks.card_task_id,
-          taskTypes: ['KYB', 'KY3P', 'Open Banking'],
-          taskCreationMethod: 'authentic_fintech_service',
+        console.log('[DemoAPI] [EmailInvite] ✅ Successfully created 3 company tasks for New Data Recipient:', {
+          companyId: companyData.id,
+          companyName: companyData.name,
+          kybTaskId: kybTask.id,
+          ky3pTaskId: ky3pTask.id,
+          openBankingTaskId: openBankingTask.id,
+          taskCreationMethod: 'direct_database_insert',
+          taskChain: 'KYB (unlocked) → KY3P (locked) → Open Banking (locked)',
           duration: Date.now() - startTime
         });
 
       } catch (taskError) {
         // Log the error but don't fail the invitation process
         console.error('[DemoAPI] [EmailInvite] ⚠️ Failed to create company tasks (non-critical):', {
-          error: taskError.message,
-          errorStack: taskError.stack?.substring(0, 500),
+          error: (taskError as Error).message,
           companyId: companyData.id,
           companyName: companyData.name,
           duration: Date.now() - startTime
