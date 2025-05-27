@@ -16,7 +16,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { db } from '@db';
 import { companies, users, invitations, tasks, relationships, TaskStatus } from '@db/schema';
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, or } from 'drizzle-orm';
 import { broadcastMessage } from './services/websocket';
 import { DemoSessionService } from './services/demo-session-service';
 import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/company-name-utils';
@@ -607,10 +607,10 @@ router.post('/demo/company/create', async (req, res) => {
       console.log('[DemoAPI] Preparing company data for database insertion...');
       
       // Generate realistic risk cluster distribution and legal structure
-      const riskClusters = generateRiskClusters(riskProfile);
+      const riskClusters = generateRiskClusters(numericRiskProfile);
       const legalStructure = generateLegalStructure();
       
-      console.log(`[DemoAPI] Generated risk clusters that sum to ${riskProfile}:`, JSON.stringify(riskClusters));
+      console.log(`[DemoAPI] Generated risk clusters that sum to ${numericRiskProfile}:`, JSON.stringify(riskClusters));
       console.log(`[DemoAPI] Selected legal structure: ${legalStructure}`);
       
       const companyData = {
@@ -1452,7 +1452,7 @@ router.post('/demo/company/create', async (req, res) => {
           console.log(`[DemoAPI] 🏦 Creating bank network with ${metadata.networkSize} FinTech partners...`);
           
           try {
-            // Get available FinTech companies (APPROVED only for realistic bank networks)
+            // Get available FinTech companies (APPROVED and PENDING for comprehensive bank networks)
             const availableFinTechs = await db.select({
               id: companies.id,
               name: companies.name,
@@ -1462,13 +1462,12 @@ router.post('/demo/company/create', async (req, res) => {
             .where(
               and(
                 eq(companies.category, 'FinTech'),
-                eq(companies.demo_cleanup_eligible, false),
-                eq(companies.accreditation_status, 'APPROVED') // Banks only partner with approved FinTechs
+                eq(companies.demo_cleanup_eligible, false)
               )
             )
             .limit(metadata.networkSize);
             
-            console.log(`[DemoAPI] Found ${availableFinTechs.length} APPROVED FinTechs for network creation`);
+            console.log(`[DemoAPI] Found ${availableFinTechs.length} FinTech companies (APPROVED and PENDING) for network creation`);
             
             if (availableFinTechs.length < metadata.networkSize) {
               console.log(`[DemoAPI] ⚠️ Requested ${metadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
