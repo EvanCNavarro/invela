@@ -2100,86 +2100,57 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         .where(eq(invitations.id, invitation.id));
 
       // ========================================
-      // NEW DATA RECIPIENT TASK ASSIGNMENT
+      // TASK ASSIGNMENT POLICY ENFORCEMENT
       // ========================================
       
       /**
-       * For New Data Recipient companies (demo companies with pending accreditation),
-       * automatically create the three standard company tasks after account setup.
-       * This provides the authentic "new company" experience with task progression.
+       * REMOVED: Duplicate Task Creation Logic
+       * 
+       * Previously, this section attempted to create company tasks during user login,
+       * which resulted in duplicate tasks for New Data Recipients. This violated the
+       * DRY principle and created data inconsistencies.
+       * 
+       * CURRENT APPROACH:
+       * - Company tasks are created ONLY during company creation (demo-api.ts)
+       * - Uses the same proven service pattern as FinTech invitations
+       * - Ensures single source of truth for task assignment
+       * - Eliminates duplicate task creation across different user flows
+       * 
+       * @see server/demo-api.ts - Primary task creation during company setup
+       * @see server/services/company.ts - Unified task creation service
+       * @see server/routes.ts (FinTech invite) - Reference implementation pattern
+       * 
+       * @removed 2025-05-27 - Duplicate task creation logic
+       * @rationale DRY principle compliance and data integrity
        */
+      
+      // Verify company exists and log account setup completion
       try {
-        // Get the company details to check if this is a New Data Recipient
         const [companyDetails] = await db.select()
           .from(companies)
           .where(eq(companies.id, existingUser.company_id))
           .limit(1);
 
         if (companyDetails) {
-          const isNewDataRecipient = 
-            companyDetails.is_demo === true && 
-            companyDetails.accreditation_status === 'PENDING';
-
-          console.log('[Account Setup] Company task assignment check:', {
+          console.log('[Account Setup] ✅ Account setup completed successfully:', {
+            userId: updatedUser.id,
+            userEmail: updatedUser.email,
             companyId: companyDetails.id,
             companyName: companyDetails.name,
-            isDemo: companyDetails.is_demo,
+            companyType: companyDetails.is_demo ? 'Demo' : 'Production',
             accreditationStatus: companyDetails.accreditation_status,
-            isNewDataRecipient: isNewDataRecipient
+            setupTimestamp: new Date().toISOString(),
+            taskCreationApproach: 'Handled during company creation (no duplicates)'
           });
-
-          if (isNewDataRecipient) {
-            console.log('[Account Setup] 🎯 Creating company tasks for New Data Recipient:', companyDetails.name);
-
-            // Import the task creation service function inline to avoid dependency issues
-            const { createCompany: createCompanyWithTasks } = await import('./services/company');
-
-            // Prepare company data for task creation service
-            const companyDataForTasks = {
-              id: companyDetails.id,
-              name: companyDetails.name,
-              category: companyDetails.category,
-              is_demo: companyDetails.is_demo,
-              accreditation_status: companyDetails.accreditation_status,
-              available_tabs: companyDetails.available_tabs,
-              metadata: {
-                created_via: 'demo_account_setup',
-                created_by_id: updatedUser.id,
-                persona: 'new-data-recipient',
-                demo_creation: true,
-                task_assignment_enabled: true,
-                setup_timestamp: new Date().toISOString()
-              }
-            };
-
-            try {
-              // Use the same service that FinTech invites use to create tasks
-              const companyWithTasks = await createCompanyWithTasks(companyDataForTasks);
-
-              console.log('[Account Setup] ✅ Successfully created company tasks:', {
-                companyId: companyWithTasks.id,
-                companyName: companyWithTasks.name,
-                kybTaskId: companyWithTasks.kyb_task_id,
-                ky3pTaskId: companyWithTasks.security_task_id,
-                openBankingTaskId: companyWithTasks.card_task_id,
-                taskTypes: ['KYB', 'KY3P', 'Open Banking']
-              });
-
-            } catch (taskError) {
-              // Log the error but don't fail the account setup
-              console.error('[Account Setup] ⚠️ Failed to create company tasks (non-critical):', {
-                error: taskError.message,
-                companyId: companyDetails.id,
-                companyName: companyDetails.name
-              });
-            }
-          } else {
-            console.log('[Account Setup] 📋 Skipping task creation (not a New Data Recipient company)');
-          }
         }
-      } catch (companyCheckError) {
-        // Log the error but don't fail the account setup
-        console.error('[Account Setup] ⚠️ Error checking company for task assignment (non-critical):', companyCheckError.message);
+      } catch (companyVerificationError) {
+        // Log verification error but don't fail the account setup
+        console.warn('[Account Setup] ⚠️ Company verification failed (non-critical):', {
+          error: companyVerificationError.message,
+          userId: updatedUser.id,
+          companyId: existingUser.company_id,
+          timestamp: new Date().toISOString()
+        });
       }
 
       // Log the user in - wrap req.login in a Promise for proper async/await handling
