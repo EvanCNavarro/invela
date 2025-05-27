@@ -72,6 +72,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'demo-flow-user-creation-fixes-2025-05-27',
+    date: '2025-05-27',
+    type: 'fix',
+    title: 'Demo Flow User Creation System Overhaul',
+    description: 'Complete resolution of persona-based onboarding issues with enhanced demo user tracking',
+    details: [
+      'Fixed critical role mapping where frontend sent raw persona titles instead of mapped roles',
+      'Resolved demo user data population by integrating demo fields into main database schema',
+      'Corrected onboarding logic so New Data Recipients see onboarding modal while others skip',
+      'Added comprehensive demo session tracking with unique session IDs and metadata',
+      'Enhanced backend user creation with proper persona-based field validation and logging',
+      'Implemented proper role mapping: New Data Recipient → "user", Accredited Data Recipient → "accredited_user"',
+      'Standardized demo data structure across frontend and backend systems'
+    ],
+    version: '1.6.0'
+  },
+  {
     id: 'enhanced-demo-generation-2025-05-25',
     date: '2025-05-25',
     type: 'enhancement',
