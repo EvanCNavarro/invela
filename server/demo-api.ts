@@ -1337,11 +1337,20 @@ router.post('/demo/company/create', async (req, res) => {
           console.log('[DemoAPI] 🎯 Creating New Data Recipient company with standard tasks (KYB, KY3P, Open Banking)');
           
           // Add metadata for task creation service
+          // Get admin user for task creation
+          const adminUser = await db.query.users.findFirst({
+            where: eq(users.email, 'admin@invela-demo.com')
+          });
+
+          if (!adminUser) {
+            throw new Error('Admin user not found for demo creation');
+          }
+
           const companyDataWithMetadata = {
             ...insertData,
             metadata: {
               created_via: 'demo_new_data_recipient',
-              created_by_id: 1, // System user for demo creation
+              created_by_id: adminUser.id, // Use existing admin user
               persona: persona,
               demo_creation: true,
               task_assignment_enabled: true
