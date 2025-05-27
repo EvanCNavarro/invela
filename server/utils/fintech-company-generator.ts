@@ -69,6 +69,7 @@ interface FinTechCompany {
   files_private: string[];
   available_tabs: string[];
   is_demo: boolean;
+  demo_cleanup_eligible: boolean;
 }
 
 interface NetworkRelationship {
@@ -297,7 +298,8 @@ function generateFinTechCompany(index: number, isApproved: boolean): FinTechComp
       ? ['internal_audit_2024.pdf', 'security_assessment.pdf', 'financial_statements.pdf', 'risk_analysis.pdf']
       : ['risk_assessment.pdf', 'technical_architecture.pdf', 'financial_projections.pdf'],
     available_tabs: ['task-center'], // Consistent with existing pattern
-    is_demo: false // Production companies for network selection
+    is_demo: false, // Production companies for network selection
+    demo_cleanup_eligible: false // Protect from deletion
   };
 }
 
