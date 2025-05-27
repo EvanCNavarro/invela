@@ -4,6 +4,30 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.6.0 - 2025-05-27
+
+#### 🐛 Fixes
+- **Demo Flow User Creation System Overhaul**
+  - Fixed critical role mapping issue where frontend sent raw persona titles instead of mapped roles
+  - Resolved demo user data population problem by integrating demo fields into main Drizzle schema
+  - Corrected onboarding logic so New Data Recipients see onboarding modal while other personas skip
+  - Added comprehensive demo session tracking with unique session IDs and metadata
+  - Enhanced backend user creation with proper persona-based field validation and logging
+
+#### 🔧 Enhancements
+- **Persona-Based Onboarding System**
+  - Implemented proper role mapping: New Data Recipient → "user", Accredited Data Recipient → "accredited_user"
+  - Added demo user tracking fields (is_demo_user, demo_persona_type, demo_session_id, demo_created_at)
+  - Enhanced backend API with comprehensive logging throughout user creation process
+  - Improved error handling and validation for demo account creation workflow
+  - Standardized demo data structure across frontend and backend systems
+
+#### ⚡ Performance
+- **Database Schema Optimization**
+  - Updated Drizzle schema to include all demo tracking fields in main users table
+  - Streamlined demo user creation process with proper field mapping
+  - Enhanced database operations with better error handling and connection management
+
 ### Version 1.5.0 - 2025-05-25
 
 #### 🔧 Enhancements
