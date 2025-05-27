@@ -65,8 +65,8 @@ async function testSingleCompany() {
         ${company.exit_strategy_history}, ${company.certifications_compliance},
         ${company.risk_score}, ${JSON.stringify(company.risk_clusters)},
         ${company.accreditation_status}, ${company.onboarding_company_completed},
-        ${JSON.stringify(company.files_public)}, ${JSON.stringify(company.files_private)},
-        ${JSON.stringify(company.available_tabs)}, ${company.is_demo}
+        ${company.files_public}, ${company.files_private},
+        ${company.available_tabs}, ${company.is_demo}
       ) RETURNING id, name
     `;
     
