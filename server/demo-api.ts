@@ -1637,7 +1637,7 @@ router.post('/demo/company/create', async (req, res) => {
               bankId: company.id,
               bankName: company.name,
               networkSize: totalCreated,
-              requestedSize: metadata.networkSize,
+              requestedSize: finalMetadata.networkSize,
               availableFinTechs: availableFinTechs.length,
               partnerNames: availableFinTechs.slice(0, totalCreated).map(f => f.name),
               timestamp: new Date().toISOString()
