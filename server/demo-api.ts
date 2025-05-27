@@ -1434,10 +1434,12 @@ router.post('/demo/company/create', async (req, res) => {
               console.log(`[DemoAPI] ⚠️ Requested ${metadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
             }
             
-            // Create network relationships
+            // Create network relationships with proper error handling and logging
+            console.log(`[DemoAPI] 🔗 Preparing to create ${availableFinTechs.length} network relationships...`);
+            
             const networkRelationships = availableFinTechs.map(fintech => ({
-              company_id: company.id, // The bank is the primary company
-              related_company_id: fintech.id, // The FinTech is the related company
+              company_id: company.id,
+              related_company_id: fintech.id,
               relationship_type: 'network_member' as const,
               status: 'active' as const,
               metadata: {
@@ -1451,23 +1453,52 @@ router.post('/demo/company/create', async (req, res) => {
               }
             }));
             
-            // Insert relationships in batches for performance
+            console.log(`[DemoAPI] Sample relationship structure:`, JSON.stringify(networkRelationships[0], null, 2));
+            
+            // Insert relationships with enhanced error handling and individual fallback
             const batchSize = 10;
+            let totalCreated = 0;
+            
             for (let i = 0; i < networkRelationships.length; i += batchSize) {
               const batch = networkRelationships.slice(i, i + batchSize);
-              await db.insert(relationships).values(batch);
-              console.log(`[DemoAPI] Created network batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(networkRelationships.length/batchSize)}`);
+              const batchNumber = Math.floor(i/batchSize) + 1;
+              const totalBatches = Math.ceil(networkRelationships.length/batchSize);
+              
+              try {
+                console.log(`[DemoAPI] 📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} relationships)...`);
+                
+                // Attempt batch insertion
+                await db.insert(relationships).values(batch);
+                totalCreated += batch.length;
+                console.log(`[DemoAPI] ✅ Batch ${batchNumber} successful - ${batch.length} relationships created`);
+                
+              } catch (batchError) {
+                console.error(`[DemoAPI] ❌ Batch ${batchNumber} failed:`, batchError);
+                console.log(`[DemoAPI] 🔄 Falling back to individual insertions for batch ${batchNumber}...`);
+                
+                // Fallback: Insert relationships individually
+                for (const relationship of batch) {
+                  try {
+                    await db.insert(relationships).values([relationship]);
+                    totalCreated++;
+                    console.log(`[DemoAPI] ✅ Individual insert successful: ${relationship.related_company_id}`);
+                  } catch (individualError) {
+                    console.error(`[DemoAPI] ❌ Individual insert failed for relationship ${relationship.related_company_id}:`, individualError);
+                  }
+                }
+              }
             }
             
-            console.log(`[DemoAPI] ✅ Successfully created ${networkRelationships.length} network relationships for bank "${company.name}"`);
+            console.log(`[DemoAPI] ✅ Network creation complete: ${totalCreated}/${networkRelationships.length} relationships created for bank "${company.name}"`);
             
             // Broadcast network creation success
             broadcastMessage('demo_network_created', {
               bankId: company.id,
               bankName: company.name,
-              networkSize: networkRelationships.length,
+              networkSize: totalCreated,
               requestedSize: metadata.networkSize,
-              partnerNames: availableFinTechs.map(f => f.name),
+              availableFinTechs: availableFinTechs.length,
+              partnerNames: availableFinTechs.slice(0, totalCreated).map(f => f.name),
               timestamp: new Date().toISOString()
             });
             
