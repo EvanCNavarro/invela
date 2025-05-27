@@ -1068,7 +1068,7 @@ router.post('/demo/company/create', async (req, res) => {
       
       // Only generate risk data for accredited (APPROVED) personas
       if (enterpriseData.accreditation_status === 'APPROVED') {
-        finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+        finalRiskScore = numericRiskProfile || Math.floor(Math.random() * 40) + 60;
         onboardingCompleted = true;
         console.log(`[DemoAPI] ✅ Generated enterprise risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
       } else {
@@ -1235,7 +1235,7 @@ router.post('/demo/company/create', async (req, res) => {
     
     // Only generate risk data for accredited (APPROVED) personas
     if (companyData.accreditation_status === 'APPROVED') {
-      finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+      finalRiskScore = numericRiskProfile || Math.floor(Math.random() * 40) + 60;
       riskClusters = generateRiskClusters(finalRiskScore);
       onboardingCompleted = true;
       console.log(`[DemoAPI] ✅ Generated risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
@@ -1274,7 +1274,8 @@ router.post('/demo/company/create', async (req, res) => {
       name,
       description: `Professional ${companyData.category.toLowerCase()} company specializing in secure data management and compliance`,
       ...companyData,
-      risk_score: finalRiskScore,
+      // CRITICAL FIX: Override any string risk_score from companyData with our converted numeric value
+      risk_score: finalRiskScore, // This must come AFTER the spread to override the string value
       risk_clusters: riskClusters,
       onboarding_company_completed: onboardingCompleted,
       
