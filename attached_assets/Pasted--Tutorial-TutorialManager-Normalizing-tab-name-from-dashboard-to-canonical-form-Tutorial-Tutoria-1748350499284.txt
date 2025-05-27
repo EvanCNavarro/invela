@@ -1,0 +1,78 @@
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 579
+[RiskRadarChart] Setting selected company ID from companyId prop 579
+[RiskRadarChart] Company category check: 
+Object {category: "Bank", isBankOrInvela: true, isFintech: false, showDropdownProp: false}
+[CurrentCompany] Setting company context: 579
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Setting selected company ID from companyId prop 579
+[RiskRadarChart] Display company updated: 
+Object {id: 579, name: "HealthSecure Systems", category: "Bank"}
+[RiskRadarChart] Updated cached risk clusters 
+Object {companyId: 579, companyName: "HealthSecure Systems", hasData: true}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: true, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "HealthSecure Systems", category: "Bank", isBankOrInvela: true, selectedCompanyId: 579, networkCompaniesCount: 0, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748350466956-eica6pj", timestamp: "2025-05-27T12:54:26.956Z", message: "Connection established"}
+[2025-05-27T12:54:26.915Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[RiskMonitoringInsight] Generating historical data 
+Object {dataRecipientsCount: 1, threshold: 40}
+[DeterioratingRiskTable] Processing companies data 
+Object {timeframe: "7day", companyCount: 1}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 2, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 2, firstFewCompanies: Array(2), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "HealthSecure Systems", category: "Bank", isBankOrInvela: true, selectedCompanyId: 579, networkCompaniesCount: 2, …}
+[BlockedDataRecipientsAlert] Rendered alert 
+Object {blockedCount: 1}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 2, relationshipCompaniesCount: 0, visualizationNodesCount: 1, uniqueCompaniesCount: 2, firstFewCompanies: Array(2), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "HealthSecure Systems", category: "Bank", isBankOrInvela: true, selectedCompanyId: 579, networkCompaniesCount: 2, …}
+[RiskRadarChart] Fetched relationship companies: 1
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 2, relationshipCompaniesCount: 1, visualizationNodesCount: 1, uniqueCompaniesCount: 2, firstFewCompanies: Array(2), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "HealthSecure Systems", category: "Bank", isBankOrInvela: true, selectedCompanyId: 579, networkCompaniesCount: 2, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748350467453-ggzqp8x", timestamp: "2025-05-27T12:54:27.453Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748350467975-dln8f1y", timestamp: "2025-05-27T12:54:27.975Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-27T12:54:28.899Z] [WebSocket] WebSocket connection established 
+[2025-05-27T12:54:28.899Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-27T12:54:28.900Z] [WebSocket] Received message of type: connection_established 
