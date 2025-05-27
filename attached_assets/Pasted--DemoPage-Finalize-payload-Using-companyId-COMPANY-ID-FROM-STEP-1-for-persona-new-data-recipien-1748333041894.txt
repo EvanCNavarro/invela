@@ -1,0 +1,32 @@
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "new-data-recipient"
+[DemoAPI] Executing: Creating "Elite Capital Ventures" organization 
+Object {id: "create-company", label: "Creating "Elite Capital Ventures" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "new-data-recipient"
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:57.871Z", messageId: "msg_1748333037871_foapb4hln"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:57.871Z", messageId: "msg_1748333037871_foapb4hln"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:57.871Z", messageId: "msg_1748333037871_foapb4hln"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:57.871Z", messageId: "msg_1748333037871_foapb4hln"}
+[2025-05-27T08:03:57.861Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:58.023Z", messageId: "msg_1748333038023_g4zo91871"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:58.023Z", messageId: "msg_1748333038023_g4zo91871"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:58.023Z", messageId: "msg_1748333038023_g4zo91871"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-27T08:03:58.023Z", messageId: "msg_1748333038023_g4zo91871"}
+[2025-05-27T08:03:58.021Z] [WebSocket] Received message of type: demo_action_error 
+[DemoAPI] REAL API FAILED for: Creating &quot;Elite Capital Ventures&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;Elite Capital Ventures&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "Elite Capital Ventures" organization
+[DemoStep3] Rendering results and next steps
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "new-data-recipient"
