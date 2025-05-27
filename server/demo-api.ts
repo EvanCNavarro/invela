@@ -1511,9 +1511,27 @@ router.post('/demo/company/create', async (req, res) => {
  */
 router.post('/demo/user/create', async (req, res) => {
   try {
-    const { fullName, email, role, permissions, companyId, persona } = req.body;
+    const { 
+      fullName, 
+      email, 
+      role, 
+      permissions, 
+      companyId, 
+      persona, 
+      demoSessionId, 
+      metadata 
+    } = req.body;
 
-    console.log('[DemoAPI] Creating user:', { fullName, email, role, companyId });
+    console.log('[DemoAPI] [UserCreate] Creating user with enhanced demo tracking:', { 
+      fullName, 
+      email, 
+      role, 
+      persona,
+      companyId,
+      demoSessionId,
+      hasMetadata: !!metadata,
+      timestamp: new Date().toISOString()
+    });
     
     // Validate required company ID
     if (!companyId || companyId === 'undefined') {
@@ -1593,10 +1611,11 @@ router.post('/demo/user/create', async (req, res) => {
       /**
        * CRITICAL FIX: Store persona type and demo user status
        * This ensures proper access control based on persona selection
+       * Uses enhanced demo session tracking from frontend payload
        */
       is_demo_user: true,
       demo_persona_type: persona || 'unknown',
-      demo_session_id: req.body.demoSessionId || `user_${Date.now()}`,
+      demo_session_id: demoSessionId || `fallback_user_${Date.now()}`,
       demo_created_at: new Date(),
       demo_expires_at: new Date(Date.now() + (72 * 60 * 60 * 1000)), // 72 hours
       demo_cleanup_eligible: true,
