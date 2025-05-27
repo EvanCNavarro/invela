@@ -167,6 +167,19 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
   onboarding_user_completed: boolean("onboarding_user_completed").notNull().default(false),
+  
+  // ========================================
+  // DEMO USER TRACKING FIELDS
+  // ========================================
+  // Added to support comprehensive demo user identification and management
+  is_demo_user: boolean("is_demo_user").default(false),
+  demo_session_id: text("demo_session_id"),
+  demo_created_at: timestamp("demo_created_at"),
+  demo_persona_type: text("demo_persona_type"),
+  demo_expires_at: timestamp("demo_expires_at"),
+  demo_cleanup_eligible: boolean("demo_cleanup_eligible").default(true),
+  demo_last_login: timestamp("demo_last_login"),
+  
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
