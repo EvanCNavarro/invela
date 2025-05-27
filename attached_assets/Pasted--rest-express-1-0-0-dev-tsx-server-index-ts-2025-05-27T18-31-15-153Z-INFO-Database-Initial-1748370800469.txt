@@ -1,0 +1,484 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-27T18:31:15.153Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-27T18:31:15.157Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-27T18:31:15.157Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-27T18:31:15.581Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-27T18:31:15.751Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-27T18:31:15.751Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-27T18:31:15.751Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-27T18:31:15.752Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-27T18:31:15.753Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-27T18:31:15.756Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-27T18:31:15.756Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"7smoy2","timestamp":"2025-05-27T18:31:15.756Z"}
+[2025-05-27T18:31:15.756Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-27T18:31:15.756Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-27T18:31:15.756Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-27T18:31:15.756Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-27T18:31:15.756Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-27T18:31:15.756Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-27T18:31:15.756Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-27T18:31:15.756Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-27T18:31:15.756Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-27T18:31:15.757Z] [INFO] [App] Setting up Vite development server 
+[2025-05-27T18:31:15.758Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-27T18:31:15.758Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-27T18:31:15.758Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-27T18:31:15.758Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-27T18:31:15.758Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-27T18:31:15.759Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-27T18:31:15.759Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-27T18:31:15.759Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-27T18:31:15.759Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-27T18:31:15.769Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-27T18:31:15.769Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-27T18:31:15.769Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-27T18:31:15.770Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-27T18:31:15.770Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-27T18:31:15.770Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-27T18:31:17.132Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-27T18:31:17.339Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-27T18:31:20.944Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-27T18:31:21.045Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-27T18:31:25.769Z] [INFO] [App] Running background health checks... 
+[2025-05-27T18:31:25.769Z] [StartupChecks] Running application startup health checks... 
+[2025-05-27T18:31:25.770Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-27T18:31:25.770Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-27T18:31:25.957Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-27T18:31:25.986Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-27T18:31:26.015Z] [DBConnectionService] Database connection check successful 
+[2025-05-27T18:31:26.015Z] [StartupChecks] Database health check passed 
+[2025-05-27T18:31:26.015Z] [StartupChecks] All startup health checks passed! 
+[2025-05-27T18:31:26.015Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-27T18:31:28.500Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370688500-3od5pos","clients":1}
+[2025-05-27T18:31:28.618Z] [INFO] [WebSocket] Received message from client client-1748370688500-3od5pos {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-27T18:31:28.512Z"}}
+[2025-05-27T18:31:28.618Z] [INFO] [WebSocket] Authentication from client client-1748370688500-3od5pos {"module":"WebSocket","hasToken":true}
+[2025-05-27T18:31:28.979Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370688979-nh1d2st","clients":2}
+[2025-05-27T18:31:29.461Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370689461-3u7mcx1","clients":3}
+[2025-05-27T18:31:29.944Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370689944-wg9djtx","clients":4}
+[2025-05-27T18:31:30.522Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370690522-h8ow6rj","clients":5}
+[2025-05-27T18:31:30.835Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"authenticate","userId":"472","companyId":"583","clientId":"ws_1748370689023_7oyugslvt","timestamp":"2025-05-27T18:31:30.732Z"}
+[2025-05-27T18:31:30.835Z] [INFO] [WebSocket] Authentication from client client-1748370690522-h8ow6rj {"module":"WebSocket","userId":"472","companyId":"583","hasToken":true}
+[2025-05-27T18:31:45.960Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[964,965,999,1001,973,969,971,978,976,981]}
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[2025-05-27T18:31:50.641Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:31:50.544Z","connectionId":"ws_1748370689023_7oyugslvt"}
+[2025-05-27T18:31:58.619Z] [INFO] [WebSocket] Received message from client client-1748370688500-3od5pos {"module":"WebSocket","type":"ping"}
+[2025-05-27T18:31:59.580Z] [INFO] [WebSocket] Received message from client client-1748370689461-3u7mcx1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:31:59.483Z","connectionId":"ws_1748370689474_psb6oz0x7"}
+[2025-05-27T18:32:00.061Z] [INFO] [WebSocket] Received message from client client-1748370689944-wg9djtx {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:31:59.965Z","connectionId":"ws_1748370688992_9z4rl6fmy"}
+[2025-05-27T18:32:10.642Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:10.547Z","connectionId":"ws_1748370689023_7oyugslvt"}
+[2025-05-27T18:32:28.617Z] [INFO] [WebSocket] Received message from client client-1748370688500-3od5pos {"module":"WebSocket","type":"ping"}
+[2025-05-27T18:32:29.582Z] [INFO] [WebSocket] Received message from client client-1748370689461-3u7mcx1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:29.485Z","connectionId":"ws_1748370689474_psb6oz0x7"}
+[2025-05-27T18:32:30.061Z] [INFO] [WebSocket] Received message from client client-1748370689944-wg9djtx {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:29.966Z","connectionId":"ws_1748370688992_9z4rl6fmy"}
+[2025-05-27T18:32:30.642Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:30.547Z","connectionId":"ws_1748370689023_7oyugslvt"}
+[2025-05-27T18:32:50.642Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:50.547Z","connectionId":"ws_1748370689023_7oyugslvt"}
+[DemoAPI] Company creation request received at: 2025-05-27T18:32:56.484Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '130',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "Quantum Advisory Solutions",
+  "type": "demo",
+  "persona": "data-provider",
+  "companySize": "medium",
+  "metadata": {
+    "networkSize": 24
+  }
+}
+[DemoAPI] ⚠️ Unrecognized risk profile "undefined", defaulting to medium (65)
+[DemoAPI] Creating demo session for tracking...
+[DemoSessionService] Creating new demo session: {
+  sessionId: 'demo_0812b53a-219c-42eb-869e-05f3a516900c',
+  personaType: 'data-provider',
+  expiresAt: '2025-05-30T18:32:56.486Z',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.',
+  ipAddress: '10.81.0.19'
+}
+[DemoSessionService] ✅ Demo session created successfully: demo_0812b53a-219c-42eb-869e-05f3a516900c
+[DemoAPI] ✅ Demo session created: demo_0812b53a-219c-42eb-869e-05f3a516900c
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'Quantum Advisory Solutions',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  riskProfile: 'undefined → 65'
+}
+[2025-05-27T18:32:56.556Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748370776556_olhte4w0w' }
+[2025-05-27T18:32:56.557Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Generating company data for: { persona: 'data-provider', companySize: 'medium' }
+[DemoAPI] IMPLEMENTING DIRECT FIX for size: medium
+[DemoAPI] Configuring persona: data-provider
+[DemoAPI] Configured bank admin with full administrative access
+[DemoAPI] Processing company size: medium
+[DemoAPI] Generated medium company: $67M revenue, 847 employees
+[DemoAPI] Generated company data: {
+  category: 'Bank',
+  accreditation_status: 'APPROVED',
+  is_demo: true,
+  available_tabs: [
+    'dashboard',
+    'task-center',
+    'network',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  revenue: '$37M',
+  num_employees: 171,
+  revenue_tier: 'medium'
+}
+[DemoAPI] ✅ Generated risk data for APPROVED persona data-provider: Score 65
+[DemoAPI] Generating comprehensive business details...
+[DemoAPI] Business Details - Persona: data-provider, Mapped Type: bank
+[DemoAPI] Generated business details: {
+  website: 'https://www.trustbank.com',
+  hasAddress: true,
+  hasLeadership: true,
+  hasClients: true,
+  hasInvestors: true,
+  hasCertifications: true
+}
+[DemoAPI] Assembled complete company data for insertion
+[DemoAPI] Business details verification: {
+  websiteIncluded: true,
+  addressIncluded: true,
+  productsIncluded: true,
+  leadershipIncluded: true,
+  clientsIncluded: true,
+  investorsIncluded: true,
+  certificationsIncluded: true,
+  riskClustersIncluded: true
+}
+[DemoAPI] Final insert values: {
+  "name": "Quantum Advisory Solutions",
+  "description": "Professional bank company specializing in secure data management and compliance",
+  "category": "Bank",
+  "accreditation_status": "APPROVED",
+  "is_demo": true,
+  "available_tabs": [
+    "dashboard",
+    "task-center",
+    "network",
+    "file-vault",
+    "insights",
+    "claims",
+    "risk-score"
+  ],
+  "revenue": "$37M",
+  "num_employees": 171,
+  "revenue_tier": "medium",
+  "risk_score": 65,
+  "risk_clusters": {
+    "Dark Web Data": 7,
+    "Cyber Security": 7,
+    "Public Sentiment": 12,
+    "Data Access Scope": 6,
+    "Financial Stability": 16,
+    "Potential Liability": 17
+  },
+  "onboarding_company_completed": true,
+  "demo_persona_type": "data-provider",
+  "demo_session_id": "demo_0812b53a-219c-42eb-869e-05f3a516900c",
+  "demo_created_at": "2025-05-27T18:32:56.559Z",
+  "demo_expires_at": "2025-05-30T18:32:56.559Z",
+  "demo_cleanup_eligible": true,
+  "website_url": "https://www.trustbank.com",
+  "hq_address": "200 West Street, 31st Floor, New York, NY 10282",
+  "products_services": "Corporate finance, trade finance, cash management solutions",
+  "founders_and_leadership": "Amanda Foster (CEO, Former Morgan Stanley MD), James Liu (CTO, Ex-Amazon Senior Director), Maria Gonzalez (CFO, Former Wells Fargo VP)",
+  "key_clients_partners": "Technology companies, healthcare organizations, energy sector clients, retail chains",
+  "investors": "Matrix Partners, Redpoint Ventures, Foundation Capital, NEA",
+  "certifications_compliance": "SOX Compliance, FISMA Moderate, FedRAMP Authorized, NIST Cybersecurity Framework",
+  "legal_structure": "Corporation",
+  "market_position": "Established Player",
+  "incorporation_year": 2006,
+  "funding_stage": "Series C"
+}
+[DemoAPI] Company creation strategy: {
+  persona: 'data-provider',
+  shouldCreateTasks: false,
+  strategy: 'Direct database insert'
+}
+[DemoAPI] Attempting company creation with name: "Quantum Advisory Solutions" (attempt 1)
+[DemoAPI] 📋 Creating company without tasks (non-New Data Recipient persona)
+[DemoAPI] ⚠️ Duplicate name detected: "Quantum Advisory Solutions". Generating unique alternative...
+[DemoAPI] 🔄 Trying with unique name: "Quantum Advisory Solutions 6605uek"
+[DemoAPI] Attempting company creation with name: "Quantum Advisory Solutions 6605uek" (attempt 2)
+[DemoAPI] 📋 Creating company without tasks (non-New Data Recipient persona)
+[DemoAPI] ✅ Company created without tasks: {
+  companyId: 663,
+  companyName: 'Quantum Advisory Solutions 6605uek',
+  tasksCreated: false
+}
+[DemoAPI] ✅ Company creation completed: "Quantum Advisory Solutions 6605uek" with ID 663
+[DemoAPI] 🔍 Network creation check: {
+  persona: 'data-provider',
+  isDataProvider: true,
+  metadata: { networkSize: 24 },
+  hasNetworkSize: 24,
+  networkSizeValue: 24,
+  conditionMet: 24
+}
+[DemoAPI] 🏦 Creating bank network with 24 FinTech partners...
+[DemoAPI] ❌ Network creation failed: error: syntax error at or near "="
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+    at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1456:39) {
+  length: 91,
+  severity: 'ERROR',
+  code: '42601',
+  detail: undefined,
+  hint: undefined,
+  position: '102',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'scan.l',
+  line: '1244',
+  routine: 'scanner_yyerror'
+}
+[WebSocket] Broadcast demo_network_warning to 5 clients (0 errors) { messageId: 'msg_1748370776679_m5xiaxek3' }
+[2025-05-27T18:32:56.680Z] [INFO] [App] Successfully broadcasted demo_network_warning message 
+[DemoAPI] 📊 Company creation summary: {
+  companyId: 663,
+  companyName: 'Quantum Advisory Solutions 6605uek',
+  persona: 'data-provider',
+  tasksCreated: false,
+  taskTypes: [],
+  accreditationStatus: 'APPROVED',
+  availableTabs: [
+    'dashboard',
+    'task-center',
+    'network',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  isDemo: true,
+  creationMethod: 'direct database insert',
+  timestamp: '2025-05-27T18:32:56.680Z'
+}
+[WebSocket] Broadcast demo_action_complete to 5 clients (0 errors) { messageId: 'msg_1748370776680_utaesxcue' }
+[2025-05-27T18:32:56.680Z] [INFO] [App] Successfully broadcasted demo_action_complete message 
+[2025-05-27T18:32:56.715Z] [INFO] [App] POST /api/demo/company/create 200 in 232ms :: {"success":true,"companyId":663,"companyData":{"name":"Quantum Advisory Solut... 
+[DemoAPI] [UserCreate] Creating user with enhanced demo tracking: {
+  fullName: 'Sophia Gonzalez',
+  email: 'sgonzalez@quantumadvisorysolutions.com',
+  role: 'provider',
+  persona: 'data-provider',
+  companyId: 663,
+  demoSessionId: 'demo_1748370774912_data-provider',
+  hasMetadata: true,
+  timestamp: '2025-05-27T18:32:57.468Z'
+}
+[DemoAPI] Parsed company ID: 663
+[DemoAPI] [UserCreate] Setting onboarding status based on role: {
+  userRole: 'provider',
+  onboardingUserCompleted: true,
+  expectedBehavior: 'Skip onboarding modal',
+  timestamp: '2025-05-27T18:32:57.695Z'
+}
+[DemoAPI] [UserCreate] User created successfully with persona-based onboarding status: {
+  userId: 473,
+  userEmail: 'sgonzalez@quantumadvisorysolutions.com',
+  companyId: 663,
+  userRole: 'provider',
+  onboardingUserCompleted: true,
+  expectedModalBehavior: '❌ Should NOT see onboarding modal',
+  timestamp: '2025-05-27T18:32:57.742Z'
+}
+[2025-05-27T18:32:57.773Z] [INFO] [App] POST /api/demo/user/create 200 in 306ms :: {"success":true,"userId":473,"userData":{"fullName":"Sophia Gonzalez","email"... 
+[DemoAPI] Setting up authentication: { userId: 473, email: 'sgonzalez@quantumadvisorysolutions.com' }
+[2025-05-27T18:32:58.567Z] [INFO] [App] POST /api/demo/auth/setup 200 in 31ms :: {"success":true,"credentials":{"loginUrl":"/login","email":"sgonzalez@quantum... 
+[2025-05-27T18:32:58.617Z] [INFO] [WebSocket] Received message from client client-1748370688500-3od5pos {"module":"WebSocket","type":"ping"}
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 473,
+  companyId: 663,
+  demoType: 'data-provider',
+  timestamp: '2025-05-27T18:32:59.321Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] Company validation check: {
+  userId: 473,
+  userCompanyId: 663,
+  requestedCompanyId: 663,
+  expectedCompanyId: 663,
+  demoType: 'data-provider',
+  isInvelaAdmin: false
+}
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 473,
+  email: 'sgonzalez@quantumadvisorysolutions.com',
+  companyId: 663,
+  fullName: 'Sophia Gonzalez',
+  duration: 35
+}
+[DemoAPI] [Finalize] Setting up demo environment...
+[DemoAPI] [Finalize] Environment configuration prepared: {
+  environmentId: 'env_demo_1748370779356_473',
+  config: {
+    type: 'data-provider',
+    features: {
+      demoDataAccess: true,
+      tutorialMode: true,
+      limitedFunctionality: false
+    },
+    permissions: {
+      canInviteUsers: true,
+      canModifySettings: true,
+      canAccessAllTabs: true
+    }
+  },
+  duration: 35
+}
+[DemoAPI] [Finalize] Initiating automatic user authentication...
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 473,
+  email: 'sgonzalez@quantumadvisorysolutions.com',
+  companyId: 663,
+  environmentId: 'env_demo_1748370779356_473',
+  authenticated: true,
+  totalDuration: 98,
+  timestamp: '2025-05-27T18:32:59.419Z'
+}
+[WebSocket] Broadcast demo_completed to 5 clients (0 errors) { messageId: 'msg_1748370779420_v5sqhh5of' }
+[2025-05-27T18:32:59.420Z] [INFO] [App] Successfully broadcasted demo_completed message 
+[2025-05-27T18:32:59.451Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 130ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-27T18:32:59.585Z] [INFO] [WebSocket] Received message from client client-1748370689461-3u7mcx1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:59.491Z","connectionId":"ws_1748370689474_psb6oz0x7"}
+[2025-05-27T18:33:00.062Z] [INFO] [WebSocket] Received message from client client-1748370689944-wg9djtx {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:32:59.967Z","connectionId":"ws_1748370688992_9z4rl6fmy"}
+[Current Company] Fetching company for user: { userId: 473, companyId: 663 }
+[Current Company] Found company: {
+  id: 663,
+  name: 'Quantum Advisory Solutions 6605uek',
+  onboardingCompleted: true,
+  riskScore: 65,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 473,
+  companyId: 663,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-27T18:33:02.823Z'
+}
+[2025-05-27T18:33:02.855Z] [INFO] [App] GET /api/companies/current 200 in 65ms :: {"id":663,"name":"Quantum Advisory Solutions 6605uek","category":"Bank","is_d... 
+[2025-05-27T18:33:02.924Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 473,
+  company_id: 663,
+  email: 'sgonzalez@quantumadvisorysolutions.com'
+}
+[2025-05-27T18:33:02.989Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":663,"userId":473}
+[2025-05-27T18:33:03.030Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":663}
+[Tasks] Automatically unlocking all tasks for company { userId: 473, companyId: 663, requestedBy: 'automatic_task_unlock' }
+[2025-05-27T18:33:03.031Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":663}
+[2025-05-27T18:33:03.043Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 473 
+[2025-05-27T18:33:03.043Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-27T18:33:03.043Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-27T18:33:03.043Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 473 
+[2025-05-27T18:33:03.061Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":663}
+[Tasks] Successfully unlocked all tasks for company: 663
+[2025-05-27T18:33:03.080Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 473 
+[2025-05-27T18:33:03.090Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748370783090-62xgg8g","clients":6}
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 473',
+    condition2: 'tasks.created_by = 473',
+    condition3: "tasks.company_id = 663 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('sgonzalez@quantumadvisorysolutions.com')"
+  }
+}
+[2025-05-27T18:33:03.110Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 68ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[Tasks] Tasks found: { count: 0 }
+[2025-05-27T18:33:03.160Z] [INFO] [App] GET /api/tasks 304 in 172ms :: [] 
+[2025-05-27T18:33:03.207Z] [INFO] [WebSocket] Received message from client client-1748370783090-62xgg8g {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748370687741_4cfc9vdn2","timestamp":"2025-05-27T18:33:03.112Z"}
+[2025-05-27T18:33:03.207Z] [INFO] [WebSocket] Authentication from client client-1748370783090-62xgg8g {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Relationships] Fetching network for company: 663
+[Companies] Fetching companies for user: { userId: 473, company_id: 663 }
+[Companies] Query successful, found companies: {
+  count: 1,
+  companies: [
+    {
+      id: 663,
+      name: 'Quantum Advisory Solutions 6605uek',
+      hasLogo: false,
+      hasRelationship: true
+    }
+  ]
+}
+[Relationships] Found network members: { count: 0 }
+[2025-05-27T18:33:03.373Z] [INFO] [App] GET /api/companies 200 in 72ms :: [{"id":663,"name":"Quantum Advisory Solutions 6605uek","category":"Bank","des... 
+[2025-05-27T18:33:03.374Z] [INFO] [App] GET /api/relationships 304 in 75ms :: [] 
+[2025-05-27T18:33:03.428Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Network Visualization] Fetching network data for company: 663
+[Network Visualization] Found network relationships: { count: 0 }
+[Network Visualization] Returning visualization data: { centerNode: 'Quantum Advisory Solutions 6605uek', nodeCount: 0 }
+[Relationships] Fetching network for company: 663
+[2025-05-27T18:33:03.575Z] [INFO] [App] GET /api/network/visualization 200 in 88ms :: {"center":{"id":663,"name":"Quantum Advisory Solutions 6605uek","riskScore":6... 
+[Relationships] Found network members: { count: 0 }
+[2025-05-27T18:33:03.608Z] [INFO] [App] GET /api/relationships 304 in 60ms :: [] 
+[2025-05-27T18:33:04.657Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 473 
+[2025-05-27T18:33:04.657Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-27T18:33:04.657Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-27T18:33:04.657Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 473 
+[2025-05-27T18:33:04.686Z] [INFO] [App] [TabTutorials] No tutorial status found for network for user 473 
+[2025-05-27T18:33:04.718Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 62ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"network"} 
+[2025-05-27T18:33:07.306Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 473 
+[2025-05-27T18:33:07.306Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-27T18:33:07.306Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-27T18:33:07.306Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: network (raw: network), user: 473 
+[2025-05-27T18:33:07.390Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for network for user 473 
+[2025-05-27T18:33:07.424Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 118ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-27T18:33:07.607Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 473 
+[2025-05-27T18:33:07.607Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-27T18:33:07.607Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-27T18:33:07.607Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 473 
+[2025-05-27T18:33:07.669Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 473: completed=false, step=0 
+[2025-05-27T18:33:07.700Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 94ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-27T18:... 
+[2025-05-27T18:33:10.642Z] [INFO] [WebSocket] Received message from client client-1748370690522-h8ow6rj {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T18:33:10.547Z","connectionId":"ws_1748370689023_7oyugslvt"}
