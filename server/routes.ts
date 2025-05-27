@@ -2099,6 +2099,89 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         })
         .where(eq(invitations.id, invitation.id));
 
+      // ========================================
+      // NEW DATA RECIPIENT TASK ASSIGNMENT
+      // ========================================
+      
+      /**
+       * For New Data Recipient companies (demo companies with pending accreditation),
+       * automatically create the three standard company tasks after account setup.
+       * This provides the authentic "new company" experience with task progression.
+       */
+      try {
+        // Get the company details to check if this is a New Data Recipient
+        const [companyDetails] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, existingUser.company_id))
+          .limit(1);
+
+        if (companyDetails) {
+          const isNewDataRecipient = 
+            companyDetails.is_demo === true && 
+            companyDetails.accreditation_status === 'PENDING';
+
+          console.log('[Account Setup] Company task assignment check:', {
+            companyId: companyDetails.id,
+            companyName: companyDetails.name,
+            isDemo: companyDetails.is_demo,
+            accreditationStatus: companyDetails.accreditation_status,
+            isNewDataRecipient: isNewDataRecipient
+          });
+
+          if (isNewDataRecipient) {
+            console.log('[Account Setup] 🎯 Creating company tasks for New Data Recipient:', companyDetails.name);
+
+            // Import the task creation service function inline to avoid dependency issues
+            const { createCompany: createCompanyWithTasks } = await import('./services/company');
+
+            // Prepare company data for task creation service
+            const companyDataForTasks = {
+              id: companyDetails.id,
+              name: companyDetails.name,
+              category: companyDetails.category,
+              is_demo: companyDetails.is_demo,
+              accreditation_status: companyDetails.accreditation_status,
+              available_tabs: companyDetails.available_tabs,
+              metadata: {
+                created_via: 'demo_account_setup',
+                created_by_id: updatedUser.id,
+                persona: 'new-data-recipient',
+                demo_creation: true,
+                task_assignment_enabled: true,
+                setup_timestamp: new Date().toISOString()
+              }
+            };
+
+            try {
+              // Use the same service that FinTech invites use to create tasks
+              const companyWithTasks = await createCompanyWithTasks(companyDataForTasks);
+
+              console.log('[Account Setup] ✅ Successfully created company tasks:', {
+                companyId: companyWithTasks.id,
+                companyName: companyWithTasks.name,
+                kybTaskId: companyWithTasks.kyb_task_id,
+                ky3pTaskId: companyWithTasks.security_task_id,
+                openBankingTaskId: companyWithTasks.card_task_id,
+                taskTypes: ['KYB', 'KY3P', 'Open Banking']
+              });
+
+            } catch (taskError) {
+              // Log the error but don't fail the account setup
+              console.error('[Account Setup] ⚠️ Failed to create company tasks (non-critical):', {
+                error: taskError.message,
+                companyId: companyDetails.id,
+                companyName: companyDetails.name
+              });
+            }
+          } else {
+            console.log('[Account Setup] 📋 Skipping task creation (not a New Data Recipient company)');
+          }
+        }
+      } catch (companyCheckError) {
+        // Log the error but don't fail the account setup
+        console.error('[Account Setup] ⚠️ Error checking company for task assignment (non-critical):', companyCheckError.message);
+      }
+
       // Log the user in - wrap req.login in a Promise for proper async/await handling
       await new Promise<void>((resolve, reject) => {
         req.login(updatedUser, (err) => {
