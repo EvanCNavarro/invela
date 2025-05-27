@@ -1599,6 +1599,11 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
           companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
           ...(selectedPersona?.id === 'accredited-data-recipient' && {
             riskProfile: formData?.riskProfile
+          }),
+          ...(selectedPersona?.id === 'data-provider' && {
+            metadata: {
+              networkSize: formData?.networkSize || 25 // Default to 25 FinTechs if not specified
+            }
           })
         },
         estimatedDuration: 2000,
