@@ -581,8 +581,38 @@ router.post('/demo/company/create', async (req, res) => {
     console.log('[DemoAPI] Input validation passed successfully');
     console.log('[DemoAPI] Extracted and validated fields:', { name, type, persona, companySize, riskProfile: `${riskProfile} → ${numericRiskProfile}` });
 
-    // IMMEDIATE ENTERPRISE CHECK - MUST BE FIRST
-    if (companySize === 'extra-large') {
+    // ========================================
+    // PERSONA-DRIVEN LOGIC - MUST BE FIRST
+    // ========================================
+    console.log(`[DemoAPI] 🎭 Processing persona: ${persona}`);
+    
+    // For Data Provider (Bank) personas, randomize company size and create network
+    let finalCompanySize = companySize;
+    let finalMetadata = metadata;
+    
+    if (persona === 'data-provider') {
+      console.log('[DemoAPI] 🏦 Data Provider (Bank) detected - applying bank-specific logic');
+      
+      // Randomize company size for realistic bank variations
+      const bankSizes = ['small', 'medium', 'large', 'extra-large'] as const;
+      const randomSize = bankSizes[Math.floor(Math.random() * bankSizes.length)];
+      finalCompanySize = randomSize;
+      
+      console.log(`[DemoAPI] 🎲 Randomized bank size: ${finalCompanySize}`);
+      
+      // Banks don't get risk-assessed (they do the assessing)
+      console.log('[DemoAPI] 🚫 Skipping risk assessment for Data Provider bank');
+      
+      // Randomize network size if not provided
+      if (!finalMetadata?.networkSize) {
+        const networkSize = Math.floor(Math.random() * 11) + 5; // 5-15 companies
+        finalMetadata = { ...finalMetadata, networkSize };
+        console.log(`[DemoAPI] 🌐 Randomized network size: ${networkSize} FinTech partners`);
+      }
+    }
+
+    // SIZE-BASED ENTERPRISE FEATURES (respects persona)
+    if (finalCompanySize === 'extra-large') {
       console.log('[DemoAPI] ✅ IMMEDIATE ENTERPRISE DETECTION - CREATING LARGE ENTERPRISE');
       
       // Broadcast start event
@@ -639,7 +669,12 @@ router.post('/demo/company/create', async (req, res) => {
       let riskClusters = null;
       let finalRiskScore = null;
       
-      if (requiresRiskProfile && numericRiskProfile) {
+      // Data Provider banks NEVER get risk scores (they assess others)
+      if (persona === 'data-provider') {
+        console.log(`[DemoAPI] 🏦 Data Provider bank - NO risk assessment applied`);
+        riskClusters = null;
+        finalRiskScore = null;
+      } else if (requiresRiskProfile && numericRiskProfile) {
         riskClusters = generateRiskClusters(numericRiskProfile);
         finalRiskScore = numericRiskProfile;
         console.log(`[DemoAPI] Generated risk clusters for ${persona} that sum to ${numericRiskProfile}:`, JSON.stringify(riskClusters));
@@ -1503,10 +1538,11 @@ router.post('/demo/company/create', async (req, res) => {
         console.log(`[DemoAPI] 🔍 Network creation check:`, {
           persona: persona,
           isDataProvider: persona === 'data-provider',
-          metadata: metadata,
-          hasNetworkSize: metadata?.networkSize,
-          networkSizeValue: metadata?.networkSize,
-          conditionMet: persona === 'data-provider' && metadata?.networkSize
+          originalMetadata: metadata,
+          finalMetadata: finalMetadata,
+          hasNetworkSize: finalMetadata?.networkSize,
+          networkSizeValue: finalMetadata?.networkSize,
+          conditionMet: persona === 'data-provider' && finalMetadata?.networkSize
         });
         
         /**
@@ -1514,8 +1550,8 @@ router.post('/demo/company/create', async (req, res) => {
          * with a specified number of FinTech companies based on the networkSize parameter.
          * This provides banks with an instant, realistic network to manage.
          */
-        if (persona === 'data-provider' && metadata?.networkSize) {
-          console.log(`[DemoAPI] 🏦 Creating bank network with ${metadata.networkSize} FinTech partners...`);
+        if (persona === 'data-provider' && finalMetadata?.networkSize) {
+          console.log(`[DemoAPI] 🏦 Creating bank network with ${finalMetadata.networkSize} FinTech partners...`);
           
           try {
             // Get available FinTech companies (APPROVED and PENDING for comprehensive bank networks)
@@ -1531,12 +1567,12 @@ router.post('/demo/company/create', async (req, res) => {
                 eq(companies.demo_cleanup_eligible, false)
               )
             )
-            .limit(metadata.networkSize);
+            .limit(finalMetadata.networkSize);
             
             console.log(`[DemoAPI] Found ${availableFinTechs.length} FinTech companies (APPROVED and PENDING) for network creation`);
             
-            if (availableFinTechs.length < metadata.networkSize) {
-              console.log(`[DemoAPI] ⚠️ Requested ${metadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
+            if (availableFinTechs.length < finalMetadata.networkSize) {
+              console.log(`[DemoAPI] ⚠️ Requested ${finalMetadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
             }
             
             // Create network relationships with proper error handling and logging
@@ -1552,7 +1588,7 @@ router.post('/demo/company/create', async (req, res) => {
                 auto_created: true,
                 bank_name: company.name,
                 fintech_name: fintech.name,
-                network_size: metadata.networkSize,
+                network_size: finalMetadata.networkSize,
                 creation_date: new Date().toISOString(),
                 demo_relationship: true
               }
