@@ -2374,14 +2374,6 @@ router.get('/demo/generate-company-name', async (req, res) => {
 // ========================================
 
 export default router;
-  const startTime = Date.now();
-  
-  try {
-    console.log('[DemoAPI] [EmailInvite] Starting email invitation process');
-    
-    // ========================================
-    // INPUT VALIDATION & EXTRACTION
-    // ========================================
     
     const { userEmail, userName, companyName, loginCredentials } = req.body;
     
