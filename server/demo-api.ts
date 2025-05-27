@@ -1400,8 +1400,16 @@ router.post('/demo/company/create', async (req, res) => {
         console.log(`[DemoAPI] ✅ Company creation completed: "${finalName}" with ID ${company.id}`);
         
         // ========================================
-        // DATA PROVIDER NETWORK CREATION
+        // DATA PROVIDER NETWORK CREATION DIAGNOSTICS
         // ========================================
+        console.log(`[DemoAPI] 🔍 Network creation check:`, {
+          persona: persona,
+          isDataProvider: persona === 'data-provider',
+          metadata: metadata,
+          hasNetworkSize: metadata?.networkSize,
+          networkSizeValue: metadata?.networkSize,
+          conditionMet: persona === 'data-provider' && metadata?.networkSize
+        });
         
         /**
          * For Data Provider (Bank Admin) personas, automatically create network relationships
