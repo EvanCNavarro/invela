@@ -4272,6 +4272,91 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
+  // ========================================
+  // FINTECH COMPANY GENERATION ENDPOINTS
+  // ========================================
+
+  // Generate custom number of FinTech companies
+  app.post("/api/generate-fintech-companies", requireAuth, async (req, res) => {
+    try {
+      const { count = 100 } = req.body;
+      
+      // Validate count parameter
+      if (!Number.isInteger(count) || count < 1 || count > 1000) {
+        return res.status(400).json({
+          message: "Count must be an integer between 1 and 1000",
+          error: "INVALID_COUNT"
+        });
+      }
+
+      console.log(`[FinTechGenerator] Starting generation of ${count} companies via API`);
+      
+      // Import and run the generator
+      const { generateFinTechCompanies } = await import('./utils/fintech-company-generator');
+      await generateFinTechCompanies(count);
+      
+      res.json({
+        message: `Successfully generated ${count} FinTech companies`,
+        count,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] API generation failed:', error);
+      res.status(500).json({
+        message: "Failed to generate FinTech companies",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Test with a single company first
+  app.post("/api/test-fintech-generation", requireAuth, async (req, res) => {
+    try {
+      console.log('[FinTechGenerator] Testing with single company generation');
+      
+      // Import and run the test
+      const { testSingleCompanyGeneration } = await import('./utils/test-single-company');
+      await testSingleCompanyGeneration();
+      
+      res.json({
+        message: "Successfully generated and validated 1 test FinTech company",
+        count: 1,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] Test generation failed:', error);
+      res.status(500).json({
+        message: "Failed to generate test company",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Validate generation results
+  app.get("/api/validate-fintech-generation", requireAuth, async (req, res) => {
+    try {
+      console.log('[FinTechGenerator] Validating generation results');
+      
+      // Import and run validation
+      const { validateGeneration } = await import('./utils/fintech-company-generator');
+      await validateGeneration();
+      
+      res.json({
+        message: "Generation validation completed successfully",
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] Validation failed:', error);
+      res.status(500).json({
+        message: "Failed to validate generation",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   return app;
 }
 
