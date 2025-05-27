@@ -462,6 +462,37 @@ router.post('/demo/company/create', async (req, res) => {
   
   try {
     const { name, type, persona, riskProfile, companySize, metadata } = req.body;
+    
+    // ========================================
+    // RISK PROFILE CONVERSION FOR DATABASE COMPATIBILITY
+    // ========================================
+    
+    /**
+     * Convert string risk profiles to numeric values for database insertion.
+     * This ensures compatibility with the database schema which expects integer values.
+     */
+    const convertRiskProfileToNumber = (profile: any): number => {
+      if (typeof profile === 'number') {
+        return profile;
+      }
+      
+      const riskMapping: Record<string, number> = {
+        'low': 25,
+        'medium': 65,
+        'high': 85
+      };
+      
+      if (typeof profile === 'string' && riskMapping[profile.toLowerCase()]) {
+        console.log(`[DemoAPI] 🔄 Converting risk profile "${profile}" to numeric value: ${riskMapping[profile.toLowerCase()]}`);
+        return riskMapping[profile.toLowerCase()];
+      }
+      
+      // Default to medium risk if unrecognized
+      console.log(`[DemoAPI] ⚠️ Unrecognized risk profile "${profile}", defaulting to medium (65)`);
+      return 65;
+    };
+    
+    const numericRiskProfile = convertRiskProfileToNumber(riskProfile);
 
     // ========================================
     // DEMO SESSION CREATION & TRACKING
@@ -527,7 +558,7 @@ router.post('/demo/company/create', async (req, res) => {
     }
 
     console.log('[DemoAPI] Input validation passed successfully');
-    console.log('[DemoAPI] Extracted and validated fields:', { name, type, persona, companySize, riskProfile });
+    console.log('[DemoAPI] Extracted and validated fields:', { name, type, persona, companySize, riskProfile: `${riskProfile} → ${numericRiskProfile}` });
 
     // IMMEDIATE ENTERPRISE CHECK - MUST BE FIRST
     if (companySize === 'extra-large') {
@@ -603,7 +634,7 @@ router.post('/demo/company/create', async (req, res) => {
         investors: "Institutional Investors",
         certifications_compliance: "SOC 2 Type II, ISO 27001",
         incorporation_year: new Date().getFullYear() - Math.floor(Math.random() * 10) - 5,
-        risk_score: riskProfile || Math.floor(Math.random() * 40) + 60
+        risk_score: numericRiskProfile || Math.floor(Math.random() * 40) + 60
       };
       
       console.log('[DemoAPI] Company data prepared:', JSON.stringify(companyData, null, 2));
@@ -806,7 +837,7 @@ router.post('/demo/company/create', async (req, res) => {
       
       // Only generate risk data for accredited (APPROVED) personas
       if (accreditationStatus === 'APPROVED') {
-        finalRiskScore = riskProfile || Math.floor(Math.random() * 40) + 60;
+        finalRiskScore = numericRiskProfile || Math.floor(Math.random() * 40) + 60;
         riskClusters = generateRiskClusters(finalRiskScore);
         onboardingCompleted = true;
         console.log(`[DemoAPI] ✅ Generated risk data for APPROVED persona ${persona}: Score ${finalRiskScore}`);
