@@ -22,6 +22,7 @@ import { DemoSessionService } from './services/demo-session-service';
 import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/company-name-utils';
 import { logDemoOperation } from './utils/demo-helpers';
 import { emailService } from './services/email';
+import { createCompany as createCompanyWithTasks } from './services/company';
 
 const router = Router();
 
@@ -1294,20 +1295,100 @@ router.post('/demo/company/create', async (req, res) => {
 
     console.log('[DemoAPI] Final insert values:', JSON.stringify(insertValues, null, 2));
     
-    // BULLETPROOF DUPLICATE PROTECTION: Try insert with automatic unique name generation
+    // ========================================
+    // ENHANCED COMPANY CREATION WITH TASK ASSIGNMENT
+    // ========================================
+    
+    /**
+     * For New Data Recipient personas, we use the same company creation service
+     * that FinTech invites use, which automatically creates the three standard tasks:
+     * 1. KYB (Know Your Business) - Unlocked and ready to start
+     * 2. KY3P (S&P Security Assessment) - Locked until KYB completion
+     * 3. Open Banking Survey - Locked until KY3P completion
+     * 
+     * This provides an authentic "new company" experience with proper task progression.
+     */
+    
     let company;
     let finalName = insertValues.name;
     let attempt = 0;
     const maxAttempts = 5;
+    
+    // Determine if this persona should get standard company tasks
+    const shouldCreateTasks = persona === 'new-data-recipient';
+    
+    console.log('[DemoAPI] Company creation strategy:', {
+      persona: persona,
+      shouldCreateTasks: shouldCreateTasks,
+      strategy: shouldCreateTasks ? 'Use task-enabled service (like FinTech invites)' : 'Direct database insert'
+    });
     
     while (attempt < maxAttempts) {
       try {
         console.log(`[DemoAPI] Attempting company creation with name: "${finalName}" (attempt ${attempt + 1})`);
         
         const insertData = { ...insertValues, name: finalName };
-        company = await db.insert(companies).values(insertData).returning().then(rows => rows[0]);
         
-        console.log(`[DemoAPI] ✅ Company created successfully: "${finalName}" with ID ${company.id}`);
+        if (shouldCreateTasks) {
+          // ========================================
+          // NEW DATA RECIPIENT: USE TASK-ENABLED CREATION
+          // ========================================
+          
+          console.log('[DemoAPI] 🎯 Creating New Data Recipient company with standard tasks (KYB, KY3P, Open Banking)');
+          
+          // Add metadata for task creation service
+          const companyDataWithMetadata = {
+            ...insertData,
+            metadata: {
+              created_via: 'demo_new_data_recipient',
+              created_by_id: 1, // System user for demo creation
+              persona: persona,
+              demo_creation: true,
+              task_assignment_enabled: true
+            }
+          };
+          
+          // Use the same service that FinTech invites use - this automatically creates tasks
+          const createdCompanyWithTasks = await createCompanyWithTasks(companyDataWithMetadata);
+          
+          // Extract the company data (the service returns additional task IDs)
+          company = {
+            id: createdCompanyWithTasks.id,
+            name: createdCompanyWithTasks.name,
+            category: createdCompanyWithTasks.category,
+            is_demo: createdCompanyWithTasks.is_demo,
+            accreditation_status: createdCompanyWithTasks.accreditation_status,
+            available_tabs: createdCompanyWithTasks.available_tabs,
+            risk_score: createdCompanyWithTasks.risk_score,
+            chosen_score: createdCompanyWithTasks.chosen_score,
+            revenue_tier: createdCompanyWithTasks.revenue_tier
+          };
+          
+          console.log('[DemoAPI] ✅ New Data Recipient company created with tasks:', {
+            companyId: company.id,
+            companyName: company.name,
+            kybTaskId: createdCompanyWithTasks.kyb_task_id,
+            ky3pTaskId: createdCompanyWithTasks.security_task_id,
+            openBankingTaskId: createdCompanyWithTasks.card_task_id,
+            tasksCreated: true
+          });
+          
+        } else {
+          // ========================================
+          // OTHER PERSONAS: DIRECT DATABASE INSERT (NO TASKS)
+          // ========================================
+          
+          console.log('[DemoAPI] 📋 Creating company without tasks (non-New Data Recipient persona)');
+          company = await db.insert(companies).values(insertData).returning().then(rows => rows[0]);
+          
+          console.log('[DemoAPI] ✅ Company created without tasks:', {
+            companyId: company.id,
+            companyName: company.name,
+            tasksCreated: false
+          });
+        }
+        
+        console.log(`[DemoAPI] ✅ Company creation completed: "${finalName}" with ID ${company.id}`);
         break;
         
       } catch (error: any) {
@@ -1329,31 +1410,69 @@ router.post('/demo/company/create', async (req, res) => {
           }
         } else {
           // Different error - rethrow
-          console.error('[DemoAPI] Company creation error:', error);
+          console.error('[DemoAPI] Company creation error:', {
+            error: error.message,
+            persona: persona,
+            shouldCreateTasks: shouldCreateTasks,
+            attempt: attempt + 1
+          });
           throw error;
         }
       }
     }
 
-    // Broadcast completion event
+    // ========================================
+    // COMPLETION LOGGING AND BROADCASTING
+    // ========================================
+    
+    /**
+     * Log comprehensive task assignment results for monitoring and debugging
+     */
+    console.log('[DemoAPI] 📊 Company creation summary:', {
+      companyId: company.id,
+      companyName: company.name,
+      persona: persona,
+      tasksCreated: shouldCreateTasks,
+      taskTypes: shouldCreateTasks ? ['KYB', 'KY3P', 'Open Banking'] : [],
+      accreditationStatus: company.accreditation_status,
+      availableTabs: company.available_tabs,
+      isDemo: company.is_demo,
+      creationMethod: shouldCreateTasks ? 'createCompanyWithTasks service' : 'direct database insert',
+      timestamp: new Date().toISOString()
+    });
+
+    // Broadcast completion event with task assignment details
     broadcastMessage('demo_action_complete', {
       actionId: 'create-company',
-      actionName: `Creating "${name}" organization`,
+      actionName: `Creating "${company.name}" organization`,
       success: true,
       result: {
         companyId: company.id,
-        companyName: company.name
+        companyName: company.name,
+        persona: persona,
+        tasksAssigned: shouldCreateTasks,
+        taskCount: shouldCreateTasks ? 3 : 0,
+        expectedUserExperience: shouldCreateTasks ? 
+          'New Data Recipient: Will see task-center with KYB, KY3P, and Open Banking tasks' :
+          'Other personas: Will see full dashboard access'
       },
       timestamp: new Date().toISOString()
     });
 
+    /**
+     * Return comprehensive response with task assignment information
+     * This helps the frontend understand what user experience to expect
+     */
     res.json({
       success: true,
       companyId: company.id,
       companyData: {
         name: company.name,
         type,
-        persona
+        persona,
+        tasksAssigned: shouldCreateTasks,
+        accreditationStatus: company.accreditation_status,
+        expectedTabs: shouldCreateTasks ? ['task-center'] : ['dashboard', 'risk-assessment', 'compliance']
       },
       timestamp: new Date().toISOString()
     });
