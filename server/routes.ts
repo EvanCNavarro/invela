@@ -2926,10 +2926,53 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         timestamp: new Date().toISOString()
       });
       
+      // ========================================
+      // CHECK FOR NEW DATA RECIPIENT DEMO USERS
+      // ========================================
+      
+      // Get current user data to check demo persona type
+      const [currentUser] = await db.select()
+        .from(users)
+        .where(eq(users.id, userId));
+        
+      if (!currentUser) {
+        return res.status(404).json({ 
+          message: "User not found",
+          error: `User ${userId} does not exist` 
+        });
+      }
+      
+      // Check if this is a New Data Recipient demo user who should NOT complete onboarding
+      const isNewDataRecipientDemo = currentUser.is_demo_user && 
+                                    currentUser.demo_persona_type === 'new-data-recipient';
+      
+      if (isNewDataRecipientDemo) {
+        console.log('[Complete Onboarding] BLOCKED: New Data Recipient demo users should not complete onboarding:', {
+          userId: userId,
+          demoPersonaType: currentUser.demo_persona_type,
+          isDemoUser: currentUser.is_demo_user,
+          reason: 'New Data Recipients must show onboarding modal for authentic persona experience'
+        });
+        
+        // Return success but don't actually update the onboarding status
+        return res.json({
+          message: "Onboarding completion blocked for New Data Recipient persona",
+          success: true,
+          blocked: true,
+          reason: "New Data Recipients maintain pending onboarding status for authentic demo experience",
+          user: {
+            id: currentUser.id,
+            email: currentUser.email,
+            onboarding_user_completed: currentUser.onboarding_user_completed // Keep original status
+          },
+          elapsedMs: Date.now() - startTime
+        });
+      }
+      
       // Variable to store updated user data
       let updatedUserData = null;
       
-      // Use transaction to update the user record
+      // Use transaction to update the user record (only for non-New Data Recipient personas)
       await db.transaction(async (tx) => {
         // Update the user record to mark onboarding as completed
         const [updatedUser] = await tx.update(users)
