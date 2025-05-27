@@ -45,7 +45,7 @@ export const emailSchema = z.string().email("Invalid email address");
 export const sendEmailSchema = z.object({
   to: emailSchema,
   from: emailSchema,
-  template: z.enum(['user_invite', 'fintech_invite']),
+  template: z.enum(['user_invite', 'fintech_invite', 'demo_invite']),
   templateData: templateDataSchema,
 });
 
