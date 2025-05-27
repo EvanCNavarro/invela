@@ -400,6 +400,9 @@ interface DemoCustomizationForm {
   riskProfileControl: 'random' | 'custom';
   // Company Size field - specific to Accredited Data Recipients
   companySize: 'small' | 'medium' | 'large';
+  // Network Size field - specific to Data Provider (Bank Admin)
+  networkSize: number;
+  networkSizeControl: 'random' | 'custom';
 }
 
 /**
@@ -555,7 +558,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       isDemoCompany: true,       // Default to on as specified
       riskProfile: randomRiskProfile,
       riskProfileControl: 'random' as 'random' | 'custom',
-      companySize: 'medium' as const // Default company size for accredited recipients
+      companySize: 'medium' as const, // Default company size for accredited recipients
+      networkSize: Math.floor(Math.random() * (100 - 5 + 1)) + 5, // Random between 5-100 FinTechs
+      networkSizeControl: 'random' as 'random' | 'custom'
     };
     
     // Immediately notify parent of initial form data
@@ -722,7 +727,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
    * Generates new random values for specified fields
    * Updates form state with fresh random data and triggers validation
    */
-  function generateRandomValues(fields: Array<'companyName' | 'userFullName' | 'riskProfile'>): void {
+  function generateRandomValues(fields: Array<'companyName' | 'userFullName' | 'riskProfile' | 'networkSize'>): void {
     console.log(`[DemoStep2] Generating random values for fields:`, fields);
     const updates: Partial<DemoCustomizationForm> = {};
     
@@ -746,6 +751,12 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       // Generate random risk score between 0-100
       updates.riskProfile = Math.floor(Math.random() * 101);
       console.log(`[DemoStep2] Generated random risk profile: ${updates.riskProfile}`);
+    }
+    
+    if (fields.includes('networkSize')) {
+      // Generate random network size between 5-86 FinTechs
+      updates.networkSize = Math.floor(Math.random() * (86 - 5 + 1)) + 5;
+      console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} FinTechs`);
     }
     
     setFormData(prev => {
@@ -776,7 +787,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     emailInvite: ['new-data-recipient', 'accredited-data-recipient', 'data-provider', 'invela-admin'],
     demoCompany: ['new-data-recipient'],  // Removed accredited-data-recipient
     riskProfile: ['accredited-data-recipient'],  // Risk assessment exclusive to advanced data recipients
-    companySize: ['accredited-data-recipient']   // Company size selection for accredited recipients
+    companySize: ['accredited-data-recipient'],   // Company size selection for accredited recipients
+    networkSize: ['data-provider']  // Bank network size selection for Data Provider banks
   };
 
   /**
@@ -1450,7 +1462,56 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                 </div>
               )}
               
-              {/* 7. Email Invite Toggle */}
+              {/* 7. Network Size Selection - Data Provider Banks Only */}
+              {shouldShowField('networkSize') && (
+                <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors min-h-[64px]">
+                  <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Network Size</span>
+                    <ValidationIcon status="valid" />
+                  </div>
+                  <div className="col-span-8 flex items-center space-x-2">
+                    {/* Network Size Slider */}
+                    <div className="flex-1 h-[32px] flex items-center px-3">
+                      <input
+                        type="range"
+                        min="5"
+                        max="86"
+                        value={formData.networkSize}
+                        onChange={(e) => handleFieldChange('networkSize', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((formData.networkSize - 5) / (86 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (86 - 5)) * 100}%, #e5e7eb 100%)`
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Value Display */}
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-700 min-w-[60px] text-center">
+                        {formData.networkSize} FinTechs
+                      </span>
+                      
+                      {/* Shuffle Button */}
+                      <button
+                        type="button"
+                        onClick={() => generateRandomValues(['networkSize'])}
+                        className="px-2 py-2 h-[32px] border border-gray-300 rounded bg-white hover:bg-green-50 text-gray-500 hover:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 flex-shrink-0"
+                      >
+                        <Shuffle className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Helper text */}
+                  <div className="col-span-12 px-6 pb-2">
+                    <p className="text-xs text-gray-500 italic">
+                      Number of FinTech partners to include in your bank's network. More partners provide richer insights but require more management.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* 8. Email Invite Toggle */}
               {shouldShowPersonaSpecificField('emailInvite') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                   <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
