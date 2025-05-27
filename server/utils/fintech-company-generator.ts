@@ -306,78 +306,85 @@ function generateFinTechCompany(index: number, isApproved: boolean): FinTechComp
 // ========================================
 
 /**
- * Generates 100 FinTech companies and inserts them into database
+ * Generates specified number of FinTech companies and inserts them into database
  */
-export async function generateFinTechCompanies(): Promise<void> {
-  console.log('[FinTechGenerator] Starting generation of 100 FinTech companies...');
+export async function generateFinTechCompanies(count: number = 100): Promise<void> {
+  console.log(`[FinTechGenerator] Starting generation of ${count} FinTech companies...`);
   
   try {
     // ========================================
     // PHASE 1: GENERATE COMPANY DATA (20%)
     // ========================================
     
-    logProgress({ current: 0, total: 100, phase: 'Generating company data structures', percentage: 5 });
+    logProgress({ current: 0, total: count, phase: 'Generating company data structures', percentage: 5 });
     
     const companies: FinTechCompany[] = [];
     
-    // Generate 50 approved companies
-    for (let i = 0; i < 50; i++) {
+    // Calculate split between approved and pending (50/50 split)
+    const approvedCount = Math.ceil(count / 2);
+    const pendingCount = count - approvedCount;
+    
+    // Generate approved companies
+    for (let i = 0; i < approvedCount; i++) {
       companies.push(generateFinTechCompany(i, true));
-      if (i % 10 === 0) {
+      if (i % Math.max(1, Math.floor(approvedCount / 5)) === 0) {
         logProgress({ 
           current: i, 
-          total: 50, 
-          phase: 'Generating APPROVED companies', 
-          percentage: 5 + (i / 50) * 10 
+          total: approvedCount, 
+          phase: `Generating APPROVED companies (${i}/${approvedCount})`, 
+          percentage: 5 + (i / count) * 10 
         });
       }
     }
     
-    // Generate 50 pending companies  
-    for (let i = 0; i < 50; i++) {
-      companies.push(generateFinTechCompany(i + 50, false));
-      if (i % 10 === 0) {
+    // Generate pending companies  
+    for (let i = 0; i < pendingCount; i++) {
+      companies.push(generateFinTechCompany(i + approvedCount, false));
+      if (i % Math.max(1, Math.floor(pendingCount / 5)) === 0) {
         logProgress({ 
-          current: i, 
-          total: 50, 
-          phase: 'Generating PENDING companies', 
-          percentage: 15 + (i / 50) * 10 
+          current: approvedCount + i, 
+          total: count, 
+          phase: `Generating PENDING companies (${i}/${pendingCount})`, 
+          percentage: 15 + ((approvedCount + i) / count) * 10 
         });
       }
     }
     
-    logProgress({ current: 100, total: 100, phase: 'Company data generation complete', percentage: 25 });
+    logProgress({ current: count, total: count, phase: 'Company data generation complete', percentage: 25 });
     
     // ========================================
     // PHASE 2: DATABASE INSERTION (50%)
     // ========================================
     
-    logProgress({ current: 0, total: 100, phase: 'Inserting companies into database', percentage: 30 });
+    logProgress({ current: 0, total: count, phase: 'Inserting companies into database', percentage: 30 });
     
     const insertedCompanies = [];
+    const batchSize = Math.min(10, count);
     
-    // Insert companies in batches of 10
-    for (let i = 0; i < companies.length; i += 10) {
-      const batch = companies.slice(i, i + 10);
+    // Insert companies in batches
+    for (let i = 0; i < companies.length; i += batchSize) {
+      const batch = companies.slice(i, i + batchSize);
       
       const batchResults = await db.insert(companiesTable).values(batch).returning({ id: companiesTable.id, name: companiesTable.name });
       insertedCompanies.push(...batchResults);
       
+      const batchNumber = Math.floor(i/batchSize) + 1;
+      const totalBatches = Math.ceil(companies.length / batchSize);
       logProgress({ 
         current: i + batch.length, 
-        total: 100, 
-        phase: `Inserting companies (batch ${Math.floor(i/10) + 1}/10)`, 
-        percentage: 30 + ((i + batch.length) / 100) * 40 
+        total: count, 
+        phase: `Inserting companies (batch ${batchNumber}/${totalBatches})`, 
+        percentage: 30 + ((i + batch.length) / count) * 40 
       });
     }
     
-    logProgress({ current: 100, total: 100, phase: 'Company insertion complete', percentage: 70 });
+    logProgress({ current: count, total: count, phase: 'Company insertion complete', percentage: 70 });
     
     // ========================================
     // PHASE 3: RELATIONSHIP CREATION (25%)
     // ========================================
     
-    logProgress({ current: 0, total: 100, phase: 'Creating network relationships', percentage: 75 });
+    logProgress({ current: 0, total: count, phase: 'Creating network relationships', percentage: 75 });
     
     const relationshipData: NetworkRelationship[] = insertedCompanies.map((company, index) => ({
       company_id: 1, // Invela
@@ -393,15 +400,18 @@ export async function generateFinTechCompanies(): Promise<void> {
     }));
     
     // Insert relationships in batches
-    for (let i = 0; i < relationshipData.length; i += 20) {
-      const batch = relationshipData.slice(i, i + 20);
+    const relationshipBatchSize = Math.min(20, count);
+    for (let i = 0; i < relationshipData.length; i += relationshipBatchSize) {
+      const batch = relationshipData.slice(i, i + relationshipBatchSize);
       await db.insert(relationshipsTable).values(batch);
       
+      const batchNumber = Math.floor(i/relationshipBatchSize) + 1;
+      const totalBatches = Math.ceil(relationshipData.length / relationshipBatchSize);
       logProgress({ 
         current: i + batch.length, 
-        total: 100, 
-        phase: `Creating relationships (batch ${Math.floor(i/20) + 1}/5)`, 
-        percentage: 75 + ((i + batch.length) / 100) * 20 
+        total: count, 
+        phase: `Creating relationships (batch ${batchNumber}/${totalBatches})`, 
+        percentage: 75 + ((i + batch.length) / count) * 20 
       });
     }
     
@@ -409,11 +419,11 @@ export async function generateFinTechCompanies(): Promise<void> {
     // COMPLETION (100%)
     // ========================================
     
-    logProgress({ current: 100, total: 100, phase: 'Generation complete!', percentage: 100 });
+    logProgress({ current: count, total: count, phase: 'Generation complete!', percentage: 100 });
     
-    console.log('[FinTechGenerator] ✅ Successfully generated 100 FinTech companies');
-    console.log(`[FinTechGenerator] - 50 APPROVED companies (risk scores 1-35)`);
-    console.log(`[FinTechGenerator] - 50 PENDING companies (risk scores 65-95)`);
+    console.log(`[FinTechGenerator] ✅ Successfully generated ${count} FinTech companies`);
+    console.log(`[FinTechGenerator] - ${approvedCount} APPROVED companies (risk scores 1-35)`);
+    console.log(`[FinTechGenerator] - ${pendingCount} PENDING companies (risk scores 65-95)`);
     console.log(`[FinTechGenerator] - All companies linked to Invela network`);
     console.log(`[FinTechGenerator] - Company IDs: ${insertedCompanies[0]?.id} - ${insertedCompanies[insertedCompanies.length - 1]?.id}`);
     
