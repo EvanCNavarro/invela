@@ -559,7 +559,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       riskProfile: randomRiskProfile,
       riskProfileControl: 'random' as 'random' | 'custom',
       companySize: 'medium' as const, // Default company size for accredited recipients
-      networkSize: Math.floor(Math.random() * (86 - 5 + 1)) + 5, // Random between 5-86 FinTechs
+      networkSize: Math.floor(Math.random() * (100 - 5 + 1)) + 5, // Random between 5-100 FinTechs
       networkSizeControl: 'random' as 'random' | 'custom'
     };
     
@@ -754,8 +754,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     }
     
     if (fields.includes('networkSize')) {
-      // Generate random network size between 5-86 FinTechs
-      updates.networkSize = Math.floor(Math.random() * (86 - 5 + 1)) + 5;
+      // Generate random network size between 5-100 FinTechs
+      updates.networkSize = Math.floor(Math.random() * (100 - 5 + 1)) + 5;
       console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} FinTechs`);
     }
     
@@ -1475,12 +1475,12 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                       <input
                         type="range"
                         min="5"
-                        max="86"
+                        max="100"
                         value={formData.networkSize}
                         onChange={(e) => handleFieldChange('networkSize', parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((formData.networkSize - 5) / (86 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (86 - 5)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb 100%)`
                         }}
                       />
                     </div>
