@@ -1785,8 +1785,102 @@ router.post('/demo/email/send-invitation', async (req, res) => {
       companyId: companyData.id,
       companyName: companyData.name,
       isDemo: companyData.is_demo,
+      accreditationStatus: companyData.accreditation_status,
+      demoPersona: companyData.demo_persona_type,
       duration: Date.now() - startTime
     });
+
+    // ========================================
+    // NEW DATA RECIPIENT COMPANY TASK CREATION
+    // ========================================
+    
+    /**
+     * For New Data Recipient companies (demo companies with pending accreditation),
+     * automatically create the three standard company tasks using the same service
+     * that FinTech invitations use. This provides the authentic "new company" experience.
+     * 
+     * Task Creation Strategy:
+     * - Mirrors FinTech invitation pattern exactly
+     * - Creates KYB, KY3P, and Open Banking tasks automatically
+     * - Establishes proper task dependency chain
+     * - Uses authentic task creation service, not synthetic data
+     */
+    
+    const isNewDataRecipient = 
+      companyData.is_demo === true && 
+      companyData.accreditation_status === 'PENDING' &&
+      (companyData.demo_persona_type === 'new-data-recipient' || companyData.available_tabs?.includes('task-center'));
+
+    console.log('[DemoAPI] [EmailInvite] Company task assignment evaluation:', {
+      companyId: companyData.id,
+      companyName: companyData.name,
+      isDemo: companyData.is_demo,
+      accreditationStatus: companyData.accreditation_status,
+      demoPersona: companyData.demo_persona_type,
+      availableTabs: companyData.available_tabs,
+      isNewDataRecipient: isNewDataRecipient,
+      willCreateTasks: isNewDataRecipient
+    });
+
+    if (isNewDataRecipient) {
+      console.log('[DemoAPI] [EmailInvite] 🎯 Creating company tasks for New Data Recipient using FinTech pattern');
+      
+      try {
+        // Import the same task creation service that FinTech invites use
+        const { createCompany: createCompanyWithTasks } = await import('./services/company');
+
+        // Prepare company data for task creation service (following FinTech pattern)
+        const companyDataForTasks = {
+          id: companyData.id,
+          name: companyData.name,
+          category: companyData.category,
+          is_demo: companyData.is_demo,
+          accreditation_status: companyData.accreditation_status,
+          available_tabs: companyData.available_tabs,
+          metadata: {
+            created_via: 'demo_email_invite',
+            created_by_id: userData.id,
+            invited_by: userData.id,
+            persona: 'new-data-recipient',
+            demo_creation: true,
+            task_assignment_enabled: true,
+            invitation_code: crypto.randomBytes(3).toString('hex').toUpperCase(),
+            setup_timestamp: new Date().toISOString()
+          }
+        };
+
+        console.log('[DemoAPI] [EmailInvite] Invoking task creation service with company data');
+
+        // Use the same service that FinTech invites use to create tasks
+        const companyWithTasks = await createCompanyWithTasks(companyDataForTasks);
+
+        console.log('[DemoAPI] [EmailInvite] ✅ Successfully created company tasks using FinTech pattern:', {
+          companyId: companyWithTasks.id,
+          companyName: companyWithTasks.name,
+          kybTaskId: companyWithTasks.kyb_task_id,
+          ky3pTaskId: companyWithTasks.security_task_id,
+          openBankingTaskId: companyWithTasks.card_task_id,
+          taskTypes: ['KYB', 'KY3P', 'Open Banking'],
+          taskCreationMethod: 'authentic_fintech_service',
+          duration: Date.now() - startTime
+        });
+
+      } catch (taskError) {
+        // Log the error but don't fail the invitation process
+        console.error('[DemoAPI] [EmailInvite] ⚠️ Failed to create company tasks (non-critical):', {
+          error: taskError.message,
+          errorStack: taskError.stack?.substring(0, 500),
+          companyId: companyData.id,
+          companyName: companyData.name,
+          duration: Date.now() - startTime
+        });
+        
+        // Continue with invitation process despite task creation failure
+        console.log('[DemoAPI] [EmailInvite] Continuing with invitation process despite task creation failure');
+      }
+    } else {
+      console.log('[DemoAPI] [EmailInvite] 📋 Skipping company task creation (not a New Data Recipient persona)');
+    }
 
     // ========================================
     // INVITATION CODE GENERATION
