@@ -4220,6 +4220,53 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
 
   // Removed Storybook static files - using custom component library
 
+  // ========================================
+  // FINTECH COMPANY GENERATION ENDPOINT
+  // ========================================
+  
+  /**
+   * POST /api/generate-fintech-companies
+   * Generates 100 diverse FinTech companies for network selection
+   */
+  app.post('/api/generate-fintech-companies', async (req: Request, res: Response) => {
+    try {
+      console.log('[FinTechGeneration] Starting generation of 100 FinTech companies...');
+      
+      // Import the generator function
+      const { generateFinTechCompanies, validateGeneration } = await import('./utils/fintech-company-generator');
+      
+      // Execute the generation
+      await generateFinTechCompanies();
+      
+      // Validate the results
+      await validateGeneration();
+      
+      console.log('[FinTechGeneration] ✅ Successfully completed generation and validation');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Successfully generated 100 FinTech companies',
+        details: {
+          approved_companies: 50,
+          pending_companies: 50,
+          total_companies: 100,
+          network_relationships_created: true,
+          generation_timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error) {
+      console.error('[FinTechGeneration] ❌ Generation failed:', error);
+      
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate FinTech companies',
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // Demo API routes are now registered early in the process via synchronous import
   // This ensures API endpoints have proper priority over frontend catch-all routes
 
