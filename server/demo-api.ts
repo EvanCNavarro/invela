@@ -1989,9 +1989,6 @@ router.post('/demo/company/create', async (req, res) => {
    * Creates a new user account with proper role and permissions
    */
   async function createDemoUser(req: any, res: any) {
-          // Duplicate name detected - generate unique alternative
-          attempt++;
-          console.log(`[DemoAPI] ⚠️ Duplicate name detected: "${finalName}". Generating unique alternative...`);
           
           // Generate unique name using timestamp and random suffix
           const timestamp = Date.now().toString().slice(-4);
