@@ -1,0 +1,306 @@
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jennifer Morgan", formData: {…}}
+[DemoStep2] Full name validation: valid (15 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jmorgan@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (jmorgan@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jennifer Morgan", formData: {…}}
+[DemoStep2] Full name validation: valid (15 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jmorgan@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (jmorgan@loading.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jennifer Morgan", formData: {…}}
+[DemoStep2] Full name validation: valid (15 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jmorgan@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (jmorgan@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStep2] Field change: networkSize = 7
+[DemoStep2] Form state updated: 
+Object {field: "networkSize", newValue: 7, updatedFormData: {…}}
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jennifer Morgan", formData: {…}}
+[DemoStep2] Full name validation: valid (15 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jmorgan@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (jmorgan@loading.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jennifer Morgan", formData: {…}}
+[DemoStep2] Full name validation: valid (15 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jmorgan@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (jmorgan@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[CompanyNameAPI] Company name generation API failed 
+Object {timestamp: "2025-05-28T12:54:53.257Z", module: "CompanyNameAPI", operation: "Company name generation API failed", error: "signal is aborted without reason", duration: 3001, …}
+
+[DemoStep2] [CompanyName] API failed, using professional fallback: 
+Object {fallbackName: "Summit Technologies mb7y6l3d", error: "Failed to generate company name: signal is aborted without reason", timestamp: "2025-05-28T12:54:53.257Z"}
+DOMException {}
+
+[DemoPage] Going back to step 2
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Auto-generating professional company name on load...
+[DemoStep2] Generating random values for fields: 
+Array ["companyName"]
+[DemoStep2] [CompanyName] Requesting professional name from API...
+[CompanyNameAPI] Starting company name generation request 
+Object {timestamp: "2025-05-28T12:54:53.909Z", module: "CompanyNameAPI", operation: "Starting company name generation request", options: {…}, requestId: "req_1748436893909_24iyvqk5s"}
+[DemoAssetPreloader] Preloading assets for step 3
+[DemoAssetPreloader] Successfully initiated preloading for 1 assets
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Loading...", formData: {…}}
+[DemoStep2] Company name validation: valid (10 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@loading.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@loading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[CompanyNameAPI] Successfully generated unique company name 
+Object {timestamp: "2025-05-28T12:54:54.122Z", module: "CompanyNameAPI", operation: "Successfully generated unique company name", companyName: "Verified Consulting Authorities", wasModified: false, …}
+[DemoStep2] [CompanyName] Successfully generated professional name: 
+Object {companyName: "Verified Consulting Authorities", method: "api_generation", timestamp: "2025-05-28T12:54:54.122Z"}
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Verified Consulting Authorities", formData: {…}}
+[DemoStep2] Company name validation: valid (31 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@verifiedconsultingauthorities.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@verifiedconsultingauthorities.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Verified Consulting Authorities", formData: {…}}
+[DemoStep2] Company name validation: valid (31 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Victoria Mohammed", formData: {…}}
+[DemoStep2] Full name validation: valid (17 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "vmohammed@verifiedconsultingauthorities.com", formData: {…}}
+[DemoStep2] Email validation: valid (vmohammed@verifiedconsultingauthorities.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStep2] Field change: emailInviteEnabled = true
+[DemoStep2] Form state updated: 
+Object {field: "emailInviteEnabled", newValue: true, updatedFormData: {…}}
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
