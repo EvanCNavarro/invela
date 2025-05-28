@@ -428,12 +428,33 @@ router.post('/demo/user/create', async (req, res) => {
     
     const hashedPassword = await bcrypt.hash('demo123', 10);
     
+    // Check company category to determine if onboarding should be auto-completed
+    let shouldCompleteOnboarding = false;
+    if (transformedData.companyId) {
+      const [companyData] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, transformedData.companyId))
+        .limit(1);
+      
+      if (companyData && companyData.is_demo) {
+        // Auto-complete onboarding for all personas except "New Data Recipient"
+        shouldCompleteOnboarding = companyData.category !== 'New Data Recipient';
+        
+        console.log('[DemoAPI] [UserCreate] Onboarding auto-completion check:', {
+          companyCategory: companyData.category,
+          shouldComplete: shouldCompleteOnboarding,
+          userId: 'pending_creation'
+        });
+      }
+    }
+    
     const user = await db.insert(users).values({
       email: transformedData.email,
       full_name: transformedData.fullName,
       password: hashedPassword,
       company_id: transformedData.companyId,
-      is_demo: true
+      is_demo: true,
+      onboarding_user_completed: shouldCompleteOnboarding
     }).returning();
     
     console.log('[DemoAPI] ✅ User created successfully:', {
@@ -441,7 +462,8 @@ router.post('/demo/user/create', async (req, res) => {
       email: user[0].email,
       fullName: user[0].full_name,
       companyId: user[0].company_id,
-      role: transformedData.role
+      role: transformedData.role,
+      onboardingCompleted: user[0].onboarding_user_completed
     });
     
     res.json({ success: true, user: user[0] });
