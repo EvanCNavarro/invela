@@ -374,8 +374,15 @@ export function transformUserData(
       ? transformPersonaValue(payload.persona)
       : payload.persona;
 
-    // Determine role based on persona
-    const role = getPersonaCategory(payload.persona) === 'Bank' ? 'provider' : 'recipient';
+    // Determine role based on persona - New Data Recipients need 'user' role for onboarding modal
+    let role: string;
+    if (payload.persona === 'new-data-recipient') {
+      role = 'user'; // Triggers onboarding modal
+    } else if (getPersonaCategory(payload.persona) === 'Bank') {
+      role = 'provider';
+    } else {
+      role = 'recipient';
+    }
 
     const transformedData: TransformedUserData = {
       fullName: payload.fullName,
