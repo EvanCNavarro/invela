@@ -1,0 +1,239 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T10:41:18.985Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T10:41:18.990Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T10:41:18.990Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T10:41:19.119Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T10:41:19.231Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T10:41:19.231Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T10:41:19.231Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T10:41:19.232Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T10:41:19.232Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T10:41:19.234Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T10:41:19.235Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"kgarwu","timestamp":"2025-05-28T10:41:19.235Z"}
+[2025-05-28T10:41:19.235Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T10:41:19.235Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T10:41:19.235Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T10:41:19.235Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T10:41:19.235Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T10:41:19.235Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T10:41:19.235Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T10:41:19.235Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T10:41:19.235Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T10:41:19.235Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T10:41:19.236Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T10:41:19.237Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T10:41:19.250Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T10:41:19.250Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T10:41:19.250Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T10:41:19.250Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T10:41:19.250Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T10:41:19.250Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T10:41:19.931Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:41:20.584Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T10:41:23.557Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:41:23.639Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:41:29.252Z] [INFO] [App] Running background health checks... 
+[2025-05-28T10:41:29.252Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T10:41:29.252Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T10:41:29.253Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T10:41:29.439Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T10:41:29.469Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T10:41:29.500Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T10:41:29.500Z] [StartupChecks] Database health check passed 
+[2025-05-28T10:41:29.500Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T10:41:29.500Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T10:41:31.415Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748428891415-1mwyh9c","clients":1}
+[2025-05-28T10:41:31.758Z] [INFO] [WebSocket] Received message from client client-1748428891415-1mwyh9c {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T10:41:31.514Z"}}
+[2025-05-28T10:41:31.759Z] [INFO] [WebSocket] Authentication from client client-1748428891415-1mwyh9c {"module":"WebSocket","hasToken":true}
+[2025-05-28T10:41:32.194Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748428892194-2dvlkl1","clients":2}
+[2025-05-28T10:41:32.704Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748428892704-2mh1i2v","clients":3}
+[2025-05-28T10:41:33.223Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748428893223-s353da0","clients":4}
+[2025-05-28T10:41:33.775Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748428893775-s6o2zrk","clients":5}
+[2025-05-28T10:41:34.094Z] [INFO] [WebSocket] Received message from client client-1748428893775-s6o2zrk {"module":"WebSocket","type":"authenticate","userId":"477","companyId":"669","clientId":"ws_1748428891848_9npxgpgqe","timestamp":"2025-05-28T10:41:33.990Z"}
+[2025-05-28T10:41:34.094Z] [INFO] [WebSocket] Authentication from client client-1748428893775-s6o2zrk {"module":"WebSocket","userId":"477","companyId":"669","hasToken":true}
+[2025-05-28T10:41:46.335Z] [INFO] [App] POST /api/demo/company/validate-name 200 in 51ms 
+[2025-05-28T10:41:47.748Z] [INFO] [App] POST /api/demo/company/validate-name 200 in 44ms 
+[2025-05-28T10:41:49.311Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,964,973,969,1001,971,978,981,976]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[2025-05-28T10:41:53.906Z] [INFO] [WebSocket] Received message from client client-1748428893775-s6o2zrk {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:41:53.801Z","connectionId":"ws_1748428891848_9npxgpgqe"}
+[2025-05-28T10:41:55.110Z] [INFO] [App] POST /api/demo/company/validate-name 200 in 41ms 
+[2025-05-28T10:42:01.618Z] [INFO] [WebSocket] Received message from client client-1748428891415-1mwyh9c {"module":"WebSocket","type":"ping"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'MeridianBlue',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 5 }
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T10:42:01.804Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'MeridianBlue',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'MeridianBlue',
+    persona: 'Data Provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T10:42:01.805Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 674,
+  name: 'MeridianBlue',
+  category: 'Bank',
+  transformedPersona: 'Data Provider',
+  shouldCreateNetwork: true
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: { bankId: 674, bankName: 'MeridianBlue', targetNetworkSize: 5 }
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'MeridianBlue',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '674-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'MeridianBlue',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '674-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'MeridianBlue',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '674-334'
+}
+[DemoAPI] ✅ Relationship created: { bank: 'MeridianBlue', fintech: 'Finloft', relationshipId: '674-9' }
+[DemoAPI] ✅ Relationship created: {
+  bank: 'MeridianBlue',
+  fintech: 'Wealthfront',
+  relationshipId: '674-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'MeridianBlue',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[2025-05-28T10:42:02.094Z] [INFO] [App] POST /api/demo/company/create 200 in 293ms :: {"success":true,"company":{"id":674,"name":"MeridianBlue","description":null,... 
+[2025-05-28T10:42:02.829Z] [INFO] [WebSocket] Received message from client client-1748428892704-2mh1i2v {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:42:02.725Z","connectionId":"ws_1748428892724_wr9yzhurz"}
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Hannah Wright',
+  email: 'hwright@meridianblue.com',
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748428920256_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T10:42:00.256Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: undefined,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: undefined
+}
+[DemoTransformer] ❌ user transformation failed: {
+  type: 'user',
+  input: {
+    fullName: 'Hannah Wright',
+    email: 'hwright@meridianblue.com',
+    role: 'provider',
+    persona: 'data-provider',
+    demoSessionId: 'demo_1748428920256_data-provider',
+    metadata: {
+      createdViaDemo: true,
+      persona: 'data-provider',
+      setupTimestamp: '2025-05-28T10:42:00.256Z',
+      demoType: 'interactive_demo'
+    }
+  },
+  error: 'Invalid companyId format: undefined',
+  availablePersonas: [
+    'data-provider',
+    'new-data-recipient',
+    'accredited-data-recipient',
+    'invela-admin'
+  ],
+  timestamp: '2025-05-28T10:42:02.858Z'
+}
+[DemoAPI] ❌ User creation failed: Error: Invalid companyId format: undefined
+    at transformUserData (/home/runner/workspace/server/utils/demo-data-transformer.ts:368:13)
+    at <anonymous> (/home/runner/workspace/server/demo-api.ts:145:29)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/workspace/server/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/server/node_modules/express/lib/router/index.js:175:3)
+[2025-05-28T10:42:02.894Z] [ERROR] [App] POST /api/demo/user/create 500 in 37ms :: {"success":false,"error":"Invalid companyId format: undefined"} 
+[2025-05-28T10:42:03.348Z] [INFO] [WebSocket] Received message from client client-1748428893223-s353da0 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:42:03.247Z","connectionId":"ws_1748428892214_nn27yak2a"}
+[2025-05-28T10:42:13.906Z] [INFO] [WebSocket] Received message from client client-1748428893775-s6o2zrk {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:42:13.800Z","connectionId":"ws_1748428891848_9npxgpgqe"}
