@@ -751,43 +751,22 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     const updates: Partial<DemoCustomizationForm> = {};
     
     if (fields.includes('companyName')) {
-      // Generate professional company name using advanced API system
       try {
-        console.log('[DemoStep2] [CompanyName] Requesting professional name from API...');
-        
         const professionalName = await generateUniqueCompanyName({
-          fallbackToTimestamp: false,
+          fallbackToTimestamp: true,
           maxRetries: 2,
           timeoutMs: 3000,
           logLevel: 'info'
         });
         
         updates.companyName = professionalName;
-        
-        // Track this as an API-generated name to skip redundant validation
         setApiGeneratedNames(prev => new Set(prev).add(professionalName));
         
-        console.log('[DemoStep2] [CompanyName] Successfully generated professional name:', {
-          companyName: professionalName,
-          method: 'api_generation',
-          timestamp: new Date().toISOString()
-        });
+        console.log('[DemoStep2] [CompanyName] Generated:', professionalName);
         
       } catch (error) {
-        // Emergency fallback with professional base names instead of "Demo Company"
-        const emergencyNames = [
-          'Apex Solutions', 'Summit Technologies', 'Pinnacle Group', 
-          'Meridian Partners', 'Quantum Analytics', 'Sterling Ventures'
-        ];
-        const baseName = emergencyNames[Math.floor(Math.random() * emergencyNames.length)];
-        const uniqueId = Date.now().toString(36);
-        updates.companyName = `${baseName} ${uniqueId}`;
-        
-        console.warn('[DemoStep2] [CompanyName] API failed, using professional fallback:', {
-          fallbackName: updates.companyName,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        });
+        console.error('[DemoStep2] [CompanyName] Generation failed:', error instanceof Error ? error.message : 'Unknown error');
+        throw error; // Let the service handle fallbacks
       }
     }
     
@@ -1031,8 +1010,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
           companyName: result.companyName,
         }));
 
-        // Also force immediate synchronization for Step 3 submission
-        window.validatedCompanyName = result.companyName;
+        // Sync validated name for Step 3 submission
+        console.log('[DemoStep2] Company name validated and synced:', result.companyName);
 
         setNameValidationState({
           isValidating: false,
@@ -2001,7 +1980,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       } catch (apiError) {
         // NO MORE SIMULATIONS - Force real API calls only
         console.error(`[DemoAPI] REAL API FAILED for: ${action.label}`, apiError);
-        throw new Error(`Demo API failed: ${apiError.message}`);
+        throw new Error(`Demo API failed: ${apiError instanceof Error ? apiError.message : 'Unknown error'}`);
 
         // Generate realistic mock response based on action type
         const mockResult = {
