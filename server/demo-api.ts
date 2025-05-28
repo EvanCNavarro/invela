@@ -109,7 +109,12 @@ router.post('/demo/company/create', async (req, res) => {
       }
     }
     
-    res.json({ success: true, company: company[0] });
+    // Return consistent response format that frontend expects
+    res.json({ 
+      success: true, 
+      company: company[0],
+      id: company[0].id // Ensure ID is easily accessible for next step
+    });
   } catch (error: any) {
     console.error('[DemoAPI] Company creation failed:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -118,21 +123,48 @@ router.post('/demo/company/create', async (req, res) => {
 
 router.post('/demo/user/create', async (req, res) => {
   try {
-    const { email, fullName, companyId } = req.body;
+    console.log('[DemoAPI] 👤 Raw user creation request:', req.body);
+    
+    // Extract company ID - it might come from different fields depending on the frontend implementation
+    const companyId = req.body.actualCompanyId || req.body.companyId;
+    
+    // If we received the placeholder string, try to extract from metadata
+    const actualCompanyId = (typeof companyId === 'string' && companyId === 'COMPANY_ID_FROM_STEP_1') 
+      ? req.body.metadata?.companyId || req.body.company?.id 
+      : companyId;
+    
+    console.log('[DemoAPI] 🔍 Company ID resolution:', {
+      originalCompanyId: req.body.companyId,
+      actualCompanyId: req.body.actualCompanyId,
+      metadataCompanyId: req.body.metadata?.companyId,
+      companyFromObject: req.body.company?.id,
+      resolvedId: actualCompanyId
+    });
+    
+    // Transform the user data using our utility
+    const transformedData = transformUserData(req.body, actualCompanyId);
     
     const hashedPassword = await bcrypt.hash('demo123', 10);
     
     const user = await db.insert(users).values({
-      email,
-      full_name: fullName,
+      email: transformedData.email,
+      full_name: transformedData.fullName,
       password: hashedPassword,
-      company_id: companyId,
+      company_id: transformedData.companyId,
       is_demo: true
     }).returning();
     
+    console.log('[DemoAPI] ✅ User created successfully:', {
+      id: user[0].id,
+      email: user[0].email,
+      fullName: user[0].full_name,
+      companyId: user[0].company_id,
+      role: transformedData.role
+    });
+    
     res.json({ success: true, user: user[0] });
   } catch (error: any) {
-    console.error('[DemoAPI] User creation failed:', error);
+    console.error('[DemoAPI] ❌ User creation failed:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
