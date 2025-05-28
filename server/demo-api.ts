@@ -1001,8 +1001,8 @@ router.post('/demo/environment/finalize', async (req, res) => {
       if (companyData) {
         // Only auto-complete onboarding for Data Provider, Accredited Data Recipient, and Invela Admin
         // New Data Recipient should complete the full onboarding process
-        const shouldCompleteOnboarding = companyData.category !== 'New Data Recipient' && 
-                                       companyData.is_demo === true;
+        const shouldCompleteOnboarding = userData.demo_persona_type !== 'new-data-recipient' && 
+                                       userData.is_demo_user === true;
         
         if (shouldCompleteOnboarding && !userData.onboarding_user_completed) {
           console.log('[DemoAPI] [Finalize] Auto-completing user onboarding for demo persona:', {
