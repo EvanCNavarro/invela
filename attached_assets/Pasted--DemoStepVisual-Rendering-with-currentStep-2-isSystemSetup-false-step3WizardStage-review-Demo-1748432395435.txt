@@ -1,0 +1,163 @@
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Field change: networkSize = 5
+[DemoStep2] Form state updated: 
+Object {field: "networkSize", newValue: 5, updatedFormData: {…}}
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "data-provider"}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Summit Treasury Platforms", formData: {…}}
+[DemoStep2] Company name validation: valid (25 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Chloe Hassan", formData: {…}}
+[DemoStep2] Full name validation: valid (12 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "chassan@summittreasuryplatforms.com", formData: {…}}
+[DemoStep2] Email validation: valid (chassan@summittreasuryplatforms.com)
+[DemoStep2] Field visibility check: riskProfile for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for data-provider = false 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for data-provider = true 
+Object {fieldTags: Array(1), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: emailInvite for data-provider = true 
+Object {fieldTags: Array(4), personaId: "data-provider", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Data Provider", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Summit Treasury Platforms", formData: {…}}
+[DemoStep2] Company name validation: valid (25 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Chloe Hassan", formData: {…}}
+[DemoStep2] Full name validation: valid (12 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "chassan@summittreasuryplatforms.com", formData: {…}}
+[DemoStep2] Email validation: valid (chassan@summittreasuryplatforms.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoStep3] Starting demo preparation with real API actions
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432281970_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432281971_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432282772_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Executing: Creating "Summit Treasury Platforms" organization 
+Object {id: "create-company", label: "Creating "Summit Treasury Platforms" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432283374_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Success: Creating "Summit Treasury Platforms" organization 
+Object {success: true, company: {…}, id: 679, companyId: 679}
+[DemoAPI] 🏢 Capturing company ID for demo flow: 679 
+Object {actionId: "create-company", companyName: "Summit Treasury Platforms", companyCategory: "Bank", persona: "unknown", timestamp: "2025-05-28T11:38:03.821Z"}
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432283822_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoAPI] Executing: Creating account for Chloe Hassan 
+Object {id: "create-user", label: "Creating account for Chloe Hassan", category: "user", targetField: "userFullName", apiEndpoint: "/api/demo/user/create", …}
+[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: 679 
+Object {actionId: "create-user", immediateResult: "available", source: "immediate_execution_result", timestamp: "2025-05-28T11:38:04.423Z"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432284424_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Success: Creating account for Chloe Hassan 
+Object {success: true, user: {…}}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432284707_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Executing: Configuring authentication 
+Object {id: "setup-auth", label: "Configuring authentication", category: "auth", targetField: "userEmail", apiEndpoint: "/api/demo/auth/setup", …}
+[DemoAPI] 🔄 Replaced placeholder userId with actual ID: 481 
+Object {actionId: "setup-auth", userResult: {…}, timestamp: "2025-05-28T11:38:05.308Z"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432285309_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, message: "Auth setup complete"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432285491_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: 679 
+Object {actionId: "finalize-environment", immediateResult: "available", source: "immediate_execution_result", timestamp: "2025-05-28T11:38:06.091Z"}
+[DemoAPI] 🔄 Replaced placeholder userId with actual ID: 481 
+Object {actionId: "finalize-environment", userResult: {…}, timestamp: "2025-05-28T11:38:06.091Z"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Chloe Hassan", demoSessionId: "demo_1748432286092_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Success: Finalizing demo environment 
+Object {success: true, demoReady: true, authenticated: true, loginRequired: false, accessUrl: "/dashboard", …}
+[DemoStep3] Demo setup completed successfully - showing success toast
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "data-provider"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: launch
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "launch", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] All demo actions completed successfully 
+Object {create-company: {…}, create-user: {…}, setup-auth: {…}, finalize-environment: {…}}
+[DemoStep3] Authentication analysis: 
+Object {isAuthenticated: true, loginRequired: false, accessUrl: "/dashboard", finalizationResult: "present"}
+[DemoStep3] Auto-login successful - synchronizing authentication state
