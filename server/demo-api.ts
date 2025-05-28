@@ -1989,19 +1989,51 @@ router.post('/demo/company/create', async (req, res) => {
    * Creates a new user account with proper role and permissions
    */
   async function createDemoUser(req: any, res: any) {
-          
-          // Generate unique name using timestamp and random suffix
-          const timestamp = Date.now().toString().slice(-4);
-          const randomSuffix = Math.random().toString(36).substring(2, 5);
-          finalName = `${insertValues.name} ${timestamp}${randomSuffix}`;
-          
-          console.log(`[DemoAPI] 🔄 Trying with unique name: "${finalName}"`);
-          
-          if (attempt >= maxAttempts) {
-            console.error(`[DemoAPI] ❌ Failed to create unique name after ${maxAttempts} attempts`);
-            throw new Error(`Failed to generate unique company name after ${maxAttempts} attempts`);
-          }
-        } else {
+    try {
+      const { email, password, firstName, lastName, companyId } = req.body;
+      
+      console.log('[DemoAPI] Creating demo user:', { email, companyId });
+      
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      const [user] = await db.insert(users).values({
+        email,
+        password_hash: hashedPassword,
+        first_name: firstName,
+        last_name: lastName,
+        company_id: companyId,
+        role: 'admin',
+        is_demo: true,
+        onboarding_completed: true
+      }).returning();
+      
+      console.log('[DemoAPI] ✅ Demo user created successfully:', user.id);
+      
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          companyId: user.company_id
+        }
+      });
+    } catch (error: any) {
+      console.error('[DemoAPI] User creation failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create demo user'
+      });
+    }
+  }
+
+  /**
+   * Demo Authentication Setup
+   * Sets up authentication credentials and generates login tokens
+   */
+  async function createDemoAuth(req: any, res: any) {
+    try {
           // Different error - rethrow
           console.error('[DemoAPI] Company creation error:', {
             error: error.message,
