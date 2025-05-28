@@ -786,6 +786,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
         
         updates.companyName = professionalName;
         
+        // Track this as an API-generated name to skip redundant validation
+        setApiGeneratedNames(prev => new Set(prev).add(professionalName));
+        
         console.log('[DemoStep2] [CompanyName] Successfully generated professional name:', {
           companyName: professionalName,
           method: 'api_generation',
@@ -950,6 +953,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     isUnique: null,
   });
 
+  // Track API-generated names to skip redundant validation
+  const [apiGeneratedNames, setApiGeneratedNames] = useState<Set<string>>(new Set());
+
   // ========================================
   // REAL-TIME COMPANY NAME VALIDATION
   // ========================================
@@ -966,6 +972,17 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       setNameValidationState({
         isValidating: false,
         isUnique: null,
+      });
+      return;
+    }
+
+    // Skip validation for API-generated names (already validated)
+    if (apiGeneratedNames.has(cleanedName)) {
+      console.log('[DemoStep2] Skipping validation for API-generated name:', cleanedName);
+      setNameValidationState({
+        isValidating: false,
+        isUnique: true,
+        lastValidatedName: cleanedName,
       });
       return;
     }
