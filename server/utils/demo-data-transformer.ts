@@ -98,7 +98,7 @@ const PERSONA_MAPPINGS: Record<string, PersonaMapping> = {
 };
 
 const DEFAULT_NETWORK_SIZE = 5;
-const MAX_NETWORK_SIZE = 15;
+const MAX_NETWORK_SIZE = 100; // Increased to support larger networks
 const MIN_NETWORK_SIZE = 0;
 
 // ========================================
