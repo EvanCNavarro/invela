@@ -160,35 +160,147 @@ router.get('/demo/generate-company-name', async (req, res) => {
   }
 });
 
-// Simple working demo endpoints
+// ========================================
+// DEMO COMPANY CREATION ENDPOINT
+// ========================================
+
+/**
+ * Creates a demo company with persona-specific configuration.
+ * Implements comprehensive persona-based tab access, onboarding settings,
+ * and network relationship creation for Data Provider personas.
+ * 
+ * @endpoint POST /api/demo/company/create
+ * @version 2.0.0
+ * @since 2025-05-28
+ */
 router.post('/demo/company/create', async (req, res) => {
+  const startTime = Date.now();
+  
   try {
     console.log('[DemoAPI] 🏢 Raw company creation request:', req.body);
+    
+    // ========================================
+    // DATA TRANSFORMATION & VALIDATION
+    // ========================================
     
     // Transform the company data using our utility
     const transformedData = transformCompanyData(req.body);
     
-    const company = await db.insert(companies).values({
+    console.log('[DemoAPI] 🔄 Company data transformation completed:', {
+      originalPersona: req.body.persona,
+      transformedCategory: transformedData.category,
+      shouldCreateNetwork: transformedData.shouldCreateNetwork,
+      networkSize: transformedData.networkSize,
+      processingTime: Date.now() - startTime
+    });
+    
+    // ========================================
+    // PERSONA-SPECIFIC CONFIGURATION
+    // ========================================
+    
+    /**
+     * Configure company settings based on persona type.
+     * Implements role-based access control through available_tabs configuration.
+     * 
+     * Persona Tab Access Matrix:
+     * - Data Provider (Bank): Full access including network management
+     * - Accredited FinTech: Business-focused tabs without network
+     * - New FinTech: Limited access for onboarding
+     * - Invela Admin: Platform administration access
+     */
+    const getPersonaConfiguration = (persona: string) => {
+      console.log(`[DemoAPI] 🎭 Configuring persona-specific settings for: ${persona}`);
+      
+      switch (persona) {
+        case 'data-provider':
+          return {
+            category: 'Bank',
+            accreditation_status: 'APPROVED',
+            available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'claims', 'risk-score'],
+            onboarding_company_completed: true,
+            demo_persona_type: 'data-provider',
+            description: 'Enterprise banking institution specializing in financial risk assessment and network management'
+          };
+          
+        case 'accredited-data-recipient':
+          return {
+            category: 'FinTech',
+            accreditation_status: 'APPROVED',
+            available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+            onboarding_company_completed: true,
+            demo_persona_type: 'accredited-data-recipient',
+            description: 'Accredited FinTech with full business platform access'
+          };
+          
+        case 'invela-admin':
+          return {
+            category: 'Platform',
+            accreditation_status: 'ADMIN',
+            available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'playground', 'claims', 'risk-score'],
+            onboarding_company_completed: true,
+            demo_persona_type: 'invela-admin',
+            description: 'Platform administration with full system access and configuration capabilities'
+          };
+          
+        default: // 'new-data-recipient'
+          return {
+            category: 'FinTech',
+            accreditation_status: 'PENDING',
+            available_tabs: ['task-center'],
+            onboarding_company_completed: false,
+            demo_persona_type: 'new-data-recipient',
+            description: 'New FinTech company beginning the onboarding process'
+          };
+      }
+    };
+    
+    const personaConfig = getPersonaConfiguration(transformedData.persona);
+    
+    console.log(`[DemoAPI] ✅ Persona configuration applied:`, {
+      persona: transformedData.persona,
+      category: personaConfig.category,
+      availableTabs: personaConfig.available_tabs,
+      onboardingRequired: !personaConfig.onboarding_company_completed,
+      tabCount: personaConfig.available_tabs.length
+    });
+    
+    // ========================================
+    // DATABASE COMPANY CREATION
+    // ========================================
+    
+    const companyResult = await db.insert(companies).values({
       name: transformedData.name,
-      category: transformedData.category,
+      category: personaConfig.category,
+      available_tabs: personaConfig.available_tabs,
+      demo_persona_type: personaConfig.demo_persona_type,
+      onboarding_company_completed: personaConfig.onboarding_company_completed,
       is_demo: true,
-      onboarding_completed: true
+      description: personaConfig.description
     }).returning();
     
+    const company = companyResult[0];
+    if (!company) {
+      throw new Error('Failed to create company - no result returned from database');
+    }
+    
     console.log('[DemoAPI] ✅ Company created successfully:', { 
-      id: company[0].id, 
-      name: company[0].name, 
-      category: company[0].category,
+      id: company.id, 
+      name: company.name, 
+      category: company.category,
+      availableTabs: personaConfig.available_tabs,
+      personaType: personaConfig.demo_persona_type,
       transformedPersona: transformedData.persona,
-      shouldCreateNetwork: transformedData.shouldCreateNetwork
+      shouldCreateNetwork: transformedData.shouldCreateNetwork,
+      processingTime: Date.now() - startTime
     });
     
     // Create network relationships for Data Provider banks
     if (transformedData.shouldCreateNetwork) {
       console.log('[DemoAPI] 🌐 Starting network creation for Data Provider:', {
-        bankId: company[0].id,
-        bankName: company[0].name,
-        targetNetworkSize: transformedData.networkSize
+        bankId: company.id,
+        bankName: company.name,
+        targetNetworkSize: transformedData.networkSize,
+        persona: transformedData.persona
       });
       
       try {
@@ -217,7 +329,7 @@ router.post('/demo/company/create', async (req, res) => {
           for (const fintech of availableFinTechs) {
             try {
               await db.insert(relationships).values({
-                company_id: company[0].id,
+                company_id: company.id,
                 related_company_id: fintech.id,
                 relationship_type: 'data_provider',
                 status: 'active'
@@ -225,14 +337,14 @@ router.post('/demo/company/create', async (req, res) => {
               
               successCount++;
               console.log('[DemoAPI] ✅ Relationship created:', {
-                bank: company[0].name,
+                bank: company.name,
                 fintech: fintech.name,
-                relationshipId: `${company[0].id}-${fintech.id}`
+                relationshipId: `${company.id}-${fintech.id}`
               });
             } catch (relError: any) {
               errorCount++;
               console.error('[DemoAPI] ❌ Relationship creation failed:', {
-                bank: company[0].name,
+                bank: company.name,
                 fintech: fintech.name,
                 error: relError.message
               });
@@ -240,7 +352,7 @@ router.post('/demo/company/create', async (req, res) => {
           }
           
           console.log('[DemoAPI] 🎯 Network creation completed:', {
-            bankName: company[0].name,
+            bankName: company.name,
             targetSize: transformedData.networkSize,
             successfulRelationships: successCount,
             failedRelationships: errorCount,
