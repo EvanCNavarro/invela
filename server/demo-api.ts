@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { companies, users, tasks, relationships, invitations } from '@db/schema';
+import { companies, users, tasks, relationships, invitations, TaskStatus } from '@db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -247,7 +247,10 @@ router.post('/demo/company/create', async (req, res) => {
             available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'playground', 'claims', 'risk-score'],
             onboarding_company_completed: true,
             demo_persona_type: 'invela-admin',
-            description: 'Platform administration with full system access and configuration capabilities'
+            description: 'Platform administration with full system access and configuration capabilities',
+            // Add risk score data for Invela Admin
+            risk_score: Math.floor(Math.random() * 10) + 85, // 85-95 range (platform admin has highest scores)
+            chosen_score: Math.floor(Math.random() * 10) + 85
           };
           
         default: // 'new-data-recipient'
@@ -257,7 +260,10 @@ router.post('/demo/company/create', async (req, res) => {
             available_tabs: ['task-center'],
             onboarding_company_completed: false,
             demo_persona_type: 'new-data-recipient',
-            description: 'New FinTech company beginning the onboarding process'
+            description: 'New FinTech company beginning the onboarding process',
+            // Add risk score data for New Data Recipients (lower scores as they're new)
+            risk_score: Math.floor(Math.random() * 25) + 20, // 20-45 range (new companies have lower scores)
+            chosen_score: Math.floor(Math.random() * 25) + 20
           };
       }
     };
@@ -336,7 +342,7 @@ router.post('/demo/company/create', async (req, res) => {
             title: `1. KYB Form: ${company.name}`,
             task_type: 'company_kyb',
             task_scope: 'company',
-            status: 'not_started',
+            status: TaskStatus.NOT_STARTED,
             company_id: company.id,
             metadata: {
               isInitialTask: true,
@@ -349,7 +355,7 @@ router.post('/demo/company/create', async (req, res) => {
             title: `2. S&P KY3P Security Assessment: ${company.name}`,
             task_type: 'ky3p',
             task_scope: 'company', 
-            status: 'not_started',
+            status: TaskStatus.NOT_STARTED,
             company_id: company.id,
             metadata: {
               isSecondaryTask: true,
@@ -363,7 +369,7 @@ router.post('/demo/company/create', async (req, res) => {
             title: `3. Open Banking Survey: ${company.name}`,
             task_type: 'open_banking',
             task_scope: 'company',
-            status: 'not_started', 
+            status: TaskStatus.NOT_STARTED, 
             company_id: company.id,
             metadata: {
               isFinalTask: true,
