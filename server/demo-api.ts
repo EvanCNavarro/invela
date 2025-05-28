@@ -361,19 +361,39 @@ router.post('/demo/company/create', async (req, res) => {
         }
       } catch (networkError: any) {
         console.error('[DemoAPI] 💥 Network creation process failed:', {
-          bankId: company[0].id,
-          bankName: company[0].name,
+          bankId: company.id,
+          bankName: company.name,
           error: networkError.message,
           stack: networkError.stack
         });
       }
     }
     
+    // ========================================
+    // SUCCESS RESPONSE
+    // ========================================
+    
+    const finalProcessingTime = Date.now() - startTime;
+    
+    console.log('[DemoAPI] 🎉 Demo company creation completed successfully:', {
+      companyId: company.id,
+      companyName: company.name,
+      persona: transformedData.persona,
+      category: personaConfig.category,
+      availableTabs: personaConfig.available_tabs.length,
+      networkCreated: transformedData.shouldCreateNetwork,
+      totalProcessingTime: finalProcessingTime
+    });
+    
     // Return consistent response format that frontend expects
     res.json({ 
       success: true, 
-      company: company[0],
-      id: company[0].id // Ensure ID is easily accessible for next step
+      company: company,
+      id: company.id, // Ensure ID is easily accessible for next step
+      companyId: company.id,
+      persona: transformedData.persona,
+      availableTabs: personaConfig.available_tabs,
+      processingTime: finalProcessingTime
     });
   } catch (error: any) {
     console.error('[DemoAPI] Company creation failed:', error);
