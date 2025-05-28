@@ -443,23 +443,172 @@ router.post('/demo/company/validate-name', async (req, res) => {
 });
 
 /**
+ * ========================================
+ * DEMO COMPANY CREATION LOGGER UTILITY
+ * ========================================
+ * 
+ * Comprehensive logging utility for tracking demo company creation flow.
+ * Provides structured logging with clear progress indicators and error tracking.
+ */
+const DemoCompanyLogger = {
+  /**
+   * Log the start of company creation with complete request details
+   */
+  logRequestStart: (req: any, sessionId: string) => {
+    console.log(`[DemoAPI:Request] 🚀 Company creation initiated`, {
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId,
+      method: req.method,
+      contentType: req.headers['content-type'],
+      contentLength: req.headers['content-length'],
+      userAgent: req.headers['user-agent']?.substring(0, 50) + '...',
+      origin: req.headers.origin
+    });
+    console.log(`[DemoAPI:Request] 📋 Full payload received:`, JSON.stringify(req.body, null, 2));
+  },
+
+  /**
+   * Log persona validation and metadata processing
+   */
+  logPersonaProcessing: (persona: string, originalMetadata: any, finalMetadata: any) => {
+    console.log(`[DemoAPI:Persona] 🎭 Processing persona: ${persona}`, {
+      persona: persona,
+      isDataProvider: persona === 'data-provider',
+      originalMetadata: originalMetadata,
+      finalMetadata: finalMetadata,
+      hasNetworkSize: !!finalMetadata?.networkSize,
+      networkSizeValue: finalMetadata?.networkSize
+    });
+  },
+
+  /**
+   * Log company creation success with comprehensive details
+   */
+  logCompanyCreated: (company: any, persona: string, metadata: any) => {
+    console.log(`[DemoAPI:Company] ✅ Company created successfully`, {
+      companyId: company.id,
+      companyName: company.name,
+      category: company.category,
+      persona: persona,
+      riskScore: company.risk_score,
+      accreditationStatus: company.accreditation_status,
+      availableTabs: company.available_tabs,
+      metadata: metadata
+    });
+  },
+
+  /**
+   * Log network creation decision point
+   */
+  logNetworkDecision: (shouldCreateNetwork: boolean, reason: string, details: any) => {
+    const status = shouldCreateNetwork ? '🌐' : '⏭️';
+    console.log(`[DemoAPI:Network] ${status} Network creation decision: ${reason}`, details);
+  },
+
+  /**
+   * Log network creation error with full context
+   */
+  logNetworkError: (error: any, context: any) => {
+    console.error(`[DemoAPI:Network] ❌ Network creation failed`, {
+      error: error.message,
+      stack: error.stack?.split('\n').slice(0, 3),
+      context: context
+    });
+  }
+};
+
+/**
+ * ========================================
+ * NETWORK CREATION LOGGER UTILITY
+ * ========================================
+ * 
+ * Specialized logging utility for tracking network relationship creation.
+ * Provides detailed insights into FinTech discovery, relationship insertion,
+ * and error handling during Data Provider network setup.
+ */
+const NetworkLogger = {
+  /**
+   * Log the start of network creation process
+   */
+  logNetworkStart: (details: any) => {
+    console.log(`[DemoAPI:Network] 🌐 STARTING Network creation for Data Provider`, {
+      timestamp: new Date().toISOString(),
+      companyId: details.companyId,
+      companyName: details.companyName,
+      persona: details.persona,
+      targetNetworkSize: details.networkSize,
+      sessionId: details.sessionId
+    });
+  },
+
+  /**
+   * Log FinTech company availability results
+   */
+  logFinTechAvailability: (requested: number, found: number, companies: any[]) => {
+    console.log(`[DemoAPI:Network] 🔍 FinTech Discovery Results`, {
+      requestedCount: requested,
+      foundCount: found,
+      availabilityRatio: `${found}/${requested}`,
+      sufficientCompanies: found >= requested,
+      companiesFound: companies.map(c => ({ id: c.id, name: c.name }))
+    });
+  },
+
+  /**
+   * Log individual relationship insertion attempts
+   */
+  logIndividualInsert: (finTechId: number, finTechName: string, success: boolean) => {
+    const status = success ? '✅' : '❌';
+    console.log(`[DemoAPI:Network] ${status} Relationship insertion`, {
+      finTechId: finTechId,
+      finTechName: finTechName,
+      success: success,
+      timestamp: new Date().toISOString()
+    });
+  },
+
+  /**
+   * Log database constraint errors during relationship creation
+   */
+  logConstraintError: (error: any, context: any) => {
+    console.error(`[DemoAPI:Network] 🚫 Database constraint error`, {
+      errorType: error.code || 'UNKNOWN',
+      errorMessage: error.message,
+      bankId: context.bankId,
+      finTechId: context.finTechId,
+      finTechName: context.finTechName,
+      possibleCause: 'Duplicate relationship or constraint violation'
+    });
+  },
+
+  /**
+   * Log final network creation summary
+   */
+  logNetworkSummary: (target: number, created: number, duration: number, companyId: number) => {
+    const successRate = ((created / target) * 100).toFixed(1);
+    console.log(`[DemoAPI:Network] 📊 Network Creation Summary`, {
+      targetRelationships: target,
+      createdRelationships: created,
+      successRate: `${successRate}%`,
+      duration: `${duration}ms`,
+      bankCompanyId: companyId,
+      status: created > 0 ? 'SUCCESS' : 'FAILED'
+    });
+  }
+};
+
+/**
  * Demo Company Creation
  * Creates a new company for demo purposes with specified configuration
  */
 router.post('/demo/company/create', async (req, res) => {
   // ========================================
-  // REQUEST LOGGING & INITIAL VALIDATION
+  // REQUEST TRACKING & SESSION MANAGEMENT
   // ========================================
   
-  console.log('[DemoAPI] Company creation request received at:', new Date().toISOString());
-  console.log('[DemoAPI] Request method:', req.method);
-  console.log('[DemoAPI] Request headers:', {
-    'content-type': req.headers['content-type'],
-    'content-length': req.headers['content-length'],
-    'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
-    'origin': req.headers.origin
-  });
-  console.log('[DemoAPI] Full request body received:', JSON.stringify(req.body, null, 2));
+  const demoSessionId = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  DemoCompanyLogger.logRequestStart(req, demoSessionId);
   
   try {
     const { name, type, persona, riskProfile, companySize, metadata } = req.body;
@@ -583,33 +732,47 @@ router.post('/demo/company/create', async (req, res) => {
     console.log('[DemoAPI] Extracted and validated fields:', { name, type, persona, companySize, riskProfile: `${riskProfile} → ${numericRiskProfile}` });
 
     // ========================================
-    // PERSONA-DRIVEN LOGIC - MUST BE FIRST
+    // PERSONA-DRIVEN LOGIC - COMPREHENSIVE TRACKING
     // ========================================
-    console.log(`[DemoAPI] 🎭 Processing persona: ${persona}`);
     
-    // For Data Provider (Bank) personas, randomize company size and create network
     let finalCompanySize = companySize;
     let finalMetadata = metadata;
     
+    // Log initial persona processing with enhanced details
+    DemoCompanyLogger.logPersonaProcessing(persona, metadata, finalMetadata);
+    
     if (persona === 'data-provider') {
-      console.log('[DemoAPI] 🏦 Data Provider (Bank) detected - applying bank-specific logic');
+      console.log('[DemoAPI:Persona] 🏦 Data Provider (Bank) persona detected - applying bank-specific logic');
       
       // Randomize company size for realistic bank variations
       const bankSizes = ['small', 'medium', 'large', 'extra-large'] as const;
       const randomSize = bankSizes[Math.floor(Math.random() * bankSizes.length)];
+      const originalSize = finalCompanySize;
       finalCompanySize = randomSize;
       
-      console.log(`[DemoAPI] 🎲 Randomized bank size: ${finalCompanySize}`);
+      console.log(`[DemoAPI:Persona] 🎲 Bank size randomization: ${originalSize || 'undefined'} → ${finalCompanySize}`);
       
       // Banks don't get risk-assessed (they do the assessing)
-      console.log('[DemoAPI] 🚫 Skipping risk assessment for Data Provider bank');
+      console.log('[DemoAPI:Persona] 🚫 Skipping risk assessment for Data Provider bank (banks assess others, not themselves)');
       
-      // Randomize network size if not provided
+      // Handle network size configuration with detailed logging
       if (!finalMetadata?.networkSize) {
         const networkSize = Math.floor(Math.random() * 11) + 5; // 5-15 companies
         finalMetadata = { ...finalMetadata, networkSize };
-        console.log(`[DemoAPI] 🌐 Randomized network size: ${networkSize} FinTech partners`);
+        console.log(`[DemoAPI:Persona] 🌐 Auto-generated network size: ${networkSize} FinTech companies (user didn't specify)`);
+      } else {
+        console.log(`[DemoAPI:Persona] 🌐 Using user-specified network size: ${finalMetadata.networkSize} FinTech companies`);
       }
+      
+      // Log final Data Provider configuration state
+      console.log(`[DemoAPI:Persona] 📋 Final Data Provider configuration:`, {
+        companySize: finalCompanySize,
+        networkSize: finalMetadata?.networkSize,
+        willCreateNetwork: true,
+        metadata: finalMetadata
+      });
+    } else {
+      console.log(`[DemoAPI:Persona] 👤 Processing non-Data Provider persona: ${persona} (no network creation expected)`);
     }
 
     // SIZE-BASED ENTERPRISE FEATURES (respects persona)
@@ -1640,11 +1803,11 @@ router.post('/demo/company/create', async (req, res) => {
             
             const duration = Date.now() - startTime;
             
-            NetworkLogger.logNetworkComplete(
+            NetworkLogger.logNetworkSummary(
+              finalMetadata.networkSize, 
               totalCreated, 
-              availableFinTechs.length, 
-              company.name, 
-              duration
+              duration,
+              company.id
             );
             
             // Broadcast network creation success
