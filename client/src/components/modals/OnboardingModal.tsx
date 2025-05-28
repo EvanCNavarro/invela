@@ -725,10 +725,10 @@ export function OnboardingModal() {
                       <SelectValue placeholder="Select number of employees" />
                     </SelectTrigger>
                     <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                      <SelectItem value="small" className="text-base py-2">Small (1-49 employees)</SelectItem>
-                      <SelectItem value="medium" className="text-base py-2">Medium (50-249 employees)</SelectItem>
-                      <SelectItem value="large" className="text-base py-2">Large (250-999 employees)</SelectItem>
-                      <SelectItem value="xlarge" className="text-base py-2">X Large (1K+ employees)</SelectItem>
+                      <SelectItem value="small" className="text-base py-2">Small (10-100 employees)</SelectItem>
+                      <SelectItem value="medium" className="text-base py-2">Medium (100-1,000 employees)</SelectItem>
+                      <SelectItem value="large" className="text-base py-2">Large (1,000-10,000 employees)</SelectItem>
+                      <SelectItem value="xlarge" className="text-base py-2">X Large (10,000-50,000 employees)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -745,10 +745,10 @@ export function OnboardingModal() {
                       <SelectValue placeholder="Select annual revenue" />
                     </SelectTrigger>
                     <SelectContent position="popper" sideOffset={5} className="z-[2000]">
-                      <SelectItem value="small" className="text-base py-2">$0–$10M</SelectItem>
-                      <SelectItem value="medium" className="text-base py-2">$10M–$50M</SelectItem>
-                      <SelectItem value="large" className="text-base py-2">$50M–$250M</SelectItem>
-                      <SelectItem value="xlarge" className="text-base py-2">$250M+</SelectItem>
+                      <SelectItem value="small" className="text-base py-2">$1M-$10M</SelectItem>
+                      <SelectItem value="medium" className="text-base py-2">$10M-$100M</SelectItem>
+                      <SelectItem value="large" className="text-base py-2">$100M-$500M</SelectItem>
+                      <SelectItem value="xlarge" className="text-base py-2">$500M-$2B</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -212,5 +212,153 @@ export function getSizeConfiguration(size: string): SizeConfiguration | null {
   if (!isValidCompanySize(size)) {
     return null;
   }
-  return COMPANY_SIZE_CONFIG[size];
+  return COMPANY_SIZE_CONFIG[size as CompanySize];
+}
+
+// ========================================
+// SHARED CONSTANTS FOR UI COMPONENTS
+// ========================================
+
+/**
+ * Standard employee count ranges for UI display
+ * Used by onboarding modals and form components
+ */
+export const EMPLOYEE_RANGES = {
+  small: '10-100 employees',
+  medium: '100-1,000 employees', 
+  large: '1,000-10,000 employees',
+  'extra-large': '10,000-50,000 employees'
+} as const;
+
+/**
+ * Standard revenue ranges for UI display
+ * Used by onboarding modals and form components
+ */
+export const REVENUE_RANGES = {
+  small: '$1M-$10M',
+  medium: '$10M-$100M',
+  large: '$100M-$500M', 
+  'extra-large': '$500M-$2B'
+} as const;
+
+/**
+ * Employee count mapping for database storage
+ * Maps size categories to representative employee counts
+ */
+export const EMPLOYEE_COUNT_MAP = {
+  small: 55,     // middle of 10-100 range
+  medium: 550,   // middle of 100-1,000 range
+  large: 5500,   // middle of 1,000-10,000 range
+  xlarge: 30000  // representative value for 10,000-50,000 range
+} as const;
+
+/**
+ * Revenue value mapping for database storage
+ * Maps size categories to representative revenue amounts
+ */
+export const REVENUE_VALUE_MAP = {
+  small: 5500000,      // $5.5M - middle of $1M-$10M range
+  medium: 55000000,    // $55M - middle of $10M-$100M range  
+  large: 300000000,    // $300M - middle of $100M-$500M range
+  xlarge: 1250000000   // $1.25B - middle of $500M-$2B range
+} as const;
+
+// ========================================
+// HELPER FUNCTIONS FOR UI COMPONENTS
+// ========================================
+
+/**
+ * Gets employee range display text for a company size
+ * Safe function with fallback for unknown sizes
+ * 
+ * @param size - Company size ('small', 'medium', 'large', 'extra-large', 'xlarge')
+ * @param context - Context for logging (e.g., 'onboarding-modal', 'demo-page')
+ * @returns Employee range display text
+ */
+export function getEmployeeRangeText(size: string, context: string = 'unknown'): string {
+  console.log(`[CompanySizeHelper] Getting employee range for size="${size}" from context="${context}"`);
+  
+  // Handle 'xlarge' vs 'extra-large' mapping
+  const normalizedSize = size === 'xlarge' ? 'extra-large' : size;
+  
+  if (normalizedSize in EMPLOYEE_RANGES) {
+    const result = EMPLOYEE_RANGES[normalizedSize as keyof typeof EMPLOYEE_RANGES];
+    console.log(`[CompanySizeHelper] ✅ Found employee range: ${result}`);
+    return result;
+  }
+  
+  console.warn(`[CompanySizeHelper] ⚠️ Unknown size "${size}" from ${context}, using fallback`);
+  return '10-100 employees'; // Safe fallback
+}
+
+/**
+ * Gets revenue range display text for a company size
+ * Safe function with fallback for unknown sizes
+ * 
+ * @param size - Company size ('small', 'medium', 'large', 'extra-large', 'xlarge')
+ * @param context - Context for logging (e.g., 'onboarding-modal', 'demo-page')  
+ * @returns Revenue range display text
+ */
+export function getRevenueRangeText(size: string, context: string = 'unknown'): string {
+  console.log(`[CompanySizeHelper] Getting revenue range for size="${size}" from context="${context}"`);
+  
+  // Handle 'xlarge' vs 'extra-large' mapping
+  const normalizedSize = size === 'xlarge' ? 'extra-large' : size;
+  
+  if (normalizedSize in REVENUE_RANGES) {
+    const result = REVENUE_RANGES[normalizedSize as keyof typeof REVENUE_RANGES];
+    console.log(`[CompanySizeHelper] ✅ Found revenue range: ${result}`);
+    return result;
+  }
+  
+  console.warn(`[CompanySizeHelper] ⚠️ Unknown size "${size}" from ${context}, using fallback`);
+  return '$1M-$10M'; // Safe fallback
+}
+
+/**
+ * Gets representative employee count for database storage
+ * Safe function with fallback for unknown sizes
+ * 
+ * @param size - Company size ('small', 'medium', 'large', 'xlarge', 'extra-large')
+ * @param context - Context for logging
+ * @returns Representative employee count
+ */
+export function getEmployeeCount(size: string, context: string = 'unknown'): number {
+  console.log(`[CompanySizeHelper] Getting employee count for size="${size}" from context="${context}"`);
+  
+  // Handle 'extra-large' vs 'xlarge' mapping
+  const normalizedSize = size === 'extra-large' ? 'xlarge' : size;
+  
+  if (normalizedSize in EMPLOYEE_COUNT_MAP) {
+    const result = EMPLOYEE_COUNT_MAP[normalizedSize as keyof typeof EMPLOYEE_COUNT_MAP];
+    console.log(`[CompanySizeHelper] ✅ Found employee count: ${result}`);
+    return result;
+  }
+  
+  console.warn(`[CompanySizeHelper] ⚠️ Unknown size "${size}" from ${context}, using fallback`);
+  return 55; // Safe fallback (small company)
+}
+
+/**
+ * Gets representative revenue value for database storage
+ * Safe function with fallback for unknown sizes
+ * 
+ * @param size - Company size ('small', 'medium', 'large', 'xlarge', 'extra-large')
+ * @param context - Context for logging
+ * @returns Representative revenue amount in dollars
+ */
+export function getRevenueValue(size: string, context: string = 'unknown'): number {
+  console.log(`[CompanySizeHelper] Getting revenue value for size="${size}" from context="${context}"`);
+  
+  // Handle 'extra-large' vs 'xlarge' mapping
+  const normalizedSize = size === 'extra-large' ? 'xlarge' : size;
+  
+  if (normalizedSize in REVENUE_VALUE_MAP) {
+    const result = REVENUE_VALUE_MAP[normalizedSize as keyof typeof REVENUE_VALUE_MAP];
+    console.log(`[CompanySizeHelper] ✅ Found revenue value: $${(result / 1000000).toFixed(1)}M`);
+    return result;
+  }
+  
+  console.warn(`[CompanySizeHelper] ⚠️ Unknown size "${size}" from ${context}, using fallback`);
+  return 5500000; // Safe fallback ($5.5M - small company)
 }
