@@ -1,0 +1,1087 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T17:39:14.640Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T17:39:14.644Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T17:39:14.644Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T17:39:14.783Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T17:39:14.886Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T17:39:14.886Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T17:39:14.886Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T17:39:14.887Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T17:39:14.888Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T17:39:14.889Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T17:39:14.890Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"0y91e3","timestamp":"2025-05-28T17:39:14.890Z"}
+[2025-05-28T17:39:14.890Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T17:39:14.890Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T17:39:14.890Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T17:39:14.890Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T17:39:14.890Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T17:39:14.890Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T17:39:14.890Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T17:39:14.890Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T17:39:14.890Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T17:39:14.890Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T17:39:14.892Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T17:39:14.904Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T17:39:14.904Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T17:39:14.904Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T17:39:14.904Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T17:39:14.904Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T17:39:14.904Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T17:39:15.891Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T17:39:16.501Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T17:39:20.178Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T17:39:20.334Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T17:39:24.905Z] [INFO] [App] Running background health checks... 
+[2025-05-28T17:39:24.905Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T17:39:24.905Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T17:39:24.906Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T17:39:25.084Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T17:39:25.112Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T17:39:25.139Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T17:39:25.139Z] [StartupChecks] Database health check passed 
+[2025-05-28T17:39:25.139Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T17:39:25.139Z] [INFO] [App] All background health checks passed successfully. 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 507,
+  company_id: 701,
+  email: 'jmohammed@internationalcloudinstitute.com'
+}
+[2025-05-28T17:39:29.319Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":701,"userId":507}
+[Current Company] Fetching company for user: { userId: 507, companyId: 701 }
+[2025-05-28T17:39:29.374Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":701}
+[Tasks] Automatically unlocking all tasks for company { userId: 507, companyId: 701, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T17:39:29.376Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":701}
+[Current Company] Found company: {
+  id: 701,
+  name: 'International Cloud Institute',
+  onboardingCompleted: true,
+  riskScore: 71,
+  chosenScore: 70,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 507,
+  companyId: 701,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T17:39:29.377Z'
+}
+[2025-05-28T17:39:29.404Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":701}
+[Tasks] Successfully unlocked all tasks for company: 701
+[2025-05-28T17:39:29.407Z] [INFO] [App] GET /api/companies/current 304 in 85ms :: {"id":701,"name":"International Cloud Institute","category":"Bank","is_demo":... 
+[2025-05-28T17:39:29.419Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453969419-lz9oh87","clients":1}
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 507',
+    condition2: 'tasks.created_by = 507',
+    condition3: "tasks.company_id = 701 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jmohammed@internationalcloudinstitute.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T17:39:29.495Z] [INFO] [App] GET /api/tasks 304 in 179ms :: [] 
+[2025-05-28T17:39:29.566Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T17:39:29.457Z"}}
+[2025-05-28T17:39:29.567Z] [INFO] [WebSocket] Authentication from client client-1748453969419-lz9oh87 {"module":"WebSocket","hasToken":true}
+[2025-05-28T17:39:29.588Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 507 
+[2025-05-28T17:39:29.588Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T17:39:29.588Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T17:39:29.588Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 507 
+[2025-05-28T17:39:29.623Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 507 
+[2025-05-28T17:39:29.652Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 65ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[Relationships] Fetching network for company: 701
+[Companies] Fetching companies for user: { userId: 507, company_id: 701 }
+[Network Visualization] Fetching network data for company: 701
+[Relationships] Found network members: { count: 82 }
+[2025-05-28T17:39:29.943Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453969943-0ugokex","clients":2}
+[Companies] Query successful, found companies: {
+  count: 83,
+  companies: [
+    {
+      id: 33,
+      name: 'Affinityx',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 55,
+      name: 'Alphapoint',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 610,
+      name: 'ApexNet Innovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 35, name: 'AscendIQ', hasLogo: true, hasRelationship: false },
+    { id: 18, name: 'Axono', hasLogo: true, hasRelationship: false },
+    { id: 30, name: 'Bankure', hasLogo: true, hasRelationship: false },
+    {
+      id: 475,
+      name: 'BlockTrade Exchange',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 39,
+      name: 'Cachepath',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    { id: 21, name: 'Clario', hasLogo: true, hasRelationship: false },
+    {
+      id: 154,
+      name: 'ClarityBank',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 32, name: 'Clyra', hasLogo: true, hasRelationship: false },
+    {
+      id: 334,
+      name: 'Cornerstone Financial Group',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 7, name: 'Credora', hasLogo: true, hasRelationship: false },
+    {
+      id: 477,
+      name: 'CrowdFund Crypto',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 15,
+      name: 'CryptoNest',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 340,
+      name: 'DataFlow Solutions',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 643,
+      name: 'DeltaEdge',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 525,
+      name: 'DigitalCore',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 11, name: 'DriftPay', hasLogo: true, hasRelationship: false },
+    { id: 17, name: 'Earnin', hasLogo: true, hasRelationship: false },
+    { id: 14, name: 'EchoPay', hasLogo: true, hasRelationship: false },
+    {
+      id: 40,
+      name: 'Equibridge',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 474,
+      name: 'FastPay Innovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 9, name: 'Finloft', hasLogo: true, hasRelationship: false },
+    { id: 38, name: 'Finsera', hasLogo: true, hasRelationship: false },
+    { id: 51, name: 'Fundory', hasLogo: true, hasRelationship: false },
+    {
+      id: 488,
+      name: 'GameFi Protocol',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 613,
+      name: 'GammaWave',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 47, name: 'Gravix', hasLogo: true, hasRelationship: false },
+    {
+      id: 337,
+      name: 'HealthGuard Analytics',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 701,
+      name: 'International Cloud Institute',
+      hasLogo: false,
+      hasRelationship: true
+    },
+    {
+      id: 167,
+      name: 'JimsAutoshop',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 27, name: 'Lumora', hasLogo: true, hasRelationship: false },
+    { id: 28, name: 'Modenex', hasLogo: true, hasRelationship: false },
+    {
+      id: 609,
+      name: 'Neo Zone Ventures',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 524,
+      name: 'NeoSpark Inc',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 520,
+      name: 'NextGen Payments',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 56, name: 'Nimblefi', hasLogo: true, hasRelationship: false },
+    { id: 34, name: 'Nodura', hasLogo: true, hasRelationship: false },
+    {
+      id: 612,
+      name: 'Nova Link Systems',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 611,
+      name: 'NovaFlow Dynamics',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 8, name: 'Novably', hasLogo: true, hasRelationship: false },
+    { id: 37, name: 'Omnipay', hasLogo: true, hasRelationship: false },
+    { id: 20, name: 'Orbipay', hasLogo: true, hasRelationship: false },
+    { id: 41, name: 'Orosync', hasLogo: true, hasRelationship: false },
+    {
+      id: 615,
+      name: 'PathGroup',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 45, name: 'Paydrift', hasLogo: true, hasRelationship: false },
+    { id: 25, name: 'Paynest', hasLogo: true, hasRelationship: false },
+    {
+      id: 26,
+      name: 'PetalSure',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 338,
+      name: 'Premium Analytics Corp',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 342,
+      name: 'ProvenSecure Corp',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 13, name: 'Quantia', hasLogo: true, hasRelationship: false },
+    {
+      id: 605,
+      name: 'QuantumPath Holdings',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 604,
+      name: 'RapidNet',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 343,
+      name: 'RealData Corp',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 437,
+      name: 'RegTech Innovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 603,
+      name: 'SigmaHub Ventures',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 614,
+      name: 'SigmaSync',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 616,
+      name: 'SigmaZone Innovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 166,
+      name: 'SkyToken',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 607,
+      name: 'SparkInnovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 165,
+      name: 'StevesAuto',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 642,
+      name: 'Stream Path Solutions',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 606,
+      name: 'StreamPath',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 31, name: 'Syntra', hasLogo: true, hasRelationship: false },
+    {
+      id: 168,
+      name: 'TannersFeedback',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 430,
+      name: 'TechFlow Financial',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 339,
+      name: 'TechSecure Financial',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 335,
+      name: 'Test Investigation Company',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 341,
+      name: 'TestCompany',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 36, name: 'Tilvio', hasLogo: true, hasRelationship: false },
+    {
+      id: 46,
+      name: 'Trustmint',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 16,
+      name: 'Trustwell',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    {
+      id: 44,
+      name: 'ValoraPay',
+      hasLogo: true,
+      hasRelationship: false
+    },
+    { id: 6, name: 'Vaultara', hasLogo: true, hasRelationship: false },
+    {
+      id: 608,
+      name: 'VelocityFinance',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 19, name: 'Veriark', hasLogo: true, hasRelationship: false },
+    {
+      id: 164,
+      name: 'Wealthfront',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 486,
+      name: 'YieldFarm Aggregator',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 29, name: 'Zenflow', hasLogo: true, hasRelationship: false },
+    { id: 24, name: 'Zentra', hasLogo: true, hasRelationship: false },
+    { id: 50, name: 'Zentry', hasLogo: true, hasRelationship: false },
+    { id: 12, name: 'Zyra', hasLogo: true, hasRelationship: false }
+  ]
+}
+[Network Visualization] Found network relationships: { count: 82 }
+[Network Visualization] Returning visualization data: { centerNode: 'International Cloud Institute', nodeCount: 82 }
+[2025-05-28T17:39:29.996Z] [INFO] [App] GET /api/relationships 304 in 154ms :: [{"id":707,"companyId":701,"relatedCompanyId":33,"relationshipType":"data_pro... 
+[2025-05-28T17:39:30.031Z] [INFO] [App] GET /api/companies 304 in 181ms :: [{"id":33,"name":"Affinityx","category":"FinTech","description":"Affinityx is... 
+[2025-05-28T17:39:30.033Z] [INFO] [App] GET /api/network/visualization 304 in 160ms :: {"center":{"id":701,"name":"International Cloud Institute","riskScore":71,"ri... 
+[Relationships] Fetching network for company: 701
+[Relationships] Found network members: { count: 82 }
+[2025-05-28T17:39:30.253Z] [INFO] [App] GET /api/relationships 304 in 62ms :: [{"id":707,"companyId":701,"relatedCompanyId":33,"relationshipType":"data_pro... 
+[2025-05-28T17:39:30.453Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453970453-w9o9r20","clients":3}
+[2025-05-28T17:39:31.028Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453971028-4kv0jae","clients":4}
+[2025-05-28T17:39:31.564Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453971564-omvf1te","clients":5}
+[2025-05-28T17:39:31.687Z] [INFO] [WebSocket] Received message from client client-1748453971564-omvf1te {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748453968645_4tt5mn6lr","timestamp":"2025-05-28T17:39:31.575Z"}
+[2025-05-28T17:39:31.688Z] [INFO] [WebSocket] Authentication from client client-1748453971564-omvf1te {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-28T17:39:32.080Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748453972080-dbbtesp","clients":6}
+[2025-05-28T17:39:32.655Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"authenticate","userId":507,"companyId":701,"clientId":"ws_1748453969914_8hwt69dqb","timestamp":"2025-05-28T17:39:32.544Z"}
+[2025-05-28T17:39:32.655Z] [INFO] [WebSocket] Authentication from client client-1748453972080-dbbtesp {"module":"WebSocket","userId":507,"companyId":701,"hasToken":true}
+[2025-05-28T17:39:44.941Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,964,969,1001,973,971,978,981,976]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[2025-05-28T17:39:52.208Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:39:52.098Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:39:59.567Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:40:00.580Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:00.469Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:40:01.160Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:01.051Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:40:12.208Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:12.098Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:40:22.020Z',
+  requestId: 'req_1748454022020_swowszqji'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:40:22.021Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:40:22.021Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Premier Lab Enterprises',
+  components: { prefix: 'Premier', core: 'Lab', suffix: 'Enterprises' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Premier Lab Enterprises',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:40:22.022Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Premier Lab Enterprises',
+  nameLength: 23
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:40:22.052Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Premier Lab Enterprises',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Premier Lab Enterprises',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 33,
+  timestamp: '2025-05-28T17:40:22.053Z'
+}
+[2025-05-28T17:40:22.083Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 63ms :: {"success":true,"companyName":"Premier Lab Enterprises","wasModified":false,"... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:40:22.337Z',
+  requestId: 'req_1748454022337_oald337ok'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:40:22.338Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:40:22.338Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Network Lab Core',
+  components: { prefix: 'Network', core: 'Lab', suffix: 'Core' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Network Lab Core',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:40:22.338Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Network Lab Core',
+  nameLength: 16
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:40:22.366Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Network Lab Core',
+  duration: 28
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Network Lab Core',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 30,
+  timestamp: '2025-05-28T17:40:22.367Z'
+}
+[2025-05-28T17:40:22.397Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 60ms :: {"success":true,"companyName":"Network Lab Core","wasModified":false,"origina... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:40:22.658Z',
+  requestId: 'req_1748454022658_ipdbemq3v'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:40:22.659Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:40:22.659Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Progressive Security Base',
+  components: { prefix: 'Progressive', core: 'Security', suffix: 'Base' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Progressive Security Base',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:40:22.660Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Progressive Security Base',
+  nameLength: 25
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:40:22.690Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Progressive Security Base',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Progressive Security Base',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 32,
+  timestamp: '2025-05-28T17:40:22.690Z'
+}
+[2025-05-28T17:40:22.720Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 62ms :: {"success":true,"companyName":"Progressive Security Base","wasModified":false... 
+[2025-05-28T17:40:29.570Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:40:30.582Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:30.469Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:40:31.160Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:31.053Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:40:32.206Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:32.098Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:40:52.206Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:40:52.098Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:40:59.568Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:41:00.580Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:00.470Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:41:01.162Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:01.052Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:41:12.206Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:12.099Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:41:29.572Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:41:30.577Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:30.470Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:41:31.163Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:31.053Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:41:31.686Z] [INFO] [WebSocket] Received message from client client-1748453971564-omvf1te {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:41:32.217Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:32.099Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:41:39.585Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T17:41:39.585Z"}
+[2025-05-28T17:41:39.590Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T17:41:39.590Z"}
+[2025-05-28T17:41:39.591Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T17:41:39.591Z"}
+[2025-05-28T17:41:39.591Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T17:41:39.591Z"}
+[2025-05-28T17:41:39.597Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["44.199.59.172:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":801193035,"secretKey":1620731694,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":12413,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-28T17:41:39.597Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T17:41:39.597Z"}
+[2025-05-28T17:41:39.597Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T17:41:39.597Z"}
+[2025-05-28T17:41:52.221Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:41:52.099Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:41:55.562Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Progressive Security Base',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T17:41:55.703Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Progressive Security Base',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Progressive Security Base',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T17:41:55.704Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 702,
+  name: 'Progressive Security Base',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 117
+}
+[DemoAPI] 📋 Creating onboarding tasks for New Data Recipient: {
+  companyId: 702,
+  companyName: 'Progressive Security Base',
+  persona: 'new-data-recipient'
+}
+[DemoAPI] ✅ Tasks created successfully for New Data Recipient: {
+  companyId: 702,
+  companyName: 'Progressive Security Base',
+  tasksCreated: 3,
+  taskTypes: [ 'company_kyb', 'ky3p', 'open_banking' ],
+  firstTaskId: 1073,
+  allTaskIds: [ 1073, 1074, 1075 ]
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 702,
+  companyName: 'Progressive Security Base',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 165
+}
+[2025-05-28T17:41:55.906Z] [INFO] [App] POST /api/demo/company/create 200 in 204ms :: {"success":true,"company":{"id":702,"name":"Progressive Security Base","descr... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Jordan Thompson',
+  email: 'jthompson@progressivesecuritybase.com',
+  companyId: 702,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748454113469_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-28T17:41:53.469Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 702,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 702
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T17:41:56.662Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Jordan Thompson',
+    email: 'jthompson@progressivesecuritybase.com',
+    companyId: 702,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Jordan Thompson',
+    email: 'jthompson@progressivesecuritybase.com',
+    companyId: 702,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T17:41:56.662Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'user',
+  persona: 'new-data-recipient',
+  shouldCompleteOnboarding: false,
+  onboardingUserCompleted: false,
+  logic: 'New Data Recipient - onboarding_user_completed = FALSE (triggers modal)',
+  modalWillShow: true
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 508,
+  email: 'jthompson@progressivesecuritybase.com',
+  fullName: 'Jordan Thompson',
+  companyId: 702,
+  role: 'user',
+  onboardingCompleted: false
+}
+[2025-05-28T17:41:56.800Z] [INFO] [App] POST /api/demo/user/create 200 in 139ms :: {"success":true,"user":{"id":508,"email":"jthompson@progressivesecuritybase.c... 
+[2025-05-28T17:41:57.591Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 508,
+  companyId: 702,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-28T17:41:58.343Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 508,
+  email: 'jthompson@progressivesecuritybase.com',
+  companyId: 702,
+  fullName: 'Jordan Thompson'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] Auto-completing user onboarding for demo persona: { userId: 508, companyCategory: 'FinTech', personaType: 'unknown' }
+[DemoAPI] [Finalize] User onboarding auto-completed successfully
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 508,
+  email: 'jthompson@progressivesecuritybase.com',
+  companyId: 702,
+  environmentId: 'env_demo_1748454118378_508',
+  authenticated: true,
+  totalDuration: 180,
+  timestamp: '2025-05-28T17:41:58.523Z'
+}
+[2025-05-28T17:41:58.554Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 211ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-28T17:41:59.568Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:42:00.580Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:00.470Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:42:01.164Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:01.053Z","connectionId":"ws_1748453969958_od1npub6w"}
+[Current Company] Fetching company for user: { userId: 508, companyId: 702 }
+[Current Company] Found company: {
+  id: 702,
+  name: 'Progressive Security Base',
+  onboardingCompleted: false,
+  riskScore: 24,
+  chosenScore: 27,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 508,
+  companyId: 702,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T17:42:01.960Z'
+}
+[2025-05-28T17:42:01.992Z] [INFO] [App] GET /api/companies/current 200 in 62ms :: {"id":702,"name":"Progressive Security Base","category":"FinTech","is_demo":t... [sampled: request 11] 
+[2025-05-28T17:42:02.177Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 508 
+[2025-05-28T17:42:02.177Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T17:42:02.177Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T17:42:02.177Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 508 
+[2025-05-28T17:42:02.213Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 508 
+[2025-05-28T17:42:02.248Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 71ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T17:42:04.078Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 508,
+  company_id: 702,
+  email: 'jthompson@progressivesecuritybase.com'
+}
+[2025-05-28T17:42:04.143Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":702,"userId":508}
+[2025-05-28T17:42:04.190Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":702}
+[Tasks] Automatically unlocking all tasks for company { userId: 508, companyId: 702, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T17:42:04.191Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":702}
+[2025-05-28T17:42:04.222Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":702,"count":3,"taskIds":[1073,1074,1075],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1074]}
+[UnifiedProgress] Starting progress update for task 1073 (company_kyb) {
+  taskId: 1073,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748454124223-157',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1073 (company_kyb)
+[2025-05-28T17:42:04.322Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[UnifiedProgressCalc] Task 1073 (company_kyb) progress: 0/30 = 0%
+[2025-05-28T17:42:04.402Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.402Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.402Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1073,"messageId":"msg_1748454124401_4g16ng6l"}
+[2025-05-28T17:42:04.403Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1073 {"progress":0,"status":"not_started","messageId":"msg_1748454124401_4g16ng6l"}
+[2025-05-28T17:42:04.403Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1073,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:42:04.403Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1074,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-28T17:42:04.403Z"}
+[UnifiedProgress] Starting progress update for task 1074 (ky3p) {
+  taskId: 1074,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748454124403-413',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1074 (ky3p)
+[KY3P Progress] Calculated progress for task 1074: {
+  taskId: 1074,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-28T17:42:04.565Z'
+}
+[UnifiedProgressCalc] Task 1074 (ky3p) progress: 0/120 = 0%
+[2025-05-28T17:42:04.594Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.595Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.595Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1074,"messageId":"msg_1748454124594_xwlypfbr"}
+[2025-05-28T17:42:04.595Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1074 {"progress":0,"status":"not_started","messageId":"msg_1748454124594_xwlypfbr"}
+[2025-05-28T17:42:04.595Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1074,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1075 (open_banking) {
+  taskId: 1075,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748454124596-163',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1075 (open_banking)
+[UnifiedProgressCalc] Task 1075 (open_banking) progress: 0/44 = 0%
+[2025-05-28T17:42:04.751Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.752Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:04.752Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1075,"messageId":"msg_1748454124751_efjedfy7"}
+[2025-05-28T17:42:04.752Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1075 {"progress":0,"status":"not_started","messageId":"msg_1748454124751_efjedfy7"}
+[2025-05-28T17:42:04.752Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1075,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:42:04.752Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":702,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 702
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 508',
+    condition2: 'tasks.created_by = 508',
+    condition3: "tasks.company_id = 702 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jthompson@progressivesecuritybase.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-28T17:42:04.848Z] [INFO] [App] GET /api/tasks 200 in 705ms :: [{"id":1073,"title":"1. KYB Form: Progressive Security Base","description":nu... 
+[2025-05-28T17:42:12.207Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:12.099Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[Current Company] Using cached company data: 702
+[2025-05-28T17:42:20.070Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":1073,"title":"1. KYB Form: Progressive Security Base","description":nu... 
+[2025-05-28T17:42:29.211Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":702,"name":"Progressive Security Base","category":"FinTech","is_demo":t... [sampled: request 21] 
+[2025-05-28T17:42:29.570Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:42:30.580Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:30.470Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:42:31.173Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:31.054Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:42:32.213Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:42:32.099Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 508,
+  company_id: 702,
+  email: 'jthompson@progressivesecuritybase.com'
+}
+[2025-05-28T17:42:35.261Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":702,"userId":508}
+[2025-05-28T17:42:35.303Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":702}
+[Tasks] Automatically unlocking all tasks for company { userId: 508, companyId: 702, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T17:42:35.304Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":702}
+[2025-05-28T17:42:35.336Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":702,"count":3,"taskIds":[1073,1074,1075],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1074]}
+[UnifiedProgress] Starting progress update for task 1073 (company_kyb) {
+  taskId: 1073,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748454155337-262',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1073 (company_kyb)
+[UnifiedProgressCalc] Task 1073 (company_kyb) progress: 0/30 = 0%
+[2025-05-28T17:42:35.489Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.490Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.490Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1073,"messageId":"msg_1748454155489_qskpklzi"}
+[2025-05-28T17:42:35.490Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1073 {"progress":0,"status":"not_started","messageId":"msg_1748454155489_qskpklzi"}
+[2025-05-28T17:42:35.490Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1073,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:42:35.490Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1074,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-28T17:42:35.490Z"}
+[UnifiedProgress] Starting progress update for task 1074 (ky3p) {
+  taskId: 1074,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748454155490-105',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1074 (ky3p)
+[KY3P Progress] Calculated progress for task 1074: {
+  taskId: 1074,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-28T17:42:35.606Z'
+}
+[UnifiedProgressCalc] Task 1074 (ky3p) progress: 0/120 = 0%
+[2025-05-28T17:42:35.635Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.635Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.635Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1074,"messageId":"msg_1748454155634_zvtryyl6"}
+[2025-05-28T17:42:35.636Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1074 {"progress":0,"status":"not_started","messageId":"msg_1748454155634_zvtryyl6"}
+[2025-05-28T17:42:35.636Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1074,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1075 (open_banking) {
+  taskId: 1075,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748454155636-240',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1075 (open_banking)
+[UnifiedProgressCalc] Task 1075 (open_banking) progress: 0/44 = 0%
+[2025-05-28T17:42:35.780Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.780Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:42:35.781Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1075,"messageId":"msg_1748454155780_qjorusfd"}
+[2025-05-28T17:42:35.781Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1075 {"progress":0,"status":"not_started","messageId":"msg_1748454155780_qjorusfd"}
+[2025-05-28T17:42:35.781Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":702,"taskId":1075,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:42:35.782Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":702,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 702
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 508',
+    condition2: 'tasks.created_by = 508',
+    condition3: "tasks.company_id = 702 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jthompson@progressivesecuritybase.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-28T17:42:35.871Z] [INFO] [App] GET /api/tasks 304 in 611ms :: [{"id":1073,"title":"1. KYB Form: Progressive Security Base","description":nu... 
