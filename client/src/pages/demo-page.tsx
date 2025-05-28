@@ -14,6 +14,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { generateUniqueCompanyName } from "@/services/company-name-api";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -728,21 +729,46 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
    * Generates new random values for specified fields
    * Updates form state with fresh random data and triggers validation
    */
-  function generateRandomValues(fields: Array<'companyName' | 'userFullName' | 'riskProfile' | 'networkSize'>): void {
+  async function generateRandomValues(fields: Array<'companyName' | 'userFullName' | 'riskProfile' | 'networkSize'>): Promise<void> {
     console.log(`[DemoStep2] Generating random values for fields:`, fields);
     const updates: Partial<DemoCustomizationForm> = {};
     
     if (fields.includes('companyName')) {
-      // Generate unique company name with timestamp to ensure uniqueness
-      const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substr(2, 5);
-      updates.companyName = `Demo Company ${timestamp}_${randomSuffix}`;
-      
-      console.log('[DemoPage] [CompanyName] Generated unique company name:', {
-        companyName: updates.companyName,
-        method: 'timestamp_unique',
-        timestamp: new Date().toISOString()
-      });
+      // Generate professional company name using advanced API system
+      try {
+        console.log('[DemoStep2] [CompanyName] Requesting professional name from API...');
+        
+        const professionalName = await generateUniqueCompanyName({
+          fallbackToTimestamp: false,
+          maxRetries: 2,
+          timeoutMs: 3000,
+          logLevel: 'info'
+        });
+        
+        updates.companyName = professionalName;
+        
+        console.log('[DemoStep2] [CompanyName] Successfully generated professional name:', {
+          companyName: professionalName,
+          method: 'api_generation',
+          timestamp: new Date().toISOString()
+        });
+        
+      } catch (error) {
+        // Emergency fallback with professional base names instead of "Demo Company"
+        const emergencyNames = [
+          'Apex Solutions', 'Summit Technologies', 'Pinnacle Group', 
+          'Meridian Partners', 'Quantum Analytics', 'Sterling Ventures'
+        ];
+        const baseName = emergencyNames[Math.floor(Math.random() * emergencyNames.length)];
+        const uniqueId = Date.now().toString(36);
+        updates.companyName = `${baseName} ${uniqueId}`;
+        
+        console.warn('[DemoStep2] [CompanyName] API failed, using professional fallback:', {
+          fallbackName: updates.companyName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
     }
     
     if (fields.includes('userFullName')) {

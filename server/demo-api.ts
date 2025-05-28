@@ -325,4 +325,203 @@ router.post('/demo/auth/setup', async (req, res) => {
   }
 });
 
+/**
+ * ========================================
+ * Demo Environment Finalization Endpoint
+ * ========================================
+ * 
+ * Completes the demo setup and automatically authenticates the user for seamless access.
+ * This endpoint handles the final step of demo account creation by establishing an
+ * authenticated session and preparing the environment for immediate dashboard access.
+ * 
+ * Key Features:
+ * - Automatic user authentication after demo completion
+ * - Session establishment for seamless dashboard access
+ * - Environment preparation for demo data access
+ * - Comprehensive error handling and logging
+ * 
+ * Authentication Flow:
+ * 1. Validates user exists and belongs to specified company
+ * 2. Establishes authenticated session via req.login()
+ * 3. Configures demo environment permissions
+ * 4. Returns success response with authentication status
+ * 
+ * @endpoint POST /api/demo/environment/finalize
+ * @version 2.0.0
+ * @since 2025-05-28
+ */
+router.post('/demo/environment/finalize', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { userId, companyId, demoType } = req.body;
+
+    console.log('[DemoAPI] [Finalize] Starting demo environment finalization:', {
+      userId,
+      companyId,
+      demoType,
+      timestamp: new Date().toISOString()
+    });
+
+    // ========================================
+    // PARAMETER VALIDATION
+    // ========================================
+    
+    if (!userId) {
+      console.error('[DemoAPI] [Finalize] Missing userId parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: userId is required',
+        code: 'MISSING_USER_ID',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    if (!companyId) {
+      console.error('[DemoAPI] [Finalize] Missing companyId parameter');
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameter: companyId is required',
+        code: 'MISSING_COMPANY_ID',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // ========================================
+    // USER VERIFICATION
+    // ========================================
+    
+    console.log('[DemoAPI] [Finalize] Verifying user and company data...');
+    
+    const [userData] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userData) {
+      console.error('[DemoAPI] [Finalize] User not found:', { userId });
+      return res.status(404).json({
+        success: false,
+        error: 'User not found for authentication',
+        code: 'USER_NOT_FOUND',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Verify user belongs to the correct company
+    if (userData.company_id !== companyId) {
+      console.error('[DemoAPI] [Finalize] Company mismatch:', {
+        userCompanyId: userData.company_id,
+        requestedCompanyId: companyId
+      });
+      return res.status(403).json({
+        success: false,
+        error: 'User does not belong to specified company',
+        code: 'COMPANY_MISMATCH',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log('[DemoAPI] [Finalize] User verification successful:', {
+      userId: userData.id,
+      email: userData.email,
+      companyId: userData.company_id,
+      fullName: userData.full_name
+    });
+
+    // ========================================
+    // ENVIRONMENT SETUP
+    // ========================================
+    
+    const environmentId = `env_demo_${Date.now()}_${userId}`;
+    
+    const environmentConfig = {
+      type: demoType || 'standard',
+      features: {
+        demoDataAccess: true,
+        tutorialMode: true,
+        limitedFunctionality: false
+      },
+      permissions: {
+        canInviteUsers: true,
+        canModifySettings: true,
+        canAccessAllFeatures: true
+      }
+    };
+
+    // ========================================
+    // SESSION AUTHENTICATION
+    // ========================================
+    
+    console.log('[DemoAPI] [Finalize] Establishing user session...');
+    
+    // Establish authenticated session
+    await new Promise<void>((resolve, reject) => {
+      req.login(userData, (err) => {
+        if (err) {
+          console.error('[DemoAPI] [Finalize] Session authentication failed:', err);
+          reject(err);
+        } else {
+          console.log('[DemoAPI] [Finalize] Session established successfully');
+          resolve();
+        }
+      });
+    });
+
+    const authDuration = Date.now() - startTime;
+
+    console.log('[DemoAPI] [Finalize] Demo finalization completed successfully:', {
+      userId: userData.id,
+      email: userData.email,
+      companyId: userData.company_id,
+      environmentId,
+      authenticated: true,
+      totalDuration: authDuration,
+      timestamp: new Date().toISOString()
+    });
+
+    // ========================================
+    // SUCCESS RESPONSE
+    // ========================================
+    
+    res.status(200).json({
+      success: true,
+      demoReady: true,
+      authenticated: true,
+      loginRequired: false,
+      accessUrl: '/dashboard',
+      environmentId,
+      environment: environmentConfig,
+      user: {
+        id: userData.id,
+        email: userData.email,
+        fullName: userData.full_name,
+        companyId: userData.company_id
+      },
+      message: 'Demo environment created and user authenticated successfully. Redirecting to dashboard...',
+      processingTime: authDuration,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    const errorDuration = Date.now() - startTime;
+    
+    console.error('[DemoAPI] [Finalize] Demo finalization failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to finalize demo environment',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      code: 'FINALIZATION_ERROR',
+      processingTime: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 export default router;
