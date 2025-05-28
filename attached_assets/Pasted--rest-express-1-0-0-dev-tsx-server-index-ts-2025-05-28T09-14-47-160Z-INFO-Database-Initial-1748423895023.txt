@@ -1,0 +1,506 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T09:14:47.160Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T09:14:47.165Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T09:14:47.165Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T09:14:47.341Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T09:14:47.485Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T09:14:47.486Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T09:14:47.486Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T09:14:47.486Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T09:14:47.487Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T09:14:47.490Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T09:14:47.491Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"zktl8e","timestamp":"2025-05-28T09:14:47.491Z"}
+[2025-05-28T09:14:47.491Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T09:14:47.491Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T09:14:47.491Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T09:14:47.491Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T09:14:47.491Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T09:14:47.491Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T09:14:47.491Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T09:14:47.491Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T09:14:47.491Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T09:14:47.492Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T09:14:47.494Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T09:14:47.511Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T09:14:47.511Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T09:14:47.511Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T09:14:47.511Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T09:14:47.511Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T09:14:47.511Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T09:14:48.492Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T09:14:48.906Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T09:14:52.785Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T09:14:53.008Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T09:14:57.512Z] [INFO] [App] Running background health checks... 
+[2025-05-28T09:14:57.513Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T09:14:57.513Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T09:14:57.514Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T09:14:57.724Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T09:14:57.758Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T09:14:57.792Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T09:14:57.792Z] [StartupChecks] Database health check passed 
+[2025-05-28T09:14:57.792Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T09:14:57.792Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T09:15:00.712Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423700712-28frdti","clients":1}
+[2025-05-28T09:15:00.844Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T09:15:00.756Z"}}
+[2025-05-28T09:15:00.844Z] [INFO] [WebSocket] Authentication from client client-1748423700712-28frdti {"module":"WebSocket","hasToken":true}
+[2025-05-28T09:15:01.245Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423701245-lhyhffc","clients":2}
+[2025-05-28T09:15:01.756Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423701756-mmxr276","clients":3}
+[2025-05-28T09:15:02.290Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423702290-gn11h8g","clients":4}
+[2025-05-28T09:15:02.818Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423702818-tnqmjr1","clients":5}
+[2025-05-28T09:15:03.169Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"authenticate","userId":"474","companyId":"665","clientId":"ws_1748423701282_fxlnvf7sa","timestamp":"2025-05-28T09:15:03.088Z"}
+[2025-05-28T09:15:03.169Z] [INFO] [WebSocket] Authentication from client client-1748423702818-tnqmjr1 {"module":"WebSocket","userId":"474","companyId":"665","hasToken":true}
+[2025-05-28T09:15:17.553Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[969,971,981,978,976,980,982,977,984,1042]}
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 1042 (ky3p): 0/0 = 0%
+[2025-05-28T09:15:22.949Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:15:22.862Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:15:30.841Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:15:31.882Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:15:31.800Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:15:32.446Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:15:32.345Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:15:42.957Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:15:42.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:16:00.845Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:16:01.881Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:01.800Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:16:02.430Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:02.345Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:16:02.949Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:02.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:16:22.946Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:22.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:16:30.853Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:16:31.887Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:31.799Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:16:32.424Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:32.344Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:16:37.489Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["34.194.100.28:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":-1550556688,"secretKey":-1266277968,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":12620,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-28T09:16:37.489Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T09:16:37.489Z"}
+[2025-05-28T09:16:37.493Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T09:16:37.493Z"}
+[2025-05-28T09:16:37.494Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T09:16:37.494Z"}
+[2025-05-28T09:16:37.494Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T09:16:37.494Z"}
+[2025-05-28T09:16:37.494Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T09:16:37.494Z"}
+[2025-05-28T09:16:37.495Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T09:16:37.495Z"}
+[2025-05-28T09:16:42.947Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:16:42.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:16:44.549Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[DemoAPI] Company creation request received at: 2025-05-28T09:16:44.671Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '129',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "Premier Banking Solutions",
+  "type": "demo",
+  "persona": "data-provider",
+  "companySize": "medium",
+  "metadata": {
+    "networkSize": 10
+  }
+}
+[DemoAPI] 🎯 Persona analysis: data-provider SKIPS risk profile assessment
+[DemoAPI] ✅ Skipping risk profile for data-provider - they evaluate others, not themselves
+[DemoAPI] Creating demo session for tracking...
+[DemoSessionService] Creating new demo session: {
+  sessionId: 'demo_43c1aaef-caf5-481f-b9be-222bfc37dcf9',
+  personaType: 'data-provider',
+  expiresAt: '2025-05-31T09:16:44.674Z',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.',
+  ipAddress: '10.81.1.16'
+}
+[DemoSessionService] ✅ Demo session created successfully: demo_43c1aaef-caf5-481f-b9be-222bfc37dcf9
+[DemoAPI] ✅ Demo session created: demo_43c1aaef-caf5-481f-b9be-222bfc37dcf9
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'Premier Banking Solutions',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  riskProfile: 'undefined → null'
+}
+[DemoAPI] 🎭 Processing persona: data-provider
+[DemoAPI] 🏦 Data Provider (Bank) detected - applying bank-specific logic
+[DemoAPI] 🎲 Randomized bank size: extra-large
+[DemoAPI] 🚫 Skipping risk assessment for Data Provider bank
+[DemoAPI] ✅ IMMEDIATE ENTERPRISE DETECTION - CREATING LARGE ENTERPRISE
+[2025-05-28T09:16:44.736Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748423804736_8w52z55ko' }
+[2025-05-28T09:16:44.737Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Immediate enterprise generated: $1.3B, 44700 employees
+[DemoAPI] Starting database insert operation for enterprise company
+[DemoAPI] Database connection status check...
+[DemoAPI] Database connection verified successfully
+[DemoAPI] Preparing company data for database insertion...
+[DemoAPI] Selected legal structure: Private Limited Company
+[DemoAPI] 🏦 Data Provider bank - NO risk assessment applied
+[DemoAPI] ✅ Configured data-provider as Bank with 7 available tabs
+[DemoAPI] Company data prepared: {
+  "name": "Premier Banking Solutions",
+  "description": "Enterprise banking institution specializing in financial risk assessment and network management",
+  "category": "Bank",
+  "revenue": "$1.3B",
+  "num_employees": 44700,
+  "revenue_tier": "xlarge",
+  "is_demo": true,
+  "available_tabs": [
+    "dashboard",
+    "network",
+    "task-center",
+    "file-vault",
+    "insights",
+    "claims",
+    "risk-score"
+  ],
+  "accreditation_status": "APPROVED",
+  "website_url": "https://premierbankingsolutions.com",
+  "hq_address": "One Embarcadero Center, Financial District, San Francisco, CA 94111",
+  "founders_and_leadership": "Enterprise Leadership Team",
+  "legal_structure": "Private Limited Company",
+  "key_clients_partners": "FinTech Companies",
+  "investors": "Institutional Investors",
+  "certifications_compliance": "SOC 2 Type II, ISO 27001",
+  "incorporation_year": 2016
+}
+[DemoAPI] Resolving company name uniqueness before database insertion...
+[DemoAPI] Ensuring company name uniqueness with reliable strategy...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T09:16:44.774Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Premier Banking Solutions',
+  nameLength: 25
+}
+[CompanyNameUtils] Company name conflict detected {
+  timestamp: '2025-05-28T09:16:44.857Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name conflict detected',
+  companyName: 'Premier Banking Solutions',
+  conflictWith: 'Premier Banking Solutions',
+  conflictId: 362,
+  isExistingDemo: true,
+  duration: 83
+}
+[DemoAPI] ⚠️ Original company name exists, generating alternatives...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T09:16:44.858Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Premier Banking Solutions Solutions',
+  nameLength: 35
+}
+[CompanyNameUtils] Company name conflict detected {
+  timestamp: '2025-05-28T09:16:44.890Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name conflict detected',
+  companyName: 'Premier Banking Solutions Solutions',
+  conflictWith: 'Premier Banking Solutions Solutions',
+  conflictId: 382,
+  isExistingDemo: true,
+  duration: 32
+}
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T09:16:44.891Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Premier Banking Solutions Partners',
+  nameLength: 34
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T09:16:44.922Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Premier Banking Solutions Partners',
+  duration: 31
+}
+[DemoAPI] ✅ Found unique name with suffix: Premier Banking Solutions Partners
+[DemoAPI] Company name resolution completed: {
+  originalName: 'Premier Banking Solutions',
+  finalName: 'Premier Banking Solutions Partners',
+  wasModified: true,
+  resolutionStrategy: 'simple_suffix_timestamp',
+  attemptsUsed: 2
+}
+[DemoAPI] Updated website URL to match resolved company name: https://premierbankingsolutionspartners.com
+[DemoAPI] Executing database insert with unique company name...
+[DemoAPI] Database insert completed successfully
+[DemoAPI] ✅ Enterprise company created successfully: {
+  id: 668,
+  name: 'Premier Banking Solutions Partners',
+  description: 'Enterprise banking institution specializing in financial risk assessment and network management',
+  category: 'Bank',
+  logo_id: null,
+  stock_ticker: null,
+  website_url: 'https://premierbankingsolutionspartners.com',
+  legal_structure: 'Private Limited Company',
+  market_position: null,
+  hq_address: 'One Embarcadero Center, Financial District, San Francisco, CA 94111',
+  products_services: null,
+  incorporation_year: 2016,
+  founders_and_leadership: 'Enterprise Leadership Team',
+  num_employees: 44700,
+  revenue: '$1.3B',
+  revenue_tier: 'xlarge',
+  key_clients_partners: 'FinTech Companies',
+  investors: 'Institutional Investors',
+  funding_stage: null,
+  exit_strategy_history: null,
+  certifications_compliance: 'SOC 2 Type II, ISO 27001',
+  risk_score: null,
+  chosen_score: null,
+  risk_clusters: null,
+  risk_configuration: null,
+  risk_priorities: null,
+  accreditation_status: 'APPROVED',
+  onboarding_company_completed: true,
+  registry_date: 2025-05-28T09:16:44.941Z,
+  files_public: [],
+  files_private: [],
+  available_tabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  is_demo: true,
+  created_at: 2025-05-28T09:16:44.941Z,
+  updated_at: 2025-05-28T09:16:44.941Z
+}
+[2025-05-28T09:16:45.026Z] [INFO] [App] POST /api/demo/company/create 200 in 356ms :: {"success":true,"company":{"id":668,"name":"Premier Banking Solutions Partner... 
+[DemoAPI] [UserCreate] Creating user with enhanced demo tracking: {
+  fullName: 'Casey Mohammed',
+  email: 'cmohammed@premiersolutions.com',
+  role: 'provider',
+  persona: 'data-provider',
+  companyId: 668,
+  demoSessionId: 'demo_1748423800434_data-provider',
+  hasMetadata: true,
+  timestamp: '2025-05-28T09:16:45.782Z'
+}
+[DemoAPI] Parsed company ID: 668
+[DemoAPI] [UserCreate] Setting onboarding status based on role: {
+  userRole: 'provider',
+  onboardingUserCompleted: true,
+  expectedBehavior: 'Skip onboarding modal',
+  timestamp: '2025-05-28T09:16:46.012Z'
+}
+[DemoAPI] [UserCreate] User created successfully with persona-based onboarding status: {
+  userId: 476,
+  userEmail: 'cmohammed@premiersolutions.com',
+  companyId: 668,
+  userRole: 'provider',
+  onboardingUserCompleted: true,
+  expectedModalBehavior: '❌ Should NOT see onboarding modal',
+  timestamp: '2025-05-28T09:16:46.080Z'
+}
+[2025-05-28T09:16:46.110Z] [INFO] [App] POST /api/demo/user/create 200 in 328ms :: {"success":true,"userId":476,"userData":{"fullName":"Casey Mohammed","email":... 
+[DemoAPI] Setting up authentication: { userId: 476, email: 'cmohammed@premiersolutions.com' }
+[2025-05-28T09:16:46.891Z] [INFO] [App] POST /api/demo/auth/setup 200 in 31ms :: {"success":true,"credentials":{"loginUrl":"/login","email":"cmohammed@premier... 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 476,
+  companyId: 668,
+  demoType: 'data-provider',
+  timestamp: '2025-05-28T09:16:47.643Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] Company validation check: {
+  userId: 476,
+  userCompanyId: 668,
+  requestedCompanyId: 668,
+  expectedCompanyId: 668,
+  demoType: 'data-provider',
+  isInvelaAdmin: false
+}
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 476,
+  email: 'cmohammed@premiersolutions.com',
+  companyId: 668,
+  fullName: 'Casey Mohammed',
+  duration: 36
+}
+[DemoAPI] [Finalize] Setting up demo environment...
+[DemoAPI] [Finalize] Environment configuration prepared: {
+  environmentId: 'env_demo_1748423807679_476',
+  config: {
+    type: 'data-provider',
+    features: {
+      demoDataAccess: true,
+      tutorialMode: true,
+      limitedFunctionality: false
+    },
+    permissions: {
+      canInviteUsers: true,
+      canModifySettings: true,
+      canAccessAllTabs: true
+    }
+  },
+  duration: 36
+}
+[DemoAPI] [Finalize] Initiating automatic user authentication...
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 476,
+  email: 'cmohammed@premiersolutions.com',
+  companyId: 668,
+  environmentId: 'env_demo_1748423807679_476',
+  authenticated: true,
+  totalDuration: 100,
+  timestamp: '2025-05-28T09:16:47.743Z'
+}
+[WebSocket] Broadcast demo_completed to 5 clients (0 errors) { messageId: 'msg_1748423807743_6urt1i33p' }
+[2025-05-28T09:16:47.744Z] [INFO] [App] Successfully broadcasted demo_completed message 
+[2025-05-28T09:16:47.774Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 132ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 476, companyId: 668 }
+[Current Company] Found company: {
+  id: 668,
+  name: 'Premier Banking Solutions Partners',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 476,
+  companyId: 668,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T09:16:51.146Z'
+}
+[2025-05-28T09:16:51.176Z] [INFO] [App] GET /api/companies/current 200 in 67ms :: {"id":668,"name":"Premier Banking Solutions Partners","category":"Bank","is_d... 
+[2025-05-28T09:16:51.361Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 476 
+[2025-05-28T09:16:51.361Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T09:16:51.361Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T09:16:51.361Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 476 
+[2025-05-28T09:16:51.397Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 476 
+[2025-05-28T09:16:51.423Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748423811423-wiukzv5","clients":6}
+[2025-05-28T09:16:51.427Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 67ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T09:16:51.551Z] [INFO] [WebSocket] Received message from client client-1748423811423-wiukzv5 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748423700005_k9pxkj3ks","timestamp":"2025-05-28T09:16:51.463Z"}
+[2025-05-28T09:16:51.552Z] [INFO] [WebSocket] Authentication from client client-1748423811423-wiukzv5 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Relationships] Fetching network for company: 668
+[Companies] Fetching companies for user: { userId: 476, company_id: 668 }
+[Relationships] Found network members: { count: 0 }
+[2025-05-28T09:16:51.740Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Companies] Query successful, found companies: {
+  count: 1,
+  companies: [
+    {
+      id: 668,
+      name: 'Premier Banking Solutions Partners',
+      hasLogo: false,
+      hasRelationship: true
+    }
+  ]
+}
+[2025-05-28T09:16:51.798Z] [INFO] [App] GET /api/relationships 304 in 154ms :: [] 
+[Network Visualization] Fetching network data for company: 668
+[2025-05-28T09:16:51.829Z] [INFO] [App] GET /api/companies 200 in 156ms :: [{"id":668,"name":"Premier Banking Solutions Partners","category":"Bank","des... 
+[Network Visualization] Found network relationships: { count: 0 }
+[Network Visualization] Returning visualization data: { centerNode: 'Premier Banking Solutions Partners', nodeCount: 0 }
+[2025-05-28T09:16:51.887Z] [INFO] [App] GET /api/network/visualization 200 in 88ms :: {"center":{"id":668,"name":"Premier Banking Solutions Partners","riskScore":0... 
+[Relationships] Fetching network for company: 668
+[Relationships] Found network members: { count: 0 }
+[2025-05-28T09:16:52.037Z] [INFO] [App] GET /api/relationships 304 in 60ms :: [] 
+[2025-05-28T09:16:53.267Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 476, company_id: 668, email: 'cmohammed@premiersolutions.com' }
+[2025-05-28T09:16:53.328Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":668,"userId":476}
+[2025-05-28T09:16:53.383Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":668}
+[Tasks] Automatically unlocking all tasks for company { userId: 476, companyId: 668, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T09:16:53.388Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":668}
+[2025-05-28T09:16:53.419Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":668}
+[Tasks] Successfully unlocked all tasks for company: 668
+[2025-05-28T09:16:53.448Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 476 
+[2025-05-28T09:16:53.448Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T09:16:53.448Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T09:16:53.448Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 476 
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 476',
+    condition2: 'tasks.created_by = 476',
+    condition3: "tasks.company_id = 668 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('cmohammed@premiersolutions.com')"
+  }
+}
+[2025-05-28T09:16:53.477Z] [INFO] [App] [TabTutorials] No tutorial status found for network for user 476 
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T09:16:53.507Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 60ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"network"} 
+[2025-05-28T09:16:53.538Z] [INFO] [App] GET /api/tasks 304 in 211ms :: [] 
+[2025-05-28T09:16:54.845Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 476 
+[2025-05-28T09:16:54.845Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T09:16:54.845Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T09:16:54.845Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: network (raw: network), user: 476 
+[2025-05-28T09:16:54.915Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for network for user 476 
+[2025-05-28T09:16:54.947Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 103ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-28T09:16:55.129Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 476 
+[2025-05-28T09:16:55.129Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T09:16:55.129Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T09:16:55.130Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 476 
+[2025-05-28T09:16:55.191Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 476: completed=false, step=0 
+[2025-05-28T09:16:55.222Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 93ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-28T09:... 
+[2025-05-28T09:17:00.843Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:17:01.881Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:01.801Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:17:02.429Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:02.345Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:17:02.944Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:02.862Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[Current Company] Using cached company data: 668
+[2025-05-28T09:17:17.471Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":668,"name":"Premier Banking Solutions Partners","category":"Bank","is_d... [sampled: request 11] 
+[2025-05-28T09:17:22.953Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:22.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[Current Company] Using cached company data: 668
+[2025-05-28T09:17:30.847Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:17:31.887Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:31.800Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:17:32.426Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:32.344Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:17:42.953Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:17:42.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
+[2025-05-28T09:17:47.478Z] [INFO] [App] GET /api/companies/current 304 in 37ms :: {"id":668,"name":"Premier Banking Solutions Partners","category":"Bank","is_d... [sampled: request 21] 
+[Current Company] Fetching company for user: { userId: 476, companyId: 668 }
+[Current Company] Found company: {
+  id: 668,
+  name: 'Premier Banking Solutions Partners',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 476,
+  companyId: 668,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T09:17:53.476Z'
+}
+[2025-05-28T09:18:00.840Z] [INFO] [WebSocket] Received message from client client-1748423700712-28frdti {"module":"WebSocket","type":"ping"}
+[2025-05-28T09:18:01.886Z] [INFO] [WebSocket] Received message from client client-1748423701756-mmxr276 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:18:01.799Z","connectionId":"ws_1748423701798_p8bogv5k6"}
+[2025-05-28T09:18:02.425Z] [INFO] [WebSocket] Received message from client client-1748423702290-gn11h8g {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:18:02.345Z","connectionId":"ws_1748423701285_hc7g2fj19"}
+[2025-05-28T09:18:02.944Z] [INFO] [WebSocket] Received message from client client-1748423702818-tnqmjr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T09:18:02.863Z","connectionId":"ws_1748423701282_fxlnvf7sa"}
