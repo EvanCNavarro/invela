@@ -1,0 +1,544 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T14:30:13.579Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T14:30:13.583Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T14:30:13.583Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T14:30:13.715Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T14:30:13.829Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T14:30:13.829Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T14:30:13.829Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T14:30:13.830Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T14:30:13.831Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T14:30:13.833Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T14:30:13.833Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"rw2f65","timestamp":"2025-05-28T14:30:13.833Z"}
+[2025-05-28T14:30:13.833Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T14:30:13.833Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T14:30:13.833Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T14:30:13.833Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T14:30:13.834Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T14:30:13.834Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T14:30:13.834Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T14:30:13.834Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T14:30:13.834Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T14:30:13.834Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T14:30:13.836Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T14:30:13.849Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T14:30:13.850Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T14:30:13.850Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T14:30:13.850Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T14:30:13.850Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T14:30:13.850Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T14:30:14.835Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T14:30:15.396Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:30:20.768Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:30:21.267Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:30:23.855Z] [INFO] [App] Running background health checks... 
+[2025-05-28T14:30:23.855Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T14:30:23.856Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T14:30:23.856Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T14:30:24.042Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T14:30:24.070Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T14:30:24.103Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T14:30:24.103Z] [StartupChecks] Database health check passed 
+[2025-05-28T14:30:24.103Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T14:30:24.103Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T14:30:29.352Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748442629352-ntl39rj","clients":1}
+[2025-05-28T14:30:29.470Z] [INFO] [WebSocket] Received message from client client-1748442629352-ntl39rj {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T14:30:29.335Z"}}
+[2025-05-28T14:30:29.471Z] [INFO] [WebSocket] Authentication from client client-1748442629352-ntl39rj {"module":"WebSocket","hasToken":true}
+[2025-05-28T14:30:29.882Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748442629882-k1d82xk","clients":2}
+[2025-05-28T14:30:30.386Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748442630386-ysc4xtr","clients":3}
+[2025-05-28T14:30:30.890Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748442630890-v09h7az","clients":4}
+[2025-05-28T14:30:31.454Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748442631454-3jlhy9a","clients":5}
+[2025-05-28T14:30:31.822Z] [INFO] [WebSocket] Received message from client client-1748442631454-3jlhy9a {"module":"WebSocket","type":"authenticate","userId":"487","companyId":"685","clientId":"ws_1748442629808_ighrlramn","timestamp":"2025-05-28T14:30:31.675Z"}
+[2025-05-28T14:30:31.823Z] [INFO] [WebSocket] Authentication from client client-1748442631454-3jlhy9a {"module":"WebSocket","userId":"487","companyId":"685","hasToken":true}
+[2025-05-28T14:30:43.931Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,964,969,1001,973,971,976,981,978]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:30:45.394Z',
+  requestId: 'req_1748442645394_1jjrcy430'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:30:45.398Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:30:45.398Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Benchmark Reserve Corporation',
+  components: { prefix: 'Benchmark', core: 'Reserve', suffix: 'Corporation' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Benchmark Reserve Corporation',
+  strategy: 'full_combinatorial',
+  duration: 4
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:30:45.398Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Benchmark Reserve Corporation',
+  nameLength: 29
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:30:45.449Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Benchmark Reserve Corporation',
+  duration: 51
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Benchmark Reserve Corporation',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 55,
+  timestamp: '2025-05-28T14:30:45.449Z'
+}
+[2025-05-28T14:30:45.481Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 87ms :: {"success":true,"companyName":"Benchmark Reserve Corporation","wasModified":f... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:30:45.747Z',
+  requestId: 'req_1748442645747_v5t8k8et3'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:30:45.748Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:30:45.748Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Standard Funding Union',
+  components: { prefix: 'Standard', core: 'Funding', suffix: 'Union' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Standard Funding Union',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:30:45.748Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Standard Funding Union',
+  nameLength: 22
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:30:45.779Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Standard Funding Union',
+  duration: 31
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Standard Funding Union',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 32,
+  timestamp: '2025-05-28T14:30:45.779Z'
+}
+[2025-05-28T14:30:45.810Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 63ms :: {"success":true,"companyName":"Standard Funding Union","wasModified":false,"o... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:30:46.069Z',
+  requestId: 'req_1748442646069_kyfymaci4'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:30:46.070Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:30:46.070Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Metropolitan Solutions Leaders',
+  components: { prefix: 'Metropolitan', core: 'Solutions', suffix: 'Leaders' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Metropolitan Solutions Leaders',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:30:46.071Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Metropolitan Solutions Leaders',
+  nameLength: 30
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:30:46.100Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Metropolitan Solutions Leaders',
+  duration: 29
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Metropolitan Solutions Leaders',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:30:46.100Z'
+}
+[2025-05-28T14:30:46.133Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 64ms :: {"success":true,"companyName":"Metropolitan Solutions Leaders","wasModified":... 
+[2025-05-28T14:30:51.612Z] [INFO] [WebSocket] Received message from client client-1748442631454-3jlhy9a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:30:51.471Z","connectionId":"ws_1748442629808_ighrlramn"}
+[2025-05-28T14:30:59.472Z] [INFO] [WebSocket] Received message from client client-1748442629352-ntl39rj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:31:00.553Z] [INFO] [WebSocket] Received message from client client-1748442630386-ysc4xtr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:00.397Z","connectionId":"ws_1748442630396_ecyd7l22v"}
+[2025-05-28T14:31:01.035Z] [INFO] [WebSocket] Received message from client client-1748442630890-v09h7az {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:00.897Z","connectionId":"ws_1748442629867_7did6mzlp"}
+[2025-05-28T14:31:11.619Z] [INFO] [WebSocket] Received message from client client-1748442631454-3jlhy9a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:11.471Z","connectionId":"ws_1748442629808_ighrlramn"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:12.409Z',
+  requestId: 'req_1748442672409_nmhiefsvn'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:12.410Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:12.410Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'NextGen Advisory Federation',
+  components: { prefix: 'NextGen', core: 'Advisory', suffix: 'Federation' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'NextGen Advisory Federation',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:12.410Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'NextGen Advisory Federation',
+  nameLength: 27
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:12.440Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'NextGen Advisory Federation',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'NextGen Advisory Federation',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:31:12.440Z'
+}
+[2025-05-28T14:31:12.473Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 64ms :: {"success":true,"companyName":"NextGen Advisory Federation","wasModified":fal... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:12.727Z',
+  requestId: 'req_1748442672727_kiry7mypg'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:12.728Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:12.728Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Sovereign Platform Alliance',
+  components: { prefix: 'Sovereign', core: 'Platform', suffix: 'Alliance' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Sovereign Platform Alliance',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:12.728Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Sovereign Platform Alliance',
+  nameLength: 27
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:12.758Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Sovereign Platform Alliance',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Sovereign Platform Alliance',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:31:12.758Z'
+}
+[2025-05-28T14:31:12.789Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 63ms :: {"success":true,"companyName":"Sovereign Platform Alliance","wasModified":fal... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:13.043Z',
+  requestId: 'req_1748442673043_gzt008mac'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:13.044Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:13.044Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Sterling Capital Core',
+  components: { prefix: 'Sterling', core: 'Capital', suffix: 'Core' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Sterling Capital Core',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:13.045Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Sterling Capital Core',
+  nameLength: 21
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:13.074Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Sterling Capital Core',
+  duration: 29
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Sterling Capital Core',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:31:13.074Z'
+}
+[2025-05-28T14:31:13.105Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 62ms :: {"success":true,"companyName":"Sterling Capital Core","wasModified":false,"or... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:15.404Z',
+  requestId: 'req_1748442675404_rzpe8ed99'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:15.404Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:15.405Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Allied Management Hub',
+  components: { prefix: 'Allied', core: 'Management', suffix: 'Hub' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Allied Management Hub',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:15.405Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Allied Management Hub',
+  nameLength: 21
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:15.435Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Allied Management Hub',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Allied Management Hub',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:31:15.435Z'
+}
+[2025-05-28T14:31:15.469Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 66ms :: {"success":true,"companyName":"Allied Management Hub","wasModified":false,"or... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:15.730Z',
+  requestId: 'req_1748442675730_mbxmif3ko'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:15.731Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:15.731Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Advanced Forge International',
+  components: { prefix: 'Advanced', core: 'Forge', suffix: 'International' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Advanced Forge International',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:15.731Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Advanced Forge International',
+  nameLength: 28
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:15.761Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Advanced Forge International',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Advanced Forge International',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:31:15.761Z'
+}
+[2025-05-28T14:31:15.794Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 64ms :: {"success":true,"companyName":"Advanced Forge International","wasModified":fa... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:31:16.046Z',
+  requestId: 'req_1748442676046_t30g9zj9z'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:31:16.047Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:31:16.047Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Dynamic Credit Partners',
+  components: { prefix: 'Dynamic', core: 'Credit', suffix: 'Partners' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Dynamic Credit Partners',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:31:16.047Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Dynamic Credit Partners',
+  nameLength: 23
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:31:16.078Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Dynamic Credit Partners',
+  duration: 31
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Dynamic Credit Partners',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 32,
+  timestamp: '2025-05-28T14:31:16.078Z'
+}
+[2025-05-28T14:31:16.109Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 63ms :: {"success":true,"companyName":"Dynamic Credit Partners","wasModified":false,"... 
+[2025-05-28T14:31:29.473Z] [INFO] [WebSocket] Received message from client client-1748442629352-ntl39rj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:31:30.540Z] [INFO] [WebSocket] Received message from client client-1748442630386-ysc4xtr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:30.397Z","connectionId":"ws_1748442630396_ecyd7l22v"}
+[2025-05-28T14:31:31.039Z] [INFO] [WebSocket] Received message from client client-1748442630890-v09h7az {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:30.897Z","connectionId":"ws_1748442629867_7did6mzlp"}
+[2025-05-28T14:31:31.607Z] [INFO] [WebSocket] Received message from client client-1748442631454-3jlhy9a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:31.471Z","connectionId":"ws_1748442629808_ighrlramn"}
+[2025-05-28T14:31:51.609Z] [INFO] [WebSocket] Received message from client client-1748442631454-3jlhy9a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:31:51.472Z","connectionId":"ws_1748442629808_ighrlramn"}
