@@ -1,0 +1,32 @@
+[DemoPage] Finalize payload: Using companyId "1" for persona "invela-admin"
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, message: "Auth setup complete"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Invela", userFullName: "Daniel Murphy", hasValidCompanyName: true, timestamp: "2025-05-28T15:30:46.111Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "invela-admin", userFullName: "Daniel Murphy", demoSessionId: "demo_1748446246112_invela-admin", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "1" for persona "invela-admin"
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoAPI] 🔄 Replaced placeholder userId with actual ID: 495 
+Object {actionId: "finalize-environment", userResult: {…}, timestamp: "2025-05-28T15:30:46.712Z"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Invela", userFullName: "Daniel Murphy", hasValidCompanyName: true, timestamp: "2025-05-28T15:30:46.714Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "invela-admin", userFullName: "Daniel Murphy", demoSessionId: "demo_1748446246714_invela-admin", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "1" for persona "invela-admin"
+[DemoAPI] REAL API FAILED for: Finalizing demo environment 
+Error {}
+
+[DemoAPI] Error executing Finalizing demo environment: 
+Error {}
+
+[DemoStep3] Action failed: Finalizing demo environment
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Invela", userFullName: "Daniel Murphy", hasValidCompanyName: true, timestamp: "2025-05-28T15:30:46.943Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "invela-admin", userFullName: "Daniel Murphy", demoSessionId: "demo_1748446246943_invela-admin", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "1" for persona "invela-admin"
