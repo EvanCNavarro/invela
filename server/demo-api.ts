@@ -1922,9 +1922,73 @@ router.post('/demo/company/create', async (req, res) => {
         }
         
         break;
-        
       } catch (error: any) {
         if (error.code === '23505' && error.constraint === 'idx_companies_name_lower') {
+          // Duplicate name detected - generate unique alternative
+          attempt++;
+          console.log(`[DemoAPI] ⚠️ Duplicate name detected: "${finalName}". Generating unique alternative...`);
+          
+          // Generate unique name using timestamp and random suffix
+          const timestamp = Date.now().toString().slice(-4);
+          const randomSuffix = Math.random().toString(36).substring(2, 5);
+          finalName = `${insertValues.name} ${timestamp}${randomSuffix}`;
+          
+          console.log(`[DemoAPI] 🔄 Trying with unique name: "${finalName}"`);
+          
+          if (attempt >= maxAttempts) {
+            console.error(`[DemoAPI] ❌ Failed to create unique name after ${maxAttempts} attempts`);
+            throw new Error(`Failed to generate unique company name after ${maxAttempts} attempts`);
+          }
+          continue;
+        } else {
+          // Different error - rethrow
+          console.error('[DemoAPI] Company creation error:', {
+            errorCode: error.code,
+            errorMessage: error.message,
+            persona: persona,
+            shouldCreateTasks: shouldCreateTasks,
+            attempt: attempt + 1
+          });
+          throw error;
+        }
+      }
+    }
+    
+    if (!company) {
+      throw new Error(`Failed to create company after ${maxAttempts} attempts`);
+    }
+    
+    // =================================================================
+    // COMPREHENSIVE RESPONSE WITH TASK INFORMATION
+    // =================================================================
+    
+    console.log('[DemoAPI] ✅ Company creation completed successfully:', {
+      companyId: company.id,
+      companyName: company.name,
+      persona: persona,
+      shouldCreateTasks: shouldCreateTasks,
+      category: company.category,
+      isDemo: company.is_demo
+    });
+    
+    // Return comprehensive response
+    return {
+      id: company.id,
+      name: company.name,
+      category: company.category,
+      type: 'demo',
+      persona,
+      tasksCreated: shouldCreateTasks,
+      onboardingCompleted: company.onboarding_completed,
+      riskScore: shouldCreateTasks ? null : company.risk_score
+    };
+  }
+  
+  /**
+   * Demo User Creation
+   * Creates a new user account with proper role and permissions
+   */
+  async function createDemoUser(req: any, res: any) {
           // Duplicate name detected - generate unique alternative
           attempt++;
           console.log(`[DemoAPI] ⚠️ Duplicate name detected: "${finalName}". Generating unique alternative...`);
