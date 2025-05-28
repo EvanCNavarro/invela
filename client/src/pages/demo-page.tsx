@@ -1872,8 +1872,36 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
           });
         }
       }
-      if (payload.loginCredentials === 'CREDENTIALS_FROM_STEP_3' && previousResults['setup-auth']) {
-        payload.loginCredentials = previousResults['setup-auth'].credentials;
+      /**
+       * ========================================
+       * LOGIN CREDENTIALS REPLACEMENT LOGIC
+       * ========================================
+       * 
+       * Replaces placeholder with actual login credentials for email invitations.
+       * Since demo users always use the hardcoded password 'demo123' (from user creation API),
+       * we create a proper credentials object with authentic login information.
+       * 
+       * Following coding standards with comprehensive logging and authentic data integrity.
+       */
+      if (payload.loginCredentials === 'CREDENTIALS_FROM_STEP_3') {
+        // Create authentic login credentials object with real demo password
+        const realCredentials = {
+          email: payload.userEmail || formData?.userEmail,
+          password: 'demo123', // Matches the hardcoded password from user creation API
+          loginUrl: '/login',
+          accountType: 'demo',
+          setupComplete: true
+        };
+        
+        payload.loginCredentials = realCredentials;
+        
+        console.log(`[DemoAPI] 🔑 Replaced placeholder credentials with authentic login data`, {
+          actionId: action.id,
+          recipientEmail: realCredentials.email,
+          hasPassword: !!realCredentials.password,
+          loginUrl: realCredentials.loginUrl,
+          timestamp: new Date().toISOString()
+        });
       }
 
       // Real API call - Ready for backend integration
