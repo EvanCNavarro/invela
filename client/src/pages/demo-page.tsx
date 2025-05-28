@@ -532,35 +532,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       
       return `${firstLetter}${cleanLastName}@${cleanCompany}.com`;
     }
-    // Generate unique company name using advanced API instead of hardcoded arrays
-    console.log('[DemoPage] [CompanyName] Generating unique company name via API...');
-    let randomCompany: string;
-    
-    try {
-      randomCompany = await generateUniqueCompanyName({
-        fallbackToTimestamp: true,
-        maxRetries: 3,
-        timeoutMs: 5000,
-        logLevel: 'info'
-      });
-      
-      console.log('[DemoPage] [CompanyName] Successfully generated unique company name:', {
-        companyName: randomCompany,
-        method: 'api_generation',
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (error) {
-      // Emergency fallback - should rarely be needed due to API fallback strategies
-      const timestamp = Date.now();
-      randomCompany = `Demo Company ${timestamp}`;
-      
-      console.warn('[DemoPage] [CompanyName] API generation failed, using emergency fallback:', {
-        fallbackName: randomCompany,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
-    }
+    // Use timestamp-based unique name for initial state (API call will happen on demand)
+    const timestamp = Date.now();
+    const randomCompany = `Demo Company ${timestamp}`;
     const randomFirstName = DEMO_DATA_GENERATORS.firstNames[
       Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
     ];
@@ -759,9 +733,16 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     const updates: Partial<DemoCustomizationForm> = {};
     
     if (fields.includes('companyName')) {
-      updates.companyName = DEMO_DATA_GENERATORS.companyNames[
-        Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
-      ];
+      // Generate unique company name with timestamp to ensure uniqueness
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substr(2, 5);
+      updates.companyName = `Demo Company ${timestamp}_${randomSuffix}`;
+      
+      console.log('[DemoPage] [CompanyName] Generated unique company name:', {
+        companyName: updates.companyName,
+        method: 'timestamp_unique',
+        timestamp: new Date().toISOString()
+      });
     }
     
     if (fields.includes('userFullName')) {
