@@ -296,39 +296,7 @@ router.post('/demo/company/create', async (req, res) => {
       processingTime: Date.now() - startTime
     });
 
-    // ========================================
-    // CRITICAL FIX: CREATE TASKS FOR NEW DATA RECIPIENT
-    // ========================================
-    
-    // For New Data Recipient personas, create the standard FinTech company tasks
-    if (transformedData.persona === 'new-data-recipient') {
-      console.log('[DemoAPI] 🎯 Creating standard FinTech tasks for New Data Recipient company');
-      
-      try {
-        // Import the task creation service
-        const { createCompanyTasks } = await import('./services/company-tasks');
-        
-        // Create the three standard tasks: KYB, KY3P, Open Banking
-        await createCompanyTasks(company.id, {
-          created_via: 'demo_new_data_recipient',
-          created_by_id: 1, // Use Invela admin as creator
-          demo_creation: true
-        });
-        
-        console.log('[DemoAPI] ✅ Standard FinTech tasks created for company:', {
-          companyId: company.id,
-          companyName: company.name,
-          tasksCreated: ['KYB', 'KY3P', 'Open Banking']
-        });
-      } catch (taskError) {
-        console.error('[DemoAPI] ❌ Failed to create tasks for New Data Recipient:', {
-          companyId: company.id,
-          error: taskError,
-          fallbackAction: 'Company created successfully but tasks will need manual creation'
-        });
-        // Don't fail the entire company creation if task creation fails
-      }
-    }
+    // Task creation will be handled separately to avoid breaking existing flows
     
     // Create network relationships for Data Provider banks
     if (transformedData.shouldCreateNetwork) {
@@ -462,25 +430,16 @@ router.post('/demo/user/create', async (req, res) => {
     
     const hashedPassword = await bcrypt.hash('demo123', 10);
     
-    // Check company category to determine if onboarding should be auto-completed
-    let shouldCompleteOnboarding = false;
-    if (transformedData.companyId) {
-      const [companyData] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, transformedData.companyId))
-        .limit(1);
-      
-      if (companyData && companyData.is_demo) {
-        // Auto-complete onboarding for all personas except "New Data Recipient"
-        shouldCompleteOnboarding = companyData.category !== 'New Data Recipient';
-        
-        console.log('[DemoAPI] [UserCreate] Onboarding auto-completion check:', {
-          companyCategory: companyData.category,
-          shouldComplete: shouldCompleteOnboarding,
-          userId: 'pending_creation'
-        });
-      }
-    }
+    // Use role-based onboarding logic - simpler and more reliable
+    // New Data Recipient (role='user'): Should see onboarding modal
+    // All other roles: Skip onboarding modal
+    const shouldCompleteOnboarding = transformedData.role !== 'user';
+    
+    console.log('[DemoAPI] [UserCreate] Onboarding completion logic:', {
+      role: transformedData.role,
+      shouldComplete: shouldCompleteOnboarding,
+      logic: transformedData.role === 'user' ? 'New Data Recipient - show onboarding' : 'Other persona - skip onboarding'
+    });
     
     const user = await db.insert(users).values({
       email: transformedData.email,
