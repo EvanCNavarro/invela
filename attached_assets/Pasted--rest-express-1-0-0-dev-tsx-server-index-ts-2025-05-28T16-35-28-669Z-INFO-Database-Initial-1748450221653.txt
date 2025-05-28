@@ -1,0 +1,628 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T16:35:28.669Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T16:35:28.676Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T16:35:28.676Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T16:35:28.854Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T16:35:28.986Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T16:35:28.986Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T16:35:28.986Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T16:35:28.986Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T16:35:28.987Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T16:35:28.989Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T16:35:28.989Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"047oe4","timestamp":"2025-05-28T16:35:28.989Z"}
+[2025-05-28T16:35:28.989Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T16:35:28.989Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T16:35:28.989Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T16:35:28.989Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T16:35:28.989Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T16:35:28.989Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T16:35:28.989Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T16:35:28.989Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T16:35:28.989Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T16:35:28.990Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T16:35:28.991Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T16:35:29.004Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T16:35:29.004Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T16:35:29.004Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T16:35:29.004Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T16:35:29.005Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T16:35:29.005Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T16:35:29.774Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:35:30.612Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T16:35:33.805Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:35:39.005Z] [INFO] [App] Running background health checks... 
+[2025-05-28T16:35:39.005Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T16:35:39.005Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T16:35:39.006Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T16:35:39.197Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T16:35:39.227Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T16:35:39.256Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T16:35:39.257Z] [StartupChecks] Database health check passed 
+[2025-05-28T16:35:39.257Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T16:35:39.257Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T16:35:56.452Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450156452-egqo120","clients":1}
+[2025-05-28T16:35:56.575Z] [INFO] [WebSocket] Received message from client client-1748450156452-egqo120 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T16:35:56.392Z"}}
+[2025-05-28T16:35:56.575Z] [INFO] [WebSocket] Authentication from client client-1748450156452-egqo120 {"module":"WebSocket","hasToken":true}
+[2025-05-28T16:35:57.193Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450157193-gd6a2qe","clients":2}
+[2025-05-28T16:35:57.752Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450157752-yol3gzi","clients":3}
+[2025-05-28T16:35:58.319Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450158319-i4h5jmf","clients":4}
+[2025-05-28T16:35:58.956Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450158956-anqwzdw","clients":5}
+[2025-05-28T16:35:59.039Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[964,965,999,973,969,1001,971,981,978,976]}
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[2025-05-28T16:35:59.262Z] [INFO] [WebSocket] Received message from client client-1748450158956-anqwzdw {"module":"WebSocket","type":"authenticate","userId":"498","companyId":"694","clientId":"ws_1748450157782_p7y38cubv","timestamp":"2025-05-28T16:35:59.084Z"}
+[2025-05-28T16:35:59.262Z] [INFO] [WebSocket] Authentication from client client-1748450158956-anqwzdw {"module":"WebSocket","userId":"498","companyId":"694","hasToken":true}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[2025-05-28T16:36:19.074Z] [INFO] [WebSocket] Received message from client client-1748450158956-anqwzdw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:18.898Z","connectionId":"ws_1748450157782_p7y38cubv"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:36:20.768Z',
+  requestId: 'req_1748450180768_6xjhcupxy'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:36:20.770Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:36:20.770Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Crown Quality Associates',
+  components: { prefix: 'Crown', core: 'Quality', suffix: 'Associates' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Crown Quality Associates',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:36:20.771Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Crown Quality Associates',
+  nameLength: 24
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:36:20.799Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Crown Quality Associates',
+  duration: 28
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Crown Quality Associates',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T16:36:20.799Z'
+}
+[2025-05-28T16:36:20.831Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 64ms :: {"success":true,"companyName":"Crown Quality Associates","wasModified":false,... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:36:21.081Z',
+  requestId: 'req_1748450181081_edl9367ec'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:36:21.082Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:36:21.082Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Certified Operations Champions',
+  components: { prefix: 'Certified', core: 'Operations', suffix: 'Champions' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Certified Operations Champions',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:36:21.083Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Certified Operations Champions',
+  nameLength: 30
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:36:21.115Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Certified Operations Champions',
+  duration: 32
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Certified Operations Champions',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 34,
+  timestamp: '2025-05-28T16:36:21.115Z'
+}
+[2025-05-28T16:36:21.145Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 64ms :: {"success":true,"companyName":"Certified Operations Champions","wasModified":... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:36:21.396Z',
+  requestId: 'req_1748450181396_7a3rpdmb4'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:36:21.397Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:36:21.397Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Network Guard Hub',
+  components: { prefix: 'Network', core: 'Guard', suffix: 'Hub' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Network Guard Hub',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:36:21.397Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Network Guard Hub',
+  nameLength: 17
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:36:21.426Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Network Guard Hub',
+  duration: 28
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Network Guard Hub',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 30,
+  timestamp: '2025-05-28T16:36:21.426Z'
+}
+[2025-05-28T16:36:21.457Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 61ms :: {"success":true,"companyName":"Network Guard Hub","wasModified":false,"origin... 
+[2025-05-28T16:36:26.571Z] [INFO] [WebSocket] Received message from client client-1748450156452-egqo120 {"module":"WebSocket","type":"ping"}
+[2025-05-28T16:36:27.880Z] [INFO] [WebSocket] Received message from client client-1748450157752-yol3gzi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:27.702Z","connectionId":"ws_1748450157700_7b62yxsm4"}
+[2025-05-28T16:36:28.443Z] [INFO] [WebSocket] Received message from client client-1748450158319-i4h5jmf {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:28.266Z","connectionId":"ws_1748450157140_swp4w0ect"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Network Guard Hub',
+  type: 'demo',
+  persona: 'accredited-data-recipient',
+  companySize: 'extra-large',
+  riskProfile: 23
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'accredited-data-recipient',
+  preserved: 'accredited-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T16:36:28.499Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'accredited-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Network Guard Hub',
+    persona: 'accredited-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Network Guard Hub',
+    persona: 'accredited-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T16:36:28.499Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'accredited-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 2
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: accredited-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'accredited-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'dashboard', 'task-center', 'file-vault', 'insights' ],
+  onboardingRequired: false,
+  tabCount: 4
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 696,
+  name: 'Network Guard Hub',
+  category: 'FinTech',
+  availableTabs: [ 'dashboard', 'task-center', 'file-vault', 'insights' ],
+  personaType: 'accredited-data-recipient',
+  transformedPersona: 'accredited-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 86
+}
+[DemoAPI] ⏭️ Skipping task creation for persona: {
+  persona: 'accredited-data-recipient',
+  reason: 'Not a New Data Recipient - tasks not required for this persona'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 696,
+  companyName: 'Network Guard Hub',
+  persona: 'accredited-data-recipient',
+  category: 'FinTech',
+  availableTabs: 4,
+  networkCreated: false,
+  totalProcessingTime: 87
+}
+[2025-05-28T16:36:28.615Z] [INFO] [App] POST /api/demo/company/create 200 in 117ms :: {"success":true,"company":{"id":696,"name":"Network Guard Hub","description":... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Emma Patel',
+  email: 'epatel@networkguardhub.com',
+  companyId: 696,
+  role: 'accredited_user',
+  persona: 'accredited-data-recipient',
+  demoSessionId: 'demo_1748450186863_accredited-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'accredited-data-recipient',
+    setupTimestamp: '2025-05-28T16:36:26.863Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 696,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 696
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'accredited-data-recipient',
+  preserved: 'accredited-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T16:36:29.373Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Emma Patel',
+    email: 'epatel@networkguardhub.com',
+    companyId: 696,
+    companyIdType: 'number',
+    persona: 'accredited-data-recipient'
+  },
+  output: {
+    fullName: 'Emma Patel',
+    email: 'epatel@networkguardhub.com',
+    companyId: 696,
+    companyIdType: 'number',
+    role: 'accredited_user',
+    persona: 'accredited-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T16:36:29.374Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'accredited_user',
+  persona: 'accredited-data-recipient',
+  shouldCompleteOnboarding: true,
+  onboardingUserCompleted: true,
+  logic: 'Other persona - onboarding_user_completed = TRUE (skips modal)',
+  modalWillShow: false
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 502,
+  email: 'epatel@networkguardhub.com',
+  fullName: 'Emma Patel',
+  companyId: 696,
+  role: 'accredited_user',
+  onboardingCompleted: true
+}
+[2025-05-28T16:36:29.498Z] [INFO] [App] POST /api/demo/user/create 200 in 125ms :: {"success":true,"user":{"id":502,"email":"epatel@networkguardhub.com","full_n... 
+[2025-05-28T16:36:30.280Z] [INFO] [App] POST /api/demo/auth/setup 200 in 32ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [EmailInvite] Starting email invitation process: {
+  userEmail: '***@***.***',
+  userName: 'Emma Patel',
+  companyName: 'Network Guard Hub',
+  loginCredentials: {
+    email: 'epatel@networkguardhub.com',
+    password: 'demo123',
+    loginUrl: '/login',
+    accountType: 'demo',
+    setupComplete: true
+  },
+  timestamp: '2025-05-28T16:36:31.034Z'
+}
+[DemoAPI] [EmailInvite] Input validation successful: {
+  userEmail: 'epatel@networkguardhub.com',
+  userName: 'Emma Patel',
+  companyName: 'Network Guard Hub',
+  hasLoginCredentials: true
+}
+[DemoAPI] [EmailInvite] Verifying user exists...
+[DemoAPI] [EmailInvite] User verification successful: {
+  userId: 502,
+  email: 'epatel@networkguardhub.com',
+  companyId: 696,
+  fullName: 'Emma Patel'
+}
+[DemoAPI] [EmailInvite] Generating secure invitation code...
+[DemoAPI] [EmailInvite] Generated invitation code: { codeLength: 6, codeFormat: 'hex-uppercase', duration: 30 }
+[DemoAPI] [EmailInvite] Creating invitation database record...
+[DemoAPI] [EmailInvite] Invitation record created: {
+  invitationId: 453,
+  code: 'A78116',
+  expiresAt: 2025-06-04T16:36:31.065Z,
+  duration: 63
+}
+[DemoAPI] [EmailInvite] Preparing email content using emailService...
+[DemoAPI] [EmailInvite] Built invitation URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com
+[EmailService] Starting to send template email
+[EmailService] Template type: demo_invite
+[EmailService] Recipient: epatel@networkguardhub.com
+[EmailService] Template data (raw): {
+  "recipientName": "Emma Patel",
+  "recipientEmail": "epatel@networkguardhub.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Network Guard Hub",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com",
+  "code": "A78116"
+}
+[EmailService] Starting email validation for: epatel@networkguardhub.com
+[EmailService] Checking MX records for domain: networkguardhub.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND networkguardhub.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'networkguardhub.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: epatel@networkguardhub.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientName": "Emma Patel",
+  "recipientEmail": "epatel@networkguardhub.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Network Guard Hub",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com",
+  "code": "A78116"
+}
+[EmailService] Built invite URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com
+[EmailService] Transformed template data: {
+  "recipientName": "Emma Patel",
+  "recipientEmail": "epatel@networkguardhub.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Network Guard Hub",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com",
+  "code": "A78116"
+}
+[EmailService] Getting email template: demo_invite
+[EmailTemplate] Getting template: demo_invite
+[EmailTemplate] Template data: {
+  "recipientName": "Emma Patel",
+  "recipientEmail": "epatel@networkguardhub.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Network Guard Hub",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com",
+  "code": "A78116"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "Emma Patel",
+  "recipientEmail": "epatel@networkguardhub.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Network Guard Hub",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A78116&email=epatel%40networkguardhub.com",
+  "code": "A78116",
+  "inviteType": "demo"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'EvanCNavarro@gmail.com',
+  to: 'epatel@networkguardhub.com',
+  subject: 'Invitation to join Invela',
+  textLength: 707,
+  htmlLength: 1789
+}
+[EmailService] Email sent successfully to: epatel@networkguardhub.com
+[DemoAPI] [EmailInvite] Demo invitation email sent successfully
+[DemoAPI] [EmailInvite] Email process completed: {
+  recipientEmail: 'epatel@networkguardhub.com',
+  invitationCode: 'A78116',
+  messageId: 'demo_invite_1748450191806_453',
+  emailSent: true,
+  duration: 772
+}
+[DemoAPI] [EmailInvite] Process completed successfully: {
+  userId: 502,
+  companyId: 696,
+  invitationId: 453,
+  invitationCode: 'A78116',
+  emailSent: true,
+  totalDuration: 772
+}
+[2025-05-28T16:36:31.836Z] [INFO] [App] POST /api/demo/email/send-invitation 200 in 802ms :: {"success":true,"emailSent":true,"messageId":"demo_invite_1748450191806_453",... 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 502,
+  companyId: 696,
+  demoType: 'accredited-data-recipient',
+  timestamp: '2025-05-28T16:36:32.599Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 502,
+  email: 'epatel@networkguardhub.com',
+  companyId: 696,
+  fullName: 'Emma Patel'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: true, alreadyCompleted: true, category: 'FinTech' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 502,
+  email: 'epatel@networkguardhub.com',
+  companyId: 696,
+  environmentId: 'env_demo_1748450192628_502',
+  authenticated: true,
+  totalDuration: 117,
+  timestamp: '2025-05-28T16:36:32.716Z'
+}
+[2025-05-28T16:36:32.746Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 147ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 502, companyId: 696 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 502, company_id: 696, email: 'epatel@networkguardhub.com' }
+[2025-05-28T16:36:36.080Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":696,"userId":502}
+[Current Company] Found company: {
+  id: 696,
+  name: 'Network Guard Hub',
+  onboardingCompleted: true,
+  riskScore: 40,
+  chosenScore: 55,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 502,
+  companyId: 696,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T16:36:36.106Z'
+}
+[2025-05-28T16:36:36.108Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":696}
+[Tasks] Automatically unlocking all tasks for company { userId: 502, companyId: 696, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T16:36:36.109Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":696}
+[2025-05-28T16:36:36.135Z] [INFO] [App] GET /api/companies/current 200 in 59ms :: {"id":696,"name":"Network Guard Hub","category":"FinTech","is_demo":true,"rev... 
+[2025-05-28T16:36:36.137Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":696}
+[Tasks] Successfully unlocked all tasks for company: 696
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 502',
+    condition2: 'tasks.created_by = 502',
+    condition3: "tasks.company_id = 696 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('epatel@networkguardhub.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T16:36:36.227Z] [INFO] [App] GET /api/tasks 200 in 149ms :: [] 
+[2025-05-28T16:36:36.320Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 502 
+[2025-05-28T16:36:36.320Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T16:36:36.320Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T16:36:36.320Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 502 
+[2025-05-28T16:36:36.349Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 502 
+[2025-05-28T16:36:36.379Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 60ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T16:36:36.391Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450196391-e5qf2l5","clients":6}
+[2025-05-28T16:36:36.517Z] [INFO] [WebSocket] Received message from client client-1748450196391-e5qf2l5 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748450155598_4c2r6x2mo","timestamp":"2025-05-28T16:36:36.339Z"}
+[2025-05-28T16:36:36.517Z] [INFO] [WebSocket] Authentication from client client-1748450196391-e5qf2l5 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Relationships] Fetching network for company: 696
+[Relationships] Found network members: { count: 0 }
+[2025-05-28T16:36:36.667Z] [INFO] [App] GET /api/relationships 200 in 94ms :: [] 
+[2025-05-28T16:36:39.077Z] [INFO] [WebSocket] Received message from client client-1748450158956-anqwzdw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:38.898Z","connectionId":"ws_1748450157782_p7y38cubv"}
+[2025-05-28T16:36:42.123Z] [INFO] [App] GET /api/tasks 304 in 29ms :: [] 
+[2025-05-28T16:36:42.336Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [] 
+[2025-05-28T16:36:43.050Z] [INFO] [App] [TabTutorials] Status request for tab "file-vault" from authenticated user ID: 502 
+[2025-05-28T16:36:43.050Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-05-28T16:36:43.050Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-05-28T16:36:43.050Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: file-vault (raw: file-vault), user: 502 
+[2025-05-28T16:36:43.079Z] [INFO] [App] GET /api/auth/user 200 in 50ms 
+[2025-05-28T16:36:43.079Z] [INFO] [App] [TabTutorials] No tutorial status found for file-vault for user 502 
+[2025-05-28T16:36:43.110Z] [INFO] [App] GET /api/user-tab-tutorials/file-vault/status 304 in 60ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"file-vault"} 
+[2025-05-28T16:36:43.180Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:36:44.569Z] [INFO] [App] [TabTutorials] Status request for tab "insights" from authenticated user ID: 502 
+[2025-05-28T16:36:44.569Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-28T16:36:44.569Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-28T16:36:44.569Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: insights (raw: insights), user: 502 
+[Network Visualization] Fetching network data for company: 696
+[Companies] Fetching companies for user: { userId: 502, company_id: 696 }
+[2025-05-28T16:36:44.600Z] [INFO] [App] [TabTutorials] No tutorial status found for insights for user 502 
+[Companies] Query successful, found companies: {
+  count: 1,
+  companies: [
+    {
+      id: 696,
+      name: 'Network Guard Hub',
+      hasLogo: false,
+      hasRelationship: true
+    }
+  ]
+}
+[2025-05-28T16:36:44.653Z] [INFO] [App] GET /api/user-tab-tutorials/insights/status 200 in 85ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"insights"} 
+[Network Visualization] Found network relationships: { count: 0 }
+[Network Visualization] Returning visualization data: { centerNode: 'Network Guard Hub', nodeCount: 0 }
+[2025-05-28T16:36:44.669Z] [INFO] [App] GET /api/companies 200 in 73ms :: [{"id":696,"name":"Network Guard Hub","category":"FinTech","description":"Acc... 
+[2025-05-28T16:36:44.685Z] [INFO] [App] GET /api/network/visualization 200 in 115ms :: {"center":{"id":696,"name":"Network Guard Hub","riskScore":40,"riskBucket":"m... 
+[2025-05-28T16:36:46.210Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [] 
+[2025-05-28T16:36:56.573Z] [INFO] [WebSocket] Received message from client client-1748450156452-egqo120 {"module":"WebSocket","type":"ping"}
+[2025-05-28T16:36:57.883Z] [INFO] [WebSocket] Received message from client client-1748450157752-yol3gzi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:57.700Z","connectionId":"ws_1748450157700_7b62yxsm4"}
+[2025-05-28T16:36:58.475Z] [INFO] [WebSocket] Received message from client client-1748450158319-i4h5jmf {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:58.265Z","connectionId":"ws_1748450157140_swp4w0ect"}
+[2025-05-28T16:36:59.077Z] [INFO] [WebSocket] Received message from client client-1748450158956-anqwzdw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:36:58.898Z","connectionId":"ws_1748450157782_p7y38cubv"}
