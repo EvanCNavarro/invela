@@ -23,6 +23,7 @@ import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/c
 import { logDemoOperation } from './utils/demo-helpers';
 import { emailService } from './services/email';
 import { createCompany as createCompanyWithTasks } from './services/company';
+import { NetworkLogger } from './utils/network-logger';
 
 const router = Router();
 
@@ -1554,11 +1555,22 @@ router.post('/demo/company/create', async (req, res) => {
           console.log(`[DemoAPI] 🏦 Creating bank network with ${finalMetadata.networkSize} FinTech partners...`);
           
           try {
-            // Get available FinTech companies (APPROVED and PENDING for comprehensive bank networks)
+            // ========================================
+            // FINTECH COMPANY DISCOVERY
+            // ========================================
+            
+            NetworkLogger.logNetworkStart({
+              companyId: company.id,
+              companyName: company.name,
+              persona: persona,
+              networkSize: finalMetadata.networkSize,
+              sessionId: demoSessionId
+            });
+            
             const availableFinTechs = await db.select({
               id: companies.id,
               name: companies.name,
-              accreditation_status: companies.accreditation_status
+              category: companies.category
             })
             .from(companies)
             .where(
@@ -1569,68 +1581,71 @@ router.post('/demo/company/create', async (req, res) => {
             )
             .limit(finalMetadata.networkSize);
             
-            console.log(`[DemoAPI] Found ${availableFinTechs.length} FinTech companies (APPROVED and PENDING) for network creation`);
+            NetworkLogger.logFinTechAvailability(
+              finalMetadata.networkSize, 
+              availableFinTechs.length, 
+              availableFinTechs
+            );
             
-            if (availableFinTechs.length < finalMetadata.networkSize) {
-              console.log(`[DemoAPI] ⚠️ Requested ${finalMetadata.networkSize} FinTechs but only ${availableFinTechs.length} available. Creating relationships with available companies.`);
+            if (availableFinTechs.length === 0) {
+              throw new Error('No FinTech companies available for network creation');
             }
             
-            // Create network relationships with proper error handling and logging
-            console.log(`[DemoAPI] 🔗 Preparing to create ${availableFinTechs.length} network relationships...`);
+            // ========================================
+            // RELATIONSHIP CREATION WITH PROPER TYPES
+            // ========================================
             
-            const networkRelationships = availableFinTechs.map(fintech => ({
-              company_id: company.id,
-              related_company_id: fintech.id,
-              relationship_type: 'network_member' as const,
-              status: 'active' as const,
-              metadata: {
-                created_via: 'demo_data_provider_network',
-                auto_created: true,
-                bank_name: company.name,
-                fintech_name: fintech.name,
-                network_size: finalMetadata.networkSize,
-                creation_date: new Date().toISOString(),
-                demo_relationship: true
-              }
-            }));
-            
-            console.log(`[DemoAPI] Sample relationship structure:`, JSON.stringify(networkRelationships[0], null, 2));
-            
-            // Insert relationships with enhanced error handling and individual fallback
-            const batchSize = 10;
+            const startTime = Date.now();
             let totalCreated = 0;
             
-            for (let i = 0; i < networkRelationships.length; i += batchSize) {
-              const batch = networkRelationships.slice(i, i + batchSize);
-              const batchNumber = Math.floor(i/batchSize) + 1;
-              const totalBatches = Math.ceil(networkRelationships.length/batchSize);
-              
+            // Create relationships one by one to avoid batch SQL issues
+            for (const fintech of availableFinTechs) {
               try {
-                console.log(`[DemoAPI] 📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} relationships)...`);
-                
-                // Attempt batch insertion
-                await db.insert(relationships).values(batch);
-                totalCreated += batch.length;
-                console.log(`[DemoAPI] ✅ Batch ${batchNumber} successful - ${batch.length} relationships created`);
-                
-              } catch (batchError) {
-                console.error(`[DemoAPI] ❌ Batch ${batchNumber} failed:`, batchError);
-                console.log(`[DemoAPI] 🔄 Falling back to individual insertions for batch ${batchNumber}...`);
-                
-                // Fallback: Insert relationships individually
-                for (const relationship of batch) {
-                  try {
-                    await db.insert(relationships).values([relationship]);
-                    totalCreated++;
-                    console.log(`[DemoAPI] ✅ Individual insert successful: ${relationship.related_company_id}`);
-                  } catch (individualError) {
-                    console.error(`[DemoAPI] ❌ Individual insert failed for relationship ${relationship.related_company_id}:`, individualError);
+                const relationshipData = {
+                  company_id: company.id,
+                  related_company_id: fintech.id,
+                  relationship_type: 'network_member',
+                  status: 'active',
+                  metadata: {
+                    created_via: 'demo_data_provider_network',
+                    auto_created: true,
+                    bank_name: company.name,
+                    fintech_name: fintech.name,
+                    network_size: finalMetadata.networkSize,
+                    creation_date: new Date().toISOString(),
+                    demo_relationship: true
                   }
-                }
+                };
+                
+                // Insert single relationship with explicit typing
+                await db.insert(relationships).values(relationshipData);
+                totalCreated++;
+                
+                NetworkLogger.logIndividualInsert(fintech.id, fintech.name, true);
+                
+              } catch (relationshipError: any) {
+                NetworkLogger.logConstraintError(relationshipError, {
+                  bankId: company.id,
+                  finTechId: fintech.id,
+                  finTechName: fintech.name
+                });
+                
+                NetworkLogger.logIndividualInsert(fintech.id, fintech.name, false);
               }
             }
             
-            console.log(`[DemoAPI] ✅ Network creation complete: ${totalCreated}/${networkRelationships.length} relationships created for bank "${company.name}"`);
+            // ========================================
+            // COMPLETION AND BROADCASTING
+            // ========================================
+            
+            const duration = Date.now() - startTime;
+            
+            NetworkLogger.logNetworkComplete(
+              totalCreated, 
+              availableFinTechs.length, 
+              company.name, 
+              duration
+            );
             
             // Broadcast network creation success
             broadcastMessage('demo_network_created', {
@@ -1640,6 +1655,7 @@ router.post('/demo/company/create', async (req, res) => {
               requestedSize: finalMetadata.networkSize,
               availableFinTechs: availableFinTechs.length,
               partnerNames: availableFinTechs.slice(0, totalCreated).map(f => f.name),
+              duration: duration,
               timestamp: new Date().toISOString()
             });
             
