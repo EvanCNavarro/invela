@@ -46,7 +46,7 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
         });
         
         // For demo users: Check if there's a database/session data mismatch and refresh if needed
-        if (!user.onboarding_user_completed && currentCompany?.is_demo && currentCompany.category !== 'New Data Recipient') {
+        if (!user.onboarding_user_completed && user.is_demo_user && user.demo_persona_type !== 'new-data-recipient') {
           console.log('[OnboardingWrapper] Detected potential session cache issue for demo persona - refreshing user data');
           
           // Invalidate and refetch user data to get fresh onboarding status from database
