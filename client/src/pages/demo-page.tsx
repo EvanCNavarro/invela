@@ -1695,6 +1695,9 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
           type: 'demo', // All companies created through demo flow are demo companies
           persona: selectedPersona?.id,
           companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
+          ...(selectedPersona?.id === 'data-provider' && {
+            networkSize: formData?.networkSize || 5 // Include network size for Data Provider
+          }),
           ...(selectedPersona?.id === 'accredited-data-recipient' && {
             riskProfile: formData?.riskProfile
           }),
