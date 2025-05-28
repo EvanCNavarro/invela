@@ -515,6 +515,19 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Auto-generate professional company name when Step 2 loads
+  useEffect(() => {
+    async function initializeProfessionalCompanyName() {
+      // Only generate for non-Invela personas and if we're showing Loading...
+      if (selectedPersona?.id !== 'invela-admin' && formData.companyName === 'Loading...') {
+        console.log('[DemoStep2] Auto-generating professional company name on load...');
+        await generateRandomValues(['companyName']);
+      }
+    }
+
+    initializeProfessionalCompanyName();
+  }, []); // Run once when component mounts
   
   /**
    * Form state management with proper TypeScript typing
@@ -533,9 +546,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       
       return `${firstLetter}${cleanLastName}@${cleanCompany}.com`;
     }
-    // Use timestamp-based unique name for initial state (API call will happen on demand)
-    const timestamp = Date.now();
-    const randomCompany = `Demo Company ${timestamp}`;
+    
+    // Generate random user data first
     const randomFirstName = DEMO_DATA_GENERATORS.firstNames[
       Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
     ];
@@ -543,8 +555,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       Math.floor(Math.random() * DEMO_DATA_GENERATORS.lastNames.length)
     ];
     
-    // Invela Admin gets locked company name
-    const finalCompanyName = selectedPersona?.id === 'invela-admin' ? 'Invela' : randomCompany;
+    // Invela Admin gets locked company name, others get professional name via API
+    const finalCompanyName = selectedPersona?.id === 'invela-admin' ? 'Invela' : 'Loading...';
     
     // Generate random risk profile (0-100) for initial state
     const randomRiskProfile = Math.floor(Math.random() * 101);
@@ -1843,7 +1855,22 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
         }
       }
       if (payload.userId === 'USER_ID_FROM_STEP_2' && previousResults['create-user']) {
-        payload.userId = previousResults['create-user'].userId;
+        const userResult = previousResults['create-user'];
+        const actualUserId = userResult.userId || userResult.id || userResult.user?.id;
+        if (actualUserId) {
+          payload.userId = actualUserId;
+          console.log(`[DemoAPI] 🔄 Replaced placeholder userId with actual ID: ${actualUserId}`, {
+            actionId: action.id,
+            userResult,
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.warn(`[DemoAPI] ⚠️ No user ID found in create-user result`, {
+            actionId: action.id,
+            userResult,
+            timestamp: new Date().toISOString()
+          });
+        }
       }
       if (payload.loginCredentials === 'CREDENTIALS_FROM_STEP_3' && previousResults['setup-auth']) {
         payload.loginCredentials = previousResults['setup-auth'].credentials;
