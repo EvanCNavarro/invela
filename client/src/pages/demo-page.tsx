@@ -1978,39 +1978,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
         return result;
 
       } catch (apiError) {
-        // NO MORE SIMULATIONS - Force real API calls only
-        console.error(`[DemoAPI] REAL API FAILED for: ${action.label}`, apiError);
+        console.error(`[DemoAPI] API call failed for: ${action.label}`, apiError);
         throw new Error(`Demo API failed: ${apiError instanceof Error ? apiError.message : 'Unknown error'}`);
-
-        // Generate realistic mock response based on action type
-        const mockResult = {
-          success: true,
-          timestamp: new Date().toISOString(),
-          actionId: action.id,
-          ...(action.id === 'create-company' && { 
-            companyId: `comp_${Date.now()}`,
-            companyData: { name: payload.name, type: payload.type, persona: payload.persona }
-          }),
-          ...(action.id === 'create-user' && { 
-            userId: `user_${Date.now()}`,
-            userData: { fullName: payload.fullName, email: payload.email, role: payload.role }
-          }),
-          ...(action.id === 'setup-auth' && { 
-            credentials: { loginUrl: '/login', tempPassword: 'demo123', setupComplete: true }
-          }),
-          ...(action.id === 'send-invitation' && { 
-            emailSent: true, 
-            messageId: `msg_${Date.now()}`,
-            recipientEmail: payload.userEmail
-          }),
-          ...(action.id === 'finalize-environment' && { 
-            demoReady: true, 
-            accessUrl: '/dashboard',
-            environmentId: `env_${Date.now()}`
-          })
-        };
-
-        return mockResult;
       }
 
     } catch (error) {
