@@ -1,0 +1,255 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T11:11:18.323Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T11:11:18.328Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T11:11:18.328Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T11:11:18.497Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T11:11:18.631Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T11:11:18.631Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T11:11:18.632Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T11:11:18.632Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T11:11:18.633Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T11:11:18.635Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T11:11:18.636Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"3hmkei","timestamp":"2025-05-28T11:11:18.636Z"}
+[2025-05-28T11:11:18.636Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T11:11:18.636Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T11:11:18.636Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T11:11:18.636Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T11:11:18.636Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T11:11:18.636Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T11:11:18.636Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T11:11:18.636Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T11:11:18.636Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T11:11:18.637Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T11:11:18.639Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T11:11:18.655Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T11:11:18.655Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T11:11:18.655Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T11:11:18.655Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T11:11:18.655Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T11:11:18.656Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T11:11:19.275Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:11:19.886Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T11:11:22.257Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:11:22.718Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:11:28.656Z] [INFO] [App] Running background health checks... 
+[2025-05-28T11:11:28.656Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T11:11:28.656Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T11:11:28.657Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T11:11:28.837Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T11:11:28.865Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T11:11:28.918Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T11:11:28.918Z] [StartupChecks] Database health check passed 
+[2025-05-28T11:11:28.918Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T11:11:28.918Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T11:11:30.300Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748430690300-pav1hi5","clients":1}
+[2025-05-28T11:11:30.420Z] [INFO] [WebSocket] Received message from client client-1748430690300-pav1hi5 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T11:11:30.314Z"}}
+[2025-05-28T11:11:30.420Z] [INFO] [WebSocket] Authentication from client client-1748430690300-pav1hi5 {"module":"WebSocket","hasToken":true}
+[2025-05-28T11:11:30.793Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748430690793-y9ai5rc","clients":2}
+[2025-05-28T11:11:31.290Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748430691290-lz0vmus","clients":3}
+[2025-05-28T11:11:31.796Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748430691796-z7h70w7","clients":4}
+[2025-05-28T11:11:32.296Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748430692296-325b3gm","clients":5}
+[2025-05-28T11:11:32.606Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"authenticate","userId":"477","companyId":"669","clientId":"ws_1748430690828_erbegqfg8","timestamp":"2025-05-28T11:11:32.499Z"}
+[2025-05-28T11:11:32.606Z] [INFO] [WebSocket] Authentication from client client-1748430692296-325b3gm {"module":"WebSocket","userId":"477","companyId":"669","hasToken":true}
+[2025-05-28T11:11:48.690Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[999,964,965,969,1001,973,971,981,978,976]}
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[2025-05-28T11:11:52.420Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:11:52.311Z","connectionId":"ws_1748430690828_erbegqfg8"}
+[2025-05-28T11:12:00.432Z] [INFO] [WebSocket] Received message from client client-1748430690300-pav1hi5 {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:12:01.413Z] [INFO] [WebSocket] Received message from client client-1748430691290-lz0vmus {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:01.305Z","connectionId":"ws_1748430691305_a2aalqm86"}
+[2025-05-28T11:12:01.922Z] [INFO] [WebSocket] Received message from client client-1748430691796-z7h70w7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:01.811Z","connectionId":"ws_1748430690805_3y2gjmb70"}
+[2025-05-28T11:12:12.417Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:12.311Z","connectionId":"ws_1748430690828_erbegqfg8"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Demo Company 1748430725812',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 5 }
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T11:12:14.293Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Demo Company 1748430725812',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Demo Company 1748430725812',
+    persona: 'Data Provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T11:12:14.293Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 677,
+  name: 'Demo Company 1748430725812',
+  category: 'Bank',
+  transformedPersona: 'Data Provider',
+  shouldCreateNetwork: true
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 677,
+  bankName: 'Demo Company 1748430725812',
+  targetNetworkSize: 5
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Demo Company 1748430725812',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '677-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Demo Company 1748430725812',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '677-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Demo Company 1748430725812',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '677-334'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Demo Company 1748430725812',
+  fintech: 'Finloft',
+  relationshipId: '677-9'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Demo Company 1748430725812',
+  fintech: 'Wealthfront',
+  relationshipId: '677-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'Demo Company 1748430725812',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[2025-05-28T11:12:14.594Z] [INFO] [App] POST /api/demo/company/create 200 in 303ms :: {"success":true,"company":{"id":677,"name":"Demo Company 1748430725812","desc... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Adrian Martinez',
+  email: 'amartinez@democompany1748430725812.com',
+  companyId: 677,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748430732720_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T11:12:12.720Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 677,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 677
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T11:12:15.348Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Adrian Martinez',
+    email: 'amartinez@democompany1748430725812.com',
+    companyId: 677,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Adrian Martinez',
+    email: 'amartinez@democompany1748430725812.com',
+    companyId: 677,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'Data Provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T11:12:15.349Z'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 479,
+  email: 'amartinez@democompany1748430725812.com',
+  fullName: 'Adrian Martinez',
+  companyId: 677,
+  role: 'provider'
+}
+[2025-05-28T11:12:15.477Z] [INFO] [App] POST /api/demo/user/create 200 in 130ms :: {"success":true,"user":{"id":479,"email":"amartinez@democompany1748430725812.... 
+[2025-05-28T11:12:16.260Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[2025-05-28T11:12:17.060Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 42ms 
+[2025-05-28T11:12:30.436Z] [INFO] [WebSocket] Received message from client client-1748430690300-pav1hi5 {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:12:31.410Z] [INFO] [WebSocket] Received message from client client-1748430691290-lz0vmus {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:31.305Z","connectionId":"ws_1748430691305_a2aalqm86"}
+[2025-05-28T11:12:31.929Z] [INFO] [WebSocket] Received message from client client-1748430691796-z7h70w7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:31.811Z","connectionId":"ws_1748430690805_3y2gjmb70"}
+[2025-05-28T11:12:32.416Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:32.311Z","connectionId":"ws_1748430690828_erbegqfg8"}
+[2025-05-28T11:12:52.420Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:12:52.311Z","connectionId":"ws_1748430690828_erbegqfg8"}
+[2025-05-28T11:13:00.426Z] [INFO] [WebSocket] Received message from client client-1748430690300-pav1hi5 {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:13:01.411Z] [INFO] [WebSocket] Received message from client client-1748430691290-lz0vmus {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:13:01.305Z","connectionId":"ws_1748430691305_a2aalqm86"}
+[2025-05-28T11:13:01.920Z] [INFO] [WebSocket] Received message from client client-1748430691796-z7h70w7 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:13:01.811Z","connectionId":"ws_1748430690805_3y2gjmb70"}
+[2025-05-28T11:13:12.419Z] [INFO] [WebSocket] Received message from client client-1748430692296-325b3gm {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:13:12.311Z","connectionId":"ws_1748430690828_erbegqfg8"}
