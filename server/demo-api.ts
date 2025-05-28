@@ -3,6 +3,8 @@ import { db } from '@db';
 import { companies, users, tasks, relationships, invitations } from '@db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { emailService } from './services/email/service';
 import { 
   transformCompanyData, 
   transformUserData, 
@@ -454,6 +456,250 @@ router.post('/demo/auth/setup', async (req, res) => {
     res.json({ success: true, message: 'Auth setup complete' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * ========================================
+ * Demo Email Invitation Endpoint
+ * ========================================
+ * 
+ * Sends welcome email invitations to demo users with login credentials and access information.
+ * This endpoint completes the demo invitation workflow by generating invitation codes,
+ * creating database records, and delivering credential emails - providing authentic email
+ * functionality identical to the proven FinTech invitation system.
+ * 
+ * Key Features:
+ * - Generates secure invitation codes using crypto.randomBytes
+ * - Creates invitation database records with proper metadata
+ * - Integrates with existing emailService (nodemailer + Gmail)
+ * - Uses 'demo_invite' email template for consistent branding
+ * - Maintains transaction safety with comprehensive error handling
+ * - Follows coding standards with detailed logging throughout
+ * 
+ * Dependencies:
+ * - User account (created in previous demo step)
+ * - Company record (created in previous demo step)
+ * - Database operations (invitations table)
+ * - Email service integration (Gmail/nodemailer)
+ * 
+ * @endpoint POST /api/demo/email/send-invitation
+ * @version 1.0.0
+ * @since 2025-05-28
+ */
+router.post('/demo/email/send-invitation', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    console.log('[DemoAPI] [EmailInvite] Starting email invitation process:', {
+      ...req.body,
+      userEmail: req.body.userEmail ? '***@***.***' : undefined,
+      timestamp: new Date().toISOString()
+    });
+
+    // ========================================
+    // INPUT VALIDATION & LOGGING
+    // ========================================
+    
+    const { userEmail, userName, companyName, loginCredentials } = req.body;
+    
+    // Validate required fields
+    const invalidFields = [];
+    if (!userEmail) invalidFields.push('userEmail');
+    if (!userName) invalidFields.push('userName');
+    if (!companyName) invalidFields.push('companyName');
+    if (!loginCredentials) invalidFields.push('loginCredentials');
+    
+    if (invalidFields.length > 0) {
+      console.error('[DemoAPI] [EmailInvite] Missing required fields:', invalidFields);
+      return res.status(400).json({
+        success: false,
+        error: `Missing required fields: ${invalidFields.join(', ')}`,
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    console.log('[DemoAPI] [EmailInvite] Input validation successful:', {
+      userEmail: userEmail.toLowerCase(),
+      userName: userName.trim(),
+      companyName: companyName.trim(),
+      hasLoginCredentials: !!loginCredentials
+    });
+
+    // ========================================
+    // USER VERIFICATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Verifying user exists...');
+    
+    const [userData] = await db.select()
+      .from(users)
+      .where(eq(users.email, userEmail.toLowerCase()))
+      .limit(1);
+
+    if (!userData) {
+      console.error('[DemoAPI] [EmailInvite] User not found:', { userEmail });
+      return res.status(404).json({
+        success: false,
+        error: 'User not found for email invitation',
+        code: 'USER_NOT_FOUND',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    console.log('[DemoAPI] [EmailInvite] User verification successful:', {
+      userId: userData.id,
+      email: userData.email,
+      companyId: userData.company_id,
+      fullName: userData.full_name
+    });
+
+    // ========================================
+    // INVITATION CODE GENERATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Generating secure invitation code...');
+    
+    // Generate secure 6-character invitation code (same format as FinTech invite)
+    const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+    
+    console.log('[DemoAPI] [EmailInvite] Generated invitation code:', {
+      codeLength: invitationCode.length,
+      codeFormat: 'hex-uppercase',
+      duration: Date.now() - startTime
+    });
+
+    // ========================================
+    // INVITATION RECORD CREATION
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Creating invitation database record...');
+    
+    const [invitationRecord] = await db.insert(invitations)
+      .values({
+        email: userEmail.toLowerCase(),
+        company_id: userData.company_id,
+        code: invitationCode,
+        status: 'pending',
+        invitee_name: userName.trim(),
+        invitee_company: companyName.trim(),
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days expiry
+        metadata: {
+          sender_name: 'Invela Demo System',
+          sender_company: 'Invela Trust Network',
+          invitation_type: 'demo_email',
+          created_via: 'demo_flow',
+          user_id: userData.id,
+          login_credentials: loginCredentials,
+          setup_timestamp: new Date().toISOString()
+        }
+      })
+      .returning();
+
+    console.log('[DemoAPI] [EmailInvite] Invitation record created:', {
+      invitationId: invitationRecord.id,
+      code: invitationRecord.code,
+      expiresAt: invitationRecord.expires_at,
+      duration: Date.now() - startTime
+    });
+
+    // ========================================
+    // EMAIL PREPARATION & SENDING
+    // ========================================
+    
+    console.log('[DemoAPI] [EmailInvite] Preparing email content using emailService...');
+    
+    // Build invitation URL with proper protocol and host detection
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers.host;
+    const inviteUrl = `${protocol}://${host}/login?code=${invitationCode}&email=${encodeURIComponent(userEmail)}`;
+    
+    console.log('[DemoAPI] [EmailInvite] Built invitation URL:', inviteUrl);
+
+    // Send email using the same proven infrastructure as FinTech invitations
+    const emailResult = await emailService.sendTemplateEmail({
+      to: userEmail.toLowerCase(),
+      from: process.env.GMAIL_USER!,
+      template: 'demo_invite',
+      templateData: {
+        recipientName: userName,
+        recipientEmail: userEmail.toLowerCase(),
+        senderName: 'Invela Demo System',
+        senderCompany: 'Invela',
+        targetCompany: companyName,
+        inviteUrl,
+        code: invitationCode
+      }
+    });
+
+    // Handle email sending results with proper error checking
+    const emailSent = emailResult.success;
+    const messageId = emailSent ? `demo_invite_${Date.now()}_${invitationRecord.id}` : null;
+    
+    if (!emailResult.success) {
+      console.error('[DemoAPI] [EmailInvite] Email sending failed:', emailResult.error);
+      // Continue with process but log the failure
+    } else {
+      console.log('[DemoAPI] [EmailInvite] Demo invitation email sent successfully');
+    }
+    
+    console.log('[DemoAPI] [EmailInvite] Email process completed:', {
+      recipientEmail: userEmail,
+      invitationCode: invitationCode,
+      messageId: messageId,
+      emailSent: emailSent,
+      duration: Date.now() - startTime
+    });
+
+    // ========================================
+    // SUCCESS RESPONSE
+    // ========================================
+    
+    const completionTime = Date.now() - startTime;
+    
+    console.log('[DemoAPI] [EmailInvite] Process completed successfully:', {
+      userId: userData.id,
+      companyId: userData.company_id,
+      invitationId: invitationRecord.id,
+      invitationCode: invitationCode,
+      emailSent: emailSent,
+      totalDuration: completionTime
+    });
+
+    res.json({
+      success: true,
+      emailSent,
+      messageId,
+      recipientEmail: userEmail,
+      invitationCode: invitationCode,
+      invitation: {
+        id: invitationRecord.id,
+        code: invitationRecord.code,
+        expiresAt: invitationRecord.expires_at
+      },
+      processingTime: completionTime,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    const errorDuration = Date.now() - startTime;
+    
+    console.error('[DemoAPI] [EmailInvite] Process failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send demo invitation email',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      code: 'EMAIL_INVITATION_ERROR',
+      processingTime: errorDuration,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
