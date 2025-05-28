@@ -863,7 +863,7 @@ router.post('/demo/environment/finalize', async (req, res) => {
             })
             .where(eq(users.id, userId));
           
-          // Update the userData object to reflect the change
+          // Update the userData object to reflect the change for session consistency
           userData.onboarding_user_completed = true;
           
           console.log('[DemoAPI] [Finalize] User onboarding auto-completed successfully');
