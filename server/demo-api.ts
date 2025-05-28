@@ -23,7 +23,7 @@ import { checkCompanyNameUniqueness, generateUniqueCompanyName } from './utils/c
 import { logDemoOperation } from './utils/demo-helpers';
 import { emailService } from './services/email';
 import { createCompany as createCompanyWithTasks } from './services/company';
-import { NetworkLogger } from './utils/network-logger';
+// import { NetworkLogger } from './utils/network-logger'; // Using local NetworkLogger instead
 
 const router = Router();
 
