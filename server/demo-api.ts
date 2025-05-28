@@ -428,7 +428,7 @@ router.post('/demo/company/create', async (req, res) => {
             eq(companies.category, 'FinTech'),
             eq(companies.is_demo, false)
           ),
-          limit: transformedData.networkSize
+          limit: Math.min(transformedData.networkSize, 100) // Cap at 100 for performance
         });
         
         console.log('[DemoAPI] 📊 FinTech discovery results:', {
