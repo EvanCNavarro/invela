@@ -3,19 +3,26 @@ import { db } from '@db';
 import { companies, users, tasks, relationships, invitations } from '@db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
+import { 
+  transformCompanyData, 
+  transformUserData, 
+  transformPersonaValue,
+  validateNetworkSize 
+} from './utils/demo-data-transformer';
 
 const router = Router();
 
 // Simple working demo endpoints
 router.post('/demo/company/create', async (req, res) => {
   try {
-    const { name, persona, networkSize } = req.body;
+    console.log('[DemoAPI] 🏢 Raw company creation request:', req.body);
     
-    console.log('[DemoAPI] 🏢 Creating demo company:', { name, persona, networkSize });
+    // Transform the company data using our utility
+    const transformedData = transformCompanyData(req.body);
     
     const company = await db.insert(companies).values({
-      name,
-      category: persona === 'Data Provider' ? 'Bank' : 'FinTech',
+      name: transformedData.name,
+      category: transformedData.category,
       is_demo: true,
       onboarding_completed: true
     }).returning();
@@ -23,15 +30,17 @@ router.post('/demo/company/create', async (req, res) => {
     console.log('[DemoAPI] ✅ Company created successfully:', { 
       id: company[0].id, 
       name: company[0].name, 
-      category: company[0].category 
+      category: company[0].category,
+      transformedPersona: transformedData.persona,
+      shouldCreateNetwork: transformedData.shouldCreateNetwork
     });
     
     // Create network relationships for Data Provider banks
-    if (persona === 'Data Provider' && networkSize && networkSize > 0) {
+    if (transformedData.shouldCreateNetwork) {
       console.log('[DemoAPI] 🌐 Starting network creation for Data Provider:', {
         bankId: company[0].id,
         bankName: company[0].name,
-        targetNetworkSize: networkSize
+        targetNetworkSize: transformedData.networkSize
       });
       
       try {
@@ -41,11 +50,11 @@ router.post('/demo/company/create', async (req, res) => {
             eq(companies.category, 'FinTech'),
             eq(companies.is_demo, false)
           ),
-          limit: networkSize
+          limit: transformedData.networkSize
         });
         
         console.log('[DemoAPI] 📊 FinTech discovery results:', {
-          requestedSize: networkSize,
+          requestedSize: transformedData.networkSize,
           availableCount: availableFinTechs.length,
           firstFewNames: availableFinTechs.slice(0, 3).map(c => c.name)
         });
@@ -84,10 +93,10 @@ router.post('/demo/company/create', async (req, res) => {
           
           console.log('[DemoAPI] 🎯 Network creation completed:', {
             bankName: company[0].name,
-            targetSize: networkSize,
+            targetSize: transformedData.networkSize,
             successfulRelationships: successCount,
             failedRelationships: errorCount,
-            successRate: `${((successCount / networkSize) * 100).toFixed(1)}%`
+            successRate: `${((successCount / transformedData.networkSize) * 100).toFixed(1)}%`
           });
         }
       } catch (networkError: any) {
