@@ -1,0 +1,463 @@
+[2025-05-28T17:55:45.007Z] [INFO] [App] GET /api/tasks 304 in 600ms :: [{"id":1073,"title":"1. KYB Form: Progressive Security Base","description":nu... 
+[Current Company] Using cached company data: 702
+[2025-05-28T17:55:50.232Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":702,"name":"Progressive Security Base","category":"FinTech","is_demo":t... [sampled: request 261] 
+[2025-05-28T17:55:52.212Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:55:52.090Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[Current Company] Using cached company data: 702
+[2025-05-28T17:55:59.596Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:56:00.582Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:00.461Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:56:01.162Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:01.044Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:56:12.208Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:12.090Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:56:12.936Z',
+  requestId: 'req_1748454972936_jbd9ui27y'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:56:12.937Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:56:12.938Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Paramount Network Industries',
+  components: { prefix: 'Paramount', core: 'Network', suffix: 'Industries' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Paramount Network Industries',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:56:12.938Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Paramount Network Industries',
+  nameLength: 28
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:56:12.978Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Paramount Network Industries',
+  duration: 39
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Paramount Network Industries',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 42,
+  timestamp: '2025-05-28T17:56:12.978Z'
+}
+[2025-05-28T17:56:13.016Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 80ms :: {"success":true,"companyName":"Paramount Network Industries","wasModified":fa... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:56:13.278Z',
+  requestId: 'req_1748454973278_rumqicz6p'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:56:13.279Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:56:13.279Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Catalyst Architecture Federation',
+  components: { prefix: 'Catalyst', core: 'Architecture', suffix: 'Federation' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Catalyst Architecture Federation',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:56:13.279Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Catalyst Architecture Federation',
+  nameLength: 32
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:56:13.359Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Catalyst Architecture Federation',
+  duration: 80
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Catalyst Architecture Federation',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 81,
+  timestamp: '2025-05-28T17:56:13.359Z'
+}
+[2025-05-28T17:56:13.389Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 111ms :: {"success":true,"companyName":"Catalyst Architecture Federation","wasModified... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T17:56:13.658Z',
+  requestId: 'req_1748454973658_2bt7ipxlk'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T17:56:13.659Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T17:56:13.659Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Future Consulting Alliance',
+  components: { prefix: 'Future', core: 'Consulting', suffix: 'Alliance' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Future Consulting Alliance',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T17:56:13.660Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Future Consulting Alliance',
+  nameLength: 26
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T17:56:13.688Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Future Consulting Alliance',
+  duration: 28
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Future Consulting Alliance',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 30,
+  timestamp: '2025-05-28T17:56:13.689Z'
+}
+[2025-05-28T17:56:13.719Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 61ms :: {"success":true,"companyName":"Future Consulting Alliance","wasModified":fals... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Future Consulting Alliance',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T17:56:19.920Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Future Consulting Alliance',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Future Consulting Alliance',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T17:56:19.921Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 703,
+  name: 'Future Consulting Alliance',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 34
+}
+[DemoAPI] 📋 Creating onboarding tasks for New Data Recipient: {
+  companyId: 703,
+  companyName: 'Future Consulting Alliance',
+  persona: 'new-data-recipient'
+}
+[DemoAPI] ✅ Tasks created successfully for New Data Recipient: {
+  companyId: 703,
+  companyName: 'Future Consulting Alliance',
+  tasksCreated: 3,
+  taskTypes: [ 'company_kyb', 'ky3p', 'open_banking' ],
+  firstTaskId: 1076,
+  allTaskIds: [ 1076, 1077, 1078 ]
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 703,
+  companyName: 'Future Consulting Alliance',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 65
+}
+[2025-05-28T17:56:20.016Z] [INFO] [App] POST /api/demo/company/create 200 in 95ms :: {"success":true,"company":{"id":703,"name":"Future Consulting Alliance","desc... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Theodore Rodriguez',
+  email: 'trodriguez@futureconsultingalliance.com',
+  companyId: 703,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748454978368_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-28T17:56:18.368Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 703,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 703
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T17:56:20.772Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Theodore Rodriguez',
+    email: 'trodriguez@futureconsultingalliance.com',
+    companyId: 703,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Theodore Rodriguez',
+    email: 'trodriguez@futureconsultingalliance.com',
+    companyId: 703,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T17:56:20.772Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'user',
+  persona: 'new-data-recipient',
+  shouldCompleteOnboarding: false,
+  onboardingUserCompleted: false,
+  logic: 'New Data Recipient - onboarding_user_completed = FALSE (triggers modal)',
+  modalWillShow: true
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 509,
+  email: 'trodriguez@futureconsultingalliance.com',
+  fullName: 'Theodore Rodriguez',
+  companyId: 703,
+  role: 'user',
+  onboardingCompleted: false
+}
+[2025-05-28T17:56:20.894Z] [INFO] [App] POST /api/demo/user/create 200 in 122ms :: {"success":true,"user":{"id":509,"email":"trodriguez@futureconsultingalliance... 
+[2025-05-28T17:56:21.671Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 509,
+  companyId: 703,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-28T17:56:22.425Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 509,
+  email: 'trodriguez@futureconsultingalliance.com',
+  companyId: 703,
+  fullName: 'Theodore Rodriguez'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] Auto-completing user onboarding for demo persona: { userId: 509, companyCategory: 'FinTech', personaType: 'unknown' }
+[DemoAPI] [Finalize] User onboarding auto-completed successfully
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 509,
+  email: 'trodriguez@futureconsultingalliance.com',
+  companyId: 703,
+  environmentId: 'env_demo_1748454982454_509',
+  authenticated: true,
+  totalDuration: 146,
+  timestamp: '2025-05-28T17:56:22.571Z'
+}
+[2025-05-28T17:56:22.602Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 176ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 509, companyId: 703 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 509,
+  company_id: 703,
+  email: 'trodriguez@futureconsultingalliance.com'
+}
+[2025-05-28T17:56:25.738Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":703,"userId":509}
+[Current Company] Found company: {
+  id: 703,
+  name: 'Future Consulting Alliance',
+  onboardingCompleted: false,
+  riskScore: 36,
+  chosenScore: 25,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 509,
+  companyId: 703,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T17:56:25.761Z'
+}
+[2025-05-28T17:56:25.767Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":703}
+[Tasks] Automatically unlocking all tasks for company { userId: 509, companyId: 703, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T17:56:25.768Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":703}
+[2025-05-28T17:56:25.797Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":703,"count":3,"taskIds":[1076,1077,1078],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1077]}
+[UnifiedProgress] Starting progress update for task 1076 (company_kyb) {
+  taskId: 1076,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748454985797-246',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1076 (company_kyb)
+[UnifiedProgressCalc] Task 1076 (company_kyb) progress: 0/30 = 0%
+[2025-05-28T17:56:25.953Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:25.953Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:25.953Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1076,"messageId":"msg_1748454985952_qgd9g3mg"}
+[2025-05-28T17:56:25.953Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1076 {"progress":0,"status":"not_started","messageId":"msg_1748454985952_qgd9g3mg"}
+[2025-05-28T17:56:25.953Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":703,"taskId":1076,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:56:25.953Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1077,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-28T17:56:25.953Z"}
+[UnifiedProgress] Starting progress update for task 1077 (ky3p) {
+  taskId: 1077,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748454985954-705',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-28T17:56:25.974Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 509 
+[2025-05-28T17:56:25.974Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T17:56:25.974Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T17:56:25.974Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 509 
+[2025-05-28T17:56:26.006Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 509 
+[UnifiedProgressCalc] Calculating progress for task 1077 (ky3p)
+[2025-05-28T17:56:26.038Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 64ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[KY3P Progress] Calculated progress for task 1077: {
+  taskId: 1077,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-28T17:56:26.097Z'
+}
+[UnifiedProgressCalc] Task 1077 (ky3p) progress: 0/120 = 0%
+[2025-05-28T17:56:26.133Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:26.133Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:26.133Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1077,"messageId":"msg_1748454986132_9c86hbx9"}
+[2025-05-28T17:56:26.133Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1077 {"progress":0,"status":"not_started","messageId":"msg_1748454986132_9c86hbx9"}
+[2025-05-28T17:56:26.133Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":703,"taskId":1077,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1078 (open_banking) {
+  taskId: 1078,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748454986134-483',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1078 (open_banking)
+[UnifiedProgressCalc] Task 1078 (open_banking) progress: 0/44 = 0%
+[2025-05-28T17:56:26.281Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:26.281Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T17:56:26.282Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1078,"messageId":"msg_1748454986281_uw5zv17x"}
+[2025-05-28T17:56:26.282Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1078 {"progress":0,"status":"not_started","messageId":"msg_1748454986281_uw5zv17x"}
+[2025-05-28T17:56:26.282Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":703,"taskId":1078,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T17:56:26.282Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":703,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 703
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 509',
+    condition2: 'tasks.created_by = 509',
+    condition3: "tasks.company_id = 703 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('trodriguez@futureconsultingalliance.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-28T17:56:26.371Z] [INFO] [App] GET /api/tasks 200 in 632ms :: [{"id":1076,"title":"1. KYB Form: Future Consulting Alliance","description":n... 
+[2025-05-28T17:56:29.590Z] [INFO] [WebSocket] Received message from client client-1748453969419-lz9oh87 {"module":"WebSocket","type":"ping"}
+[2025-05-28T17:56:30.580Z] [INFO] [WebSocket] Received message from client client-1748453970453-w9o9r20 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:30.461Z","connectionId":"ws_1748453970468_fz2w2896l"}
+[2025-05-28T17:56:31.167Z] [INFO] [WebSocket] Received message from client client-1748453971028-4kv0jae {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:31.043Z","connectionId":"ws_1748453969958_od1npub6w"}
+[2025-05-28T17:56:32.208Z] [INFO] [WebSocket] Received message from client client-1748453972080-dbbtesp {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T17:56:32.089Z","connectionId":"ws_1748453969914_8hwt69dqb"}
+[2025-05-28T17:56:41.586Z] [INFO] [App] GET /api/tasks 304 in 32ms :: [{"id":1076,"title":"1. KYB Form: Future Consulting Alliance","description":n... 
