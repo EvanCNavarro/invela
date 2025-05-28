@@ -1715,19 +1715,36 @@ router.post('/demo/company/create', async (req, res) => {
          * This provides banks with an instant, realistic network to manage.
          */
         if (persona === 'data-provider' && finalMetadata?.networkSize) {
-          console.log(`[DemoAPI] 🏦 Creating bank network with ${finalMetadata.networkSize} FinTech partners...`);
+          console.log(`[DemoAPI:Network] 🏦 STARTING Bank network creation with ${finalMetadata.networkSize} FinTech partners...`);
+          console.log(`[DemoAPI:Network] 🔍 Network creation conditions verified:`, {
+            persona: persona,
+            isDataProvider: persona === 'data-provider',
+            networkSize: finalMetadata.networkSize,
+            companyId: company.id,
+            companyName: company.name,
+            timestamp: new Date().toISOString()
+          });
           
           try {
+            console.log(`[DemoAPI:Network] 🚀 Entering network creation try block...`);
             // ========================================
             // FINTECH COMPANY DISCOVERY
             // ========================================
             
+            console.log(`[DemoAPI:Network] 📋 Starting NetworkLogger.logNetworkStart...`);
             NetworkLogger.logNetworkStart({
               companyId: company.id,
               companyName: company.name,
               persona: persona,
               networkSize: finalMetadata.networkSize,
               sessionId: demoSessionId
+            });
+            
+            console.log(`[DemoAPI:Network] 🔍 Executing FinTech discovery database query...`);
+            console.log(`[DemoAPI:Network] 🔍 Query parameters:`, {
+              targetCategory: 'FinTech',
+              demoCleanupEligible: false,
+              requestedLimit: finalMetadata.networkSize
             });
             
             const availableFinTechs = await db.select({
@@ -1744,6 +1761,13 @@ router.post('/demo/company/create', async (req, res) => {
             )
             .limit(finalMetadata.networkSize);
             
+            console.log(`[DemoAPI:Network] ✅ FinTech discovery query completed successfully`);
+            console.log(`[DemoAPI:Network] 📊 Discovery results:`, {
+              requested: finalMetadata.networkSize,
+              found: availableFinTechs.length,
+              firstFew: availableFinTechs.slice(0, 3).map(f => ({ id: f.id, name: f.name }))
+            });
+            
             NetworkLogger.logFinTechAvailability(
               finalMetadata.networkSize, 
               availableFinTechs.length, 
@@ -1751,19 +1775,35 @@ router.post('/demo/company/create', async (req, res) => {
             );
             
             if (availableFinTechs.length === 0) {
+              console.log(`[DemoAPI:Network] ❌ CRITICAL: No FinTech companies available for network creation`);
               throw new Error('No FinTech companies available for network creation');
             }
             
+            console.log(`[DemoAPI:Network] ✅ FinTech validation passed - proceeding to relationship creation`);
+            
             // ========================================
-            // RELATIONSHIP CREATION WITH PROPER TYPES
+            // RELATIONSHIP CREATION WITH GRANULAR LOGGING
             // ========================================
             
+            console.log(`[DemoAPI:Network] 🔄 Starting relationship creation loop...`);
             const startTime = Date.now();
             let totalCreated = 0;
+            let totalAttempted = 0;
+            
+            console.log(`[DemoAPI:Network] 📊 Loop parameters:`, {
+              totalFinTechsToProcess: availableFinTechs.length,
+              bankId: company.id,
+              bankName: company.name,
+              expectedRelationships: availableFinTechs.length
+            });
             
             // Create relationships one by one to avoid batch SQL issues
             for (const fintech of availableFinTechs) {
+              totalAttempted++;
+              console.log(`[DemoAPI:Network] 🔄 Processing FinTech ${totalAttempted}/${availableFinTechs.length}: ${fintech.name} (ID: ${fintech.id})`);
+              
               try {
+                console.log(`[DemoAPI:Network] 📋 Preparing relationship data for ${fintech.name}...`);
                 const relationshipData = {
                   company_id: company.id,
                   related_company_id: fintech.id,
@@ -1780,13 +1820,25 @@ router.post('/demo/company/create', async (req, res) => {
                   }
                 };
                 
+                console.log(`[DemoAPI:Network] 💾 Executing database insert for relationship: ${company.id} → ${fintech.id}`);
+                
                 // Insert single relationship with explicit typing
                 await db.insert(relationships).values(relationshipData);
                 totalCreated++;
                 
+                console.log(`[DemoAPI:Network] ✅ SUCCESS: Relationship created successfully (${totalCreated}/${availableFinTechs.length})`);
                 NetworkLogger.logIndividualInsert(fintech.id, fintech.name, true);
                 
               } catch (relationshipError: any) {
+                console.error(`[DemoAPI:Network] ❌ FAILED: Relationship creation failed for ${fintech.name}:`, {
+                  errorCode: relationshipError.code,
+                  errorMessage: relationshipError.message,
+                  bankId: company.id,
+                  finTechId: fintech.id,
+                  finTechName: fintech.name,
+                  attemptNumber: totalAttempted
+                });
+                
                 NetworkLogger.logConstraintError(relationshipError, {
                   bankId: company.id,
                   finTechId: fintech.id,
@@ -1796,6 +1848,13 @@ router.post('/demo/company/create', async (req, res) => {
                 NetworkLogger.logIndividualInsert(fintech.id, fintech.name, false);
               }
             }
+            
+            console.log(`[DemoAPI:Network] 🏁 Relationship creation loop completed:`, {
+              totalAttempted: totalAttempted,
+              totalCreated: totalCreated,
+              successRate: `${((totalCreated / totalAttempted) * 100).toFixed(1)}%`,
+              duration: `${Date.now() - startTime}ms`
+            });
             
             // ========================================
             // COMPLETION AND BROADCASTING
@@ -1822,16 +1881,44 @@ router.post('/demo/company/create', async (req, res) => {
               timestamp: new Date().toISOString()
             });
             
-          } catch (networkError) {
-            console.error('[DemoAPI] ❌ Network creation failed:', networkError);
+          } catch (networkError: any) {
+            console.error(`[DemoAPI:Network] ❌ CRITICAL NETWORK CREATION FAILURE:`, {
+              errorType: networkError.name || 'Unknown',
+              errorCode: networkError.code || 'N/A',
+              errorMessage: networkError.message,
+              stackTrace: networkError.stack?.split('\n').slice(0, 5),
+              companyId: company.id,
+              companyName: company.name,
+              networkSize: finalMetadata?.networkSize,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Log complete failure context for debugging
+            console.error(`[DemoAPI:Network] 🔍 Failure context:`, {
+              persona: persona,
+              finalMetadata: finalMetadata,
+              availableFinTechs: 'Query may have failed',
+              demoSessionId: demoSessionId
+            });
+            
             // Don't fail the entire company creation for network issues
+            console.log(`[DemoAPI:Network] ⚠️ Company creation will continue despite network failure`);
             broadcastMessage('demo_network_warning', {
               bankId: company.id,
               bankName: company.name,
               error: 'Network creation failed, but company was created successfully',
+              errorType: networkError.name || 'Unknown',
               timestamp: new Date().toISOString()
             });
           }
+        } else {
+          console.log(`[DemoAPI:Network] ⏭️ Skipping network creation:`, {
+            persona: persona,
+            isDataProvider: persona === 'data-provider',
+            hasNetworkSize: !!finalMetadata?.networkSize,
+            networkSizeValue: finalMetadata?.networkSize,
+            reason: persona !== 'data-provider' ? 'Not a Data Provider' : 'No network size specified'
+          });
         }
         
         break;
