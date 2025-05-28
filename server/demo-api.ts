@@ -12,6 +12,154 @@ import {
 
 const router = Router();
 
+/**
+ * ========================================
+ * Company Name Generation API
+ * ========================================
+ * 
+ * Generates unique, professional company names using the advanced combinatorial system.
+ * This endpoint ensures no naming conflicts by pre-validating against the database,
+ * eliminating the collision issues that occur when using static name arrays.
+ * 
+ * Key Features:
+ * - Uses 118,000+ name combinations from advanced generation system
+ * - Pre-validates uniqueness against existing companies
+ * - Returns ready-to-use names that won't cause database conflicts
+ * - Professional business naming with proper suffixes
+ * - Comprehensive logging for debugging and monitoring
+ * 
+ * @endpoint GET /api/demo/generate-company-name
+ * @version 1.0.0
+ * @since 2025-05-28
+ */
+router.get('/demo/generate-company-name', async (req, res) => {
+  const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    console.log('[DemoAPI] [CompanyName] Starting unique company name generation:', {
+      timestamp: new Date().toISOString(),
+      requestId
+    });
+
+    // Import the advanced company name utilities
+    const { generateAdvancedCompanyName, checkCompanyNameUniqueness } = await import('./utils/company-name-utils');
+    
+    console.log('[DemoAPI] [CompanyName] Loaded advanced name generation utilities');
+    
+    // Generate a base name using the combinatorial system
+    // Start with attempt 1 for full combinatorial generation (PREFIX + CORE + SUFFIX)
+    const generatedName = await generateAdvancedCompanyName('Demo Company', 1);
+    
+    console.log('[DemoAPI] [CompanyName] Advanced generation produced:', {
+      generatedName,
+      strategy: 'full_combinatorial',
+      duration: Date.now() - startTime
+    });
+
+    // Validate uniqueness against database
+    console.log('[DemoAPI] [CompanyName] Validating name uniqueness against database...');
+    
+    const uniquenessCheck = await checkCompanyNameUniqueness(generatedName);
+    
+    if (!uniquenessCheck.isUnique) {
+      console.log('[DemoAPI] [CompanyName] Name collision detected, generating alternative:', {
+        originalName: generatedName,
+        existingCompany: uniquenessCheck.conflictDetails
+      });
+      
+      // Try different generation strategies until we find a unique name
+      let finalName = generatedName;
+      let isUnique = false;
+      let attempt = 2;
+      const maxAttempts = 5;
+      
+      while (!isUnique && attempt <= maxAttempts) {
+        console.log(`[DemoAPI] [CompanyName] Attempting strategy ${attempt} for uniqueness...`);
+        
+        const alternativeName = await generateAdvancedCompanyName('Demo Company', attempt);
+        const alternativeCheck = await checkCompanyNameUniqueness(alternativeName);
+        
+        if (alternativeCheck.isUnique) {
+          finalName = alternativeName;
+          isUnique = true;
+          console.log('[DemoAPI] [CompanyName] Found unique alternative:', {
+            finalName,
+            attempt,
+            duration: Date.now() - startTime
+          });
+        } else {
+          console.log(`[DemoAPI] [CompanyName] Strategy ${attempt} also resulted in collision, trying next...`);
+          attempt++;
+        }
+      }
+      
+      // If all strategies failed, add timestamp suffix as guaranteed unique fallback
+      if (!isUnique) {
+        finalName = `${generatedName} ${Date.now()}`;
+        console.log('[DemoAPI] [CompanyName] Using timestamp fallback for guaranteed uniqueness:', {
+          finalName,
+          originalName: generatedName,
+          wasModified: true,
+          strategy: 'timestamp_fallback',
+          processingTime: Date.now() - startTime,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      return res.json({
+        success: true,
+        companyName: finalName,
+        wasModified: true,
+        originalName: generatedName,
+        strategy: isUnique ? `attempt_${attempt - 1}` : 'timestamp_fallback',
+        processingTime: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Success - original name is unique
+    const processingTime = Date.now() - startTime;
+    
+    console.log('[DemoAPI] [CompanyName] Company name generation completed successfully:', {
+      companyName: generatedName,
+      wasModified: false,
+      strategy: 'full_combinatorial',
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      companyName: generatedName,
+      wasModified: false,
+      originalName: generatedName,
+      strategy: 'full_combinatorial',
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    const errorDuration = Date.now() - startTime;
+    
+    console.error('[DemoAPI] [CompanyName] Company name generation failed:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate unique company name',
+      details: error instanceof Error ? error.message : 'Unknown error occurred',
+      code: 'NAME_GENERATION_FAILED',
+      processingTime: errorDuration,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Simple working demo endpoints
 router.post('/demo/company/create', async (req, res) => {
   try {

@@ -43,6 +43,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { generateUniqueCompanyName } from "@/services/company-name-api";
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
