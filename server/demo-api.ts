@@ -828,6 +828,56 @@ router.post('/demo/environment/finalize', async (req, res) => {
     };
 
     // ========================================
+    // USER ONBOARDING COMPLETION FOR DEMO PERSONAS
+    // ========================================
+    
+    // For demo users, automatically complete user onboarding for all personas except "New Data Recipient"
+    // New Data Recipients should go through the standard onboarding flow
+    console.log('[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...');
+    
+    if (userData.is_demo_user) {
+      // Get the company data to check the persona type
+      const [companyData] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      if (companyData) {
+        // Only auto-complete onboarding for Data Provider, Accredited Data Recipient, and Invela Admin
+        // New Data Recipient should complete the full onboarding process
+        const shouldCompleteOnboarding = companyData.category !== 'New Data Recipient' && 
+                                       companyData.is_demo === true;
+        
+        if (shouldCompleteOnboarding && !userData.onboarding_user_completed) {
+          console.log('[DemoAPI] [Finalize] Auto-completing user onboarding for demo persona:', {
+            userId: userData.id,
+            companyCategory: companyData.category,
+            personaType: companyData.demo_persona_type || 'unknown'
+          });
+          
+          // Update user onboarding status
+          await db.update(users)
+            .set({ 
+              onboarding_user_completed: true,
+              updated_at: new Date()
+            })
+            .where(eq(users.id, userId));
+          
+          // Update the userData object to reflect the change
+          userData.onboarding_user_completed = true;
+          
+          console.log('[DemoAPI] [Finalize] User onboarding auto-completed successfully');
+        } else {
+          console.log('[DemoAPI] [Finalize] User onboarding not auto-completed:', {
+            shouldComplete: shouldCompleteOnboarding,
+            alreadyCompleted: userData.onboarding_user_completed,
+            category: companyData.category
+          });
+        }
+      }
+    }
+
+    // ========================================
     // SESSION AUTHENTICATION
     // ========================================
     
