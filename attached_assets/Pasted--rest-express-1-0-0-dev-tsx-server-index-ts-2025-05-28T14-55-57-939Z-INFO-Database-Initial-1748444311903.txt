@@ -1,0 +1,537 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T14:55:57.939Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T14:55:57.944Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T14:55:57.944Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T14:55:58.095Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T14:55:58.212Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T14:55:58.212Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T14:55:58.212Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T14:55:58.213Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T14:55:58.214Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T14:55:58.216Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T14:55:58.216Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"08u19l","timestamp":"2025-05-28T14:55:58.216Z"}
+[2025-05-28T14:55:58.216Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T14:55:58.216Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T14:55:58.217Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T14:55:58.217Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T14:55:58.217Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T14:55:58.217Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T14:55:58.217Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T14:55:58.217Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T14:55:58.217Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T14:55:58.217Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T14:55:58.219Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T14:55:58.232Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T14:55:58.232Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T14:55:58.232Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T14:55:58.232Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T14:55:58.233Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T14:55:58.233Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T14:55:59.218Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T14:56:01.770Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:56:05.303Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:56:05.896Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T14:56:08.233Z] [INFO] [App] Running background health checks... 
+[2025-05-28T14:56:08.233Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T14:56:08.233Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T14:56:08.234Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T14:56:08.423Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T14:56:08.457Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T14:56:08.499Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T14:56:08.499Z] [StartupChecks] Database health check passed 
+[2025-05-28T14:56:08.499Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T14:56:08.500Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T14:56:15.071Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444175071-58e2qlj","clients":1}
+[2025-05-28T14:56:15.205Z] [INFO] [WebSocket] Received message from client client-1748444175071-58e2qlj {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T14:56:15.034Z"}}
+[2025-05-28T14:56:15.205Z] [INFO] [WebSocket] Authentication from client client-1748444175071-58e2qlj {"module":"WebSocket","hasToken":true}
+[2025-05-28T14:56:15.629Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444175629-71akf2g","clients":2}
+[2025-05-28T14:56:16.222Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444176222-t079wr1","clients":3}
+[2025-05-28T14:56:16.716Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444176716-kid4ko4","clients":4}
+[2025-05-28T14:56:17.278Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444177278-o98y8qr","clients":5}
+[2025-05-28T14:56:17.638Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"authenticate","userId":"487","companyId":"685","clientId":"ws_1748444175548_s2c90dy0c","timestamp":"2025-05-28T14:56:17.477Z"}
+[2025-05-28T14:56:17.638Z] [INFO] [WebSocket] Authentication from client client-1748444177278-o98y8qr {"module":"WebSocket","userId":"487","companyId":"685","hasToken":true}
+[2025-05-28T14:56:28.304Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[999,964,965,973,969,1001,971,976,978,981]}
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[2025-05-28T14:56:38.041Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:56:37.896Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[2025-05-28T14:56:46.041Z] [INFO] [WebSocket] Received message from client client-1748444175071-58e2qlj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:56:46.398Z] [INFO] [WebSocket] Received message from client client-1748444176222-t079wr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:56:46.255Z","connectionId":"ws_1748444176178_6bomap025"}
+[2025-05-28T14:56:46.868Z] [INFO] [WebSocket] Received message from client client-1748444176716-kid4ko4 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:56:46.728Z","connectionId":"ws_1748444175590_j202y7qaf"}
+[2025-05-28T14:56:57.403Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:56:57.267Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:56:58.441Z',
+  requestId: 'req_1748444218441_2okz7plt4'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:56:58.445Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:56:58.445Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Crown Treasury Consolidated',
+  components: { prefix: 'Crown', core: 'Treasury', suffix: 'Consolidated' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Crown Treasury Consolidated',
+  strategy: 'full_combinatorial',
+  duration: 5
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:56:58.446Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Crown Treasury Consolidated',
+  nameLength: 27
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:56:58.488Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Crown Treasury Consolidated',
+  duration: 42
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Crown Treasury Consolidated',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 48,
+  timestamp: '2025-05-28T14:56:58.489Z'
+}
+[2025-05-28T14:56:58.520Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 79ms :: {"success":true,"companyName":"Crown Treasury Consolidated","wasModified":fal... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:56:58.788Z',
+  requestId: 'req_1748444218788_e19ounf3m'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:56:58.794Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:56:58.796Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Progressive Excellence Corporation',
+  components: { prefix: 'Progressive', core: 'Excellence', suffix: 'Corporation' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Progressive Excellence Corporation',
+  strategy: 'full_combinatorial',
+  duration: 8
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:56:58.796Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Progressive Excellence Corporation',
+  nameLength: 34
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:56:58.831Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Progressive Excellence Corporation',
+  duration: 35
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Progressive Excellence Corporation',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 43,
+  timestamp: '2025-05-28T14:56:58.831Z'
+}
+[2025-05-28T14:56:58.865Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 78ms :: {"success":true,"companyName":"Progressive Excellence Corporation","wasModifi... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:56:59.125Z',
+  requestId: 'req_1748444219125_vgn9ppihg'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:56:59.126Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:56:59.126Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Central Forge Industries',
+  components: { prefix: 'Central', core: 'Forge', suffix: 'Industries' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Central Forge Industries',
+  strategy: 'full_combinatorial',
+  duration: 2
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:56:59.127Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Central Forge Industries',
+  nameLength: 24
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:56:59.162Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Central Forge Industries',
+  duration: 34
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Central Forge Industries',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 37,
+  timestamp: '2025-05-28T14:56:59.162Z'
+}
+[2025-05-28T14:56:59.192Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 67ms :: {"success":true,"companyName":"Central Forge Industries","wasModified":false,... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Central Forge Industries',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T14:57:07.040Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Central Forge Industries',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Central Forge Industries',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T14:57:07.040Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 690,
+  name: 'Central Forge Industries',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 50
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 690,
+  companyName: 'Central Forge Industries',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 50
+}
+[2025-05-28T14:57:07.123Z] [INFO] [App] POST /api/demo/company/create 200 in 84ms :: {"success":true,"company":{"id":690,"name":"Central Forge Industries","descri... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Jack Bennett',
+  email: 'jbennett@centralforgeindustries.com',
+  companyId: 690,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748444225458_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-28T14:57:05.458Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 690,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 690
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T14:57:07.881Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Jack Bennett',
+    email: 'jbennett@centralforgeindustries.com',
+    companyId: 690,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Jack Bennett',
+    email: 'jbennett@centralforgeindustries.com',
+    companyId: 690,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T14:57:07.881Z'
+}
+[DemoAPI] [UserCreate] Onboarding auto-completion check: {
+  companyCategory: 'FinTech',
+  shouldComplete: true,
+  userId: 'pending_creation'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 492,
+  email: 'jbennett@centralforgeindustries.com',
+  fullName: 'Jack Bennett',
+  companyId: 690,
+  role: 'user',
+  onboardingCompleted: true
+}
+[2025-05-28T14:57:08.057Z] [INFO] [App] POST /api/demo/user/create 200 in 177ms :: {"success":true,"user":{"id":492,"email":"jbennett@centralforgeindustries.com... 
+[2025-05-28T14:57:08.877Z] [INFO] [App] POST /api/demo/auth/setup 200 in 33ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 492,
+  companyId: 690,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-28T14:57:09.658Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 492,
+  email: 'jbennett@centralforgeindustries.com',
+  companyId: 690,
+  fullName: 'Jack Bennett'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 492,
+  email: 'jbennett@centralforgeindustries.com',
+  companyId: 690,
+  environmentId: 'env_demo_1748444229691_492',
+  authenticated: true,
+  totalDuration: 98,
+  timestamp: '2025-05-28T14:57:09.756Z'
+}
+[2025-05-28T14:57:09.789Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 131ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 492, companyId: 690 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 492,
+  company_id: 690,
+  email: 'jbennett@centralforgeindustries.com'
+}
+[2025-05-28T14:57:13.153Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":690,"userId":492}
+[Current Company] Found company: {
+  id: 690,
+  name: 'Central Forge Industries',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 492,
+  companyId: 690,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T14:57:13.182Z'
+}
+[2025-05-28T14:57:13.189Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":690}
+[Tasks] Automatically unlocking all tasks for company { userId: 492, companyId: 690, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T14:57:13.190Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":690}
+[2025-05-28T14:57:13.218Z] [INFO] [App] GET /api/companies/current 200 in 73ms :: {"id":690,"name":"Central Forge Industries","category":"FinTech","is_demo":tr... 
+[2025-05-28T14:57:13.221Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":690}
+[Tasks] Successfully unlocked all tasks for company: 690
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 492',
+    condition2: 'tasks.created_by = 492',
+    condition3: "tasks.company_id = 690 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jbennett@centralforgeindustries.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T14:57:13.319Z] [INFO] [App] GET /api/tasks 304 in 168ms :: [] 
+[2025-05-28T14:57:13.416Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 492 
+[2025-05-28T14:57:13.416Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T14:57:13.416Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T14:57:13.416Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 492 
+[2025-05-28T14:57:13.451Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 492 
+[2025-05-28T14:57:13.476Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748444233476-42wjmj6","clients":6}
+[2025-05-28T14:57:13.481Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 67ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T14:57:13.595Z] [INFO] [WebSocket] Received message from client client-1748444233476-42wjmj6 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748444174270_9p3t1qn8s","timestamp":"2025-05-28T14:57:13.463Z"}
+[2025-05-28T14:57:13.595Z] [INFO] [WebSocket] Authentication from client client-1748444233476-42wjmj6 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-28T14:57:15.204Z] [INFO] [WebSocket] Received message from client client-1748444175071-58e2qlj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:57:16.349Z] [INFO] [WebSocket] Received message from client client-1748444176222-t079wr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:16.208Z","connectionId":"ws_1748444176178_6bomap025"}
+[2025-05-28T14:57:16.870Z] [INFO] [WebSocket] Received message from client client-1748444176716-kid4ko4 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:16.734Z","connectionId":"ws_1748444175590_j202y7qaf"}
+[2025-05-28T14:57:17.419Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:17.270Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[2025-05-28T14:57:28.536Z] [INFO] [App] GET /api/tasks 304 in 33ms :: [] 
+[2025-05-28T14:57:37.405Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:37.270Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[2025-05-28T14:57:40.452Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":690,"name":"Central Forge Industries","category":"FinTech","is_demo":tr... [sampled: request 11] 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 492,
+  company_id: 690,
+  email: 'jbennett@centralforgeindustries.com'
+}
+[2025-05-28T14:57:43.722Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":690,"userId":492}
+[2025-05-28T14:57:43.751Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":690}
+[Tasks] Automatically unlocking all tasks for company { userId: 492, companyId: 690, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T14:57:43.751Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":690}
+[2025-05-28T14:57:43.785Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":690}
+[Tasks] Successfully unlocked all tasks for company: 690
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 492',
+    condition2: 'tasks.created_by = 492',
+    condition3: "tasks.company_id = 690 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jbennett@centralforgeindustries.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T14:57:43.884Z] [INFO] [App] GET /api/tasks 304 in 163ms :: [] 
+[2025-05-28T14:57:45.202Z] [INFO] [WebSocket] Received message from client client-1748444175071-58e2qlj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:57:46.341Z] [INFO] [WebSocket] Received message from client client-1748444176222-t079wr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:46.209Z","connectionId":"ws_1748444176178_6bomap025"}
+[2025-05-28T14:57:46.872Z] [INFO] [WebSocket] Received message from client client-1748444176716-kid4ko4 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:46.735Z","connectionId":"ws_1748444175590_j202y7qaf"}
+[2025-05-28T14:57:57.431Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:57:57.271Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[Tasks] Using cached task data for user: 492
+[2025-05-28T14:57:59.101Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [] 
+[2025-05-28T14:58:10.449Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":690,"name":"Central Forge Industries","category":"FinTech","is_demo":tr... [sampled: request 21] 
+[Current Company] Fetching company for user: { userId: 492, companyId: 690 }
+[Current Company] Found company: {
+  id: 690,
+  name: 'Central Forge Industries',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 492,
+  companyId: 690,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T14:58:13.462Z'
+}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 492,
+  company_id: 690,
+  email: 'jbennett@centralforgeindustries.com'
+}
+[2025-05-28T14:58:14.287Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":690,"userId":492}
+[2025-05-28T14:58:14.316Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":690}
+[Tasks] Automatically unlocking all tasks for company { userId: 492, companyId: 690, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T14:58:14.316Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":690}
+[2025-05-28T14:58:14.345Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":690}
+[Tasks] Successfully unlocked all tasks for company: 690
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 492',
+    condition2: 'tasks.created_by = 492',
+    condition3: "tasks.company_id = 690 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('jbennett@centralforgeindustries.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T14:58:14.447Z] [INFO] [App] GET /api/tasks 304 in 160ms :: [] 
+[2025-05-28T14:58:15.204Z] [INFO] [WebSocket] Received message from client client-1748444175071-58e2qlj {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:58:16.344Z] [INFO] [WebSocket] Received message from client client-1748444176222-t079wr1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:58:16.210Z","connectionId":"ws_1748444176178_6bomap025"}
+[2025-05-28T14:58:16.875Z] [INFO] [WebSocket] Received message from client client-1748444176716-kid4ko4 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:58:16.736Z","connectionId":"ws_1748444175590_j202y7qaf"}
+[2025-05-28T14:58:17.403Z] [INFO] [WebSocket] Received message from client client-1748444177278-o98y8qr {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:58:17.271Z","connectionId":"ws_1748444175548_s2c90dy0c"}
+[Tasks] Using cached task data for user: 492
+[2025-05-28T14:58:29.663Z] [INFO] [App] GET /api/tasks 304 in 32ms :: [] 

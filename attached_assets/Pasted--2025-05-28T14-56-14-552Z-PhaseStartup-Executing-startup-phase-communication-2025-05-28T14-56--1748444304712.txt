@@ -1,0 +1,71 @@
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-28T14:56:14.552Z] [App] Communication phase initializing 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-28T14:56:14.552Z] [App] Application ready for user interaction 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-28T14:56:14.552Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[TanStack Query] 401 Unauthorized for /api/user, returning null as configured
+[Router] Current location: /login
+[AuthLayout] Rendering with mode: login, step: 1/3
+[2025-05-28T14:56:14.751Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748444175071-58e2qlj", timestamp: "2025-05-28T14:56:15.071Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-28T14:56:15.205Z", message: "Authentication successful"}
+[2025-05-28T14:56:15.548Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748444175629-71akf2g", timestamp: "2025-05-28T14:56:15.629Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748444176222-t079wr1", timestamp: "2025-05-28T14:56:16.222Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748444176716-kid4ko4", timestamp: "2025-05-28T14:56:16.716Z", message: "Connection established"}
+[2025-05-28T14:56:17.239Z] [WebSocket] WebSocket connection established 
+[2025-05-28T14:56:17.239Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-28T14:56:17.245Z] [WebSocket] Received message of type: connection_established 
+[2025-05-28T14:56:17.245Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748444177278-o98y8qr 
+[2025-05-28T14:56:17.477Z] [WebSocket] Sending authentication message 
+Object {userId: "487", companyId: "685", connectionId: "ws_1748444175548_s2c90dy0c", hasUserData: false, hasCompanyData: false}
+[2025-05-28T14:56:17.617Z] [WebSocket] Received message of type: authenticated 
+[2025-05-28T14:56:17.617Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:56:46.042Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:56:46.398Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:56:46.868Z", echo: {…}}
+[AuthLayout] Rendering with mode: login, step: 1/3
+[LoginDemoHeader] Demo login accessed 
+Object {timestamp: "2025-05-28T14:56:54.395Z", action: "demo_login_access"}
+[Router] Current location: /demo
+[DemoPage] Rendering step 1/3 
+Object {selectedPersona: undefined}
+[AuthLayout] Rendering with mode: demo, step: 1/3
+[DemoStep1] Rendering platform overview
+[DemoStep1] Applying color scheme: gray, selected: false
+[DemoStep1] Setting icon color for: gray
+[DemoStep1] Applying color scheme: green, selected: false
+[DemoStep1] Setting icon color for: green
+[DemoStep1] Applying color scheme: purple, selected: false
+[DemoStep1] Setting icon color for: purple
+[DemoStep1] Applying color scheme: blue, selected: false
+[DemoStep1] Setting icon color for: blue
+[DemoStepVisual] Rendering with currentStep: 1, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: true, Asset: /assets/demo/steps/step-1-animated.gif
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoAssetPreloader] Preloading assets for step 2
+[DemoAssetPreloader] Successfully initiated preloading for 1 assets
+[DemoStep1] Persona selected: new-data-recipient
+[DemoPage] Rendering step 1/3 
+Object {selectedPersona: "new-data-recipient"}

@@ -295,6 +295,40 @@ router.post('/demo/company/create', async (req, res) => {
       shouldCreateNetwork: transformedData.shouldCreateNetwork,
       processingTime: Date.now() - startTime
     });
+
+    // ========================================
+    // CRITICAL FIX: CREATE TASKS FOR NEW DATA RECIPIENT
+    // ========================================
+    
+    // For New Data Recipient personas, create the standard FinTech company tasks
+    if (transformedData.persona === 'new-data-recipient') {
+      console.log('[DemoAPI] 🎯 Creating standard FinTech tasks for New Data Recipient company');
+      
+      try {
+        // Import the task creation service
+        const { createCompanyTasks } = await import('./services/company-tasks');
+        
+        // Create the three standard tasks: KYB, KY3P, Open Banking
+        await createCompanyTasks(company.id, {
+          created_via: 'demo_new_data_recipient',
+          created_by_id: 1, // Use Invela admin as creator
+          demo_creation: true
+        });
+        
+        console.log('[DemoAPI] ✅ Standard FinTech tasks created for company:', {
+          companyId: company.id,
+          companyName: company.name,
+          tasksCreated: ['KYB', 'KY3P', 'Open Banking']
+        });
+      } catch (taskError) {
+        console.error('[DemoAPI] ❌ Failed to create tasks for New Data Recipient:', {
+          companyId: company.id,
+          error: taskError,
+          fallbackAction: 'Company created successfully but tasks will need manual creation'
+        });
+        // Don't fail the entire company creation if task creation fails
+      }
+    }
     
     // Create network relationships for Data Provider banks
     if (transformedData.shouldCreateNetwork) {
@@ -454,6 +488,8 @@ router.post('/demo/user/create', async (req, res) => {
       password: hashedPassword,
       company_id: transformedData.companyId,
       is_demo: true,
+      is_demo_user: true,  // CRITICAL FIX: Set demo user flag
+      demo_persona_type: transformedData.persona,  // CRITICAL FIX: Store persona type
       onboarding_user_completed: shouldCompleteOnboarding
     }).returning();
     
