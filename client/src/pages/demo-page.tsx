@@ -1043,7 +1043,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
         });
 
         // Show user-friendly notification about the change
-        toast({
+        console.log('Company name updated:', {
           title: "Company name updated",
           description: `"${cleanedName}" was already taken. Updated to "${result.companyName}"`,
           duration: 4000,
