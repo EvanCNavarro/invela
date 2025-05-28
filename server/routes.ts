@@ -1303,6 +1303,63 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       });
     }
   });
+
+  // Get company profile data for network company pages
+  app.get("/api/companies/:id/profile", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Fetch comprehensive company profile data
+      const companyProfile = await db.select({
+        id: companies.id,
+        name: companies.name,
+        description: companies.description,
+        category: companies.category,
+        riskScore: companies.risk_score,
+        chosenScore: companies.chosen_score,
+        riskClusters: companies.risk_clusters,
+        onboardingCompleted: companies.onboarding_company_completed,
+        isDemo: companies.is_demo,
+        revenueTier: companies.revenue_tier,
+        accreditationStatus: companies.accreditation_status,
+        websiteUrl: companies.website_url,
+        numEmployees: companies.num_employees,
+        incorporationYear: companies.incorporation_year,
+        availableTabs: companies.available_tabs,
+        logoId: companies.logo_id,
+        createdAt: companies.created_at,
+        updatedAt: companies.updated_at
+      })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+      
+      if (!companyProfile || companyProfile.length === 0) {
+        return res.status(404).json({
+          message: "Company profile not found",
+          code: "NOT_FOUND"
+        });
+      }
+      
+      console.log(`[Company Profile] Retrieved profile for company ${companyId}: ${companyProfile[0].name}`);
+      
+      // Return the complete company profile data
+      return res.json(companyProfile[0]);
+    } catch (error) {
+      console.error("[Company Profile] Error fetching company profile:", error);
+      return res.status(500).json({
+        message: "Error fetching company profile",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
   
   // Get network companies for the current user's company
   app.get("/api/companies/network", requireAuth, async (req, res) => {

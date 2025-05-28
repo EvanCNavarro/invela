@@ -1,0 +1,675 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T12:51:29.333Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T12:51:29.338Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T12:51:29.338Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T12:51:29.481Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T12:51:29.597Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T12:51:29.597Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T12:51:29.597Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T12:51:29.597Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T12:51:29.598Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T12:51:29.600Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T12:51:29.600Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"aeygno","timestamp":"2025-05-28T12:51:29.600Z"}
+[2025-05-28T12:51:29.600Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T12:51:29.600Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T12:51:29.600Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T12:51:29.600Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T12:51:29.600Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T12:51:29.600Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T12:51:29.601Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T12:51:29.601Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T12:51:29.601Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T12:51:29.601Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T12:51:29.602Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T12:51:29.602Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T12:51:29.602Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T12:51:29.603Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T12:51:29.617Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T12:51:29.617Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T12:51:29.617Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T12:51:29.617Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T12:51:29.617Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T12:51:29.617Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T12:51:30.210Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:51:30.802Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T12:51:33.245Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:51:33.717Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:51:39.619Z] [INFO] [App] Running background health checks... 
+[2025-05-28T12:51:39.619Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T12:51:39.620Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T12:51:39.620Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T12:51:39.812Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T12:51:39.842Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T12:51:39.871Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T12:51:39.871Z] [StartupChecks] Database health check passed 
+[2025-05-28T12:51:39.871Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T12:51:39.872Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T12:51:42.804Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436702804-9fokwmu","clients":1}
+[2025-05-28T12:51:42.925Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T12:51:42.827Z"}}
+[2025-05-28T12:51:42.925Z] [INFO] [WebSocket] Authentication from client client-1748436702804-9fokwmu {"module":"WebSocket","hasToken":true}
+[2025-05-28T12:51:43.304Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436703304-1x82m31","clients":2}
+[2025-05-28T12:51:43.796Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436703796-incca1a","clients":3}
+[2025-05-28T12:51:44.296Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436704296-1w962mt","clients":4}
+[2025-05-28T12:51:45.017Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436705017-bulejdx","clients":5}
+[2025-05-28T12:51:45.357Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"authenticate","userId":"484","companyId":"682","clientId":"ws_1748436703414_sxqbp83l2","timestamp":"2025-05-28T12:51:45.264Z"}
+[2025-05-28T12:51:45.357Z] [INFO] [WebSocket] Authentication from client client-1748436705017-bulejdx {"module":"WebSocket","userId":"484","companyId":"682","hasToken":true}
+[2025-05-28T12:51:59.653Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[980,982,977,984,1042,1041,986,1043,989,990]}
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 1042 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1041 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[Task Progress] Calculated progress for task 1043 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[2025-05-28T12:52:06.516Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:06.416Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:52:13.511Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:52:13.928Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:13.825Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:52:14.418Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:14.322Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:52:25.166Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:25.073Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:52:42.930Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:52:43.919Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:43.826Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:52:44.417Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:44.322Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:52:45.173Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:52:45.073Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:53:05.168Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:05.073Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:53:12.931Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:53:13.918Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:13.825Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:53:14.419Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:14.322Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:53:26.099Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:25.073Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:53:42.923Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:53:43.920Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:43.826Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:53:44.416Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:44.323Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:53:45.166Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:53:45.074Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:53:56.747Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["23.23.229.9:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":-1471064488,"secretKey":-1395714936,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":11991,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-28T12:53:56.749Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:53:56.749Z"}
+[2025-05-28T12:53:56.753Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:53:56.753Z"}
+[2025-05-28T12:53:56.753Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:53:56.753Z"}
+[2025-05-28T12:53:56.754Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:53:56.754Z"}
+[2025-05-28T12:53:56.755Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:53:56.755Z"}
+[2025-05-28T12:53:56.755Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:53:56.755Z"}
+[2025-05-28T12:54:05.166Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:05.073Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:54:12.937Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:54:13.923Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:13.827Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:54:14.421Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:14.323Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:54:25.167Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:25.074Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:54:42.924Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:54:43.921Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:43.827Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:54:44.418Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:44.323Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:54:45.174Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:54:45.075Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[2025-05-28T12:54:53.056Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T12:54:53.228Z',
+  requestId: 'req_1748436893228_2uxyxp6zo'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T12:54:53.231Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T12:54:53.231Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Synergy Creation Advisors',
+  components: { prefix: 'Synergy', core: 'Creation', suffix: 'Advisors' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Synergy Creation Advisors',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T12:54:53.232Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Synergy Creation Advisors',
+  nameLength: 25
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T12:54:53.356Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Synergy Creation Advisors',
+  duration: 124
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Synergy Creation Advisors',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 129,
+  timestamp: '2025-05-28T12:54:53.357Z'
+}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T12:54:54.035Z',
+  requestId: 'req_1748436894035_n0ltzxxnl'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T12:54:54.035Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T12:54:54.036Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Verified Consulting Authorities',
+  components: { prefix: 'Verified', core: 'Consulting', suffix: 'Authorities' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Verified Consulting Authorities',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T12:54:54.036Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Verified Consulting Authorities',
+  nameLength: 31
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T12:54:54.066Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Verified Consulting Authorities',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Verified Consulting Authorities',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T12:54:54.066Z'
+}
+[2025-05-28T12:54:54.098Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 63ms :: {"success":true,"companyName":"Verified Consulting Authorities","wasModified"... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Verified Consulting Authorities',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 7 }
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T12:55:02.210Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Verified Consulting Authorities',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Verified Consulting Authorities',
+    persona: 'data-provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T12:55:02.211Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 5,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: data-provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  onboardingRequired: false,
+  tabCount: 7
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 683,
+  name: 'Verified Consulting Authorities',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  personaType: 'data-provider',
+  transformedPersona: 'data-provider',
+  shouldCreateNetwork: true,
+  processingTime: 60
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 683,
+  bankName: 'Verified Consulting Authorities',
+  targetNetworkSize: 5,
+  persona: 'data-provider'
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Verified Consulting Authorities',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '683-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Verified Consulting Authorities',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '683-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Verified Consulting Authorities',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '683-334'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Verified Consulting Authorities',
+  fintech: 'Finloft',
+  relationshipId: '683-9'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Verified Consulting Authorities',
+  fintech: 'Wealthfront',
+  relationshipId: '683-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'Verified Consulting Authorities',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 683,
+  companyName: 'Verified Consulting Authorities',
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: 7,
+  networkCreated: true,
+  totalProcessingTime: 273
+}
+[2025-05-28T12:55:02.514Z] [INFO] [App] POST /api/demo/company/create 200 in 305ms :: {"success":true,"company":{"id":683,"name":"Verified Consulting Authorities",... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Victoria Mohammed',
+  email: 'vmohammed@verifiedconsultingauthorities.com',
+  companyId: 683,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748436900669_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T12:55:00.669Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 683,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 683
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T12:55:03.270Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Victoria Mohammed',
+    email: 'vmohammed@verifiedconsultingauthorities.com',
+    companyId: 683,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Victoria Mohammed',
+    email: 'vmohammed@verifiedconsultingauthorities.com',
+    companyId: 683,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'data-provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T12:55:03.270Z'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 485,
+  email: 'vmohammed@verifiedconsultingauthorities.com',
+  fullName: 'Victoria Mohammed',
+  companyId: 683,
+  role: 'provider'
+}
+[2025-05-28T12:55:03.421Z] [INFO] [App] POST /api/demo/user/create 200 in 152ms :: {"success":true,"user":{"id":485,"email":"vmohammed@verifiedconsultingauthori... 
+[2025-05-28T12:55:04.216Z] [INFO] [App] POST /api/demo/auth/setup 200 in 33ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [EmailInvite] Starting email invitation process: {
+  userEmail: '***@***.***',
+  userName: 'Victoria Mohammed',
+  companyName: 'Verified Consulting Authorities',
+  loginCredentials: {
+    email: 'vmohammed@verifiedconsultingauthorities.com',
+    password: 'demo123',
+    loginUrl: '/login',
+    accountType: 'demo',
+    setupComplete: true
+  },
+  timestamp: '2025-05-28T12:55:04.972Z'
+}
+[DemoAPI] [EmailInvite] Input validation successful: {
+  userEmail: 'vmohammed@verifiedconsultingauthorities.com',
+  userName: 'Victoria Mohammed',
+  companyName: 'Verified Consulting Authorities',
+  hasLoginCredentials: true
+}
+[DemoAPI] [EmailInvite] Verifying user exists...
+[DemoAPI] [EmailInvite] User verification successful: {
+  userId: 485,
+  email: 'vmohammed@verifiedconsultingauthorities.com',
+  companyId: 683,
+  fullName: 'Victoria Mohammed'
+}
+[DemoAPI] [EmailInvite] Generating secure invitation code...
+[DemoAPI] [EmailInvite] Generated invitation code: { codeLength: 6, codeFormat: 'hex-uppercase', duration: 36 }
+[DemoAPI] [EmailInvite] Creating invitation database record...
+[DemoAPI] [EmailInvite] Invitation record created: {
+  invitationId: 445,
+  code: 'A158DE',
+  expiresAt: 2025-06-04T12:55:05.008Z,
+  duration: 84
+}
+[DemoAPI] [EmailInvite] Preparing email content using emailService...
+[DemoAPI] [EmailInvite] Built invitation URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com
+[EmailService] Starting to send template email
+[EmailService] Template type: demo_invite
+[EmailService] Recipient: vmohammed@verifiedconsultingauthorities.com
+[EmailService] Template data (raw): {
+  "recipientName": "Victoria Mohammed",
+  "recipientEmail": "vmohammed@verifiedconsultingauthorities.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Verified Consulting Authorities",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com",
+  "code": "A158DE"
+}
+[EmailService] Starting email validation for: vmohammed@verifiedconsultingauthorities.com
+[EmailService] Checking MX records for domain: verifiedconsultingauthorities.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND verifiedconsultingauthorities.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'verifiedconsultingauthorities.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: vmohammed@verifiedconsultingauthorities.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientName": "Victoria Mohammed",
+  "recipientEmail": "vmohammed@verifiedconsultingauthorities.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Verified Consulting Authorities",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com",
+  "code": "A158DE"
+}
+[EmailService] Built invite URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com
+[EmailService] Transformed template data: {
+  "recipientName": "Victoria Mohammed",
+  "recipientEmail": "vmohammed@verifiedconsultingauthorities.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Verified Consulting Authorities",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com",
+  "code": "A158DE"
+}
+[EmailService] Getting email template: demo_invite
+[EmailTemplate] Getting template: demo_invite
+[EmailTemplate] Template data: {
+  "recipientName": "Victoria Mohammed",
+  "recipientEmail": "vmohammed@verifiedconsultingauthorities.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Verified Consulting Authorities",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com",
+  "code": "A158DE"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "Victoria Mohammed",
+  "recipientEmail": "vmohammed@verifiedconsultingauthorities.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Verified Consulting Authorities",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=A158DE&email=vmohammed%40verifiedconsultingauthorities.com",
+  "code": "A158DE",
+  "inviteType": "demo"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'EvanCNavarro@gmail.com',
+  to: 'vmohammed@verifiedconsultingauthorities.com',
+  subject: 'Invitation to join Invela',
+  textLength: 745,
+  htmlLength: 1827
+}
+[2025-05-28T12:55:05.166Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:55:05.074Z","connectionId":"ws_1748436703414_sxqbp83l2"}
+[EmailService] Email sent successfully to: vmohammed@verifiedconsultingauthorities.com
+[DemoAPI] [EmailInvite] Demo invitation email sent successfully
+[DemoAPI] [EmailInvite] Email process completed: {
+  recipientEmail: 'vmohammed@verifiedconsultingauthorities.com',
+  invitationCode: 'A158DE',
+  messageId: 'demo_invite_1748436905962_445',
+  emailSent: true,
+  duration: 990
+}
+[DemoAPI] [EmailInvite] Process completed successfully: {
+  userId: 485,
+  companyId: 683,
+  invitationId: 445,
+  invitationCode: 'A158DE',
+  emailSent: true,
+  totalDuration: 990
+}
+[2025-05-28T12:55:05.994Z] [INFO] [App] POST /api/demo/email/send-invitation 200 in 1022ms :: {"success":true,"emailSent":true,"messageId":"demo_invite_1748436905962_445",... 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 485,
+  companyId: 683,
+  demoType: 'data-provider',
+  timestamp: '2025-05-28T12:55:06.759Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 485,
+  email: 'vmohammed@verifiedconsultingauthorities.com',
+  companyId: 683,
+  fullName: 'Victoria Mohammed'
+}
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 485,
+  email: 'vmohammed@verifiedconsultingauthorities.com',
+  companyId: 683,
+  environmentId: 'env_demo_1748436906789_485',
+  authenticated: true,
+  totalDuration: 94,
+  timestamp: '2025-05-28T12:55:06.853Z'
+}
+[2025-05-28T12:55:06.887Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 129ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 485, companyId: 683 }
+[Current Company] Found company: {
+  id: 683,
+  name: 'Verified Consulting Authorities',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 485,
+  companyId: 683,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T12:55:10.281Z'
+}
+[2025-05-28T12:55:10.314Z] [INFO] [App] GET /api/companies/current 200 in 63ms :: {"id":683,"name":"Verified Consulting Authorities","category":"Bank","is_demo... 
+[2025-05-28T12:55:10.501Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 485 
+[2025-05-28T12:55:10.501Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T12:55:10.501Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T12:55:10.501Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 485 
+[2025-05-28T12:55:10.634Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748436910634-4i6i8e1","clients":6}
+[2025-05-28T12:55:10.689Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 485 
+[2025-05-28T12:55:10.721Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 221ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T12:55:10.757Z] [INFO] [WebSocket] Received message from client client-1748436910634-4i6i8e1 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748436702100_74h84p5wb","timestamp":"2025-05-28T12:55:10.666Z"}
+[2025-05-28T12:55:10.757Z] [INFO] [WebSocket] Authentication from client client-1748436910634-4i6i8e1 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Relationships] Fetching network for company: 683
+[Companies] Fetching companies for user: { userId: 485, company_id: 683 }
+[Relationships] Found network members: { count: 5 }
+[Companies] Query successful, found companies: {
+  count: 6,
+  companies: [
+    {
+      id: 334,
+      name: 'Cornerstone Financial Group',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 9, name: 'Finloft', hasLogo: true, hasRelationship: false },
+    {
+      id: 603,
+      name: 'SigmaHub Ventures',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 642,
+      name: 'Stream Path Solutions',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 683,
+      name: 'Verified Consulting Authorities',
+      hasLogo: false,
+      hasRelationship: true
+    },
+    {
+      id: 164,
+      name: 'Wealthfront',
+      hasLogo: false,
+      hasRelationship: false
+    }
+  ]
+}
+[2025-05-28T12:55:11.086Z] [INFO] [App] GET /api/relationships 200 in 144ms :: [{"id":596,"companyId":683,"relatedCompanyId":334,"relationshipType":"data_pr... 
+[2025-05-28T12:55:11.116Z] [INFO] [App] GET /api/companies 200 in 145ms :: [{"id":334,"name":"Cornerstone Financial Group","category":"FinTech","descrip... 
+[Relationships] Fetching network for company: 683
+[Relationships] Found network members: { count: 5 }
+[2025-05-28T12:55:11.339Z] [INFO] [App] GET /api/relationships 304 in 64ms :: [{"id":596,"companyId":683,"relatedCompanyId":334,"relationshipType":"data_pr... 
+[2025-05-28T12:55:12.391Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 485,
+  company_id: 683,
+  email: 'vmohammed@verifiedconsultingauthorities.com'
+}
+[2025-05-28T12:55:12.456Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":683,"userId":485}
+[2025-05-28T12:55:12.505Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":683}
+[Tasks] Automatically unlocking all tasks for company { userId: 485, companyId: 683, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T12:55:12.506Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":683}
+[2025-05-28T12:55:12.535Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":683}
+[Tasks] Successfully unlocked all tasks for company: 683
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 485',
+    condition2: 'tasks.created_by = 485',
+    condition3: "tasks.company_id = 683 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('vmohammed@verifiedconsultingauthorities.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T12:55:12.624Z] [INFO] [App] GET /api/tasks 304 in 170ms :: [] 
+[2025-05-28T12:55:12.922Z] [INFO] [WebSocket] Received message from client client-1748436702804-9fokwmu {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:55:13.039Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Network Visualization] Fetching network data for company: 683
+[Network Visualization] Found network relationships: { count: 5 }
+[Network Visualization] Returning visualization data: { centerNode: 'Verified Consulting Authorities', nodeCount: 5 }
+[2025-05-28T12:55:13.196Z] [INFO] [App] GET /api/network/visualization 200 in 99ms :: {"center":{"id":683,"name":"Verified Consulting Authorities","riskScore":0,"r... 
+[2025-05-28T12:55:13.919Z] [INFO] [WebSocket] Received message from client client-1748436703796-incca1a {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:55:13.826Z","connectionId":"ws_1748436703823_1w2xo70eu"}
+[2025-05-28T12:55:14.417Z] [INFO] [WebSocket] Received message from client client-1748436704296-1w962mt {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:55:14.324Z","connectionId":"ws_1748436703327_0wfughdy0"}
+[2025-05-28T12:55:25.172Z] [INFO] [WebSocket] Received message from client client-1748436705017-bulejdx {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:55:25.074Z","connectionId":"ws_1748436703414_sxqbp83l2"}
