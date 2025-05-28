@@ -1,0 +1,32 @@
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Sebastian Bell", demoSessionId: "demo_1748428744536_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Sebastian Bell", demoSessionId: "demo_1748428745338_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Executing: Creating "BioSecure Systems" organization 
+Object {id: "create-company", label: "Creating "BioSecure Systems" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Sebastian Bell", demoSessionId: "demo_1748428745939_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] REAL API FAILED for: Creating &quot;BioSecure Systems&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;BioSecure Systems&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "BioSecure Systems" organization
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Sebastian Bell", demoSessionId: "demo_1748428746215_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
