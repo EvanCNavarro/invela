@@ -2536,34 +2536,12 @@ export default function DemoPage() {
    */
   const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
   const [step2FormData, setStep2FormData] = useState<any>(null);
-  
-  /**
-   * Enhanced form data change handler with validation and logging
-   * Ensures proper state synchronization between Step 2 and Step 3
-   */
+  const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
+
+  // Simple callback to update form data from Step 2
   const handleFormDataChange = useCallback((newFormData: any) => {
-    console.log('[DemoPage] Form data update received from Step 2:', {
-      companyName: newFormData?.companyName,
-      userFullName: newFormData?.userFullName,
-      timestamp: new Date().toISOString(),
-      hasValidCompanyName: newFormData?.companyName && newFormData.companyName !== 'Loading...'
-    });
-    
-    // Validate that we're not storing placeholder data
-    if (newFormData?.companyName === 'Loading...') {
-      console.warn('[DemoPage] Received form data with placeholder company name, delaying state update');
-      return;
-    }
-    
     setStep2FormData(newFormData);
   }, []);
-  
-  /**
-   * Company ID state management for demo flow
-   * Captures and stores the actual company ID from API response for use in subsequent steps
-   * Replaces the placeholder "COMPANY_ID_FROM_STEP_1" with real company data
-   */
-  const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
   
   // Enhanced: Track Step 3 wizard state for system setup visual integration
   const [step3WizardStep, setStep3WizardStep] = useState<'review' | 'setup' | 'launch'>('review');
