@@ -77,7 +77,7 @@ interface NetworkRelationship {
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-const itemsPerPage = 5;
+const itemsPerPage = 50; // Increased to show more network companies
 
 // Highlight matching text helper function
 const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string }) => {
