@@ -1571,7 +1571,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
 /**
  * Step 3: Demo Configuration Review & Preparation
  */
-const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: DemoStepProps & { formData?: any; onWizardStepChange?: (step: 'review' | 'setup' | 'launch') => void }) => {
+const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCompanyCreated }: DemoStepProps & { formData?: any; onWizardStepChange?: (step: 'review' | 'setup' | 'launch') => void; onCompanyCreated?: (companyId: number) => void }) => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -1788,25 +1788,23 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
        */
       if (payload.companyId === 'COMPANY_ID_FROM_STEP_1') {
         const immediateCompanyId = previousResults['create-company']?.companyId || previousResults['create-company']?.id;
-        const storedCompanyId = createdCompanyId;
         
-        // Use immediate result first, fall back to stored state
-        const actualCompanyId = immediateCompanyId || storedCompanyId;
+        // Use immediate result from current execution cycle
+        const actualCompanyId = immediateCompanyId;
         
         if (actualCompanyId) {
           payload.companyId = actualCompanyId;
           console.log(`[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: ${actualCompanyId}`, {
             actionId: action.id,
             immediateResult: immediateCompanyId ? 'available' : 'missing',
-            storedState: storedCompanyId ? 'available' : 'missing',
-            selectedSource: immediateCompanyId ? 'immediate' : 'stored',
+            source: 'immediate_execution_result',
             timestamp: new Date().toISOString()
           });
         } else {
           console.warn(`[DemoAPI] ⚠️ No company ID available for replacement in action: ${action.id}`, {
             immediateResult: immediateCompanyId,
-            storedState: storedCompanyId,
-            previousResults: Object.keys(previousResults)
+            previousResults: Object.keys(previousResults),
+            timestamp: new Date().toISOString()
           });
         }
       }
@@ -1851,8 +1849,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
             timestamp: new Date().toISOString()
           });
           
-          // Store company ID in component state for use in subsequent steps
-          setCreatedCompanyId(companyId);
+          // Store company ID in parent component state for use in subsequent steps
+          onCompanyCreated?.(companyId);
           
           // Also add to result object for immediate use in this execution cycle
           result.companyId = companyId;
@@ -2468,6 +2466,7 @@ export default function DemoPage() {
             selectedPersona={selectedPersona}
             formData={step2FormData}
             onWizardStepChange={setStep3WizardStep}
+            onCompanyCreated={setCreatedCompanyId}
           />
         );
       default:
