@@ -1,0 +1,49 @@
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/dashboard", …}
+[Sidebar] Tab state check: company=682, path=/dashboard, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 682
+[UserContext] Company context changed to: 682
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[DashboardLayout] Tab "dashboard" is locked. Redirecting to task-center.
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[Router] Current location: /task-center
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for dashboard
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=682, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 682
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-28T12:34:36.688Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 484, databaseStatus: "not completed", localStorageStatus: "not stored or not completed", showModal: true}
+databaseStatus: "not completed"
+localStorageStatus: "not stored or not completed"
+showModal: true
+userId: 484
+[[Prototype]]: Object
+[AnimatedOnboardingModal] Image loaded for step: Welcome to the Invela Trust Network 
+Object {src: "/assets/welcome_1.png"}
+[usePreventFocus] Removing focus from 
+<div role="dialog" id="radix-:ra:" aria-describedby="radix-:rc:" aria-labelledby="radix-:rb:" data-state="open" class="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-w-4xl w-[950px] p-0 overflow-hidden h-[550px] flex flex-col onboarding-modal" tabindex="-1" style="pointer-events: auto;">…</div>
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T12:34:38.084Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T12:34:39.181Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T12:34:39.692Z", echo: {…}}

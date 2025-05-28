@@ -113,13 +113,14 @@ class DemoTransformLogger {
   private static logPrefix = '[DemoTransformer]';
 
   /**
-   * Log persona transformation with before/after values
+   * Log persona validation and preservation
    */
-  static logPersonaTransformation(original: string, transformed: string, category: string): void {
-    console.log(`${this.logPrefix} 🔄 Persona transformation:`, {
+  static logPersonaTransformation(original: string, preserved: string, category: string): void {
+    console.log(`${this.logPrefix} ✅ Persona validation:`, {
       original,
-      transformed,
+      preserved,
       category,
+      unchanged: original === preserved,
       mappingFound: !!PERSONA_MAPPINGS[original],
       timestamp: new Date().toISOString()
     });
@@ -202,13 +203,13 @@ class DemoTransformLogger {
 // ========================================
 
 /**
- * Transform frontend persona value to backend-expected format
+ * Validate and preserve frontend persona value for backend consistency
  * 
  * @param frontendPersona - The persona value from the frontend form
- * @returns The normalized persona value expected by the backend
+ * @returns The original persona value (maintaining hyphenated format for backend compatibility)
  * 
  * @example
- * transformPersonaValue('data-provider') // Returns 'Data Provider'
+ * transformPersonaValue('data-provider') // Returns 'data-provider' (unchanged)
  */
 export function transformPersonaValue(frontendPersona: string): string {
   const mapping = PERSONA_MAPPINGS[frontendPersona];
@@ -221,11 +222,11 @@ export function transformPersonaValue(frontendPersona: string): string {
 
   DemoTransformLogger.logPersonaTransformation(
     frontendPersona,
-    mapping.backendValue,
+    mapping.frontendValue, // Keep original hyphenated format
     mapping.category
   );
 
-  return mapping.backendValue;
+  return mapping.frontendValue; // Return original format for backend consistency
 }
 
 /**
