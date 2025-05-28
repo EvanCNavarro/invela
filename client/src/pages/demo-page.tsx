@@ -841,6 +841,10 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
         newData.userEmail = generateEmailFromData(firstName, lastName, newData.companyName);
       }
       
+      // Immediately notify parent component with the updated data
+      // This fixes the race condition where Step 3 receives "Loading..." instead of the generated name
+      onFormDataChange?.(newData);
+      
       return newData;
     });
   }
