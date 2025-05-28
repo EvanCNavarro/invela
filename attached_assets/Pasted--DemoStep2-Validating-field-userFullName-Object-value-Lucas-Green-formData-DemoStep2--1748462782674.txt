@@ -1,0 +1,64 @@
+[DemoStep2] Validating field: userFullName 
+Object {value: "Lucas Green", formData: {…}}
+[DemoStep2] Full name validation: valid (11 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "lgreen@standardfinancegroup.com", formData: {…}}
+[DemoStep2] Email validation: valid (lgreen@standardfinancegroup.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "accredited-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "accredited-data-recipient"}
+[DemoStep2] Validating field: persona 
+Object {value: "Accredited Data Recipient", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Standard Finance Group", formData: {…}}
+[DemoStep2] Company name validation: valid (22 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Lucas Green", formData: {…}}
+[DemoStep2] Full name validation: valid (11 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "lgreen@standardfinancegroup.com", formData: {…}}
+[DemoStep2] Email validation: valid (lgreen@standardfinancegroup.com)
+[DemoStep2] Field visibility check: riskProfile for accredited-data-recipient = true 
+Object {fieldTags: Array(1), personaId: "accredited-data-recipient", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: companySize for accredited-data-recipient = true 
+Object {fieldTags: Array(1), personaId: "accredited-data-recipient", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Field visibility check: networkSize for accredited-data-recipient = false 
+Object {fieldTags: Array(1), personaId: "accredited-data-recipient", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for accredited-data-recipient = true 
+Object {fieldTags: Array(4), personaId: "accredited-data-recipient", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Accredited Data Recipient", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Standard Finance Group", formData: {…}}
+[DemoStep2] Company name validation: valid (22 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Lucas Green", formData: {…}}
+[DemoStep2] Full name validation: valid (11 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "lgreen@standardfinancegroup.com", formData: {…}}
+[DemoStep2] Email validation: valid (lgreen@standardfinancegroup.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Company name generation failed after all retries
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T20:05:51.678Z", echo: {…}}
+echo: Object
+timestamp: "2025-05-28T20:05:51.678Z"
+type: "pong"
+[[Prototype]]: Object
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T20:05:54.041Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T20:05:54.540Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T20:06:21.682Z", echo: {…}}

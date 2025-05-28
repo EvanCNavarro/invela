@@ -44,7 +44,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { generateUniqueCompanyName } from "@/services/company-name-api";
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
@@ -516,45 +515,24 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Auto-generate professional company name when Step 2 loads
+  // Auto-generate professional company name when Step 2 loads (clean single generation)
   useEffect(() => {
     async function initializeProfessionalCompanyName() {
       // Only generate for non-Invela personas and if we're showing Loading...
       if (selectedPersona?.id !== 'invela-admin' && formData.companyName === 'Loading...') {
         console.log('[DemoStep2] Auto-generating professional company name on load...');
         
-        // Retry logic to ensure name generation succeeds
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries && formData.companyName === 'Loading...') {
-          try {
-            await generateRandomValues(['companyName']);
-            
-            // Wait a bit for state to update, then check if it worked
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            if (formData.companyName !== 'Loading...') {
-              console.log('[DemoStep2] Company name generation successful:', formData.companyName);
-              // Ensure parent component gets the updated data
-              onFormDataChange?.(formData);
-              break;
-            }
-          } catch (error) {
-            console.error('[DemoStep2] Company name generation failed, retry', retryCount + 1, error);
-          }
-          
-          retryCount++;
-        }
-        
-        if (formData.companyName === 'Loading...' && retryCount >= maxRetries) {
-          console.error('[DemoStep2] Company name generation failed after all retries');
+        try {
+          await generateRandomValues(['companyName']);
+          console.log('[DemoStep2] Company name generation completed on initial load');
+        } catch (error) {
+          console.error('[DemoStep2] Company name generation failed on initial load:', error);
         }
       }
     }
 
     initializeProfessionalCompanyName();
-  }, []); // Run once when component mounts
+  }, [selectedPersona]); // Only depend on persona, not formData to prevent loops
   
   /**
    * Form state management with proper TypeScript typing
