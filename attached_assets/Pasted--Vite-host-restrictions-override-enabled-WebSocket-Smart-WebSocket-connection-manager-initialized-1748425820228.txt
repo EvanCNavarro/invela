@@ -1,0 +1,140 @@
+✅ Vite host restrictions override enabled
+[WebSocket] Smart WebSocket connection manager initialized
+[vite] connecting...
+[WebSocket] Connection to wss://localhost:undefined/ failed: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/' is invalid.
+[vite] failed to connect to websocket.
+your current setup:
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ <--[HTTP]--> localhost:undefined/ (server)
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ <--[WebSocket (failing)]--> localhost:undefined/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES
+[EnhancedKybServiceFactory] Error accessing user context manager: 
+ReferenceError {}
+[EnhancedKybServiceFactory] Creating app-level EnhancedKybFormService instance
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-05-28T09:49:34.586Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+[Main] Starting application bootstrap sequence
+[WebSocket] Smart WebSocket connection manager initialized
+[WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection attempt initiated
+[Main] WebSocket connection managers initialized successfully
+[Main] Application services initialized successfully
+[Main] React application rendered successfully
+[Main] Application bootstrap completed successfully
+[Router] Current location: /
+[2025-05-28T09:49:34.857Z] [WebSocket] WebSocket connection manager initialized 
+[2025-05-28T09:49:34.857Z] [WebSocket] Scheduling initial WebSocket connection in 1000ms to ensure environment is ready 
+[2025-05-28T09:49:34.859Z] [App] Initializing application with phased startup approach 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Registering callback for phase: framework 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Registering callback for phase: context 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Registering callback for phase: services 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Registering callback for phase: communication 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Registering callback for phase: ready 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Starting phased application initialization 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Executing startup phase: framework 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Executing 1 callbacks for phase framework 
+[2025-05-28T09:49:34.860Z] [PhaseStartup] Executing callback 1/1 for phase framework 
+[2025-05-28T09:49:34.860Z] [App] Framework phase initializing 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Phase framework completed successfully 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Executing startup phase: context 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Executing 1 callbacks for phase context 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Executing callback 1/1 for phase context 
+[2025-05-28T09:49:34.861Z] [App] Context phase initializing 
+[2025-05-28T09:49:34.861Z] [PhaseStartup] Phase context completed successfully 
+[2025-05-28T09:49:34.862Z] [PhaseStartup] Phase services dependencies satisfied, executing... 
+[2025-05-28T09:49:34.862Z] [PhaseStartup] Executing startup phase: services 
+[2025-05-28T09:49:34.862Z] [PhaseStartup] Executing 1 callbacks for phase services 
+[2025-05-28T09:49:34.862Z] [PhaseStartup] Executing callback 1/1 for phase services 
+[2025-05-28T09:49:34.862Z] [App] Services phase initializing 
+[2025-05-28T09:49:34.862Z] [App] Initializing unified service registration 
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-28T09:49:34.862Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-28T09:49:34.862Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-28T09:49:34.863Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-05-28T09:49:34.863Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-28T09:49:34.863Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-05-28T09:49:34.863Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-28T09:49:34.863Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-28T09:49:34.863Z] [App] Communication phase initializing 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-28T09:49:34.863Z] [App] Application ready for user interaction 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-28T09:49:34.863Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[TanStack Query] 401 Unauthorized for /api/user, returning null as configured
+[Router] Current location: /login
+[AuthLayout] Rendering with mode: login, step: 1/3
