@@ -221,7 +221,10 @@ router.post('/demo/company/create', async (req, res) => {
             available_tabs: ['dashboard', 'network', 'task-center', 'file-vault', 'insights', 'claims', 'risk-score'],
             onboarding_company_completed: true,
             demo_persona_type: 'data-provider',
-            description: 'Enterprise banking institution specializing in financial risk assessment and network management'
+            description: 'Enterprise banking institution specializing in financial risk assessment and network management',
+            // Add risk score data for Data Provider banks
+            risk_score: Math.floor(Math.random() * 20) + 65, // 65-85 range (banks typically have higher scores)
+            chosen_score: Math.floor(Math.random() * 20) + 65
           };
           
         case 'accredited-data-recipient':
@@ -233,8 +236,8 @@ router.post('/demo/company/create', async (req, res) => {
             demo_persona_type: 'accredited-data-recipient',
             description: 'Accredited FinTech with full business platform access',
             // Add risk score data for Accredited Data Recipients
-            risk_score: req.body.riskProfile || Math.floor(Math.random() * 30) + 40, // 40-70 range
-            chosen_score: req.body.riskProfile || Math.floor(Math.random() * 30) + 40
+            risk_score: Math.floor(Math.random() * 30) + 40, // 40-70 range
+            chosen_score: Math.floor(Math.random() * 30) + 40
           };
           
         case 'invela-admin':
@@ -437,6 +440,7 @@ router.post('/demo/company/create', async (req, res) => {
           
           for (const fintech of availableFinTechs) {
             try {
+              // Create relationship
               await db.insert(relationships).values({
                 company_id: company.id,
                 related_company_id: fintech.id,
@@ -444,11 +448,25 @@ router.post('/demo/company/create', async (req, res) => {
                 status: 'active'
               });
               
+              // PHASE 2 FIX: Add risk score data for network companies
+              // Ensure each FinTech in the network has proper risk scores for dashboard display
+              const riskScore = Math.floor(Math.random() * 40) + 30; // 30-70 range
+              const chosenScore = Math.floor(Math.random() * 40) + 30; // 30-70 range
+              
+              await db.update(companies)
+                .set({ 
+                  risk_score: riskScore,
+                  chosen_score: chosenScore
+                })
+                .where(eq(companies.id, fintech.id));
+              
               successCount++;
-              console.log('[DemoAPI] ✅ Relationship created:', {
+              console.log('[DemoAPI] ✅ Relationship and risk scores created:', {
                 bank: company.name,
                 fintech: fintech.name,
-                relationshipId: `${company.id}-${fintech.id}`
+                relationshipId: `${company.id}-${fintech.id}`,
+                riskScore: riskScore,
+                chosenScore: chosenScore
               });
             } catch (relError: any) {
               errorCount++;
@@ -913,11 +931,16 @@ router.post('/demo/environment/finalize', async (req, res) => {
       });
     }
 
-    // Verify user belongs to the correct company
-    if (userData.company_id !== companyId) {
+    // Verify user belongs to the correct company (handle string/number conversion)
+    const userCompanyId = userData.company_id;
+    const requestedCompanyId = typeof companyId === 'string' ? parseInt(companyId, 10) : companyId;
+    
+    if (userCompanyId !== requestedCompanyId) {
       console.error('[DemoAPI] [Finalize] Company mismatch:', {
-        userCompanyId: userData.company_id,
-        requestedCompanyId: companyId
+        userCompanyId,
+        requestedCompanyId,
+        companyIdType: typeof companyId,
+        afterConversion: requestedCompanyId
       });
       return res.status(403).json({
         success: false,
