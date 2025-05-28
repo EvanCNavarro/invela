@@ -1780,8 +1780,35 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
 
       // Replace placeholder values with actual IDs from previous steps
       let payload = { ...action.payload };
-      if (payload.companyId === 'COMPANY_ID_FROM_STEP_1' && previousResults['create-company']) {
-        payload.companyId = previousResults['create-company'].companyId;
+      
+      /**
+       * CRITICAL FIX: Replace "COMPANY_ID_FROM_STEP_1" with actual company ID
+       * Uses both immediate results and stored state for maximum reliability
+       * Following coding standards for comprehensive logging and error handling
+       */
+      if (payload.companyId === 'COMPANY_ID_FROM_STEP_1') {
+        const immediateCompanyId = previousResults['create-company']?.companyId || previousResults['create-company']?.id;
+        const storedCompanyId = createdCompanyId;
+        
+        // Use immediate result first, fall back to stored state
+        const actualCompanyId = immediateCompanyId || storedCompanyId;
+        
+        if (actualCompanyId) {
+          payload.companyId = actualCompanyId;
+          console.log(`[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: ${actualCompanyId}`, {
+            actionId: action.id,
+            immediateResult: immediateCompanyId ? 'available' : 'missing',
+            storedState: storedCompanyId ? 'available' : 'missing',
+            selectedSource: immediateCompanyId ? 'immediate' : 'stored',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.warn(`[DemoAPI] ⚠️ No company ID available for replacement in action: ${action.id}`, {
+            immediateResult: immediateCompanyId,
+            storedState: storedCompanyId,
+            previousResults: Object.keys(previousResults)
+          });
+        }
       }
       if (payload.userId === 'USER_ID_FROM_STEP_2' && previousResults['create-user']) {
         payload.userId = previousResults['create-user'].userId;
@@ -1808,6 +1835,30 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange }: De
 
         const result = await response.json();
         console.log(`[DemoAPI] Success: ${action.label}`, result);
+        
+        /**
+         * CRITICAL: Capture company ID from API response for Data Provider demo flow
+         * Following coding standards for comprehensive logging and state management
+         * This fixes the "COMPANY_ID_FROM_STEP_1" placeholder issue
+         */
+        if (action.id === 'create-company' && result.success && result.company?.id) {
+          const companyId = result.company.id;
+          console.log(`[DemoAPI] 🏢 Capturing company ID for demo flow: ${companyId}`, {
+            actionId: action.id,
+            companyName: result.company.name,
+            companyCategory: result.company.category,
+            persona: result.company.persona || 'unknown',
+            timestamp: new Date().toISOString()
+          });
+          
+          // Store company ID in component state for use in subsequent steps
+          setCreatedCompanyId(companyId);
+          
+          // Also add to result object for immediate use in this execution cycle
+          result.companyId = companyId;
+          result.id = companyId; // For backward compatibility
+        }
+        
         return result;
 
       } catch (apiError) {
@@ -2350,6 +2401,13 @@ export default function DemoPage() {
    */
   const [selectedPersona, setSelectedPersona] = useState<DemoPersona | null>(null);
   const [step2FormData, setStep2FormData] = useState<any>(null);
+  
+  /**
+   * Company ID state management for demo flow
+   * Captures and stores the actual company ID from API response for use in subsequent steps
+   * Replaces the placeholder "COMPANY_ID_FROM_STEP_1" with real company data
+   */
+  const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
   
   // Enhanced: Track Step 3 wizard state for system setup visual integration
   const [step3WizardStep, setStep3WizardStep] = useState<'review' | 'setup' | 'launch'>('review');
