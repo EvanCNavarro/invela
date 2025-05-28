@@ -522,7 +522,32 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       // Only generate for non-Invela personas and if we're showing Loading...
       if (selectedPersona?.id !== 'invela-admin' && formData.companyName === 'Loading...') {
         console.log('[DemoStep2] Auto-generating professional company name on load...');
-        await generateRandomValues(['companyName']);
+        
+        // Retry logic to ensure name generation succeeds
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries && formData.companyName === 'Loading...') {
+          try {
+            await generateRandomValues(['companyName']);
+            
+            // Wait a bit for state to update, then check if it worked
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (formData.companyName !== 'Loading...') {
+              console.log('[DemoStep2] Company name generation successful:', formData.companyName);
+              break;
+            }
+          } catch (error) {
+            console.error('[DemoStep2] Company name generation failed, retry', retryCount + 1, error);
+          }
+          
+          retryCount++;
+        }
+        
+        if (formData.companyName === 'Loading...' && retryCount >= maxRetries) {
+          console.error('[DemoStep2] Company name generation failed after all retries');
+        }
       }
     }
 
@@ -1632,14 +1657,29 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
 
     // 1. Company Creation Action (skip for Invela Admin - they use existing Invela company)
     if (selectedPersona?.id !== 'invela-admin') {
+      // Validate that we have a proper company name and not the loading placeholder
+      const companyName = formData?.companyName || '';
+      
+      // If we still have the loading placeholder, this indicates a race condition
+      if (companyName === 'Loading...' || !companyName.trim()) {
+        console.error('[DemoStep3] Company creation blocked - invalid company name:', {
+          companyName,
+          formData,
+          blockedReason: companyName === 'Loading...' ? 'LOADING_PLACEHOLDER' : 'EMPTY_NAME'
+        });
+        
+        // Don't add the action - this will prevent the submission from proceeding
+        return [];
+      }
+      
       actions.push({
         id: 'create-company',
-        label: `Creating "${formData?.companyName}" organization`,
+        label: `Creating "${companyName}" organization`,
         category: 'company',
         targetField: 'companyName',
         apiEndpoint: '/api/demo/company/create',
         payload: {
-          name: formData?.companyName,
+          name: companyName,
           type: 'demo', // All companies created through demo flow are demo companies
           persona: selectedPersona?.id,
           companySize: formData?.companySize || 'medium', // Always include companySize with default fallback

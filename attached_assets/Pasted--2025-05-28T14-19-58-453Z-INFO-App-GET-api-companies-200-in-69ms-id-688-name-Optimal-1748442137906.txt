@@ -1,0 +1,346 @@
+[2025-05-28T14:19:58.453Z] [INFO] [App] GET /api/companies 200 in 69ms :: [{"id":688,"name":"Optimal Insights International","category":"FinTech","desc... 
+[2025-05-28T14:19:58.935Z] [INFO] [App] GET /api/tasks 304 in 29ms :: [] 
+[2025-05-28T14:20:03.872Z] [INFO] [WebSocket] Received message from client client-1748441463736-gwcjegu {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:20:04.083Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 490 
+[2025-05-28T14:20:04.083Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-28T14:20:04.084Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-28T14:20:04.084Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: insights (raw: insights), user: 490 
+[2025-05-28T14:20:04.154Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for insights for user 490 
+[2025-05-28T14:20:04.193Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 110ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-28T14:20:04.383Z] [INFO] [App] [TabTutorials] Status request for tab "insights" from authenticated user ID: 490 
+[2025-05-28T14:20:04.383Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-28T14:20:04.383Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-28T14:20:04.383Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: insights (raw: insights), user: 490 
+[2025-05-28T14:20:04.442Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for insights for user 490: completed=false, step=0 
+[2025-05-28T14:20:04.478Z] [INFO] [App] GET /api/user-tab-tutorials/insights/status 200 in 95ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-28T14:... 
+[2025-05-28T14:20:05.172Z] [INFO] [WebSocket] Received message from client client-1748441465034-vnj72k8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:04.990Z","connectionId":"ws_1748441464991_0h2akytvx"}
+[2025-05-28T14:20:05.786Z] [INFO] [WebSocket] Received message from client client-1748441465632-2frf6pe {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:05.602Z","connectionId":"ws_1748441464358_380kjwrm1"}
+[2025-05-28T14:20:06.436Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:06.257Z","connectionId":"ws_1748441464182_5fjqbouzg"}
+[2025-05-28T14:20:09.730Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":688,"name":"Optimal Insights International","category":"FinTech","is_de... [sampled: request 21] 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:20:20.690Z',
+  requestId: 'req_1748442020690_esqqy89vu'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:20:20.690Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:20:20.691Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Core Securities Group',
+  components: { prefix: 'Core', core: 'Securities', suffix: 'Group' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Core Securities Group',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:20:20.691Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Core Securities Group',
+  nameLength: 21
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:20:20.721Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Core Securities Group',
+  duration: 30
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Core Securities Group',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T14:20:20.721Z'
+}
+[2025-05-28T14:20:20.752Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 62ms :: {"success":true,"companyName":"Core Securities Group","wasModified":false,"or... 
+[2025-05-28T14:20:26.441Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:26.262Z","connectionId":"ws_1748441464182_5fjqbouzg"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Loading...',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T14:20:26.464Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Loading...',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Loading...',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T14:20:26.464Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 689,
+  name: 'Loading...',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 33
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 689,
+  companyName: 'Loading...',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 33
+}
+[2025-05-28T14:20:26.527Z] [INFO] [App] POST /api/demo/company/create 200 in 63ms :: {"success":true,"company":{"id":689,"name":"Loading...","description":"New Fi... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Andrew Chavez',
+  email: 'achavez@loading.com',
+  companyId: 689,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748442024839_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-28T14:20:24.839Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 689,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 689
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T14:20:27.290Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Andrew Chavez',
+    email: 'achavez@loading.com',
+    companyId: 689,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Andrew Chavez',
+    email: 'achavez@loading.com',
+    companyId: 689,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T14:20:27.290Z'
+}
+[DemoAPI] [UserCreate] Onboarding auto-completion check: {
+  companyCategory: 'FinTech',
+  shouldComplete: true,
+  userId: 'pending_creation'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 491,
+  email: 'achavez@loading.com',
+  fullName: 'Andrew Chavez',
+  companyId: 689,
+  role: 'user',
+  onboardingCompleted: true
+}
+[2025-05-28T14:20:27.444Z] [INFO] [App] POST /api/demo/user/create 200 in 154ms :: {"success":true,"user":{"id":491,"email":"achavez@loading.com","full_name":"A... 
+[2025-05-28T14:20:28.229Z] [INFO] [App] POST /api/demo/auth/setup 200 in 29ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 491,
+  companyId: 689,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-28T14:20:28.988Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 491,
+  email: 'achavez@loading.com',
+  companyId: 689,
+  fullName: 'Andrew Chavez'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 491,
+  email: 'achavez@loading.com',
+  companyId: 689,
+  environmentId: 'env_demo_1748442029020_491',
+  authenticated: true,
+  totalDuration: 92,
+  timestamp: '2025-05-28T14:20:29.080Z'
+}
+[2025-05-28T14:20:29.113Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 125ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 491, companyId: 689 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 491, company_id: 689, email: 'achavez@loading.com' }
+[2025-05-28T14:20:32.252Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":689,"userId":491}
+[2025-05-28T14:20:32.284Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":689}
+[Tasks] Automatically unlocking all tasks for company { userId: 491, companyId: 689, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T14:20:32.285Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":689}
+[Current Company] Found company: {
+  id: 689,
+  name: 'Loading...',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 491,
+  companyId: 689,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T14:20:32.286Z'
+}
+[2025-05-28T14:20:32.314Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":689}
+[Tasks] Successfully unlocked all tasks for company: 689
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 491',
+    condition2: 'tasks.created_by = 491',
+    condition3: "tasks.company_id = 689 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('achavez@loading.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T14:20:32.405Z] [INFO] [App] GET /api/tasks 304 in 153ms :: [] 
+[2025-05-28T14:20:32.504Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 491 
+[2025-05-28T14:20:32.504Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T14:20:32.504Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T14:20:32.504Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 491 
+[2025-05-28T14:20:32.532Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 491 
+[2025-05-28T14:20:32.563Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 59ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T14:20:33.873Z] [INFO] [WebSocket] Received message from client client-1748441463736-gwcjegu {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:20:35.173Z] [INFO] [WebSocket] Received message from client client-1748441465034-vnj72k8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:34.990Z","connectionId":"ws_1748441464991_0h2akytvx"}
+[2025-05-28T14:20:35.783Z] [INFO] [WebSocket] Received message from client client-1748441465632-2frf6pe {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:35.602Z","connectionId":"ws_1748441464358_380kjwrm1"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T14:20:38.823Z',
+  requestId: 'req_1748442038823_ixbhud9ln'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T14:20:38.824Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T14:20:38.824Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Metropolitan Reserve Systems',
+  components: { prefix: 'Metropolitan', core: 'Reserve', suffix: 'Systems' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Metropolitan Reserve Systems',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T14:20:38.824Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Metropolitan Reserve Systems',
+  nameLength: 28
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T14:20:38.855Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Metropolitan Reserve Systems',
+  duration: 31
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Metropolitan Reserve Systems',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 33,
+  timestamp: '2025-05-28T14:20:38.856Z'
+}
+[2025-05-28T14:20:38.894Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 71ms :: {"success":true,"companyName":"Metropolitan Reserve Systems","wasModified":fa... 
+[2025-05-28T14:20:46.440Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:20:46.269Z","connectionId":"ws_1748441464182_5fjqbouzg"}
+[2025-05-28T14:20:51.323Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,964,969,1001,973,971,976,981,978]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[2025-05-28T14:21:03.874Z] [INFO] [WebSocket] Received message from client client-1748441463736-gwcjegu {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:21:05.170Z] [INFO] [WebSocket] Received message from client client-1748441465034-vnj72k8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:05.022Z","connectionId":"ws_1748441464991_0h2akytvx"}
+[2025-05-28T14:21:05.782Z] [INFO] [WebSocket] Received message from client client-1748441465632-2frf6pe {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:05.635Z","connectionId":"ws_1748441464358_380kjwrm1"}
+[2025-05-28T14:21:06.435Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:06.290Z","connectionId":"ws_1748441464182_5fjqbouzg"}
+[2025-05-28T14:21:26.068Z] [INFO] [WebSocket] Received message from client client-1748441485912-iyqrqbi {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:21:26.437Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:26.296Z","connectionId":"ws_1748441464182_5fjqbouzg"}
+[2025-05-28T14:21:33.875Z] [INFO] [WebSocket] Received message from client client-1748441463736-gwcjegu {"module":"WebSocket","type":"ping"}
+[2025-05-28T14:21:35.171Z] [INFO] [WebSocket] Received message from client client-1748441465034-vnj72k8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:35.030Z","connectionId":"ws_1748441464991_0h2akytvx"}
+[2025-05-28T14:21:35.781Z] [INFO] [WebSocket] Received message from client client-1748441465632-2frf6pe {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:35.643Z","connectionId":"ws_1748441464358_380kjwrm1"}
+[2025-05-28T14:21:46.435Z] [INFO] [WebSocket] Received message from client client-1748441466279-q6844vw {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T14:21:46.297Z","connectionId":"ws_1748441464182_5fjqbouzg"}
