@@ -536,6 +536,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
             
             if (formData.companyName !== 'Loading...') {
               console.log('[DemoStep2] Company name generation successful:', formData.companyName);
+              // Ensure parent component gets the updated data
+              onFormDataChange?.(formData);
               break;
             }
           } catch (error) {
@@ -1650,6 +1652,12 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
   const [wizardStep, setWizardStep] = useState<'review' | 'setup' | 'launch'>('review');
   
   console.log('[DemoStep3] Rendering results and next steps');
+  console.log('[DemoStep3] Received form data:', {
+    companyName: formData?.companyName,
+    userFullName: formData?.userFullName,
+    hasValidCompanyName: formData?.companyName && formData.companyName !== 'Loading...',
+    timestamp: new Date().toISOString()
+  });
   
   // Dynamic API action configuration based on user selections
   const getDemoActions = (formData: any, selectedPersona: any) => {
@@ -2530,6 +2538,27 @@ export default function DemoPage() {
   const [step2FormData, setStep2FormData] = useState<any>(null);
   
   /**
+   * Enhanced form data change handler with validation and logging
+   * Ensures proper state synchronization between Step 2 and Step 3
+   */
+  const handleFormDataChange = useCallback((newFormData: any) => {
+    console.log('[DemoPage] Form data update received from Step 2:', {
+      companyName: newFormData?.companyName,
+      userFullName: newFormData?.userFullName,
+      timestamp: new Date().toISOString(),
+      hasValidCompanyName: newFormData?.companyName && newFormData.companyName !== 'Loading...'
+    });
+    
+    // Validate that we're not storing placeholder data
+    if (newFormData?.companyName === 'Loading...') {
+      console.warn('[DemoPage] Received form data with placeholder company name, delaying state update');
+      return;
+    }
+    
+    setStep2FormData(newFormData);
+  }, []);
+  
+  /**
    * Company ID state management for demo flow
    * Captures and stores the actual company ID from API response for use in subsequent steps
    * Replaces the placeholder "COMPANY_ID_FROM_STEP_1" with real company data
@@ -2584,7 +2613,7 @@ export default function DemoPage() {
             onNext={handleNextStep} 
             onBack={handlePreviousStep}
             selectedPersona={selectedPersona}
-            onFormDataChange={setStep2FormData}
+            onFormDataChange={handleFormDataChange}
           />
         );
       case 3:
