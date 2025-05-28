@@ -2034,28 +2034,21 @@ router.post('/demo/company/create', async (req, res) => {
    */
   async function createDemoAuth(req: any, res: any) {
     try {
-      const { email, userId, companyId } = req.body;
-      console.log('[DemoAPI] Setting up demo authentication:', { email, userId, companyId });
-      
-      res.json({
-        success: true,
-        message: 'Demo authentication setup complete'
-      });
-    } catch (error: any) {
-      console.error('[DemoAPI] Auth setup failed:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to set up demo authentication'
-      });
+          // Different error - rethrow
+          console.error('[DemoAPI] Company creation error:', {
+            error: error.message,
+            persona: persona,
+            shouldCreateTasks: shouldCreateTasks,
+            attempt: attempt + 1
+          });
+          throw error;
+        }
+      }
     }
-  }
 
-// Export router with endpoints
-router.post('/demo/company/create', createDemoCompany);
-router.post('/demo/user/create', createDemoUser); 
-router.post('/demo/auth/setup', createDemoAuth);
-
-export default router;
+    // ========================================
+    // COMPLETION LOGGING AND BROADCASTING
+    // ========================================
     
     /**
      * Log comprehensive task assignment results for monitoring and debugging
