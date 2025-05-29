@@ -1,0 +1,358 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-29T20:22:38.035Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-29T20:22:38.039Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-29T20:22:38.039Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-29T20:22:38.181Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-29T20:22:38.296Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-29T20:22:38.296Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"t9ckbs","timestamp":"2025-05-29T20:22:38.296Z"}
+[2025-05-29T20:22:38.297Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-29T20:22:38.297Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-29T20:22:38.297Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-29T20:22:38.297Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-29T20:22:38.297Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-29T20:22:38.297Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-29T20:22:38.297Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-29T20:22:38.297Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-29T20:22:38.297Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-29T20:22:38.297Z] [INFO] [App] Setting up Vite development server 
+[2025-05-29T20:22:38.298Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-29T20:22:38.298Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-29T20:22:38.298Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-29T20:22:38.299Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-29T20:22:38.311Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-29T20:22:38.311Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-29T20:22:38.311Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-29T20:22:38.311Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-29T20:22:38.311Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-29T20:22:38.312Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-29T20:22:38.339Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-29T20:22:38.340Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-29T20:22:38.340Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-29T20:22:38.340Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-29T20:22:38.341Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-29T20:22:38.936Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T20:22:39.552Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-29T20:22:42.144Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T20:22:43.447Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T20:22:48.312Z] [INFO] [App] Running background health checks... 
+[2025-05-29T20:22:48.312Z] [StartupChecks] Running application startup health checks... 
+[2025-05-29T20:22:48.313Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-29T20:22:48.313Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-29T20:22:48.490Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-29T20:22:48.518Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-29T20:22:48.548Z] [DBConnectionService] Database connection check successful 
+[2025-05-29T20:22:48.548Z] [StartupChecks] Database health check passed 
+[2025-05-29T20:22:48.548Z] [StartupChecks] All startup health checks passed! 
+[2025-05-29T20:22:48.548Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-29T20:22:51.701Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748550171701-n1tg4j0","clients":1}
+[2025-05-29T20:22:51.818Z] [INFO] [WebSocket] Received message from client client-1748550171701-n1tg4j0 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-29T20:22:51.757Z"}}
+[2025-05-29T20:22:51.818Z] [INFO] [WebSocket] Authentication from client client-1748550171701-n1tg4j0 {"module":"WebSocket","hasToken":true}
+[2025-05-29T20:22:52.262Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748550172262-5ocadvm","clients":2}
+[2025-05-29T20:22:52.767Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748550172767-how5k2d","clients":3}
+[2025-05-29T20:22:53.284Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748550173284-z1tvl5l","clients":4}
+[2025-05-29T20:22:53.790Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748550173790-xy7rn0x","clients":5}
+[2025-05-29T20:22:54.146Z] [INFO] [WebSocket] Received message from client client-1748550173790-xy7rn0x {"module":"WebSocket","type":"authenticate","userId":"529","companyId":"743","clientId":"ws_1748550172285_5dipdzd61","timestamp":"2025-05-29T20:22:54.068Z"}
+[2025-05-29T20:22:54.146Z] [INFO] [WebSocket] Authentication from client client-1748550173790-xy7rn0x {"module":"WebSocket","userId":"529","companyId":"743","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T20:22:58.458Z',
+  requestId: 'req_1748550178458_pzhj5zatw'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T20:22:58.461Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean full combinatorial name {
+  timestamp: '2025-05-29T20:22:58.462Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Nexus Trust Industries',
+  components: { prefix: 'Nexus', core: 'Trust', suffix: 'Industries' },
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Nexus Trust Industries',
+  strategy: 'full_combinatorial',
+  duration: 4
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T20:22:58.462Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Nexus Trust Industries',
+  nameLength: 22
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T20:22:58.506Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Nexus Trust Industries',
+  duration: 44
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Nexus Trust Industries',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 48,
+  timestamp: '2025-05-29T20:22:58.506Z'
+}
+[2025-05-29T20:22:58.540Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 82ms :: {"success":true,"companyName":"Nexus Trust Industries","wasModified":false,"o... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Nexus Trust Industries',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  networkSize: 10,
+  metadata: { networkSize: 10 }
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-29T20:23:07.226Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: 10,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 10,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Nexus Trust Industries',
+    persona: 'data-provider',
+    networkSize: 10
+  },
+  output: {
+    name: 'Nexus Trust Industries',
+    persona: 'data-provider',
+    category: 'Bank',
+    networkSize: 10,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-29T20:23:07.226Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 10,
+  processingTime: 2
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: data-provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  onboardingRequired: false,
+  tabCount: 7
+}
+[DemoAPI] Generated business details: { persona: 'data-provider', isApproved: true, fieldsGenerated: 19 }
+[DemoAPI] Risk assessment access validation: {
+  persona: 'data-provider',
+  accreditationStatus: 'APPROVED',
+  hasRiskAccess: true,
+  willIncludeRiskScores: 16
+}
+[DemoAPI] Creating demo session tracking: {
+  sessionId: 'demo_1748550187229_data-provider',
+  persona: 'data-provider',
+  timestamp: '2025-05-29T20:23:07.229Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 750,
+  name: 'Nexus Trust Industries',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  personaType: 'data-provider',
+  transformedPersona: 'data-provider',
+  shouldCreateNetwork: true,
+  processingTime: 53
+}
+[DemoAPI] ⏭️ Skipping task creation for persona: {
+  persona: 'data-provider',
+  reason: 'Not a New Data Recipient - tasks not required for this persona'
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 750,
+  bankName: 'Nexus Trust Industries',
+  targetNetworkSize: 10,
+  persona: 'data-provider'
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 10,
+  availableCount: 10,
+  firstFewNames: [
+    'Bridge Quality Consultants',
+    'Continental Infrastructure Union',
+    'United Exchange Platforms'
+  ]
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Bridge Quality Consultants',
+  relationshipId: '750-494',
+  riskScore: 32,
+  chosenScore: 48
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Continental Infrastructure Union',
+  relationshipId: '750-500',
+  riskScore: 69,
+  chosenScore: 51
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'United Exchange Platforms',
+  relationshipId: '750-508',
+  riskScore: 41,
+  chosenScore: 39
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Allied Evaluation Specialists',
+  relationshipId: '750-505',
+  riskScore: 61,
+  chosenScore: 57
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Catalyst Consulting Council',
+  relationshipId: '750-496',
+  riskScore: 68,
+  chosenScore: 51
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Coin Tracker',
+  relationshipId: '750-498',
+  riskScore: 54,
+  chosenScore: 55
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'Wealthfront',
+  relationshipId: '750-164',
+  riskScore: 52,
+  chosenScore: 43
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'StableCoin Protocol',
+  relationshipId: '750-483',
+  riskScore: 34,
+  chosenScore: 35
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'ClimateFinance Labs',
+  relationshipId: '750-458',
+  riskScore: 65,
+  chosenScore: 38
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'Nexus Trust Industries',
+  fintech: 'RealEstate TokenFi',
+  relationshipId: '750-449',
+  riskScore: 59,
+  chosenScore: 58
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'Nexus Trust Industries',
+  targetSize: 10,
+  successfulRelationships: 10,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 750,
+  companyName: 'Nexus Trust Industries',
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: 7,
+  networkCreated: true,
+  totalProcessingTime: 755
+}
+[2025-05-29T20:23:08.010Z] [INFO] [App] POST /api/demo/company/create 200 in 785ms :: {"success":true,"company":{"id":750,"name":"Nexus Trust Industries","descript... 
+[2025-05-29T20:23:08.342Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":3,"taskIds":[1092,1093,1094]}
+[Task Progress] Calculated progress for task 1092 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1093 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1094 (open_banking): 0/44 = 0%
+[DemoAPI] [Network] Displaying existing network: {
+  companyId: 750,
+  networkSize: 10,
+  persona: 'data-provider',
+  timestamp: '2025-05-29T20:23:08.769Z'
+}
+[DemoAPI] [Network] Display failed: TypeError: Cannot read properties of undefined (reading 'referencedTable')
+    at normalizeRelation (/home/runner/workspace/node_modules/src/relations.ts:571:74)
+    at PgDialect.buildRelationalQueryWithoutPK (/home/runner/workspace/node_modules/src/pg-core/dialect.ts:1282:32)
+    at QueryPromise._getQuery (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:117:23)
+    at QueryPromise._toSQL (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:134:22)
+    at <anonymous> (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:92:39)
+    at Object.startActiveSpan (/home/runner/workspace/node_modules/src/tracing.ts:27:11)
+    at QueryPromise._prepare (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:91:17)
+    at <anonymous> (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:154:16)
+    at Object.startActiveSpan (/home/runner/workspace/node_modules/src/tracing.ts:27:11)
+    at QueryPromise.execute (/home/runner/workspace/node_modules/src/pg-core/query-builders/query.ts:153:17)
+[2025-05-29T20:23:08.814Z] [ERROR] [App] POST /api/demo/network/create 500 in 45ms :: {"success":false,"error":"Failed to display network","details":"Cannot read p... 
+[2025-05-29T20:23:13.932Z] [INFO] [WebSocket] Received message from client client-1748550173790-xy7rn0x {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T20:23:13.871Z","connectionId":"ws_1748550172285_5dipdzd61"}
+[2025-05-29T20:23:21.819Z] [INFO] [WebSocket] Received message from client client-1748550171701-n1tg4j0 {"module":"WebSocket","type":"ping"}
+[2025-05-29T20:23:22.891Z] [INFO] [WebSocket] Received message from client client-1748550172767-how5k2d {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T20:23:22.827Z","connectionId":"ws_1748550172826_fp5bvosgz"}
+[2025-05-29T20:23:23.405Z] [INFO] [WebSocket] Received message from client client-1748550173284-z1tvl5l {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T20:23:23.344Z","connectionId":"ws_1748550172319_nd91e284n"}

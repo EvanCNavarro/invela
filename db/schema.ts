@@ -632,6 +632,17 @@ export const securityResponsesRelations = relations(securityResponses, ({ one })
   })
 }));
 
+export const relationshipsRelations = relations(relationships, ({ one }) => ({
+  company: one(companies, {
+    fields: [relationships.company_id],
+    references: [companies.id],
+  }),
+  relatedCompany: one(companies, {
+    fields: [relationships.related_company_id],
+    references: [companies.id],
+  }),
+}));
+
 // Define the S&P KY3P Security Assessment tables
 export const ky3pFields = pgTable("ky3p_fields", {
   id: serial("id").primaryKey(),
