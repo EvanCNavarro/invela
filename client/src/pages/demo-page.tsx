@@ -1636,25 +1636,38 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
     timestamp: new Date().toISOString()
   });
   
-  // Dynamic API action configuration based on user selections
+  // Optimized API action configuration - only shows operations that will actually occur
   const getDemoActions = (formData: any, selectedPersona: any) => {
     const actions = [];
+    const isInvelaAdmin = selectedPersona?.id === 'invela-admin';
+    const hasEmailInvite = formData?.emailInviteEnabled === true;
 
-    // 1. Company Creation Action (skip for Invela Admin - they use existing Invela company)
-    if (selectedPersona?.id !== 'invela-admin') {
-      // Validate that we have a proper company name and not the loading placeholder
+    // 1. Company Creation (only for non-Invela Admin personas)
+    if (!isInvelaAdmin) {
       const companyName = formData?.companyName || '';
       
-      // If we still have the loading placeholder, this indicates a race condition
+      // Validate company name before proceeding
       if (companyName === 'Loading...' || !companyName.trim()) {
         console.error('[DemoStep3] Company creation blocked - invalid company name:', {
-          companyName,
-          formData,
-          blockedReason: companyName === 'Loading...' ? 'LOADING_PLACEHOLDER' : 'EMPTY_NAME'
+          companyName, persona: selectedPersona?.id
         });
-        
-        // Don't add the action - this will prevent the submission from proceeding
-        return [];
+        return []; // Return empty array to prevent progression
+      }
+      
+      // Build persona-specific payload efficiently
+      const payload = {
+        name: companyName,
+        type: 'demo',
+        persona: selectedPersona?.id,
+        companySize: formData?.companySize || 'medium'
+      };
+      
+      // Add persona-specific fields only when needed
+      if (selectedPersona?.id === 'data-provider') {
+        payload.networkSize = formData?.networkSize || 5;
+        payload.metadata = { networkSize: formData?.networkSize || 25 };
+      } else if (selectedPersona?.id === 'accredited-data-recipient') {
+        payload.riskProfile = formData?.riskProfile;
       }
       
       actions.push({
@@ -1663,69 +1676,33 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
         category: 'company',
         targetField: 'companyName',
         apiEndpoint: '/api/demo/company/create',
-        payload: {
-          name: companyName,
-          type: 'demo', // All companies created through demo flow are demo companies
-          persona: selectedPersona?.id,
-          companySize: formData?.companySize || 'medium', // Always include companySize with default fallback
-          ...(selectedPersona?.id === 'data-provider' && {
-            networkSize: formData?.networkSize || 5 // Include network size for Data Provider
-          }),
-          ...(selectedPersona?.id === 'accredited-data-recipient' && {
-            riskProfile: formData?.riskProfile
-          }),
-          ...(selectedPersona?.id === 'data-provider' && {
-            metadata: {
-              networkSize: formData?.networkSize || 25 // Default to 25 FinTechs if not specified
-            }
-          })
-        },
-        estimatedDuration: 2000,
+        payload,
+        estimatedDuration: 2500,
         description: 'Setting up organizational structure and preferences'
       });
+
+      // 1b. Network Setup (only for Data Provider after company creation)
+      if (selectedPersona?.id === 'data-provider') {
+        const networkSize = formData?.networkSize || 25;
+        actions.push({
+          id: 'setup-network',
+          label: `Configuring network with ${networkSize} FinTech partners`,
+          category: 'network',
+          targetField: 'networkSize',
+          apiEndpoint: '/api/demo/network/create',
+          payload: {
+            companyId: 'COMPANY_ID_FROM_STEP_1',
+            networkSize: networkSize,
+            persona: selectedPersona?.id
+          },
+          estimatedDuration: 2000,
+          description: 'Establishing FinTech partner relationships and risk assessments'
+        });
+      }
     }
 
-    // 2. User Account Creation Action
-    // ========================================
-    // FIXED: Use Data Transformer for Proper Role Mapping
-    // ========================================
-    
-    /**
-     * CRITICAL FIX: Use the existing data transformer instead of raw persona data
-     * This ensures proper role mapping (New Data Recipient → "user") and demo data population
-     * 
-     * Previous Issue: 
-     * - Frontend sent raw persona titles (e.g., "New Data Recipient")
-     * - Backend expected mapped roles (e.g., "user") 
-     * - Demo user fields weren't populated properly
-     * 
-     * Solution:
-     * - Use transformToUserPayload() for consistent role mapping
-     * - Include demo session data for proper user tracking
-     * - Maintain persona-specific onboarding logic
-     */
-    
-    // Generate proper demo session ID for user tracking
+    // 2. User Account Creation (all personas)
     const demoSessionId = `demo_${Date.now()}_${selectedPersona?.id}`;
-    
-    // Build user creation payload using the data transformer
-    const userPayloadData = {
-      persona: selectedPersona?.id,
-      companyName: formData?.companyName,
-      userFullName: formData?.userFullName,
-      userEmail: formData?.userEmail,
-      emailInviteEnabled: formData?.emailInvite || false,
-      isDemoCompany: formData?.demoCompany || false,
-      riskProfile: formData?.riskProfile,
-      companySize: formData?.companySize
-    };
-    
-    console.log('[DemoPage] Building user payload with transformer:', {
-      persona: selectedPersona?.id,
-      userFullName: formData?.userFullName,
-      demoSessionId,
-      expectedRole: selectedPersona?.id === 'new-data-recipient' ? 'user' : 'other'
-    });
     
     actions.push({
       id: 'create-user',
@@ -1734,21 +1711,14 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       targetField: 'userFullName',
       apiEndpoint: '/api/demo/user/create',
       payload: {
-        // Core user data
         fullName: formData?.userFullName,
         email: formData?.userEmail,
-        companyId: selectedPersona?.id === 'invela-admin' ? 1 : 'COMPANY_ID_FROM_STEP_1',
-        
-        // FIXED: Use proper role mapping from persona features
+        companyId: isInvelaAdmin ? 1 : 'COMPANY_ID_FROM_STEP_1',
         role: selectedPersona?.id === 'new-data-recipient' ? 'user' : 
               selectedPersona?.id === 'accredited-data-recipient' ? 'accredited_user' :
               selectedPersona?.id === 'data-provider' ? 'provider' : 'admin',
-        
-        // Demo session tracking data  
         persona: selectedPersona?.id,
         demoSessionId: demoSessionId,
-        
-        // Additional demo metadata
         metadata: {
           createdViaDemo: true,
           persona: selectedPersona?.id,
@@ -1760,24 +1730,42 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       description: 'Setting up user profile and access permissions'
     });
 
-    // 3. Authentication Setup Action
+    // 3. Platform Configuration (persona-specific setup)
+    let platformLabel = 'Configuring platform access';
+    let platformDescription = 'Setting up demo environment and permissions';
+    
+    if (selectedPersona?.id === 'accredited-data-recipient') {
+      platformLabel = 'Enabling advanced risk assessment tools';
+      platformDescription = 'Configuring S&P DARS integration and advanced analytics';
+    } else if (selectedPersona?.id === 'data-provider') {
+      platformLabel = 'Setting up bank administration features';
+      platformDescription = 'Enabling network management and provider tools';
+    } else if (isInvelaAdmin) {
+      platformLabel = 'Activating administrative privileges';
+      platformDescription = 'Granting full system access and admin capabilities';
+    }
+
     actions.push({
-      id: 'setup-auth',
-      label: 'Configuring authentication',
-      category: 'auth',
-      targetField: 'userEmail',
-      apiEndpoint: '/api/demo/auth/setup',
+      id: 'setup-platform',
+      label: platformLabel,
+      category: 'platform',
+      targetField: null,
+      apiEndpoint: '/api/demo/platform/configure',
       payload: {
-        userId: 'USER_ID_FROM_STEP_2', // Will be replaced with actual ID from previous step
-        email: formData?.userEmail,
-        generateCredentials: true
+        userId: 'USER_ID_FROM_STEP_2',
+        companyId: isInvelaAdmin ? 1 : 'COMPANY_ID_FROM_STEP_1',
+        persona: selectedPersona?.id,
+        ...(selectedPersona?.id === 'accredited-data-recipient' && {
+          riskProfile: formData?.riskProfile,
+          companySize: formData?.companySize
+        })
       },
-      estimatedDuration: 1000,
-      description: 'Setting up secure access credentials'
+      estimatedDuration: 1200,
+      description: platformDescription
     });
 
-    // 4. Optional Email Invitation Action
-    if (formData?.emailInviteEnabled) {
+    // 4. Email Invitation (only if enabled)
+    if (hasEmailInvite) {
       actions.push({
         id: 'send-invitation',
         label: 'Sending welcome email invitation',
@@ -1788,29 +1776,14 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
           userEmail: formData?.userEmail,
           userName: formData?.userFullName,
           companyName: formData?.companyName,
-          loginCredentials: 'CREDENTIALS_FROM_STEP_3' // Will be replaced with actual credentials
+          loginCredentials: 'CREDENTIALS_FROM_STEP_3'
         },
         estimatedDuration: 800,
         description: 'Delivering access credentials via email'
       });
     }
 
-    // 5. Final Environment Preparation
-    // ========================================
-    // PERSONA-AWARE COMPANY ID HANDLING
-    // ========================================
-    
-    /**
-     * For Invela Admin persona, use the existing Invela company (ID: 1) 
-     * instead of expecting a company from Step 1 (which was skipped).
-     * For all other personas, use the company created in Step 1.
-     */
-    const finalizeCompanyId = selectedPersona?.id === 'invela-admin' 
-      ? '1'  // Hardcoded Invela company ID for internal users
-      : 'COMPANY_ID_FROM_STEP_1';  // Company created in Step 1 for external users
-    
-    console.log(`[DemoPage] Finalize payload: Using companyId "${finalizeCompanyId}" for persona "${selectedPersona?.id}"`);
-    
+    // 5. Final Authentication & Environment Setup (all personas)
     actions.push({
       id: 'finalize-environment',
       label: 'Finalizing demo environment',
@@ -1819,13 +1792,16 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       apiEndpoint: '/api/demo/environment/finalize',
       payload: {
         userId: 'USER_ID_FROM_STEP_2',
-        companyId: finalizeCompanyId,
+        companyId: isInvelaAdmin ? 1 : 'COMPANY_ID_FROM_STEP_1',
         demoType: selectedPersona?.id
       },
-      estimatedDuration: 1200,
-      description: 'Preparing platform access and demo data'
+      estimatedDuration: 1000,
+      description: 'Preparing platform access and authentication'
     });
 
+    console.log(`[DemoStep3] Generated ${actions.length} actions for ${selectedPersona?.id}:`, 
+      actions.map(a => a.id));
+    
     return actions;
   };
 
