@@ -80,45 +80,36 @@ async function populateRiskClusters() {
  * Generate randomized risk clusters that sum up to the total score
  */
 function generateRiskClusters(totalScore: number) {
-  // Define the categories
+  // Define the new risk cluster categories matching the schema
   const categories = [
-    "PII Data",
-    "Account Data",
-    "Data Transfers",
-    "Certifications Risk",
-    "Security Risk",
-    "Financial Risk"
+    "Cyber Security",
+    "Financial Stability",
+    "Potential Liability",
+    "Dark Web Data",
+    "Public Sentiment",
+    "Data Access Scope"
   ];
+  
+  // Fixed weights based on risk priorities (matching example provided)
+  const weights = {
+    "Cyber Security": 0.30,        // 30% - Highest priority
+    "Financial Stability": 0.25,   // 25% - Second highest
+    "Potential Liability": 0.20,   // 20% - Third priority
+    "Dark Web Data": 0.15,         // 15% - Fourth priority
+    "Public Sentiment": 0.07,      // 7% - Fifth priority
+    "Data Access Scope": 0.03      // 3% - Lowest priority
+  };
   
   // Initialize result object
   const result: Record<string, number> = {};
-  
-  // Generate 5 random proportions for first 5 categories
-  const proportions: number[] = [];
-  let remainingProportion = 1;
-  
-  for (let i = 0; i < categories.length - 1; i++) {
-    // Generate a random proportion between 0.05 and remainingProportion/2
-    const maxProportion = remainingProportion > 0.1 ? remainingProportion / 2 : remainingProportion;
-    const minProportion = 0.05;
-    const proportion = Math.random() * (maxProportion - minProportion) + minProportion;
-    
-    proportions.push(proportion);
-    remainingProportion -= proportion;
-  }
-  
-  // Add the remaining proportion for the last category
-  proportions.push(remainingProportion);
-  
-  // Assign values to categories
   let sumOfValues = 0;
-  categories.forEach((category, index) => {
-    // Calculate the value for this category
-    // Note: totalScore is now on 0-100 scale instead of 0-1500
-    let value = Math.round(totalScore * proportions[index]);
+  
+  // Calculate base values for each category using fixed weights
+  categories.forEach((category) => {
+    // Calculate the value for this category using predetermined weights
+    let value = Math.round(totalScore * (weights as any)[category]);
     
     // Ensure the value is at least 1 for visibility on the chart
-    // Lower minimum value from 10 to 1 to account for new 0-100 scale
     value = Math.max(value, 1);
     
     // Add to the result
