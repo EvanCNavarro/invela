@@ -5,6 +5,7 @@ import * as WebSocketService from "./websocket";
 import { eq } from "drizzle-orm";
 // Import demo company hooks for automatic file vault population
 import { processNewCompany } from "../hooks/demo-company-hooks";
+import { generateBusinessDetails, type PersonaType } from "../utils/business-details-generator";
 
 /**
  * Creates a new company and handles all associated rules/tasks

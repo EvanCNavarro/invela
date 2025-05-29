@@ -382,13 +382,10 @@ router.post('/demo/company/create', async (req, res) => {
       // Demo session tracking fields
       demo_session_id: demoSessionId,
       demo_created_at: demoCreatedAt,
-      // Include risk score data only for accredited entities (APPROVED status)
-      ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.risk_score && { risk_score: personaConfig.risk_score }),
-      ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score }),
-      // Include risk clusters for accredited entities
-      ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.risk_score && { 
-        risk_clusters: generateRiskClusters(personaConfig.risk_score) 
-      }),
+      // Use standardized risk data from business details generator
+      risk_score: businessDetails.risk_score,
+      risk_clusters: businessDetails.risk_clusters,
+      ...(personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score }),
       // Include comprehensive business details
       legal_structure: businessDetails.legal_structure,
       market_position: businessDetails.market_position,
