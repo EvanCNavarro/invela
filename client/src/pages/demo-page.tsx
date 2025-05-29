@@ -512,6 +512,11 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
   const [formData, setFormData] = useState<DemoCustomizationForm>(() => {
     // Helper function needs to be defined before use
     function generateEmailFromDataInit(firstName: string, lastName: string, companyName: string): string {
+      // Special case for Invela admin users
+      if (selectedPersona?.id === 'invela-admin' || companyName.toLowerCase() === 'invela') {
+        return `${firstName.toLowerCase()}.${lastName.toLowerCase()}@invela.com`;
+      }
+      
       const firstLetter = firstName.charAt(0).toLowerCase();
       const cleanLastName = lastName.toLowerCase();
       const cleanCompany = companyName
@@ -690,6 +695,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
   /**
    * Generates email address from user name and company
    * Follows the pattern: firstletter + lastname @ companydomain.com
+   * Special case for Invela admin: firstname.lastname@invela.com
    * 
    * @param firstName - User's first name
    * @param lastName - User's last name  
@@ -700,6 +706,11 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     // Handle undefined or empty values safely
     if (!firstName || !lastName || !companyName) {
       return '';
+    }
+    
+    // Special case for Invela admin users
+    if (selectedPersona?.id === 'invela-admin' || companyName.toLowerCase() === 'invela') {
+      return `${firstName.toLowerCase()}.${lastName.toLowerCase()}@invela.com`;
     }
     
     const firstLetter = firstName.charAt(0).toLowerCase();
@@ -1405,7 +1416,28 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
               {shouldShowPersonaSpecificField('riskProfile') && (
                 <div className="grid grid-cols-12 gap-3 pr-6 border-b border-gray-200/50 hover:bg-gray-50/30 transition-colors h-[64px]">
                   <div className="col-span-4 flex items-center justify-end pr-2 space-x-2">
-                    <span className="text-sm font-medium text-gray-700">Risk Profile</span>
+                    <span className="text-sm font-medium text-gray-700">S&P DARS</span>
+                    <div className="relative group">
+                      <svg 
+                        className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600 transition-colors"
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9,9h0a3,3,0,0,1,6,0c0,2-3,3-3,3"></path>
+                        <path d="M12,17h.01"></path>
+                      </svg>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 w-64 z-50">
+                        <div className="text-left">
+                          <div className="font-semibold mb-1">S&P Data Access Risk Score (DARS)</div>
+                          <div className="text-xs leading-relaxed">
+                            Risk score reflective of the company at the time of accreditation. This score can change over time based on updated information received by the Invela Trust Network, including changes in Dark Web Data, Cyber Security, Public Sentiment, Data Access Scope, Financial Stability, and Potential Liability metrics.
+                          </div>
+                        </div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
                     <ValidationIcon status="valid" />
                   </div>
                   <div className="col-span-8 flex items-center space-x-3">
@@ -1505,7 +1537,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                         onChange={(e) => handleFieldChange('networkSize', parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb 100%)`
                         }}
                       />
                     </div>
@@ -1525,13 +1557,6 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                         <Shuffle className="h-3 w-3" />
                       </button>
                     </div>
-                  </div>
-                  
-                  {/* Helper text */}
-                  <div className="col-span-12 px-6 pb-2">
-                    <p className="text-xs text-gray-500 italic">
-                      Number of FinTech partners to include in your bank's network. More partners provide richer insights but require more management.
-                    </p>
                   </div>
                 </div>
               )}
