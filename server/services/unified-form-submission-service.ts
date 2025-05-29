@@ -1036,10 +1036,12 @@ async function handleOpenBankingPostSubmission(
  * This function distributes the total risk score across different risk categories
  * using predetermined weight percentages. The distribution follows these rules:
  * 
- * 1. PII Data receives the highest weight (35%) as it's the most critical category
- * 2. Account Data receives the second highest weight (30%)
- * 3. Data Transfers, Certifications Risk, and Security Risk each get 10%
- * 4. Financial Risk receives 5% of the total risk score
+ * 1. Cyber Security receives the highest weight (30%) as it's the most critical category
+ * 2. Financial Stability receives the second highest weight (25%)
+ * 3. Potential Liability receives 20% of the total risk score
+ * 4. Dark Web Data receives 15% of the total risk score
+ * 5. Public Sentiment receives 7% of the total risk score
+ * 6. Data Access Scope receives 3% of the total risk score
  * 
  * The function ensures that the sum of all category scores exactly equals the
  * total risk score, making adjustments to the main categories if needed.
@@ -1048,31 +1050,31 @@ async function handleOpenBankingPostSubmission(
  * @returns An object containing risk scores distributed across all six categories
  */
 function calculateRiskClusters(riskScore: number): {
-  "PII Data": number,
-  "Account Data": number,
-  "Data Transfers": number,
-  "Certifications Risk": number,
-  "Security Risk": number,
-  "Financial Risk": number
+  "Cyber Security": number,
+  "Financial Stability": number,
+  "Potential Liability": number,
+  "Dark Web Data": number,
+  "Public Sentiment": number,
+  "Data Access Scope": number
 } {
   // Base distribution weights for each category - THESE MUST SUM TO 1.0 (100%)
   const weights = {
-    "PII Data": 0.35,           // 35% of total score - Highest priority
-    "Account Data": 0.30,        // 30% of total score - Second highest priority
-    "Data Transfers": 0.10,      // 10% of total score
-    "Certifications Risk": 0.10, // 10% of total score
-    "Security Risk": 0.10,       // 10% of total score
-    "Financial Risk": 0.05       // 5% of total score
+    "Cyber Security": 0.30,        // 30% - Highest priority
+    "Financial Stability": 0.25,   // 25% - Second highest priority
+    "Potential Liability": 0.20,   // 20% - Third priority
+    "Dark Web Data": 0.15,         // 15% - Fourth priority
+    "Public Sentiment": 0.07,      // 7% - Fifth priority
+    "Data Access Scope": 0.03      // 3% - Lowest priority
   };
   
   // Calculate base values for each category
   let clusters = {
-    "PII Data": Math.round(riskScore * weights["PII Data"]),
-    "Account Data": Math.round(riskScore * weights["Account Data"]),
-    "Data Transfers": Math.round(riskScore * weights["Data Transfers"]),
-    "Certifications Risk": Math.round(riskScore * weights["Certifications Risk"]),
-    "Security Risk": Math.round(riskScore * weights["Security Risk"]),
-    "Financial Risk": Math.round(riskScore * weights["Financial Risk"])
+    "Cyber Security": Math.round(riskScore * weights["Cyber Security"]),
+    "Financial Stability": Math.round(riskScore * weights["Financial Stability"]),
+    "Potential Liability": Math.round(riskScore * weights["Potential Liability"]),
+    "Dark Web Data": Math.round(riskScore * weights["Dark Web Data"]),
+    "Public Sentiment": Math.round(riskScore * weights["Public Sentiment"]),
+    "Data Access Scope": Math.round(riskScore * weights["Data Access Scope"])
   };
   
   // Ensure the sum equals the total risk score by adjusting the main categories
@@ -1084,12 +1086,12 @@ function calculateRiskClusters(riskScore: number): {
     // If positive, add to the highest weighted categories
     // If negative, subtract from them
     if (diff > 0) {
-      clusters["PII Data"] += Math.ceil(diff * 0.6);
-      clusters["Account Data"] += Math.floor(diff * 0.4);
+      clusters["Cyber Security"] += Math.ceil(diff * 0.6);
+      clusters["Financial Stability"] += Math.floor(diff * 0.4);
     } else {
       const absDiff = Math.abs(diff);
-      clusters["PII Data"] -= Math.ceil(absDiff * 0.6);
-      clusters["Account Data"] -= Math.floor(absDiff * 0.4);
+      clusters["Cyber Security"] -= Math.ceil(absDiff * 0.6);
+      clusters["Financial Stability"] -= Math.floor(absDiff * 0.4);
     }
   }
   
