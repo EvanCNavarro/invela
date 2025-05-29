@@ -483,7 +483,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     async function initializeProfessionalCompanyName() {
       // Only generate for non-Invela personas and if we're showing Loading...
       if (selectedPersona?.id !== 'invela-admin' && formData.companyName === 'Loading...') {
-        console.log('[DemoStep2] Auto-generating professional company name on load...');
+
         
         try {
           await generateRandomValues(['companyName']);
@@ -1595,13 +1595,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
   const [loadingStep, setLoadingStep] = useState(0);
   const [wizardStep, setWizardStep] = useState<'review' | 'setup' | 'launch'>('review');
   
-  console.log('[DemoStep3] Rendering results and next steps');
-  console.log('[DemoStep3] Received form data:', {
-    companyName: formData?.companyName,
-    userFullName: formData?.userFullName,
-    hasValidCompanyName: formData?.companyName && formData.companyName !== 'Loading...',
-    timestamp: new Date().toISOString()
-  });
+
   
   // Optimized API action configuration - only shows operations that will actually occur
   const getDemoActions = (formData: any, selectedPersona: any) => {
@@ -1766,8 +1760,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       description: 'Preparing platform access and authentication'
     });
 
-    console.log(`[DemoStep3] Generated ${actions.length} actions for ${selectedPersona?.id}:`, 
-      actions.map(a => a.id));
+
     
     return actions;
   };
@@ -1947,7 +1940,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
   };
   
   const handleStartDemo = async () => {
-    console.log('[DemoStep3] Starting demo preparation with real API actions');
+
     const actions = getDemoActions(formData, selectedPersona);
     const results: any = {};
     
