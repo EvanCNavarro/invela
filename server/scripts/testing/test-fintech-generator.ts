@@ -1,26 +1,99 @@
-// Quick test script to generate a single FinTech company
+/**
+ * ========================================
+ * FinTech Company Test Generator
+ * ========================================
+ * 
+ * Test script for generating a single FinTech company with secure name validation.
+ * Uses the validated company name generation API to ensure all names pass
+ * blacklist validation and maintain professional standards.
+ * 
+ * Key Features:
+ * - Secure company name generation via API
+ * - Complete company profile creation
+ * - Network relationship establishment
+ * - Professional data integrity validation
+ * 
+ * Dependencies:
+ * - Neon Database: Production database connection
+ * - Company Name API: Validated name generation endpoint
+ * 
+ * @module TestFintechGenerator
+ * @version 1.0.0
+ * @since 2025-05-29
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
 import { neon } from '@neondatabase/serverless';
 
-async function testSingleCompany() {
-  console.log('🚀 Testing FinTech company generation...');
+// ========================================
+// TYPES & INTERFACES
+// ========================================
+
+interface CompanyData {
+  name: string;
+  description: string;
+  category: string;
+  legal_structure: string;
+  market_position: string;
+  hq_address: string;
+  website_url: string;
+  products_services: string;
+  incorporation_year: number;
+  founders_and_leadership: string;
+  num_employees: number;
+  revenue: string;
+  revenue_tier: string;
+  key_clients_partners: string;
+  investors: string;
+  funding_stage: string;
+  exit_strategy_history: null;
+  certifications_compliance: string;
+  risk_score: number;
+  risk_clusters: Record<string, number>;
+  accreditation_status: string;
+  onboarding_company_completed: boolean;
+  files_public: string[];
+  files_private: string[];
+  available_tabs: string[];
+  is_demo: boolean;
+}
+
+// ========================================
+// MAIN FUNCTION
+// ========================================
+
+/**
+ * Generates a single test FinTech company with validated data
+ * 
+ * @returns Promise<boolean> - Success status of company creation
+ */
+async function generateTestFintechCompany(): Promise<boolean> {
+  console.log('Starting FinTech company generation test...');
   
   try {
     // Create database connection
     const sql = neon(process.env.DATABASE_URL);
     
-    // Generate company name using secure API
+    // Generate secure company name using validated API
     const nameResponse = await fetch('http://localhost:5000/api/demo/generate-company-name');
     const nameData = await nameResponse.json();
     
-    // Generate a single test company
-    const company = {
+    if (!nameData.success || !nameData.companyName) {
+      throw new Error('Failed to generate secure company name');
+    }
+    
+    // Create comprehensive company profile
+    const company: CompanyData = {
       name: nameData.companyName,
       description: 'Innovative payment processing and financial technology solutions for modern businesses.',
       category: 'FinTech',
       legal_structure: 'Private Limited Company',
       market_position: 'emerging',
       hq_address: '789 Innovation Drive, Suite 200, Austin, TX 78701, USA',
-      website_url: 'https://techflowfinancial.com',
+      website_url: `https://${nameData.companyName.toLowerCase().replace(/\s+/g, '')}.com`,
       products_services: 'Payment processing, API banking, financial analytics',
       incorporation_year: 2020,
       founders_and_leadership: 'Sarah Chen (CEO), Marcus Rodriguez (CTO), Li Wei (COO)',
@@ -49,7 +122,7 @@ async function testSingleCompany() {
       is_demo: false
     };
     
-    // Insert the company
+    // Insert company into database
     const result = await sql`
       INSERT INTO companies (
         name, description, category, legal_structure, market_position,
@@ -76,7 +149,7 @@ async function testSingleCompany() {
     
     const newCompany = result[0];
     
-    // Create network relationship with Invela
+    // Establish network relationship with Invela
     await sql`
       INSERT INTO relationships (
         company_id, related_company_id, relationship_type, status, metadata
@@ -91,19 +164,23 @@ async function testSingleCompany() {
       )
     `;
     
-    console.log(`✅ Successfully created test company:`);
-    console.log(`   - ID: ${newCompany.id}`);
-    console.log(`   - Name: ${newCompany.name}`);
-    console.log(`   - Status: ${company.accreditation_status}`);
-    console.log(`   - Risk Score: ${company.risk_score}`);
-    console.log(`   - Linked to Invela network`);
+    console.log('Successfully created test company:');
+    console.log(`  - ID: ${newCompany.id}`);
+    console.log(`  - Name: ${newCompany.name}`);
+    console.log(`  - Status: ${company.accreditation_status}`);
+    console.log(`  - Risk Score: ${company.risk_score}`);
+    console.log('  - Network relationship established');
     
     return true;
     
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error('Test generation failed:', error);
     return false;
   }
 }
 
-testSingleCompany();
+// ========================================
+// EXECUTION
+// ========================================
+
+generateTestFintechCompany();

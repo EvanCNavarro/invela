@@ -5,7 +5,7 @@
  * and validates them against the problematic words blacklist.
  */
 
-import { validateCompanyNameSafety } from '../utils/company-name-utils.js';
+import { validateCompanyNameSafety } from '../utils/company-name-utils';
 
 // Hardcoded names found in scripts
 const HARDCODED_NAMES = [
