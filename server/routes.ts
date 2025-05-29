@@ -153,6 +153,9 @@ import { PDFExtract } from 'pdf.js-extract';
 // Create PDFExtract instance
 const pdfExtract = new PDFExtract();
 
+// Import admin demo cleanup routes
+import adminDemoCleanupRoutes from './routes/admin-demo-cleanup';
+
 // Company cache for current company endpoint - exported for other modules to use
 export const companyCache = new Map<number, { company: any, timestamp: number }>();
 export const COMPANY_CACHE_TTL = 1 * 60 * 1000; // Reduced to 1 minute to improve UI responsiveness

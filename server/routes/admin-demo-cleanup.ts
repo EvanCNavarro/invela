@@ -32,7 +32,12 @@ import {
 } from '@db/schema';
 import { eq, and, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import * as crypto from 'crypto';
-import { logger } from '../services/logger';
+// Simple console logger for demo cleanup operations
+const logger = {
+  info: (message: string, data?: any) => console.log(`[INFO] ${message}`, data || ''),
+  warn: (message: string, data?: any) => console.warn(`[WARN] ${message}`, data || ''),
+  error: (message: string, data?: any) => console.error(`[ERROR] ${message}`, data || '')
+};
 
 const router = Router();
 
@@ -123,9 +128,9 @@ async function checkAdminAccess(userId: number): Promise<boolean> {
     });
     
     // Check if user is from Invela admin company or has admin role
-    return user?.email?.includes('@invela.') || user?.company?.name === 'Invela';
+    return user?.email?.includes('@invela.') || (user as any)?.company?.name === 'Invela';
   } catch (error) {
-    logger.error('Error checking admin access:', error);
+    logger.error('Error checking admin access:', (error as Error).message);
     return false;
   }
 }
@@ -620,8 +625,8 @@ router.delete('/demo-data/cleanup', async (req, res) => {
         auditTrail.push(`Transaction completed successfully. Total entities deleted: ${deletedCounts.totalEntities}`);
         
       } catch (transactionError) {
-        auditTrail.push(`Transaction failed: ${transactionError.message}`);
-        errors.push(`Transaction failed: ${transactionError.message}`);
+        auditTrail.push(`Transaction failed: ${(transactionError as Error).message}`);
+        errors.push(`Transaction failed: ${(transactionError as Error).message}`);
         throw transactionError;
       }
     });
