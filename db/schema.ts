@@ -488,6 +488,17 @@ export const securityFieldsRelations = relations(securityFields, ({ many }) => (
   responses: many(securityResponses)
 }));
 
+export const relationshipsRelations = relations(relationships, ({ one }) => ({
+  company: one(companies, {
+    fields: [relationships.company_id],
+    references: [companies.id],
+  }),
+  relatedCompany: one(companies, {
+    fields: [relationships.related_company_id],
+    references: [companies.id],
+  }),
+}));
+
 // Claims Management Enums
 export const ClaimStatus = {
   IN_REVIEW: 'in_review',
