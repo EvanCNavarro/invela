@@ -1,0 +1,241 @@
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:08.066Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522588066_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:08.867Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522588867_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Executing: Creating "Zenith Quality Alliance" organization 
+Object {id: "create-company", label: "Creating "Zenith Quality Alliance" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:09.469Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522589469_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Success: Creating "Zenith Quality Alliance" organization 
+Object {success: true, company: {…}, id: 712, companyId: 712, persona: "accredited-data-recipient", …}
+[DemoAPI] 🏢 Capturing company ID for demo flow: 712 
+Object {actionId: "create-company", companyName: "Zenith Quality Alliance", companyCategory: "FinTech", persona: "unknown", timestamp: "2025-05-29T12:43:09.711Z"}
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "accredited-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:09.712Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522589712_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoAPI] Executing: Creating account for Michael Davis 
+Object {id: "create-user", label: "Creating account for Michael Davis", category: "user", targetField: "userFullName", apiEndpoint: "/api/demo/user/create", …}
+[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: 712 
+Object {actionId: "create-user", immediateResult: "available", source: "immediate_execution_result", timestamp: "2025-05-29T12:43:10.312Z"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:10.313Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522590313_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Success: Creating account for Michael Davis 
+Object {success: true, user: {…}}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:10.598Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522590598_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Executing: Configuring authentication 
+Object {id: "setup-auth", label: "Configuring authentication", category: "auth", targetField: "userEmail", apiEndpoint: "/api/demo/auth/setup", …}
+[DemoAPI] 🔄 Replaced placeholder userId with actual ID: 519 
+Object {actionId: "setup-auth", userResult: {…}, timestamp: "2025-05-29T12:43:11.199Z"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:11.199Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522591199_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, message: "Auth setup complete"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:11.393Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522591393_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: 712 
+Object {actionId: "finalize-environment", immediateResult: "available", source: "immediate_execution_result", timestamp: "2025-05-29T12:43:11.994Z"}
+[DemoAPI] 🔄 Replaced placeholder userId with actual ID: 519 
+Object {actionId: "finalize-environment", userResult: {…}, timestamp: "2025-05-29T12:43:11.994Z"}
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:11.995Z"}
+[DemoPage] Building user payload with transformer: 
+Object {persona: "accredited-data-recipient", userFullName: "Michael Davis", demoSessionId: "demo_1748522591995_accredited-data-recipient", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "accredited-data-recipient"
+[DemoAPI] Success: Finalizing demo environment 
+Object {success: true, demoReady: true, authenticated: true, loginRequired: false, accessUrl: "/dashboard", …}
+[DemoStep3] Demo setup completed successfully - showing success toast
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "accredited-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Zenith Quality Alliance", userFullName: "Michael Davis", hasValidCompanyName: true, timestamp: "2025-05-29T12:43:12.308Z"}
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: launch
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "launch", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] All demo actions completed successfully 
+Object {create-company: {…}, create-user: {…}, setup-auth: {…}, finalize-environment: {…}}
+[DemoStep3] Authentication analysis: 
+Object {isAuthenticated: true, loginRequired: false, accessUrl: "/dashboard", finalizationResult: "present"}
+[DemoStep3] Auto-login successful - synchronizing authentication state
+[DemoStep3] Initiating comprehensive authentication state synchronization
+[AuthSync] Initiating complete authentication synchronization workflow 
+Object {timestamp: "2025-05-29T12:43:15.019Z", module: "AuthSync"}
+[AuthSync] Starting authentication state synchronization 
+Object {timestamp: "2025-05-29T12:43:15.020Z", module: "AuthSync", queryKey: Array(1), retryAttempts: 2}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 519, email: "mdavis@zenithqualityalliance.com", timestamp: "2025-05-29T12:43:15.225Z"}
+[AuthSync] Authentication cache successfully invalidated 
+Object {timestamp: "2025-05-29T12:43:15.326Z", module: "AuthSync", duration: 306, queryKey: Array(1)}
+[AuthSync] Authentication synchronization workflow completed 
+Object {timestamp: "2025-05-29T12:43:15.326Z", module: "AuthSync", success: true, action: "cache_invalidated", duration: 306}
+[DemoStep3] Authentication synchronization successful - navigating to dashboard 
+Object {action: "cache_invalidated", duration: 306}
+[DemoStep3] Navigating to authenticated dashboard with refreshed state
+[Router] Current location: /dashboard
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/dashboard", …}
+[Sidebar] Tab state check: company=undefined, path=/dashboard, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 519, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(4), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/dashboard", …}
+[Sidebar] Tab state check: company=712, path=/dashboard, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 712
+[UserContext] Company context changed to: 712
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 519, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 712
+[RiskRadarChart] Setting selected company ID from companyId prop 712
+[RiskRadarChart] Company category check: 
+Object {category: "FinTech", isBankOrInvela: false, isFintech: true, showDropdownProp: false}
+[CurrentCompany] Setting company context: 712
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Setting selected company ID from companyId prop 712
+[RiskRadarChart] Display company updated: 
+Object {id: 712, name: "Zenith Quality Alliance", category: "FinTech"}
+[RiskRadarChart] Risk clusters data missing for company: 
+Object {id: 712, name: "Zenith Quality Alliance", riskScore: 66, usingCachedData: false}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Zenith Quality Alliance", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 712, networkCompaniesCount: 0, …}
