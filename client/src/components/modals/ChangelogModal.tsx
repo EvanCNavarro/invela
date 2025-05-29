@@ -72,6 +72,22 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'console-logging-cleanup-2025-05-29',
+    date: '2025-05-29',
+    type: 'enhancement',
+    title: 'Developer Experience Console Logging Cleanup',
+    description: 'Systematic cleanup of excessive console logging to improve developer debugging experience and reduce console spam',
+    details: [
+      'Removed verbose field visibility logging from DemoStep2 component that fired on every render',
+      'Cleaned up DemoStepVisual asset switching logs that triggered during navigation',
+      'Eliminated repetitive step progression logging while preserving essential error handling',
+      'Reduced console output by 20+ log statements without affecting functionality',
+      'Maintained comprehensive error logging for production debugging needs',
+      'Improved developer experience during demo flow testing and development'
+    ],
+    version: '1.8.1'
+  },
+  {
     id: 'comprehensive-system-updates-2025-05-29',
     date: '2025-05-29',
     type: 'enhancement',
