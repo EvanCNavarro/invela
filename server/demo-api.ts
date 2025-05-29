@@ -49,9 +49,11 @@ router.get('/demo/generate-company-name', async (req, res) => {
     
     console.log('[DemoAPI] [CompanyName] Loaded advanced name generation utilities');
     
-    // Generate a base name using the combinatorial system
-    // Start with attempt 1 for full combinatorial generation (PREFIX + CORE + SUFFIX)
-    const generatedName = await generateAdvancedCompanyName('Demo Company', 1);
+    // Generate a base name using the combinatorial system with length variance
+    // Use mixed preference for 50% short/long distribution
+    const generatedName = await generateAdvancedCompanyName('Demo Company', 1, { 
+      lengthPreference: 'mixed' 
+    });
     
     console.log('[DemoAPI] [CompanyName] Advanced generation produced:', {
       generatedName,
