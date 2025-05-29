@@ -412,37 +412,8 @@ interface DemoCustomizationForm {
  * Focused on financial services, consulting, and enterprise sectors
  */
 const DEMO_DATA_GENERATORS = {
-  companyNames: [
-    // Original favorites
-    "WealthWave Financial", "SecureVault Capital", "TrustLink Partners", "NextGen Banking", "RiskShield Analytics",
-    
-    // Financial Services (25 total)
-    "Apex Capital Management", "Sterling Trust Solutions", "Meridian Wealth Advisors", "Cornerstone Financial Group", "Pinnacle Investment Partners",
-    "Quantum Risk Management", "Elite Capital Ventures", "Sovereign Asset Management", "Premier Banking Solutions", "Vanguard Credit Union",
-    "Precision Lending Group", "Optimal Finance Partners", "Dynamic Capital Holdings", "Strategic Investment Bank", "Integrity Financial Services",
-    "Summit Wealth Management", "Horizon Capital Group", "Catalyst Investment Partners", "Nexus Financial Solutions", "Premier Trust Company",
-    
-    // Technology & Analytics (25 total)
-    "DataVault Technologies", "CloudSecure Systems", "InnovateTech Solutions", "DigitalEdge Analytics", "CyberGuard Technologies",
-    "AlphaTech Innovations", "SmartData Corporation", "TechFlow Solutions", "DataBridge Analytics", "SecureCloud Partners",
-    "IntelliSoft Systems", "NexGen Data Solutions", "ProTech Analytics", "DataSync Technologies", "TechVantage Group",
-    "QuantumTech Solutions", "DataForge Corporation", "CyberShield Systems", "InnoData Technologies", "TechCore Solutions",
-    "DataPlex Analytics", "CloudWave Technologies", "TechNova Solutions", "DataStream Corporation", "CyberTech Partners",
-    
-    // Consulting & Advisory (25 total)
-    "Strategic Consulting Group", "Elite Advisory Partners", "Pinnacle Business Solutions", "Summit Strategy Advisors", "Vanguard Consulting",
-    "Meridian Advisory Group", "Cornerstone Consulting", "Apex Business Partners", "Premier Strategy Group", "Quantum Advisory Solutions",
-    "Dynamic Consulting Partners", "Strategic Solutions Group", "Elite Business Advisors", "Pinnacle Strategy Partners", "Nexus Consulting",
-    "Optimal Advisory Group", "Sterling Business Solutions", "Catalyst Consulting Partners", "Horizon Strategy Advisors", "Premier Advisory",
-    "Summit Business Group", "Vanguard Strategy Partners", "Meridian Consulting Solutions", "Cornerstone Advisory Group", "Apex Strategy",
-    
-    // Healthcare & Life Sciences (25 total)
-    "MedTech Innovations", "HealthSecure Systems", "BioVantage Solutions", "MedCore Technologies", "LifeScience Partners",
-    "HealthGuard Analytics", "MedData Corporation", "BioTech Solutions Group", "HealthTech Innovations", "MedSecure Systems",
-    "LifeTech Analytics", "HealthVault Technologies", "MedPlex Solutions", "BioSecure Systems", "HealthTech Partners",
-    "MedFlow Corporation", "LifeGuard Technologies", "HealthCore Solutions", "MedVantage Group", "BioTech Analytics",
-    "HealthStream Systems", "MedTech Partners", "LifeSecure Solutions", "HealthTech Corporation", "MedGuard Analytics"
-  ],
+  // Company names now generated via secure API with blacklist validation
+  // Legacy static array removed to prevent validation bypass
   
   firstNames: [
     // Classic Professional Names (50 total)
@@ -1094,17 +1065,20 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       // When switching to random, generate new random value
       else if (newType === 'random') {
         if (field === 'companyNameControl') {
-          const randomCompany = DEMO_DATA_GENERATORS.companyNames[
-            Math.floor(Math.random() * DEMO_DATA_GENERATORS.companyNames.length)
-          ];
-          updates.companyName = randomCompany;
+          // Use validated API generation instead of static array
+          updates.companyName = 'Loading...';
+          // Trigger async generation after state update
+          setTimeout(async () => {
+            try {
+              await generateRandomValues(['companyName']);
+              console.log('[DemoStep2] Company name generated via API for random toggle');
+            } catch (error) {
+              console.error('[DemoStep2] Company name generation failed for random toggle:', error);
+              setFormData(prev => ({ ...prev, companyName: 'Error generating name' }));
+            }
+          }, 0);
           
-          // Also update email if needed
-          const firstPart = updates.userFullName.split(' ')[0] || '';
-          const lastPart = updates.userFullName.split(' ')[1] || '';
-          if (firstPart && lastPart) {
-            updates.userEmail = generateEmailFromData(firstPart, lastPart, randomCompany);
-          }
+          // Email will be updated after async company name generation completes
         } else if (field === 'userFullNameControl') {
           const randomFirstName = DEMO_DATA_GENERATORS.firstNames[
             Math.floor(Math.random() * DEMO_DATA_GENERATORS.firstNames.length)
