@@ -61,6 +61,27 @@ interface NameGenerationOptions {
 // CONSTANTS
 // ========================================
 
+/**
+ * Blacklisted words that should never appear in company names
+ * Categorized by issue type for clarity and maintenance
+ */
+const COMPANY_NAME_BLACKLIST = [
+  // Illegal/Criminal Activities
+  'anonymous', 'mixer', 'blackmarket', 'black-market', 'heist', 'dark', 'darkpool', 'exit', 'scam', 'silkroad', 'silk-road', 'underground',
+  
+  // Gambling/Addiction
+  'gambling', 'casino', 'addiction', 'degenerate', 'degeneratefi', 'degenfi',
+  
+  // Scams/Fraud
+  'sharks', 'ponzi', 'scheme', 'mlm', 'moonshot', 'rugpull', 'rug-pull', 'scamcoin',
+  
+  // High Risk/Negative
+  'shelter', 'leverage', 'max', 'risky', 'volatility', 'volatile',
+  
+  // Meme/Unprofessional
+  'meme', 'memecoin', 'memetoken', 'farm', 'yield-farm', 'gamefi', 'game-fi', 'flash', 'flashloan', 'flash-loan'
+] as const;
+
 // ========================================
 // ADVANCED NAME GENERATION POOLS
 // ========================================
@@ -177,6 +198,36 @@ const DEFAULT_GENERATION_OPTIONS: Required<NameGenerationOptions> = {
 };
 
 // ========================================
+// VALIDATION FUNCTIONS
+// ========================================
+
+/**
+ * Checks if a company name contains any blacklisted words
+ * Performs case-insensitive matching to catch variations
+ * 
+ * @param companyName - The company name to validate
+ * @returns True if the name is clean, false if it contains blacklisted words
+ */
+function isCompanyNameClean(companyName: string): boolean {
+  const normalizedName = companyName.toLowerCase().replace(/[\s-_]/g, '');
+  
+  for (const blacklistedWord of COMPANY_NAME_BLACKLIST) {
+    const normalizedBlacklistWord = blacklistedWord.toLowerCase().replace(/[\s-_]/g, '');
+    if (normalizedName.includes(normalizedBlacklistWord)) {
+      logCompanyNameOperation('warn', 'Blacklisted word detected in company name', {
+        companyName,
+        blacklistedWord,
+        normalizedName,
+        normalizedBlacklistWord,
+      });
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// ========================================
 // ADVANCED NAME GENERATION FUNCTIONS
 // ========================================
 
@@ -200,19 +251,34 @@ export async function generateAdvancedCompanyName(
 
   // Strategy 1: Full combinatorial generation (PREFIX + CORE + SUFFIX)
   if (attempt === 1) {
-    const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
-    const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
-    const suffix = ADVANCED_NAME_SUFFIXES[Math.floor(Math.random() * ADVANCED_NAME_SUFFIXES.length)];
+    let generatedName: string;
+    let attempts = 0;
+    const maxValidationAttempts = 10;
     
-    const generatedName = `${prefix} ${core} ${suffix}`;
+    do {
+      const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+      const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+      const suffix = ADVANCED_NAME_SUFFIXES[Math.floor(Math.random() * ADVANCED_NAME_SUFFIXES.length)];
+      
+      generatedName = `${prefix} ${core} ${suffix}`;
+      attempts++;
+      
+      if (isCompanyNameClean(generatedName)) {
+        logCompanyNameOperation('info', 'Generated clean full combinatorial name', {
+          baseName,
+          generatedName,
+          components: { prefix, core, suffix },
+          validationAttempts: attempts,
+        });
+        return generatedName;
+      }
+    } while (attempts < maxValidationAttempts);
     
-    logCompanyNameOperation('info', 'Generated full combinatorial name', {
+    // If we can't generate a clean name, fall back to next strategy
+    logCompanyNameOperation('warn', 'Could not generate clean name with strategy 1, falling back', {
       baseName,
-      generatedName,
-      components: { prefix, core, suffix },
+      attempts,
     });
-    
-    return generatedName;
   }
 
   // Strategy 2: Preserve original core with professional prefix/suffix
