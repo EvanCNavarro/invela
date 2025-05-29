@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { companies, users, tasks, relationships, invitations, TaskStatus } from '@db/schema';
-import { eq, and, inArray, sql } from 'drizzle-orm';
+import { eq, and, inArray, sql, or } from 'drizzle-orm';
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
