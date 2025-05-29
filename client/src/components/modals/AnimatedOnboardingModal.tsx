@@ -1142,7 +1142,12 @@ export function AnimatedOnboardingModal({
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-500">Revenue</span>
-                      <span className="text-sm font-medium">{companyInfo.revenue ? getRevenueLabel(companyInfo.revenue) : 'Not specified'}</span>
+                      <span className="text-sm font-medium">
+                        {companyInfo.revenue ? 
+                          formatRevenue(revenueValueMap[companyInfo.revenue as keyof typeof revenueValueMap]) : 
+                          'Not specified'
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>
