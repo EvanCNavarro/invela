@@ -154,6 +154,12 @@ export const companies = pgTable("companies", {
   files_private: jsonb("files_private").$type<string[]>().default([]),
   available_tabs: text("available_tabs").array().notNull().default(['task-center']),
   is_demo: boolean("is_demo").default(false),
+  // Demo-specific fields (exist in database but missing from schema)
+  demo_created_at: timestamp("demo_created_at"),
+  demo_expires_at: timestamp("demo_expires_at"),
+  demo_cleanup_eligible: boolean("demo_cleanup_eligible").default(true),
+  demo_session_id: text("demo_session_id"),
+  demo_persona_type: text("demo_persona_type"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

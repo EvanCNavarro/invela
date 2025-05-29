@@ -11,6 +11,7 @@ import {
   transformPersonaValue,
   validateNetworkSize 
 } from './utils/demo-data-transformer';
+import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
 
 const router = Router();
 
@@ -281,6 +282,24 @@ router.post('/demo/company/create', async (req, res) => {
     });
     
     // ========================================
+    // BUSINESS DETAILS GENERATION
+    // ========================================
+    
+    // Generate comprehensive business details based on persona type
+    const isApproved = personaConfig.accreditation_status === 'APPROVED';
+    const businessDetails = generateBusinessDetails(
+      transformedData.name,
+      personaConfig.demo_persona_type as PersonaType,
+      isApproved
+    );
+    
+    console.log('[DemoAPI] Generated business details:', {
+      persona: personaConfig.demo_persona_type,
+      isApproved,
+      fieldsGenerated: Object.keys(businessDetails).length
+    });
+    
+    // ========================================
     // DATABASE COMPANY CREATION
     // ========================================
     
@@ -295,7 +314,25 @@ router.post('/demo/company/create', async (req, res) => {
       accreditation_status: personaConfig.accreditation_status,
       // Include risk score data for personas that need it
       ...(personaConfig.risk_score && { risk_score: personaConfig.risk_score }),
-      ...(personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score })
+      ...(personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score }),
+      // Include comprehensive business details
+      legal_structure: businessDetails.legal_structure,
+      market_position: businessDetails.market_position,
+      hq_address: businessDetails.hq_address,
+      website_url: businessDetails.website_url,
+      products_services: businessDetails.products_services,
+      incorporation_year: businessDetails.incorporation_year,
+      founders_and_leadership: businessDetails.founders_and_leadership,
+      num_employees: businessDetails.num_employees,
+      revenue: businessDetails.revenue,
+      revenue_tier: businessDetails.revenue_tier,
+      key_clients_partners: businessDetails.key_clients_partners,
+      investors: businessDetails.investors,
+      funding_stage: businessDetails.funding_stage,
+      exit_strategy_history: businessDetails.exit_strategy_history,
+      certifications_compliance: businessDetails.certifications_compliance,
+      files_public: businessDetails.files_public,
+      files_private: businessDetails.files_private
     }).returning();
     
     const company = companyResult[0];
