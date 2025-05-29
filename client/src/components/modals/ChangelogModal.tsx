@@ -72,6 +72,22 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'comprehensive-system-updates-2025-05-29',
+    date: '2025-05-29',
+    type: 'enhancement',
+    title: 'Comprehensive System Enhancement & Security Updates',
+    description: 'Major platform improvements including risk cluster unification, security enhancements, and data management optimization',
+    details: [
+      'Unified risk cluster categories across all generation functions with new standardized schema',
+      'Implemented comprehensive company name security system with blacklist validation',
+      'Created unified business details generator providing consistent 16+ field profiles',
+      'Built comprehensive demo data cleanup system with cascading deletion safety',
+      'Enhanced data integrity validation for accreditation status compliance',
+      'Standardized revenue formatting and employee count display across all components'
+    ],
+    version: '1.8.0'
+  },
+  {
     id: 'complete-demo-flow-system-2025-05-28',
     date: '2025-05-28',
     type: 'feature',
