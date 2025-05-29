@@ -688,7 +688,7 @@ router.post('/demo/user/create', async (req, res) => {
       modalWillShow: !shouldCompleteOnboarding
     });
     
-    const user = await db.insert(users).values({
+    const userResult = await db.insert(users).values({
       email: transformedData.email,
       full_name: transformedData.fullName,
       password: hashedPassword,
@@ -699,16 +699,18 @@ router.post('/demo/user/create', async (req, res) => {
       onboarding_user_completed: shouldCompleteOnboarding
     }).returning();
     
+    const user = userResult[0];
+    
     console.log('[DemoAPI] ✅ User created successfully:', {
-      id: user[0].id,
-      email: user[0].email,
-      fullName: user[0].full_name,
-      companyId: user[0].company_id,
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      companyId: user.company_id,
       role: transformedData.role,
-      onboardingCompleted: user[0].onboarding_user_completed
+      onboardingCompleted: user.onboarding_user_completed
     });
     
-    res.json({ success: true, user: user[0] });
+    res.json({ success: true, user: user });
   } catch (error: any) {
     console.error('[DemoAPI] ❌ User creation failed:', error);
     res.status(500).json({ success: false, error: error.message });
