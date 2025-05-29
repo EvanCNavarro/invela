@@ -1837,25 +1837,34 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
        * Following coding standards for comprehensive logging and error handling
        */
       if (payload.companyId === 'COMPANY_ID_FROM_STEP_1') {
-        const immediateCompanyId = previousResults['create-company']?.companyId || previousResults['create-company']?.id;
+        const companyResult = previousResults['create-company'];
+        const actualCompanyId = companyResult?.companyId || companyResult?.id || companyResult?.company?.id;
         
-        // Use immediate result from current execution cycle
-        const actualCompanyId = immediateCompanyId;
+        console.log(`[DemoAPI] 🔍 Company ID replacement debug:`, {
+          actionId: action.id,
+          hasCompanyResult: !!companyResult,
+          companyResultKeys: companyResult ? Object.keys(companyResult) : [],
+          companyId: companyResult?.companyId,
+          id: companyResult?.id,
+          companyObjectId: companyResult?.company?.id,
+          finalCompanyId: actualCompanyId,
+          timestamp: new Date().toISOString()
+        });
         
         if (actualCompanyId) {
           payload.companyId = actualCompanyId;
-          console.log(`[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: ${actualCompanyId}`, {
+          console.log(`[DemoAPI] ✅ Replaced placeholder companyId with actual ID: ${actualCompanyId}`, {
             actionId: action.id,
-            immediateResult: immediateCompanyId ? 'available' : 'missing',
-            source: 'immediate_execution_result',
+            source: 'previous_results',
             timestamp: new Date().toISOString()
           });
         } else {
-          console.warn(`[DemoAPI] ⚠️ No company ID available for replacement in action: ${action.id}`, {
-            immediateResult: immediateCompanyId,
-            previousResults: Object.keys(previousResults),
+          console.error(`[DemoAPI] ❌ No company ID available for replacement in action: ${action.id}`, {
+            companyResult,
+            previousResultsKeys: Object.keys(previousResults),
             timestamp: new Date().toISOString()
           });
+          throw new Error(`Missing company ID for ${action.id} - company creation step may have failed`);
         }
       }
       if (payload.userId === 'USER_ID_FROM_STEP_2' && previousResults['create-user']) {
