@@ -4,6 +4,48 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.8.0 - 2025-05-29
+
+#### 🔧 Enhancements
+- **Risk Cluster Schema Unification**
+  - Unified risk cluster categories across all generation functions (demo-api.ts, unified-form-submission-service.ts)
+  - Replaced legacy "PII Data" schema with standardized "Dark Web Data" categories
+  - Implemented consistent risk weighting: Cyber Security (30%), Financial Stability (25%), Potential Liability (20%), Dark Web Data (15%), Public Sentiment (7%), Data Access Scope (3%)
+  - Created database migration script to convert existing company records (57 companies processed, 100% success rate)
+  - Enhanced risk radar chart visualization compatibility with new category schema
+
+#### 🛡️ Security
+- **Company Name Generation Security System**
+  - Implemented comprehensive blacklist validation across all company creation pathways
+  - Added real-time uniqueness checking with automatic conflict resolution
+  - Created company name suggestion system for handling duplicates
+  - Secured demo forms, API endpoints, and generation scripts with validation
+  - Enhanced name generation with professional suffix options and safety mechanisms
+
+#### ⚡ Performance
+- **Business Details Generation Optimization**
+  - Created unified business details generator providing consistent 16+ field profiles
+  - Eliminated duplicate generation logic across demo and bulk creation systems
+  - Implemented persona-specific business patterns (Banks vs FinTechs vs New Recipients)
+  - Enhanced data quality with realistic address, leadership, and certification generation
+  - Standardized revenue formatting with K/M/B suffixes and business-friendly employee count rounding
+
+#### 🧹 Data Management
+- **Demo Data Cleanup System Implementation**
+  - Built comprehensive cascading deletion system respecting database relationships
+  - Added safety preview functionality showing what would be deleted before execution
+  - Implemented transaction-based atomic operations with detailed audit trails
+  - Created admin controls with confirmation tokens and batch processing limits
+  - Enhanced relationship-aware cleanup preventing data integrity violations
+
+#### 🐛 Fixes
+- **Data Integrity Validation**
+  - Fixed non-accredited personas incorrectly receiving risk assessment data
+  - Implemented proper NULL risk scores for PENDING accreditation status
+  - Enhanced accreditation status validation throughout data generation
+  - Corrected risk cluster generation to maintain consistent total scores
+  - Resolved formatting inconsistencies in revenue and employee count displays
+
 ### Version 1.7.0 - 2025-05-28
 
 #### ✨ Features
