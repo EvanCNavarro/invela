@@ -13,6 +13,50 @@ import {
 } from './utils/demo-data-transformer';
 import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
 
+/**
+ * Generate randomized risk clusters that sum up to the total score
+ */
+function generateRiskClusters(totalScore: number) {
+  const categories = [
+    "PII Data",
+    "Account Data", 
+    "Data Transfers",
+    "Certifications Risk",
+    "Security Risk",
+    "Financial Risk"
+  ];
+  
+  const result: Record<string, number> = {};
+  const proportions: number[] = [];
+  let remainingProportion = 1;
+  
+  for (let i = 0; i < categories.length - 1; i++) {
+    const maxProportion = remainingProportion > 0.1 ? remainingProportion / 2 : remainingProportion;
+    const minProportion = 0.05;
+    const proportion = Math.random() * (maxProportion - minProportion) + minProportion;
+    proportions.push(proportion);
+    remainingProportion -= proportion;
+  }
+  
+  proportions.push(remainingProportion);
+  
+  let sumOfValues = 0;
+  categories.forEach((category, index) => {
+    let value = Math.round(totalScore * proportions[index]);
+    value = Math.max(value, 1);
+    result[category] = value;
+    sumOfValues += value;
+  });
+  
+  if (sumOfValues !== totalScore) {
+    const adjustment = totalScore - sumOfValues;
+    const lastCategory = categories[categories.length - 1];
+    result[lastCategory] = Math.max(1, result[lastCategory] + adjustment);
+  }
+  
+  return result;
+}
+
 const router = Router();
 
 /**
@@ -340,6 +384,10 @@ router.post('/demo/company/create', async (req, res) => {
       // Include risk score data only for accredited entities (APPROVED status)
       ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.risk_score && { risk_score: personaConfig.risk_score }),
       ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score }),
+      // Include risk clusters for accredited entities
+      ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.risk_score && { 
+        risk_clusters: generateRiskClusters(personaConfig.risk_score) 
+      }),
       // Include comprehensive business details
       legal_structure: businessDetails.legal_structure,
       market_position: businessDetails.market_position,
