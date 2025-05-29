@@ -20,6 +20,8 @@
 // IMPORTS
 // ========================================
 
+import { formatRevenue, roundEmployeeCount } from './formatting-utils';
+
 // ========================================
 // TYPES & INTERFACES
 // ========================================
