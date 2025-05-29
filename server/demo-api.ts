@@ -969,15 +969,15 @@ router.post('/demo/email/send-invitation', async (req, res) => {
 
 /**
  * ========================================
- * Demo Network Creation Endpoint
+ * Demo Network Display Endpoint
  * ========================================
  * 
- * Creates FinTech partner network for Data Provider personas.
- * Generates the specified number of FinTech relationships with
- * authentic company data and risk assessments.
+ * Returns existing network information for Data Provider personas.
+ * This endpoint is now display-only since network creation happens
+ * during company creation to avoid duplicate relationships.
  * 
  * @endpoint POST /api/demo/network/create
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-05-29
  */
 router.post('/demo/network/create', async (req, res) => {
@@ -986,7 +986,7 @@ router.post('/demo/network/create', async (req, res) => {
   try {
     const { companyId, networkSize, persona } = req.body;
 
-    console.log('[DemoAPI] [Network] Starting network creation:', {
+    console.log('[DemoAPI] [Network] Displaying existing network:', {
       companyId, networkSize, persona, timestamp: new Date().toISOString()
     });
 
@@ -994,33 +994,22 @@ router.post('/demo/network/create', async (req, res) => {
     if (!companyId || !networkSize || persona !== 'data-provider') {
       return res.status(400).json({
         success: false,
-        error: 'Invalid network creation parameters',
+        error: 'Invalid network display parameters',
         code: 'INVALID_NETWORK_PARAMS'
       });
     }
 
-    // Generate FinTech companies for the network
-    await generateFinTechCompanies(networkSize);
-    
-    // Get the newly created companies from database
-    const finTechCompanies = await db.query.companies.findMany({
-      where: eq(companies.category, 'FinTech'),
-      orderBy: [sql`created_at DESC`],
-      limit: networkSize
+    // Get existing relationships for this company
+    const existingRelationships = await db.query.relationships.findMany({
+      where: eq(relationships.company_id, parseInt(companyId)),
+      with: {
+        relatedCompany: true
+      }
     });
-    
-    // Create relationships in database
-    const relationshipRecords = finTechCompanies.map(fintech => ({
-      company_id: parseInt(companyId),
-      related_company_id: fintech.id,
-      relationship_type: 'fintech_partner',
-      status: 'active'
-    }));
 
-    const createdRelationships = await db.insert(relationships).values(relationshipRecords).returning();
-
-    console.log('[DemoAPI] [Network] Network created successfully:', {
-      companyId, networkSize: createdRelationships.length,
+    console.log('[DemoAPI] [Network] Retrieved existing network:', {
+      companyId, 
+      existingRelationships: existingRelationships.length,
       duration: Date.now() - startTime
     });
 
@@ -1028,18 +1017,18 @@ router.post('/demo/network/create', async (req, res) => {
       success: true,
       network: {
         providerCompanyId: companyId,
-        partnerCount: createdRelationships.length,
-        relationships: createdRelationships.map(r => r.id)
+        partnerCount: existingRelationships.length,
+        relationships: existingRelationships.map(r => r.id)
       },
       processingTime: Date.now() - startTime,
       timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('[DemoAPI] [Network] Creation failed:', error);
+    console.error('[DemoAPI] [Network] Display failed:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create network',
+      error: 'Failed to display network',
       details: error instanceof Error ? error.message : 'Unknown error',
       processingTime: Date.now() - startTime
     });
