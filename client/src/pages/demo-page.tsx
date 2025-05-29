@@ -826,13 +826,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     // Show field if it's tagged as 'default' OR if current persona is in the field's tag list
     const shouldShow = fieldTags.includes('default') || fieldTags.includes(personaId);
     
-    console.log(`[DemoStep2] Field visibility check: ${fieldName} for ${personaId} = ${shouldShow}`, {
-      fieldTags,
-      personaId,
-      isDefault: fieldTags.includes('default'),
-      hasPersonaTag: fieldTags.includes(personaId),
-      shouldShow
-    });
+
     
     return shouldShow;
   }

@@ -143,10 +143,7 @@ const getStepAssetSource = (
     
     // During review stage, use regular step 3 animated GIF
     if (step3WizardStage === 'review') {
-      console.log('[DemoStepVisual] Step 3 review stage:', {
-        stage: step3WizardStage,
-        asset: 'regular-animated-gif'
-      });
+
       return stepConfig.assets.animatedGif;
     }
   }
@@ -212,7 +209,7 @@ export function DemoStepVisual({ currentStep, className, isSystemSetup = false, 
             const assetSource = getStepAssetSource(stepConfig, isActive, isSystemSetup, step3WizardStage);
             const altText = getStepAltText(stepConfig, isActive);
             
-            console.log(`[DemoStepVisual] Step ${stepConfig.id} - Active: ${isActive}, Asset: ${assetSource}`);
+
             
             // Enhanced: Sophisticated fade logic for system setup and launch stages
             const isPreviousStep = stepConfig.id < currentStep;
