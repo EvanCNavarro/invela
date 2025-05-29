@@ -225,20 +225,15 @@ const DemoNavigation = ({
  * Updated to use shared state management for persona selection
  */
 const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) => {
-  console.log('[DemoStep1] Rendering platform overview');
-  
   /**
    * Handle persona selection with proper state management
    * Updates shared state that will be used in subsequent steps
    */
   const handlePersonaSelect = (persona: DemoPersona) => {
-    console.log('[DemoStep1] Persona selected:', persona.id);
     onPersonaSelect?.(persona);
   };
 
   const getColorClasses = (color: string, isSelected: boolean) => {
-    console.log(`[DemoStep1] Applying color scheme: ${color}, selected: ${isSelected}`);
-    
     // All personas use consistent blue selection color regardless of icon color
     return isSelected 
       ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 ring-offset-2" 
@@ -246,8 +241,6 @@ const DemoStep1 = ({ onNext, selectedPersona, onPersonaSelect }: DemoStepProps) 
   };
 
   const getIconColor = (color: string) => {
-    console.log(`[DemoStep1] Setting icon color for: ${color}`);
-    
     const colorMap = {
       gray: "text-gray-500",      // New Data Recipient - gray icon
       green: "text-green-600",    // Accredited Data Recipient - green icon
