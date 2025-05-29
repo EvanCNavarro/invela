@@ -47,6 +47,8 @@ export interface BusinessDetails {
   certifications_compliance: string;
   files_public: string[];
   files_private: string[];
+  risk_score: number | null;
+  risk_clusters: Record<string, number> | null;
 }
 
 // ========================================
@@ -133,6 +135,36 @@ function getEmployeeCount(revenueTier: RevenueTier): number {
   );
 }
 
+/**
+ * Generates risk clusters that mathematically sum to risk score
+ */
+function generateRiskClusters(targetRiskScore: number): Record<string, number> {
+  const clusters = {
+    "Dark Web Data": 0,
+    "Cyber Security": 0,
+    "Public Sentiment": 0,
+    "Data Access Scope": 0,
+    "Financial Stability": 0,
+    "Potential Liability": 0
+  };
+  
+  const clusterKeys = Object.keys(clusters) as Array<keyof typeof clusters>;
+  let remainingScore = targetRiskScore;
+  
+  // Distribute score across clusters with some randomness
+  for (let i = 0; i < clusterKeys.length - 1; i++) {
+    const maxForThisCluster = Math.min(remainingScore, Math.floor(targetRiskScore / 3));
+    const clusterScore = randomInt(0, maxForThisCluster);
+    clusters[clusterKeys[i]] = clusterScore;
+    remainingScore -= clusterScore;
+  }
+  
+  // Assign remaining score to last cluster
+  clusters[clusterKeys[clusterKeys.length - 1]] = remainingScore;
+  
+  return clusters;
+}
+
 // ========================================
 // MAIN GENERATION FUNCTIONS
 // ========================================
@@ -152,6 +184,10 @@ export function generateBusinessDetails(
   
   const revenueTier = getRevenueTier(isApproved, persona);
   const numEmployees = getEmployeeCount(revenueTier);
+  
+  // Generate risk assessment data
+  const riskScore = isApproved ? randomInt(1, 35) : randomInt(65, 95);
+  const riskClusters = isApproved ? generateRiskClusters(riskScore) : null;
   
   // Generate persona-specific business details
   const businessDetails: BusinessDetails = {
@@ -225,7 +261,10 @@ export function generateBusinessDetails(
       ? ['board_minutes_2024.pdf', 'regulatory_examination.pdf', 'risk_committee_report.pdf', 'capital_adequacy.pdf']
       : isApproved
         ? ['internal_audit_2024.pdf', 'security_assessment.pdf', 'financial_statements.pdf', 'risk_analysis.pdf']
-        : ['risk_assessment.pdf', 'technical_architecture.pdf', 'financial_projections.pdf']
+        : ['risk_assessment.pdf', 'technical_architecture.pdf', 'financial_projections.pdf'],
+    
+    risk_score: isApproved ? riskScore : null,
+    risk_clusters: riskClusters
   };
   
   return businessDetails;
