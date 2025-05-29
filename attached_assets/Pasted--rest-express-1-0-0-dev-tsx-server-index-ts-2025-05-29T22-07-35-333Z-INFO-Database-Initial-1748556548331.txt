@@ -1,0 +1,347 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-29T22:07:35.333Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-29T22:07:35.337Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":103,"timestamp":"2025-05-29T22:07:35.337Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-29T22:07:36.075Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-29T22:07:36.549Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-29T22:07:36.550Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"u8m5ah","timestamp":"2025-05-29T22:07:36.550Z"}
+[2025-05-29T22:07:36.550Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-29T22:07:36.550Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-29T22:07:36.550Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-29T22:07:36.550Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-29T22:07:36.550Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-29T22:07:36.550Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-29T22:07:36.550Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-29T22:07:36.550Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-29T22:07:36.550Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-29T22:07:36.551Z] [INFO] [App] Setting up Vite development server 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-29T22:07:36.552Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-29T22:07:36.568Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-29T22:07:36.569Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-29T22:07:36.569Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-29T22:07:36.569Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-29T22:07:36.569Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-29T22:07:36.569Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-29T22:07:36.607Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-29T22:07:36.607Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-29T22:07:36.607Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-29T22:07:36.608Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-29T22:07:36.609Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-29T22:07:37.944Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-29T22:07:38.651Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T22:07:42.004Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T22:07:42.480Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T22:07:46.569Z] [INFO] [App] Running background health checks... 
+[2025-05-29T22:07:46.569Z] [StartupChecks] Running application startup health checks... 
+[2025-05-29T22:07:46.570Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-29T22:07:46.570Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-29T22:07:46.777Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-29T22:07:46.812Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-29T22:07:46.845Z] [DBConnectionService] Database connection check successful 
+[2025-05-29T22:07:46.845Z] [StartupChecks] Database health check passed 
+[2025-05-29T22:07:46.845Z] [StartupChecks] All startup health checks passed! 
+[2025-05-29T22:07:46.845Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-29T22:07:50.493Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748556470493-dnxo6wm","clients":1}
+[2025-05-29T22:07:50.612Z] [INFO] [WebSocket] Received message from client client-1748556470493-dnxo6wm {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-29T22:07:50.487Z"}}
+[2025-05-29T22:07:50.612Z] [INFO] [WebSocket] Authentication from client client-1748556470493-dnxo6wm {"module":"WebSocket","hasToken":true}
+[2025-05-29T22:07:50.998Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748556470998-d1f9lix","clients":2}
+[2025-05-29T22:07:51.504Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748556471504-i27ks2a","clients":3}
+[2025-05-29T22:07:52.061Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748556472061-cx0amd2","clients":4}
+[2025-05-29T22:07:52.568Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748556472568-oylme5c","clients":5}
+[2025-05-29T22:07:52.935Z] [INFO] [WebSocket] Received message from client client-1748556472568-oylme5c {"module":"WebSocket","type":"authenticate","userId":"529","companyId":"743","clientId":"ws_1748556471006_reo7b6bl6","timestamp":"2025-05-29T22:07:52.809Z"}
+[2025-05-29T22:07:52.935Z] [INFO] [WebSocket] Authentication from client client-1748556472568-oylme5c {"module":"WebSocket","userId":"529","companyId":"743","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T22:08:02.663Z',
+  requestId: 'req_1748556482663_wj7zm9l19'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T22:08:02.665Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean full combinatorial name {
+  timestamp: '2025-05-29T22:08:02.666Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Dynamic Compliance Technologies',
+  components: { prefix: 'Dynamic', core: 'Compliance', suffix: 'Technologies' },
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Dynamic Compliance Technologies',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T22:08:02.666Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Dynamic Compliance Technologies',
+  nameLength: 31
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T22:08:02.739Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Dynamic Compliance Technologies',
+  duration: 73
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Dynamic Compliance Technologies',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 76,
+  timestamp: '2025-05-29T22:08:02.739Z'
+}
+[2025-05-29T22:08:02.769Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 106ms :: {"success":true,"companyName":"Dynamic Compliance Technologies","wasModified"... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T22:08:04.936Z',
+  requestId: 'req_1748556484936_9k40ft182'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T22:08:04.937Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean short portmanteau name {
+  timestamp: '2025-05-29T22:08:04.937Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean short portmanteau name',
+  baseName: 'Demo Company',
+  generatedName: 'PrecisionCapital',
+  nameLength: 'short',
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'PrecisionCapital',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T22:08:04.937Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'PrecisionCapital',
+  nameLength: 16
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T22:08:04.969Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'PrecisionCapital',
+  duration: 32
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'PrecisionCapital',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 33,
+  timestamp: '2025-05-29T22:08:04.969Z'
+}
+[2025-05-29T22:08:05.002Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 66ms :: {"success":true,"companyName":"PrecisionCapital","wasModified":false,"origina... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T22:08:06.554Z',
+  requestId: 'req_1748556486554_y7r0xtyvp'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T22:08:06.555Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean short portmanteau name {
+  timestamp: '2025-05-29T22:08:06.555Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean short portmanteau name',
+  baseName: 'Demo Company',
+  generatedName: 'CloudEnterprises',
+  nameLength: 'short',
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'CloudEnterprises',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T22:08:06.556Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'CloudEnterprises',
+  nameLength: 16
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T22:08:06.588Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'CloudEnterprises',
+  duration: 32
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'CloudEnterprises',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 34,
+  timestamp: '2025-05-29T22:08:06.588Z'
+}
+[2025-05-29T22:08:06.621Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 67ms :: {"success":true,"companyName":"CloudEnterprises","wasModified":false,"origina... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T22:08:08.076Z',
+  requestId: 'req_1748556488076_dvuxnsr27'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T22:08:08.077Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean full combinatorial name {
+  timestamp: '2025-05-29T22:08:08.077Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Standard Performance Advisors',
+  components: { prefix: 'Standard', core: 'Performance', suffix: 'Advisors' },
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Standard Performance Advisors',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T22:08:08.077Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Standard Performance Advisors',
+  nameLength: 29
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T22:08:08.111Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Standard Performance Advisors',
+  duration: 34
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Standard Performance Advisors',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 35,
+  timestamp: '2025-05-29T22:08:08.111Z'
+}
+[2025-05-29T22:08:08.147Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 71ms :: {"success":true,"companyName":"Standard Performance Advisors","wasModified":f... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T22:08:11.360Z',
+  requestId: 'req_1748556491360_m28tux2lq'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T22:08:11.361Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean full combinatorial name {
+  timestamp: '2025-05-29T22:08:11.361Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Summit Investment Studios',
+  components: { prefix: 'Summit', core: 'Investment', suffix: 'Studios' },
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Summit Investment Studios',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T22:08:11.362Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Summit Investment Studios',
+  nameLength: 25
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T22:08:11.394Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Summit Investment Studios',
+  duration: 32
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Summit Investment Studios',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 35,
+  timestamp: '2025-05-29T22:08:11.395Z'
+}
+[2025-05-29T22:08:11.431Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 71ms :: {"success":true,"companyName":"Summit Investment Studios","wasModified":false... 
+[2025-05-29T22:08:12.723Z] [INFO] [WebSocket] Received message from client client-1748556472568-oylme5c {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:12.599Z","connectionId":"ws_1748556471006_reo7b6bl6"}
+[2025-05-29T22:08:20.614Z] [INFO] [WebSocket] Received message from client client-1748556470493-dnxo6wm {"module":"WebSocket","type":"ping"}
+[2025-05-29T22:08:21.669Z] [INFO] [WebSocket] Received message from client client-1748556471504-i27ks2a {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:21.542Z","connectionId":"ws_1748556471541_oc2gx2jm3"}
+[2025-05-29T22:08:22.181Z] [INFO] [WebSocket] Received message from client client-1748556472061-cx0amd2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:22.058Z","connectionId":"ws_1748556470994_u9pltjrwa"}
+[2025-05-29T22:08:32.732Z] [INFO] [WebSocket] Received message from client client-1748556472568-oylme5c {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:32.599Z","connectionId":"ws_1748556471006_reo7b6bl6"}
+[2025-05-29T22:08:50.613Z] [INFO] [WebSocket] Received message from client client-1748556470493-dnxo6wm {"module":"WebSocket","type":"ping"}
+[2025-05-29T22:08:51.668Z] [INFO] [WebSocket] Received message from client client-1748556471504-i27ks2a {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:51.543Z","connectionId":"ws_1748556471541_oc2gx2jm3"}
+[2025-05-29T22:08:52.188Z] [INFO] [WebSocket] Received message from client client-1748556472061-cx0amd2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:52.057Z","connectionId":"ws_1748556470994_u9pltjrwa"}
+[2025-05-29T22:08:52.728Z] [INFO] [WebSocket] Received message from client client-1748556472568-oylme5c {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T22:08:52.599Z","connectionId":"ws_1748556471006_reo7b6bl6"}
