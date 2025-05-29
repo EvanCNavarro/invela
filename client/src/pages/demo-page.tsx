@@ -1655,7 +1655,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
       }
       
       // Build persona-specific payload efficiently
-      const payload = {
+      const payload: any = {
         name: companyName,
         type: 'demo',
         persona: selectedPersona?.id,
