@@ -4,6 +4,17 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.8.1 - 2025-05-29
+
+#### 🔧 Enhancements
+- **Developer Experience Console Logging Cleanup**
+  - Removed verbose field visibility logging from DemoStep2 component that fired on every render
+  - Cleaned up DemoStepVisual asset switching logs that triggered during navigation
+  - Eliminated repetitive step progression logging while preserving essential error handling
+  - Reduced console output by 20+ log statements without affecting functionality
+  - Maintained comprehensive error logging for production debugging needs
+  - Improved developer experience during demo flow testing and development
+
 ### Version 1.8.0 - 2025-05-29
 
 #### 🔧 Enhancements
