@@ -308,6 +308,20 @@ router.post('/demo/company/create', async (req, res) => {
     });
     
     // ========================================
+    // DEMO SESSION TRACKING
+    // ========================================
+    
+    // Generate demo session ID for tracking
+    const demoSessionId = `demo_${Date.now()}_${personaConfig.demo_persona_type}`;
+    const demoCreatedAt = new Date();
+    
+    console.log('[DemoAPI] Creating demo session tracking:', {
+      sessionId: demoSessionId,
+      persona: personaConfig.demo_persona_type,
+      timestamp: demoCreatedAt.toISOString()
+    });
+    
+    // ========================================
     // DATABASE COMPANY CREATION
     // ========================================
     
@@ -320,6 +334,9 @@ router.post('/demo/company/create', async (req, res) => {
       is_demo: true,
       description: personaConfig.description,
       accreditation_status: personaConfig.accreditation_status,
+      // Demo session tracking fields
+      demo_session_id: demoSessionId,
+      demo_created_at: demoCreatedAt,
       // Include risk score data only for accredited entities (APPROVED status)
       ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.risk_score && { risk_score: personaConfig.risk_score }),
       ...(personaConfig.accreditation_status === 'APPROVED' && personaConfig.chosen_score && { chosen_score: personaConfig.chosen_score }),
