@@ -270,8 +270,8 @@ router.post('/demo/company/create', async (req, res) => {
             demo_persona_type: 'data-provider',
             description: 'Enterprise banking institution specializing in financial risk assessment and network management',
             // Add risk score data for Data Provider banks
-            risk_score: Math.floor(Math.random() * 20) + 65, // 65-85 range (banks typically have higher scores)
-            chosen_score: Math.floor(Math.random() * 20) + 65
+            risk_score: Math.floor(Math.random() * 41) + 5, // 5-45 range (banks have lower risk scores)
+            chosen_score: Math.floor(Math.random() * 41) + 5
           };
           
         case 'accredited-data-recipient':

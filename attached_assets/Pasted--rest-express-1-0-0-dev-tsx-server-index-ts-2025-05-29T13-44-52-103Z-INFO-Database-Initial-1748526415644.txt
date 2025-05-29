@@ -1,0 +1,737 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-29T13:44:52.103Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-29T13:44:52.108Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-29T13:44:52.108Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-29T13:44:52.839Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-29T13:44:53.391Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-29T13:44:53.393Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"4axkwk","timestamp":"2025-05-29T13:44:53.393Z"}
+[2025-05-29T13:44:53.393Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-29T13:44:53.393Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-29T13:44:53.393Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-29T13:44:53.393Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-29T13:44:53.393Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-29T13:44:53.393Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-29T13:44:53.393Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-29T13:44:53.393Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-29T13:44:53.394Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-29T13:44:53.394Z] [INFO] [App] Setting up Vite development server 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-29T13:44:53.398Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-29T13:44:53.412Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-29T13:44:53.412Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-29T13:44:53.412Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-29T13:44:53.412Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-29T13:44:53.412Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-29T13:44:53.413Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-29T13:44:53.455Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-29T13:44:53.455Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-29T13:44:53.455Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-29T13:44:53.455Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-29T13:44:53.457Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-29T13:44:54.752Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-29T13:44:55.345Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T13:45:03.412Z] [INFO] [App] Running background health checks... 
+[2025-05-29T13:45:03.413Z] [StartupChecks] Running application startup health checks... 
+[2025-05-29T13:45:03.413Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-29T13:45:03.414Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-29T13:45:03.591Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-29T13:45:03.619Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-29T13:45:03.654Z] [DBConnectionService] Database connection check successful 
+[2025-05-29T13:45:03.654Z] [StartupChecks] Database health check passed 
+[2025-05-29T13:45:03.654Z] [StartupChecks] All startup health checks passed! 
+[2025-05-29T13:45:03.654Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-29T13:45:03.870Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T13:45:03.874Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T13:45:12.015Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526312015-pgfc7yh","clients":1}
+[2025-05-29T13:45:12.133Z] [INFO] [WebSocket] Received message from client client-1748526312015-pgfc7yh {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-29T13:45:12.016Z"}}
+[2025-05-29T13:45:12.133Z] [INFO] [WebSocket] Authentication from client client-1748526312015-pgfc7yh {"module":"WebSocket","hasToken":true}
+[2025-05-29T13:45:12.494Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526312494-spl020k","clients":2}
+[2025-05-29T13:45:12.975Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526312975-sqi9b65","clients":3}
+[2025-05-29T13:45:13.452Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526313452-l1eo8or","clients":4}
+[2025-05-29T13:45:13.927Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526313927-dpchl07","clients":5}
+[2025-05-29T13:45:14.221Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"authenticate","userId":"519","companyId":"712","clientId":"ws_1748526312573_2f9uhlzmi","timestamp":"2025-05-29T13:45:14.107Z"}
+[2025-05-29T13:45:14.221Z] [INFO] [WebSocket] Authentication from client client-1748526313927-dpchl07 {"module":"WebSocket","userId":"519","companyId":"712","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T13:45:16.319Z',
+  requestId: 'req_1748526316318_xd06d2nd2'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T13:45:16.321Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean short portmanteau name {
+  timestamp: '2025-05-29T13:45:16.322Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean short portmanteau name',
+  baseName: 'Demo Company',
+  generatedName: 'FundingInstitute',
+  nameLength: 'short',
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'FundingInstitute',
+  strategy: 'full_combinatorial',
+  duration: 4
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T13:45:16.322Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'FundingInstitute',
+  nameLength: 16
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T13:45:16.364Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'FundingInstitute',
+  duration: 42
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'FundingInstitute',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 47,
+  timestamp: '2025-05-29T13:45:16.365Z'
+}
+[2025-05-29T13:45:16.395Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 77ms :: {"success":true,"companyName":"FundingInstitute","wasModified":false,"origina... 
+[2025-05-29T13:45:23.459Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":6,"taskIds":[1089,1090,1091,1086,1087,1088]}
+[Task Progress] Calculated progress for task 1089 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1090 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1091 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1086 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1087 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1088 (open_banking): 0/44 = 0%
+[2025-05-29T13:45:34.045Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:45:33.931Z","connectionId":"ws_1748526312573_2f9uhlzmi"}
+[2025-05-29T13:45:42.133Z] [INFO] [WebSocket] Received message from client client-1748526312015-pgfc7yh {"module":"WebSocket","type":"ping"}
+[2025-05-29T13:45:43.092Z] [INFO] [WebSocket] Received message from client client-1748526312975-sqi9b65 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:45:42.977Z","connectionId":"ws_1748526312976_3eap7z9lv"}
+[2025-05-29T13:45:43.568Z] [INFO] [WebSocket] Received message from client client-1748526313452-l1eo8or {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:45:43.454Z","connectionId":"ws_1748526312496_9573pil86"}
+[2025-05-29T13:45:54.049Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:45:53.931Z","connectionId":"ws_1748526312573_2f9uhlzmi"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'FundingInstitute',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  networkSize: 14,
+  metadata: { networkSize: 14 }
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-29T13:46:06.413Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: 14,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 14,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'FundingInstitute',
+    persona: 'data-provider',
+    networkSize: 14
+  },
+  output: {
+    name: 'FundingInstitute',
+    persona: 'data-provider',
+    category: 'Bank',
+    networkSize: 14,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-29T13:46:06.413Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 14,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: data-provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  onboardingRequired: false,
+  tabCount: 7
+}
+[DemoAPI] Generated business details: { persona: 'data-provider', isApproved: true, fieldsGenerated: 17 }
+[DemoAPI] Risk assessment access validation: {
+  persona: 'data-provider',
+  accreditationStatus: 'APPROVED',
+  hasRiskAccess: true,
+  willIncludeRiskScores: 67
+}
+[DemoAPI] Creating demo session tracking: {
+  sessionId: 'demo_1748526366415_data-provider',
+  persona: 'data-provider',
+  timestamp: '2025-05-29T13:46:06.415Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 714,
+  name: 'FundingInstitute',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  personaType: 'data-provider',
+  transformedPersona: 'data-provider',
+  shouldCreateNetwork: true,
+  processingTime: 54
+}
+[DemoAPI] ⏭️ Skipping task creation for persona: {
+  persona: 'data-provider',
+  reason: 'Not a New Data Recipient - tasks not required for this persona'
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 714,
+  bankName: 'FundingInstitute',
+  targetNetworkSize: 14,
+  persona: 'data-provider'
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 14,
+  availableCount: 14,
+  firstFewNames: [
+    'Catalyst Consulting Council',
+    'Coin Tracker',
+    'Continental Infrastructure Union'
+  ]
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Catalyst Consulting Council',
+  relationshipId: '714-496',
+  riskScore: 66,
+  chosenScore: 65
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Coin Tracker',
+  relationshipId: '714-498',
+  riskScore: 50,
+  chosenScore: 35
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Continental Infrastructure Union',
+  relationshipId: '714-500',
+  riskScore: 69,
+  chosenScore: 45
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Wealthfront',
+  relationshipId: '714-164',
+  riskScore: 41,
+  chosenScore: 36
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Allied Evaluation Specialists',
+  relationshipId: '714-505',
+  riskScore: 69,
+  chosenScore: 32
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'Bridge Quality Consultants',
+  relationshipId: '714-494',
+  riskScore: 45,
+  chosenScore: 35
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'United Exchange Platforms',
+  relationshipId: '714-508',
+  riskScore: 60,
+  chosenScore: 69
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'StableCoin Protocol',
+  relationshipId: '714-483',
+  riskScore: 32,
+  chosenScore: 50
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'RealEstate TokenFi',
+  relationshipId: '714-449',
+  riskScore: 34,
+  chosenScore: 37
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'ClimateFinance Labs',
+  relationshipId: '714-458',
+  riskScore: 59,
+  chosenScore: 36
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'DeFi Bridge Protocol',
+  relationshipId: '714-452',
+  riskScore: 32,
+  chosenScore: 62
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'PayrollTech Innovations',
+  relationshipId: '714-455',
+  riskScore: 37,
+  chosenScore: 40
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'QuantTrading Systems',
+  relationshipId: '714-457',
+  riskScore: 50,
+  chosenScore: 49
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'FundingInstitute',
+  fintech: 'BankingAPI Gateway',
+  relationshipId: '714-459',
+  riskScore: 34,
+  chosenScore: 68
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'FundingInstitute',
+  targetSize: 14,
+  successfulRelationships: 14,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 714,
+  companyName: 'FundingInstitute',
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: 7,
+  networkCreated: true,
+  totalProcessingTime: 1023
+}
+[2025-05-29T13:46:07.467Z] [INFO] [App] POST /api/demo/company/create 200 in 1055ms :: {"success":true,"company":{"id":714,"name":"FundingInstitute","description":"... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Ashley Carter',
+  email: 'acarter@fundinginstitute.com',
+  companyId: 714,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748526364829_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-29T13:46:04.829Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 714,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 714
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-29T13:46:08.219Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Ashley Carter',
+    email: 'acarter@fundinginstitute.com',
+    companyId: 714,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Ashley Carter',
+    email: 'acarter@fundinginstitute.com',
+    companyId: 714,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'data-provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-29T13:46:08.219Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'provider',
+  persona: 'data-provider',
+  shouldCompleteOnboarding: true,
+  onboardingUserCompleted: true,
+  logic: 'Other persona - onboarding_user_completed = TRUE (skips modal)',
+  modalWillShow: false
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 521,
+  email: 'acarter@fundinginstitute.com',
+  fullName: 'Ashley Carter',
+  companyId: 714,
+  role: 'provider',
+  onboardingCompleted: true
+}
+[2025-05-29T13:46:08.350Z] [INFO] [App] POST /api/demo/user/create 200 in 131ms :: {"success":true,"user":{"id":521,"email":"acarter@fundinginstitute.com","full... 
+[2025-05-29T13:46:09.130Z] [INFO] [App] POST /api/demo/auth/setup 200 in 32ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 521,
+  companyId: 714,
+  demoType: 'data-provider',
+  timestamp: '2025-05-29T13:46:09.876Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 521,
+  email: 'acarter@fundinginstitute.com',
+  companyId: 714,
+  fullName: 'Ashley Carter'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: true, alreadyCompleted: true, category: 'Bank' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 521,
+  email: 'acarter@fundinginstitute.com',
+  companyId: 714,
+  environmentId: 'env_demo_1748526369908_521',
+  authenticated: true,
+  totalDuration: 131,
+  timestamp: '2025-05-29T13:46:10.007Z'
+}
+[2025-05-29T13:46:10.037Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 161ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-29T13:46:12.133Z] [INFO] [WebSocket] Received message from client client-1748526312015-pgfc7yh {"module":"WebSocket","type":"ping"}
+[2025-05-29T13:46:13.091Z] [INFO] [WebSocket] Received message from client client-1748526312975-sqi9b65 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:12.977Z","connectionId":"ws_1748526312976_3eap7z9lv"}
+[Current Company] Fetching company for user: { userId: 521, companyId: 714 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 521, company_id: 714, email: 'acarter@fundinginstitute.com' }
+[2025-05-29T13:46:13.384Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":714,"userId":521}
+[Current Company] Found company: {
+  id: 714,
+  name: 'FundingInstitute',
+  onboardingCompleted: true,
+  riskScore: 67,
+  chosenScore: 77,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 521,
+  companyId: 714,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-29T13:46:13.406Z'
+}
+[2025-05-29T13:46:13.413Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":714}
+[Tasks] Automatically unlocking all tasks for company { userId: 521, companyId: 714, requestedBy: 'automatic_task_unlock' }
+[2025-05-29T13:46:13.414Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":714}
+[2025-05-29T13:46:13.436Z] [INFO] [App] GET /api/companies/current 200 in 59ms :: {"id":714,"name":"FundingInstitute","category":"Bank","is_demo":true,"revenue... 
+[2025-05-29T13:46:13.442Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":714}
+[Tasks] Successfully unlocked all tasks for company: 714
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 521',
+    condition2: 'tasks.created_by = 521',
+    condition3: "tasks.company_id = 714 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('acarter@fundinginstitute.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-29T13:46:13.543Z] [INFO] [App] GET /api/tasks 304 in 160ms :: [] 
+[2025-05-29T13:46:13.575Z] [INFO] [WebSocket] Received message from client client-1748526313452-l1eo8or {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:13.462Z","connectionId":"ws_1748526312496_9573pil86"}
+[2025-05-29T13:46:13.613Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 521 
+[2025-05-29T13:46:13.613Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-29T13:46:13.613Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-29T13:46:13.613Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 521 
+[2025-05-29T13:46:13.655Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 521 
+[2025-05-29T13:46:13.663Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748526373663-al5cv7b","clients":6}
+[2025-05-29T13:46:13.685Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 73ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-29T13:46:13.779Z] [INFO] [WebSocket] Received message from client client-1748526373663-al5cv7b {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748526311277_pbx4e4l66","timestamp":"2025-05-29T13:46:13.664Z"}
+[2025-05-29T13:46:13.779Z] [INFO] [WebSocket] Authentication from client client-1748526373663-al5cv7b {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Companies] Fetching companies for user: { userId: 521, company_id: 714 }
+[Relationships] Fetching network for company: 714
+[Network Visualization] Fetching network data for company: 714
+[Companies] Query successful, found companies: {
+  count: 15,
+  companies: [
+    {
+      id: 505,
+      name: 'Allied Evaluation Specialists',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 459,
+      name: 'BankingAPI Gateway',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 494,
+      name: 'Bridge Quality Consultants',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 496,
+      name: 'Catalyst Consulting Council',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 458,
+      name: 'ClimateFinance Labs',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 498,
+      name: 'Coin Tracker',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 500,
+      name: 'Continental Infrastructure Union',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 452,
+      name: 'DeFi Bridge Protocol',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 714,
+      name: 'FundingInstitute',
+      hasLogo: false,
+      hasRelationship: true
+    },
+    {
+      id: 455,
+      name: 'PayrollTech Innovations',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 457,
+      name: 'QuantTrading Systems',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 449,
+      name: 'RealEstate TokenFi',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 483,
+      name: 'StableCoin Protocol',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 508,
+      name: 'United Exchange Platforms',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 164,
+      name: 'Wealthfront',
+      hasLogo: false,
+      hasRelationship: false
+    }
+  ]
+}
+[Relationships] Found network members: { count: 14 }
+[Network Visualization] Found network relationships: { count: 14 }
+[Network Visualization] Returning visualization data: { centerNode: 'FundingInstitute', nodeCount: 14 }
+[2025-05-29T13:46:13.945Z] [INFO] [App] GET /api/companies 200 in 70ms :: [{"id":505,"name":"Allied Evaluation Specialists","category":"FinTech","descr... 
+[2025-05-29T13:46:13.945Z] [INFO] [App] GET /api/relationships 200 in 65ms :: [{"id":814,"companyId":714,"relatedCompanyId":505,"relationshipType":"data_pr... 
+[2025-05-29T13:46:13.968Z] [INFO] [App] GET /api/network/visualization 200 in 86ms :: {"center":{"id":714,"name":"FundingInstitute","riskScore":67,"riskBucket":"hi... 
+[2025-05-29T13:46:14.044Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:13.931Z","connectionId":"ws_1748526312573_2f9uhlzmi"}
+[Relationships] Fetching network for company: 714
+[Relationships] Found network members: { count: 14 }
+[2025-05-29T13:46:14.186Z] [INFO] [App] GET /api/relationships 304 in 66ms :: [{"id":814,"companyId":714,"relatedCompanyId":505,"relationshipType":"data_pr... 
+[2025-05-29T13:46:18.921Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 521 
+[2025-05-29T13:46:18.921Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-29T13:46:18.921Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-29T13:46:18.921Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 521 
+[Company Logo] Fetching logo for company ID: 505
+[Company Logo] Fetching logo for company ID: 459
+[Company Logo] Fetching logo for company ID: 494
+[Company Logo] Fetching logo for company ID: 496
+[Company Logo] Fetching logo for company ID: 458
+[2025-05-29T13:46:18.977Z] [INFO] [App] [TabTutorials] No tutorial status found for network for user 521 
+[Company Logo] No logo assigned for company: Allied Evaluation Specialists (505)
+[Company Logo] No logo assigned for company: BankingAPI Gateway (459)
+[Company Logo] No logo assigned for company: Bridge Quality Consultants (494)
+[Company Logo] No logo assigned for company: Catalyst Consulting Council (496)
+[Company Logo] No logo assigned for company: ClimateFinance Labs (458)
+[2025-05-29T13:46:19.035Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 114ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"network"} 
+[2025-05-29T13:46:19.036Z] [WARN] [App] GET /api/companies/505/logo 404 in 112ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-29T13:46:19.041Z] [WARN] [App] GET /api/companies/459/logo 404 in 115ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-29T13:46:19.063Z] [WARN] [App] GET /api/companies/494/logo 404 in 114ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-29T13:46:19.064Z] [WARN] [App] GET /api/companies/496/logo 404 in 113ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-29T13:46:19.070Z] [WARN] [App] GET /api/companies/458/logo 404 in 116ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-29T13:46:20.312Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 521 
+[2025-05-29T13:46:20.313Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-29T13:46:20.313Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-29T13:46:20.313Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: network (raw: network), user: 521 
+[2025-05-29T13:46:20.381Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for network for user 521 
+[2025-05-29T13:46:20.412Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 99ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-29T13:46:20.593Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 521 
+[2025-05-29T13:46:20.593Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-29T13:46:20.593Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-29T13:46:20.593Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 521 
+[2025-05-29T13:46:20.655Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 521: completed=false, step=0 
+[2025-05-29T13:46:20.688Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 96ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-29T13:... 
+[2025-05-29T13:46:26.690Z] [INFO] [App] [TabTutorials] Status request for tab "risk-score-configuration" from authenticated user ID: 521 
+[2025-05-29T13:46:26.690Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form 
+[2025-05-29T13:46:26.690Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'risk-score-configuration' 
+[2025-05-29T13:46:26.690Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: risk-score-configuration (raw: risk-score-configuration), user: 521 
+[OptionalAuth] Request to /configuration: authenticated=true, hasUser=true
+[OptionalAuth] Request to /configuration: authenticated=true, hasUser=true
+[RiskConfiguration] Using company ID: 714 (authenticated)
+[OptionalAuth] Request to /priorities: authenticated=true, hasUser=true
+[OptionalAuth] Request to /priorities: authenticated=true, hasUser=true
+[RiskPriorities] GET request received
+[RiskPriorities] Using company ID: 714 (authenticated)
+[2025-05-29T13:46:26.733Z] [INFO] [App] [TabTutorials] No tutorial status found for risk-score-configuration for user 521 
+[RiskPriorities] Retrieved company from DB: found
+[RiskPriorities] risk_priorities in DB: not present
+[RiskPriorities] No priorities found in DB, returning null
+[2025-05-29T13:46:26.770Z] [INFO] [App] GET /api/user-tab-tutorials/risk-score-configuration/status 304 in 80ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"risk-score-confi... 
+[2025-05-29T13:46:26.794Z] [INFO] [App] GET /api/risk-score/configuration 304 in 93ms 
+[2025-05-29T13:46:26.794Z] [INFO] [App] GET /api/risk-score/priorities 304 in 83ms 
+[OptionalAuth] Request to /priorities: authenticated=true, hasUser=true
+[OptionalAuth] Request to /priorities: authenticated=true, hasUser=true
+[RiskPriorities] GET request received
+[RiskPriorities] Using company ID: 714 (authenticated)
+[RiskPriorities] Retrieved company from DB: found
+[RiskPriorities] risk_priorities in DB: not present
+[RiskPriorities] No priorities found in DB, returning null
+[2025-05-29T13:46:27.050Z] [INFO] [App] GET /api/risk-score/priorities 304 in 65ms 
+[Current Company] Using cached company data: 714
+[2025-05-29T13:46:31.431Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 521 
+[2025-05-29T13:46:31.431Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form 
+[2025-05-29T13:46:31.432Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'risk-score-configuration' 
+[2025-05-29T13:46:31.432Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: risk-score-configuration (raw: risk-score-configuration), user: 521 
+[2025-05-29T13:46:31.494Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for risk-score-configuration for user 521 
+[2025-05-29T13:46:31.526Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 95ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-29T13:46:31.718Z] [INFO] [App] [TabTutorials] Status request for tab "risk-score-configuration" from authenticated user ID: 521 
+[2025-05-29T13:46:31.719Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form 
+[2025-05-29T13:46:31.719Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'risk-score-configuration' 
+[2025-05-29T13:46:31.720Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: risk-score-configuration (raw: risk-score-configuration), user: 521 
+[2025-05-29T13:46:31.797Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for risk-score-configuration for user 521: completed=false, step=0 
+[2025-05-29T13:46:31.832Z] [INFO] [App] GET /api/user-tab-tutorials/risk-score-configuration/status 200 in 120ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-29T13:... 
+[2025-05-29T13:46:32.211Z] [INFO] [App] [TabTutorials] Status request for tab "claims" from authenticated user ID: 521 
+[2025-05-29T13:46:32.211Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'claims' to canonical form 
+[2025-05-29T13:46:32.211Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'claims' 
+[2025-05-29T13:46:32.211Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: claims (raw: claims), user: 521 
+[2025-05-29T13:46:32.236Z] [INFO] [App] GET /api/claims/active 304 in 31ms :: [{"id":1,"claim_id":"CLM-2025-001","bank_id":"BNK-12009","bank_name":"First N... 
+[2025-05-29T13:46:32.246Z] [INFO] [App] [TabTutorials] No tutorial status found for claims for user 521 
+[2025-05-29T13:46:32.276Z] [INFO] [App] GET /api/user-tab-tutorials/claims/status 304 in 65ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"claims"} 
+[2025-05-29T13:46:33.345Z] [INFO] [App] [TabTutorials] Status request for tab "insights" from authenticated user ID: 521 
+[2025-05-29T13:46:33.345Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-29T13:46:33.345Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-29T13:46:33.345Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: insights (raw: insights), user: 521 
+[2025-05-29T13:46:33.373Z] [INFO] [App] [TabTutorials] No tutorial status found for insights for user 521 
+[2025-05-29T13:46:33.409Z] [INFO] [App] GET /api/user-tab-tutorials/insights/status 200 in 64ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"insights"} 
+[2025-05-29T13:46:34.045Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:33.931Z","connectionId":"ws_1748526312573_2f9uhlzmi"}
+[2025-05-29T13:46:34.698Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 521 
+[2025-05-29T13:46:34.698Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-29T13:46:34.698Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-29T13:46:34.698Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: insights (raw: insights), user: 521 
+[2025-05-29T13:46:34.756Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for insights for user 521 
+[2025-05-29T13:46:34.788Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 90ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-29T13:46:34.979Z] [INFO] [App] [TabTutorials] Status request for tab "insights" from authenticated user ID: 521 
+[2025-05-29T13:46:34.979Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'insights' to canonical form 
+[2025-05-29T13:46:34.979Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'insights' 
+[2025-05-29T13:46:34.979Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: insights (raw: insights), user: 521 
+[2025-05-29T13:46:35.039Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for insights for user 521: completed=false, step=0 
+[2025-05-29T13:46:35.068Z] [INFO] [App] GET /api/user-tab-tutorials/insights/status 200 in 89ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-29T13:... 
+[2025-05-29T13:46:36.635Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 521 
+[2025-05-29T13:46:36.635Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-29T13:46:36.635Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-29T13:46:36.636Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 521 
+[2025-05-29T13:46:36.696Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for dashboard for user 521 
+[2025-05-29T13:46:36.728Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 93ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-29T13:46:36.909Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 521 
+[2025-05-29T13:46:36.909Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-29T13:46:36.909Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-29T13:46:36.909Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 521 
+[2025-05-29T13:46:36.968Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 521: completed=false, step=0 
+[2025-05-29T13:46:37.000Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 91ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-29T13:... 
+[2025-05-29T13:46:38.531Z] [INFO] [App] GET /api/companies/current 304 in 40ms :: {"id":714,"name":"FundingInstitute","category":"Bank","is_demo":true,"revenue... [sampled: request 11] 
+[2025-05-29T13:46:42.133Z] [INFO] [WebSocket] Received message from client client-1748526312015-pgfc7yh {"module":"WebSocket","type":"ping"}
+[2025-05-29T13:46:43.092Z] [INFO] [WebSocket] Received message from client client-1748526312975-sqi9b65 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:42.977Z","connectionId":"ws_1748526312976_3eap7z9lv"}
+[2025-05-29T13:46:43.569Z] [INFO] [WebSocket] Received message from client client-1748526313452-l1eo8or {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:43.455Z","connectionId":"ws_1748526312496_9573pil86"}
+[2025-05-29T13:46:54.045Z] [INFO] [WebSocket] Received message from client client-1748526313927-dpchl07 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T13:46:53.930Z","connectionId":"ws_1748526312573_2f9uhlzmi"}
