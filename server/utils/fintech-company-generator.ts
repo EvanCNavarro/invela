@@ -30,6 +30,7 @@
 import { db } from "@db";
 import { companies as companiesTable, relationships as relationshipsTable } from "@db/schema";
 import { eq, and } from "drizzle-orm";
+import { generateBusinessDetails, type PersonaType } from './business-details-generator.js';
 
 // ========================================
 // TYPES & INTERFACES
@@ -237,66 +238,41 @@ function generateRiskClusters(targetRiskScore: number): FinTechCompany['risk_clu
 function generateFinTechCompany(index: number, isApproved: boolean): FinTechCompany {
   const companyName = generateCompanyName();
   const riskScore = isApproved ? randomInt(1, 35) : randomInt(65, 95);
-  const sector = randomChoice(BUSINESS_SECTORS);
-  const location = randomChoice(CITIES);
   
-  // Employee count based on revenue tier and approval status
-  const employeeRanges = {
-    small: { min: 25, max: 500 },
-    medium: { min: 501, max: 3000 },
-    large: { min: 3001, max: 8000 },
-    xlarge: { min: 8001, max: 15000 }
-  };
-  
-  const revenueTiers = isApproved 
-    ? ['medium', 'large', 'xlarge']
-    : ['small', 'medium'];
-  
-  const revenueTier = randomChoice(revenueTiers) as 'small' | 'medium' | 'large' | 'xlarge';
-  const numEmployees = randomInt(
-    employeeRanges[revenueTier].min, 
-    employeeRanges[revenueTier].max
+  // Use shared business details generator for FinTech persona
+  const businessDetails = generateBusinessDetails(
+    companyName,
+    'accredited-data-recipient', // FinTech companies are data recipients
+    isApproved
   );
   
   return {
     name: companyName,
-    description: `Innovative ${sector.toLowerCase()} platform focused on ${isApproved ? 'enterprise-grade' : 'emerging market'} solutions`,
+    description: `Innovative fintech platform focused on ${isApproved ? 'enterprise-grade' : 'emerging market'} solutions`,
     category: 'FinTech',
-    legal_structure: randomChoice(LEGAL_STRUCTURES[isApproved ? 'APPROVED' : 'PENDING']),
-    market_position: isApproved 
-      ? `Leading ${sector.toLowerCase()} provider serving enterprise clients`
-      : `Emerging ${sector.toLowerCase()} platform targeting ${randomChoice(['SMBs', 'retail customers', 'startups'])}`,
-    hq_address: generateAddress(),
-    website_url: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.${randomChoice(['com', 'io', 'co'])}`,
-    products_services: `${sector} solutions, API integrations, ${randomChoice(['compliance tools', 'analytics platform', 'mobile apps', 'enterprise dashboard'])}`,
-    incorporation_year: isApproved ? randomInt(2010, 2018) : randomInt(2018, 2022),
-    founders_and_leadership: `${randomChoice(['Sarah Chen', 'Michael Rodriguez', 'Jessica Park', 'David Kim', 'Maria Garcia'])} (CEO), ${randomChoice(['Former Goldman Sachs', 'Ex-Stripe', 'Ex-PayPal', 'Former JPMorgan', 'Ex-Square'])} executive`,
-    num_employees: numEmployees,
-    revenue: `$${randomInt(10, 200)} million ARR`,
-    revenue_tier: revenueTier,
-    key_clients_partners: isApproved 
-      ? `${randomChoice(['Microsoft', 'Salesforce', 'Adobe', 'Oracle'])}, ${randomChoice(['JPMorgan', 'Wells Fargo', 'Bank of America'])}`
-      : `${randomChoice(['Various startups', 'Regional banks', 'SMB clients', 'Emerging markets'])}`,
-    investors: isApproved
-      ? `${randomChoice(['Andreessen Horowitz', 'Sequoia Capital', 'Kleiner Perkins'])}, ${randomChoice(['Goldman Sachs Ventures', 'JPMorgan Strategic'])} `
-      : `${randomChoice(['Pantera Capital', 'Coinbase Ventures', 'Individual angels', 'Seed funds'])}`,
-    funding_stage: randomChoice(FUNDING_STAGES[isApproved ? 'APPROVED' : 'PENDING']),
-    exit_strategy_history: isApproved && randomInt(1, 4) === 1 
-      ? `Acquired ${randomChoice(['payment processor', 'compliance platform', 'analytics company'])} in ${randomInt(2019, 2023)}`
-      : null,
-    certifications_compliance: isApproved
-      ? `PCI DSS Level 1, SOC 2 Type II, ${randomChoice(['ISO 27001', 'GDPR compliant', 'FedRAMP certified'])}`
-      : `Basic PCI compliance, ${randomChoice(['SOC 2 in progress', 'ISO 27001 planned', 'GDPR compliant'])}`,
+    // Use business details from shared generator
+    legal_structure: businessDetails.legal_structure,
+    market_position: businessDetails.market_position,
+    hq_address: businessDetails.hq_address,
+    website_url: businessDetails.website_url,
+    products_services: businessDetails.products_services,
+    incorporation_year: businessDetails.incorporation_year,
+    founders_and_leadership: businessDetails.founders_and_leadership,
+    num_employees: businessDetails.num_employees,
+    revenue: businessDetails.revenue,
+    revenue_tier: businessDetails.revenue_tier,
+    key_clients_partners: businessDetails.key_clients_partners,
+    investors: businessDetails.investors,
+    funding_stage: businessDetails.funding_stage,
+    exit_strategy_history: businessDetails.exit_strategy_history,
+    certifications_compliance: businessDetails.certifications_compliance,
+    files_public: businessDetails.files_public,
+    files_private: businessDetails.files_private,
+    // Risk and accreditation logic remains unchanged
     risk_score: isApproved ? riskScore : null, // Only APPROVED companies have risk scores
     risk_clusters: isApproved ? generateRiskClusters(riskScore) : null, // Only APPROVED companies have risk clusters
     accreditation_status: isApproved ? 'APPROVED' : 'PENDING',
     onboarding_company_completed: isApproved, // Only APPROVED companies have completed onboarding
-    files_public: isApproved 
-      ? ['compliance_report_2024.pdf', 'audit_summary.pdf', 'security_overview.pdf']
-      : ['business_overview.pdf', 'compliance_basic.pdf'],
-    files_private: isApproved
-      ? ['internal_audit_2024.pdf', 'security_assessment.pdf', 'financial_statements.pdf', 'risk_analysis.pdf']
-      : ['risk_assessment.pdf', 'technical_architecture.pdf', 'financial_projections.pdf'],
     available_tabs: isApproved 
       ? ['dashboard', 'task-center', 'file-vault', 'insights'] // APPROVED companies get all tabs
       : ['task-center'], // PENDING companies only get task-center
