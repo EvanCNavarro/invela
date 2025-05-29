@@ -968,6 +968,192 @@ router.post('/demo/email/send-invitation', async (req, res) => {
 
 /**
  * ========================================
+ * Demo Network Creation Endpoint
+ * ========================================
+ * 
+ * Creates FinTech partner network for Data Provider personas.
+ * Generates the specified number of FinTech relationships with
+ * authentic company data and risk assessments.
+ * 
+ * @endpoint POST /api/demo/network/create
+ * @version 1.0.0
+ * @since 2025-05-29
+ */
+router.post('/demo/network/create', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { companyId, networkSize, persona } = req.body;
+
+    console.log('[DemoAPI] [Network] Starting network creation:', {
+      companyId, networkSize, persona, timestamp: new Date().toISOString()
+    });
+
+    // Validate inputs
+    if (!companyId || !networkSize || persona !== 'data-provider') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid network creation parameters',
+        code: 'INVALID_NETWORK_PARAMS'
+      });
+    }
+
+    // Generate FinTech companies for the network
+    const { generateFinTechCompanies } = await import('./utils/fintech-company-generator');
+    await generateFinTechCompanies(networkSize);
+    
+    // Get the newly created companies from database
+    const finTechCompanies = await db.query.companies.findMany({
+      where: eq(companies.category, 'FinTech'),
+      orderBy: [sql`created_at DESC`],
+      limit: networkSize
+    });
+    
+    // Create relationships in database
+    const relationshipRecords = finTechCompanies.map(fintech => ({
+      company_id: parseInt(companyId),
+      related_company_id: fintech.id,
+      relationship_type: 'fintech_partner',
+      status: 'active'
+    }));
+
+    const createdRelationships = await db.insert(relationships).values(relationshipRecords).returning();
+
+    console.log('[DemoAPI] [Network] Network created successfully:', {
+      companyId, networkSize: createdRelationships.length,
+      duration: Date.now() - startTime
+    });
+
+    res.json({
+      success: true,
+      network: {
+        providerCompanyId: companyId,
+        partnerCount: createdRelationships.length,
+        relationships: createdRelationships.map(r => r.id)
+      },
+      processingTime: Date.now() - startTime,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[DemoAPI] [Network] Creation failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create network',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      processingTime: Date.now() - startTime
+    });
+  }
+});
+
+/**
+ * ========================================
+ * Demo Platform Configuration Endpoint
+ * ========================================
+ * 
+ * Configures persona-specific platform features and access levels.
+ * Sets up advanced tools and permissions based on user persona.
+ * 
+ * @endpoint POST /api/demo/platform/configure
+ * @version 1.0.0
+ * @since 2025-05-29
+ */
+router.post('/demo/platform/configure', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { userId, companyId, persona, riskProfile, companySize } = req.body;
+
+    console.log('[DemoAPI] [Platform] Starting platform configuration:', {
+      userId, companyId, persona, timestamp: new Date().toISOString()
+    });
+
+    // Configure persona-specific features
+    const configurationResult: any = {
+      userId: parseInt(userId),
+      companyId: parseInt(companyId),
+      persona,
+      features: [],
+      accessLevel: 'demo'
+    };
+
+    switch (persona) {
+      case 'accredited-data-recipient':
+        configurationResult.features = [
+          'advanced_risk_assessment',
+          'sp_dars_integration',
+          'detailed_analytics',
+          'compliance_reporting'
+        ];
+        configurationResult.accessLevel = 'accredited';
+        
+        // Set risk profile if provided
+        if (riskProfile) {
+          await db.update(companies)
+            .set({ 
+              risk_score: riskProfile,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, parseInt(companyId)));
+        }
+        break;
+
+      case 'data-provider':
+        configurationResult.features = [
+          'network_management',
+          'provider_dashboard',
+          'relationship_oversight',
+          'risk_monitoring',
+          'bank_admin_tools'
+        ];
+        configurationResult.accessLevel = 'provider';
+        break;
+
+      case 'invela-admin':
+        configurationResult.features = [
+          'system_administration',
+          'user_management',
+          'platform_analytics',
+          'configuration_control',
+          'audit_access'
+        ];
+        configurationResult.accessLevel = 'admin';
+        break;
+
+      default: // new-data-recipient
+        configurationResult.features = [
+          'basic_dashboard',
+          'onboarding_flow',
+          'standard_tools'
+        ];
+        configurationResult.accessLevel = 'user';
+    }
+
+    console.log('[DemoAPI] [Platform] Configuration completed:', {
+      userId, persona, features: configurationResult.features.length,
+      duration: Date.now() - startTime
+    });
+
+    res.json({
+      success: true,
+      configuration: configurationResult,
+      processingTime: Date.now() - startTime,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[DemoAPI] [Platform] Configuration failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to configure platform',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      processingTime: Date.now() - startTime
+    });
+  }
+});
+
+/**
+ * ========================================
  * Demo Environment Finalization Endpoint
  * ========================================
  * 
