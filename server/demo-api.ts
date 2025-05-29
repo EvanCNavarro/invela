@@ -17,41 +17,42 @@ import { generateBusinessDetails, type PersonaType } from './utils/business-deta
  * Generate randomized risk clusters that sum up to the total score
  */
 function generateRiskClusters(totalScore: number) {
+  // New risk cluster categories matching the schema definition
   const categories = [
-    "PII Data",
-    "Account Data", 
-    "Data Transfers",
-    "Certifications Risk",
-    "Security Risk",
-    "Financial Risk"
+    "Cyber Security",
+    "Financial Stability", 
+    "Potential Liability",
+    "Dark Web Data",
+    "Public Sentiment",
+    "Data Access Scope"
   ];
   
+  // Fixed weights based on risk priorities (matching example provided)
+  const weights = {
+    "Cyber Security": 0.30,        // 30% - Highest priority
+    "Financial Stability": 0.25,   // 25% - Second highest
+    "Potential Liability": 0.20,   // 20% - Third priority
+    "Dark Web Data": 0.15,         // 15% - Fourth priority
+    "Public Sentiment": 0.07,      // 7% - Fifth priority
+    "Data Access Scope": 0.03      // 3% - Lowest priority
+  };
+  
   const result: Record<string, number> = {};
-  const proportions: number[] = [];
-  let remainingProportion = 1;
-  
-  for (let i = 0; i < categories.length - 1; i++) {
-    const maxProportion = remainingProportion > 0.1 ? remainingProportion / 2 : remainingProportion;
-    const minProportion = 0.05;
-    const proportion = Math.random() * (maxProportion - minProportion) + minProportion;
-    proportions.push(proportion);
-    remainingProportion -= proportion;
-  }
-  
-  proportions.push(remainingProportion);
-  
   let sumOfValues = 0;
-  categories.forEach((category, index) => {
-    let value = Math.round(totalScore * proportions[index]);
-    value = Math.max(value, 1);
+  
+  // Calculate base values for each category using fixed weights
+  categories.forEach((category) => {
+    let value = Math.round(totalScore * weights[category]);
+    value = Math.max(value, 1); // Ensure minimum visibility
     result[category] = value;
     sumOfValues += value;
   });
   
+  // Ensure the sum equals the total risk score by adjusting the main category
   if (sumOfValues !== totalScore) {
     const adjustment = totalScore - sumOfValues;
-    const lastCategory = categories[categories.length - 1];
-    result[lastCategory] = Math.max(1, result[lastCategory] + adjustment);
+    const mainCategory = "Cyber Security"; // Adjust the highest weight category
+    result[mainCategory] = Math.max(1, result[mainCategory] + adjustment);
   }
   
   return result;
