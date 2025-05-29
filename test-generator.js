@@ -8,9 +8,13 @@ async function testSingleCompany() {
     // Create database connection
     const sql = neon(process.env.DATABASE_URL);
     
+    // Generate company name using secure API
+    const nameResponse = await fetch('http://localhost:5000/api/demo/generate-company-name');
+    const nameData = await nameResponse.json();
+    
     // Generate a single test company
     const company = {
-      name: 'TechFlow Financial',
+      name: nameData.companyName,
       description: 'Innovative payment processing and financial technology solutions for modern businesses.',
       category: 'FinTech',
       legal_structure: 'Private Limited Company',
