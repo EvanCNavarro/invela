@@ -418,8 +418,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 export const companiesRelations = relations(companies, ({ many }) => ({
   users: many(users),
   tasks: many(tasks),
-  networkMembers: many(relationships, { relationName: "networkMembers" }),
-  memberOfNetworks: many(relationships, { relationName: "memberOfNetworks" }),
   logos: many(companyLogos)
 }));
 
