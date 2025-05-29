@@ -218,6 +218,12 @@ export async function registerRoutes(app: Express): Promise<Express> {
   app.use('/api/company-name', companyNameValidationRouter);
   routeRegistrationTracker.register('CompanyNameValidation');
   console.log('[Routes] Company name validation API registered successfully');
+
+  // Register admin demo cleanup routes
+  console.log('[Routes] Registering admin demo cleanup API...');
+  app.use('/api/admin', adminDemoCleanupRoutes);
+  routeRegistrationTracker.register('AdminDemoCleanup');
+  console.log('[Routes] Admin demo cleanup API registered successfully');
   
   // ========================================
   // CORE APPLICATION ROUTES
