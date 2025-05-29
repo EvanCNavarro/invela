@@ -1,0 +1,217 @@
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Chloe Williams", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "chloe.williams@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (chloe.williams@invela.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "invela-admin"}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Chloe Williams", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "chloe.williams@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (chloe.williams@invela.com)
+[DemoStep2] Field visibility check: riskProfile for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for invela-admin = true 
+Object {fieldTags: Array(4), personaId: "invela-admin", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Chloe Williams", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "chloe.williams@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (chloe.williams@invela.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Invela", userFullName: "Chloe Williams", hasValidCompanyName: true, timestamp: "2025-05-29T21:11:46.618Z"}
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoPage] Going back to step 2
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "invela-admin"}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Field visibility check: riskProfile for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for invela-admin = true 
+Object {fieldTags: Array(4), personaId: "invela-admin", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoAssetPreloader] Preloading assets for step 3
+[DemoAssetPreloader] Successfully initiated preloading for 1 assets
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "invela-admin"}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Field visibility check: riskProfile for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for invela-admin = true 
+Object {fieldTags: Array(4), personaId: "invela-admin", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "invela-admin"}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Field visibility check: riskProfile for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for invela-admin = false 
+Object {fieldTags: Array(1), personaId: "invela-admin", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for invela-admin = true 
+Object {fieldTags: Array(4), personaId: "invela-admin", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "Invela Admin", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Invela", formData: {…}}
+[DemoStep2] Company name validation: valid (6 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Jamie Anderson", formData: {…}}
+[DemoStep2] Full name validation: valid (14 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "jamie.anderson@invela.com", formData: {…}}
+[DemoStep2] Email validation: valid (jamie.anderson@invela.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-29T21:11:48.889Z", echo: {…}}
+[DemoPage] Going back to step 1
+[DemoPage] Rendering step 1/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 1/3
+[DemoStep1] Rendering platform overview
+[DemoStep1] Applying color scheme: gray, selected: false
+[DemoStep1] Setting icon color for: gray
+[DemoStep1] Applying color scheme: green, selected: false
+[DemoStep1] Setting icon color for: green
+[DemoStep1] Applying color scheme: purple, selected: false
+[DemoStep1] Setting icon color for: purple
+[DemoStep1] Applying color scheme: blue, selected: true
+[DemoStep1] Setting icon color for: blue
+[DemoStepVisual] Rendering with currentStep: 1, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: true, Asset: /assets/demo/steps/step-1-animated.gif
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] Preloading assets for step 2
+[DemoAssetPreloader] Successfully initiated preloading for 1 assets
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-29T21:11:49.968Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-29T21:11:50.485Z", echo: {…}}
