@@ -137,11 +137,7 @@ const getStepAssetSource = (
   if (isActive && stepConfig.id === 3) {
     // During setup or launch stages, show the launch GIF in hero section
     if (step3WizardStage === 'setup' || step3WizardStage === 'launch') {
-      console.log('[DemoStepVisual] Step 3 stage-aware switching:', {
-        stage: step3WizardStage,
-        asset: 'launch-gif',
-        location: 'hero-section'
-      });
+
       return "/assets/demo/steps/step-3-launch.gif";
     }
     
@@ -191,7 +187,6 @@ const getStepAltText = (stepConfig: StepConfig, isActive: boolean): string => {
  * - Consistent visual hierarchy and styling
  */
 export function DemoStepVisual({ currentStep, className, isSystemSetup = false, step3WizardStage }: DemoStepVisualProps) {
-  console.log(`[DemoStepVisual] Rendering with currentStep: ${currentStep}, isSystemSetup: ${isSystemSetup}, step3WizardStage: ${step3WizardStage}`);
   
   // ========================================
   // ASSET PRELOADING
