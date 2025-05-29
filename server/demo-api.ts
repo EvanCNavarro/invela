@@ -42,7 +42,7 @@ function generateRiskClusters(totalScore: number) {
   
   // Calculate base values for each category using fixed weights
   categories.forEach((category) => {
-    let value = Math.round(totalScore * weights[category]);
+    let value = Math.round(totalScore * (weights as any)[category]);
     value = Math.max(value, 1); // Ensure minimum visibility
     result[category] = value;
     sumOfValues += value;
