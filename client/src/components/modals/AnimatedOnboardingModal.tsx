@@ -28,6 +28,23 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/no-close-dialog';
 import { useToast } from '@/hooks/use-toast';
+
+// Import formatting utilities
+const formatRevenue = (amount: number): string => {
+  if (amount >= 1_000_000_000) {
+    const billions = amount / 1_000_000_000;
+    return `$${parseFloat(billions.toFixed(1))}B`;
+  } else if (amount >= 1_000_000) {
+    const millions = amount / 1_000_000;
+    return `$${parseFloat(millions.toFixed(1))}M`;
+  } else if (amount >= 1_000) {
+    const thousands = amount / 1_000;
+    return `$${parseFloat(thousands.toFixed(1))}K`;
+  } else {
+    return `$${amount}`;
+  }
+};
+
 // Map company size values to employee count
 const employeeCountMap = {
   'small': 25, // middle of 1-49
