@@ -55,6 +55,7 @@ interface NameGenerationOptions {
   suffixStyle?: 'professional' | 'numeric' | 'hybrid';
   preserveOriginal?: boolean;
   isDemoContext?: boolean;
+  lengthPreference?: 'long' | 'short' | 'mixed';
 }
 
 // ========================================
@@ -195,6 +196,7 @@ const DEFAULT_GENERATION_OPTIONS: Required<NameGenerationOptions> = {
   suffixStyle: 'professional',
   preserveOriginal: true,
   isDemoContext: true,
+  lengthPreference: 'mixed',
 };
 
 // ========================================
@@ -232,25 +234,91 @@ function isCompanyNameClean(companyName: string): boolean {
 // ========================================
 
 /**
+ * Generates a short portmanteau company name by fusing two components
+ * Creates brand-style names like "Firefox" or "LimeWire"
+ * 
+ * @returns A short, fused company name
+ */
+function generateShortPortmanteauName(): string {
+  const patterns = [
+    // Pattern A: PREFIX + CORE fusion (e.g., "StreamPay")
+    () => {
+      const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+      const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+      return `${prefix}${core}`;
+    },
+    // Pattern B: CORE + SUFFIX fusion (e.g., "CapitalCore")
+    () => {
+      const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+      const suffix = ADVANCED_NAME_SUFFIXES[Math.floor(Math.random() * ADVANCED_NAME_SUFFIXES.length)];
+      return `${core}${suffix}`;
+    }
+  ];
+  
+  const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+  return selectedPattern();
+}
+
+/**
  * Generates sophisticated company names using combinatorial approach
  * Leverages expanded name pools for maximum variety and professional appearance
  * 
  * @param baseName - Original company name for context and fallback
  * @param attempt - Generation attempt number for strategy variation
+ * @param options - Configuration options including length preference
  * @returns Promise that resolves with a professionally crafted company name
  */
 export async function generateAdvancedCompanyName(
   baseName: string,
-  attempt: number
+  attempt: number,
+  options: NameGenerationOptions = {}
 ): Promise<string> {
+  const config = { ...DEFAULT_GENERATION_OPTIONS, ...options };
+  
   logCompanyNameOperation('info', 'Generating advanced company name', {
     baseName,
     attempt,
     strategy: 'combinatorial',
+    lengthPreference: config.lengthPreference,
   });
 
-  // Strategy 1: Full combinatorial generation (PREFIX + CORE + SUFFIX)
-  if (attempt === 1) {
+  // Determine if we should generate short or long name
+  let useShortName = false;
+  if (config.lengthPreference === 'short') {
+    useShortName = true;
+  } else if (config.lengthPreference === 'mixed') {
+    useShortName = Math.random() < 0.5; // 50% chance for short names
+  }
+
+  // Strategy 1: Short portmanteau names (new)
+  if (attempt === 1 && useShortName) {
+    let generatedName: string;
+    let attempts = 0;
+    const maxValidationAttempts = 10;
+    
+    do {
+      generatedName = generateShortPortmanteauName();
+      attempts++;
+      
+      if (isCompanyNameClean(generatedName)) {
+        logCompanyNameOperation('info', 'Generated clean short portmanteau name', {
+          baseName,
+          generatedName,
+          nameLength: 'short',
+          validationAttempts: attempts,
+        });
+        return generatedName;
+      }
+    } while (attempts < maxValidationAttempts);
+    
+    logCompanyNameOperation('warn', 'Could not generate clean short name, falling back to long', {
+      baseName,
+      attempts,
+    });
+  }
+
+  // Strategy 2: Full combinatorial generation (PREFIX + CORE + SUFFIX)
+  if ((attempt === 1 && !useShortName) || attempt === 2) {
     let generatedName: string;
     let attempts = 0;
     const maxValidationAttempts = 10;
