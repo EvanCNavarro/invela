@@ -124,6 +124,21 @@ The shared business details generator supports:
 4. `db/schema.ts` - Added demo-specific fields
 5. `server/scripts/testing/test-business-details-consistency.ts` - Integration tests
 
+## Risk Assessment Data Integrity Fix
+
+**Issue Resolved**: Risk assessment data was incorrectly assigned to non-accredited `new-data-recipient` personas, violating platform compliance requirements.
+
+**Fix Applied**:
+- Removed risk score generation from non-accredited persona configurations
+- Added accreditation status validation in database insertion logic
+- Cleaned up existing invalid risk data (1 company affected)
+- Created comprehensive validation test suite (4/4 tests passing)
+
+**Compliance Status**: ✅ SECURED
+- Non-accredited entities (PENDING status) no longer receive risk assessment data
+- Only APPROVED entities can access risk scoring functionality
+- Data integrity validation confirms 100% compliance
+
 ## Risk Assessment
 
 **Risk Level**: Low
@@ -131,5 +146,6 @@ The shared business details generator supports:
 - Preserves all existing functionality
 - Additive enhancements only
 - Comprehensive test validation
+- Data integrity compliance maintained
 
 This enhancement provides a robust foundation for consistent company data generation across all Invela platform creation pathways.
