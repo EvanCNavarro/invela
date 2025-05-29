@@ -219,11 +219,12 @@ export async function registerRoutes(app: Express): Promise<Express> {
   routeRegistrationTracker.register('CompanyNameValidation');
   console.log('[Routes] Company name validation API registered successfully');
 
-  // Register admin demo cleanup routes
-  console.log('[Routes] Registering admin demo cleanup API...');
-  app.use('/api/admin', adminDemoCleanupRoutes);
-  routeRegistrationTracker.register('AdminDemoCleanup');
-  console.log('[Routes] Admin demo cleanup API registered successfully');
+  // Register demo cleanup routes
+  const demoCleanupRoutes = await import('./routes/demo-cleanup-simple');
+  console.log('[Routes] Registering demo cleanup API...');
+  app.use('/api/admin', demoCleanupRoutes.default);
+  routeRegistrationTracker.register('DemoCleanup');
+  console.log('[Routes] Demo cleanup API registered successfully');
   
   // ========================================
   // CORE APPLICATION ROUTES
