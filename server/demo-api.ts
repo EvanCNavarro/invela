@@ -999,17 +999,26 @@ router.post('/demo/network/create', async (req, res) => {
       });
     }
 
-    // Get existing relationships for this company
-    const existingRelationships = await db.query.relationships.findMany({
-      where: eq(relationships.company_id, parseInt(companyId)),
-      with: {
-        relatedCompany: true
-      }
-    });
+    // Get existing relationships for this company using raw SQL
+    const existingRelationships = await db.execute(sql`
+      SELECT 
+        r.id,
+        r.company_id,
+        r.related_company_id,
+        r.relationship_type,
+        c.company_name as "relatedCompanyName",
+        c.industry as "relatedCompanyIndustry"
+      FROM relationships r
+      INNER JOIN companies c ON c.id = r.related_company_id
+      WHERE r.company_id = ${parseInt(companyId)}
+      LIMIT ${parseInt(networkSize)}
+    `);
+
+    const relationshipsData = existingRelationships.rows || existingRelationships;
 
     console.log('[DemoAPI] [Network] Retrieved existing network:', {
       companyId, 
-      existingRelationships: existingRelationships.length,
+      existingRelationships: relationshipsData.length,
       duration: Date.now() - startTime
     });
 
@@ -1017,8 +1026,13 @@ router.post('/demo/network/create', async (req, res) => {
       success: true,
       network: {
         providerCompanyId: companyId,
-        partnerCount: existingRelationships.length,
-        relationships: existingRelationships.map(r => r.id)
+        partnerCount: relationshipsData.length,
+        relationships: relationshipsData.map((r: any) => ({
+          id: r.id,
+          companyName: r.relatedCompanyName,
+          industry: r.relatedCompanyIndustry,
+          relationshipType: r.relationship_type
+        }))
       },
       processingTime: Date.now() - startTime,
       timestamp: new Date().toISOString()
