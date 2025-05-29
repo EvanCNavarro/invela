@@ -298,6 +298,15 @@ router.post('/demo/company/create', async (req, res) => {
       fieldsGenerated: Object.keys(businessDetails).length
     });
     
+    // Validate accreditation status for risk assessment access
+    const hasRiskAccess = personaConfig.accreditation_status === 'APPROVED';
+    console.log('[DemoAPI] Risk assessment access validation:', {
+      persona: personaConfig.demo_persona_type,
+      accreditationStatus: personaConfig.accreditation_status,
+      hasRiskAccess,
+      willIncludeRiskScores: hasRiskAccess && personaConfig.risk_score
+    });
+    
     // ========================================
     // DATABASE COMPANY CREATION
     // ========================================
