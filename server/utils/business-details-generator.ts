@@ -167,7 +167,7 @@ export function generateBusinessDetails(
     
     hq_address: generateAddress(),
     
-    website_url: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.${randomChoice(['com', 'io', 'co'])}`,
+    website_url: `https://${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
     
     products_services: isBank
       ? `${sector} services, treasury management, ${randomChoice(['commercial lending', 'investment advisory', 'wealth management', 'corporate banking'])}`
@@ -181,11 +181,11 @@ export function generateBusinessDetails(
       ? `${randomChoice(['Robert Chen', 'Sarah Williams', 'Michael Davis', 'Jennifer Park'])} (CEO), ${randomChoice(['Former Federal Reserve', 'Ex-JPMorgan Chase', 'Former Wells Fargo', 'Ex-Bank of America'])} executive`
       : `${randomChoice(['Sarah Chen', 'Michael Rodriguez', 'Jessica Park', 'David Kim', 'Maria Garcia'])} (CEO), ${randomChoice(['Former Goldman Sachs', 'Ex-Stripe', 'Ex-PayPal', 'Former JPMorgan', 'Ex-Square'])} executive`,
     
-    num_employees: numEmployees,
+    num_employees: roundEmployeeCount(numEmployees),
     
     revenue: isBank
-      ? `$${randomInt(500, 2000)} million`  // Banks have higher revenue
-      : `$${randomInt(10, 200)} million ARR`,
+      ? formatRevenue(randomInt(500, 2000) * 1000000)  // Banks have higher revenue
+      : formatRevenue(randomInt(10, 200) * 1000000),   // Convert to actual dollar amounts for formatting
     
     revenue_tier: revenueTier,
     
