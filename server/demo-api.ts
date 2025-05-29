@@ -263,10 +263,9 @@ router.post('/demo/company/create', async (req, res) => {
             available_tabs: ['task-center'],
             onboarding_company_completed: false,
             demo_persona_type: 'new-data-recipient',
-            description: 'New FinTech company beginning the onboarding process',
-            // Add risk score data for New Data Recipients (lower scores as they're new)
-            risk_score: Math.floor(Math.random() * 25) + 20, // 20-45 range (new companies have lower scores)
-            chosen_score: Math.floor(Math.random() * 25) + 20
+            description: 'New FinTech company beginning the onboarding process'
+            // Note: No risk score data for non-accredited entities (PENDING status)
+            // Risk assessment is only available after completing accreditation process
           };
       }
     };
