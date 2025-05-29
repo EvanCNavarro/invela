@@ -1000,25 +1000,75 @@ router.post('/demo/network/create', async (req, res) => {
       });
     }
 
-    // Temporary fallback: Return empty network data to unblock demo flow
-    // TODO: Fix underlying Drizzle relational query issue with relationships table
-    console.log('[DemoAPI] [Network] Using fallback - returning empty network data:', {
-      companyId, 
-      networkSize,
-      reason: 'Drizzle relational query error - needs schema fix',
+    // Query existing relationships using the working join pattern from /api/relationships
+    console.log('[DemoAPI] [Network] Querying existing relationships for company:', companyId);
+    
+    const networkRelationships = await db.select({
+      id: relationships.id,
+      companyId: relationships.company_id,
+      relatedCompanyId: relationships.related_company_id,
+      relationshipType: relationships.relationship_type,
+      status: relationships.status,
+      metadata: relationships.metadata,
+      createdAt: relationships.created_at,
+      // Join with companies to get related company details
+      relatedCompany: {
+        id: companies.id,
+        name: companies.name,
+        category: companies.category,
+        logoId: companies.logo_id,
+        accreditationStatus: companies.accreditation_status,
+        riskScore: companies.risk_score,
+        isDemo: companies.is_demo
+      }
+    })
+      .from(relationships)
+      .innerJoin(
+        companies,
+        eq(
+          companies.id,
+          sql`CASE 
+        WHEN ${relationships.company_id} = ${companyId} THEN ${relationships.related_company_id}
+        ELSE ${relationships.company_id}
+      END`
+        )
+      )
+      .where(
+        or(
+          eq(relationships.company_id, companyId),
+          eq(relationships.related_company_id, companyId)
+        )
+      )
+      .orderBy(companies.name);
+
+    console.log('[DemoAPI] [Network] Found relationships:', {
+      count: networkRelationships.length,
       duration: Date.now() - startTime
     });
+
+    // Transform relationships for response
+    const formattedRelationships = networkRelationships.map(rel => ({
+      id: rel.id,
+      companyId: rel.relatedCompany.id,
+      companyName: rel.relatedCompany.name,
+      category: rel.relatedCompany.category || 'FinTech',
+      relationshipType: rel.relationshipType,
+      status: rel.status,
+      riskScore: rel.relatedCompany.riskScore || 0,
+      accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
+      isDemo: rel.relatedCompany.isDemo,
+      createdAt: rel.createdAt
+    }));
 
     res.json({
       success: true,
       network: {
         providerCompanyId: companyId,
-        partnerCount: 0,
-        relationships: []
+        partnerCount: networkRelationships.length,
+        relationships: formattedRelationships
       },
       processingTime: Date.now() - startTime,
-      timestamp: new Date().toISOString(),
-      note: 'Network display temporarily disabled - relationships will be shown after schema fix'
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
