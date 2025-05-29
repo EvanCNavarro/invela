@@ -900,12 +900,12 @@ async function handleOpenBankingPostSubmission(
       // Set default values to continue execution
       riskScore = 50; // Default risk score if generation fails
       riskClusters = {
-        "PII Data": 18, 
-        "Account Data": 15, 
-        "Data Transfers": 5, 
-        "Certifications Risk": 5, 
-        "Security Risk": 5, 
-        "Financial Risk": 2
+        "Cyber Security": 15,
+        "Financial Stability": 13,
+        "Potential Liability": 10,
+        "Dark Web Data": 8,
+        "Public Sentiment": 3,
+        "Data Access Scope": 1
       };
     }
     
