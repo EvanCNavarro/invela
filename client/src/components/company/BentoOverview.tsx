@@ -17,6 +17,34 @@ interface BentoOverviewProps {
 }
 
 /**
+ * Formats revenue amounts with K/M/B suffixes
+ */
+const formatRevenue = (amount: number): string => {
+  if (amount >= 1_000_000_000) {
+    const billions = amount / 1_000_000_000;
+    return `$${parseFloat(billions.toFixed(1))}B`;
+  } else if (amount >= 1_000_000) {
+    const millions = amount / 1_000_000;
+    return `$${parseFloat(millions.toFixed(1))}M`;
+  } else if (amount >= 1_000) {
+    const thousands = amount / 1_000;
+    return `$${parseFloat(thousands.toFixed(1))}K`;
+  } else {
+    return `$${amount}`;
+  }
+};
+
+/**
+ * Maps revenue tiers to numeric values for formatting
+ */
+const revenueValueMap: Record<string, number> = {
+  small: 5500000,      // $5.5M
+  medium: 55000000,    // $55M
+  large: 300000000,    // $300M
+  xlarge: 1250000000   // $1.25B
+};
+
+/**
  * Formats a value with proper display
  */
 const formatValue = (value: any, formatter?: (val: any) => string) => {
@@ -123,9 +151,14 @@ export function BentoOverview({
               <div className="flex items-start space-x-2">
                 <DollarSign className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Revenue Tier</h3>
+                  <h3 className="text-sm font-medium text-gray-700">Annual Revenue</h3>
                   <p className="text-sm text-gray-700">
-                    {formatValue(company.revenueTier || company.revenue_tier, (val) => val.toString().toUpperCase())}
+                    {company.revenue ? 
+                      formatRevenue(company.revenue) : 
+                      (company.revenueTier || company.revenue_tier) ? 
+                        formatRevenue(revenueValueMap[(company.revenueTier || company.revenue_tier).toLowerCase()]) :
+                        'Not available'
+                    }
                   </p>
                 </div>
               </div>
