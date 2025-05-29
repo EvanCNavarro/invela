@@ -1681,9 +1681,9 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
         description: 'Setting up organizational structure and preferences'
       });
 
-      // 1b. Network Setup (only for Data Provider after company creation)
+      // 1b. Network Display (only for Data Provider after company creation)
       if (selectedPersona?.id === 'data-provider') {
-        const networkSize = formData?.networkSize || 25;
+        const networkSize = formData?.networkSize || 9;
         actions.push({
           id: 'setup-network',
           label: `Configuring network with ${networkSize} FinTech partners`,
@@ -1695,8 +1695,8 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
             networkSize: networkSize,
             persona: selectedPersona?.id
           },
-          estimatedDuration: 2000,
-          description: 'Establishing FinTech partner relationships and risk assessments'
+          estimatedDuration: 1500,
+          description: 'Displaying existing FinTech partner relationships and risk data'
         });
       }
     }
