@@ -453,7 +453,6 @@ const DEMO_DATA_GENERATORS = {
  * with random/custom toggles and persona-specific options.
  */
 const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoStepProps) => {
-  console.log('[DemoStep2] Rendering interactive demo', { selectedPersona: selectedPersona?.id });
   
   // ========================================
   // STATE MANAGEMENT
@@ -566,60 +565,44 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
    * Real-time validation that responds to actual form state changes
    */
   const getFieldValidationStatus = (fieldName: string): 'valid' | 'invalid' | 'in-progress' => {
-    console.log(`[DemoStep2] Validating field: ${fieldName}`, { 
-      value: formData[fieldName as keyof DemoCustomizationForm],
-      formData 
-    });
-
     switch (fieldName) {
       case 'persona':
         const personaValid = formData.persona && formData.persona.length > 0;
-        console.log(`[DemoStep2] Persona validation: ${personaValid ? 'valid' : 'invalid'}`);
         return personaValid ? 'valid' : 'invalid';
         
       case 'companyName':
         const companyName = formData.companyName?.trim() || '';
         if (companyName.length === 0) {
-          console.log(`[DemoStep2] Company name validation: invalid (empty)`);
           return 'invalid';
         }
         if (companyName.length < 2) {
-          console.log(`[DemoStep2] Company name validation: in-progress (${companyName.length} chars)`);
           return 'in-progress';
         }
-        console.log(`[DemoStep2] Company name validation: valid (${companyName.length} chars)`);
         return 'valid';
         
       case 'userFullName':
         const fullName = formData.userFullName?.trim() || '';
         if (fullName.length === 0) {
-          console.log(`[DemoStep2] Full name validation: invalid (empty)`);
           return 'invalid';
         }
         const nameParts = fullName.split(' ').filter(part => part.length > 0);
         if (fullName.length < 3 || nameParts.length < 2) {
-          console.log(`[DemoStep2] Full name validation: in-progress (${fullName.length} chars, ${nameParts.length} parts)`);
           return 'in-progress';
         }
-        console.log(`[DemoStep2] Full name validation: valid (${fullName.length} chars, ${nameParts.length} parts)`);
         return 'valid';
         
       case 'userEmail':
         const email = formData.userEmail?.trim() || '';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (email.length === 0) {
-          console.log(`[DemoStep2] Email validation: invalid (empty)`);
           return 'invalid';
         }
         if (email.includes('@') && emailRegex.test(email)) {
-          console.log(`[DemoStep2] Email validation: valid (${email})`);
           return 'valid';
         }
-        console.log(`[DemoStep2] Email validation: in-progress (${email})`);
         return 'in-progress';
         
       default:
-        console.log(`[DemoStep2] Unknown field validation: ${fieldName} - defaulting to invalid`);
         return 'invalid';
     }
   };
@@ -638,16 +621,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     
     const allValid = Object.values(validationResults).every(status => status === 'valid');
     
-    console.log('[DemoStep2] Form validation check:', {
-      validationResults,
-      allValid,
-      formData: {
-        persona: formData.persona,
-        companyName: formData.companyName,
-        userFullName: formData.userFullName,
-        userEmail: formData.userEmail
-      }
-    });
+
     
     return allValid;
   };
