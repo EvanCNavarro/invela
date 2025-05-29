@@ -12,6 +12,7 @@ import {
   validateNetworkSize 
 } from './utils/demo-data-transformer';
 import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
+import { generateFinTechCompanies } from './utils/fintech-company-generator';
 
 /**
  * Generate randomized risk clusters that sum up to the total score
@@ -999,7 +1000,6 @@ router.post('/demo/network/create', async (req, res) => {
     }
 
     // Generate FinTech companies for the network
-    const { generateFinTechCompanies } = await import('./utils/fintech-company-generator');
     await generateFinTechCompanies(networkSize);
     
     // Get the newly created companies from database
