@@ -8,8 +8,8 @@
  * multiple client sessions.
  */
 
-import React, { useEffect, useContext, useRef } from 'react';
-import { WebSocketContext } from '@/providers/websocket-provider';
+import React, { useEffect, useRef } from 'react';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
@@ -79,15 +79,15 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
   onFieldsCleared,
   showToasts = true
 }) => {
-  const { socket, isConnected } = useContext(WebSocketContext);
+  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
   const queryClient = useQueryClient();
-  const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
+  const handleMessageRef = useRef<(() => void) | null>(null);
   const listenerInfoRef = useRef({ taskId, formType });
   const hasSetupListenerRef = useRef(false);
 
   useEffect(() => {
-    // We need both the socket and an active connection
-    if (!socket || !isConnected) {
+    // We need an active connection for unified WebSocket
+    if (!isConnected) {
       return;
     }
 
@@ -105,11 +105,9 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
 
     logger.info(`Setting up form fields listener for task ${taskId} (${formType})`);
 
-    // Define message handler
-    const handleMessage = (messageEvent: MessageEvent): void => {
+    // Define message handler for unified WebSocket
+    const handleMessage = (message: any): void => {
       try {
-        // Parse incoming message
-        const message = JSON.parse(messageEvent.data);
         
         // Process both 'form_fields' and 'clear_fields' type messages
         if (message.type !== 'form_fields' && message.type !== 'clear_fields') {
@@ -304,18 +302,24 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
     };
 
     // Store refs for cleanup
-    handleMessageRef.current = handleMessage;
     listenerInfoRef.current = { taskId, formType };
     hasSetupListenerRef.current = true;
     
-    // Add the event listener
-    socket.addEventListener('message', handleMessage);
+    // Subscribe to both message types using unified WebSocket
+    const unsubscribeFormFields = subscribe('form_fields', handleMessage);
+    const unsubscribeClearFields = subscribe('clear_fields', handleMessage);
+    
+    // Store unsubscribe function for cleanup
+    handleMessageRef.current = () => {
+      unsubscribeFormFields();
+      unsubscribeClearFields();
+    };
 
     // Cleanup function - only execute on unmount or when task/form changes
     return () => {
-      if (socket && handleMessageRef.current) {
+      if (handleMessageRef.current) {
         try {
-          socket.removeEventListener('message', handleMessageRef.current);
+          handleMessageRef.current();
           logger.info(`Cleaned up form fields listener for task ${taskId}`);
           
           // Update active listener count
@@ -323,14 +327,14 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
             window.fieldEventTracker.activeListeners = Math.max(0, window.fieldEventTracker.activeListeners - 1);
           }
         } catch (e) {
-          // Ignore errors removing listeners from potentially closed sockets
+          // Ignore errors during cleanup
         } finally {
           hasSetupListenerRef.current = false;
           handleMessageRef.current = null;
         }
       }
     };
-  }, [socket, isConnected, taskId, formType, onFieldsCleared, showToasts]);
+  }, [isConnected, taskId, formType, onFieldsCleared, showToasts, subscribe]);
 
   return null; // This component doesn't render anything
 };
