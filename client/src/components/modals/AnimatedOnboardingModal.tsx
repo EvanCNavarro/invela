@@ -329,21 +329,32 @@ const StepImage: React.FC<{
   src, 
   alt = 'Onboarding step image',
   isLoaded
-}) => (
-  <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
-    {isLoaded ? (
-      <img 
-        src={src || ''} 
-        alt={alt || 'Onboarding step image'}
-        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
-      />
-    ) : (
-      <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-full h-full rounded-xl animate-pulse bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200" />
-      </div>
-    )}
-  </div>
-);
+}) => {
+  const [imageError, setImageError] = useState(false);
+  
+  return (
+    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
+      {src && !imageError ? (
+        <img 
+          src={src} 
+          alt={alt || 'Onboarding step image'}
+          className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
+          onError={() => {
+            console.error(`Image failed to load: ${src}`);
+            setImageError(true);
+          }}
+          onLoad={() => {
+            console.log(`Image loaded successfully: ${src}`);
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-slate-400">
+          {imageError ? 'Image not available' : 'Loading...'}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Independent component for step layout to avoid JSX nesting issues
 const StepLayout: React.FC<{ 
@@ -363,39 +374,10 @@ const StepLayout: React.FC<{
   description,
   rightImageSrc
 }) => {
-  // Track image loading status
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  // Use cached image or preload with optimized loading strategy
-  useEffect(() => {
-    if (!imgSrc) {
-      setImageLoaded(true); // No image to load
-      return;
-    }
-    
-    setImageLoaded(false); // Reset loading state
-    
-    console.log(`[AnimatedOnboardingModal] Loading image: ${imgSrc}`);
-    
-    // Use cached image or preload
-    if (globalImageCache.has(imgSrc)) {
-      console.log(`[AnimatedOnboardingModal] Using cached image: ${imgSrc}`);
-      setImageLoaded(true);
-    } else {
-      preloadImage(imgSrc)
-        .then(() => {
-          console.log(`[AnimatedOnboardingModal] Successfully loaded image: ${imgSrc}`);
-          setImageLoaded(true);
-        })
-        .catch(() => {
-          console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
-          setImageLoaded(true); // Show content even if image fails
-        });
-    }
-  }, [imgSrc]);
+  console.log(`[AnimatedOnboardingModal] Rendering with image: ${imgSrc}`);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
@@ -456,7 +438,7 @@ const StepLayout: React.FC<{
             <StepImage 
               src={imgSrc} 
               alt={imageAlt || title}
-              isLoaded={imageLoaded} 
+              isLoaded={true} 
             />
           )}
         </RightImageContainer>
