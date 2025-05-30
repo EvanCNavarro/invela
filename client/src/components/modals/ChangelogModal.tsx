@@ -19,7 +19,7 @@
  * @since 2025-05-23
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, Code, Palette, Settings, Zap, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -341,6 +341,23 @@ export function ChangelogModal({
 }: ChangelogModalProps) {
 
   // ========================================
+  // STATE MANAGEMENT
+  // ========================================
+
+  const [activeFilter, setActiveFilter] = useState<ChangelogFilter>('product');
+
+  // ========================================
+  // DATA FILTERING
+  // ========================================
+
+  const filteredEntries = useMemo(() => {
+    if (activeFilter === 'all') {
+      return changelogEntries;
+    }
+    return changelogEntries.filter(entry => entry.audience === activeFilter);
+  }, [activeFilter]);
+
+  // ========================================
   // EFFECTS
   // ========================================
 
@@ -412,20 +429,40 @@ export function ChangelogModal({
                 </div>
               </div>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+              <div className="flex items-center gap-4">
+                {/* Filter Controls */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  {(['all', 'product', 'developer'] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setActiveFilter(filter)}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                        activeFilter === filter
+                          ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-200"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      )}
+                    >
+                      {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-6">
-                {changelogEntries.map((entry, index) => (
+                {filteredEntries.map((entry, index) => (
                   <motion.div
                     key={entry.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -487,7 +524,7 @@ export function ChangelogModal({
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">
-                  Showing {changelogEntries.length} recent updates
+                  Showing {filteredEntries.length} recent updates
                 </p>
                 <Button onClick={onClose} className="bg-green-600 hover:bg-green-700">
                   Close
