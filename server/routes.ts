@@ -60,7 +60,6 @@ import { createCompany } from "./services/company";
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 
 // WebSocket services for real-time communication
-import * as LegacyWebSocketService from './services/websocket';
 import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
 
