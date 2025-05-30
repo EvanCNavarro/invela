@@ -500,28 +500,40 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     };
 
     // Store refs for cleanup
-    handleMessageRef.current = handleMessage;
     listenerInfoRef.current = { taskId, formType };
     hasSetupListenerRef.current = true;
     
-    // Add the event listener
-    socket.addEventListener('message', handleMessage);
+    // Subscribe to unified WebSocket events
+    const unsubscribeFormSubmission = subscribe('form_submission', handleMessage);
+    const unsubscribeFormSubmitted = subscribe('form_submitted', handleMessage);
+    const unsubscribeTaskUpdate = subscribe('task_update', handleMessage);
+    const unsubscribeTaskUpdated = subscribe('task_updated', handleMessage);
+    const unsubscribeFormCompleted = subscribe('form_submission_completed', handleMessage);
+    
+    // Store unsubscribe function for cleanup
+    handleMessageRef.current = () => {
+      unsubscribeFormSubmission();
+      unsubscribeFormSubmitted();
+      unsubscribeTaskUpdate();
+      unsubscribeTaskUpdated();
+      unsubscribeFormCompleted();
+    };
 
     // Cleanup function - only execute on unmount or when task/form changes
     return () => {
-      if (socket && handleMessageRef.current) {
+      if (handleMessageRef.current) {
         try {
-          socket.removeEventListener('message', handleMessageRef.current);
+          handleMessageRef.current();
           logger.info(`Cleaned up form submission listener for task ${taskId}`);
         } catch (e) {
-          // Ignore errors removing listeners from potentially closed sockets
+          // Ignore errors during cleanup
         } finally {
           hasSetupListenerRef.current = false;
           handleMessageRef.current = null;
         }
       }
     };
-  }, [socket, isConnected, taskId, formType]); // Remove callback dependencies
+  }, [subscribe, isConnected, taskId, formType]); // Updated dependencies
 
   return null; // This component doesn't render anything
 };
