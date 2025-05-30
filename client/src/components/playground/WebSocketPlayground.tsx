@@ -47,7 +47,7 @@ export function WebSocketPlayground() {
                 variant={isConnected ? "default" : "secondary"}
                 className="text-xs"
               >
-                {status.toUpperCase()}
+                {isConnected ? "CONNECTED" : "DISCONNECTED"}
               </Badge>
             </div>
             <div>
@@ -57,22 +57,10 @@ export function WebSocketPlayground() {
               </Badge>
             </div>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Connection is managed automatically by the unified WebSocket service.
+          </p>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2">
-          <Button 
-            variant="outline" 
-            onClick={disconnect}
-            disabled={!isConnected}
-          >
-            Disconnect
-          </Button>
-          <Button 
-            onClick={connect}
-            disabled={isConnected}
-          >
-            Connect
-          </Button>
-        </CardFooter>
       </Card>
 
       <Tabs defaultValue="demo" value={activeTab} onValueChange={setActiveTab}>

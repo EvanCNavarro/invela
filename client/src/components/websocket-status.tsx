@@ -1,4 +1,4 @@
-import { useWebSocketContext } from "@/providers/websocket-provider";
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import { Badge } from "@/components/ui/badge";
 import { 
   Tooltip,
@@ -35,7 +35,10 @@ export function WebSocketStatus({
   className = "",
   position = "top"
 }: WebSocketStatusProps) {
-  const { status, isConnected } = useWebSocketContext();
+  const { isConnected } = useUnifiedWebSocket();
+  
+  // Map unified WebSocket status to legacy status format
+  const status = isConnected ? 'connected' : 'disconnected';
   
   const statusColor = statusColors[status];
   const statusMessage = statusMessages[status];
