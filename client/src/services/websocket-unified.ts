@@ -137,6 +137,15 @@ class UnifiedWebSocketService {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
       
+      // Debug log all messages except pings
+      if (message.type !== 'pong' && message.type !== 'ping') {
+        console.log('[UnifiedWebSocket Debug] Received message:', {
+          type: message.type,
+          data: message.data,
+          timestamp: message.timestamp
+        });
+      }
+      
       // Handle system messages
       if (message.type === 'pong') {
         return; // Heartbeat response
@@ -145,6 +154,7 @@ class UnifiedWebSocketService {
       // Route message to subscribers
       const handlers = this.subscribers.get(message.type);
       if (handlers) {
+        console.log(`[UnifiedWebSocket Debug] Routing ${message.type} to ${handlers.size} handler(s)`);
         handlers.forEach(handler => {
           try {
             handler(message.data);
