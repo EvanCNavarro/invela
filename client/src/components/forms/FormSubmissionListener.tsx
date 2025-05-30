@@ -11,8 +11,8 @@
  * to ensure that the same event is never processed twice across the application.
  */
 
-import React, { useEffect, useContext, useRef } from 'react';
-import { WebSocketContext } from '@/providers/websocket-provider';
+import React, { useEffect, useRef } from 'react';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 
@@ -105,10 +105,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onInProgress,
   showToasts = false // Default to false to prevent duplicate toasts
 }) => {
-  const { socket, isConnected } = useContext(WebSocketContext);
+  const { subscribe, isConnected } = useUnifiedWebSocket();
   
   // Use refs to track listener state and prevent unnecessary reattachment
-  const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
+  const handleMessageRef = useRef<(() => void) | null>(null);
   const listenerInfoRef = useRef<{taskId: number; formType: string} | null>(null);
   const hasSetupListenerRef = useRef<boolean>(false);
   
@@ -133,35 +133,22 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   
   // Process messages after reconnection
   useEffect(() => {
-    // If we have a socket and it's connected, and we've previously had a connection (were disconnected)
-    if (socket && isConnected && reconnectionAttemptsRef.current > 0 && handleMessageRef.current) {
+    // If we're connected and we've previously had a connection (were disconnected)
+    if (isConnected && reconnectionAttemptsRef.current > 0) {
       logger.info(`WebSocket reconnected after ${reconnectionAttemptsRef.current} attempts, checking for missed messages`);
       
       // Reset reconnection counter when successfully reconnected
       reconnectionAttemptsRef.current = 0;
       
-      // Request any missed form submission events
-      try {
-        // Send a message to the server requesting any missed events for this task
-        socket.send(JSON.stringify({
-          type: 'request_missed_events',
-          taskId,
-          formType,
-          lastMessageId: lastProcessedMessageIdRef.current,
-          timestamp: new Date().toISOString()
-        }));
-        
-        logger.info(`Requested missed events for task ${taskId}`);
-      } catch (error) {
-        logger.error('Error requesting missed events:', error);
-      }
+      // Note: Unified WebSocket handles missed events automatically
+      logger.info(`Reconnection handled by unified WebSocket for task ${taskId}`);
     }
-  }, [socket, isConnected, taskId, formType]);
+  }, [isConnected, taskId, formType]);
 
   // Main effect for setting up WebSocket listeners
   useEffect(() => {
-    // Only proceed if we actually have a socket and it's connected
-    if (!socket || !isConnected) {
+    // Only proceed if we actually have a connection
+    if (!isConnected) {
       // Don't show warnings during initial page load - only when we've been connected before
       if (hasSetupListenerRef.current) {
         reconnectionAttemptsRef.current += 1;
@@ -205,10 +192,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
 
     logger.info(`Setting up form submission listener for task ${taskId} (${formType})`);
 
-    // Create new message handler
-    const handleMessage = (event: MessageEvent) => {
+    // Create new message handler for unified WebSocket
+    const handleMessage = (data: any) => {
       try {
-        const data = JSON.parse(event.data);
         
         // Process form-related events including task update events which carry form submission status
         // Added support for form_submission_completed which indicates all operations are complete
