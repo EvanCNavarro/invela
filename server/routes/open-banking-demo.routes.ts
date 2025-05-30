@@ -19,7 +19,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import { isNotNull, ne } from 'drizzle-orm/expressions';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from '../services/websocket';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 const router = Router();
 // Logger is already initialized in the imported module

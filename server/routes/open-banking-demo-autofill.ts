@@ -16,7 +16,7 @@ import {
 import { eq, and, asc, ne, isNotNull } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
-import { broadcastTaskUpdate } from '../services/websocket';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 const router = Router();
 const logger = new Logger('OpenBankingDemoAutofill');

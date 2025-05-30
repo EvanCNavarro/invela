@@ -1,5 +1,5 @@
 import { TaskStatus } from '../types';
-import * as WebSocketService from '../services/websocket';
+import * as WebSocketService from '../utils/unified-websocket';
 import { db } from '@db';
 import { eq, and, sql } from 'drizzle-orm';
 import { 

@@ -12,7 +12,7 @@
 import { db } from '../../db';
 import { tasks, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from '../../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { broadcastTaskUpdate } from './websocket';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 import { determineStatusFromProgress } from '../utils/progress';
 import { FieldStatus } from '../utils/field-status';
