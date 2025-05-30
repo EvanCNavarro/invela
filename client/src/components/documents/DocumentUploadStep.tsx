@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentStatus, UploadedFile } from './types';
-// Legacy WebSocket service import removed
-import { useWebSocket } from '@/hooks/useWebSocket';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 
 // Memoize handlers outside component to prevent recreation
 const createUploadProgressHandler = (toast: any) => (data: any) => {
@@ -146,7 +145,7 @@ export function DocumentUploadStep({
 }: DocumentUploadStepProps) {
   const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
-  const { connected } = useWebSocket();
+  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
   const subscriptionsRef = useRef<(() => void)[]>([]);
   const isInitialMount = useRef(true);
   const uploadProgressHandler = useRef(createUploadProgressHandler(toast));
@@ -256,8 +255,8 @@ export function DocumentUploadStep({
 
     const setupSubscriptions = async () => {
       try {
-        const uploadSub = await wsService.subscribe('UPLOAD_PROGRESS', uploadProgressHandler.current);
-        const countSub = await wsService.subscribe('COUNT_UPDATE', countUpdateHandler.current);
+        const uploadSub = subscribe('UPLOAD_PROGRESS', uploadProgressHandler.current);
+        const countSub = subscribe('COUNT_UPDATE', countUpdateHandler.current);
 
         subscriptionsRef.current = [uploadSub, countSub];
 

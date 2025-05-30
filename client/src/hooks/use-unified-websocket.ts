@@ -150,3 +150,5 @@ export function useUnifiedWebSocket(): UseUnifiedWebSocketReturn {
     disconnect
   };
 }
+
+export { useUnifiedWebSocket };
