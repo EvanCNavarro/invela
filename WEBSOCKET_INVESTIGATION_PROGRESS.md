@@ -429,6 +429,37 @@
      - Pattern: Task form with enhanced submission handling
      - Status: COMPLIANT - Form submission page, no WebSocket integration needed
 
+189. **client/src/pages/register-page.tsx** - ⚠️ REGISTER PAGE
+     - Lines 1-1099: Comprehensive user registration with invitation codes
+     - Pattern: Multi-step registration with form validation and invitation handling
+     - Status: COMPLIANT - Registration page, no WebSocket integration needed
+
+190. **client/src/pages/registry-page.tsx** - ⚠️ REGISTRY PAGE
+     - Lines 1-33: Simple company cell component for registry display
+     - Pattern: Company display component with logo handling
+     - Status: COMPLIANT - Display component, no WebSocket integration needed
+
+191. **client/src/pages/task-center-page.tsx** - ✅ TASK CENTER PAGE WITH UNIFIED WEBSOCKET
+     - Lines 1-397: Task center with proper unified WebSocket integration
+     - Pattern: Uses useUnifiedWebSocket hook for real-time task updates
+     - WebSocket Usage: Lines 34, 74, 108-165 - proper subscription to task_update and task_test_notification events
+     - Status: COMPLIANT - Correctly uses unified WebSocket architecture
+
+192. **client/src/pages/task-page.tsx** - ⚠️ TASK PAGE
+     - Lines 1-853: Universal task page with form submission handling
+     - Pattern: Task display with form integration and submission tracking
+     - Status: COMPLIANT - Task management page, no WebSocket integration needed
+
+193. **client/src/pages/risk-score-page.tsx** - ⚠️ RISK SCORE PAGE
+     - Lines 1-101: S&P Data Access risk score monitoring page
+     - Pattern: Risk assessment display with tutorial integration
+     - Status: COMPLIANT - Risk monitoring page, no WebSocket integration needed
+
+194. **client/src/pages/risk-score-configuration-page.tsx** - ⚠️ RISK SCORE CONFIGURATION PAGE
+     - Lines 1-574: Risk score configuration with drag-and-drop interface
+     - Pattern: Configuration management with interactive controls
+     - Status: COMPLIANT - Configuration page, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
