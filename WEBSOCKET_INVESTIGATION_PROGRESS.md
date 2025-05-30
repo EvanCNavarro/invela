@@ -293,6 +293,41 @@
      - Pattern: Static compliance content page
      - Status: COMPLIANT - Static content page, no WebSocket integration needed
 
+162. **client/src/pages/landing/products/accreditation.tsx** - ⚠️ ACCREDITATION PRODUCT PAGE
+     - Lines 1-276: Product marketing page for accreditation service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+163. **client/src/pages/landing/products/risk-score.tsx** - ⚠️ RISK SCORE PRODUCT PAGE
+     - Lines 1-274: Product marketing page for risk score service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+164. **client/src/pages/landing/products/data-access-grants-service.tsx** - ⚠️ DATA ACCESS PRODUCT PAGE
+     - Lines 1-281: Product marketing page for data access grants service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+165. **client/src/pages/landing/products/dispute-resolution.tsx** - ⚠️ DISPUTE RESOLUTION PRODUCT PAGE
+     - Lines 1-272: Product marketing page for dispute resolution service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+166. **client/src/pages/landing/products/insights-consulting.tsx** - ⚠️ INSIGHTS CONSULTING PRODUCT PAGE
+     - Lines 1-272: Product marketing page for insights consulting service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+167. **client/src/pages/landing/products/invela-registry.tsx** - ⚠️ INVELA REGISTRY PRODUCT PAGE
+     - Lines 1-272: Product marketing page for invela registry service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+168. **client/src/pages/landing/products/liability-insurance.tsx** - ⚠️ LIABILITY INSURANCE PRODUCT PAGE
+     - Lines 1-272: Product marketing page for liability insurance service
+     - Pattern: Static marketing content page with animations
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
