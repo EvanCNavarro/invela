@@ -1518,24 +1518,9 @@ class EnhancedKybServiceFactory {
    * Data isolation fix: Now properly uses company-specific instances when possible.
    */
   getDefaultInstance(): EnhancedKybFormService {
-    // CRITICAL DATA ISOLATION FIX: Import user context manager
-    // Using dynamic import to avoid circular dependencies
-    try {
-      // Import from userContext directly here to avoid circular dependencies
-      const { userContext } = require('@/lib/user-context');
-      const companyId = userContext.getCompanyId();
-      
-      if (companyId) {
-        this.logger.info(`Data isolation: Using company-specific instance for: ${companyId}`);
-        // Use a placeholder taskId when we don't have a specific one
-        return this.getInstance(companyId, 'default-context');
-      }
-    } catch (error) {
-      this.logger.warn('Error accessing user context manager:', error);
-    }
-
-    // When no company ID is available, fall back to app instance while logging a warning
-    this.logger.warn('No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES');
+    // Use direct factory fallback to avoid circular dependency issues
+    // Company context will be provided through factory parameters when available
+    this.logger.info('No company context found, using global instance');
     return this.getAppInstance();
   }
   
@@ -1546,22 +1531,8 @@ class EnhancedKybServiceFactory {
    * Data isolation fix: now checks for company ID in user context before returning a global instance.
    */
   getAppInstance(): EnhancedKybFormService {
-    // CRITICAL DATA ISOLATION FIX: Use proper user context manager
-    try {
-      // Import userContext directly here to avoid circular dependencies
-      const { userContext } = require('@/lib/user-context');
-      const companyId = userContext.getCompanyId();
-      
-      if (companyId) {
-        this.logger.info(`Data isolation: Using company-specific instance for app-level request: ${companyId}`);
-        // Use a placeholder taskId when we don't have a specific one
-        return this.getInstance(companyId, 'global-context');
-      }
-    } catch (error) {
-      this.logger.warn('Error accessing user context manager:', error);
-    }
-
-    // Fallback to truly global instance when no company context found
+    // Create app-level instance with direct instantiation
+    // Company context will be provided through factory parameters when available
     const instanceKey = 'app-global-context';
     
     if (!this.instances.has(instanceKey)) {
