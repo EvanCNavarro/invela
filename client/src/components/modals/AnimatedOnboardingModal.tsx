@@ -1077,7 +1077,12 @@ export function AnimatedOnboardingModal({
             imageAlt="Invite Team"
           >
             <div className="mt-0 space-y-4">
-              <div className="bg-primary/5 p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
+              <div className={cn(
+                "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500",
+                invitationStatus['CFO'] === 'success' 
+                  ? "bg-green-50 border-green-200" 
+                  : "bg-primary/5 border-primary/10"
+              )}>
                 <div className="flex items-center mb-3">
                   <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CFO
@@ -1100,7 +1105,7 @@ export function AnimatedOnboardingModal({
                         setTeamMembers(newMembers);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="John Doe"
+
                     />
                   </div>
                   <div>
@@ -1117,13 +1122,18 @@ export function AnimatedOnboardingModal({
                         setTeamMembers(newMembers);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="jd@company.com"
+
                     />
                   </div>
                 </div>
               </div>
               
-              <div className="bg-primary/5 p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
+              <div className={cn(
+                "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500",
+                invitationStatus['CISO'] === 'success' 
+                  ? "bg-green-50 border-green-200" 
+                  : "bg-primary/5 border-primary/10"
+              )}>
                 <div className="flex items-center mb-3">
                   <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CISO
@@ -1148,7 +1158,7 @@ export function AnimatedOnboardingModal({
                         setTeamMembers(newMembers);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="Jane Smith"
+
                     />
                   </div>
                   <div>
@@ -1165,7 +1175,7 @@ export function AnimatedOnboardingModal({
                         setTeamMembers(newMembers);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="ciso@company.com"
+
                     />
                   </div>
                 </div>
