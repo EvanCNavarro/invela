@@ -197,7 +197,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
                           generateMessageId('submission', taskId, data.type, timestamp);
         
         // Use shared deduplication utility - this handles all the complex logic
-        if (!processMessageWithDeduplication(messageId, taskId, listenerTaskId, undefined, undefined)) {
+        if (!processMessageWithDeduplication(messageId, taskId, taskId, undefined, undefined)) {
           return;
         }
         
