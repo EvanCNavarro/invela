@@ -20,8 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
-import { wsService } from "@/lib/websocket";
-import { TaskCountData, CompanyTabsUpdateEvent, FormSubmittedEvent, SidebarRefreshEvent } from "@/lib/websocket-types";
+// Legacy WebSocket imports removed - now using unified provider
 
 interface SidebarProps {
   isExpanded: boolean;
