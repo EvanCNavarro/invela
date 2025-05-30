@@ -1,0 +1,456 @@
+> rest-express@1.0.0 dev
+[2025-05-30T17:01:26.873Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-30T17:01:26.878Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":103,"timestamp":"2025-05-30T17:01:26.878Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-30T17:01:27.012Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-30T17:01:27.129Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-30T17:01:27.130Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"dl1kkg","timestamp":"2025-05-30T17:01:27.130Z"}
+[2025-05-30T17:01:27.130Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-30T17:01:27.130Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-30T17:01:27.130Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-30T17:01:27.130Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-30T17:01:27.130Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-30T17:01:27.130Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-30T17:01:27.130Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-30T17:01:27.130Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-30T17:01:27.130Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-30T17:01:27.131Z] [INFO] [App] Setting up Vite development server 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-30T17:01:27.132Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-30T17:01:27.133Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (production mode) 
+[2025-05-30T17:01:27.133Z] [INFO] [App] [ENV] Environment=production 
+[2025-05-30T17:01:27.133Z] [INFO] [App] [ENV] Configuration: Production mode 
+[2025-05-30T17:01:27.146Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-30T17:01:27.146Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-30T17:01:27.172Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-30T17:01:27.172Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-30T17:01:27.172Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-30T17:01:27.172Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-30T17:01:27.173Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-30T17:01:28.164Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-30T17:01:28.164Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-30T17:01:28.164Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-30T17:01:28.164Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-30T17:01:28.165Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-30T17:01:31.046Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:01:31.643Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748624491643-9xkfsmr","clients":1}
+[2025-05-30T17:01:32.003Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1748624491643-9xkfsmr","code":1001,"reason":"","remainingClients":0}
+[2025-05-30T17:01:32.560Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:01:32.575Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:01:33.164Z] [INFO] [App] Running background health checks... 
+[2025-05-30T17:01:33.165Z] [StartupChecks] Running application startup health checks... 
+[2025-05-30T17:01:33.165Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-30T17:01:33.165Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-30T17:01:33.346Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-30T17:01:33.374Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-30T17:01:33.441Z] [DBConnectionService] Database connection check successful 
+[2025-05-30T17:01:33.441Z] [StartupChecks] Database health check passed 
+[2025-05-30T17:01:33.441Z] [StartupChecks] All startup health checks passed! 
+[2025-05-30T17:01:33.441Z] [INFO] [App] All background health checks passed successfully. 
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-30T17:01:41.882Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":755,"userId":536}
+[2025-05-30T17:01:41.941Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":755}
+[Tasks] Automatically unlocking all tasks for company { userId: 536, companyId: 755, requestedBy: 'automatic_task_unlock' }
+[2025-05-30T17:01:41.942Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":755}
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-30T17:01:41.949Z'
+}
+[2025-05-30T17:01:41.954Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748624501954-3lrfxaj","clients":1}
+[2025-05-30T17:01:41.972Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":755,"count":3,"taskIds":[1102,1103,1104],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1103]}
+[UnifiedProgress] Starting progress update for task 1102 (company_kyb) {
+  taskId: 1102,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748624501973-687',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-30T17:01:41.981Z] [INFO] [App] GET /api/companies/current 304 in 104ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... 
+[UnifiedProgressCalc] Calculating progress for task 1102 (company_kyb)
+[UnifiedProgressCalc] Task 1102 (company_kyb) progress: 0/30 = 0%
+[2025-05-30T17:01:42.145Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.145Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.145Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1102,"messageId":"msg_1748624502145_xkwmk84p"}
+[2025-05-30T17:01:42.145Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1102 {"progress":0,"status":"not_started","messageId":"msg_1748624502145_xkwmk84p"}
+[2025-05-30T17:01:42.146Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1102,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-30T17:01:42.146Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1103,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-30T17:01:42.146Z"}
+[UnifiedProgress] Starting progress update for task 1103 (ky3p) {
+  taskId: 1103,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748624502146-321',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-30T17:01:42.169Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 536 
+[2025-05-30T17:01:42.169Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-30T17:01:42.169Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-30T17:01:42.169Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 536 
+[UnifiedProgressCalc] Calculating progress for task 1103 (ky3p)
+[2025-05-30T17:01:42.214Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 536 
+[2025-05-30T17:01:42.248Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 80ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[KY3P Progress] Calculated progress for task 1103: {
+  taskId: 1103,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-30T17:01:42.286Z'
+}
+[UnifiedProgressCalc] Task 1103 (ky3p) progress: 0/120 = 0%
+[2025-05-30T17:01:42.314Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.315Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.315Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1103,"messageId":"msg_1748624502314_c0tngbc8"}
+[2025-05-30T17:01:42.315Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1103 {"progress":0,"status":"not_started","messageId":"msg_1748624502314_c0tngbc8"}
+[2025-05-30T17:01:42.315Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1103,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1104 (open_banking) {
+  taskId: 1104,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748624502315-591',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1104 (open_banking)
+[UnifiedProgressCalc] Task 1104 (open_banking) progress: 0/44 = 0%
+[2025-05-30T17:01:42.477Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.477Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:01:42.477Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1104,"messageId":"msg_1748624502476_htkiqy3v"}
+[2025-05-30T17:01:42.477Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1104 {"progress":0,"status":"not_started","messageId":"msg_1748624502476_htkiqy3v"}
+[2025-05-30T17:01:42.477Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1104,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-30T17:01:42.477Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":755,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-30T17:01:42.570Z] [INFO] [App] GET /api/tasks 200 in 690ms :: [{"id":1102,"title":"1. KYB Form: Meridian Research United","description":nul... 
+[2025-05-30T17:02:09.236Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... [sampled: request 11] 
+[2025-05-30T17:02:12.086Z] [INFO] [WebSocket] Received message from client client-1748624501954-3lrfxaj {"module":"WebSocket","type":"ping","data":{"timestamp":"2025-05-30T17:02:12.015Z","source":"unified-websocket-service"},"timestamp":"2025-05-30T17:02:12.015Z"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-30T17:02:15.558Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":755,"userId":536}
+[2025-05-30T17:02:15.591Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":755}
+[Tasks] Automatically unlocking all tasks for company { userId: 536, companyId: 755, requestedBy: 'automatic_task_unlock' }
+[2025-05-30T17:02:15.593Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":755}
+[2025-05-30T17:02:15.624Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":755,"count":3,"taskIds":[1102,1103,1104],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1103]}
+[2025-05-30T17:02:15.625Z] [INFO] [App] GET /api/tasks/1102 200 in 64ms :: {"id":1102,"title":"1. KYB Form: Meridian Research United","description":null... 
+[UnifiedProgress] Starting progress update for task 1102 (company_kyb) {
+  taskId: 1102,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748624535626-965',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1102 (company_kyb)
+[UnifiedProgressCalc] Task 1102 (company_kyb) progress: 0/30 = 0%
+[2025-05-30T17:02:15.772Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:15.772Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:15.772Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1102,"messageId":"msg_1748624535771_aum7ar3u"}
+[2025-05-30T17:02:15.772Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1102 {"progress":0,"status":"not_started","messageId":"msg_1748624535771_aum7ar3u"}
+[2025-05-30T17:02:15.772Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1102,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-30T17:02:15.772Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1103,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-30T17:02:15.772Z"}
+[UnifiedProgress] Starting progress update for task 1103 (ky3p) {
+  taskId: 1103,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748624535773-19',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1103 (ky3p)
+[KY3P Progress] Calculated progress for task 1103: {
+  taskId: 1103,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-30T17:02:15.889Z'
+}
+[UnifiedProgressCalc] Task 1103 (ky3p) progress: 0/120 = 0%
+[2025-05-30T17:02:15.923Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:15.923Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:15.923Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1103,"messageId":"msg_1748624535923_tmjmiego"}
+[2025-05-30T17:02:15.923Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1103 {"progress":0,"status":"not_started","messageId":"msg_1748624535923_tmjmiego"}
+[2025-05-30T17:02:15.924Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1103,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1104 (open_banking) {
+  taskId: 1104,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748624535924-269',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1104 (open_banking)
+[UnifiedProgressCalc] Task 1104 (open_banking) progress: 0/44 = 0%
+[2025-05-30T17:02:16.069Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:16.069Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:02:16.069Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1104,"messageId":"msg_1748624536068_f2bex1xo"}
+[2025-05-30T17:02:16.069Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1104 {"progress":0,"status":"not_started","messageId":"msg_1748624536068_f2bex1xo"}
+[2025-05-30T17:02:16.069Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1104,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-30T17:02:16.069Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":755,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-30T17:02:16.175Z] [INFO] [App] GET /api/tasks 200 in 618ms :: [{"id":1102,"title":"1. KYB Form: Meridian Research United","description":nul... 
+[Task Templates API] Fetching template for task type: company_kyb, user: 536
+[Task Templates API] Found template: 1 (KYB Form) for task type: company_kyb
+[2025-05-30T17:02:16.680Z] [INFO] [App] GET /api/tasks/1102 304 in 61ms :: {"id":1102,"title":"1. KYB Form: Meridian Research United","description":null... 
+[Task Templates API] Retrieved 9 configuration items for template ID: 1
+[2025-05-30T17:02:16.739Z] [INFO] [App] GET /api/task-templates/by-type/company_kyb 200 in 115ms :: {"id":1,"name":"KYB Form","description":"Know Your Business form for company ... 
+[2025-05-30T17:02:17.945Z] [INFO] [App] Fetching KYB fields 
+[2025-05-30T17:02:18.002Z] [INFO] [App] KYB fields retrieved successfully {"fieldCount":30,"groups":["companyProfile","financialProfile","governanceLeadership","operationsCompliance"]}
+[2025-05-30T17:02:18.032Z] [INFO] [App] GET /api/kyb/fields 200 in 87ms :: [{"id":1,"field_key":"legalEntityName","display_name":"Legal Entity Name","fi... 
+[KYB API Debug] Loading progress for task: 1102
+[Task Reconciliation] Task submission indicators: {
+  taskId: 1102,
+  status: 'not_started',
+  progress: 0,
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  submissionDate: undefined,
+  isTerminalState: false,
+  hasBeenSubmitted: false
+}
+[Task Reconciliation] Found 0 responses for task 1102 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 0,
+  currentStatus: 'not_started',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: false,
+  effectiveHasResponses: false,
+  timestamp: '2025-05-30T17:02:18.290Z'
+}
+[STATUS DETERMINATION] Task has 0% progress and no responses, setting to NOT_STARTED
+[Task Reconciliation] Progress calculation: {
+  taskId: 1102,
+  currentProgress: 0,
+  calculatedProgress: 0,
+  currentStatus: 'not_started',
+  calculatedStatus: 'not_started',
+  responseCount: 0,
+  completeCount: 0
+}
+[Task Reconciliation] No updates needed for task 1102
+[KYB API Debug] Retrieved task: {
+  taskId: 1102,
+  status: 'not_started',
+  progress: 0,
+  metadata: [
+    'persona',
+    'unlocked',
+    'createdBy',
+    'isInitialTask',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-30T17:02:18.332Z'
+}
+[KYB API Debug] Retrieved responses: { responseCount: 0, fields: [], timestamp: '2025-05-30T17:02:18.364Z' }
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 1102,
+  responseCount: 0,
+  progress: 0,
+  status: 'not_started',
+  formDataKeys: []
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-30T17:02:18.364Z
+[SERVER DEBUG] Task ID: 1102, Found 0 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field goodStanding in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: NOT PRESENT
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 0 fields, status: not_started, progress: 0%
+===============================================
+[2025-05-30T17:02:18.396Z] [INFO] [App] GET /api/kyb/progress/1102 200 in 172ms :: {"formData":{},"progress":0,"status":"not_started"} 
+[KYB API Debug] Loading progress for task: 1102
+[Task Reconciliation] Task submission indicators: {
+  taskId: 1102,
+  status: 'not_started',
+  progress: 0,
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  submissionDate: undefined,
+  isTerminalState: false,
+  hasBeenSubmitted: false
+}
+[Task Reconciliation] Found 0 responses for task 1102 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 0,
+  currentStatus: 'not_started',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: false,
+  effectiveHasResponses: false,
+  timestamp: '2025-05-30T17:02:18.718Z'
+}
+[STATUS DETERMINATION] Task has 0% progress and no responses, setting to NOT_STARTED
+[Task Reconciliation] Progress calculation: {
+  taskId: 1102,
+  currentProgress: 0,
+  calculatedProgress: 0,
+  currentStatus: 'not_started',
+  calculatedStatus: 'not_started',
+  responseCount: 0,
+  completeCount: 0
+}
+[Task Reconciliation] No updates needed for task 1102
+[KYB API Debug] Retrieved task: {
+  taskId: 1102,
+  status: 'not_started',
+  progress: 0,
+  metadata: [
+    'persona',
+    'unlocked',
+    'createdBy',
+    'isInitialTask',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-30T17:02:18.746Z'
+}
+[KYB API Debug] Retrieved responses: { responseCount: 0, fields: [], timestamp: '2025-05-30T17:02:18.775Z' }
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 1102,
+  responseCount: 0,
+  progress: 0,
+  status: 'not_started',
+  formDataKeys: []
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-30T17:02:18.775Z
+[SERVER DEBUG] Task ID: 1102, Found 0 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field goodStanding in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: NOT PRESENT
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 0 fields, status: not_started, progress: 0%
+===============================================
+[2025-05-30T17:02:18.807Z] [INFO] [App] GET /api/kyb/progress/1102 304 in 153ms :: {"formData":{},"progress":0,"status":"not_started"} 
+[2025-05-30T17:02:33.853Z] [INFO] [App] GET /api/companies/current 304 in 37ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... [sampled: request 21] 
+[2025-05-30T17:02:42.088Z] [INFO] [WebSocket] Received message from client client-1748624501954-3lrfxaj {"module":"WebSocket","type":"ping","data":{"timestamp":"2025-05-30T17:02:42.015Z","source":"unified-websocket-service"},"timestamp":"2025-05-30T17:02:42.015Z"}
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-30T17:02:42.849Z'
+}
+[Current Company] Using cached company data: 755

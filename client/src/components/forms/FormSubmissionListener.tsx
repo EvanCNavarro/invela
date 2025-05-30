@@ -89,7 +89,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onInProgress,
   showToasts = false // Default to false to prevent duplicate toasts
 }) => {
-  const { subscribe, isConnected } = useUnifiedWebSocket();
+  const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket();
   
   // Use refs to track listener state and prevent unnecessary reattachment
   const handleMessageRef = useRef<(() => void) | null>(null);
