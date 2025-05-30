@@ -969,27 +969,6 @@ export function OnboardingModal() {
                 </div>
               </div>
             </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_6.png" 
-                      alt="Information Review" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
-            </div>
           </StepLayout>
         );
       
@@ -1033,27 +1012,6 @@ export function OnboardingModal() {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Right side: Image */}
-            <div className="hidden md:block bg-blue-50/30 relative md:w-[45%] max-w-[450px] flex-shrink-0 border-l border-slate-100">
-              {isCurrentImageLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <div className="relative w-full aspect-square flex items-center justify-center">
-                    <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
-                    <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                    <img 
-                      src="/assets/welcome_7.png" 
-                      alt="Ready to Begin" 
-                      className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center p-5">
-                  <EnhancedSkeleton className="w-[90%] aspect-square rounded-lg" />
-                </div>
-              )}
             </div>
           </StepLayout>
         );
