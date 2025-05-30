@@ -247,7 +247,7 @@ export function DocumentUploadStep({
 
   React.useEffect(() => {
     // Only run on initial mount
-    if (!isInitialMount.current || !connected) return;
+    if (!isInitialMount.current || !isConnected) return;
 
     console.log('[DocumentUploadStep] Setting up WebSocket subscriptions (initial mount)', {
       timestamp: new Date().toISOString()
@@ -291,7 +291,7 @@ export function DocumentUploadStep({
       });
       subscriptionsRef.current = [];
     };
-  }, [connected]); 
+  }, [isConnected]); 
 
   return (
     <div className="space-y-6">
