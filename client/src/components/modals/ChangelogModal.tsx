@@ -105,6 +105,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'changelog-audience-filtering-2025-05-30',
+    date: '2025-05-30',
+    type: 'feature',
+    title: 'Changelog Audience Filtering System',
+    description: 'Added Product/Developer/All filter controls to changelog modal for better content organization',
+    details: [
+      'Implemented audience-based filtering with Product, Developer, and All options',
+      'Added light blue active state styling for filter buttons',
+      'Created responsive filter UI with smooth transitions',
+      'Enhanced user experience with filtered view of relevant updates',
+      'Added comprehensive documentation in docs/features/CHANGELOG_MODAL.md',
+      'Optimized performance with useMemo for filtered entry computation'
+    ],
+    version: '1.9.1',
+    audience: 'product'
+  },
+  {
     id: 'documentation-overhaul-2025-05-30',
     date: '2025-05-30',
     type: 'docs',
