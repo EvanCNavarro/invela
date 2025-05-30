@@ -374,6 +374,16 @@
      - Pattern: Dashboard with React Query, no real-time features requiring WebSocket
      - Status: COMPLIANT - Standard dashboard, no WebSocket integration needed
 
+178. **client/src/pages/demo-page.tsx** - ⚠️ DEMO PAGE
+     - Lines 1-2525: Comprehensive demo walkthrough with interactive forms
+     - Pattern: Multi-step demo flow with API generation for company names
+     - Status: COMPLIANT - Demo functionality, no WebSocket integration needed
+
+179. **client/src/pages/diagnostic-page.tsx** - ⚠️ DIAGNOSTIC PAGE
+     - Lines 1-356: Diagnostic tools for testing API endpoints and form services
+     - Pattern: Testing interface with API calls and form validation
+     - Status: COMPLIANT - Diagnostic tools, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
