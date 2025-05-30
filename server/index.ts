@@ -354,29 +354,28 @@ import { initializeProductionOptimizations } from './deployment/production-confi
 initializeProductionOptimizations();
 
 // Configure server for proper deployment
-// Replit's deployment fix #2: Use dynamic port configuration from environment
-// Best practice: Environment-aware configuration that adapts to deployment context
-// Homogeneous solution: Maintains same forced production approach while enabling flexibility
-const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
+// Use development-friendly configuration while maintaining deployment compatibility
+const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
-// Set NODE_ENV based on deployment context - prioritize explicit production setting
-process.env.NODE_ENV = 'production';
+// Set appropriate NODE_ENV - don't force production in development
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
 
-// Replit's recommended dynamic port configuration
-// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
-// Fallback ensures Cloud Run compatibility while respecting Replit's deployment environment
+// Dynamic port configuration that works for both development and deployment
+// Development: Use 5000 for Replit workflow compatibility
+// Production: Use PORT environment variable or fallback to 8080
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : (isDevelopment ? 5000 : 8080);
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Simplified deployment logging for Replit's forced configuration approach
-// Best practice: Clear visibility into forced production settings
-logger.info(`[ENV] Server will listen on PORT=${PORT} (forced production mode)`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV} (forced production)`);
-logger.info(`[ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment`);
+// Environment logging for development and deployment
+logger.info(`[ENV] Server will listen on PORT=${PORT} (${process.env.NODE_ENV} mode)`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV}`);
+logger.info(`[ENV] Configuration: ${isDevelopment ? 'Development' : 'Production'} mode`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
