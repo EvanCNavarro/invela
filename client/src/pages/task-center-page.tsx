@@ -1,31 +1,7 @@
 /**
  * ========================================
- * Task Center Page - Workflow Management
+ * Task Center Page - Unified WebSocket Implementation
  * ========================================
- * 
- * Comprehensive task management and workflow coordination page providing
- * advanced task organization, assignment, and progress tracking capabilities.
- * Features real-time updates, collaborative workflows, and enterprise-grade
- * task management with integrated WebSocket communication.
- * 
- * Key Features:
- * - Multi-tab task organization (All, My Tasks, Team Tasks)
- * - Real-time task status updates via WebSocket
- * - Advanced filtering and sorting capabilities
- * - Task creation and assignment workflows
- * - Progress tracking and status management
- * - Collaborative team task coordination
- * 
- * Task Management:
- * - Task lifecycle management (Created, In Progress, Completed)
- * - User and team assignment capabilities
- * - Real-time status synchronization
- * - Interactive task creation modal
- * - Comprehensive task filtering and search
- * 
- * @module pages/TaskCenterPage
- * @version 1.0.0
- * @since 2025-05-23
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -155,21 +131,18 @@ export default function TaskCenterPage() {
     refreshTasks();
   }, [queryClient]);
 
+  // Unified WebSocket subscription
   useEffect(() => {
-    // Update WebSocket connection status
     setWsConnected(isConnected);
     
     if (isConnected) {
-      console.log('[TaskCenter] WebSocket connection established');
+      console.log('[TaskCenter] Unified WebSocket connection established');
       
       const subscriptions: (() => void)[] = [];
       
-      const setupSubscriptions = () => {
-        try {
-          // 1. Subscribe to task updates using unified service
-          const unsubTaskUpdate = subscribe('task_update', (data: any) => {
-            // Message data now comes directly from the WebSocket service
-            console.log('[TaskCenter] Raw WebSocket task_update data:', data);
+      // Subscribe to task updates
+      const unsubTaskUpdate = subscribe('task_update', (data: any) => {
+        console.log('[TaskCenter] Unified task update received:', data);
           
           // Enhanced logging to help diagnose the exact structure
           console.log('[TaskCenter] WebSocket message structure analysis:', {
