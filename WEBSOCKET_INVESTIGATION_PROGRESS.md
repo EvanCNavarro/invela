@@ -358,6 +358,22 @@
      - Pattern: Large profile page with user management and risk visualization
      - Status: COMPLIANT - Profile display functionality, no WebSocket integration needed
 
+175. **client/src/pages/FileVault.tsx** - ✅ FILE VAULT PAGE WITH UNIFIED WEBSOCKET
+     - Lines 1-780: File management page with proper unified WebSocket integration
+     - Pattern: Uses useUnifiedWebSocket hook for real-time file vault updates
+     - WebSocket Usage: Lines 24, 319-353 - proper subscription to file_vault_update events
+     - Status: COMPLIANT - Correctly uses unified WebSocket architecture
+
+176. **client/src/pages/component-library.tsx** - ⚠️ COMPONENT LIBRARY PAGE
+     - Lines 1-449: Component demonstration and documentation page
+     - Pattern: Static component showcase with interactive demos
+     - Status: COMPLIANT - Demo page, no WebSocket integration needed
+
+177. **client/src/pages/dashboard-page.tsx** - ⚠️ DASHBOARD PAGE
+     - Lines 1-562: Main dashboard with widgets and company data visualization
+     - Pattern: Dashboard with React Query, no real-time features requiring WebSocket
+     - Status: COMPLIANT - Standard dashboard, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
