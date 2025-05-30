@@ -157,7 +157,9 @@ class UnifiedWebSocketService {
         console.log(`[UnifiedWebSocket Debug] Routing ${message.type} to ${handlers.size} handler(s)`);
         handlers.forEach(handler => {
           try {
-            handler(message.data);
+            // Check for data in multiple possible locations for compatibility
+            const messageData = message.data || (message as any).payload || message;
+            handler(messageData);
           } catch (error) {
             console.error('[WebSocket] Error in message handler:', error);
           }
