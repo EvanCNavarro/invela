@@ -336,7 +336,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
   };
   
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait" initial={false} onExitComplete={() => {}}>
       {isActive && (
         <motion.div
           key={`step-transition-${isActive ? 'active' : 'inactive'}`}
@@ -346,9 +346,16 @@ const StepTransition: React.FC<StepTransitionProps> = ({
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 400, damping: 40 },
-            opacity: { duration: 0.3 },
-            ease: [0.22, 1, 0.36, 1]
+            x: { 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              mass: 0.8
+            },
+            opacity: { 
+              duration: 0.25,
+              ease: "easeOut"
+            }
           }}
           className="w-full"
         >
