@@ -11,6 +11,13 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 
+// Animation timing constants - standardized across the application
+const ANIMATION_TIMING = {
+  STEP_TRANSITION: 200, // ms - time before step change
+  COMPLETION: 300, // ms - time to complete animation
+  IMAGE_FADE: 150, // ms - image loading transition
+} as const;
+
 import {
   Card,
   CardContent,
@@ -29,7 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/no-close-dialog';
 import { useToast } from '@/hooks/use-toast';
 
-// Import formatting utilities
+// Revenue formatting utilities - updated to match demo system format
 const formatRevenue = (amount: number): string => {
   if (amount >= 1_000_000_000) {
     const billions = amount / 1_000_000_000;
@@ -114,11 +121,12 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
  * @returns Response data from the API
  */
 // Revenue mapping from text descriptions to numeric values (in dollars)
+// Updated to match demo system format for consistency
 const revenueValueMap: Record<string, number> = {
-  small: 1000000,     // $1 million
-  medium: 10000000,   // $10 million
-  large: 50000000,    // $50 million
-  xlarge: 100000000   // $100 million
+  small: 1750000,     // $1.75M - matches demo system format
+  medium: 17500000,   // $17.5M - matches demo system format  
+  large: 87500000,    // $87.5M - matches demo system format
+  xlarge: 175000000   // $175M - matches demo system format
 };
 
 const updateCompanyDetails = async (companyId: number, details: any) => {
@@ -310,7 +318,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
-  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4 w-fit">
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 w-fit">
     Onboarding Modal
   </div>
 );
@@ -396,7 +404,7 @@ const StepLayout: React.FC<{
           <HeaderChip />
           
           {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">
+          <h2 className="text-2xl font-bold text-primary mb-4">
             {title}
           </h2>
           
@@ -589,8 +597,8 @@ export function AnimatedOnboardingModal({
       setTimeout(() => {
         setIsTransitioning(false);
         logDebug('Next step animation completed', { newStep: currentStep + 1 });
-      }, 300);
-    }, 200);
+      }, ANIMATION_TIMING.COMPLETION);
+    }, ANIMATION_TIMING.STEP_TRANSITION);
   };
   
   // Handle back button click with animation
@@ -614,8 +622,8 @@ export function AnimatedOnboardingModal({
       setTimeout(() => {
         setIsTransitioning(false);
         logDebug('Back step animation completed', { newStep: currentStep - 1 });
-      }, 300);
-    }, 200);
+      }, ANIMATION_TIMING.COMPLETION);
+    }, ANIMATION_TIMING.STEP_TRANSITION);
   };
   
   // Handle complete onboarding action
