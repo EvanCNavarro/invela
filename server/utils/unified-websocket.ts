@@ -318,10 +318,12 @@ export function broadcast<T extends WebSocketPayload>(
   // The individual client connections will have their own readyState
   // which we check before sending messages to each client
   
-  // Create full message with type and timestamp
+  // Create full message with type, timestamp, and properly structured payload
   const message = {
     type,
     timestamp: new Date().toISOString(),
+    payload: payload,
+    // Also spread payload directly for backward compatibility
     ...payload
   };
   
@@ -372,23 +374,21 @@ export function getWebSocketServer(): WebSocketServer | null {
  * @param payload Task update payload
  */
 export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
-  broadcast<TaskUpdateMessage>('task_updated', payload);
+  // Ensure the payload includes the task data properly formatted
+  const taskData = {
+    taskId: payload.taskId || payload.id,
+    id: payload.id || payload.taskId,
+    status: payload.status,
+    progress: payload.progress,
+    metadata: payload.metadata || {}
+  };
+
+  // Broadcast with complete task data
+  broadcast<TaskUpdateMessage>('task_updated', taskData);
+  broadcast('task_update', taskData);
   
-  // Extract task ID from multiple possible locations for backward compatibility  
-  const taskId = payload.taskId || payload.id;
-  
-  // Also broadcast with the legacy type for backward compatibility
-  if (taskId) {
-    broadcast('task_update', {
-      id: taskId,
-      taskId: taskId, // Include both formats for maximum compatibility
-      status: payload.status || 'submitted',
-      progress: payload.progress || 100,
-      metadata: payload.metadata || {},
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    wsLogger.warn('Task update broadcast called without task ID', { payload });
+  if (!taskData.taskId) {
+    wsLogger.warn('Task update broadcast called without task ID', { payload: taskData });
   }
 }
 
