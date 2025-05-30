@@ -144,10 +144,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Reset reconnection counter when connected
     reconnectionAttemptsRef.current = 0;
     
-    // Handle scenario where socket reconnected but the component did not remount
-    // We check both for new task and for existing socket listener attachment
-    const needsReattachment = socket &&
-      (socket.readyState === WebSocket.OPEN) &&
+    // Handle scenario where connection reconnected but the component did not remount
+    // We check for existing listener attachment status
+    const needsReattachment = isConnected &&
       handleMessageRef.current && 
       !hasSetupListenerRef.current;
     
@@ -167,10 +166,11 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Clean up any existing listener if we're setting up a new one
     if (hasSetupListenerRef.current && handleMessageRef.current) {
       try {
-        socket.removeEventListener('message', handleMessageRef.current);
+        unsubscribe('form_submission_complete', handleMessageRef.current);
+        unsubscribe('task_submission_complete', handleMessageRef.current);
         logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
       } catch (e) {
-        // Ignore errors removing listeners from potentially closed sockets
+        // Ignore errors removing listeners from potentially closed connections
       }
     }
 
