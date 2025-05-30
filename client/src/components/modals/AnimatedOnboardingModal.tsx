@@ -313,8 +313,8 @@ const HeaderChip: React.FC = () => (
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-primary/5 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
-    <div className="absolute inset-0 flex items-center justify-center">
+  <div className="flex-1 bg-primary/5 relative border-l border-slate-100 min-w-0">
+    <div className="absolute inset-0 flex items-center justify-center p-6">
       {children}
     </div>
   </div>
@@ -334,10 +334,7 @@ const StepImage: React.FC<{
   console.log(`[StepImage] Rendering with src: ${src}, alt: ${alt}`);
 
   return (
-    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-red-500">
-      <div className="absolute top-2 left-2 text-xs bg-black text-white p-1 rounded z-10">
-        Status: {imageStatus} | Src: {src ? 'provided' : 'missing'}
-      </div>
+    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
       
       {src ? (
         <>
@@ -358,18 +355,10 @@ const StepImage: React.FC<{
               setImageStatus('loaded');
             }}
           />
-          {imageStatus === 'error' && (
-            <div className="absolute inset-0 flex items-center justify-center text-red-500 text-sm p-4 text-center">
-              Error: {errorMessage}
-            </div>
-          )}
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-400 text-center">
-          <div>
-            <div>No image source provided</div>
-            <div className="text-xs mt-2">src={JSON.stringify(src)}</div>
-          </div>
+        <div className="w-full h-full flex items-center justify-center text-slate-400">
+          No image available
         </div>
       )}
     </div>
