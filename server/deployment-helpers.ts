@@ -20,8 +20,9 @@ export function getDeploymentPort(): number {
     return isNaN(parsedPort) ? 8080 : parsedPort;
   }
   
-  // For Autoscale deployments, always default to 8080 if PORT is not provided
-  return process.env.NODE_ENV === 'production' ? 8080 : 5000;
+  // Special case: In Replit development environment, use 5000 to match workflow expectations
+  // In actual deployment, PORT environment variable will be set to 8080
+  return 5000;
 }
 
 /**
