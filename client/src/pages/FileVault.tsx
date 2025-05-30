@@ -343,7 +343,9 @@ export const FileVault: React.FC = () => {
     };
     
     // Subscribe to file vault updates using unified WebSocket service
+    console.log('[FileVault Debug] Subscribing to file_vault_update events');
     const unsubscribeHandler = subscribe('file_vault_update', handleFileVaultUpdate);
+    console.log('[FileVault Debug] Subscription result:', unsubscribeHandler);
     
     return () => {
       // Clean up subscription
