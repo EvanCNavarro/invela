@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-// Legacy WebSocket service import removed - using unified provider
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { Badge } from "@/components/ui/badge";
