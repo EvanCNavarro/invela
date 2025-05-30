@@ -1,0 +1,250 @@
+[2025-05-30T17:06:33.598Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-30T17:06:33.598Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-30T17:06:33.598Z] [App] Application ready for user interaction 
+[2025-05-30T17:06:33.598Z] [PhaseStartup] Phase ready marked as completed immediately 
+[Router] Current location: /
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] WebSocket disconnected - modal rendering disabled
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 536, email: "rward@meridianresearchunited.com", timestamp: "2025-05-30T17:06:33.829Z"}
+[2025-05-30T17:06:33.838Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=755, path=/, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 755
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[DashboardLayout] Tab "dashboard" is locked. Redirecting to task-center.
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[Router] Current location: /task-center
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=755, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 755
+[OnboardingWrapper] WebSocket disconnected - modal rendering disabled
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[2025-05-30T17:06:34.095Z] [App] Unified WebSocket service connected successfully 
+[2025-05-30T17:06:34.095Z] [PhaseStartup] Phase communication completed successfully 
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T17:06:34.228Z"}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T17:06:34.379Z"}
+[TaskCenter] Unified WebSocket connection established
+[OnboardingWrapper] WebSocket connected - modal rendering enabled
+[TaskTable] Task clicked: 
+Object {id: 1102, title: "1. KYB Form: Meridian Research United", type: "company_kyb", status: "ready_for_submission", metadata: {…}, …}
+[TaskTable] Generated task URL: 
+Object {taskId: 1102, companyName: "Meridian Research United", formUrl: "/task-center/task/1102?review=true", timestamp: "2025-05-30T17:06:35.776Z"}
+[TaskTable] Direct task navigation preparation: 
+Object {taskId: 1102, taskType: "company_kyb", formType: "kyb", title: "1. KYB Form: Meridian Research United", constructedUrl: "/task-center/task/1102?review=true", …}
+[TaskTable] Initiating direct ID-based navigation to: /task-center/task/1102?review=true
+[Router] Current location: /task-center/task/1102
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center/task/1102", …}
+[Sidebar] Tab state check: company=755, path=/task-center/task/1102, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 755
+[TaskPage] Fetching task data for ID: 1102
+[TaskPage] Set task context: taskId=1102
+[TaskPage] Processed task type: company_kyb → kyb 
+Object {originalType: "company_kyb", mappedType: "kyb", timestamp: "2025-05-30T17:06:36.081Z"}
+[TaskPage] Company name set for kyb form 
+Object {displayNameValue: "Meridian Research United", extractedName: "Meridian Research United", metadata: {…}}
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center/task/1102", …}
+[Sidebar] Tab state check: company=755, path=/task-center/task/1102, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 755
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[FormSubmissionListener] Setting up form submission listener for task 1102 (kyb)
+[CurrentCompany] Setting company context: 755
+[FormStatus] [DIAGNOSTIC][diag_1748624796892_voo8v] Starting section status calculation 
+Object {timestamp: "2025-05-30T17:06:36.892Z", sectionCount: 0, hasValues: false, valueCount: 0}
+[TaskPage] Form progress updated: 0%
+[UniversalForm] Fetching template for task type: kyb
+[TaskTemplateService] Fetching template for task type: company_kyb
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[FormSubmissionListener] Setting up form submission listener for task 1102 (kyb)
+[TaskTemplateService] Successfully fetched template: 
+Object {templateId: 1, templateName: "KYB Form", taskType: "company_kyb", configCount: 9}
+[UniversalForm] Template loaded: ID=1, Name=KYB Form
+[UniversalForm] Looking for company-specific form service for task type: kyb
+[UniversalForm] Data isolation: Using company ID 755 from user context
+[FormServiceFactory] Creating form service for type: kyb 
+Object {companyId: 755, taskId: 1102, useEnhanced: true, fromContext: false}
+[FormServiceFactory] Attempting to dynamically import enhanced KYB service for company 755, task 1102
+[FormServiceFactory] Successfully imported enhanced KYB service module
+[EnhancedKybServiceFactory] Creating new EnhancedKybFormService instance for company-755-task-1102
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[UniversalForm] Found form service: EnhancedKybFormService
+[FormStatus] [DIAGNOSTIC][diag_1748624797831_22c1c] Starting section status calculation 
+Object {timestamp: "2025-05-30T17:06:37.831Z", sectionCount: 0, hasValues: false, valueCount: 0}
+[TaskPage] Form progress updated: 0%
+[UniversalForm] Initializing form structure with form service
+[UniversalForm] Form service type: EnhancedKybFormService
+[UniversalForm] Form service has initialize method: true
+[UniversalForm] Initializing form service with template ID: 1
+[Enhanced KYB Service] EnhancedKybService initializing with template ID: 1
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[Enhanced KYB Service] Retrieved KYB fields from API: 30
+[Enhanced KYB Service] Sample first field: 
+Object {id: 1, key: "legalEntityName", type: "TEXT", group: "companyProfile"}
+[Enhanced KYB Service] Normalized sections (4): Company Profile, Financial Profile, Governance & Leadership, Operations & Compliance
+[Enhanced KYB Service]   - Company Profile: 8 fields
+[Enhanced KYB Service]   - Financial Profile: 4 fields
+[Enhanced KYB Service]   - Governance & Leadership: 10 fields
+[Enhanced KYB Service]   - Operations & Compliance: 8 fields
+[Enhanced KYB Service] Field grouping result: 4 groups found
+[Enhanced KYB Service] Grouped field sections: Company Profile, Financial Profile, Governance & Leadership, Operations & Compliance
+[Enhanced KYB Service] Expected section names: Company Profile, Governance & Leadership, Financial Profile, Operations & Compliance
+[Enhanced KYB Service] Section Company Profile has 8 fields
+[Enhanced KYB Service] Section Governance & Leadership has 10 fields
+[Enhanced KYB Service] Section Financial Profile has 4 fields
+[Enhanced KYB Service] Section Operations & Compliance has 8 fields
+[Enhanced KYB Service] Creating sections from fields. Sections found: Company Profile, Governance & Leadership, Financial Profile, Operations & Compliance
+[Enhanced KYB Service] Creating section "Company Profile" with ID "section-0" (8 fields)
+[Enhanced KYB Service] Creating section "Governance & Leadership" with ID "section-1" (10 fields)
+[Enhanced KYB Service] Creating section "Financial Profile" with ID "section-2" (4 fields)
+[Enhanced KYB Service] Creating section "Operations & Compliance" with ID "section-3" (8 fields)
+[Enhanced KYB Service] Created sections:
+[Enhanced KYB Service] - Section "Company Profile" with 8 fields (order: 1)
+[Enhanced KYB Service] - Section "Governance & Leadership" with 10 fields (order: 2)
+[Enhanced KYB Service] - Section "Financial Profile" with 4 fields (order: 3)
+[Enhanced KYB Service] - Section "Operations & Compliance" with 8 fields (order: 4)
+[Enhanced KYB Service] Success: All 30 fields have section IDs correctly assigned
+[Enhanced KYB Service] EnhancedKybFormService initialization complete.
+[UniversalForm] Form service initialization completed
+[UniversalForm] Fetching fields from form service...
+[Enhanced KYB Service] Progressive loading disabled for this page. Returning all fields.
+[UniversalForm] Fields result type: object
+[UniversalForm] Is fields array: true
+[UniversalForm] Loaded 30 fields from form service
+[UniversalForm] Sample field: {"id":1,"key":"legalEntityName","label":"Legal Entity Name","type":"TEXT","required":true,"question":"What is the registered business name?","order":1,"validation":null,"helpText":"The official name under which your business is registered with government authorities.","placeholder":"","value":"","section":"section-0","sectionId":"section-0"}
+[UniversalForm] Fetching sections from form service...
+[Enhanced KYB Service] Progressive loading disabled for this page. Returning all sections as fully loaded.
+[UniversalForm] Sections result type: object
+[UniversalForm] Is sections array: true
+[UniversalForm] Loaded 4 sections from form service
+[UniversalForm] Sample section: {"id":"section-0","title":"Company Profile","description":"","order":1,"collapsed":false,"fields":[{"id":1,"key":"legalEntityName","label":"Legal Entity Name","type":"TEXT","required":true,"question":"What is the registered business name?","order":1,"validation":null,"helpText":"The official name under which your business is registered with government authorities.","placeholder":"","value":"","section":"section-0","sectionId":"section-0"},{"id":2,"key":"registrationNumber","label":"Registration Number","type":"TEXT","required":true,"question":"What is your company's entity registration number (e.g., EIN or State Entity ID)?","order":2,"validation":null,"helpText":"In the US, this is typically your EIN (Employer Identification Number) or state entity registration number.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"12-3456789"},{"id":3,"key":"incorporationDate","label":"Incorporation Date","type":"DATE","required":true,"question":"When was the company incorporated?","order":3,"validation":null,"helpText":"The date when your company was legally established as per your registration documents.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"5/12/2010"},{"id":4,"key":"businessType","label":"Business Type","type":"TEXT","required":true,"question":"What type of business entity is this?","order":4,"validation":null,"helpText":"Examples include LLC, Corporation, Partnership, Sole Proprietorship, etc.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"Limited Liability Company (LLC)"},{"id":5,"key":"jurisdiction","label":"Jurisdiction","type":"TEXT","required":true,"question":"In which jurisdiction is the company registered?","order":5,"validation":null,"helpText":"The country, state, or region where your company is officially registered.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"Delaware, United States"},{"id":6,"key":"registeredAddress","label":"Registered Address","type":"TEXT","required":true,"question":"What is the registered business address?","order":6,"validation":null,"helpText":"The official address listed on your business registration documents.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"123 Market Street, Wilmington, DE 19801"},{"id":7,"key":"companyPhone","label":"Company Phone Number","type":"TEXT","required":true,"question":"What is the company's phone number?","order":7,"validation":null,"helpText":"The primary business contact number used for official communications.","placeholder":"","value":"","section":"section-0","sectionId":"section-0","demoAutofill":"(302) 555-1234"},{"id":8,"key":"priorNames","label":"Previous Name","type":"TEXT","required":true,"question":"List any names the company has operated under in the past five years.","order":8,"validation":null,"helpText":"Include all previous legal names, \"doing…
+[UniversalForm] Processing section section-0 (Company Profile) with 8 fields
+[UniversalForm] Processing section section-1 (Governance & Leadership) with 10 fields
+[UniversalForm] Processing section section-2 (Financial Profile) with 4 fields
+[UniversalForm] Processing section section-3 (Operations & Compliance) with 8 fields
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Starting section status calculation 
+Object {timestamp: "2025-05-30T17:06:38.108Z", sectionCount: 4, hasValues: false, valueCount: 0}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Processing section "Company Profile" 
+Object {sectionId: "section-0", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Section "Company Profile" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Processing section "Governance & Leadership" 
+Object {sectionId: "section-1", fieldCount: 10, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Section "Governance & Leadership" fields 
+Object {fieldCount: 10, fields: Array(10)}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Processing section "Financial Profile" 
+Object {sectionId: "section-2", fieldCount: 4, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Section "Financial Profile" fields 
+Object {fieldCount: 4, fields: Array(4)}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Processing section "Operations & Compliance" 
+Object {sectionId: "section-3", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624798108_jus3n] Section "Operations & Compliance" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[TaskPage] Form progress updated: 0%
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[KYB Timestamp Sync] Loading field timestamps for task 1102...
+[KYB Timestamp Sync] Loaded 31 field timestamps
+[KYB Form Data] Loaded 30 fields with 31 timestamps for task 1102
+[KYB Timestamp Sync] Loading field timestamps for task 1102...
+[KYB Timestamp Sync] Loaded 31 field timestamps
+[KYB Form Data] Loaded 30 fields with 31 timestamps for task 1102
+[UniversalForm] Form data changed: 31 fields
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Starting section status calculation 
+Object {timestamp: "2025-05-30T17:06:39.032Z", sectionCount: 4, hasValues: true, valueCount: 30}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Processing section "Company Profile" 
+Object {sectionId: "section-0", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Section "Company Profile" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Processing section "Governance & Leadership" 
+Object {sectionId: "section-1", fieldCount: 10, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Section "Governance & Leadership" fields 
+Object {fieldCount: 10, fields: Array(10)}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Processing section "Financial Profile" 
+Object {sectionId: "section-2", fieldCount: 4, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Section "Financial Profile" fields 
+Object {fieldCount: 4, fields: Array(4)}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Processing section "Operations & Compliance" 
+Object {sectionId: "section-3", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748624799032_b8pua] Section "Operations & Compliance" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[TaskPage] Form progress updated: 100%
+[UniversalForm] Auto-navigating form on initial load based on task status and completion
+[UniversalForm] Task status is ready_for_submission, navigating to review section
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[UniversalForm] Toggling agreement confirmation to true for task type: kyb, task ID: 1102
+[UniversalForm] Submit button clicked for kyb task 1102
+[UniversalForm] Task will be marked as ready_for_submission: progress=100%
+[UniversalForm] Using provided onSubmit callback
+[TaskPage] KYB form submission handler called 
+Object {taskId: 1102}
+[FormSubmissionAPI] Submitting form data with transaction API: 
+Object {url: "/api/forms-tx/submit/kyb/1102", taskId: 1102, formType: "kyb", companyId: 755, formDataKeys: Array(30), …}
+[API Request] POST /api/forms-tx/submit/kyb/1102 with body data 
+Object {bodyPreview: "(Object)"}
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T17:06:43.030Z"}
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T17:06:43.094Z"}
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+<span style="color:#f44336;display:inline-block;max-width:100%;">[FormSubmissionListener] Error processing WebSocket message:</span> 
+TypeError {}
+
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T17:06:43.399Z"}
