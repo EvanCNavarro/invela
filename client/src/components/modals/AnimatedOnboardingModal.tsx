@@ -432,7 +432,7 @@ const StepLayout: React.FC<{
 // Component for rendering checklist items with consistent styling
 const CheckListItem: React.FC<{children: React.ReactNode}> = ({ children }) => (
   <div className="flex items-start space-x-3 mb-5">
-    <div className="h-5 w-5 text-blue-600 flex-shrink-0 rounded-full bg-blue-50 flex items-center justify-center mt-0.5">
+    <div className="h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
@@ -817,7 +817,7 @@ export function AnimatedOnboardingModal({
               className={cn(
                 "h-2.5 w-2.5 rounded-full transition-colors", 
                 currentStep === idx 
-                  ? "bg-blue-600 ring-2 ring-blue-200" 
+                  ? "bg-primary ring-2 ring-primary/20" 
                   : idx < currentStep 
                     ? "bg-green-400" 
                     : "bg-gray-200"
@@ -1005,9 +1005,9 @@ export function AnimatedOnboardingModal({
             imageAlt="Invite Team"
           >
             <div className="mt-0 space-y-4">
-              <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
+              <div className="bg-primary/5 p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
                 <div className="flex items-center mb-3">
-                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+                  <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CFO
                   </div>
                   <span className="text-sm">Financial Data for</span>
@@ -1051,9 +1051,9 @@ export function AnimatedOnboardingModal({
                 </div>
               </div>
               
-              <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
+              <div className="bg-primary/5 p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
                 <div className="flex items-center mb-3">
-                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+                  <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CISO
                   </div>
                   <div>
@@ -1111,8 +1111,8 @@ export function AnimatedOnboardingModal({
           >
             <div className="mt-0 space-y-3">
               {/* Company Information Section */}
-              <div className="bg-blue-50/70 p-4 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50 mb-3">
-                <h3 className="text-blue-600 font-medium mb-2.5 text-base">Company Details</h3>
+              <div className="bg-primary/5 p-4 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10 mb-3">
+                <h3 className="text-primary font-medium mb-2.5 text-base">Company Details</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
@@ -1162,15 +1162,15 @@ export function AnimatedOnboardingModal({
               </div>
               
               {/* Team Members Section */}
-              <div className="bg-blue-50/70 p-4 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
-                <h3 className="text-blue-600 font-medium mb-2.5 text-base">Team Members to Invite</h3>
+              <div className="bg-primary/5 p-4 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
+                <h3 className="text-primary font-medium mb-2.5 text-base">Team Members to Invite</h3>
                 <div className="space-y-3">
                   {teamMembers.filter(member => member.fullName && isValidEmail(member.email)).length > 0 ? (
                     // Show team members that have both name and valid email
                     teamMembers.map((member, index) => (
                       member.fullName && isValidEmail(member.email) ? (
                         <div key={index} className="flex gap-3 items-center">
-                          <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+                          <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                             {member.role}
                           </div>
                           <div className="flex-1">
@@ -1204,8 +1204,8 @@ export function AnimatedOnboardingModal({
               </p>
               
               <div className="space-y-4">
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">Know Your Business (KYB) Form</div>
+                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-primary">Know Your Business (KYB) Form</div>
                   <div className="text-xs text-gray-500 mt-1">Basic information about your business operations and structure</div>
                 </div>
                 
