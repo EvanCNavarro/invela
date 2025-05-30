@@ -408,7 +408,7 @@ export default function TaskCenterPage() {
           }
         });
         
-        subscriptions.push(unsubTaskTestNotification);
+          subscriptions.push(unsubTaskTestNotification);
         } catch (error) {
           console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
         }
