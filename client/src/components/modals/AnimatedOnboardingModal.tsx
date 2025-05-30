@@ -11,12 +11,26 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 
-// Animation timing constants - standardized across the application
-const ANIMATION_TIMING = {
-  STEP_TRANSITION: 200, // ms - time before step change
-  COMPLETION: 300, // ms - time to complete animation
-  IMAGE_FADE: 150, // ms - image loading transition
-} as const;
+// Global image cache for preloading and instant access
+const globalImageCache = new Map<string, HTMLImageElement>();
+
+// Preload images into cache
+const preloadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    if (globalImageCache.has(src)) {
+      resolve(globalImageCache.get(src)!);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      globalImageCache.set(src, img);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
 
 // Type definitions for better type safety
 interface User {
@@ -361,7 +375,7 @@ const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children
   </div>
 );
 
-// Component for consistent step image with loading indicator
+// Component for consistent step image with loading indicator and professional styling
 const StepImage: React.FC<{ 
   src: string | undefined; 
   alt: string | undefined;
@@ -376,11 +390,11 @@ const StepImage: React.FC<{
       <img 
         src={src || ''} 
         alt={alt || 'Onboarding step image'}
-        className="w-full h-full object-contain rounded-lg"
+        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200"
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-[300px] h-[300px] rounded-lg" />
+        <Skeleton className="w-full h-full rounded-xl" />
       </div>
     )}
   </div>
@@ -410,7 +424,7 @@ const StepLayout: React.FC<{
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  // Preload image with optimized loading strategy
+  // Use cached image or preload with optimized loading strategy
   useEffect(() => {
     if (!imgSrc) {
       setImageLoaded(true); // No image to load
@@ -418,19 +432,18 @@ const StepLayout: React.FC<{
     }
     
     setImageLoaded(false); // Reset loading state
-    const img = new Image();
     
-    img.onload = () => {
-      // Add slight delay for smooth transition
-      setTimeout(() => setImageLoaded(true), ANIMATION_TIMING.IMAGE_FADE);
-    };
-    
-    img.onerror = () => {
-      console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
-      setImageLoaded(true); // Show content even if image fails
-    };
-    
-    img.src = imgSrc;
+    // Use cached image or preload
+    if (globalImageCache.has(imgSrc)) {
+      setImageLoaded(true);
+    } else {
+      preloadImage(imgSrc)
+        .then(() => setImageLoaded(true))
+        .catch(() => {
+          console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
+          setImageLoaded(true); // Show content even if image fails
+        });
+    }
   }, [imgSrc]);
   
   return (
@@ -521,13 +534,26 @@ export function AnimatedOnboardingModal({
   // Track transition animation direction (next or previous)
   const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
   
-  // Track if transition is in progress
-
-  
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
     revenue: '',
   });
+
+  // Preload all onboarding step images when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const imagesToPreload = [
+        "/images/onboarding/step1-welcome.jpg",
+        "/images/onboarding/step2-company.jpg", 
+        "/images/onboarding/step3-team.jpg",
+        "/images/onboarding/step4-tasks.jpg"
+      ];
+    
+      imagesToPreload.forEach(src => {
+        preloadImage(src).catch(console.warn);
+      });
+    }
+  }, [isOpen]);
   
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
