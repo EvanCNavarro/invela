@@ -354,18 +354,18 @@ import { initializeProductionOptimizations } from './deployment/production-confi
 initializeProductionOptimizations();
 
 // Configure server for proper deployment
-// Use development-friendly configuration while maintaining deployment compatibility
+// Use environment-aware configuration for development and production
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
-// Set appropriate NODE_ENV - don't force production in development
+// Set appropriate NODE_ENV if not already set
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
 
-// Dynamic port configuration that works for both development and deployment
-// Development: Use 5000 for Replit workflow compatibility
+// Port configuration based on .replit workflow expectations
+// Development: Use 5000 (matches .replit waitForPort configuration)
 // Production: Use PORT environment variable or fallback to 8080
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : (isDevelopment ? 5000 : 8080);
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
