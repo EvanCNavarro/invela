@@ -396,31 +396,65 @@ const StepLayout: React.FC<{
       {/* Left side: Text content with fixed height and consistent padding */}
       <div className="md:w-[50%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
-          {/* Header chip for consistent styling */}
-          <HeaderChip />
+          {/* Header chip - static fade only */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <HeaderChip />
+          </motion.div>
           
-          {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-primary mb-4">
+          {/* Page title - content reveal with delay */}
+          <motion.h2 
+            className="text-2xl font-bold text-primary mb-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.4, 
+              ease: [0.22, 1, 0.36, 1],
+              delay: 0.1 
+            }}
+          >
             {title}
-          </h2>
+          </motion.h2>
           
-          {/* Content area with fixed height and no scrolling */}
-          <div className="flex-grow content-area pr-2">
+          {/* Content area with staggered entrance */}
+          <motion.div 
+            className="flex-grow content-area pr-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.4, 
+              ease: [0.22, 1, 0.36, 1],
+              delay: 0.2 
+            }}
+          >
             {children}
-          </div>
+          </motion.div>
         </div>
       </div>
       
-      {/* Right side: Image with consistent container */}
-      <RightImageContainer>
-        {imgSrc && (
-          <StepImage 
-            src={imgSrc} 
-            alt={imageAlt || title}
-            isLoaded={imageLoaded} 
-          />
-        )}
-      </RightImageContainer>
+      {/* Right side: Image with delayed reveal */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ 
+          duration: 0.4, 
+          ease: [0.22, 1, 0.36, 1],
+          delay: 0.3 
+        }}
+      >
+        <RightImageContainer>
+          {imgSrc && (
+            <StepImage 
+              src={imgSrc} 
+              alt={imageAlt || title}
+              isLoaded={imageLoaded} 
+            />
+          )}
+        </RightImageContainer>
+      </motion.div>
     </div>
   );
 };
@@ -1323,56 +1357,66 @@ export function AnimatedOnboardingModal({
           {renderStepContent()}
         </div>
         
-        {/* Footer buttons */}
-        <DialogFooter className="p-4 border-t flex items-center">
-          <div className="flex-1 text-left">
-            {currentStep > 0 ? (
+        {/* Footer buttons - static fade only */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.22, 1, 0.36, 1],
+            delay: 0.4 
+          }}
+        >
+          <DialogFooter className="p-4 border-t flex items-center">
+            <div className="flex-1 text-left">
+              {currentStep > 0 ? (
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={handleBackStep}
+                  disabled={false}
+                >
+                  Back
+                </Button>
+              ) : (
+                <div></div> // Empty div to maintain spacing when back button is hidden
+              )}
+            </div>
+            
+            {/* Step indicator in the footer - centered */}
+            <div className="flex-1 flex justify-center">
+              {renderStepIndicator()}
+            </div>
+            
+            <div className="flex-1 text-right">
               <Button 
                 type="button"
-                variant="outline"
-                onClick={handleBackStep}
-                disabled={false}
+                onClick={handleNextStep}
+                disabled={!canProceed || (currentStep === 6 && isSubmitting)}
+                className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
               >
-                Back
-              </Button>
-            ) : (
-              <div></div> // Empty div to maintain spacing when back button is hidden
-            )}
-          </div>
-          
-          {/* Step indicator in the footer - centered */}
-          <div className="flex-1 flex justify-center">
-            {renderStepIndicator()}
-          </div>
-          
-          <div className="flex-1 text-right">
-            <Button 
-              type="button"
-              onClick={handleNextStep}
-              disabled={!canProceed || (currentStep === 6 && isSubmitting)}
-              className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
-            >
-              {currentStep === 6 ? (
-                isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Setting up...
-                  </>
+                {currentStep === 6 ? (
+                  isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      Start 
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )
                 ) : (
                   <>
-                    Start 
+                    Next
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
-                )
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogFooter>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
