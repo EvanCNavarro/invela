@@ -10,7 +10,7 @@ import { db } from '@db';
 import { eq, and, or } from 'drizzle-orm';
 import { executeWithRetry } from './db-connection-service';
 import { Logger } from './logger';
-import { WebSocketService } from '../websocket-server';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 const logger = new Logger('EnhancedFormSubmissionHandler');
 
