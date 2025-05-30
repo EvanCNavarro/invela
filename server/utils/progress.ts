@@ -570,15 +570,26 @@ export async function updateTaskProgress(
       // After successful transaction completion, broadcast the update if needed
       if (!skipBroadcast && result) {
         // Broadcasting is done outside of transaction as it doesn't require rollback
-        setTimeout(() => {
-          // Pass diagnostic ID for end-to-end tracking
-          broadcastProgressUpdate(
-            taskId,
-            newProgress,
-            result.status as TaskStatus,
-            result.metadata || {},
-            options.diagnosticId || `update-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-          );
+        setTimeout(async () => {
+          // Use unified WebSocket system for consistent message format
+          try {
+            const { broadcastTaskUpdate } = await import('../utils/unified-websocket');
+            broadcastTaskUpdate({
+              taskId: taskId,
+              id: taskId,
+              status: result.status,
+              progress: newProgress,
+              metadata: {
+                ...result.metadata,
+                updatedVia: 'progress-update',
+                timestamp: new Date().toISOString(),
+                diagnosticId: options.diagnosticId || `update-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+              }
+            });
+            console.log(`[Progress] Successfully broadcast task update via unified WebSocket for task ${taskId}`);
+          } catch (error) {
+            console.error(`[Progress] Error broadcasting via unified WebSocket:`, error);
+          }
         }, 0);
       }
       
