@@ -68,10 +68,13 @@ Comprehensive enterprise-grade risk assessment platform delivering advanced diag
 User {
   id: number
   email: string
-  firstName?: string
-  lastName?: string
-  hashedPassword: string
-  createdAt: timestamp
+  full_name: string | null
+  first_name: string | null
+  last_name: string | null
+  password: string
+  company_id: number
+  created_at: timestamp
+  updated_at: timestamp
 }
 
 Company {
@@ -82,25 +85,34 @@ Company {
   industry?: string
   companySize?: string
   isDemo: boolean
+  created_at: timestamp
+  updated_at: timestamp
 }
 
 Task {
   id: number
   title: string
   status: TaskStatus
-  companyId: number
-  formType: string
+  company_id: number
+  form_type: string
   progress: number
   dependencies?: string[]
+  created_at: timestamp
+  updated_at: timestamp
 }
 ```
 
 ### Form Schema Pattern
 Each form type (KYB, KY3P, Open Banking, Security) follows consistent structure:
-- Field definitions with validation rules
+- Field definitions with validation rules (snake_case database fields)
 - Progress tracking and dependencies
 - File attachment capabilities
 - Real-time status updates
+
+### Database Naming Conventions
+- **Database fields**: snake_case (first_name, company_id, created_at)
+- **TypeScript interfaces**: Match database field names exactly
+- **API responses**: Use database field naming for consistency
 
 ## Build
 
@@ -128,9 +140,10 @@ drizzle-kit studio   # Launch database studio
 ### Current Issues
 1. **Documentation Fragmentation**: 10+ files in docs/ need consolidation
 2. **Development Artifacts**: 120+ attached_assets files cluttering repository
-3. **Testing Infrastructure**: No test framework setup (pytest missing)
+3. **Testing Infrastructure**: No test framework setup (Jest/Vitest missing)
 4. **Legacy Code**: Multiple backup files and outdated scripts
 5. **File Cleanup**: Significant cleanup needed per COMPREHENSIVE_PROJECT_AUDIT.md
+6. **Import Organization**: Missing blank lines between external/internal imports
 
 ### Technical Debt
 - Multiple route files with overlapping functionality
@@ -152,7 +165,43 @@ drizzle-kit studio   # Launch database studio
 
 ---
 
+## Code Quality Standards
+
+### File Headers
+All components and modules use standardized headers:
+```typescript
+/**
+ * ========================================
+ * [Component Name] Component
+ * ========================================
+ * 
+ * [Brief description and key features]
+ * 
+ * @module [ModuleName]
+ * @version [X.Y.Z]
+ * @since [YYYY-MM-DD]
+ */
+```
+
+### File Naming Conventions
+- **Components**: PascalCase.tsx (CompanySnapshot.tsx) or kebab-case.tsx (alert-dialog.tsx)
+- **Pages**: kebab-case-page.tsx (auth-page.tsx)
+- **Hooks**: use-kebab-case.tsx (use-auth.tsx)
+- **API Routes**: kebab-case.ts (company-search.ts)
+
+### Import Organization
+Follow strict order with blank lines between sections:
+1. React core libraries
+2. Third-party libraries
+3. Internal utilities and services
+4. Components
+5. Types and interfaces
+6. Relative imports
+
+---
+
 **Quick Navigation**:
 - Architecture Details: `docs/APPLICATION_ARCHITECTURE_ATLAS.md`
 - Coding Standards: `docs/CODING_STANDARDS.md`
 - Cleanup Plan: `docs/COMPREHENSIVE_PROJECT_AUDIT.md`
+- Reality Audit: `docs/COMPREHENSIVE_REALITY_AUDIT.md`
