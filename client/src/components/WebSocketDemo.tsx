@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/use-websocket';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,7 @@ interface Message {
 export function WebSocketDemo() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const { status, sendMessage, subscribe, reconnect } = useWebSocket();
+  const { status, sendMessage, subscribe, reconnect } = useUnifiedWebSocket();
   
   // Subscribe to messages from the server
   useEffect(() => {
