@@ -328,6 +328,26 @@
      - Pattern: Static marketing content page with animations
      - Status: COMPLIANT - Static content page, no WebSocket integration needed
 
+169. **client/src/pages/TaskFix.tsx** - ⚠️ TASK FIX UTILITY PAGE
+     - Lines 1-250: Task fixing utility with React Query integration
+     - Pattern: Admin utility page using standard API calls
+     - Status: COMPLIANT - Standard form submission, no WebSocket integration needed
+
+170. **client/src/pages/FormPerformancePage.tsx** - ⚠️ FORM PERFORMANCE DEMO PAGE
+     - Lines 1-107: Form optimization testing and demo suite
+     - Pattern: Development testing page with demo components
+     - Status: COMPLIANT - Demo/testing page, no WebSocket integration needed
+
+171. **client/src/pages/auth-page.tsx** - ⚠️ AUTHENTICATION PAGE
+     - Lines 1-270: Login and registration forms with authentication
+     - Pattern: Standard authentication page with form handling
+     - Status: COMPLIANT - Standard authentication, no WebSocket integration needed
+
+172. **client/src/pages/card-form.tsx** - ⚠️ CARD FORM PAGE
+     - Lines 1-158: CARD form handling with file submission
+     - Pattern: Form page with API integration and file handling
+     - Status: COMPLIANT - Standard form submission, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
