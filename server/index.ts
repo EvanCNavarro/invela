@@ -362,11 +362,11 @@ if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
 
-// Port configuration based on .replit workflow expectations
-// Development: Use 5000 (matches .replit waitForPort configuration)
-// Production: Use PORT environment variable or fallback to 8080
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
-const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
+// Use deployment helpers for proper port configuration
+import { getDeploymentPort, getDeploymentHost } from './deployment-helpers';
+
+const PORT = getDeploymentPort();
+const HOST = getDeploymentHost();
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
