@@ -117,15 +117,18 @@ export default function TaskCenterPage() {
       const unsubTaskUpdate = subscribe('task_update', (data: any) => {
         console.log('[TaskCenter] Unified task update received:', data);
         
-        const taskId = data?.id || data?.taskId;
+        // Check for task data in both root level and payload
+        const taskData = data?.payload || data;
+        const taskId = taskData?.taskId || taskData?.id || data?.taskId || data?.id;
+        
         if (!taskId) {
-          console.warn('[TaskCenter] Missing task ID in update');
+          console.warn('[TaskCenter] Missing task ID in update', { data, taskData });
           return;
         }
         
         const now = Date.now();
-        const serverTimestamp = data.metadata?.timestamp 
-          ? new Date(data.metadata.timestamp).getTime()
+        const serverTimestamp = taskData.metadata?.timestamp || data.metadata?.timestamp 
+          ? new Date(taskData.metadata?.timestamp || data.metadata?.timestamp).getTime()
           : now;
           
         const prevTimestamp = taskTimestampRef.current[taskId];

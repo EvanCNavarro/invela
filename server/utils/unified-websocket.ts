@@ -328,6 +328,19 @@ export function broadcast<T extends WebSocketPayload>(
   };
   
   const messageString = JSON.stringify(message);
+  
+  // Debug logging to see what we're actually sending
+  if (type === 'task_update' || type === 'task_updated') {
+    wsLogger.info(`Broadcasting ${type} with message structure:`, {
+      messageType: type,
+      hasPayload: !!message.payload,
+      payloadKeys: message.payload ? Object.keys(message.payload) : [],
+      rootKeys: Object.keys(message),
+      taskId: message.payload?.taskId || message.taskId,
+      id: message.payload?.id || message.id
+    });
+  }
+  
   let sentCount = 0;
   
   // Send to all clients, or filtered clients if filter provided
