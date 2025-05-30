@@ -41,6 +41,18 @@ export type ChangelogEntryType =
   | 'performance' // Performance improvements;
 
 /**
+ * Changelog entry audience categorization
+ */
+export type ChangelogAudience = 
+  | 'product'    // User-facing features and improvements
+  | 'developer'  // Internal development and technical changes
+
+/**
+ * Filter options for changelog display
+ */
+export type ChangelogFilter = 'all' | 'product' | 'developer';
+
+/**
  * Individual changelog entry structure
  */
 export interface ChangelogEntry {
@@ -51,6 +63,7 @@ export interface ChangelogEntry {
   description: string;
   details?: string[];
   version?: string;
+  audience: ChangelogAudience;
 }
 
 /**
@@ -88,7 +101,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Created organized structure with features subdirectory',
       'Updated coding standards to specify UPPERCASE.md for documentation files'
     ],
-    version: '1.9.0'
+    version: '1.9.0',
+    audience: 'developer'
   },
   {
     id: 'console-logging-cleanup-2025-05-29',
@@ -104,7 +118,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Maintained comprehensive error logging for production debugging needs',
       'Improved developer experience during demo flow testing and development'
     ],
-    version: '1.8.1'
+    version: '1.8.1',
+    audience: 'developer'
   },
   {
     id: 'comprehensive-system-updates-2025-05-29',
@@ -120,7 +135,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Enhanced data integrity validation for accreditation status compliance',
       'Standardized revenue formatting and employee count display across all components'
     ],
-    version: '1.8.0'
+    version: '1.8.0',
+    audience: 'developer'
   },
   {
     id: 'complete-demo-flow-system-2025-05-28',
@@ -138,7 +154,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Clean production logging with comprehensive error tracking',
       'Efficient database operations with proper connection management'
     ],
-    version: '1.7.0'
+    version: '1.7.0',
+    audience: 'product'
   },
   {
     id: 'demo-flow-user-creation-fixes-2025-05-27',
@@ -155,7 +172,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Implemented proper role mapping: New Data Recipient → "user", Accredited Data Recipient → "accredited_user"',
       'Standardized demo data structure across frontend and backend systems'
     ],
-    version: '1.6.0'
+    version: '1.6.0',
+    audience: 'product'
   },
   {
     id: 'enhanced-demo-generation-2025-05-25',
@@ -172,7 +190,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Improved API route priority for reliable JSON responses',
       'Comprehensive error handling and database integration'
     ],
-    version: '1.5.0'
+    version: '1.5.0',
+    audience: 'product'
   },
   {
     id: 'demo-flow-implementation-2025-05-24',
@@ -189,7 +208,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Enhanced visual hierarchy with clean gray backgrounds and proper styling',
       'Professional "Back to Login" button with improved visibility'
     ],
-    version: '1.4.0'
+    version: '1.4.0',
+    audience: 'product'
   },
   {
     id: 'component-library-v1-2025-05-24',
@@ -205,7 +225,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Accessible via Component Library button on login page',
       'Zero maintenance overhead - always in sync with actual components'
     ],
-    version: '1.3.0'
+    version: '1.3.0',
+    audience: 'product'
   },
   {
     id: 'changelog-modal-2025-05-23',
@@ -219,7 +240,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Chronological entry display',
       'Responsive design with keyboard navigation'
     ],
-    version: '1.2.0'
+    version: '1.2.0',
+    audience: 'product'
   },
   {
     id: 'coding-standards-2025-05-23',
@@ -234,7 +256,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Improved error handling and logging patterns',
       'Professional code organization and best practices'
     ],
-    version: '1.1.0'
+    version: '1.1.0',
+    audience: 'developer'
   }
 ];
 
