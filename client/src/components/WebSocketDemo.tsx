@@ -23,7 +23,7 @@ interface Message {
 export function WebSocketDemo() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const { status, sendMessage, subscribe, reconnect } = useUnifiedWebSocket();
+  const { status, send, subscribe, connect } = useUnifiedWebSocket();
   
   // Subscribe to messages from the server
   useEffect(() => {
@@ -64,7 +64,7 @@ export function WebSocketDemo() {
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
     
-    const success = sendMessage('message', { content: inputMessage });
+    const success = send('message', { content: inputMessage });
     
     if (success) {
       // Add the sent message to the list
@@ -83,7 +83,7 @@ export function WebSocketDemo() {
   
   // Send a ping to test the connection
   const handleSendPing = () => {
-    const success = sendMessage('ping', { 
+    const success = send('ping', { 
       timestamp: new Date().toISOString() 
     });
     
@@ -216,7 +216,7 @@ export function WebSocketDemo() {
         
         <Button 
           variant="outline" 
-          onClick={reconnect}
+          onClick={connect}
         >
           <RefreshCw className="h-4 w-4 mr-2" />
           Reconnect

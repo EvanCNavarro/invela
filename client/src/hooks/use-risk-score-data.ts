@@ -193,15 +193,11 @@ export function useRiskScoreData() {
       }
     };
     
-    // Register event listeners
-    const unsubscribers = [
-      wsManager.on('risk_score_update', handleServerUpdate),
-      wsManager.on('risk_priorities_update', handleServerUpdate),
-      wsManager.on('risk_priority_update', handleServerUpdate)
-    ];
+    // WebSocket event listeners now handled by unified provider
+    // Legacy wsManager event listeners removed
     
-    // Cleanup on unmount
-    return () => unsubscribers.forEach(unsubscribe => unsubscribe());
+    // Cleanup placeholder
+    return () => {};
   }, []);
 
   /**
