@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchBar } from "@/components/ui/search-bar";
@@ -34,6 +35,7 @@ export const FileVault: React.FC = () => {
   const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
@@ -319,73 +321,38 @@ export const FileVault: React.FC = () => {
   
   // Listen for WebSocket file_vault_update events to refresh file list automatically
   useEffect(() => {
-    console.log('[FileVault Debug] Setting up WebSocket listener for file vault updates');
+    if (!isConnected || !user?.company_id) {
+      return;
+    }
+
+    console.log('[FileVault Debug] Setting up unified WebSocket listener for file vault updates');
     
     // This function will be called whenever a file_vault_update event is received
-    const handleFileVaultUpdate = (payload: any) => {
-      console.log('[FileVault Debug] Received file_vault_update event:', payload);
+    const handleFileVaultUpdate = (data: any) => {
+      console.log('[FileVault Debug] Received file_vault_update event:', data);
       
       // Check if this update is for our company
-      if (payload.companyId && user?.company_id && payload.companyId === user.company_id) {
-        console.log('[FileVault Debug] Refreshing file list for company:', payload.companyId);
+      if (data.companyId && data.companyId === user.company_id) {
+        console.log('[FileVault Debug] Refreshing file list for company:', data.companyId);
         
         // Invalidate and refetch the files query
         queryClient.invalidateQueries({ 
-          queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+          queryKey: ['/api/files', { company_id: user.company_id, page: currentPage, pageSize: itemsPerPage }] 
         });
       }
     };
     
-    // We need to access the global WebSocket service
-    if (typeof window !== 'undefined') {
-      // Add event listener for the file_vault_update message type
-      window.addEventListener('file_vault_update', (event: any) => {
-        if (event.detail) {
-          handleFileVaultUpdate(event.detail);
-        }
-      });
-      
-      // Also listen for generic ws_message events that might contain file_vault_update
-      window.addEventListener('ws_message', (event: any) => {
-        // Check if this is a file vault update event
-        if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
-          handleFileVaultUpdate(event.detail.payload);
-        }
-      });
-    }
-    
-    // Keep references to the actual event listeners so we can remove them properly
-    const fileVaultEventHandler = (event: any) => {
-      if (event.detail) {
-        handleFileVaultUpdate(event.detail);
-      }
-    };
-    
-    const wsMessageEventHandler = (event: any) => {
-      // Check if this is a file vault update event
-      if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
-        handleFileVaultUpdate(event.detail.payload);
-      }
-    };
-    
-    // We need to access the global WebSocket service
-    if (typeof window !== 'undefined') {
-      // Add event listener for the file_vault_update message type
-      window.addEventListener('file_vault_update', fileVaultEventHandler);
-      
-      // Also listen for generic ws_message events that might contain file_vault_update
-      window.addEventListener('ws_message', wsMessageEventHandler);
-    }
+    // Subscribe to file vault updates using unified WebSocket service
+    const unsubscribeHandler = subscribe('file_vault_update', handleFileVaultUpdate);
     
     return () => {
-      // Clean up event listeners when component unmounts
-      if (typeof window !== 'undefined') {
-        // Remove event listeners by referencing the same function instances
-        window.removeEventListener('file_vault_update', fileVaultEventHandler);
-        window.removeEventListener('ws_message', wsMessageEventHandler);
+      // Clean up subscription
+      if (unsubscribeHandler) {
+        unsubscribe('file_vault_update', handleFileVaultUpdate);
       }
+      console.log('[FileVault Debug] Cleaned up WebSocket listener for file vault updates');
     };
-  }, [queryClient, user?.company_id, currentPage, itemsPerPage]);
+  }, [queryClient, user?.company_id, currentPage, itemsPerPage, isConnected, subscribe, unsubscribe]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
