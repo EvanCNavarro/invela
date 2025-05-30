@@ -263,6 +263,36 @@
      - Pattern: Marketing page with real-time messaging
      - Status: COMPLIANT - Marketing references only, no WebSocket integration needed
 
+156. **client/src/pages/landing/company/about.tsx** - ⚠️ ABOUT PAGE
+     - Lines 1-314: Company about page with leadership and values
+     - Pattern: Static marketing content page
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+157. **client/src/pages/landing/company/contact-us.tsx** - ⚠️ CONTACT FORM PAGE
+     - Lines 1-392: Contact form with validation and animations
+     - Pattern: Form submission page with validation
+     - Status: COMPLIANT - Standard form submission, no WebSocket integration needed
+
+158. **client/src/pages/landing/legal/index.tsx** - ⚠️ LEGAL INDEX PAGE
+     - Lines 1-139: Legal documentation navigation page
+     - Pattern: Static navigation page with links
+     - Status: COMPLIANT - Static navigation page, no WebSocket integration needed
+
+159. **client/src/pages/landing/legal/privacy-policy.tsx** - ⚠️ PRIVACY POLICY PAGE
+     - Lines 1-127: Privacy policy legal content
+     - Pattern: Static legal content page
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+160. **client/src/pages/landing/legal/terms-of-use.tsx** - ⚠️ TERMS OF USE PAGE
+     - Lines 1-112: Terms of use legal content
+     - Pattern: Static legal content page
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
+161. **client/src/pages/landing/legal/compliance.tsx** - ⚠️ COMPLIANCE PAGE
+     - Lines 1-144: Compliance information and certifications
+     - Pattern: Static compliance content page
+     - Status: COMPLIANT - Static content page, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
