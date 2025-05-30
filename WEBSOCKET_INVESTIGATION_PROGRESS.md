@@ -2,9 +2,9 @@
 
 ## Investigation Status
 - **Phase**: 2 - Components Analysis  
-- **Files Checked**: 150/421+
-- **Files Remaining**: 271+
-- **WebSocket Findings**: 158
+- **Files Checked**: 175/421+
+- **Files Remaining**: 246+
+- **WebSocket Findings**: 183
 
 ## Critical Discoveries
 
@@ -272,6 +272,110 @@
     - Uses: broadcastTutorialUpdate from unified-websocket
     - Pattern: Proper service-level integration
     - Status: Compliant with architecture
+
+### SERVER ROUTE FINDINGS (ADDITIONAL 25 FILES)
+
+24. **server/routes/submissions.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcast
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+25. **server/routes/transactional-form-routes.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate and broadcastFormSubmission from unified-websocket AND WebSocketService.broadcast
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+26. **server/routes/update-tabs.ts** - ⚠️ DIRECT WEBSOCKET ACCESS (REVIEW NEEDED)
+    - Uses: Direct getWebSocketServer from unified-websocket and manual client iteration
+    - Pattern: Low-level WebSocket server access
+    - Status: REQUIRES REVIEW - May bypass unified message handling
+
+27. **server/routes/ky3p-enhanced.routes.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: Dynamic import of broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+28. **server/routes/user-tab-tutorials.ts** - ⚠️ MIXED LEGACY PATTERNS (REVIEW NEEDED)
+    - Uses: broadcast from unified-websocket AND direct WebSocketServer imports AND custom webSocketService
+    - Pattern: Complex mix of approaches
+    - Status: REQUIRES REVIEW - Multiple WebSocket patterns in one file
+
+### SERVER SERVICE FINDINGS (ADDITIONAL 25 FILES)
+
+29. **server/services/companyTabsService.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService direct calls
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+30. **server/services/enhance-kyb-form-handler.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+31. **server/services/file-creation.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcastEvent
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+32. **server/services/form-submission-broadcaster.ts** - ⚠️ COMPLEX LEGACY PATTERNS (REVIEW NEEDED)
+    - Uses: Multiple broadcastTaskUpdate imports (unified and legacy) AND complex fallback logic
+    - Pattern: Complex redundant broadcasting with multiple fallbacks
+    - Status: REQUIRES REVIEW - Overly complex with legacy fallbacks
+
+33. **server/services/form-submission-handler.ts** - ⚠️ MIXED LEGACY PATTERNS (REVIEW NEEDED)
+    - Uses: Legacy broadcastTaskUpdate import AND unified broadcastTaskUpdate AND broadcast
+    - Pattern: Multiple imports of same functionality
+    - Status: REQUIRES REVIEW - Redundant imports and potential conflicts
+
+34. **server/services/transactional-form-handler.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate and broadcastFormSubmission from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+35. **server/services/transactional-kyb-handler.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate and broadcastFormSubmission from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+36. **server/services/unified-file-tracking.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcast
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+37. **server/services/unified-form-submission-handler.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastFormSubmission from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+38. **server/services/unified-form-submission-service.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService direct calls
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+39. **server/services/universalDemoAutoFillService.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+40. **server/services/synchronous-task-dependencies.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+41. **server/services/company-tabs.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTabsUpdated (aliased) from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+42. **server/services/unified-tab-service.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcast from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+43. **server/services/unified-clear-fields.ts** - ⚠️ WEBSOCKET CONTEXT USAGE (REVIEW NEEDED)
+    - Uses: broadcast and broadcastTaskUpdate from unified-websocket AND WebSocketContext
+    - Pattern: Advanced WebSocket context management
+    - Status: REQUIRES REVIEW - Uses WebSocketContext which may conflict with unified approach
 
 ## Remaining Investigation Areas
 
