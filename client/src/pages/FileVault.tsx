@@ -60,6 +60,10 @@ export const FileVault: React.FC = () => {
   }>({
     queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }],
     enabled: !!user?.company_id,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes (was cacheTime in v4)
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchOnMount: false, // Only refetch if data is stale
     queryFn: async ({ queryKey }) => {
       // Extract params from query key for consistency
       const params = queryKey[1] as { company_id?: number, page: number, pageSize: number };
