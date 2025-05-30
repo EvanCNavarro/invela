@@ -24,7 +24,7 @@ export { updateTaskProgress } from './unified-task-progress';
 // Import WebSocket utilities with robust fallback mechanisms
 import { 
   broadcast as broadcastToClients 
-} from '../services/websocket';
+} from '../utils/unified-websocket';
 
 // Import unified WebSocket implementation
 import { 

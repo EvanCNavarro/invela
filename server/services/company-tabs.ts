@@ -13,7 +13,7 @@ import { db } from '@db';
 import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
-import { broadcastCompanyTabsUpdate as wsBroadcastCompanyTabsUpdate } from './websocket';
+import { broadcastCompanyTabsUpdate as wsBroadcastCompanyTabsUpdate } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 
 // Logger is already initialized in the imported module

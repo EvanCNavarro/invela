@@ -25,7 +25,7 @@ import {
   TaskStatus
 } from '@db/schema';
 import { logger } from './logger';
-import * as WebSocketService from '../services/websocket';
+import * as WebSocketService from '../utils/unified-websocket';
 
 /**
  * Transaction context - allows calculations to be part of a larger transaction

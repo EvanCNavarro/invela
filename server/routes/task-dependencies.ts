@@ -9,7 +9,7 @@ import { db } from '@db';
 import { tasks } from '@db/schema';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm/sql';
-import { broadcastTaskUpdate } from '../services/websocket';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 import { updateTaskProgressAndBroadcast } from '../utils/unified-progress-calculator';
 

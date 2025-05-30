@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 import { FileCreationService } from '../services/file-creation';
 import { broadcastCompanyTabsUpdate } from '../services/company-tabs';
 import { unlockFileVaultAccess } from '../services/synchronous-task-dependencies';
-import { broadcastMessage } from '../services/websocket';
+import { broadcastMessage } from '../utils/unified-websocket';
 import { broadcastTaskUpdate } from '../utils/task-broadcast';
 import { logger } from '../utils/logger';
 
