@@ -2,9 +2,9 @@
 
 ## Investigation Status
 - **Phase**: 2 - Components Analysis  
-- **Files Checked**: 85/200+
-- **Files Remaining**: 125+
-- **WebSocket Findings**: 103
+- **Files Checked**: 125/421+
+- **Files Remaining**: 296+
+- **WebSocket Findings**: 135
 
 ## Critical Discoveries
 
@@ -108,6 +108,88 @@
 2. **client/src/components/tasks/TaskTable.tsx** ✓
    - Contains: Comments about removed WebSocketTester
    - Pattern: Clean legacy cleanup documentation
+
+### SERVER-SIDE WEBSOCKET IMPLEMENTATIONS (MIXED COMPLIANCE)
+1. **server/routes/task-websocket.ts** - ⚠️ DIRECT WEBSOCKET IMPLEMENTATION
+   - Uses: Direct WebSocket server from 'ws' package
+   - Pattern: Standalone WebSocket route handler
+   - Status: Not using unified service
+
+2. **server/routes/websocket.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: WebSocketService and unified-websocket utilities
+   - Pattern: Proper integration with unified service
+   - Status: Compliant with architecture
+
+3. **server/services/company.ts** - ✅ UNIFIED USAGE
+   - Uses: broadcastTaskUpdate from unified-websocket
+   - Pattern: Proper service-level integration
+   - Status: Compliant with architecture
+
+4. **server/utils/unified-websocket.ts** - ✅ CORE UNIFIED SERVICE
+   - Implements: Central WebSocket server management
+   - Pattern: Primary unified service implementation
+   - Status: Core architecture component
+
+5. **server/utils/task-update.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: Unified WebSocket service for broadcasting
+   - Pattern: Proper delegation to unified service
+   - Status: Compliant wrapper
+
+6. **server/utils/websocket-broadcast-hook.ts** - ⚠️ LEGACY PATTERN
+   - Uses: Direct WebSocket interface definitions
+   - Pattern: Legacy broadcast hook pattern
+   - Status: May need migration assessment
+
+7. **server/utils/websocketBroadcast.ts** - ⚠️ LEGACY UTILITY
+   - Uses: Direct WebSocket server management
+   - Pattern: Legacy broadcast utility
+   - Status: May conflict with unified service
+
+8. **server/utils/websocket-context.ts** - ✅ CONTEXT MANAGEMENT
+   - Implements: WebSocket context for operation tracking
+   - Pattern: Support utility for unified service
+   - Status: Compliant support utility
+
+9. **server/utils/websocket-monitor.ts** - ✅ MONITORING UTILITY
+   - Implements: WebSocket event monitoring
+   - Pattern: Support utility for unified service
+   - Status: Compliant monitoring tool
+
+### ADDITIONAL COMPLIANT IMPLEMENTATIONS
+1. **client/src/components/modals/TaskDetailsModal.tsx** - ✅ UNIFIED USAGE
+   - Uses: useUnifiedWebSocket hook properly
+   - Pattern: Subscribe for task updates in modal
+   - Status: Compliant with architecture
+
+2. **client/src/components/forms/FormFieldsListener.tsx** - ✅ UNIFIED USAGE
+   - Uses: useUnifiedWebSocket hook properly
+   - Pattern: Subscribe for form field events
+   - Status: Compliant with architecture
+
+3. **client/src/components/forms/FormSubmissionListener.tsx** - ✅ UNIFIED USAGE
+   - Uses: useUnifiedWebSocket hook properly
+   - Pattern: Subscribe for form submission events
+   - Status: Compliant with architecture
+
+4. **client/src/components/OnboardingWrapper.tsx** - ✅ UNIFIED USAGE
+   - Uses: useUnifiedWebSocket hook properly
+   - Pattern: Connection status monitoring
+   - Status: Compliant with architecture
+
+5. **server/routes/broadcast.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: WebSocketService.broadcast and unified-websocket utilities
+   - Pattern: Proper service-level integration
+   - Status: Compliant with architecture
+
+6. **server/routes/enhanced-ky3p-submission.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: broadcastTaskUpdate and broadcastFormSubmission from unified-websocket
+   - Pattern: Proper service-level integration
+   - Status: Compliant with architecture
+
+7. **server/routes/form-submission-routes.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: broadcast and broadcastFormSubmission from unified-websocket
+   - Pattern: Proper service-level integration
+   - Status: Compliant with architecture
 
 ## Remaining Investigation Areas
 
