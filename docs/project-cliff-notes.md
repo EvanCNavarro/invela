@@ -2,7 +2,7 @@
 
 **Project**: Invela Enterprise Risk Assessment Platform  
 **Stack**: TypeScript Full-Stack (React + Express + PostgreSQL)  
-**Last Updated**: 2025-05-30  
+**Last Updated**: May 30, 2025  
 
 ---
 

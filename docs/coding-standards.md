@@ -1,7 +1,7 @@
 # Coding Standards & Best Practices Guide
 
 **Project:** Enterprise Risk Assessment Platform  
-**Last Updated:** May 23, 2025  
+**Last Updated:** May 30, 2025  
 **Purpose:** Unified coding standards for consistent, maintainable, and scalable code across the entire application
 
 ---
