@@ -72,6 +72,25 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'documentation-overhaul-2025-05-30',
+    date: '2025-05-30',
+    type: 'docs',
+    title: 'Documentation Overhaul & System Investigation',
+    description: 'Comprehensive documentation cleanup and live system analysis with architecture investigation',
+    details: [
+      'Conducted live system analysis revealing sophisticated multi-workflow architecture',
+      'Documented KYB, KY3P, Open Banking, and Security assessment workflows',
+      'Analyzed WebSocket real-time communication system with authentication flow',
+      'Investigated company-scoped data isolation and session management',
+      'Removed 9 redundant documentation files (1,356 lines of outdated content)',
+      'Renamed all documentation to follow industry standards (README.md, CONTRIBUTING.md, etc.)',
+      'Achieved 100% naming convention compliance across documentation',
+      'Created organized structure with features subdirectory',
+      'Updated coding standards to specify UPPERCASE.md for documentation files'
+    ],
+    version: '1.9.0'
+  },
+  {
     id: 'console-logging-cleanup-2025-05-29',
     date: '2025-05-29',
     type: 'enhancement',
