@@ -348,6 +348,16 @@
      - Pattern: Form page with API integration and file handling
      - Status: COMPLIANT - Standard form submission, no WebSocket integration needed
 
+173. **client/src/pages/card-task-page.tsx** - ⚠️ CARD TASK PAGE
+     - Lines 1-156: CARD task handling with React Query integration
+     - Pattern: Task-specific page with API calls and form integration
+     - Status: COMPLIANT - Standard task handling, no WebSocket integration needed
+
+174. **client/src/pages/company-profile-page.tsx** - ⚠️ COMPANY PROFILE PAGE
+     - Lines 1-958: Comprehensive company profile display with tabs
+     - Pattern: Large profile page with user management and risk visualization
+     - Status: COMPLIANT - Profile display functionality, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
