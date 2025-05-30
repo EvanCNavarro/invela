@@ -384,6 +384,51 @@
      - Pattern: Testing interface with API calls and form validation
      - Status: COMPLIANT - Diagnostic tools, no WebSocket integration needed
 
+180. **client/src/pages/document-upload.tsx** - ⚠️ DOCUMENT UPLOAD PAGE
+     - Lines 1-16: Simple wrapper page for document upload wizard
+     - Pattern: Layout wrapper with component integration
+     - Status: COMPLIANT - Simple wrapper, no WebSocket integration needed
+
+181. **client/src/pages/file-vault-page.tsx** - ⚠️ DEPRECATED FILE VAULT PAGE
+     - Lines 1-7: Deprecated redirect to new FileVault implementation
+     - Pattern: Simple redirect component
+     - Status: COMPLIANT - Redirect page, no WebSocket integration needed
+
+182. **client/src/pages/form-field.tsx** - ⚠️ FORM FIELD PLAYGROUND
+     - Lines 1-75: Component playground for form field testing
+     - Pattern: UI component demonstration and testing
+     - Status: COMPLIANT - Playground page, no WebSocket integration needed
+
+183. **client/src/pages/insights-page.tsx** - ⚠️ INSIGHTS PAGE
+     - Lines 1-145: Data visualization and insights dashboard
+     - Pattern: Chart visualization with React Query data fetching
+     - Status: COMPLIANT - Data visualization, no WebSocket integration needed
+
+184. **client/src/pages/ky3p-task-page.tsx** - ⚠️ KY3P TASK PAGE
+     - Lines 1-239: KY3P form submission task page
+     - Pattern: Task form with submission tracking and modal management
+     - Status: COMPLIANT - Form submission page, no WebSocket integration needed
+
+185. **client/src/pages/kyb-form.tsx** - ⚠️ KYB FORM PAGE
+     - Lines 1-189: KYB form submission and file download management
+     - Pattern: Form submission with file handling and export functionality
+     - Status: COMPLIANT - Form management page, no WebSocket integration needed
+
+186. **client/src/pages/kyb-task-page.tsx** - ⚠️ KYB TASK PAGE
+     - Lines 1-354: Enhanced KYB task page with file vault integration
+     - Pattern: Task management with form submission and file vault services
+     - Status: COMPLIANT - Task management page, no WebSocket integration needed
+
+187. **client/src/pages/network-page.tsx** - ⚠️ NETWORK PAGE
+     - Lines 1-488: Network relationship management with search and filtering
+     - Pattern: Data table with search, filtering, and invitation management
+     - Status: COMPLIANT - Data management page, no WebSocket integration needed
+
+188. **client/src/pages/open-banking-task-page.tsx** - ⚠️ OPEN BANKING TASK PAGE
+     - Lines 1-228: Open banking task form submission page
+     - Pattern: Task form with enhanced submission handling
+     - Status: COMPLIANT - Form submission page, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
