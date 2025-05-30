@@ -29,6 +29,7 @@ interface User {
 interface Company {
   id: number;
   name: string;
+  category?: string;
   onboarding_company_completed: boolean;
 }
 
@@ -41,6 +42,8 @@ interface TeamMember {
   fullName: string;
   email: string;
   role: string;
+  roleDescription?: string;
+  formType?: string;
 }
 
 import {
@@ -270,8 +273,8 @@ const logDebug = (message: string, data?: any) => {
   console.log(`[AnimatedOnboardingModal] ${message}`, data);
 };
 
-// Define the interface for team members
-interface TeamMember {
+// Define the interface for team members (consolidated definition)
+interface TeamMemberDefinition {
   role: 'CFO' | 'CISO';
   fullName: string;
   email: string;
