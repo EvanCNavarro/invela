@@ -28,7 +28,7 @@ interface User {
  */
 export function useUser() {
   const { data: user, isLoading, error } = useQuery<User>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ['/api/user'],
     // Don't retry on 401/403 errors to prevent auth loops
     retry: false,
   });
