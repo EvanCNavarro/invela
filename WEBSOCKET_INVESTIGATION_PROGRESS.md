@@ -193,6 +193,36 @@
      - Pattern: Claims risk analysis page with tutorial system
      - Status: REQUIRES INVESTIGATION - Risk analysis may need WebSocket integration for real-time data updates
 
+142. **client/src/pages/company-profile-page.tsx** - ⚠️ COMPANY PROFILE PAGE
+     - Lines 28-72: "interface CompanyProfileData" with risk score and status tracking
+     - Pattern: Company profile page with risk assessment and accreditation status
+     - Status: REQUIRES INVESTIGATION - Company profiles may need WebSocket integration for real-time updates
+
+143. **client/src/pages/component-library.tsx** - ⚠️ COMPONENT LIBRARY
+     - Lines 4-8: "Interactive component library showcasing actual Button, Input, and Table components"
+     - Pattern: Component library documentation page
+     - Status: COMPLIANT - Documentation page, no WebSocket integration needed
+
+144. **client/src/pages/dashboard-page.tsx** - ⚠️ DASHBOARD PAGE (MENTIONS REAL-TIME)
+     - Lines 7, 12, 154: "real-time monitoring capabilities" and "Comprehensive risk assessment dashboard with real-time data"
+     - Pattern: Enterprise dashboard with real-time data visualization
+     - Status: REQUIRES INVESTIGATION - Dashboard mentions real-time capabilities but needs WebSocket integration verification
+
+145. **client/src/pages/demo-page.tsx** - ⚠️ DEMO PAGE (MENTIONS REAL-TIME)
+     - Lines 612, 864, 895, 1079: "real-time validation status", "real-time company name validation"
+     - Pattern: Demo page with real-time validation features
+     - Status: REQUIRES INVESTIGATION - Demo page mentions real-time validation but needs WebSocket integration verification
+
+146. **client/src/pages/diagnostic-page.tsx** - ⚠️ DIAGNOSTIC PAGE
+     - Lines 1-357: Diagnostic tools for KYB form testing and API validation
+     - Pattern: Diagnostic tooling page
+     - Status: COMPLIANT - Testing tools, no WebSocket integration needed
+
+147. **client/src/pages/document-upload.tsx** - ⚠️ DOCUMENT UPLOAD PAGE
+     - Lines 1-17: Document upload wizard wrapper component
+     - Pattern: Document upload functionality
+     - Status: REQUIRES INVESTIGATION - Document uploads may need WebSocket integration for progress tracking
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
