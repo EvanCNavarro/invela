@@ -1,0 +1,32 @@
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T12:37:16.928Z", id: 1104, status: "not_started", progress: 100, …}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T12:37:17.084Z", taskId: 1102, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T12:37:17.084Z", id: 1102, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T12:37:17.243Z", taskId: 1103, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T12:37:17.243Z", id: 1103, status: "not_started", progress: 100, …}
+[2025-05-30T12:37:17.213Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748608637314-hz5okay", timestamp: "2025-05-30T12:37:17.314Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748608637883-7kpsx81", timestamp: "2025-05-30T12:37:17.884Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748608638389-hlsih3j", timestamp: "2025-05-30T12:37:18.389Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-30T12:37:19.388Z] [WebSocket] WebSocket connection established 
+[2025-05-30T12:37:19.388Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-30T12:37:19.389Z] [WebSocket] Received message of type: connection_established 
+[2025-05-30T12:37:19.389Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748608639463-7afer84 
+[2025-05-30T12:37:19.806Z] [WebSocket] Sending authentication message 
+Object {userId: 536, companyId: 755, connectionId: "ws_1748608637213_b8mwnsrjb", hasUserData: true, hasCompanyData: true}
+[2025-05-30T12:37:19.930Z] [WebSocket] Received message of type: authenticated 
+[2025-05-30T12:37:19.930Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
