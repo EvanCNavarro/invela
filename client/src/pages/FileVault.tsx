@@ -31,7 +31,7 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .PNG,
 
 export const FileVault: React.FC = () => {
   const { toast } = useToast();
-  const unifiedToast = useUnifiedToast();
+  const unifiedToastHook = useUnifiedToast();
   const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
@@ -456,7 +456,7 @@ export const FileVault: React.FC = () => {
       
       // Then after a brief delay, show the success toast
       setTimeout(() => {
-        unifiedToast.fileUploadSuccess(file.name);
+        unifiedToastHook.fileUploadSuccess(file.name);
         console.log('[FileVault] Showed success toast for file:', file.name);
       }, 300);
       
@@ -485,7 +485,7 @@ export const FileVault: React.FC = () => {
       
       // Then show the error toast
       setTimeout(() => {
-        unifiedToast.fileUploadError(
+        unifiedToastHook.fileUploadError(
           file.name, 
           error instanceof Error ? error.message : "Upload failed"
         );

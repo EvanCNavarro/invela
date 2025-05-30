@@ -1,0 +1,36 @@
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for file-vault, step 1: /assets/tutorials/modal_file_1.png
+[FileTable Debug] Rendering row: 
+Object {id: "1748625187798-rev0qtqai", name: "1_SOC_2_Questions.csv", size: 4139, type: "text/csv", status: "uploading", …}
+[FileTable Debug] Component mounted/updated: 
+Object {dataLength: 1, firstItem: {…}, selectedItemsCount: 0, isLoading: false}
+[FileVault Debug] Component state updated: 
+Object {hasFiles: false, isLoading: false, serverPagination: undefined, userContext: {…}, timestamp: "2025-05-30T17:13:07.804Z"}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(1), fetchedFiles: Array(0), combinedFiles: Array(1)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(1), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 1, result: Array(1)}
+[FileVault Debug] Using client-side pagination: 
+Object {page: 1, startIndex: 0, endIndex: 5, totalItems: 1, pageItems: 1}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 2 for file-vault
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for file-vault, step 1: /assets/tutorials/modal_file_1.png
+unifiedToast2.fileUploadProgress is not a function
