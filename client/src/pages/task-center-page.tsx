@@ -168,8 +168,8 @@ export default function TaskCenterPage() {
         try {
           // 1. Subscribe to task updates using unified service
           const unsubTaskUpdate = subscribe('task_update', (data: any) => {
-          // Message data now comes directly from the WebSocket service
-          console.log('[TaskCenter] Raw WebSocket task_update data:', data);
+            // Message data now comes directly from the WebSocket service
+            console.log('[TaskCenter] Raw WebSocket task_update data:', data);
           
           // Enhanced logging to help diagnose the exact structure
           console.log('[TaskCenter] WebSocket message structure analysis:', {
@@ -296,7 +296,7 @@ export default function TaskCenterPage() {
             queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
           }
           });
-
+        
           subscriptions.push(unsubTaskUpdate);
         
         // 2. Subscribe to test task notifications as well
@@ -409,25 +409,26 @@ export default function TaskCenterPage() {
         });
         
         subscriptions.push(unsubTaskTestNotification);
-      } catch (error) {
-        console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
-      }
-    };
-
-    setupSubscriptions();
-
-    return () => {
-      subscriptions.forEach(unsubscribe => {
-        try {
-          unsubscribe();
         } catch (error) {
-          console.error('[TaskCenter] Error unsubscribing from WebSocket:', error);
+          console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
         }
-      });
-    };
+      };
+
+      setupSubscriptions();
+
+      return () => {
+        subscriptions.forEach((unsubscribe: () => void) => {
+          try {
+            unsubscribe();
+          } catch (error) {
+            console.error('[TaskCenter] Error unsubscribing from WebSocket:', error);
+          }
+        });
+      };
+    }
   }, [queryClient]);
 
-  const tasks = [];  // Placeholder - will be fixed shortly
+
 
   const myTasksCount = !isLoading && currentCompany?.id
     ? tasks.filter(task => 

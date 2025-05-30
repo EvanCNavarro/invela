@@ -27,7 +27,7 @@ import { unifiedWebSocketService, type MessageHandler, type ConnectionStatus } f
 interface UseUnifiedWebSocketReturn {
   status: ConnectionStatus;
   isConnected: boolean;
-  subscribe: (messageType: string, handler: MessageHandler) => void;
+  subscribe: (messageType: string, handler: MessageHandler) => () => void;
   unsubscribe: (messageType: string, handler: MessageHandler) => void;
   send: (type: string, data?: any) => boolean;
   connect: () => Promise<void>;
