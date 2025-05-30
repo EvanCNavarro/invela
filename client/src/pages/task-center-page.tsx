@@ -162,8 +162,12 @@ export default function TaskCenterPage() {
     if (isConnected) {
       console.log('[TaskCenter] WebSocket connection established');
       
-      // Subscribe to task updates using unified service
-      subscribe('task_update', (data: any) => {
+      const subscriptions: (() => void)[] = [];
+      
+      const setupSubscriptions = () => {
+        try {
+          // 1. Subscribe to task updates using unified service
+          const unsubTaskUpdate = subscribe('task_update', (data: any) => {
           // Message data now comes directly from the WebSocket service
           console.log('[TaskCenter] Raw WebSocket task_update data:', data);
           
@@ -291,12 +295,12 @@ export default function TaskCenterPage() {
           if (taskData.metadata?.forceRefresh) {
             queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
           }
-        });
+          });
 
-        subscriptions.push(unsubTaskUpdate);
+          subscriptions.push(unsubTaskUpdate);
         
         // 2. Subscribe to test task notifications as well
-        subscribe('task_test_notification', (data: any) => {
+        const unsubTaskTestNotification = subscribe('task_test_notification', (data: any) => {
           // Enhanced logging to see the raw data structure
           console.log('[TaskCenter] Raw WebSocket test_notification data:', data);
 
@@ -422,6 +426,8 @@ export default function TaskCenterPage() {
       });
     };
   }, [queryClient]);
+
+  const tasks = [];  // Placeholder - will be fixed shortly
 
   const myTasksCount = !isLoading && currentCompany?.id
     ? tasks.filter(task => 
