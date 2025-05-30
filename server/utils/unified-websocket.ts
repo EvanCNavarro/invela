@@ -412,6 +412,7 @@ export function broadcastFormSubmission(payload: Omit<FormSubmissionCompletedMes
   // Also broadcast a task update for form submission to ensure clients receive the updates
   if (payload.taskId) {
     broadcastTaskUpdate({
+      id: payload.taskId,
       taskId: payload.taskId,
       status: payload.status,
       progress: payload.progress || 100,
