@@ -308,7 +308,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
   // Different animations based on direction
   const variants = {
     enter: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? 100 : -100,
+      x: direction === 'next' ? 200 : -200,
       opacity: 0,
     }),
     center: {
@@ -316,7 +316,7 @@ const StepTransition: React.FC<StepTransitionProps> = ({
       opacity: 1,
     },
     exit: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? -100 : 100,
+      x: direction === 'next' ? -200 : 200,
       opacity: 0,
     }),
   };
@@ -332,8 +332,9 @@ const StepTransition: React.FC<StepTransitionProps> = ({
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 }
+            x: { type: "spring", stiffness: 400, damping: 40 },
+            opacity: { duration: 0.3 },
+            ease: [0.22, 1, 0.36, 1]
           }}
           className="w-full"
         >
@@ -1324,7 +1325,7 @@ export function AnimatedOnboardingModal({
                 type="button"
                 variant="outline"
                 onClick={handleBackStep}
-                disabled={isTransitioning}
+                disabled={false}
               >
                 Back
               </Button>
@@ -1342,7 +1343,7 @@ export function AnimatedOnboardingModal({
             <Button 
               type="button"
               onClick={handleNextStep}
-              disabled={!canProceed || isTransitioning || (currentStep === 6 && isSubmitting)}
+              disabled={!canProceed || (currentStep === 6 && isSubmitting)}
               className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
             >
               {currentStep === 6 ? (
