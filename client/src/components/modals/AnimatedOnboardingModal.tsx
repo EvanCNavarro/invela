@@ -378,12 +378,18 @@ const StepLayout: React.FC<{
     
     setImageLoaded(false); // Reset loading state
     
+    console.log(`[AnimatedOnboardingModal] Loading image: ${imgSrc}`);
+    
     // Use cached image or preload
     if (globalImageCache.has(imgSrc)) {
+      console.log(`[AnimatedOnboardingModal] Using cached image: ${imgSrc}`);
       setImageLoaded(true);
     } else {
       preloadImage(imgSrc)
-        .then(() => setImageLoaded(true))
+        .then(() => {
+          console.log(`[AnimatedOnboardingModal] Successfully loaded image: ${imgSrc}`);
+          setImageLoaded(true);
+        })
         .catch(() => {
           console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
           setImageLoaded(true); // Show content even if image fails
@@ -522,10 +528,13 @@ export function AnimatedOnboardingModal({
   useEffect(() => {
     if (isOpen) {
       const imagesToPreload = [
-        "/images/onboarding/step1-welcome.jpg",
-        "/images/onboarding/step2-company.jpg", 
-        "/images/onboarding/step3-team.jpg",
-        "/images/onboarding/step4-tasks.jpg"
+        "/assets/welcome_1.png",
+        "/assets/welcome_2.png", 
+        "/assets/welcome_3.png",
+        "/assets/welcome_4.png",
+        "/assets/welcome_5.png",
+        "/assets/welcome_6.png",
+        "/assets/welcome_7.png"
       ];
     
       imagesToPreload.forEach(src => {
