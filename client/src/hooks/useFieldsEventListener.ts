@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useWebSocketContext } from '../providers/websocket-provider';
+import { useUnifiedWebSocket } from './use-unified-websocket';
 import { useQueryClient } from '@tanstack/react-query';
 import { handleWebSocketClearFields } from '../components/forms/enhancedClearFields';
 import { toast } from '../hooks/use-toast';
@@ -54,7 +54,7 @@ export function useFieldsEventListener({
   onBatchUpdate,
   showToasts = true,
 }: UseFieldsEventListenerProps) {
-  const { socket } = useWebSocketContext();
+  const { subscribe, isConnected } = useUnifiedWebSocket();
   const queryClient = useQueryClient();
   const [lastEvent, setLastEvent] = useState<FieldsEvent | null>(null);
   
@@ -91,13 +91,12 @@ export function useFieldsEventListener({
   
   // Handle WebSocket messages
   useEffect(() => {
-    if (!socket || !taskId || !formType) {
+    if (!isConnected || !taskId || !formType) {
       return;
     }
     
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = (data: any) => {
       try {
-        const data = JSON.parse(event.data);
         
         // Check if this is a fields event
         if (
@@ -205,18 +204,20 @@ export function useFieldsEventListener({
       }
     };
     
-    // Add the message event listener
-    socket.addEventListener('message', handleMessage);
+    // Subscribe to unified WebSocket events
+    const unsubscribeFormFields = subscribe('form_fields', handleMessage);
+    const unsubscribeClearFields = subscribe('clear_fields', handleMessage);
     
-    // Remove the event listener when the component unmounts
+    // Remove the event listeners when the component unmounts
     return () => {
-      socket.removeEventListener('message', handleMessage);
+      unsubscribeFormFields();
+      unsubscribeClearFields();
     };
-  }, [socket, taskId, formType, onFieldsCleared, onFieldUpdated, onBatchUpdate, queryClient, showToasts]);
+  }, [subscribe, taskId, formType, onFieldsCleared, onFieldUpdated, onBatchUpdate, queryClient, showToasts]);
   
   return {
     lastEvent,
-    socket
+    isConnected
   };
 }
 
