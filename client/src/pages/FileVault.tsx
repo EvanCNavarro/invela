@@ -45,6 +45,7 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPageChanging, setIsPageChanging] = useState(false);
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -699,16 +700,28 @@ export const FileVault: React.FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
+                    onClick={() => {
+                      if (currentPage !== 1 && !isPageChanging) {
+                        setIsPageChanging(true);
+                        setCurrentPage(1);
+                        setTimeout(() => setIsPageChanging(false), 100);
+                      }
+                    }}
+                    disabled={currentPage === 1 || isPageChanging}
                   >
                     <ChevronsLeftIcon className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => {
+                      if (currentPage > 1 && !isPageChanging) {
+                        setIsPageChanging(true);
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        setTimeout(() => setIsPageChanging(false), 100);
+                      }
+                    }}
+                    disabled={currentPage === 1 || isPageChanging}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
@@ -720,16 +733,28 @@ export const FileVault: React.FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      if (currentPage < totalPages && !isPageChanging) {
+                        setIsPageChanging(true);
+                        setCurrentPage(p => Math.min(totalPages, p + 1));
+                        setTimeout(() => setIsPageChanging(false), 100);
+                      }
+                    }}
+                    disabled={currentPage === totalPages || isPageChanging}
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      if (currentPage !== totalPages && !isPageChanging) {
+                        setIsPageChanging(true);
+                        setCurrentPage(totalPages);
+                        setTimeout(() => setIsPageChanging(false), 100);
+                      }
+                    }}
+                    disabled={currentPage === totalPages || isPageChanging}
                   >
                     <ChevronsRightIcon className="h-4 w-4" />
                   </Button>
