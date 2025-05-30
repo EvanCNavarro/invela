@@ -291,23 +291,25 @@ async function createCompanyInternal(
       });
     }
 
-    // Broadcast task updates using the standardized WebSocket service
-    WebSocketService.broadcastTaskUpdate({
-      id: kybTask.id,
+    // Broadcast task updates using the unified WebSocket service
+    const { broadcastTaskUpdate } = await import('../utils/unified-websocket');
+    
+    broadcastTaskUpdate({
+      taskId: kybTask.id,
       status: kybTask.status,
       progress: kybTask.progress,
       metadata: kybTask.metadata
     });
     
-    WebSocketService.broadcastTaskUpdate({
-      id: securityTask.id,
+    broadcastTaskUpdate({
+      taskId: securityTask.id,
       status: securityTask.status,
       progress: securityTask.progress,
       metadata: securityTask.metadata
     });
 
-    WebSocketService.broadcastTaskUpdate({
-      id: cardTask.id,
+    broadcastTaskUpdate({
+      taskId: cardTask.id,
       status: cardTask.status,
       progress: cardTask.progress,
       metadata: cardTask.metadata

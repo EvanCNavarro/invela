@@ -392,11 +392,11 @@ server.listen(PORT, HOST, () => {
   
   // Initialize background services after server is listening
   setTimeout(() => {
-    // Start the periodic task reconciliation system
+    // TEMPORARILY DISABLED: Start the periodic task reconciliation system
     if (process.env.NODE_ENV !== 'test') {
-      logger.info('Starting periodic task reconciliation system...');
-      startPeriodicTaskReconciliation();
-      logger.info('Task reconciliation system initialized successfully');
+      logger.info('TESTING: Periodic task reconciliation system DISABLED to test real-time WebSocket');
+      // startPeriodicTaskReconciliation();
+      logger.info('Task reconciliation system DISABLED for testing');
     }
     
     // Run startup health checks in the background
