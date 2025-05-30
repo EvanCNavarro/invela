@@ -1,6 +1,6 @@
-# Enterprise Risk Assessment Platform
+# Invela Enterprise Risk Assessment Platform
 
-A comprehensive enterprise-grade risk assessment platform delivering advanced diagnostic capabilities through a modern, scalable web application with intelligent monitoring and deployment management.
+A comprehensive enterprise-grade risk assessment platform delivering advanced diagnostic capabilities through modern, scalable web application with intelligent monitoring and deployment management. Enables organizations to assess, track, and manage risk across multiple assessment types including KYB (Know Your Business), KY3P (Know Your Third Party), Open Banking, and Security evaluations.
 
 ## 🚀 Quick Start
 
@@ -11,27 +11,50 @@ npm install
 # Start development server
 npm run dev
 
-# Launch Storybook design system
+# Push database schema
+npm run db:push
+
+# Launch Storybook design system (optional)
 npm run storybook
 ```
 
 ## 🏗️ Architecture
 
 ### Core Technologies
-- **Frontend**: React 18 with TypeScript
-- **Backend**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Styling**: Tailwind CSS with Radix UI
+- **Frontend**: React 18 + TypeScript + Wouter routing
+- **Backend**: Express.js + TypeScript + WebSocket
+- **Database**: PostgreSQL + Drizzle ORM
+- **Styling**: Tailwind CSS + Radix UI components
+- **State**: TanStack Query + Zustand
 - **Real-time**: WebSocket communication
 - **Design System**: Storybook documentation
 
+### Layered Architecture
+```
+┌─────────────────────────────────────┐
+│ Presentation Layer (client/src/)    │
+│ - Pages, Components, UI interactions│
+├─────────────────────────────────────┤
+│ API Layer (server/routes/)          │
+│ - HTTP endpoints, Auth, Validation  │
+├─────────────────────────────────────┤
+│ Business Logic (server/services/)   │
+│ - Core business rules, Processing   │
+├─────────────────────────────────────┤
+│ Data Access Layer (db/)             │
+│ - Schema, Migrations, Transactions  │
+└─────────────────────────────────────┘
+```
+
 ### Key Features
-- 📊 **Risk Assessment Dashboards** - Interactive analytics and reporting
-- 🏢 **Company Monitoring** - Real-time risk score tracking
-- 📝 **Form Management** - KYB, KY3P, and Open Banking forms
-- 🔍 **File Processing** - Document upload and analysis
-- 🎯 **Task Management** - Progress tracking and workflow
-- 📱 **Responsive Design** - Mobile-first approach
+- 📊 **Risk Assessment Workflows** - KYB, KY3P, Open Banking, Security assessments
+- 🏢 **Multi-tenant Architecture** - Company-scoped data isolation
+- 📝 **Progressive Assessment Unlocking** - KYB completion unlocks KY3P security tasks
+- 🔍 **Real-time Updates** - WebSocket-driven live notifications
+- 🎯 **Risk Scoring Engine** - Multi-dimensional calculations with AI analysis
+- 📱 **Dashboard Analytics** - 10+ specialized widgets with network visualization
+- 🔐 **Session-based Authentication** - Passport.js with company context
+- 📁 **File Management** - Document processing, CSV/PDF generation, vault storage
 
 ## 📚 Design System
 
@@ -154,8 +177,9 @@ All components are thoroughly documented in Storybook with:
 - **Design Guidelines**: When and how to use components
 
 ### Technical Documentation
-- **Architecture Atlas**: `docs/APPLICATION_ARCHITECTURE_ATLAS.md`
-- **Coding Standards**: `docs/CODING_STANDARDS.md`
+- **System Architecture**: `docs/ARCHITECTURE.md`
+- **Development Guidelines**: `docs/CONTRIBUTING.md`
+- **Technical Analysis**: `docs/TECHNICAL_ANALYSIS.md`
 - **API Reference**: Available in Storybook actions panel
 
 ## 🚦 Quality Assurance

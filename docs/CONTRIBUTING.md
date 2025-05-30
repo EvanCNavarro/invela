@@ -58,6 +58,7 @@ db/
 - **Utilities:** `kebab-case.ts` (e.g., `form-utils.ts`)
 - **Types:** `kebab-case.ts` (e.g., `company-types.ts`)
 - **API Routes:** `kebab-case.ts` (e.g., `user-routes.ts`)
+- **Documentation:** `UPPERCASE.md` (e.g., `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`)
 
 ---
 
