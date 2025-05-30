@@ -261,22 +261,17 @@ export const FileVault: React.FC = () => {
     const endIndex = startIndex + itemsPerPage;
     
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      // When using server data with pagination, apply proper slicing based on current page
-      const startIdx = (currentPage - 1) * itemsPerPage;
-      const endIdx = Math.min(startIdx + itemsPerPage, files.length);
-      const slicedFiles = files.slice(startIdx, endIdx);
-      
-      console.log('[FileVault Debug] Using server pagination with client-side slicing:', {
+      // When using server pagination, return the entire server response without additional slicing
+      // The server already handles pagination with LIMIT/OFFSET
+      console.log('[FileVault Debug] Using server pagination - displaying full API response:', {
         page: currentPage,
         totalItems: serverPagination?.totalItems || 0,
         itemsPerPage,
-        startIdx,
-        endIdx,
-        availableFiles: files.length,
-        displayedFiles: slicedFiles.length
+        serverReturnedFiles: files.length,
+        displayedFiles: files.length
       });
       
-      return slicedFiles;
+      return files;
     } else {
       // Use client-side filtering and pagination when filters are applied
       const result = filteredFiles.slice(startIndex, endIndex);

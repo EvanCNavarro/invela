@@ -1,0 +1,43 @@
+[WebSocket] Smart WebSocket connection manager initialized
+[vite] connecting...
+[WebSocket] Connection to wss://localhost:undefined/ failed: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/' is invalid.
+[vite] failed to connect to websocket.
+your current setup:
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ <--[HTTP]--> localhost:undefined/ (server)
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:/ <--[WebSocket (failing)]--> localhost:undefined/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+[EnhancedKybServiceFactory] No company context found, using global instance
+[EnhancedKybServiceFactory] Creating app-level EnhancedKybFormService instance
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-05-30T19:35:09.759Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+[Main] Starting application bootstrap sequence
+[Main] WebSocket initialization delegated to unified provider
+[Main] Application services initialized successfully
+[Main] React application rendered successfully
+[Main] Application bootstrap completed successfully
+[Router] Current location: /file-vault
+[2025-05-30T19:35:10.018Z] [App] Initializing application with phased startup approach 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Registering callback for phase: framework 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Registering callback for phase: context 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Registering callback for phase: services 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Registering callback for phase: communication 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Registering callback for phase: ready 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Starting phased application initialization 
+[2025-05-30T19:35:10.018Z] [PhaseStartup] Executing startup phase: framework 
+[2025-05-30T19:35:10.019Z] [PhaseStartup] Executing 1 callbacks for phase framework 
+[2025-05-30T19:35:10.019Z] [PhaseStartup] Executing callback 1/1 for phase framework 
+[2025-05-30T19:35:10.019Z] [App] Framework phase initializing 
+[2025-05-30T19:35:10.020Z] [PhaseStartup] Phase framework completed successfully 
+[2025-05-30T19:35:10.020Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+[2025-05-30T19:35:10.020Z] [PhaseStartup] Executing startup phase: context 
+[2025-05-30T19:35:10.020Z] [PhaseStartup] Executing 1 callbacks for phase context 
+[2025-05-30T19:35:10.020Z] [PhaseStartup] Executing callback 1/1 for phase context 
+[2025-05-30T19:35:10.020Z] [App] Context phase initializing 
