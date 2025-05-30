@@ -76,6 +76,9 @@ export function useUnifiedWebSocket(): UseUnifiedWebSocketReturn {
     // Subscribe to the service and store the unsubscribe function
     const unsubscribeFromService = unifiedWebSocketService.subscribe(messageType, handler);
     handlersMap.set(handler, unsubscribeFromService);
+    
+    // Return the unsubscribe function
+    return unsubscribeFromService;
   }, []);
   
   const unsubscribe = useCallback((messageType: string, handler: MessageHandler) => {
