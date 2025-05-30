@@ -207,7 +207,10 @@ class UnifiedWebSocketService {
   
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(() => {
-      this.send('ping');
+      this.send('ping', {
+        timestamp: new Date().toISOString(),
+        source: 'unified-websocket-service'
+      });
     }, 30000);
   }
   

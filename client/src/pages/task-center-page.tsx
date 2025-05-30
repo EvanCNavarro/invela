@@ -57,7 +57,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskStatus } from "@db/schema";
-import { wsService } from "@/lib/websocket";
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -102,6 +102,7 @@ export default function TaskCenterPage() {
   const [wsConnected, setWsConnected] = useState(false); // Track WebSocket connection state
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
 
   // Use a ref to track and update timestamps without triggering re-renders
   const taskTimestampRef = useRef<Record<number, number>>({});
@@ -155,28 +156,14 @@ export default function TaskCenterPage() {
   }, [queryClient]);
 
   useEffect(() => {
-    const subscriptions: Array<() => void> = [];
-
-    const setupSubscriptions = async () => {
-      try {
-        // Subscribe to WebSocket connection status
-        const connectionSub = await wsService.subscribe('connection_established', () => {
-          console.log('[TaskCenter] WebSocket connection established');
-          setWsConnected(true);
-        });
-        
-        subscriptions.push(connectionSub);
-        
-        // Also subscribe to disconnection events to restart polling when WebSocket is down
-        const disconnectionSub = await wsService.subscribe('connection_closed', () => {
-          console.log('[TaskCenter] WebSocket connection closed, reverting to polling');
-          setWsConnected(false);
-        });
-        
-        subscriptions.push(disconnectionSub);
-        
-        // Subscribe to task updates
-        const unsubTaskUpdate = await wsService.subscribe('task_update', (data: any) => {
+    // Update WebSocket connection status
+    setWsConnected(isConnected);
+    
+    if (isConnected) {
+      console.log('[TaskCenter] WebSocket connection established');
+      
+      // Subscribe to task updates using unified service
+      subscribe('task_update', (data: any) => {
           // Message data now comes directly from the WebSocket service
           console.log('[TaskCenter] Raw WebSocket task_update data:', data);
           
@@ -309,7 +296,7 @@ export default function TaskCenterPage() {
         subscriptions.push(unsubTaskUpdate);
         
         // 2. Subscribe to test task notifications as well
-        const unsubTaskTestNotification = await wsService.subscribe('task_test_notification', (data: any) => {
+        subscribe('task_test_notification', (data: any) => {
           // Enhanced logging to see the raw data structure
           console.log('[TaskCenter] Raw WebSocket test_notification data:', data);
 
