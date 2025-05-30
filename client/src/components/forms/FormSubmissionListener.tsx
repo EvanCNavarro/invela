@@ -179,6 +179,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Create new message handler for unified WebSocket
     const handleMessage = (data: any) => {
       try {
+        // Validate data exists and has required structure
+        if (!data || typeof data !== 'object') {
+          return;
+        }
         
         // Process form-related events including task update events which carry form submission status
         // Added support for form_submission_completed which indicates all operations are complete
