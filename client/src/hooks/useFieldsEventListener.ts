@@ -12,6 +12,12 @@ import { useUnifiedWebSocket } from './use-unified-websocket';
 import { useQueryClient } from '@tanstack/react-query';
 import { handleWebSocketClearFields } from '../components/forms/enhancedClearFields';
 import { toast } from '../hooks/use-toast';
+import {
+  generateMessageId,
+  processMessageWithDeduplication,
+  incrementActiveListeners,
+  decrementActiveListeners
+} from '@/utils/websocket-event-deduplication';
 
 export interface FieldsEventPayload {
   taskId: number;
@@ -61,32 +67,14 @@ export function useFieldsEventListener({
   // Ref to keep track of processed events to avoid duplicates
   const processedEvents = useRef<Set<string>>(new Set());
   
-  // Set up event tracker on window to manage multiple listeners
+  // Set up listener tracking using shared utility
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Initialize the event tracker if it doesn't exist
-      if (!window.fieldEventTracker) {
-        window.fieldEventTracker = {
-          processedEventIds: new Set<string>(),
-          activeListeners: 0
-        };
-      }
-      
-      // Increment active listeners count
-      window.fieldEventTracker.activeListeners++;
-      
-      // Cleanup on unmount
-      return () => {
-        if (window.fieldEventTracker) {
-          window.fieldEventTracker.activeListeners--;
-          
-          // Clean up the tracker if there are no active listeners
-          if (window.fieldEventTracker.activeListeners <= 0) {
-            delete window.fieldEventTracker;
-          }
-        }
-      };
-    }
+    incrementActiveListeners();
+    
+    // Cleanup on unmount
+    return () => {
+      decrementActiveListeners();
+    };
   }, []);
   
   // Handle WebSocket messages
@@ -105,27 +93,12 @@ export function useFieldsEventListener({
           data.payload.taskId === taskId &&
           data.payload.formType === formType
         ) {
-          // Create an event ID to track processed events
-          const eventId = `${data.type}_${data.payload.taskId}_${data.payload.formType}_${data.payload.timestamp || Date.now()}`;
+          // Generate message ID and use shared deduplication utility
+          const eventId = generateMessageId('field', data.payload.taskId, data.type, data.payload.timestamp);
           
-          // Skip if this event has already been processed
-          if (window.fieldEventTracker?.processedEventIds.has(eventId)) {
-            console.log(`[FieldsEventListener] Skipping already processed event: ${eventId}`);
+          // Use shared deduplication utility
+          if (!processMessageWithDeduplication(eventId, data.payload.taskId, taskId, data.payload.formType, formType)) {
             return;
-          }
-          
-          // Mark this event as processed
-          if (window.fieldEventTracker) {
-            window.fieldEventTracker.processedEventIds.add(eventId);
-            
-            // Limit the size of the processed events set to prevent memory leaks
-            if (window.fieldEventTracker.processedEventIds.size > 100) {
-              const iterator = window.fieldEventTracker.processedEventIds.values();
-              const firstValue = iterator.next().value;
-              if (firstValue) {
-                window.fieldEventTracker.processedEventIds.delete(firstValue);
-              }
-            }
           }
           
           // Format the event data
@@ -221,19 +194,3 @@ export function useFieldsEventListener({
   };
 }
 
-// Add window augmentation for TypeScript
-declare global {
-  interface Window {
-    fieldEventTracker?: {
-      processedEventIds: Set<string>;
-      activeListeners: number;
-    };
-    _lastClearOperation?: {
-      taskId: number;
-      formType: string;
-      timestamp: number;
-      blockExpiration: number;
-      operationId: string;
-    };
-  }
-}
