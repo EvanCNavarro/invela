@@ -373,15 +373,21 @@ export function getWebSocketServer(): WebSocketServer | null {
 export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
   broadcast<TaskUpdateMessage>('task_updated', payload);
   
+  // Extract task ID from multiple possible locations for backward compatibility
+  const taskId = payload.taskId || payload.id || (payload as any).taskId;
+  
   // Also broadcast with the legacy type for backward compatibility
-  if (payload.taskId) {
+  if (taskId) {
     broadcast('task_update', {
-      id: payload.taskId,
+      id: taskId,
+      taskId: taskId, // Include both formats for maximum compatibility
       status: payload.status || 'submitted',
       progress: payload.progress || 100,
       metadata: payload.metadata || {},
       timestamp: new Date().toISOString()
     });
+  } else {
+    wsLogger.warn('Task update broadcast called without task ID', { payload });
   }
 }
 
