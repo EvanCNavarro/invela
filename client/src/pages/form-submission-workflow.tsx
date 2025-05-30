@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import FormSubmissionService from '@/services/form-submission-service';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 
 export default function FormSubmissionWorkflowPage() {
   // Form state
@@ -47,6 +47,9 @@ export default function FormSubmissionWorkflowPage() {
   const [submissionComplete, setSubmissionComplete] = useState<boolean>(false);
   const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  
+  // Unified WebSocket integration
+  const { isConnected } = useUnifiedWebSocket();
   
   // Reset form to initial state
   const resetForm = useCallback(() => {
@@ -92,13 +95,26 @@ export default function FormSubmissionWorkflowPage() {
         explicitSubmission: true
       };
       
-      // Use the form submission service to submit the form
-      await FormSubmissionService.submitFormWithWebSocketUpdates({
-        taskId,
-        formType,
-        companyId,
-        formData: submissionData
+      // Submit form via standard API endpoint
+      const response = await fetch(`/api/${formType}/submit/${taskId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          fileName: `${formType}_submission_${taskId}_${Date.now()}.json`,
+          formData: submissionData,
+          taskId,
+          explicitSubmission: true
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`Submission failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
       
       // Note: We don't need to manually update UI state here as the WebSocket events
       // will trigger the appropriate state changes via FormSubmissionListener
