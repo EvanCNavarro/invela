@@ -392,16 +392,16 @@ const StepImage: React.FC<{
   alt = 'Onboarding step image',
   isLoaded
 }) => (
-  <div className="w-[400px] h-[350px] relative flex items-center justify-center">
+  <div className="w-[400px] h-[350px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
     {isLoaded ? (
       <img 
         src={src || ''} 
         alt={alt || 'Onboarding step image'}
-        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200"
+        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60 transition-all duration-300 hover:shadow-xl"
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-full h-full rounded-xl" />
+        <Skeleton className="w-full h-full rounded-xl animate-pulse bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200" />
       </div>
     )}
   </div>
@@ -1009,7 +1009,7 @@ export function AnimatedOnboardingModal({
               
               <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">1</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">Know Your Business (KYB) Form</h3>
                     <p className="text-xs text-gray-500">Verify your company's business information</p>
@@ -1017,7 +1017,7 @@ export function AnimatedOnboardingModal({
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">2</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">S&P KY3P Security Assessment</h3>
                     <p className="text-xs text-gray-500">Third-party risk assessment for security practices</p>
@@ -1025,7 +1025,7 @@ export function AnimatedOnboardingModal({
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">3</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">Open Banking Survey</h3>
                     <p className="text-xs text-gray-500">API access and data sharing assessment</p>
