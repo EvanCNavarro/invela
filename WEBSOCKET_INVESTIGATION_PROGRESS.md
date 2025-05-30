@@ -2,9 +2,9 @@
 
 ## Investigation Status
 - **Phase**: 2 - Components Analysis  
-- **Files Checked**: 25/200+
-- **Files Remaining**: 175+
-- **WebSocket Findings**: 86
+- **Files Checked**: 50/200+
+- **Files Remaining**: 150+
+- **WebSocket Findings**: 95
 
 ## Critical Discoveries
 
@@ -14,7 +14,17 @@
    - Uses `useTutorialWebSocket` from old service
    - Status: **BROKEN - Will cause runtime errors**
 
-2. **client/src/services/enhanced-ky3p-form-service.ts** - MEDIUM
+2. **client/src/components/tutorial/tabs/RiskScoreTutorial.tsx** - CRITICAL
+   - Imports from legacy `@/services/websocket-service` (file doesn't exist)
+   - Uses `useTutorialWebSocket` from old service
+   - Status: **BROKEN - Will cause runtime errors**
+
+3. **client/src/components/tutorial/tabs/ClaimsRiskTutorial.tsx** - CRITICAL
+   - Imports from legacy `@/services/websocket-service` (file doesn't exist)
+   - Uses `useTutorialWebSocket` from old service
+   - Status: **BROKEN - Will cause runtime errors**
+
+4. **client/src/services/enhanced-ky3p-form-service.ts** - MEDIUM
    - Direct WebSocket availability check: `if (window && window.WebSocket)`
    - Legacy WebSocket pattern but falls back to CustomEvent
    - Status: **NEEDS MIGRATION to unified service**
@@ -58,6 +68,9 @@
 
 12. **client/src/components/forms/enhancedClearFields.ts** ✓
     - Event processing utility for WebSocket clear fields events
+
+13. **client/src/components/tutorial/TutorialManager.tsx** ✓
+    - Uses unified WebSocket for tutorial progress updates
 
 ### NO WEBSOCKET USAGE (COMPLIANT)
 1. **client/src/pages/dashboard-page.tsx** ✓
