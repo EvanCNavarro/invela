@@ -1051,19 +1051,37 @@ export function AnimatedOnboardingModal({
           >
             <div className="mt-0 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                You'll be asked to submit documents during the assessment process:
+                Upload your compliance documents to accelerate your accreditation process. Our system processes these documents to auto-fill form questions, making your assessment faster and more accurate.
               </p>
               
               <div className="space-y-4">
                 <CheckListItem>
-                  All documents are securely stored in the File Vault
+                  Faster assessment completion through automated data extraction
                 </CheckListItem>
                 <CheckListItem>
-                  Industry-standard security practices protect all uploads
+                  Auto-filled forms with data from your uploaded documents
                 </CheckListItem>
                 <CheckListItem>
-                  Granular permissions control who can access each document
+                  Auditable paper trail for compliance verification
                 </CheckListItem>
+                <CheckListItem>
+                  Secure file vault with SOC 2 Type II compliant storage
+                </CheckListItem>
+                
+                <div className="bg-slate-50 p-4 rounded-lg border">
+                  <h4 className="font-medium text-sm text-gray-900 mb-2">Recommended Documents to Upload:</h4>
+                  <div className="grid grid-cols-1 gap-1 text-sm text-gray-600">
+                    <div>• SOC 2 Audit Report</div>
+                    <div>• ISO/IEC 27001 Certification</div>
+                    <div>• Penetration Test Report</div>
+                    <div>• Business Continuity Plan (BCP)</div>
+                    <div>• GDPR/CCPA Compliance Assessment</div>
+                    <div>• API Security Review</div>
+                    <div>• Data Protection Controls Assessment</div>
+                    <div>• OAuth Security Certification</div>
+                    <div>• FDX (Financial Data Exchange) Certification</div>
+                  </div>
+                </div>
               </div>
             </div>
           </StepLayout>
