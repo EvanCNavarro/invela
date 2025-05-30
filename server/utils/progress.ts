@@ -42,7 +42,7 @@ export function broadcastFieldUpdate(
   const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   
   // Broadcast the field update with standard payload structure
-  WebSocketService.broadcast('field_update', {
+  WebSocketService.broadcastFieldUpdate({
     taskId: numericTaskId,
     fieldKey,
     value,
@@ -76,7 +76,7 @@ export function broadcastSubmissionStatus(
   const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   
   // Broadcast the submission status
-  WebSocketService.broadcast('submission_status', {
+  WebSocketService.broadcastSubmissionUpdate({
     taskId: numericTaskId,
     status,
     ...details,
@@ -739,8 +739,9 @@ export function broadcastProgressUpdate(
   
   // Broadcast the update to all connected clients with the appropriate status
   try {
-    WebSocketService.broadcast('task_update', {
+    WebSocketService.broadcastTaskUpdate({
       id: taskId,
+      taskId: taskId, // Include both formats for compatibility
       status: finalStatus || status || TaskStatus.IN_PROGRESS,
       progress: validatedProgress,
       metadata: metadata || {},
