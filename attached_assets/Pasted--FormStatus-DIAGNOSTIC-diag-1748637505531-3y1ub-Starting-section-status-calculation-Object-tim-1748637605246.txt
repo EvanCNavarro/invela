@@ -1,0 +1,49 @@
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Starting section status calculation 
+Object {timestamp: "2025-05-30T20:38:25.531Z", sectionCount: 4, hasValues: false, valueCount: 0}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Processing section "Development" 
+Object {sectionId: "Development", fieldCount: 31, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Section "Development" fields 
+Object {fieldCount: 31, fields: Array(31)}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Processing section "Governance" 
+Object {sectionId: "Governance", fieldCount: 30, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Section "Governance" fields 
+Object {fieldCount: 30, fields: Array(30)}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Processing section "Resilience" 
+Object {sectionId: "Resilience", fieldCount: 27, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Section "Resilience" fields 
+Object {fieldCount: 27, fields: Array(27)}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Processing section "Security" 
+Object {sectionId: "Security", fieldCount: 32, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748637505531_3y1ub] Section "Security" fields 
+Object {fieldCount: 32, fields: Array(32)}
+[TaskPage] Form progress updated: 0%
+[UnifiedKY3PFormService] [Unified KY3P] Syncing form data for task 1103
+[UnifiedKY3PFormService] [Unified KY3P] Fetching latest form data from /api/ky3p/progress/1103
+[Router] Current location: /task-center
+[FormSubmissionListener] Cleaned up form submission listener for task 1103
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=755, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 755
+[OnboardingWrapper] WebSocket disconnected - modal rendering disabled
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[TaskCenter] Unified WebSocket connection established
+[OnboardingWrapper] WebSocket connected - modal rendering enabled
+[UnifiedKY3PFormService] [Unified KY3P] Loaded form data with 120 entries
+[UnifiedKY3PFormService] [Unified KY3P] Updated form data with 120 fields from server
+[UnifiedKY3PFormService] [Unified KY3P] Loading progress for task 1103
+[UnifiedKY3PFormService] [Unified KY3P] Loaded form data with 120 entries
+[UnifiedKY3PFormService] [Unified KY3P] Updated form data with 120 fields from server
+[UnifiedKY3PFormService] [Unified KY3P] Loading progress for task 1103
+[UnifiedKY3PFormService] [Unified KY3P] Task info: status=in_progress, isSubmitted=false
+[UnifiedKY3PFormService] [Unified KY3P] Fetching responses from: /api/tasks/1103/ky3p-responses
+[UnifiedKY3PFormService] [Unified KY3P] Responses API status: 200
+[UnifiedKY3PFormService] [Unified KY3P] Retrieved 120 raw responses
+[UnifiedKY3PFormService] [Unified KY3P] Fetching progress from: /api/ky3p/progress/1103
+[UnifiedKY3PFormService] [Unified KY3P] Task info: status=in_progress, isSubmitted=false
+[UnifiedKY3PFormService] [Unified KY3P] Fetching responses from: /api/tasks/1103/ky3p-responses
+[UnifiedKY3PFormService] [Unified KY3P] Progress API status: 200
+[UnifiedKY3PFormService] [Unified KY3P] Loaded form data with 120 entries
+[UnifiedKY3PFormService] [Unified KY3P] Used progress endpoint data with 120 fields
+[UnifiedKY3PFormService] [Unified KY3P] Responses API status: 200
