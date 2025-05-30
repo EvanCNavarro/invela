@@ -180,6 +180,7 @@ All components are thoroughly documented in Storybook with:
 - **System Architecture**: `docs/ARCHITECTURE.md`
 - **Development Guidelines**: `docs/CONTRIBUTING.md`
 - **Technical Analysis**: `docs/TECHNICAL_ANALYSIS.md`
+- **Platform Changelog**: Modal accessible from login page via "View Changelog" button
 - **API Reference**: Available in Storybook actions panel
 
 ## 🚦 Quality Assurance

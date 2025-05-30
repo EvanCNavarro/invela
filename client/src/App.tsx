@@ -139,8 +139,7 @@ import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
 import ClaimsPage from "@/pages/claims";
 import ClaimDetailsPage from "@/pages/claims/[id]";
 
-// Platform documentation pages
-import ChangelogPage from "@/pages/changelog-page";
+
 
 // ========================================
 // TYPE DEFINITIONS

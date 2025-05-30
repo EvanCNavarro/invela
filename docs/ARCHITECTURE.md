@@ -335,6 +335,16 @@ WS     /ws (WebSocket endpoint)
 - **Compliance Features**: Built-in support for regulatory requirements
 - **Risk Assessment**: Continuous security posture evaluation
 
+## Platform Documentation Features
+
+### Changelog System
+- **Location**: Modal-based changelog accessible from login page
+- **Component**: `client/src/components/modals/ChangelogModal.tsx`
+- **Trigger**: LoginDemoHeader component on login page ("View Changelog" button)
+- **Data Source**: Static changelog entries within the modal component
+- **Updates**: Add new entries to `changelogEntries` array in ChangelogModal.tsx
+- **Integration**: Updates both CHANGELOG.md file and modal component data
+
 ---
 
 *Architecture documentation reflects live system analysis*
