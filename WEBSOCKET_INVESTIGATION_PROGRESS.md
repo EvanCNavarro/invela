@@ -2,9 +2,9 @@
 
 ## Investigation Status
 - **Phase**: 2 - Components Analysis  
-- **Files Checked**: 125/421+
-- **Files Remaining**: 296+
-- **WebSocket Findings**: 135
+- **Files Checked**: 150/421+
+- **Files Remaining**: 271+
+- **WebSocket Findings**: 158
 
 ## Critical Discoveries
 
@@ -190,6 +190,88 @@
    - Uses: broadcast and broadcastFormSubmission from unified-websocket
    - Pattern: Proper service-level integration
    - Status: Compliant with architecture
+
+8. **server/routes/enhanced-open-banking.ts** - ✅ UNIFIED INTEGRATION
+   - Uses: broadcastTaskUpdate from unified-websocket
+   - Pattern: Proper service-level integration
+   - Status: Compliant with architecture
+
+9. **server/routes/files.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+   - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcast
+   - Pattern: Mix of unified utilities and direct service calls
+   - Status: Compliant with current architecture
+
+10. **server/routes/fix-missing-file-api.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcast from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+11. **server/routes/fix-missing-file.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcast
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+12. **server/routes/ky3p-clear-fixed.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+### PROBLEMATIC LEGACY IMPLEMENTATIONS DISCOVERED
+
+13. **server/routes/ky3p-clear.ts** - ❌ REDUNDANT DUAL IMPORTS (CRITICAL ISSUE)
+    - Uses: Double import of broadcastTaskUpdate (both standard and unified)
+    - Pattern: Redundant dual WebSocket broadcast attempts
+    - Status: NON-COMPLIANT - Contains unnecessary duplication and legacy references
+
+14. **server/routes/open-banking.ts** - ⚠️ MIXED LEGACY PATTERNS (NEEDS REVIEW)
+    - Uses: Mix of ws WebSocket imports, unified-websocket utilities, and legacy websocketBroadcast
+    - Pattern: Complex integration with multiple WebSocket approaches
+    - Status: PARTIALLY COMPLIANT - Needs consolidation review
+
+15. **server/routes/task-websocket.ts** - ⚠️ DEDICATED WEBSOCKET ROUTE (REVIEW NEEDED)
+    - Uses: Direct ws WebSocket imports and custom WebSocket server handling
+    - Pattern: Dedicated WebSocket route implementation
+    - Status: REQUIRES ARCHITECTURE REVIEW - May conflict with unified approach
+
+16. **server/routes/websocket.ts** - ✅ UNIFIED INTEGRATION HUB
+    - Uses: Proper integration with WebSocketService and unified-websocket utilities
+    - Pattern: Central WebSocket management hub
+    - Status: Compliant with architecture
+
+17. **server/routes/task-broadcast.ts** - ⚠️ DIRECT WEBSOCKET ACCESS (REVIEW NEEDED)
+    - Uses: Direct getWebSocketServer from unified-websocket and manual client iteration
+    - Pattern: Low-level WebSocket server access
+    - Status: REQUIRES REVIEW - May bypass unified message handling
+
+18. **server/routes/ky3p-submission-fix.ts** - ❌ MIXED LEGACY PATTERNS (CRITICAL ISSUE)
+    - Uses: broadcastTaskUpdate from unified-websocket BUT also getWebSocketServer and legacy require
+    - Pattern: Mix of unified utilities and direct legacy WebSocket access
+    - Status: NON-COMPLIANT - Contains legacy WebSocket patterns alongside unified approach
+
+19. **server/routes/risk-score-configuration.ts** - ⚠️ DYNAMIC IMPORT PATTERNS (REVIEW NEEDED)
+    - Uses: Dynamic imports of websocket routes for broadcasting
+    - Pattern: Runtime WebSocket route imports
+    - Status: REQUIRES REVIEW - May cause circular dependencies
+
+20. **server/routes/tasks.ts** - ✅ MIXED INTEGRATION (PARTIALLY COMPLIANT)
+    - Uses: broadcastTaskUpdate from unified-websocket AND WebSocketService.broadcast
+    - Pattern: Mix of unified utilities and direct service calls
+    - Status: Compliant with current architecture
+
+21. **server/routes/task-dependencies.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+22. **server/routes/task-fix.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTaskUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
+
+23. **server/routes/tutorial.ts** - ✅ UNIFIED INTEGRATION
+    - Uses: broadcastTutorialUpdate from unified-websocket
+    - Pattern: Proper service-level integration
+    - Status: Compliant with architecture
 
 ## Remaining Investigation Areas
 
