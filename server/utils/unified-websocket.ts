@@ -79,6 +79,7 @@ interface PongMessage extends WebSocketMessage {
 // Task update message
 interface TaskUpdateMessage extends WebSocketMessage {
   type: 'task_updated';
+  id: number;
   taskId: number;
   message?: string;
   progress?: number;
@@ -373,8 +374,8 @@ export function getWebSocketServer(): WebSocketServer | null {
 export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
   broadcast<TaskUpdateMessage>('task_updated', payload);
   
-  // Extract task ID from multiple possible locations for backward compatibility
-  const taskId = payload.taskId || payload.id || (payload as any).taskId;
+  // Extract task ID from multiple possible locations for backward compatibility  
+  const taskId = payload.taskId || payload.id;
   
   // Also broadcast with the legacy type for backward compatibility
   if (taskId) {
