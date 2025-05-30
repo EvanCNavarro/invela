@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import { WebSocketStatus } from "@/components/websocket-status";
-import { WebSocketDemo } from "@/components/websocket-demo";
+
 import { 
   Card, 
   CardContent, 
@@ -70,7 +70,20 @@ export function WebSocketPlayground() {
         </TabsList>
         
         <TabsContent value="demo" className="space-y-4">
-          <WebSocketDemo />
+          <Card>
+            <CardHeader>
+              <CardTitle>WebSocket Demo</CardTitle>
+              <CardDescription>
+                Demo functionality has been consolidated into the unified WebSocket system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                The WebSocket demo has been removed as part of the unified WebSocket migration. 
+                All real-time features now use the single, efficient unified connection.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="docs" className="space-y-4">

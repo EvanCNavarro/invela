@@ -404,12 +404,7 @@ function Router(): JSX.Element {
           <DiagnosticPage />
         </Route>
 
-        {/* WebSocket Demo Page */}
-        <Route path="/websocket-demo">
-          <ProtectedLayout>
-            <WebSocketDemoPage />
-          </ProtectedLayout>
-        </Route>
+
         
         {/* Removed test route */}
         
