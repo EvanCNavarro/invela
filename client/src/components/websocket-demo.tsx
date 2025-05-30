@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useWebSocketContext } from "@/providers/websocket-provider";
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 import { WebSocketStatus } from "@/components/websocket-status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export function WebSocketDemo() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { status, isConnected, send, subscribe, unsubscribe } = useWebSocketContext();
+  const { isConnected, send, subscribe } = useUnifiedWebSocket();
 
   useEffect(() => {
     // Function to handle incoming messages
@@ -51,11 +51,11 @@ export function WebSocketDemo() {
       unsubscribers.forEach(unsub => unsub());
       genericUnsubscriber();
     };
-  }, [subscribe, unsubscribe]);
+  }, [subscribe]);
 
   // Handle connection status changes
   useEffect(() => {
-    if (status === "connected") {
+    if (isConnected) {
       // Add connection status message
       const connectionMessage: Message = {
         id: `conn-${Date.now()}`,
@@ -65,18 +65,18 @@ export function WebSocketDemo() {
         direction: "incoming"
       };
       setMessages(prev => [...prev, connectionMessage]);
-    } else if (status === "disconnected" || status === "error") {
+    } else {
       // Add disconnection status message
       const disconnectionMessage: Message = {
         id: `disconn-${Date.now()}`,
         type: "system",
-        content: `Disconnected from WebSocket server. Status: ${status}`,
+        content: "Disconnected from WebSocket server",
         timestamp: new Date().toISOString(),
         direction: "incoming"
       };
       setMessages(prev => [...prev, disconnectionMessage]);
     }
-  }, [status]);
+  }, [isConnected]);
 
   // Send a message
   const sendMessage = () => {
