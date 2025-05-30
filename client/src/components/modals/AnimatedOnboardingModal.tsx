@@ -18,6 +18,31 @@ const ANIMATION_TIMING = {
   IMAGE_FADE: 150, // ms - image loading transition
 } as const;
 
+// Type definitions for better type safety
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  onboarding_user_completed: boolean;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  onboarding_company_completed: boolean;
+}
+
+interface CompanyInfo {
+  size: string;
+  revenue: string;
+}
+
+interface TeamMember {
+  fullName: string;
+  email: string;
+  role: string;
+}
+
 import {
   Card,
   CardContent,
@@ -381,19 +406,28 @@ const StepLayout: React.FC<{
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  // Preload image
+  // Preload image with optimized loading strategy
   useEffect(() => {
     if (!imgSrc) {
+      setImageLoaded(true); // No image to load
       return;
     }
     
+    setImageLoaded(false); // Reset loading state
     const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.src = imgSrc;
     
-    // Log when image is loaded for debugging
-    console.log(`[AnimatedOnboardingModal] Image loaded for step: ${title}`, { src: imgSrc });
-  }, [imgSrc, title]);
+    img.onload = () => {
+      // Add slight delay for smooth transition
+      setTimeout(() => setImageLoaded(true), ANIMATION_TIMING.IMAGE_FADE);
+    };
+    
+    img.onerror = () => {
+      console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
+      setImageLoaded(true); // Show content even if image fails
+    };
+    
+    img.src = imgSrc;
+  }, [imgSrc]);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
@@ -475,8 +509,8 @@ export function AnimatedOnboardingModal({
 }: {
   isOpen: boolean,
   setShowModal: (show: boolean) => void,
-  user: any | null,
-  currentCompany: any | null,
+  user: User | null,
+  currentCompany: Company | null,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   
@@ -560,7 +594,18 @@ export function AnimatedOnboardingModal({
         
       case 2: // Tasks - always can proceed
       case 3: // Documents - always can proceed
-      case 4: // Team Members - always can proceed (can skip inviting team)
+        return true;
+        
+      case 4: // Team Members - validate partial entries
+        // Can proceed if no team members entered, OR if all entries are complete
+        const hasPartialEntries = teamMembers.some(member => {
+          const hasName = member.fullName && member.fullName.trim() !== '';
+          const hasEmail = member.email && member.email.trim() !== '';
+          // Partial entry = has one field but not both
+          return (hasName && !hasEmail) || (!hasName && hasEmail);
+        });
+        return !hasPartialEntries;
+        
       case 5: // Review - always can proceed
       case 6: // Complete - always can proceed
         return true;
@@ -698,6 +743,8 @@ export function AnimatedOnboardingModal({
         
         const inviteErrors: string[] = [];
         
+        let successfulInvites = 0;
+        
         for (const member of validMembers) {
           try {
             await inviteTeamMember(currentCompany.id, {
@@ -709,6 +756,7 @@ export function AnimatedOnboardingModal({
               email: member.email, 
               role: member.role 
             });
+            successfulInvites++;
           } catch (error) {
             logDebug('Failed to invite team member', { 
               member: member.email,
@@ -717,6 +765,15 @@ export function AnimatedOnboardingModal({
             inviteErrors.push(`Failed to invite ${member.email}. Please try again.`);
             hasErrors = true;
           }
+        }
+        
+        // Show success toast for successful invitations
+        if (successfulInvites > 0) {
+          toastFn({
+            title: "Team invitations sent",
+            description: `Successfully sent ${successfulInvites} team member invitation${successfulInvites > 1 ? 's' : ''}.`,
+            variant: "default"
+          });
         }
         
         if (inviteErrors.length > 0) {
@@ -1209,13 +1266,13 @@ export function AnimatedOnboardingModal({
                   <div className="text-xs text-gray-500 mt-1">Basic information about your business operations and structure</div>
                 </div>
                 
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">S&P KY3P Security Assessment</div>
+                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-primary">S&P KY3P Security Assessment</div>
                   <div className="text-xs text-gray-500 mt-1">Industry-standard security questionnaire</div>
                 </div>
                 
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">Open Banking Survey</div>
+                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <div className="font-medium text-primary">Open Banking Survey</div>
                   <div className="text-xs text-gray-500 mt-1">Data access and sharing practices assessment</div>
                 </div>
               </div>
