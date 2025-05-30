@@ -335,9 +335,9 @@ export const FileVault: React.FC = () => {
       if (data.companyId && data.companyId === user.company_id) {
         console.log('[FileVault Debug] Refreshing file list for company:', data.companyId);
         
-        // Invalidate and refetch the files query
+        // Invalidate all file queries for this company regardless of pagination
         queryClient.invalidateQueries({ 
-          queryKey: ['/api/files', { company_id: user.company_id, page: currentPage, pageSize: itemsPerPage }] 
+          queryKey: ['/api/files']
         });
       }
     };
