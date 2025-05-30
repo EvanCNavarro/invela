@@ -113,9 +113,9 @@
 - Authentication pages
 
 ## Summary of Issues Found
-1. **1 CRITICAL**: Broken import causing runtime errors
+1. **3 CRITICAL**: Broken imports causing runtime errors
 2. **1 MEDIUM**: Legacy WebSocket pattern needing migration
-3. **10 COMPLIANT**: Proper unified WebSocket usage
+3. **13 COMPLIANT**: Proper unified WebSocket usage
 4. **Multiple**: Clean implementations with no WebSocket usage
 
 ## Next Steps
