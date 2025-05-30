@@ -54,8 +54,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 
-// Real-time communication
-import { WebSocketProvider } from "@/providers/websocket-provider";
+// Real-time communication - unified approach
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 // Service initialization and management
 import { initializeServices } from "./services/unified-service-registration";
@@ -547,7 +547,13 @@ export default function App(): JSX.Element {
     phaseStartup.registerPhaseCallback('communication', async () => {
       logger.info('Communication phase initializing');
       setStartupPhase('communication');
-      // WebSocket initialization happens in provider
+      // Initialize unified WebSocket service
+      try {
+        await unifiedWebSocketService.connect();
+        logger.info('Unified WebSocket service connected successfully');
+      } catch (error) {
+        logger.error('Failed to connect unified WebSocket service:', error);
+      }
     });
     
     // Phase 5: Ready - Application ready for user interaction
@@ -599,10 +605,8 @@ export default function App(): JSX.Element {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <WebSocketProvider>
-            <Router />
-            <Toaster />
-          </WebSocketProvider>
+          <Router />
+          <Toaster />
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>
