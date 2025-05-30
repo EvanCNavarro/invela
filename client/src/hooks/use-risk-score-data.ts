@@ -15,7 +15,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import riskScoreLogger from '@/lib/risk-score-logger';
-import wsManager from '../lib/web-socket-manager';
+// Legacy WebSocket manager import removed - now using unified WebSocket provider
 import { 
   RiskDimension, 
   RiskThresholds,
