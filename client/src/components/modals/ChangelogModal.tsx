@@ -10,13 +10,33 @@
  * - Clean, modern modal interface
  * - Chronological changelog entries
  * - Badge-based categorization
+ * - Audience-based filtering (Product/Developer/All)
  * - Smooth animations and transitions
  * - Responsive design
  * - Keyboard navigation support
  * 
+ * Usage:
+ * ```tsx
+ * import { ChangelogModal } from '@/components/modals/ChangelogModal';
+ * 
+ * function MyComponent() {
+ *   const [isOpen, setIsOpen] = useState(false);
+ *   
+ *   return (
+ *     <ChangelogModal 
+ *       isOpen={isOpen} 
+ *       onClose={() => setIsOpen(false)} 
+ *     />
+ *   );
+ * }
+ * ```
+ * 
+ * See docs/features/CHANGELOG_MODAL.md for detailed implementation guide.
+ * 
  * @module ChangelogModal
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-05-23
+ * @updated 2025-05-30 - Added audience filtering system
  */
 
 import { useState, useEffect, useMemo } from "react";

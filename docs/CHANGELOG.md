@@ -4,6 +4,21 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.1 - 2025-05-30
+
+#### 🎛️ Changelog Modal Enhancement
+- **Audience-Based Filtering System**
+  - Added Product/Developer/All filter controls to changelog modal
+  - Implemented audience categorization for better content organization
+  - Created light blue active state styling for filter buttons
+  - Enhanced user experience with filtered view of relevant updates
+
+- **Technical Implementation**
+  - Added ChangelogFilter and ChangelogAudience TypeScript interfaces
+  - Implemented filteredEntries computation with useMemo optimization
+  - Created responsive filter UI with smooth transitions
+  - Updated entry count display to reflect filtered results
+
 ### Version 1.9.0 - 2025-05-30
 
 #### 📚 Documentation Overhaul
