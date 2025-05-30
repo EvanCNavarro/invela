@@ -200,14 +200,14 @@ export function startPeriodicTaskReconciliation(): void {
     status: 'active'
   });
   
-  // Start reconciliation interval
-  reconciliationInterval = setInterval(reconcileBatch, RECONCILIATION_INTERVAL);
+  // DISABLED: Start reconciliation interval for testing real-time WebSocket events
+  // reconciliationInterval = setInterval(reconcileBatch, RECONCILIATION_INTERVAL);
   
   // Start cache cleanup interval
   cacheCleanupInterval = setInterval(cleanupCache, CACHE_CLEANUP_INTERVAL);
   
-  // Run initial reconciliation after a short delay
-  setTimeout(reconcileBatch, 30 * 1000); // 30 seconds after server startup
+  // DISABLED: Run initial reconciliation after a short delay
+  // setTimeout(reconcileBatch, 30 * 1000); // 30 seconds after server startup
 }
 
 /**
