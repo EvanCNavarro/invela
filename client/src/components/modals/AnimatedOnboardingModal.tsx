@@ -313,7 +313,7 @@ const HeaderChip: React.FC = () => (
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex-1 bg-primary/5 relative border-l border-slate-100 min-w-0">
+  <div className="flex-1 bg-primary/5 relative border-l border-slate-100 min-w-0 min-h-[400px]">
     <div className="absolute inset-0 flex items-center justify-center p-6">
       {children}
     </div>
