@@ -2,9 +2,9 @@
 
 ## Investigation Status
 - **Phase**: 2 - Comprehensive File Analysis  
-- **Files Checked**: 1000+/2147 total files (expanded scope)
-- **Files Remaining**: 1147
-- **WebSocket Findings**: 50+ proper unified implementations, 2 legacy files requiring migration
+- **Files Checked**: 1040+/2147 total files (expanded scope)
+- **Files Remaining**: 1107
+- **WebSocket Findings**: 53+ proper unified implementations, 2 legacy files requiring migration
 - **Method**: Line-by-line examination of ALL project files
 
 ## KEY FINDINGS SUMMARY
@@ -21,6 +21,9 @@
 9. **client/src/services/form-submission-service.ts** - WebSocket form submission service
 10. **client/src/utils/test-form-submission.ts** - WebSocket testing utilities
 11. **client/src/utils/webSocketLogger.ts** - WebSocket logging infrastructure
+12. **client/src/components/modals/TaskDetailsModal.tsx** - Uses useUnifiedWebSocket hook correctly
+13. **client/src/components/documents/DocumentUploadStep.tsx** - Uses useUnifiedWebSocket hook correctly
+14. **client/src/services/ping-unified.ts** - Uses unifiedWebSocketService correctly
 
 ### 🔧 CORE WEBSOCKET INFRASTRUCTURE:
 - **client/src/services/websocket-unified.ts** (262 lines) - Core client-side unified WebSocket service
