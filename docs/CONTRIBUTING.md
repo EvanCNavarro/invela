@@ -1,8 +1,8 @@
-# Coding Standards & Best Practices Guide
+# Contributing Guide
 
-**Project:** Enterprise Risk Assessment Platform  
+**Project:** Invela Enterprise Risk Assessment Platform  
 **Last Updated:** May 30, 2025  
-**Purpose:** Unified coding standards for consistent, maintainable, and scalable code across the entire application
+**Purpose:** Development guidelines, coding standards, and best practices for contributors
 
 ---
 
