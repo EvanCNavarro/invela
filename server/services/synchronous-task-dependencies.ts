@@ -10,7 +10,7 @@ import { tasks } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { Logger } from "./logger";
 import { withRetry } from "../utils/db-retry";
-import { broadcastTaskUpdate } from "../services/websocket";
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 
 const logger = new Logger("TaskDependencies");
 
