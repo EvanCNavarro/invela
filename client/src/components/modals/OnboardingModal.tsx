@@ -968,7 +968,6 @@ export function OnboardingModal() {
                   )}
                 </div>
               </div>
-            </div>
           </StepLayout>
         );
       
@@ -1012,7 +1011,6 @@ export function OnboardingModal() {
                   </div>
                 </div>
               </div>
-            </div>
           </StepLayout>
         );
       
