@@ -1011,6 +1011,7 @@ export function OnboardingModal() {
                   </div>
                 </div>
               </div>
+            </div>
           </StepLayout>
         );
       
