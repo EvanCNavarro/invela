@@ -1,0 +1,26 @@
+You're right to keep us anchored to the original goal. Here's the Updated Phased Implementation Plan that integrates the multi-layer verification strategy with our WebSocket unification objective:
+
+Revised Implementation Plan
+Phase 1: Safe Verification & Critical Assessment (Investigation + Risk Mitigation)
+Static Build Analysis - Run webpack/vite analyzer to identify files actually bundled in production
+Runtime Dependency Mapping - Check server logs and browser DevTools for actively loaded modules
+Critical Path Identification - Map files essential to: authentication, task management, real-time updates
+Quarantine Strategy Setup - Create backup branch and quarantine folder for suspected dead files
+Phase 2: Verified Critical Path Migration (High Impact + Verified Safe)
+Main.tsx cleanup - Remove dual initialization (already partially done)
+Compilation error resolution - Fix broken imports causing TypeScript hang
+Core component migration - Update WebSocket playground and task center (verified active files only)
+Server-side redundancy cleanup - Remove duplicate broadcast functions after verification
+Phase 3: Systematic Dead Code Removal (Medium Impact + Gradual)
+Move suspected dead files to quarantine - Based on Phase 1 analysis
+Test application thoroughly - Run all major flows for 24-48 hours
+Consolidate remaining ping/pong implementations (53 → 1) - Only after verification
+Update import statements - Fix references to moved/removed files
+Phase 4: Final Migration & Validation (Quality Assurance)
+Migrate verified active files to unified approach
+Connection count verification - Achieve true 1 client per session
+Coding standards compliance - Apply docs/CONTRIBUTING.md standards
+Documentation updates - Update architecture docs
+Key Change: We now verify before touching anything and use quarantine instead of deletion until we're 100% certain files are truly dead code.
+
+Should I start with Phase 1 - running the static build analysis to see which of the 147 WebSocket files are actually included in the production bundle?
