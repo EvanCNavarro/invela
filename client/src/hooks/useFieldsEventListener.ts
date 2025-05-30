@@ -64,8 +64,7 @@ export function useFieldsEventListener({
   const queryClient = useQueryClient();
   const [lastEvent, setLastEvent] = useState<FieldsEvent | null>(null);
   
-  // Ref to keep track of processed events to avoid duplicates
-  const processedEvents = useRef<Set<string>>(new Set());
+
   
   // Set up listener tracking using shared utility
   useEffect(() => {
