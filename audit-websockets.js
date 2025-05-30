@@ -7,8 +7,8 @@
  * to identify redundancy, dependencies, and consolidation opportunities.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Audit results structure
 const auditResults = {
