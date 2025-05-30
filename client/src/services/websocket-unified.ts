@@ -216,12 +216,13 @@ class UnifiedWebSocketService {
   }
   
   private startHeartbeat(): void {
-    this.heartbeatInterval = setInterval(() => {
-      this.send('ping', {
-        timestamp: new Date().toISOString(),
-        source: 'unified-websocket-service'
-      });
-    }, 30000);
+    // DISABLED: Heartbeat for testing real-time WebSocket events without polling
+    // this.heartbeatInterval = setInterval(() => {
+    //   this.send('ping', {
+    //     timestamp: new Date().toISOString(),
+    //     source: 'unified-websocket-service'
+    //   });
+    // }, 30000);
   }
   
   private cleanup(): void {
