@@ -322,16 +322,19 @@ const StepTransition: React.FC<StepTransitionProps> = ({
   // Different animations based on direction
   const variants = {
     enter: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? 200 : -200,
+      x: direction === 'next' ? 100 : -100,
       opacity: 0,
+      scale: 0.95,
     }),
     center: {
       x: 0,
       opacity: 1,
+      scale: 1,
     },
     exit: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? -200 : 200,
+      x: direction === 'next' ? -100 : 100,
       opacity: 0,
+      scale: 0.95,
     }),
   };
   
@@ -392,12 +395,12 @@ const StepImage: React.FC<{
   alt = 'Onboarding step image',
   isLoaded
 }) => (
-  <div className="w-[400px] h-[350px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
+  <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
     {isLoaded ? (
       <img 
         src={src || ''} 
         alt={alt || 'Onboarding step image'}
-        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60 transition-all duration-300 hover:shadow-xl"
+        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">
@@ -592,6 +595,9 @@ export function AnimatedOnboardingModal({
     companyDetails?: string;
     teamInvites?: string[];
   }>({});
+
+  // Track invitation success for validation styling
+  const [invitationStatus, setInvitationStatus] = useState<{[key: string]: 'pending' | 'success' | 'error'}>({});
   
   // Reset state when modal is opened
   useEffect(() => {
