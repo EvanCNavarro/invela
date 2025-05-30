@@ -54,15 +54,16 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     
     console.log(`[KY3P] Task ${taskId} progress updated: ${progressPercent}% (${completed}/${total} fields complete)`);
     
-    // Broadcast the update using the websocket
+    // Broadcast the update using the unified websocket system
     try {
-      const { broadcastTaskUpdate } = await import('../services/websocket-enhanced.service');
+      const { broadcastTaskUpdate } = await import('../utils/unified-websocket');
       const status = progressPercent === 0 ? 'not_started' : 
                     progressPercent === 100 ? 'ready_for_submission' : 
                     'in_progress';
         
       broadcastTaskUpdate({
         id: taskId,
+        taskId: taskId, // Include both formats for compatibility
         status,
         progress: progressPercent,
         metadata: {
