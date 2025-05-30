@@ -100,7 +100,7 @@ import DiagnosticPage from "@/pages/diagnostic-page";
 import NotFound from "@/pages/not-found";
 // Development and testing utility pages
 import TaskFix from "@/pages/TaskFix";
-import WebSocketDemoPage from "@/pages/websocket-demo-page";
+
 import { ComponentLibrary } from "@/pages/component-library";
 
 // Route protection utilities
