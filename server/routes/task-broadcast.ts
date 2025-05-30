@@ -6,7 +6,7 @@
  */
 
 import express, { Request, Response } from 'express';
-import { getWebSocketServer } from '../utils/websocket';
+import { getWebSocketServer } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 import { WebSocket } from 'ws';
 

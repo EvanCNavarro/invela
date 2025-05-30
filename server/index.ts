@@ -45,7 +45,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
-import { setupWebSocketServer } from "./websocket-setup";
+import { initializeWebSocketServer } from "./utils/unified-websocket";
 // Removed Storybook proxy - using custom component library
 
 // ========================================
@@ -271,7 +271,7 @@ app.use((req, res, next) => {
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
 // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
-const wssInstance = setupWebSocketServer(server);
+const wssInstance = initializeWebSocketServer(server);
 logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
 // Ensure old-style handlers can still access the WebSocket server
