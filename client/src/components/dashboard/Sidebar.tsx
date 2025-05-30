@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
-// Legacy WebSocket imports removed - now using unified provider
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -50,6 +50,7 @@ export function Sidebar({
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
   const queryClient = useQueryClient();
+  const { subscribe, unsubscribe } = useUnifiedWebSocket();
   
   // Get current company data
   const { data: company } = useQuery<{ id: number; name: string; available_tabs?: string[] }>({

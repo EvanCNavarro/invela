@@ -250,12 +250,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <WelcomeModal />
       
-      {/* Bridge WebSocket events to DOM events */}
-        'file_vault_update',
-        'form_submission',
-        'company_tabs_update'
-        // Removed 'company_tabs_updated' as it's not used by any broadcast
-      ]} />
+
     </div>
   );
 }
