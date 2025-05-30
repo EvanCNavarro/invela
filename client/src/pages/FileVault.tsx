@@ -59,30 +59,30 @@ export const FileVault: React.FC = () => {
       totalPages: number
     }
   }>({
-    queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }],
+    queryKey: ['/api/files', user?.company_id],
     enabled: !!user?.company_id,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 300000, // Keep in cache for 5 minutes (was cacheTime in v4)
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
-    refetchOnMount: false, // Only refetch if data is stale
+    staleTime: 30000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async ({ queryKey }) => {
-      // Extract params from query key for consistency
-      const params = queryKey[1] as { company_id?: number, page: number, pageSize: number };
+      // Use current pagination state instead of query key params
+      const company_id = queryKey[1] as number;
       
       console.log('[FileVault Debug] Starting API request:', {
         userId: user?.id,
-        companyId: params.company_id,
-        page: params.page,
-        pageSize: params.pageSize,
+        companyId: company_id,
+        page: currentPage,
+        pageSize: itemsPerPage,
         timestamp: new Date().toISOString()
       });
 
       const url = new URL('/api/files', window.location.origin);
-      if (params.company_id) {
-        url.searchParams.append('company_id', params.company_id.toString());
+      if (company_id) {
+        url.searchParams.append('company_id', company_id.toString());
       }
-      url.searchParams.append('page', params.page.toString());
-      url.searchParams.append('pageSize', params.pageSize.toString());
+      url.searchParams.append('page', currentPage.toString());
+      url.searchParams.append('pageSize', itemsPerPage.toString());
       
       const response = await fetch(url);
 
@@ -308,16 +308,12 @@ export const FileVault: React.FC = () => {
     }
   }, [filteredFiles.length, itemsPerPage, searchQuery, statusFilter, uploadingFiles.length, serverPagination]);
 
-  // Refetch when page changes to get new data from server
+  // Refetch when page changes - use manual refetch instead of query invalidation
   useEffect(() => {
-    // Only refetch from server if we're using server-side pagination
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      // Invalidate the query to trigger a refetch with the new page
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
-      });
+      refetch();
     }
-  }, [currentPage, queryClient, searchQuery, statusFilter, uploadingFiles.length, user?.company_id, itemsPerPage]);
+  }, [currentPage, refetch, searchQuery, statusFilter, uploadingFiles.length]);
   
   // Listen for WebSocket file_vault_update events to refresh file list automatically
   useEffect(() => {
@@ -444,9 +440,9 @@ export const FileVault: React.FC = () => {
       // Update local state
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
       
-      // Invalidate with the complete query key structure to match our fetch
+      // Invalidate with the stable query key structure
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+        queryKey: ['/api/files', user?.company_id] 
       });
 
       // First explicitly dismiss the uploading toast
