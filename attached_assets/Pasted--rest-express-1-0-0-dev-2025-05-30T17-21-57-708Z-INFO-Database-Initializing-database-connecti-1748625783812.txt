@@ -1,0 +1,241 @@
+> rest-express@1.0.0 dev
+[2025-05-30T17:21:57.708Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-30T17:21:57.711Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":103,"timestamp":"2025-05-30T17:21:57.711Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-30T17:21:57.841Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-30T17:21:57.949Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-30T17:21:57.949Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"gvugnd","timestamp":"2025-05-30T17:21:57.949Z"}
+[2025-05-30T17:21:57.950Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-30T17:21:57.950Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-30T17:21:57.950Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-30T17:21:57.950Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-30T17:21:57.950Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-30T17:21:57.950Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-30T17:21:57.950Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-30T17:21:57.950Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-30T17:21:57.950Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-30T17:21:57.951Z] [INFO] [App] Setting up Vite development server 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (production mode) 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ENV] Environment=production 
+[2025-05-30T17:21:57.952Z] [INFO] [App] [ENV] Configuration: Production mode 
+[2025-05-30T17:21:57.964Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-30T17:21:57.964Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-30T17:21:57.992Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-30T17:21:57.992Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-30T17:21:57.993Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-30T17:21:57.993Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-30T17:21:57.994Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-30T17:21:58.960Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-30T17:21:59.025Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-30T17:21:59.026Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-30T17:21:59.026Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-30T17:21:59.026Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-30T17:22:01.144Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:22:02.551Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:22:02.565Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-30T17:22:02.620Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748625722620-mr885lb","clients":1}
+[2025-05-30T17:22:03.035Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1748625722620-mr885lb","code":1001,"reason":"","remainingClients":0}
+[2025-05-30T17:22:04.025Z] [INFO] [App] Running background health checks... 
+[2025-05-30T17:22:04.026Z] [StartupChecks] Running application startup health checks... 
+[2025-05-30T17:22:04.026Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-30T17:22:04.026Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-30T17:22:04.211Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-30T17:22:04.240Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-30T17:22:04.273Z] [DBConnectionService] Database connection check successful 
+[2025-05-30T17:22:04.273Z] [StartupChecks] Database health check passed 
+[2025-05-30T17:22:04.273Z] [StartupChecks] All startup health checks passed! 
+[2025-05-30T17:22:04.273Z] [INFO] [App] All background health checks passed successfully. 
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[2025-05-30T17:22:11.498Z] [INFO] [App] [TabTutorials] Status request for tab "file-vault" from authenticated user ID: 536 
+[2025-05-30T17:22:11.498Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-05-30T17:22:11.498Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-05-30T17:22:11.498Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: file-vault (raw: file-vault), user: 536 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-30T17:22:11.501Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":755,"userId":536}
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-30T17:22:11.511Z'
+}
+[2025-05-30T17:22:11.537Z] [INFO] [App] GET /api/auth/user 200 in 54ms 
+[2025-05-30T17:22:11.551Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748625731551-afnoash","clients":1}
+[2025-05-30T17:22:11.555Z] [INFO] [App] Found completed KYB tasks, checking security tasks to unlock {"companyId":755,"kybTaskCount":1}
+[2025-05-30T17:22:11.566Z] [INFO] [App] GET /api/companies/current 304 in 110ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... 
+[2025-05-30T17:22:11.589Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for file-vault for user 536: completed=false, step=0 
+[2025-05-30T17:22:11.592Z] [INFO] [App] No security tasks found for company {"companyId":755}
+[Tasks] Automatically unlocking all tasks for company { userId: 536, companyId: 755, requestedBy: 'automatic_task_unlock' }
+[2025-05-30T17:22:11.594Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":755}
+[TaskDependencies] Skipping task 1102 with submission indicators {
+  hasSubmissionDate: true,
+  hasSubmittedFlag: true,
+  hasFileId: true,
+  status: 'submitted',
+  progress: 100,
+  isReadyForSubmission: false
+}
+[2025-05-30T17:22:11.622Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":755,"count":2,"taskIds":[1103,1104],"taskTypes":["ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1103]}
+[2025-05-30T17:22:11.622Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1103,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-30T17:22:11.622Z"}
+[2025-05-30T17:22:11.623Z] [INFO] [App] GET /api/user-tab-tutorials/file-vault/status 200 in 126ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-30T17:... 
+[UnifiedProgress] Starting progress update for task 1103 (ky3p) {
+  taskId: 1103,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748625731623-894',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1103 (ky3p)
+[KY3P Progress] Calculated progress for task 1103: {
+  taskId: 1103,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-30T17:22:11.782Z'
+}
+[UnifiedProgressCalc] Task 1103 (ky3p) progress: 0/120 = 0%
+[2025-05-30T17:22:11.813Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:22:11.813Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:22:11.814Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1103,"messageId":"msg_1748625731813_ygikyur0"}
+[2025-05-30T17:22:11.814Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1103 {"progress":0,"status":"not_started","messageId":"msg_1748625731813_ygikyur0"}
+[2025-05-30T17:22:11.814Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1103,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1104 (open_banking) {
+  taskId: 1104,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748625731814-632',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1104 (open_banking)
+[UnifiedProgressCalc] Task 1104 (open_banking) progress: 0/44 = 0%
+[2025-05-30T17:22:11.957Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:22:11.958Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":false}
+[2025-05-30T17:22:11.958Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1104,"messageId":"msg_1748625731957_ciyzlxnv"}
+[2025-05-30T17:22:11.958Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1104 {"progress":0,"status":"not_started","messageId":"msg_1748625731957_ciyzlxnv"}
+[2025-05-30T17:22:11.958Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":755,"taskId":1104,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-30T17:22:11.958Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":755,"count":2}
+[Tasks] Successfully unlocked all tasks for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-30T17:22:12.054Z] [INFO] [App] GET /api/tasks 200 in 554ms :: [{"id":1102,"title":"1. KYB Form: Meridian Research United","description":nul... 
+[2025-05-30T17:22:29.058Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":5,"taskIds":[1103,1098,1099,1100,1104]}
+[Task Progress] Calculated progress for task 1103 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1098 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1099 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1100 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1104 (open_banking): 0/44 = 0%
+[2025-05-30T17:22:41.669Z] [INFO] [WebSocket] Received message from client client-1748625731551-afnoash {"module":"WebSocket","type":"ping","data":{"timestamp":"2025-05-30T17:22:41.574Z","source":"unified-websocket-service"},"timestamp":"2025-05-30T17:22:41.574Z"}
+[2025-05-30T17:22:41.791Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... [sampled: request 11] 
+[2025-05-30T17:22:49.969Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 536 
+[2025-05-30T17:22:49.969Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-05-30T17:22:49.969Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-05-30T17:22:49.969Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: file-vault (raw: file-vault), user: 536 
+[2025-05-30T17:22:50.029Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial file-vault for user 536 
+[2025-05-30T17:22:50.061Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 92ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-05-30T17:22:50.247Z] [INFO] [App] [TabTutorials] Status request for tab "file-vault" from authenticated user ID: 536 
+[2025-05-30T17:22:50.247Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-05-30T17:22:50.247Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-05-30T17:22:50.247Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: file-vault (raw: file-vault), user: 536 
+[2025-05-30T17:22:50.322Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for file-vault for user 536: completed=false, step=0 
+[2025-05-30T17:22:50.360Z] [INFO] [App] GET /api/user-tab-tutorials/file-vault/status 200 in 112ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-30T17:... 
+[Files] Processing file upload request
+[Files] File details: {
+  originalname: '1_SOC_2_Questions.csv',
+  mimetype: 'text/csv',
+  size: 4139,
+  filename: '20250530172253.csv'
+}
+[Files] Document category detection: {
+  filename: '1_SOC_2_Questions.csv',
+  lowerFilename: '1_soc_2_questions.csv',
+  detectedCategory: 'other',
+  timestamp: '2025-05-30T17:22:53.111Z',
+  matches: {
+    isSoc2: false,
+    isIso27001: false,
+    isPentest: false,
+    isBusinessContinuity: false,
+    exactMatch: '1_soc_2_questions.csv'
+  }
+}
+[Files] Detected category: other
+[Files] Created file record: {
+  id: 1026,
+  name: '1_SOC_2_Questions.csv',
+  status: 'uploaded',
+  category: 'other'
+}
+[2025-05-30T17:22:53.152Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast document_count_update to 1 clients (0 errors) { messageId: 'msg_1748625773152_c6gdftm5d' }
+[2025-05-30T17:22:53.153Z] [INFO] [App] Successfully broadcasted document_count_update message 
+[WebSocket] Broadcast file_vault_update to 1 clients (0 errors) { messageId: 'msg_1748625773153_ueurcdty3' }
+[2025-05-30T17:22:53.153Z] [INFO] [App] Successfully broadcasted file_vault_update message 
+[Files] Broadcasted WebSocket notification for file vault update: {
+  companyId: 755,
+  fileId: 1026,
+  action: 'added',
+  timestamp: '2025-05-30T17:22:53.153Z'
+}
+[2025-05-30T17:22:53.188Z] [INFO] [App] POST /api/files 201 in 86ms :: {"id":1026,"name":"1_SOC_2_Questions.csv","size":4139,"type":"text/csv","path... 
