@@ -19,7 +19,7 @@ import {
   ANIMATION_VARIANTS, 
   ANIMATION_TRANSITIONS, 
   ANIMATION_DELAY 
-} from '@/lib/animation-constants';
+} from '../../lib/animation-constants';
 
 interface BaseAnimationProps {
   children: ReactNode;

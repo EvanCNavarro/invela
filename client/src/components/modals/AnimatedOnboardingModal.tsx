@@ -1294,10 +1294,13 @@ export function AnimatedOnboardingModal({
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, x: transitionDirection === 'next' ? 50 : -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: transitionDirection === 'next' ? -50 : 50 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.22, 1, 0.36, 1] 
+          }}
           className="w-full h-full"
         >
           {getCurrentStepContent()}
