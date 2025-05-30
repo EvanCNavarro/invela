@@ -25,7 +25,7 @@ import {
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { WebSocketServer, WebSocket } from 'ws';
-import * as WebSocketService from '../services/websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { broadcastMessage } from '../utils/websocketBroadcast';
 import { generateOpenBankingRiskScore, completeCompanyOnboarding } from '../services/openBankingRiskScore';
 import path from 'path';

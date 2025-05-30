@@ -9,7 +9,7 @@ import { db } from "@db";
 import { tasks } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
-import { getWebSocketServer } from "../services/websocket";
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 
 // Create router instance
 const router = Router();

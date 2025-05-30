@@ -10,7 +10,7 @@ import { eq, and } from 'drizzle-orm';
 import { db, pool } from '@db';
 import { ky3pResponses, tasks, TaskStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import { broadcastTaskUpdate } from '../services/websocket';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
 const router = Router();
 

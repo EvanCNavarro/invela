@@ -13,7 +13,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { FileCreationService } from './file-creation';
 import { TaskStatus } from '@db/schema';
 import { logger } from '../utils/logger';
-import * as WebSocketService from './websocket-service';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { normalizeTaskStatus, getSubmittedStatus } from '../utils/task-status';
 // Define this to make TypeScript happy with the validation_rules.options access

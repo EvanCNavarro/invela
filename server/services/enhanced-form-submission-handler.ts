@@ -109,7 +109,7 @@ export async function processSubmission(options: SubmissionOptions): Promise<{
 
     // Broadcast update via WebSocket
     if (broadcastUpdate) {
-      WebSocketService.broadcastTaskUpdate({
+      broadcastTaskUpdate({
         taskId,
         status: 'submitted',
         progress: 100,

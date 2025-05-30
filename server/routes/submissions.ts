@@ -3,7 +3,7 @@ import { db } from '@db';
 import { tasks, TaskStatus } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
-import * as WebSocketService from '../services/websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { logger } from '../utils/logger';
 
 const router = Router();

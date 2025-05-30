@@ -25,7 +25,7 @@ import {
   companies 
 } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
-import * as WebSocketService from '../services/websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import * as fileCreationService from '../services/fileCreation';
 import { logger } from '../utils/logger';
 

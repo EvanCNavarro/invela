@@ -11,7 +11,7 @@ import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { submitFormWithTransaction } from '../services/transactional-form-handler';
-import * as WebSocketService from '../services/websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { broadcastFormSubmission } from '../utils/unified-websocket';
 import { generateMissingFileForTask } from './fix-missing-file';
 
