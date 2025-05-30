@@ -22,7 +22,7 @@ import {
 } from '@db/schema';
 import { logger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth';
-import WebSocketService, { WebSocketMessage, MessageType } from '../services/websocket-service';
+import { broadcast } from '../utils/unified-websocket';
 import { WebSocketServer } from 'ws';
 
 /**
@@ -76,7 +76,7 @@ function normalizeTabName(inputTabName: string): string {
 
 // Create an instance of the WebSocket service
 // For broadcasts in this module, we don't need an actual WSS instance
-const webSocketService = new WebSocketService(null);
+// WebSocket service handled by unified system
 
 const router = Router();
 
