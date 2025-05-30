@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentStatus, UploadedFile } from './types';
-import { wsService } from '@/lib/websocket';
+// Legacy WebSocket service import removed
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 // Memoize handlers outside component to prevent recreation
