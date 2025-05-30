@@ -2,7 +2,7 @@
 
 ## Investigation Status
 - **Phase**: 2 - Components Analysis  
-- **Files Checked**: 75/200+
+- **Files Checked**: 85/200+
 - **Files Remaining**: 125+
 - **WebSocket Findings**: 103
 
@@ -92,6 +92,22 @@
    - Uses API endpoints for WebSocket operations
 2. **client/src/services/formSubmissionService.ts** ✓
    - Uses server API for WebSocket broadcasting
+
+### UNIFIED WEBSOCKET IMPLEMENTATION (COMPLIANT)
+1. **client/src/components/documents/DocumentUploadStep.tsx** ✓
+   - Uses: `useUnifiedWebSocket` hook properly
+   - Pattern: Subscribe/unsubscribe for upload progress events
+2. **client/src/components/tutorial/TutorialManager.tsx** ✓
+   - Uses: `useTutorialWebSocket` hook from unified service
+   - Pattern: Proper WebSocket updates for tutorial progress
+
+### DOCUMENTATION/COMMENTS ONLY (COMPLIANT)
+1. **client/src/components/forms/UniversalFormNew.tsx** ✓
+   - Contains: WebSocket-related comments for form submission
+   - Usage: Documentation only, no actual WebSocket implementation
+2. **client/src/components/tasks/TaskTable.tsx** ✓
+   - Contains: Comments about removed WebSocketTester
+   - Pattern: Clean legacy cleanup documentation
 
 ## Remaining Investigation Areas
 
