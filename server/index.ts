@@ -382,35 +382,37 @@ import { runStartupChecks } from './startup-checks';
 // Import production database setup for deployment readiness
 import { initializeProductionDatabase } from './deployment/database-setup';
 
-// Start the server with the standardized configuration and health checks
-server.listen(PORT, HOST, async () => {
+// Start the server with immediate port binding
+server.listen(PORT, HOST, () => {
   logger.info(`Server running on ${HOST}:${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
   
   // Log additional deployment information
   logDeploymentInfo(PORT, HOST);
   
-  // Start the periodic task reconciliation system directly
-  // Don't wait for health checks to avoid creating more rate limit issues
-  if (process.env.NODE_ENV !== 'test') {
-    logger.info('Starting periodic task reconciliation system...');
-    startPeriodicTaskReconciliation();
-    logger.info('Task reconciliation system initialized successfully');
-  }
-  
-  // Run startup health checks in the background but don't block application startup
-  setTimeout(async () => {
-    try {
-      logger.info('Running background health checks...');
-      const healthChecksPassed = await runStartupChecks();
-      
-      if (healthChecksPassed) {
-        logger.info('All background health checks passed successfully.');
-      } else {
-        logger.warn('Some background health checks failed. Application may encounter database errors.');
-      }
-    } catch (error) {
-      logger.error('Error running background health checks', error);
+  // Initialize background services after server is listening
+  setTimeout(() => {
+    // Start the periodic task reconciliation system
+    if (process.env.NODE_ENV !== 'test') {
+      logger.info('Starting periodic task reconciliation system...');
+      startPeriodicTaskReconciliation();
+      logger.info('Task reconciliation system initialized successfully');
     }
-  }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
+    
+    // Run startup health checks in the background
+    setTimeout(async () => {
+      try {
+        logger.info('Running background health checks...');
+        const healthChecksPassed = await runStartupChecks();
+        
+        if (healthChecksPassed) {
+          logger.info('All background health checks passed successfully.');
+        } else {
+          logger.warn('Some background health checks failed. Application may encounter database errors.');
+        }
+      } catch (error) {
+        logger.error('Error running background health checks', error);
+      }
+    }, 5000);
+  }, 1000);
 });
