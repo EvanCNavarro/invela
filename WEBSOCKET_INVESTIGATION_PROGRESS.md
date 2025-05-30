@@ -104,11 +104,94 @@
     - Status: REQUIRES INVESTIGATION - May need WebSocket for real-time risk monitoring
 
 **CURRENT PROGRESS UPDATE:**
-- **Files Checked**: 425/797 total files (53% complete)
+- **Files Checked**: 200/797 total files (25% complete)
 - **WebSocket Findings**: 150+ components analyzed with patterns found
 - **Real-time Features Requiring Investigation**: 18 components with real-time mentions but unclear WebSocket usage
 - **Confirmed WebSocket Implementations**: 25+ components using unified WebSocket properly
 - **Broken/Missing Files**: 8 total critical files with import issues or missing implementations
+
+## ADDITIONAL FILE ANALYSIS (Files 176-200)
+
+127. **client/src/lib/direct-risk-update.ts** - ✅ WEBSOCKET INTEGRATION
+     - Lines 113-118: "Send a test WebSocket broadcast message" with testWebSocketBroadcast function
+     - Lines 125-164: Complete WebSocket broadcast testing utility with error handling
+     - Pattern: Risk update utility with direct WebSocket broadcasting capability
+     - Status: COMPLIANT - Uses unified WebSocket broadcasting for testing
+
+128. **client/src/lib/types.ts** - ✅ WEBSOCKET TYPE DEFINITIONS (CONFIRMED)
+     - Lines 11-14: "WebSocket message type definitions, Real-time event messaging interfaces"
+     - Lines 29-50: Complete WebSocketMessage interface with type, payload, data, timestamp
+     - Lines 52-98: FileVaultUpdateMessage and FormSubmissionMessage interfaces
+     - Pattern: Core type definitions for WebSocket messaging system
+     - Status: COMPLIANT - Central type definitions for unified WebSocket
+
+129. **client/src/lib/user-context.ts** - ⚠️ CONTEXT MANAGEMENT
+     - Lines 5-8: "Centralized user context management for the enterprise risk assessment platform"
+     - Pattern: User context manager for session state management
+     - Status: REQUIRES INVESTIGATION - May need WebSocket integration for real-time context updates
+
+130. **client/src/lib/tutorial-logger.ts** - ⚠️ LOGGING UTILITY
+     - Lines 4-7: "provides consistent, structured logging for tutorial components"
+     - Pattern: Logging utility for tutorial components
+     - Status: COMPLIANT - Support utility for WebSocket-enabled tutorial system
+
+131. **client/src/lib/risk-score-data-service.ts** - ✅ WEBSOCKET INTEGRATION (CONFIRMED)
+     - Lines 10-11: "WebSocket updates handling, Error resilience"
+     - Lines 200-269: Complete WebSocket update handlers for priorities and score updates
+     - Pattern: Risk score service with comprehensive WebSocket integration
+     - Status: COMPLIANT - Uses unified WebSocket for real-time risk score updates
+
+132. **client/src/lib/queryClient.ts** - ⚠️ API CLIENT
+     - Lines 7-8: "Centralized API communication system for the enterprise risk assessment platform"
+     - Pattern: API client with query management capabilities
+     - Status: REQUIRES INVESTIGATION - API client may need WebSocket integration for real-time updates
+
+133. **client/src/pages/FileVault.tsx** - ✅ WEBSOCKET INTEGRATION (CONFIRMED)
+     - Line 24: "import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket'"
+     - Line 38: "const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket()"
+     - Lines 318-353: Complete WebSocket listener setup for file_vault_update events
+     - Pattern: File vault page with real-time file updates via unified WebSocket
+     - Status: COMPLIANT - Uses unified WebSocket for real-time file vault updates
+
+134. **client/src/pages/FormPerformancePage.tsx** - ⚠️ FORM PERFORMANCE PAGE
+     - Lines 4-14: "comprehensive demonstration and testing environment for all the form optimization features"
+     - Pattern: Performance testing page for form optimizations
+     - Status: COMPLIANT - Support page for form optimization testing
+
+135. **client/src/pages/TaskFix.tsx** - ⚠️ TASK FIX UTILITY
+     - Lines 14-17: "provides an interface to fix tasks with inconsistent status/progress"
+     - Pattern: Task status/progress fixing utility
+     - Status: REQUIRES INVESTIGATION - May need WebSocket integration for real-time task updates
+
+136. **client/src/pages/auth-page.tsx** - ⚠️ AUTHENTICATION PAGE
+     - Lines 96-98: "Enterprise Risk Assessment Platform, Advanced analytics for financial risk assessment with intelligent data processing and real-time adaptive learning"
+     - Pattern: Authentication page with mentions of real-time features
+     - Status: COMPLIANT - Authentication page, no WebSocket integration needed
+
+137. **client/src/pages/builder/BuilderPage.tsx** - ⚠️ BUILDER PAGE
+     - Lines 8-9: "Configure fintech onboarding questionnaires and requirements"
+     - Pattern: Builder configuration page
+     - Status: REQUIRES INVESTIGATION - May need WebSocket integration for real-time configuration updates
+
+138. **client/src/pages/card-form.tsx** - ⚠️ CARD FORM PAGE
+     - Lines 16-36: "interface Task" with metadata for task management
+     - Pattern: Card form task page for form submissions
+     - Status: REQUIRES INVESTIGATION - Task forms may need WebSocket integration for real-time updates
+
+139. **client/src/pages/card-task-page.tsx** - ⚠️ CARD TASK PAGE
+     - Lines 16-30: "interface Task" with task metadata and progress tracking
+     - Pattern: Card task page with progress tracking
+     - Status: REQUIRES INVESTIGATION - Task progress may need WebSocket integration for real-time updates
+
+140. **client/src/pages/claims/index.tsx** - ⚠️ CLAIMS MANAGEMENT PAGE
+     - Lines 75-76: "ClaimsTutorial component that handles both localStorage cleanup and includes the TutorialManager"
+     - Pattern: Claims management page with tutorial integration
+     - Status: REQUIRES INVESTIGATION - Claims data may need WebSocket integration for real-time updates
+
+141. **client/src/pages/claims-risk-page.tsx** - ⚠️ CLAIMS RISK PAGE
+     - Lines 14-21: "TutorialManager with tabName claims-risk" and "Analyze claims data to identify risk patterns"
+     - Pattern: Claims risk analysis page with tutorial system
+     - Status: REQUIRES INVESTIGATION - Risk analysis may need WebSocket integration for real-time data updates
 
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
