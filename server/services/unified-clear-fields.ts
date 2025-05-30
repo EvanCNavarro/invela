@@ -19,8 +19,7 @@ import {
   openBankingResponses,
   cardResponses
 } from '@db/schema';
-import { broadcast, broadcastTaskUpdate } from '../utils/websocket';
-import { WebSocketContext } from '../utils/websocket-context';
+import { broadcast, broadcastTaskUpdate } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 import { Pool } from 'pg';
 
@@ -31,7 +30,8 @@ const pool = new Pool({
 });
 
 // Import FormType and re-export for consumers
-import type { FormType } from '../utils/websocket-context';
+// FormType definition for clearing operations
+export type FormType = 'kyb' | 'ky3p' | 'open_banking' | 'card';
 export type { FormType };
 
 // CRITICAL: To ensure proper type safety, explicitly define form types
