@@ -587,6 +587,7 @@ export const OnboardingKYBFormPlayground = ({
   const { toast } = useToast();
   const unifiedToast = useUnifiedToast();
   const queryClient = useQueryClient();
+  const { send } = useUnifiedWebSocket();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
@@ -976,7 +977,7 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
 
-      await wsService.send('task_updated', {
+      await send('task_updated', {
         taskId,
         progress: result.savedData.progress,
         status: result.savedData.status
