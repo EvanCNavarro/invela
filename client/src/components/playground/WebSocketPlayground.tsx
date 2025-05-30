@@ -85,12 +85,12 @@ export function WebSocketPlayground() {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Basic Setup</h3>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-{`// Import the hook
-import { useWebSocketContext } from "@/providers/websocket-provider";
+{`// Import the unified hook
+import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 
 // In your component
 function MyComponent() {
-  const { subscribe, send, isConnected } = useWebSocketContext();
+  const { subscribe, send, isConnected } = useUnifiedWebSocket();
   
   useEffect(() => {
     // Subscribe to events
