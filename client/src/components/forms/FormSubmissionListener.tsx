@@ -15,30 +15,14 @@ import React, { useEffect, useRef } from 'react';
 import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
+import {
+  generateMessageId,
+  processMessageWithDeduplication,
+  incrementActiveListeners,
+  decrementActiveListeners
+} from '@/utils/websocket-event-deduplication';
 
 const logger = getLogger('FormSubmissionListener');
-
-// Global tracking of processed messages and active listeners
-// These static variables are shared across all instances of the component
-// We use window object to make it globally accessible for both component and hook
-const GLOBAL_STATE = {
-  // Global set to track processed submission messages across all instances
-  // This ensures we never process the same message twice, even across different components
-  processedMessages: new Set<string>(),
-  
-  // Map of active listeners by task and form type
-  // Used to prevent duplicate listeners for the same task+form combination
-  activeListeners: new Map<string, boolean>(),
-  
-  // Get a unique key for a task+form combination
-  getListenerKey(taskId: number, formType: string): string {
-    return `${taskId}:${formType}`;
-  }
-};
-
-// Make the global state available to other modules through the window object
-// This allows the useFormSubmissionEvents hook to access the same state
-(window as any).__FORM_SUBMISSION_GLOBAL_STATE = GLOBAL_STATE;
 
 export interface SubmissionAction {
   type: string;       // Type of action: "task_completion", "file_generation", etc.
@@ -206,30 +190,15 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
-        // Message deduplication: check if we've already processed this message globally
+        // Generate message ID for deduplication
+        const taskId = data.taskId || data.payload?.taskId;
+        const timestamp = data.timestamp || data.payload?.timestamp;
         const messageId = data.messageId || (data.payload?.messageId) || 
-                          `${data.type}_${data.taskId || data.payload?.taskId}_${data.timestamp || data.payload?.timestamp}`;
+                          generateMessageId('submission', taskId, data.type, timestamp);
         
-        // Skip if we've already processed this message (globally across all components)
-        if (messageId && GLOBAL_STATE.processedMessages.has(messageId)) {
-          logger.debug(`Skipping duplicate message: ${messageId} (globally)`);
+        // Use shared deduplication utility - this handles all the complex logic
+        if (!processMessageWithDeduplication(messageId, taskId, listenerTaskId, undefined, undefined)) {
           return;
-        }
-        
-        // Add to both the global processed messages set and our local component set
-        if (messageId) {
-          // Add to global set to prevent any other component from processing this same message
-          GLOBAL_STATE.processedMessages.add(messageId);
-          
-          // Also add to our local component set for cleanup on unmount
-          processedMessagesRef.current.add(messageId);
-          
-          // Limit size of global processed messages set to avoid memory leaks
-          if (GLOBAL_STATE.processedMessages.size > 500) {
-            // Keep only the most recent 250 messages
-            const messagesToKeep = Array.from(GLOBAL_STATE.processedMessages).slice(-250);
-            GLOBAL_STATE.processedMessages = new Set(messagesToKeep);
-          }
         }
         
         // Add debug logging to help troubleshoot WebSocket events
