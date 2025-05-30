@@ -302,72 +302,7 @@ interface CompanyInfo {
   revenue: string;
 }
 
-/**
- * Step Transition Component
- * 
- * Wraps step content with animation using framer-motion
- * Provides smooth transitions between steps
- */
-interface StepTransitionProps {
-  children: React.ReactNode;
-  direction: 'next' | 'prev';
-  isActive: boolean;
-}
 
-const StepTransition: React.FC<StepTransitionProps> = ({ 
-  children, 
-  direction, 
-  isActive 
-}) => {
-  // Different animations based on direction
-  const variants = {
-    enter: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? 100 : -100,
-      opacity: 0,
-      scale: 0.95,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? -100 : 100,
-      opacity: 0,
-      scale: 0.95,
-    }),
-  };
-  
-  return (
-    <AnimatePresence mode="wait" initial={false} onExitComplete={() => {}}>
-      {isActive && (
-        <motion.div
-          key={`step-transition-${isActive ? 'active' : 'inactive'}`}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { 
-              type: "spring", 
-              stiffness: 300, 
-              damping: 30,
-              mass: 0.8
-            },
-            opacity: { 
-              duration: 0.25,
-              ease: "easeOut"
-            }
-          }}
-          className="w-full"
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
@@ -1355,18 +1290,19 @@ export function AnimatedOnboardingModal({
   
   // Render step content with animation wrapper
   const renderStepContent = () => {
-    // Get current step content
-    const content = getCurrentStepContent();
-    
-    // Return with animation wrapper
     return (
-      <StepTransition
-        direction={transitionDirection}
-        isActive={true}
-        key={`step-${currentStep}`}
-      >
-        {content}
-      </StepTransition>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, x: transitionDirection === 'next' ? 50 : -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: transitionDirection === 'next' ? -50 : 50 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="w-full h-full"
+        >
+          {getCurrentStepContent()}
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
