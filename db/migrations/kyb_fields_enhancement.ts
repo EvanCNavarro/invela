@@ -107,7 +107,7 @@ const fieldMetadata: Record<string, {
   },
   'controlEnvironment': {
     order: 13,
-    answer_expectation: 'Provide the full names and titles of all members serving on the company's board of directors.',
+    answer_expectation: 'Provide the full names and titles of all members serving on the company board of directors.',
     demo_autofill: 'John Smith (Chairman), Jane Doe (Director), Mike Johnson (Director)',
     validation_type: '3rd-Party or Internal Document'
   },
@@ -131,7 +131,7 @@ const fieldMetadata: Record<string, {
   },
   'directorsAndOfficers': {
     order: 17,
-    answer_expectation: 'Describe briefly the company's primary business activities and service offerings.',
+    answer_expectation: 'Describe briefly the company primary business activities and service offerings.',
     demo_autofill: 'Financial data aggregation and analytics services',
     validation_type: '3rd-Party or Internal Document'
   },
@@ -149,25 +149,25 @@ const fieldMetadata: Record<string, {
   },
   'annualRecurringRevenue': {
     order: 20,
-    answer_expectation: 'Provide the company's annual revenue from the most recent fiscal year, in USD.',
+    answer_expectation: 'Provide the company annual revenue from the most recent fiscal year, in USD.',
     demo_autofill: '5,000,000',
     validation_type: '3rd-Party or Internal Document'
   },
   'lifetimeCustomerValue': {
     order: 21,
-    answer_expectation: 'Provide the name and contact information of the company's primary financial institution or bank.',
+    answer_expectation: 'Provide the name and contact information of the company primary financial institution or bank.',
     demo_autofill: 'First National Bank, (302) 555-7890',
     validation_type: '3rd-Party or Internal Document'
   },
   'monthlyRecurringRevenue': {
     order: 22,
-    answer_expectation: 'State the company's total assets from the most recent fiscal year-end, in USD.',
+    answer_expectation: 'State the company total assets from the most recent fiscal year-end, in USD.',
     demo_autofill: '12,500,000',
     validation_type: '3rd-Party or Internal Document'
   },
   'investigationsIncidents': {
     order: 23,
-    answer_expectation: 'Provide the company's net income or net loss from the most recent fiscal year, in USD. Indicate clearly if it is a loss.',
+    answer_expectation: 'Provide the company net income or net loss from the most recent fiscal year, in USD. Indicate clearly if it is a loss.',
     demo_autofill: '800,000',
     validation_type: '3rd-Party or Internal Document'
   },
