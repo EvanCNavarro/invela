@@ -1218,7 +1218,7 @@ export class EnhancedKybFormService implements FormServiceInterface {
         // As a fallback, manually trigger a WebSocket submission event
         try {
           // Import and use the WebSocket service directly
-          const { wsService } = await import('../lib/websocket');
+          const { wsService } = await import('./websocket-unified');
           
           console.log('[Form Submission] Emitting local submission_status event as fallback');
           // Send local websocket event with a small delay to let the server event arrive first
