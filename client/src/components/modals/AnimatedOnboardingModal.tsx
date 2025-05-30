@@ -320,36 +320,56 @@ const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children
   </div>
 );
 
-// Component for consistent step image with loading indicator and professional styling
+// Component for consistent step image with comprehensive debugging
 const StepImage: React.FC<{ 
   src: string | undefined; 
   alt: string | undefined;
-  isLoaded: boolean;
 }> = ({ 
   src, 
-  alt = 'Onboarding step image',
-  isLoaded
+  alt = 'Onboarding step image'
 }) => {
-  const [imageError, setImageError] = useState(false);
-  
+  const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  console.log(`[StepImage] Rendering with src: ${src}, alt: ${alt}`);
+
   return (
-    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
-      {src && !imageError ? (
-        <img 
-          src={src} 
-          alt={alt || 'Onboarding step image'}
-          className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
-          onError={() => {
-            console.error(`Image failed to load: ${src}`);
-            setImageError(true);
-          }}
-          onLoad={() => {
-            console.log(`Image loaded successfully: ${src}`);
-          }}
-        />
+    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-red-500">
+      <div className="absolute top-2 left-2 text-xs bg-black text-white p-1 rounded z-10">
+        Status: {imageStatus} | Src: {src ? 'provided' : 'missing'}
+      </div>
+      
+      {src ? (
+        <>
+          <img 
+            src={src} 
+            alt={alt || 'Onboarding step image'}
+            className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
+            loading="eager"
+            decoding="async"
+            onError={(e) => {
+              const error = `Failed to load: ${src}`;
+              console.error(`[StepImage] ${error}`, e);
+              setImageStatus('error');
+              setErrorMessage(error);
+            }}
+            onLoad={() => {
+              console.log(`[StepImage] Successfully loaded: ${src}`);
+              setImageStatus('loaded');
+            }}
+          />
+          {imageStatus === 'error' && (
+            <div className="absolute inset-0 flex items-center justify-center text-red-500 text-sm p-4 text-center">
+              Error: {errorMessage}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-400">
-          {imageError ? 'Image not available' : 'Loading...'}
+        <div className="w-full h-full flex items-center justify-center text-slate-400 text-center">
+          <div>
+            <div>No image source provided</div>
+            <div className="text-xs mt-2">src={JSON.stringify(src)}</div>
+          </div>
         </div>
       )}
     </div>
@@ -377,7 +397,13 @@ const StepLayout: React.FC<{
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  console.log(`[AnimatedOnboardingModal] Rendering with image: ${imgSrc}`);
+  console.log(`[AnimatedOnboardingModal] StepLayout render:`, {
+    title,
+    imageSrc,
+    rightImageSrc,
+    finalImageSrc: imgSrc,
+    hasChildren: !!children
+  });
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
@@ -434,13 +460,10 @@ const StepLayout: React.FC<{
         }}
       >
         <RightImageContainer>
-          {imgSrc && (
-            <StepImage 
-              src={imgSrc} 
-              alt={imageAlt || title}
-              isLoaded={true} 
-            />
-          )}
+          <StepImage 
+            src={imgSrc} 
+            alt={imageAlt || title}
+          />
         </RightImageContainer>
       </motion.div>
     </div>
