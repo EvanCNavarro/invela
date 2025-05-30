@@ -13,14 +13,16 @@ import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  generateMessageId,
+  processMessageWithDeduplication,
+  incrementActiveListeners,
+  decrementActiveListeners
+} from '@/utils/websocket-event-deduplication';
 
-// Add type declaration for the fieldEventTracker global object
+// Add type declaration for the last clear operation tracking
 declare global {
   interface Window {
-    fieldEventTracker?: {
-      processedEventIds: Set<string>;
-      activeListeners: number;
-    };
     _lastClearOperation?: {
       taskId: number;
       formType: string;
@@ -29,15 +31,6 @@ declare global {
       operationId: string;
     };
   }
-}
-
-// Global tracking of processed messages and active listeners
-// These static variables are shared across all instances of the component
-if (typeof window !== 'undefined' && !window.fieldEventTracker) {
-  window.fieldEventTracker = {
-    processedEventIds: new Set<string>(),
-    activeListeners: 0
-  };
 }
 
 export interface FieldsEventPayload {
@@ -166,23 +159,11 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         }
 
         // Create a unique message ID to prevent duplicate processing
-        const messageId = `field_${payload.action}_${payload.taskId}_${payload.timestamp || Date.now()}`;
+        const messageId = generateMessageId('field', payload.taskId, payload.action, payload.timestamp);
         
-        // Skip if we've already processed this message (global deduplication)
-        if (typeof window !== 'undefined' && window.fieldEventTracker?.processedEventIds.has(messageId)) {
-          logger.debug(`Skipping already processed message: ${messageId}`);
+        // Use shared deduplication utility to check if message should be processed
+        if (!processMessageWithDeduplication(messageId, payload.taskId, taskId, payload.formType, formType)) {
           return;
-        }
-        
-        // Mark this message as processed
-        if (typeof window !== 'undefined' && window.fieldEventTracker) {
-          window.fieldEventTracker.processedEventIds.add(messageId);
-          
-          // Prevent the set from growing too large
-          if (window.fieldEventTracker.processedEventIds.size > 100) {
-            const values = Array.from(window.fieldEventTracker.processedEventIds);
-            window.fieldEventTracker.processedEventIds = new Set(values.slice(-50));
-          }
         }
 
         // Create a standardized event object
@@ -322,10 +303,8 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
           handleMessageRef.current();
           logger.info(`Cleaned up form fields listener for task ${taskId}`);
           
-          // Update active listener count
-          if (typeof window !== 'undefined' && window.fieldEventTracker) {
-            window.fieldEventTracker.activeListeners = Math.max(0, window.fieldEventTracker.activeListeners - 1);
-          }
+          // Update active listener count using shared utility
+          decrementActiveListeners();
         } catch (e) {
           // Ignore errors during cleanup
         } finally {
