@@ -157,7 +157,7 @@ const revenueValueMap: Record<string, number> = {
   xlarge: 175000000   // $175M - matches demo system format
 };
 
-const updateCompanyDetails = async (companyId: number, details: any) => {
+const updateCompanyDetails = async (companyId: number, details: CompanyInfo) => {
   // Map size to employee count if available
   const numEmployees = details.size ? 
     employeeCountMap[details.size as keyof typeof employeeCountMap] : 
@@ -353,7 +353,7 @@ const HeaderChip: React.FC = () => (
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-blue-50/30 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+  <div className="hidden md:block bg-primary/5 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
     <div className="absolute inset-0 flex items-center justify-center">
       {children}
     </div>
@@ -1175,7 +1175,7 @@ export function AnimatedOnboardingModal({
                 <h3 className="text-primary font-medium mb-2.5 text-base">Company Details</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1185,7 +1185,7 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1195,7 +1195,7 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1205,7 +1205,7 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
