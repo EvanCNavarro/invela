@@ -223,6 +223,46 @@
      - Pattern: Document upload functionality
      - Status: REQUIRES INVESTIGATION - Document uploads may need WebSocket integration for progress tracking
 
+148. **client/src/pages/file-vault-page.tsx** - ⚠️ DEPRECATED FILE VAULT PAGE
+     - Lines 1-7: Redirect to new FileVault.tsx implementation
+     - Pattern: Deprecated redirect component
+     - Status: COMPLIANT - Simple redirect, no WebSocket integration needed
+
+149. **client/src/pages/form-field.tsx** - ⚠️ FORM FIELD PLAYGROUND
+     - Lines 1-76: Form field component playground
+     - Pattern: Component playground for testing
+     - Status: COMPLIANT - Testing playground, no WebSocket integration needed
+
+150. **client/src/pages/form-submission-workflow.tsx** - ⚠️ LEGACY WEBSOCKET IMPLEMENTATION (CRITICAL)
+     - Lines 4, 96, 103, 123, 136, 148, 164, 365, 411, 456: "WebSocket" and "real-time updates"
+     - Pattern: Legacy WebSocket implementation for form submissions
+     - Status: CRITICAL LEGACY IMPLEMENTATION - Contains legacy WebSocket code for FormSubmissionService
+
+151. **client/src/pages/insights-page.tsx** - ⚠️ INSIGHTS PAGE
+     - Lines 1-146: Data visualization and insights dashboard
+     - Pattern: Analytics and insights page
+     - Status: COMPLIANT - Analytics page, no WebSocket integration needed
+
+152. **client/src/pages/ky3p-task-page.tsx** - ⚠️ KY3P TASK PAGE
+     - Lines 1-240: KY3P security assessment form page
+     - Pattern: Task-specific form page
+     - Status: REQUIRES INVESTIGATION - Task page may need WebSocket integration for real-time updates
+
+153. **client/src/pages/kyb-form.tsx** - ⚠️ KYB FORM PAGE
+     - Lines 1-190: KYB form submission page
+     - Pattern: Form submission with file downloads
+     - Status: COMPLIANT - Standard form submission, no WebSocket integration needed
+
+154. **client/src/pages/kyb-task-page.tsx** - ⚠️ KYB TASK PAGE
+     - Lines 1-355: KYB task page with enhanced form submission
+     - Pattern: Complex task page with form submission and file vault integration
+     - Status: REQUIRES INVESTIGATION - Task page may need WebSocket integration for real-time updates
+
+155. **client/src/pages/landing/index.tsx** - ⚠️ LANDING PAGE
+     - Lines 94, 303: "real-time" references in marketing copy
+     - Pattern: Marketing page with real-time messaging
+     - Status: COMPLIANT - Marketing references only, no WebSocket integration needed
+
 ## CRITICAL AUDIT FINDINGS SUMMARY
 
 ### ✅ UNIFIED WEBSOCKET ARCHITECTURE STATUS
