@@ -6,7 +6,7 @@ import { eq, and, or, ilike, sql } from 'drizzle-orm';
 // Import using actual module name conventions
 import * as FileCreationService from '../services/fileCreation';
 import { logger } from '../utils/logger';
-import * as WebSocketService from '../services/websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
 // Import CompanyTabsService directly, we don't need the patch function anymore
@@ -1544,7 +1544,7 @@ router.post('/api/kyb/save', async (req, res) => {
       WebSocketService.broadcast('submission_status', { taskId, status: 'submitted' });
 
       // Also broadcast the task update for dashboard real-time updates
-      WebSocketService.broadcastTaskUpdate({
+      broadcastTaskUpdate({
         id: taskId,
         status: TaskStatus.SUBMITTED,
         progress: 100,

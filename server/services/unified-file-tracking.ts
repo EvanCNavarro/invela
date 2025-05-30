@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import * as WebSocketService from './websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 
 // Add namespace context to logs
 const logContext = { service: 'UnifiedFileTracking' };

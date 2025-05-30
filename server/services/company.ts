@@ -1,7 +1,7 @@
 import { db } from "@db";
 import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
-import * as WebSocketService from "./websocket";
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { eq } from "drizzle-orm";
 // Import demo company hooks for automatic file vault population
 import { processNewCompany } from "../hooks/demo-company-hooks";

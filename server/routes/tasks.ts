@@ -3,7 +3,7 @@ import { db } from "@db";
 import { tasks, TaskStatus as DbTaskStatus, companies, kybFields, kybResponses, ky3pFields, ky3pResponses, openBankingFields, openBankingResponses } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import * as WebSocketService from "../services/websocket"; // Use standardized WebSocketService
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 import { requireAuth } from '../middleware/auth';
 import { determineStatusFromProgress, broadcastProgressUpdate } from '../utils/progress';

@@ -7,7 +7,7 @@
 
 import { Server } from 'http';
 import { WebSocketServer } from 'ws';
-import * as WebSocketService from './websocket';
+import { broadcastTaskUpdate } from "../utils/unified-websocket";
 import { logger } from '../utils/logger';
 import { configureTaskWebSocketRoutes } from '../routes/task-websocket';
 import { setWebSocketServer } from '../utils/task-broadcast';
