@@ -521,7 +521,7 @@ export function AnimatedOnboardingModal({
   const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
   
   // Track if transition is in progress
-  const [isTransitioning, setIsTransitioning] = useState(false);
+
   
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
@@ -618,60 +618,32 @@ export function AnimatedOnboardingModal({
     }
   }, [currentStep, companyInfo, teamMembers]);
   
-  // Handle next step button click with animation
+  // Handle next step button click with framer-motion
   const handleNextStep = () => {
-    // Prevent interaction during transition
-    if (isTransitioning) return;
-    
     // If we're on the last step, complete onboarding
     if (currentStep === 6) {
       handleCompleteOnboarding();
       return;
     }
     
-    // Set transition direction to 'next'
+    // Set transition direction for framer-motion
     setTransitionDirection('next');
-    
-    // Start transition animation
-    setIsTransitioning(true);
     logDebug('Starting next step animation', { currentStep });
     
-    // Short delay to allow animation to complete
-    setTimeout(() => {
-      // Go to the next step
-      setCurrentStep(prev => prev + 1);
-      
-      // End transition after a short delay to ensure animation completes
-      setTimeout(() => {
-        setIsTransitioning(false);
-        logDebug('Next step animation completed', { newStep: currentStep + 1 });
-      }, ANIMATION_TIMING.COMPLETION);
-    }, ANIMATION_TIMING.STEP_TRANSITION);
+    // Let framer-motion handle the transition naturally
+    setCurrentStep(prev => prev + 1);
+    logDebug('Next step animation completed', { newStep: currentStep + 1 });
   };
   
-  // Handle back button click with animation
+  // Handle back button click with framer-motion
   const handleBackStep = () => {
-    // Prevent interaction during transition
-    if (isTransitioning) return;
-    
-    // Set transition direction to 'prev'
+    // Set transition direction for framer-motion
     setTransitionDirection('prev');
-    
-    // Start transition animation
-    setIsTransitioning(true);
     logDebug('Starting back step animation', { currentStep });
     
-    // Short delay to allow animation to complete
-    setTimeout(() => {
-      // Go to the previous step
-      setCurrentStep(prev => Math.max(0, prev - 1));
-      
-      // End transition after a short delay to ensure animation completes
-      setTimeout(() => {
-        setIsTransitioning(false);
-        logDebug('Back step animation completed', { newStep: currentStep - 1 });
-      }, ANIMATION_TIMING.COMPLETION);
-    }, ANIMATION_TIMING.STEP_TRANSITION);
+    // Let framer-motion handle the transition naturally
+    setCurrentStep(prev => Math.max(0, prev - 1));
+    logDebug('Back step animation completed', { newStep: currentStep - 1 });
   };
   
   // Handle complete onboarding action
