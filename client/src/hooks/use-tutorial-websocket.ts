@@ -69,9 +69,7 @@ export function useTutorialWebSocket(tabName: string) {
   
   // Subscribe to WebSocket events using unified service
   useEffect(() => {
-    // Check both connection status and service availability
-    const serviceConnected = unifiedWebSocketService.isConnected();
-    if (!isConnected && !serviceConnected) {
+    if (!isConnected) {
       logger.info(`App WebSocket not available, using event bridge only`);
       return;
     }
