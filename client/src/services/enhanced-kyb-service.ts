@@ -790,8 +790,9 @@ export class EnhancedKybFormService implements FormServiceInterface {
       this.saveProgressTimer = null;
     }
     
+    // DISABLED: Auto-save mechanism replaced with event-driven WebSocket updates
     // Schedule a new save operation after a short delay
-    this.saveProgressTimer = setTimeout(async () => {
+    // this.saveProgressTimer = setTimeout(async () => {
       // If already saving, the next save will pick up latest data from writeBuffer
       if (this.isSaving) {
         return;
@@ -843,12 +844,13 @@ export class EnhancedKybFormService implements FormServiceInterface {
       } finally {
         this.isSaving = false;
         
+        // DISABLED: Auto-save recursion replaced with event-driven WebSocket updates
         // Check if write buffer changed during save - if so, save again
-        if (this.writeBuffer) {
-          this.saveProgress(taskId);
-        }
-      }
-    }, this.saveDebounceMs);
+        // if (this.writeBuffer) {
+        //   this.saveProgress(taskId);
+        // }
+      // }
+    // }, this.saveDebounceMs);
   }
   
   /**
