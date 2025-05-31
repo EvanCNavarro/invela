@@ -39,10 +39,10 @@
 ## Files to Investigate Next 📋
 
 **High Priority - Need to Check for Timer Creation:**
+- [x] `client/src/hooks/form/use-form-data-manager.ts` - Form hook with BatchUpdater usage (CHECKED - uses FormBatchUpdater.queueUpdate, no direct timers)
+- [x] `client/src/services/unified-ky3p-form-service.ts` - Service layer (CHECKED - no setInterval/setTimeout found)
 - [ ] `client/src/components/forms/UniversalFormNew.tsx` - Main form component loaded on KY3P page
-- [ ] `client/src/hooks/form/use-form-data-manager.ts` - Form hook with BatchUpdater usage
 - [ ] `client/src/components/forms/standardized-ky3p-update.ts` - Makes batch-update calls
-- [ ] `client/src/services/unified-ky3p-form-service.ts` - Service layer
 
 **React Query Sources to Check:**
 - [ ] Check if any React Query has `refetchInterval: 60000` specifically for KY3P
@@ -51,7 +51,9 @@
 - 09:51:31 ✓
 - 09:52:31 ✓ 
 - 09:53:31 ✓
-- 09:54:31 ✓ (JUST FIRED)
+- 09:54:31 ✓ 
+- 09:55:30 ✓ 
+- 09:56:31 ✓ (EXPECTED - investigating source)
 
 ## Key Insights 💡
 - Timer starts immediately when KY3P form page loads
