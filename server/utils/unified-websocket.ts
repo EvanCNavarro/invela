@@ -378,26 +378,91 @@ export function getWebSocketServer(): WebSocketServer | null {
 // Utility broadcast functions for common scenarios
 
 /**
- * Broadcast a task update message
+ * Enhanced task update broadcast with context enrichment
+ * Fetches complete context data to eliminate client-side redundant API calls
  * 
  * @param payload Task update payload
  */
-export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
-  // Ensure the payload includes the task data properly formatted
-  const taskData = {
-    taskId: payload.taskId || payload.id,
-    id: payload.id || payload.taskId,
-    status: payload.status,
-    progress: payload.progress,
-    metadata: payload.metadata || {}
-  };
+export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): Promise<void> {
+  try {
+    // Import database utilities to fetch context
+    const { db } = await import("@db");
+    const { tasks } = await import("@db/schema");
+    const { eq } = await import("drizzle-orm");
 
-  // Broadcast with complete task data
-  broadcast<TaskUpdateMessage>('task_updated', taskData);
-  broadcast('task_update', taskData);
-  
-  if (!taskData.taskId) {
-    wsLogger.warn('Task update broadcast called without task ID', { payload: taskData });
+    const taskId = payload.taskId || payload.id;
+    
+    if (!taskId) {
+      wsLogger.warn('Task update broadcast called without task ID', { payload });
+      return;
+    }
+
+    // Fetch complete task context from database
+    const taskWithContext = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId),
+      with: {
+        company: true,
+        assignedUser: true
+      }
+    });
+
+    if (!taskWithContext) {
+      wsLogger.warn(`Task ${taskId} not found for context enrichment`);
+      return;
+    }
+
+    // Create enriched payload with context data that components need
+    const enrichedData = {
+      taskId: taskId,
+      id: taskId,
+      status: payload.status || taskWithContext.status,
+      progress: payload.progress ?? taskWithContext.progress,
+      metadata: payload.metadata || taskWithContext.metadata || {},
+      // Context enrichment - eliminates need for separate API calls
+      context: {
+        userId: taskWithContext.assigned_to,
+        companyId: taskWithContext.company_id,
+        companyName: taskWithContext.company?.name,
+        taskType: taskWithContext.task_type,
+        taskScope: taskWithContext.task_scope
+      },
+      title: taskWithContext.title,
+      description: taskWithContext.description,
+      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    wsLogger.debug(`Broadcasting enriched task_updated for task ${taskId}`, {
+      companyId: taskWithContext.company_id,
+      companyName: taskWithContext.company?.name
+    });
+
+    // Broadcast enriched message with company filtering for efficiency
+    broadcast<TaskUpdateMessage>('task_updated', enrichedData, (client) => 
+      client.companyId === taskWithContext.company_id
+    );
+    broadcast('task_update', enrichedData, (client) => 
+      client.companyId === taskWithContext.company_id
+    );
+
+    wsLogger.info(`Enriched task update broadcast completed for task ${taskId}`, {
+      companyId: taskWithContext.company_id,
+      messageId: enrichedData.messageId
+    });
+
+  } catch (error) {
+    wsLogger.error(`Failed to broadcast enriched task update for task ${payload.taskId || payload.id}:`, error);
+    
+    // Fallback to basic broadcast
+    const taskData = {
+      taskId: payload.taskId || payload.id,
+      id: payload.id || payload.taskId,
+      status: payload.status,
+      progress: payload.progress,
+      metadata: payload.metadata || {}
+    };
+
+    broadcast<TaskUpdateMessage>('task_updated', taskData);
+    broadcast('task_update', taskData);
   }
 }
 
