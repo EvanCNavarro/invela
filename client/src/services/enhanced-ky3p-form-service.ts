@@ -244,12 +244,12 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
     // Clear any existing timer
     if (this.batchUpdateTimer) {
       clearTimeout(this.batchUpdateTimer);
+      this.batchUpdateTimer = null;
     }
     
-    // Schedule a batch update
-    this.batchUpdateTimer = setTimeout(() => {
-      this.flushPendingUpdates(taskId);
-    }, this.batchUpdateInterval);
+    // COMPLETELY DISABLED: No automatic batch updates to eliminate artificial polling
+    // Using event-driven updates only via WebSocket
+    logger.debug('[Enhanced KY3P] Batch update timer disabled - using event-driven updates only');
   }
   
   /**
