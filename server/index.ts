@@ -345,8 +345,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 // Import deployment helpers for port and host configuration
 import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
 
-// Import task reconciliation system
-import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
+
 
 // Early production optimizations - must run before other configurations
 // Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
@@ -395,7 +394,7 @@ server.listen(PORT, HOST, () => {
     // TEMPORARILY DISABLED: Start the periodic task reconciliation system
     if (process.env.NODE_ENV !== 'test') {
       logger.info('TESTING: Periodic task reconciliation system DISABLED to test real-time WebSocket');
-      // startPeriodicTaskReconciliation();
+
       logger.info('Task reconciliation system DISABLED for testing');
     }
     

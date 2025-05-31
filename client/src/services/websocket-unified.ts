@@ -218,13 +218,7 @@ class UnifiedWebSocketService {
   }
   
   private startHeartbeat(): void {
-    // DISABLED: Heartbeat for testing real-time WebSocket events without polling
-    // this.heartbeatInterval = setInterval(() => {
-    //   this.send('ping', {
-    //     timestamp: new Date().toISOString(),
-    //     source: 'unified-websocket-service'
-    //   });
-    // }, 30000);
+    // Heartbeat functionality removed - relying on real-time WebSocket events only
   }
   
   private cleanup(): void {
