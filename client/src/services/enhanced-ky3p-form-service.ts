@@ -44,9 +44,10 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
   constructor(companyId?: number, taskId?: number) {
     // Only log when we have actual context data to avoid undefined spam
     if (companyId && taskId) {
-      logger.info('Initializing EnhancedKY3PFormService', {
+      logger.info('Initializing EnhancedKY3PFormService with autosave DISABLED', {
         companyId,
         taskId,
+        autoSaveDisabled: true,
         timestamp: new Date().toISOString()
       });
     }

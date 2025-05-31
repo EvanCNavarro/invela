@@ -55,9 +55,13 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     this._companyId = companyId;
     this._taskId = taskId;
     
-    logger.info('[Unified KY3P] Initializing service', {
+    // DISABLED: Prevent automatic batch updates to stop artificial 60-second polling
+    this.batchUpdateInterval = Infinity; // Disable automatic batch updates
+    
+    logger.info('[Unified KY3P] Initializing service with batch updates DISABLED', {
       companyId,
       taskId,
+      batchUpdateInterval: this.batchUpdateInterval,
       timestamp: new Date().toISOString()
     });
   }
