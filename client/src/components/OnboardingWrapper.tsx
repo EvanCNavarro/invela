@@ -29,12 +29,12 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
     enabled: !!user && showModal, // Only fetch if we need to show the modal
   });
   
-  // WebSocket connection status monitoring to prevent race conditions
+  // WebSocket connection status monitoring - only log actual changes
+  const prevConnectedRef = React.useRef(isConnected);
   React.useEffect(() => {
-    if (isConnected) {
-      console.log('[OnboardingWrapper] WebSocket connected - modal rendering enabled');
-    } else {
-      console.log('[OnboardingWrapper] WebSocket disconnected - modal rendering disabled');
+    if (prevConnectedRef.current !== isConnected) {
+      console.log(`[OnboardingWrapper] WebSocket ${isConnected ? 'connected' : 'disconnected'} - modal rendering ${isConnected ? 'enabled' : 'disabled'}`);
+      prevConnectedRef.current = isConnected;
     }
   }, [isConnected]);
 

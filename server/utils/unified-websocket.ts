@@ -156,10 +156,10 @@ type WebSocketPayload =
  * @param server HTTP server instance to attach WebSocket server to
  * @param path Path for the WebSocket server
  */
-export function initializeWebSocketServer(server: Server, path: string = '/ws'): void {
+export function initializeWebSocketServer(server: Server, path: string = '/ws'): WebSocketServer {
   if (wss) {
-    wsLogger.warn('WebSocket server already initialized, skipping initialization');
-    return;
+    wsLogger.warn('WebSocket server already initialized, returning existing instance');
+    return wss;
   }
 
   // Create WebSocket server
@@ -258,6 +258,8 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
       stack: error instanceof Error ? error.stack : undefined
     });
   });
+
+  return wss;
 }
 
 /**

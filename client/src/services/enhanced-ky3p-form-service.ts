@@ -42,11 +42,14 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * @param taskId Optional task ID
    */
   constructor(companyId?: number, taskId?: number) {
-    logger.info('Initializing EnhancedKY3PFormService', {
-      companyId,
-      taskId,
-      timestamp: new Date().toISOString()
-    });
+    // Only log when we have actual context data to avoid undefined spam
+    if (companyId && taskId) {
+      logger.info('Initializing EnhancedKY3PFormService', {
+        companyId,
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+    }
     
     // Create the fixed KY3P service that resolves the ReferenceError issues
     this.originalService = createFixedKY3PFormService(companyId, taskId);
