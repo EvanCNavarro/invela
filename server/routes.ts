@@ -1717,27 +1717,23 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           tasksCache.delete(cacheKey);
         }
         
-        // Always process task dependencies and ensure all tasks are unlocked
-        // This makes the dependency chain optional rather than enforced
+        // DISABLED: Automatic task unlocking to prevent artificial updates
+        // Task unlocking should only happen on genuine user actions (form submissions, etc.)
         try {
-          console.log('[Tasks] Automatically unlocking all tasks for company', {
+          console.log('[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates', {
             userId,
             companyId,
-            requestedBy: 'automatic_task_unlock'
+            requestedBy: 'event_driven_only'
           });
           
-          // Import and use task dependency processors
-          // Use dynamic import to handle the ESM module properly
-          const taskDependencies = await import('./routes/task-dependencies');
-          const unlockAllTasks = taskDependencies.unlockAllTasks;
+          // DISABLED: This automatic unlocking was causing artificial WebSocket updates every ~30 seconds
+          // Use event-driven updates only - tasks unlock when users actually complete prerequisites
+          console.log('[Tasks] Skipping automatic task unlocking - using event-driven updates only');
           
-          // Unlock ALL tasks for this company regardless of dependencies
-          await unlockAllTasks(companyId);
-          
-          // Clear task cache to ensure updated task status is returned
+          // Note: Task cache clearing is still needed for accurate data retrieval
           tasksCache.delete(cacheKey);
           
-          console.log('[Tasks] Successfully unlocked all tasks for company:', companyId);
+          console.log('[Tasks] Using event-driven task updates only for company:', companyId);
         } catch (depError) {
             console.error('[Tasks] Error unlocking all tasks:', {
               userId,
