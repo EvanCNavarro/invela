@@ -345,8 +345,6 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 // Import deployment helpers for port and host configuration
 import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
 
-
-
 // Early production optimizations - must run before other configurations
 // Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
 import { initializeProductionOptimizations } from './deployment/production-config';
@@ -360,9 +358,6 @@ const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'develop
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
-
-// Use deployment helpers for proper port configuration
-import { getDeploymentPort, getDeploymentHost } from './deployment-helpers';
 
 const PORT = getDeploymentPort();
 const HOST = getDeploymentHost();

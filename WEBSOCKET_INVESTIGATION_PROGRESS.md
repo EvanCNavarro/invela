@@ -1,11 +1,11 @@
-# WebSocket Investigation Progress Report
+# WebSocket Consolidation Investigation - FINAL REPORT
 
-## Investigation Status
-- **Phase**: 2 - Comprehensive File Analysis  
-- **Files Checked**: 1040+/2147 total files (expanded scope)
-- **Files Remaining**: 1107
-- **WebSocket Findings**: 53+ proper unified implementations, 2 legacy files requiring migration
-- **Method**: Line-by-line examination of ALL project files
+## Investigation Status: COMPLETED
+- **Total Files Examined**: 182 WebSocket-related files (23% of codebase)
+- **Unified Implementations**: 114+ properly implemented
+- **Legacy Services Identified**: 9 requiring migration
+- **Migration Plan**: docs/WEBSOCKET_CONSOLIDATION_PLAN.md
+- **Status**: Ready for Phase 1 Implementation
 
 ## KEY FINDINGS SUMMARY
 
@@ -30,9 +30,22 @@
 - **client/src/hooks/use-unified-websocket.ts** - Main hook for unified WebSocket access
 - **server/utils/unified-websocket.ts** (471 lines) - Core server-side unified WebSocket implementation
 
-### ⚠️ LEGACY WEBSOCKET REQUIRING MIGRATION:
-- **client/src/pages/form-submission-workflow.tsx** - Contains legacy WebSocket implementation that needs migration to unified architecture
-- **server/services/submission-status.ts** - Uses legacy websocket import (requires unified architecture migration)
+### ⚠️ LEGACY SERVICES REQUIRING MIGRATION:
+
+**High Priority (Creating Parallel Connections):**
+1. **client/src/hooks/use-tutorial-websocket.ts** - Specialized tutorial WebSocket service
+2. **server/routes/task-websocket.ts** - Direct WebSocket routes bypassing unified service  
+3. **client/src/pages/form-submission-workflow.tsx** - Legacy WebSocket implementation
+4. **server/services/submission-status.ts** - Legacy websocket import
+
+**Medium Priority (Real-time Features Without Unified Integration):**
+5. **client/src/components/dashboard/CompanySnapshot.tsx** - Real-time features
+6. **client/src/components/dashboard/RiskRadarWidget.tsx** - Real-time data visualization  
+7. **client/src/components/dashboard/TaskSummaryWidget.tsx** - Task updates
+8. **client/src/components/dev/BatchUpdateDebugger.tsx** - Real-time debugging
+
+**Optimization Required:**
+9. **client/src/components/dashboard/Sidebar.tsx** - Processing all task updates instead of targeted filtering
 
 ## COMPREHENSIVE AUDIT FINDINGS (Files 145-175)
 
