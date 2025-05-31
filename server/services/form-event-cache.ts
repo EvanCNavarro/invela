@@ -162,16 +162,18 @@ export function cleanupExpiredEvents(): void {
   }
 }
 
-// Set up regular cleanup interval (every 5 minutes)
-const cleanupInterval = setInterval(cleanupExpiredEvents, 5 * 60 * 1000);
+// REMOVED: Automatic cleanup interval to eliminate polling mechanism
+// Cleanup now triggered manually when needed or on specific events
+// Original: const cleanupInterval = setInterval(cleanupExpiredEvents, 5 * 60 * 1000);
 
-// Handle process shutdown
-process.on('SIGTERM', () => {
-  clearInterval(cleanupInterval);
-});
+// Manual cleanup function available for event-driven cleanup
+export function triggerManualCleanup() {
+  cleanupExpiredEvents();
+}
 
 export default {
   cacheFormEvent,
   getRecentFormEvents,
-  cleanupExpiredEvents
+  cleanupExpiredEvents,
+  triggerManualCleanup
 };

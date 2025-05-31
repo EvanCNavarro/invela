@@ -172,40 +172,9 @@ class NeonConnectionManager {
       clearInterval(this.healthCheckTimer);
     }
     
-    // Skip health monitoring if interval is disabled (set to 0)
-    if (HEALTH_CHECK_INTERVAL_MS <= 0) {
-      logger.info('Health check monitoring disabled');
-      return;
-    }
-    
-    this.healthCheckTimer = setInterval(async () => {
-      logger.debug('Running connection health check');
-      
-      try {
-        // Skip health check if we're already in a rate-limited state
-        if (this.rateLimitDetected) {
-          logger.info('Skipping health check - rate limited');
-          return;
-        }
-        
-        const isHealthy = await this.testConnection();
-        
-        if (isHealthy) {
-          this.consecutiveFailures = 0;
-          logger.debug('Health check passed');
-        } else {
-          this.consecutiveFailures++;
-          logger.warn(`Health check failed (${this.consecutiveFailures}/${MAX_FAILED_HEALTH_CHECKS})`);
-          
-          if (this.consecutiveFailures >= MAX_FAILED_HEALTH_CHECKS) {
-            logger.error('Too many failed health checks, recreating pool');
-            await this.recreatePool();
-          }
-        }
-      } catch (error) {
-        logger.error('Error in health check:', error);
-      }
-    }, HEALTH_CHECK_INTERVAL_MS);
+    // REMOVED: Health check timer to eliminate polling mechanism
+    // Health checks disabled to achieve pure event-driven architecture
+    connLogger.info('Health check monitoring disabled - using event-driven monitoring only');
   }
   
   /**
