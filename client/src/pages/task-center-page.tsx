@@ -75,26 +75,11 @@ export default function TaskCenterPage() {
   
   const taskTimestampRef = useRef<Record<number, number>>({});
 
-  const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
-    queryKey: ["/api/tasks"],
-    staleTime: Infinity, // Cache forever - only update via WebSocket invalidation
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-    select: (data) => {
-      const now = Date.now();
-      data.forEach(task => {
-        taskTimestampRef.current[task.id] = now;
-      });
-      return data;
-    }
-  });
-
-  const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
-    queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000,
-  });
+  // WebSocket-only data state - NO HTTP polling
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [isTasksLoading, setIsTasksLoading] = useState(true);
+  const [isCompanyLoading, setIsCompanyLoading] = useState(true);
 
   const isCompanyOnboarded = currentCompany?.onboarding_company_completed ?? false;
   const isLoading = isTasksLoading || isCompanyLoading;
@@ -111,11 +96,43 @@ export default function TaskCenterPage() {
       
       const subscriptions: (() => void)[] = [];
       
-      // Subscribe to task updates
+      // Subscribe to initial data broadcast (replaces HTTP GET /api/tasks)
+      const unsubInitialData = subscribe('initial_data', (data: any) => {
+        console.log('[TaskCenter] Received initial data broadcast:', data);
+        if (data.tasks) {
+          setTasks(data.tasks);
+          setIsTasksLoading(false);
+          const now = Date.now();
+          data.tasks.forEach(task => {
+            taskTimestampRef.current[task.id] = now;
+          });
+        }
+        if (data.company) {
+          setCurrentCompany(data.company);
+          setIsCompanyLoading(false);
+        }
+      });
+
+      // Subscribe to task data updates (replaces HTTP polling)
+      const unsubTaskData = subscribe('task_data', (data: any) => {
+        console.log('[TaskCenter] Received task data update:', data);
+        setTasks(data);
+        const now = Date.now();
+        data.forEach(task => {
+          taskTimestampRef.current[task.id] = now;
+        });
+      });
+
+      // Subscribe to company data updates (replaces HTTP company polling)
+      const unsubCompanyData = subscribe('company_data', (data: any) => {
+        console.log('[TaskCenter] Received company data update:', data);
+        setCurrentCompany(data);
+      });
+
+      // Subscribe to individual task updates
       const unsubTaskUpdate = subscribe('task_update', (data: any) => {
         console.log('[TaskCenter] Unified task update received:', data);
         
-        // Check for task data in both root level and payload
         const taskData = data?.payload || data;
         const taskId = taskData?.taskId || taskData?.id || data?.taskId || data?.id;
         
@@ -133,12 +150,16 @@ export default function TaskCenterPage() {
         
         if (!prevTimestamp || serverTimestamp >= prevTimestamp) {
           taskTimestampRef.current[taskId] = serverTimestamp;
-          // REMOVED: Automatic query invalidation - using manual updates only for true event-driven architecture
-          // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          // Update tasks state directly - NO HTTP refetch
+          setTasks(prevTasks => 
+            prevTasks.map(task => 
+              task.id === taskId ? { ...task, ...taskData } : task
+            )
+          );
         }
       });
       
-      subscriptions.push(unsubTaskUpdate);
+      subscriptions.push(unsubInitialData, unsubTaskData, unsubCompanyData, unsubTaskUpdate);
       
       // Subscribe to test notifications
       const unsubTestNotification = subscribe('task_test_notification', (data: any) => {
