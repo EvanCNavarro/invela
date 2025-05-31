@@ -1,0 +1,174 @@
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: file-vault
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for file-vault: 
+Object {exists: true, completed: true, currentStep: 1, lastSeenAt: "2025-05-31T08:29:54.150Z", completedAt: "2025-05-30T19:33:40.562Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=1, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileVault Debug] API Response received: 
+Object {responseData: {…}, responseStructure: Array(2), fileCount: 5, firstFile: {…}, pagination: {…}, …}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(0), fetchedFiles: Array(5), combinedFiles: Array(5)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(5), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 5, result: Array(5)}
+[FileVault Debug] Using server pagination - displaying full API response: 
+Object {page: 1, totalItems: 12, itemsPerPage: 5, serverReturnedFiles: 5, displayedFiles: 5}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[FileTable Debug] Component mounted/updated: 
+Object {dataLength: 5, firstItem: {…}, selectedItemsCount: 0, isLoading: false}
+[FileVault Debug] Component state updated: 
+Object {hasFiles: true, isLoading: false, serverPagination: {…}, userContext: {…}, timestamp: "2025-05-31T08:51:03.645Z"}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[FileVault Debug] Using server pagination - displaying full API response: 
+Object {page: 2, totalItems: 12, itemsPerPage: 5, serverReturnedFiles: 5, displayedFiles: 5}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[FileVault Debug] Cleaned up WebSocket listener for file vault updates
+[FileVault Debug] Starting API request: 
+Object {userId: 536, companyId: 755, page: 2, pageSize: 5, timestamp: "2025-05-31T08:51:14.574Z"}
+[FileVault Debug] Setting up unified WebSocket listener for file vault updates
+[FileVault Debug] Subscribing to file_vault_update events
+[FileVault Debug] Subscription result: () => {
+      handlers.delete(handler);
+      if (handlers.size === 0) {
+        this.subscribers.delete(messageType);
+      }
+    }
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[FileVault Debug] API Response received: 
+Object {responseData: {…}, responseStructure: Array(2), fileCount: 5, firstFile: {…}, pagination: {…}, …}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(0), fetchedFiles: Array(5), combinedFiles: Array(5)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(5), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 5, result: Array(5)}
+[FileVault Debug] Using server pagination - displaying full API response: 
+Object {page: 2, totalItems: 12, itemsPerPage: 5, serverReturnedFiles: 5, displayedFiles: 5}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1028", name: "1_SOC_2_Questions.csv", size: 4139, status: "uploaded", createdAt: "2025-05-30T17:51:17.465Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1027", name: "1_SOC_2_Questions.csv", size: 4139, status: "uploaded", createdAt: "2025-05-30T17:24:34.303Z", …}
