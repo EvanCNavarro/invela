@@ -105,12 +105,16 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       });
     }
     
-    // Log batch update request for monitoring
-    console.log(`[KY3P API] Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
+    // DEBUGGING: Log batch update request with caller information to find persistent timer
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const referer = req.headers.referer || 'unknown';
+    const timestamp = new Date().toISOString();
+    console.log(`[TIMER DEBUG] [KY3P API] Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
+    console.log(`[TIMER DEBUG] Headers - User-Agent: ${userAgent}`);
+    console.log(`[TIMER DEBUG] Headers - Referer: ${referer}`);
+    console.log(`[TIMER DEBUG] Timestamp: ${timestamp}`);
     
     // Check if this is a legitimate update or artificial polling
-    const userAgent = req.headers['user-agent'] || '';
-    const referer = req.headers.referer || '';
     const isFromForm = referer.includes('/task-center/task/');
     
     if (!isFromForm) {
