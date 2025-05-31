@@ -142,17 +142,17 @@ export function TopNav() {
               <PopoverContent 
                 id="invela-popover"
                 className="w-48 p-0 shadow-lg border border-gray-200" 
-                align="end"
+                align="center"
                 sideOffset={8}
                 onOpenAutoFocus={(event) => event.preventDefault()}
               >
                 <div className="p-3">
                   <button
                     onClick={() => window.open('https://invela.com', '_blank')}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group"
                     aria-label="Visit Invela website in a new tab"
                   >
-                    <span>Visit invela.com</span>
+                    <span className="group-hover:underline">Visit Invela.com</span>
                     <ExternalLinkIcon className="h-4 w-4" />
                   </button>
                 </div>
