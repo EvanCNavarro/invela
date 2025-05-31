@@ -114,7 +114,7 @@ export function Sidebar({
       unsubTaskData();
       unsubTaskUpdate();
     };
-  }, [subscribe]);
+  }, []);
 
   // Enhanced monitoring of availableTabs
   useEffect(() => {
@@ -327,7 +327,7 @@ export function Sidebar({
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
-        const unsubTaskUpdate = subscribe('task_updated', handleTaskCountUpdate);
+        const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', handleTaskCountUpdate);
         subscriptions.push(unsubTaskUpdate);
         
         // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
@@ -376,19 +376,19 @@ export function Sidebar({
         };
         
         // Subscribe to company tabs updates - both event names for compatibility
-        const unsubCompanyTabsUpdate = subscribe('company_tabs_update', (data: any) => {
+        const unsubCompanyTabsUpdate = unifiedWebSocketService.subscribe('company_tabs_update', (data: any) => {
           handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
-        const unsubCompanyTabsUpdated = subscribe('company_tabs_updated', (data: any) => {
+        const unsubCompanyTabsUpdated = unifiedWebSocketService.subscribe('company_tabs_updated', (data: any) => {
           handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
         // Listen for form submission events that may affect tab access
-        const unsubFormSubmitted = subscribe('form_submitted', (data: any) => {
+        const unsubFormSubmitted = unifiedWebSocketService.subscribe('form_submitted', (data: any) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
           // Only process events for our company

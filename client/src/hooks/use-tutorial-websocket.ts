@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { useUnifiedWebSocket } from './use-unified-websocket';
+import { unifiedWebSocketService } from '@/services/websocket-unified';
 
 // Create a dedicated logger for the WebSocket component
 const logger = createTutorialLogger('TutorialWebSocket');
@@ -28,7 +28,7 @@ interface TutorialUpdate {
  */
 export function useTutorialWebSocket(tabName: string) {
   const [tutorialUpdate, setTutorialUpdate] = useState<TutorialUpdate | null>(null);
-  const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
   
   // Normalize tab name for comparison using the shared function
   const normalizeTabName = (inputTabName: string): string => {
@@ -69,9 +69,21 @@ export function useTutorialWebSocket(tabName: string) {
   
   // Subscribe to WebSocket events using unified service
   useEffect(() => {
+    // Connect to WebSocket service
+    unifiedWebSocketService.connect().then(() => {
+      setIsConnected(true);
+    }).catch(console.error);
+    
+    // Subscribe to connection status
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected || false);
+    });
+    
     if (!isConnected) {
       logger.info(`App WebSocket not available, using event bridge only`);
-      return;
+      return () => {
+        unsubscribeConnection();
+      };
     }
 
     logger.info(`Setting up WebSocket listener for ${normalizedTabName}`);
@@ -109,16 +121,17 @@ export function useTutorialWebSocket(tabName: string) {
     };
     
     // Subscribe to tutorial updates using unified WebSocket service
-    const unsubscribeHandler = subscribe('tutorial_updated', handleTutorialUpdate);
+    const unsubscribeHandler = unifiedWebSocketService.subscribe('tutorial_updated', handleTutorialUpdate);
     
     // Clean up subscription
     return () => {
       if (unsubscribeHandler) {
-        unsubscribe('tutorial_updated', handleTutorialUpdate);
+        unsubscribeHandler();
       }
+      unsubscribeConnection();
       logger.info(`Cleaned up WebSocket listener for ${normalizedTabName}`);
     };
-  }, [normalizedTabName, isConnected, subscribe, unsubscribe]);
+  }, [normalizedTabName, isConnected]);
   
   return {
     tutorialUpdate
