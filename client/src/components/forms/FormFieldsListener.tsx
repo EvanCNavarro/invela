@@ -72,16 +72,28 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
   onFieldsCleared,
   showToasts = true
 }) => {
-  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = React.useState(false);
   const queryClient = useQueryClient();
   const handleMessageRef = useRef<(() => void) | null>(null);
   const listenerInfoRef = useRef({ taskId, formType });
   const hasSetupListenerRef = useRef(false);
 
   useEffect(() => {
+    // Connect to WebSocket service
+    unifiedWebSocketService.connect().then(() => {
+      setIsConnected(true);
+    }).catch(console.error);
+    
+    // Subscribe to connection status
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected || false);
+    });
+    
     // We need an active connection for unified WebSocket
     if (!isConnected) {
-      return;
+      return () => {
+        unsubscribeConnection();
+      };
     }
 
     // Skip if we've already set up a listener for this task/form
@@ -287,8 +299,8 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
     hasSetupListenerRef.current = true;
     
     // Subscribe to both message types using unified WebSocket
-    const unsubscribeFormFields = subscribe('form_fields', handleMessage);
-    const unsubscribeClearFields = subscribe('clear_fields', handleMessage);
+    const unsubscribeFormFields = unifiedWebSocketService.subscribe('form_fields', handleMessage);
+    const unsubscribeClearFields = unifiedWebSocketService.subscribe('clear_fields', handleMessage);
     
     // Store unsubscribe function for cleanup
     handleMessageRef.current = () => {
@@ -313,7 +325,7 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         }
       }
     };
-  }, [isConnected, taskId, formType, onFieldsCleared, showToasts, subscribe]);
+  }, [isConnected, taskId, formType, onFieldsCleared, showToasts]);
 
   return null; // This component doesn't render anything
 };
