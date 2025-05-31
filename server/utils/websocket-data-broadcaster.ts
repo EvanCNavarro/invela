@@ -35,11 +35,19 @@ export async function broadcastInitialData(userId: number, companyId: number, cl
       return;
     }
 
+    // Determine available tabs based on company's onboarding status
+    const availableTabs = [];
+    if (company.onboarding_company_completed) {
+      availableTabs.push('file-vault');
+    }
+    availableTabs.push('task-center'); // Always available
+
     // Send initial data payload
     broadcast('initial_data', {
       company: {
         id: company.id,
         name: company.name,
+        available_tabs: availableTabs,
         onboarding_company_completed: company.onboarding_company_completed || false,
         risk_score: company.risk_score,
         chosen_score: company.chosen_score,
@@ -52,7 +60,7 @@ export async function broadcastInitialData(userId: number, companyId: number, cl
         email: user.email,
         company_id: user.company_id
       }
-    }, { userId, companyId });
+    }, (client) => client.userId === userId && client.companyId === companyId);
 
     broadcastLogger.info('Initial data broadcast completed', { userId, companyId });
 
@@ -75,15 +83,23 @@ export async function broadcastCompanyUpdate(companyId: number) {
       return;
     }
 
+    // Determine available tabs based on company's onboarding status
+    const availableTabs = [];
+    if (company.onboarding_company_completed) {
+      availableTabs.push('file-vault');
+    }
+    availableTabs.push('task-center'); // Always available
+
     broadcast('company_data', {
       id: company.id,
       name: company.name,
+      available_tabs: availableTabs,
       onboarding_company_completed: company.onboarding_company_completed || false,
       risk_score: company.risk_score,
       chosen_score: company.chosen_score,
       category: company.category,
       is_demo: company.is_demo || false
-    }, { companyId });
+    }, (client) => client.companyId === companyId);
 
     broadcastLogger.info('Company data broadcast completed', { companyId });
 
@@ -103,7 +119,7 @@ export async function broadcastTaskUpdate(companyId: number, taskId?: number) {
         : eq(tasks.company_id, companyId)
     });
 
-    broadcast('task_data', userTasks, { companyId });
+    broadcast('task_data', userTasks, (client) => client.companyId === companyId);
 
     broadcastLogger.info('Task data broadcast completed', { companyId, taskId });
 
