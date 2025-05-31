@@ -26,8 +26,8 @@ const MAX_RATE_LIMIT_RETRIES = 10;
 const MIN_BACKOFF_MS = 1000;
 const MAX_BACKOFF_MS = 30000;
 
-// Connection health monitoring
-const HEALTH_CHECK_INTERVAL_MS = 60000; // 1 minute
+// Connection health monitoring - DISABLED to eliminate 60-second timer
+const HEALTH_CHECK_INTERVAL_MS = 0; // DISABLED - was causing persistent 60-second batch update calls
 const MAX_FAILED_HEALTH_CHECKS = 3;
 
 // Circuit breaker settings
@@ -170,6 +170,12 @@ class NeonConnectionManager {
   private startHealthMonitoring(): void {
     if (this.healthCheckTimer) {
       clearInterval(this.healthCheckTimer);
+    }
+    
+    // Skip health monitoring if interval is disabled (set to 0)
+    if (HEALTH_CHECK_INTERVAL_MS <= 0) {
+      logger.info('Health check monitoring disabled');
+      return;
     }
     
     this.healthCheckTimer = setInterval(async () => {
