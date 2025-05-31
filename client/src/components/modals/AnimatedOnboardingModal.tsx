@@ -627,10 +627,14 @@ export function AnimatedOnboardingModal({
       return 'blue';
     }
     
-    // Yellow: has been focused before, touched, but incomplete
+    // Yellow: has been focused before, touched, but incomplete (only if at least one field has content)
     if (state.hasBeenFocused && state.touched && (!state.nameComplete || !state.emailComplete)) {
-      logDebug(`Block state: YELLOW for ${role}`, { hasBeenFocused: state.hasBeenFocused, touched: state.touched, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
-      return 'yellow';
+      // Only show yellow if user has started filling (at least one field has content)
+      const hasAnyContent = state.nameComplete || state.emailComplete;
+      if (hasAnyContent) {
+        logDebug(`Block state: YELLOW for ${role}`, { hasBeenFocused: state.hasBeenFocused, touched: state.touched, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
+        return 'yellow';
+      }
     }
     
     // Gray: default state (not touched or not focused yet)
@@ -641,7 +645,7 @@ export function AnimatedOnboardingModal({
   // Get CSS classes for block based on color state
   const getBlockClasses = (role: string): string => {
     const colorState = getBlockColorState(role);
-    const baseClasses = "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500";
+    const baseClasses = "p-5 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-200";
     
     switch (colorState) {
       case 'green':
@@ -653,6 +657,24 @@ export function AnimatedOnboardingModal({
       case 'gray':
       default:
         return `${baseClasses} bg-gray-50 border-gray-200`;
+    }
+  };
+
+  // Get CSS classes for role chip based on validation state
+  const getChipClasses = (role: string): string => {
+    const colorState = getBlockColorState(role);
+    const baseClasses = "py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border transition-all duration-200";
+    
+    switch (colorState) {
+      case 'green':
+        return `${baseClasses} bg-green-100 text-green-700 border-green-200`;
+      case 'blue':
+        return `${baseClasses} bg-blue-100 text-blue-700 border-blue-200`;
+      case 'yellow':
+        return `${baseClasses} bg-yellow-100 text-yellow-700 border-yellow-200`;
+      case 'gray':
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-700 border-gray-200`;
     }
   };
   
@@ -1131,8 +1153,8 @@ export function AnimatedOnboardingModal({
           >
             <div className="mt-0 space-y-4">
               <div className={getBlockClasses('CFO')}>
-                <div className="flex items-center mb-3">
-                  <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
+                <div className="flex items-center mb-2">
+                  <div className={getChipClasses('CFO')}>
                     CFO
                   </div>
                   <span className="text-sm">Financial Data for</span>
@@ -1181,8 +1203,8 @@ export function AnimatedOnboardingModal({
               </div>
               
               <div className={getBlockClasses('CISO')}>
-                <div className="flex items-center mb-3">
-                  <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
+                <div className="flex items-center mb-2">
+                  <div className={getChipClasses('CISO')}>
                     CISO
                   </div>
                   <div>
