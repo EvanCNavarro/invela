@@ -547,6 +547,12 @@ export default function App(): JSX.Element {
       setStartupPhase('services');
       
       try {
+        // CRITICAL: Clear all cached service instances to eliminate persistent timers
+        // This prevents the 60-second timer from cached KY3P service instances
+        logger.info('Clearing cached service instances to eliminate persistent timers');
+        const { emergencyServiceReset } = await import('@/utils/clear-cached-services');
+        emergencyServiceReset();
+        
         // KISS: Use only one service registration system to avoid conflicts
         // This is a critical fix to prevent double registration of services
         logger.info('Initializing unified service registration');
