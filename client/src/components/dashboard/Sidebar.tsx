@@ -188,7 +188,7 @@ export function Sidebar({
           {/* Dashboard tab */}
           {(hasDashboard || isPlayground) && (
             <SidebarTab
-              to="/"
+              href="/"
               icon={HomeIcon}
               label="Dashboard"
               isActive={location === "/"}
@@ -201,7 +201,7 @@ export function Sidebar({
           {/* Task Center tab */}
           {(hasTaskCenter || isPlayground) && (
             <SidebarTab
-              to="/task-center"
+              href="/task-center"
               icon={CheckCircleIcon}
               label="Task Center"
               isActive={location.startsWith("/task-center")}
@@ -213,7 +213,7 @@ export function Sidebar({
           {/* File Vault tab - only show if company has it unlocked or it's playground */}
           {(hasFileVault || isPlayground) && (isFileVaultUnlocked || isPlayground) && (
             <SidebarTab
-              to="/file-vault"
+              href="/file-vault"
               icon={FileIcon}
               label="File Vault"
               isActive={location.startsWith("/file-vault")}
@@ -226,14 +226,14 @@ export function Sidebar({
             <>
               <Separator className="my-2" />
               <SidebarTab
-                to="/network"
+                href="/network"
                 icon={Network}
                 label="Network"
                 isActive={location === "/network"}
                 isExpanded={isExpanded}
               />
               <SidebarTab
-                to="/analytics"
+                href="/analytics"
                 icon={BarChartIcon}
                 label="Analytics"
                 isActive={location === "/analytics"}
@@ -253,14 +253,14 @@ export function Sidebar({
                 {isExpanded ? "Playground" : "P"}
               </div>
               <SidebarTab
-                to="/playground/cursor"
+                href="/playground/cursor"
                 icon={MousePointer2Icon}
                 label="Cursor"
                 isActive={location === "/playground/cursor"}
                 isExpanded={isExpanded}
               />
               <SidebarTab
-                to="/playground/utility"
+                href="/playground/utility"
                 icon={Hammer}
                 label="Utility"
                 isActive={location === "/playground/utility"}
