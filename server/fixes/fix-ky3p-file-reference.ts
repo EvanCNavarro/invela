@@ -12,7 +12,7 @@
 import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import * as WebSocketService from '../utils/unified-websocket';
+import * as WebSocketService from '../services/websocket';
 
 /**
  * Log with timestamp for better tracking

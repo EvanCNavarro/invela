@@ -10,7 +10,7 @@ import { eq, and } from 'drizzle-orm';
 import { db, pool } from '@db';
 import { openBankingResponses, tasks, TaskStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
+import { broadcastTaskUpdate } from '../services/websocket';
 
 const router = Router();
 

@@ -301,9 +301,7 @@ class BatchUpdateManagerImpl<T = any> {
    * @param initialValues Optional initial values to populate the queue with
    */
   constructor(delay = 1500, initialValues?: Record<string, T>) {
-    // COMPLETELY DISABLED: Set delay to Infinity to disable automatic batch processing
-    // This eliminates the persistent 60-second timer causing artificial polling
-    this._delay = Infinity;
+    this._delay = delay;
     
     // Initialize with any provided values
     if (initialValues) {
@@ -359,12 +357,15 @@ class BatchUpdateManagerImpl<T = any> {
     if (immediate) {
       this.processQueue();
     } else {
-      // COMPLETELY DISABLED: Never create automatic timers to eliminate persistent polling
-      // This prevents the 60-second timer that was causing artificial API calls every minute
-      // All batch processing must now be triggered manually via processQueue() calls
-      // This ensures genuine event-driven architecture without artificial timers
+      // Only set a new timeout if one doesn't exist
+      // This ensures we accumulate as many updates as possible
+      // before processing, which is more efficient
+      if (this.timeout === null) {
+        this.timeout = window.setTimeout(() => this.processQueue(), this._delay);
+      }
       
-      // Timer creation is completely disabled - no automatic batch processing
+      // Don't reset timeout for each update - let it accumulate updates
+      // until the timeout fires
     }
     
     performanceMonitor.endTimer('batchUpdate_add');

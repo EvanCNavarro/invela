@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { unifiedWebSocketService } from '@/services/websocket-unified';
+import FormSubmissionService from '@/services/form-submission-service';
 
 export default function FormSubmissionWorkflowPage() {
   // Form state
@@ -47,22 +47,6 @@ export default function FormSubmissionWorkflowPage() {
   const [submissionComplete, setSubmissionComplete] = useState<boolean>(false);
   const [lastEvent, setLastEvent] = useState<FormSubmissionEvent | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
-  
-  // Unified WebSocket integration
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // Monitor WebSocket connection status
-  useEffect(() => {
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    // Listen for connection state changes
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
   
   // Reset form to initial state
   const resetForm = useCallback(() => {
@@ -108,26 +92,13 @@ export default function FormSubmissionWorkflowPage() {
         explicitSubmission: true
       };
       
-      // Submit form via standard API endpoint
-      const response = await fetch(`/api/${formType}/submit/${taskId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          fileName: `${formType}_submission_${taskId}_${Date.now()}.json`,
-          formData: submissionData,
-          taskId,
-          explicitSubmission: true
-        })
+      // Use the form submission service to submit the form
+      await FormSubmissionService.submitFormWithWebSocketUpdates({
+        taskId,
+        formType,
+        companyId,
+        formData: submissionData
       });
-
-      if (!response.ok) {
-        throw new Error(`Submission failed: ${response.statusText}`);
-      }
-
-      const result = await response.json();
       
       // Note: We don't need to manually update UI state here as the WebSocket events
       // will trigger the appropriate state changes via FormSubmissionListener

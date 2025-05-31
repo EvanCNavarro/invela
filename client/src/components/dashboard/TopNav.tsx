@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchBar } from "@/components/ui/search-bar";
 // WebSocket functionality is still maintained but the icon has been removed
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { useWebSocketContext } from "@/providers/websocket-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,

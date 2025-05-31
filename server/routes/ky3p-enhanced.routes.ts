@@ -54,16 +54,15 @@ async function updateTaskProgress(taskId: number): Promise<number> {
     
     console.log(`[KY3P] Task ${taskId} progress updated: ${progressPercent}% (${completed}/${total} fields complete)`);
     
-    // Broadcast the update using the unified websocket system
+    // Broadcast the update using the websocket
     try {
-      const { broadcastTaskUpdate } = await import('../utils/unified-websocket');
+      const { broadcastTaskUpdate } = await import('../services/websocket-enhanced.service');
       const status = progressPercent === 0 ? 'not_started' : 
                     progressPercent === 100 ? 'ready_for_submission' : 
                     'in_progress';
         
       broadcastTaskUpdate({
         id: taskId,
-        taskId: taskId, // Include both formats for compatibility
         status,
         progress: progressPercent,
         metadata: {
@@ -105,26 +104,8 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       });
     }
     
-    // DEBUGGING: Log batch update request with caller information to find persistent timer
-    const userAgent = req.headers['user-agent'] || 'unknown';
-    const referer = req.headers.referer || 'unknown';
-    const timestamp = new Date().toISOString();
-    console.log(`[TIMER DEBUG] [KY3P API] Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
-    console.log(`[TIMER DEBUG] Headers - User-Agent: ${userAgent}`);
-    console.log(`[TIMER DEBUG] Headers - Referer: ${referer}`);
-    console.log(`[TIMER DEBUG] Timestamp: ${timestamp}`);
-    
-    // Check if this is a legitimate update or artificial polling
-    const isFromForm = referer.includes('/task-center/task/');
-    
-    if (!isFromForm) {
-      console.log(`[KY3P API] Rejecting batch update - not from task form page`);
-      return res.status(400).json({
-        success: false,
-        message: 'Batch updates only allowed from task form pages',
-        processedCount: 0
-      });
-    }
+    // Log the request details
+    console.log(`[KY3P API] Received batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
     
     // Get all fields for field type validation and ID mapping
     const fields = await db.select().from(ky3pFields);

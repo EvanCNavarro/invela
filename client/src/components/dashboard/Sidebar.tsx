@@ -20,15 +20,8 @@ import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
-
-// Task type definition
-interface Task {
-  id: number;
-  title: string;
-  status: string;
-  progress: number;
-}
+import { wsService } from "@/lib/websocket";
+import { TaskCountData, CompanyTabsUpdateEvent, FormSubmittedEvent, SidebarRefreshEvent } from "@/lib/websocket-types";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -58,20 +51,6 @@ export function Sidebar({
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
   const queryClient = useQueryClient();
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // Monitor WebSocket connection status
-  useEffect(() => {
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    // Listen for connection state changes
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
   
   // Get current company data
   const { data: company } = useQuery<{ id: number; name: string; available_tabs?: string[] }>({
@@ -79,42 +58,11 @@ export function Sidebar({
     enabled: !isPlayground
   });
 
-  // WebSocket-only data state - NO HTTP polling
-  const [tasks, setTasks] = useState<Task[]>([]);
-  
-  useEffect(() => {
-    // Connect and subscribe to initial data
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    const unsubInitialData = unifiedWebSocketService.subscribe('initial_data', (data) => {
-      if (data.tasks) {
-        setTasks(data.tasks);
-      }
-    });
-
-    // Subscribe to task data updates
-    const unsubTaskData = unifiedWebSocketService.subscribe('task_data', (data) => {
-      setTasks(data);
-    });
-
-    // Subscribe to individual task updates
-    const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', (data) => {
-      const taskId = data?.taskId || data?.id;
-      if (taskId) {
-        setTasks(prevTasks => 
-          prevTasks.map(task => 
-            task.id === taskId ? { ...task, ...data } : task
-          )
-        );
-      }
-    });
-
-    return () => {
-      unsubInitialData();
-      unsubTaskData();
-      unsubTaskUpdate();
-    };
-  }, []);
+  // Only fetch real data if not in playground mode
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["/api/tasks"],
+    enabled: !isPlayground,
+  });
 
   // Enhanced monitoring of availableTabs
   useEffect(() => {
@@ -139,7 +87,7 @@ export function Sidebar({
     if (!company?.id) return;
     
     // Define handler for company tabs updates from WebSocket
-    const handleTabsUpdate = (data: any) => {
+    const handleTabsUpdate = (data: CompanyTabsUpdateEvent['payload']) => {
       console.log('[Sidebar] 🔔 WebSocket company_tabs_update received:', data);
       
       // Only process if it's for our company
@@ -153,7 +101,7 @@ export function Sidebar({
     };
     
     // Define handler for special immediate sidebar refresh event
-    const handleSidebarRefresh = (data: any) => {
+    const handleSidebarRefresh = (data: SidebarRefreshEvent['payload']) => {
       console.log('[Sidebar] 🚀 WebSocket sidebar_refresh_tabs received:', data);
       
       // This is a critical path for IMMEDIATE visual updates
@@ -170,19 +118,25 @@ export function Sidebar({
     // Create an array to hold all the unsubscribe functions
     const unsubscribeFunctions: Array<() => void> = [];
     
-    // Subscribe to the company_tabs_update event using unified WebSocket
-    const unsubCompanyTabsUpdate = unifiedWebSocketService.subscribe('company_tabs_update', handleTabsUpdate);
-    unsubscribeFunctions.push(unsubCompanyTabsUpdate);
+    // Subscribe to the company_tabs_update event
+    wsService.subscribe('company_tabs_update', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_update:', err));
     
     // Subscribe to the company_tabs_updated event (alternative format)
-    const unsubCompanyTabsUpdated = unifiedWebSocketService.subscribe('company_tabs_updated', handleTabsUpdate);
-    unsubscribeFunctions.push(unsubCompanyTabsUpdated);
+    wsService.subscribe('company_tabs_updated', handleTabsUpdate)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to company_tabs_updated:', err));
     
     // Subscribe to the sidebar_refresh_tabs event
-    const unsubSidebarRefresh = unifiedWebSocketService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
-    unsubscribeFunctions.push(unsubSidebarRefresh);
+    wsService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh)
+      .then(unsubscribe => unsubscribeFunctions.push(unsubscribe))
+      .catch(err => console.error('[Sidebar] Failed to subscribe to sidebar_refresh_tabs:', err));
     
-    // Real-time tab updates handled by WebSocket events, no polling needed
+    // Start polling more frequently when we know an update might be coming
+    const intervalId = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
+    }, 3000); // Check every 3 seconds instead of 10 seconds
     
     return () => {
       // Unsubscribe from all WebSocket subscriptions
@@ -194,7 +148,8 @@ export function Sidebar({
         }
       });
       
-      // No polling intervals to clear - using real-time WebSocket events only
+      // Clear the polling interval
+      clearInterval(intervalId);
     };
   }, [company?.id, queryClient]);
   
@@ -279,35 +234,28 @@ export function Sidebar({
          * 
          * @param {TaskCountData} data - The task count data from WebSocket
          */
-        const handleTaskCountUpdate = (data: any) => {
+        const handleTaskCountUpdate = (data: TaskCountData) => {
+          // Safe logging with explicit type checking to aid debugging
+          console.log(`[Sidebar] Processing task update event:`, {
+            hasCountObject: !!data?.count,
+            taskId: data?.taskId,
+            companyId: data?.companyId,
+            receivedAt: new Date().toISOString(),
+          });
+          
           try {
-            // OPTIMIZATION: Only process updates for our current company
-            const currentCompanyId = company?.id;
-            const updateCompanyId = data?.companyId || data?.context?.companyId;
-            
-            // Early exit if not for our company - this prevents unnecessary processing
-            if (currentCompanyId && updateCompanyId && currentCompanyId !== updateCompanyId) {
-              return; // Skip processing updates for other companies
-            }
-            
-            // Only log relevant updates to reduce console noise
-            if (data?.count?.total !== undefined || updateCompanyId === currentCompanyId) {
-              console.log(`[Sidebar] Processing relevant task update:`, {
-                hasCountObject: !!data?.count,
-                taskId: data?.taskId,
-                companyId: updateCompanyId,
-                relevantToCurrentCompany: updateCompanyId === currentCompanyId,
-                receivedAt: new Date().toISOString(),
-              });
-            }
-            
-            // Update task count if valid count data provided
+            // FIXED: Add robust null/undefined checking for the count property
+            // Only update task count state if we have valid count data
             if (data?.count?.total !== undefined) {
               console.log(`[Sidebar] Updating task count to: ${data.count.total}`);
               setTaskCount(data.count.total);
             }
             
-            // Invalidate queries only for relevant company updates to avoid unnecessary API calls
+            // FIXED: Add proper defensive checks for company-specific updates
+            // Check if this update is relevant to our current company context
+            const currentCompanyId = company?.id;
+            const updateCompanyId = data?.companyId;
+            
             if (currentCompanyId && updateCompanyId && currentCompanyId === updateCompanyId) {
               console.log(`[Sidebar] Invalidating tasks query for company ${currentCompanyId}`);
               queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
@@ -318,21 +266,21 @@ export function Sidebar({
           }
         };
         
-        // Subscribe to task creation using unified WebSocket
-        const unsubTaskCreate = unifiedWebSocketService.subscribe('task_created', handleTaskCountUpdate);
+        // Subscribe to task creation
+        const unsubTaskCreate = await wsService.subscribe('task_created', handleTaskCountUpdate);
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
-        const unsubTaskDelete = unifiedWebSocketService.subscribe('task_deleted', handleTaskCountUpdate);
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', handleTaskCountUpdate);
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
-        const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', handleTaskCountUpdate);
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', handleTaskCountUpdate);
         subscriptions.push(unsubTaskUpdate);
         
         // CRITICAL FIX: Enhanced WebSocket handling for sidebar updates
         // This function is shared between both event handlers to ensure consistent behavior
-        const handleCompanyTabsUpdate = (data: any, eventName: string) => {
+        const handleCompanyTabsUpdate = (data: CompanyTabsUpdateEvent['payload'], eventName: string) => {
           console.log(`[Sidebar] Received ${eventName} event:`, data);
           
           // First, check if this is for our company
@@ -376,19 +324,19 @@ export function Sidebar({
         };
         
         // Subscribe to company tabs updates - both event names for compatibility
-        const unsubCompanyTabsUpdate = unifiedWebSocketService.subscribe('company_tabs_update', (data: any) => {
+        const unsubCompanyTabsUpdate = await wsService.subscribe('company_tabs_update', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_update');
         });
         subscriptions.push(unsubCompanyTabsUpdate);
         
         // Also subscribe to the alternative event name
-        const unsubCompanyTabsUpdated = unifiedWebSocketService.subscribe('company_tabs_updated', (data: any) => {
+        const unsubCompanyTabsUpdated = await wsService.subscribe('company_tabs_updated', (data: CompanyTabsUpdateEvent['payload']) => {
           handleCompanyTabsUpdate(data, 'company_tabs_updated');
         });
         subscriptions.push(unsubCompanyTabsUpdated);
         
         // Listen for form submission events that may affect tab access
-        const unsubFormSubmitted = unifiedWebSocketService.subscribe('form_submitted', (data: any) => {
+        const unsubFormSubmitted = await wsService.subscribe('form_submitted', (data: FormSubmittedEvent['payload']) => {
           console.log(`[Sidebar] Received form_submitted event:`, data);
           
           // Only process events for our company

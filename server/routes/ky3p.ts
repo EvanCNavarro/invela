@@ -11,7 +11,7 @@ import { tasks, ky3pFields, ky3pResponses, files, companies } from '@db/schema';
 import { eq, and, or, ilike, sql } from 'drizzle-orm';
 import * as FileCreationService from '../services/fileCreation';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 
 // Logger is already initialized in the imported module
@@ -261,7 +261,7 @@ router.post('/enhanced-submit/:taskId', requireAuth, async (req, res) => {
     }
     
     // Broadcast task update via WebSocket
-    broadcastTaskUpdate(taskId, 'submitted', {
+    WebSocketService.broadcastTaskUpdate(taskId, 'submitted', {
       fileId: fileCreationResult.fileId,
       fileName
     });

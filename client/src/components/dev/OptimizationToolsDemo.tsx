@@ -46,12 +46,9 @@ const OptimizationToolsDemo: React.FC = () => {
     updateMetrics();
     
     // Set up periodic refresh
-    // Disabled automatic polling - use manual refresh only
-    // const interval = setInterval(updateMetrics, 2000);
+    const interval = setInterval(updateMetrics, 2000);
     
-    return () => {
-      // No interval to clear since automatic polling is disabled
-    };
+    return () => clearInterval(interval);
   }, []);
   
   // Update metrics from the performance monitor

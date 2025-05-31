@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { Badge } from "@/components/ui/badge";
@@ -587,18 +587,6 @@ export const OnboardingKYBFormPlayground = ({
   const { toast } = useToast();
   const unifiedToast = useUnifiedToast();
   const queryClient = useQueryClient();
-  const [wsConnected, setWsConnected] = useState(false);
-  
-  useEffect(() => {
-    setWsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setWsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
@@ -988,7 +976,7 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
 
-      await send('task_updated', {
+      await wsService.send('task_updated', {
         taskId,
         progress: result.savedData.progress,
         status: result.savedData.status

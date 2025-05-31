@@ -10,7 +10,7 @@ import { db } from '@db';
 import { eq, and, or } from 'drizzle-orm';
 import { executeWithRetry } from './db-connection-service';
 import { Logger } from './logger';
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
+import { WebSocketService } from '../websocket-server';
 
 const logger = new Logger('EnhancedFormSubmissionHandler');
 
@@ -109,7 +109,7 @@ export async function processSubmission(options: SubmissionOptions): Promise<{
 
     // Broadcast update via WebSocket
     if (broadcastUpdate) {
-      broadcastTaskUpdate({
+      WebSocketService.broadcastTaskUpdate({
         taskId,
         status: 'submitted',
         progress: 100,

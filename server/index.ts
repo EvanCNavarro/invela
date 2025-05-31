@@ -45,7 +45,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
-import { initializeWebSocketServer } from "./utils/unified-websocket";
+import { setupWebSocketServer } from "./websocket-setup";
 // Removed Storybook proxy - using custom component library
 
 // ========================================
@@ -271,7 +271,7 @@ app.use((req, res, next) => {
 // Setup WebSocket server with error handling - using unified implementation
 // Initialize once and store the instance for all modules to access
 // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
-const wssInstance = initializeWebSocketServer(server);
+const wssInstance = setupWebSocketServer(server);
 logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
 // Ensure old-style handlers can still access the WebSocket server
@@ -345,68 +345,73 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 // Import deployment helpers for port and host configuration
 import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deployment-helpers';
 
+// Import task reconciliation system
+import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
+
 // Early production optimizations - must run before other configurations
 // Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
 import { initializeProductionOptimizations } from './deployment/production-config';
 initializeProductionOptimizations();
 
 // Configure server for proper deployment
-// Use environment-aware configuration for development and production
-const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+// Replit's deployment fix #2: Use dynamic port configuration from environment
+// Best practice: Environment-aware configuration that adapts to deployment context
+// Homogeneous solution: Maintains same forced production approach while enabling flexibility
+const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
 
-// Set appropriate NODE_ENV if not already set
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'development';
-}
+// Set NODE_ENV based on deployment context - prioritize explicit production setting
+process.env.NODE_ENV = 'production';
 
-const PORT = getDeploymentPort();
-const HOST = getDeploymentHost();
+// Replit's recommended dynamic port configuration
+// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+// Fallback ensures Cloud Run compatibility while respecting Replit's deployment environment
+const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 
 // Set environment variable for other components that might need it
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Environment logging for development and deployment
-logger.info(`[ENV] Server will listen on PORT=${PORT} (${process.env.NODE_ENV} mode)`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV}`);
-logger.info(`[ENV] Configuration: ${isDevelopment ? 'Development' : 'Production'} mode`);
+// Simplified deployment logging for Replit's forced configuration approach
+// Best practice: Clear visibility into forced production settings
+logger.info(`[ENV] Server will listen on PORT=${PORT} (forced production mode)`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (forced production)`);
+logger.info(`[ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
 // Import production database setup for deployment readiness
 import { initializeProductionDatabase } from './deployment/database-setup';
 
-// Start the server with immediate port binding
-server.listen(PORT, HOST, () => {
+// Start the server with the standardized configuration and health checks
+server.listen(PORT, HOST, async () => {
   logger.info(`Server running on ${HOST}:${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
   
   // Log additional deployment information
   logDeploymentInfo(PORT, HOST);
   
-  // Initialize background services after server is listening
-  setTimeout(() => {
-    // TEMPORARILY DISABLED: Start the periodic task reconciliation system
-    if (process.env.NODE_ENV !== 'test') {
-      logger.info('TESTING: Periodic task reconciliation system DISABLED to test real-time WebSocket');
-
-      logger.info('Task reconciliation system DISABLED for testing');
-    }
-    
-    // Run startup health checks in the background
-    setTimeout(async () => {
-      try {
-        logger.info('Running background health checks...');
-        const healthChecksPassed = await runStartupChecks();
-        
-        if (healthChecksPassed) {
-          logger.info('All background health checks passed successfully.');
-        } else {
-          logger.warn('Some background health checks failed. Application may encounter database errors.');
-        }
-      } catch (error) {
-        logger.error('Error running background health checks', error);
+  // Start the periodic task reconciliation system directly
+  // Don't wait for health checks to avoid creating more rate limit issues
+  if (process.env.NODE_ENV !== 'test') {
+    logger.info('Starting periodic task reconciliation system...');
+    startPeriodicTaskReconciliation();
+    logger.info('Task reconciliation system initialized successfully');
+  }
+  
+  // Run startup health checks in the background but don't block application startup
+  setTimeout(async () => {
+    try {
+      logger.info('Running background health checks...');
+      const healthChecksPassed = await runStartupChecks();
+      
+      if (healthChecksPassed) {
+        logger.info('All background health checks passed successfully.');
+      } else {
+        logger.warn('Some background health checks failed. Application may encounter database errors.');
       }
-    }, 5000);
-  }, 1000);
+    } catch (error) {
+      logger.error('Error running background health checks', error);
+    }
+  }, 10000); // Delay health checks by 10 seconds to allow rate limits to reset
 });

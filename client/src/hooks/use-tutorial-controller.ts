@@ -28,7 +28,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTabTutorials } from './use-tab-tutorials';
-import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
+import { useTutorialWebSocket } from '@/services/websocket-service';
 import { TutorialStep } from '@/components/tutorial/TabTutorialModal';
 
 interface TutorialControllerProps {
@@ -66,7 +66,7 @@ export function useTutorialController({
   } = useTabTutorials(tabName);
   
   // Connect to WebSocket for real-time tutorial updates
-  const { tutorialUpdate } = useTutorialWebSocket(tabName);
+  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket(tabName);
   
   // Local state
   const [isVisible, setIsVisible] = useState(false);
@@ -82,16 +82,14 @@ export function useTutorialController({
   
   // Handle WebSocket updates
   useEffect(() => {
-    if (tutorialUpdate) {
-      if (tutorialUpdate.currentStep !== undefined) {
-        setCurrentStep(tutorialUpdate.currentStep);
-      }
-      
-      if (tutorialUpdate.completed) {
-        setIsVisible(false);
-      }
+    if (tutorialProgress) {
+      setCurrentStep(tutorialProgress.currentStep);
     }
-  }, [tutorialUpdate]);
+    
+    if (tutorialCompleted) {
+      setIsVisible(false);
+    }
+  }, [tutorialProgress, tutorialCompleted]);
   
   // Get current step data
   const currentStepData = steps[currentStep] || null;

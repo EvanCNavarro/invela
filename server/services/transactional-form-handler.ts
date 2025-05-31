@@ -10,7 +10,7 @@ import { withTransactionContext } from './transaction-manager';
 import { UnifiedTabService } from './unified-tab-service';
 import * as StandardizedFileReference from './standardized-file-reference';
 import * as fileCreationService from './fileCreation';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from './websocket';
 import { 
   sendFormSubmissionSuccess, 
   sendFormSubmissionError, 

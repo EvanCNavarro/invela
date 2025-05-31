@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { useWebSocketContext } from "@/providers/websocket-provider";
 import { WebSocketStatus } from "@/components/websocket-status";
-
+import { WebSocketDemo } from "@/components/websocket-demo";
 import { 
   Card, 
   CardContent, 
@@ -17,18 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function WebSocketPlayground() {
   const { user } = useAuth();
-  const [isConnected, setIsConnected] = useState(false);
-  
-  useEffect(() => {
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
+  const { connect, disconnect, isConnected, status } = useWebSocketContext();
   const [activeTab, setActiveTab] = useState("demo");
 
   return (
@@ -58,7 +47,7 @@ export function WebSocketPlayground() {
                 variant={isConnected ? "default" : "secondary"}
                 className="text-xs"
               >
-                {isConnected ? "CONNECTED" : "DISCONNECTED"}
+                {status.toUpperCase()}
               </Badge>
             </div>
             <div>
@@ -68,10 +57,22 @@ export function WebSocketPlayground() {
               </Badge>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Connection is managed automatically by the unified WebSocket service.
-          </p>
         </CardContent>
+        <CardFooter className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={disconnect}
+            disabled={!isConnected}
+          >
+            Disconnect
+          </Button>
+          <Button 
+            onClick={connect}
+            disabled={isConnected}
+          >
+            Connect
+          </Button>
+        </CardFooter>
       </Card>
 
       <Tabs defaultValue="demo" value={activeTab} onValueChange={setActiveTab}>
@@ -81,20 +82,7 @@ export function WebSocketPlayground() {
         </TabsList>
         
         <TabsContent value="demo" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>WebSocket Demo</CardTitle>
-              <CardDescription>
-                Demo functionality has been consolidated into the unified WebSocket system
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                The WebSocket demo has been removed as part of the unified WebSocket migration. 
-                All real-time features now use the single, efficient unified connection.
-              </p>
-            </CardContent>
-          </Card>
+          <WebSocketDemo />
         </TabsContent>
         
         <TabsContent value="docs" className="space-y-4">
@@ -109,12 +97,12 @@ export function WebSocketPlayground() {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Basic Setup</h3>
                 <pre className="bg-muted p-4 rounded-md overflow-x-auto">
-{`// Import the unified hook
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+{`// Import the hook
+import { useWebSocketContext } from "@/providers/websocket-provider";
 
 // In your component
 function MyComponent() {
-  const { subscribe, send, isConnected } = useUnifiedWebSocket();
+  const { subscribe, send, isConnected } = useWebSocketContext();
   
   useEffect(() => {
     // Subscribe to events

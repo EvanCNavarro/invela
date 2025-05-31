@@ -15,7 +15,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import riskScoreLogger from '@/lib/risk-score-logger';
-// Legacy WebSocket manager import removed - now using unified WebSocket provider
+import wsManager from '../lib/web-socket-manager';
 import { 
   RiskDimension, 
   RiskThresholds,
@@ -193,11 +193,15 @@ export function useRiskScoreData() {
       }
     };
     
-    // WebSocket event listeners now handled by unified provider
-    // Legacy wsManager event listeners removed
+    // Register event listeners
+    const unsubscribers = [
+      wsManager.on('risk_score_update', handleServerUpdate),
+      wsManager.on('risk_priorities_update', handleServerUpdate),
+      wsManager.on('risk_priority_update', handleServerUpdate)
+    ];
     
-    // Cleanup placeholder
-    return () => {};
+    // Cleanup on unmount
+    return () => unsubscribers.forEach(unsubscribe => unsubscribe());
   }, []);
 
   /**

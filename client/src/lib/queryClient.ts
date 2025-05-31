@@ -265,10 +265,10 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     };
   }
   
-  // Company current endpoint - DISABLED for WebSocket-only data flow
+  // Frequently accessed endpoints - moderate caching but ensure updates are reflected for company permissions
   if (urlStr.includes('/api/companies/current')) {
     return {
-      refetchInterval: false,       // DISABLED - using WebSocket data only
+      refetchInterval: 180000,      // 3 minutes - poll more frequently to catch permission changes
       refetchOnWindowFocus: true,   // Fetch when tab becomes active to check for updated permissions
       staleTime: 60000,             // 1 minute - keep data fresh for less time to reflect permission changes
       retry: false,
@@ -278,7 +278,18 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     };
   }
   
-
+  // Tasks endpoint - drastically reduce polling to prevent lag spikes
+  if (urlStr.includes('/api/tasks')) {
+    return {
+      refetchInterval: 600000,      // 10 minutes - drastically reduce polling frequency
+      refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
+      staleTime: 300000,            // 5 minutes - consider data fresh for much longer
+      retry: false,
+      gcTime: 30 * 60 * 1000,       // 30 minutes - garbage collection time (React Query v5)
+      refetchOnReconnect: false,    // Don't refetch on reconnect
+      refetchOnMount: false,        // Don't refetch on mount
+    };
+  }
   
   // KYB fields - aggressive caching since form fields rarely change
   if (urlStr.includes('/api/kyb/fields') || urlStr.includes('/api/form-fields/')) {
@@ -316,7 +327,7 @@ export const queryClient = new QueryClient({
       // These are the global defaults, but individual queries should use getOptimizedQueryOptions
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,          // DISABLED: Prevent artificial 30-second polling that triggers fake updates
+      staleTime: 30000,             // 30 seconds (shorter than previous Infinity)
       retry: false,
     },
     mutations: {

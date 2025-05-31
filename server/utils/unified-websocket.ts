@@ -46,10 +46,7 @@ type InternalMessageType =
   | 'form_submission_completed'
   | 'tabs_updated'
   | 'notification'
-  | 'tutorial_updated'
-  | 'initial_data'
-  | 'company_data'
-  | 'task_data';
+  | 'tutorial_updated';
 
 // Union type that includes all possible message types
 type MessageType = InternalMessageType | AppMessageType;
@@ -82,7 +79,6 @@ interface PongMessage extends WebSocketMessage {
 // Task update message
 interface TaskUpdateMessage extends WebSocketMessage {
   type: 'task_updated';
-  id: number;
   taskId: number;
   message?: string;
   progress?: number;
@@ -159,10 +155,10 @@ type WebSocketPayload =
  * @param server HTTP server instance to attach WebSocket server to
  * @param path Path for the WebSocket server
  */
-export function initializeWebSocketServer(server: Server, path: string = '/ws'): WebSocketServer {
+export function initializeWebSocketServer(server: Server, path: string = '/ws'): void {
   if (wss) {
-    wsLogger.warn('WebSocket server already initialized, returning existing instance');
-    return wss;
+    wsLogger.warn('WebSocket server already initialized, skipping initialization');
+    return;
   }
 
   // Create WebSocket server
@@ -261,8 +257,6 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
       stack: error instanceof Error ? error.stack : undefined
     });
   });
-
-  return wss;
 }
 
 /**
@@ -271,7 +265,7 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
  * @param clientId Client ID
  * @param message Authentication message
  */
-async function handleAuthentication(clientId: string, message: AuthMessage): Promise<void> {
+function handleAuthentication(clientId: string, message: AuthMessage): void {
   const client = clients.get(clientId);
   
   if (!client) {
@@ -300,14 +294,6 @@ async function handleAuthentication(clientId: string, message: AuthMessage): Pro
     timestamp: new Date().toISOString(),
     message: 'Authentication successful'
   }));
-
-  // Broadcast initial data to newly authenticated client
-  try {
-    const { broadcastInitialData } = await import('./websocket-data-broadcaster');
-    await broadcastInitialData(message.userId, message.companyId, clientId);
-  } catch (error) {
-    wsLogger.error('Failed to broadcast initial data on authentication', { error, clientId });
-  }
 }
 
 /**
@@ -331,23 +317,14 @@ export function broadcast<T extends WebSocketPayload>(
   // The individual client connections will have their own readyState
   // which we check before sending messages to each client
   
-  // Create full message with type, timestamp, and properly structured payload
+  // Create full message with type and timestamp
   const message = {
     type,
     timestamp: new Date().toISOString(),
-    payload: payload,
-    // Also spread payload directly for backward compatibility
     ...payload
   };
   
   const messageString = JSON.stringify(message);
-  
-  // Minimal logging for task updates
-  if (type === 'task_update' || type === 'task_updated') {
-    const taskId = message.payload?.taskId || message.taskId;
-    wsLogger.debug(`Broadcasting ${type} for task ${taskId}`);
-  }
-  
   let sentCount = 0;
   
   // Send to all clients, or filtered clients if filter provided
@@ -389,101 +366,22 @@ export function getWebSocketServer(): WebSocketServer | null {
 // Utility broadcast functions for common scenarios
 
 /**
- * Enhanced task update broadcast with context enrichment
- * Fetches complete context data to eliminate client-side redundant API calls
+ * Broadcast a task update message
  * 
  * @param payload Task update payload
  */
-export async function broadcastTaskUpdate(payload: {
-  taskId?: number;
-  id?: number;
-  status?: string;
-  progress?: number;
-  metadata?: any;
-}): Promise<void> {
-  try {
-    // Import database utilities to fetch context
-    const { db } = await import("@db");
-    const { tasks } = await import("@db/schema");
-    const { eq } = await import("drizzle-orm");
-
-    const taskId = payload.taskId || payload.id;
-    
-    if (!taskId) {
-      wsLogger.warn('Task update broadcast called without task ID', { payload });
-      return;
-    }
-
-    // Fetch complete task context from database
-    const taskWithContext = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
+  broadcast<TaskUpdateMessage>('task_updated', payload);
+  
+  // Also broadcast with the legacy type for backward compatibility
+  if (payload.taskId) {
+    broadcast('task_update', {
+      id: payload.taskId,
+      status: payload.status || 'submitted',
+      progress: payload.progress || 100,
+      metadata: payload.metadata || {},
+      timestamp: new Date().toISOString()
     });
-
-    if (!taskWithContext) {
-      wsLogger.warn(`Task ${taskId} not found for context enrichment`);
-      return;
-    }
-
-    // Fetch company data separately
-    const { companies } = await import("@db/schema");
-    const companyData = taskWithContext.company_id 
-      ? await db.query.companies.findFirst({
-          where: eq(companies.id, taskWithContext.company_id)
-        })
-      : null;
-
-    // Create enriched payload with context data that components need
-    const enrichedData = {
-      taskId: taskId,
-      id: taskId,
-      status: payload.status || taskWithContext.status,
-      progress: payload.progress ?? taskWithContext.progress,
-      metadata: payload.metadata || taskWithContext.metadata || {},
-      // Context enrichment - eliminates need for separate API calls
-      context: {
-        userId: taskWithContext.assigned_to,
-        companyId: taskWithContext.company_id,
-        companyName: companyData?.name,
-        taskType: taskWithContext.task_type,
-        taskScope: taskWithContext.task_scope
-      },
-      title: taskWithContext.title,
-      description: taskWithContext.description,
-      messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    };
-
-    wsLogger.debug(`Broadcasting enriched task_updated for task ${taskId}`, {
-      companyId: taskWithContext.company_id,
-      companyName: companyData?.name
-    });
-
-    // Broadcast enriched message with company filtering for efficiency
-    broadcast('task_updated', enrichedData, (client) => 
-      client.companyId === taskWithContext.company_id
-    );
-    broadcast('task_update', enrichedData, (client) => 
-      client.companyId === taskWithContext.company_id
-    );
-
-    wsLogger.info(`Enriched task update broadcast completed for task ${taskId}`, {
-      companyId: taskWithContext.company_id,
-      messageId: enrichedData.messageId
-    });
-
-  } catch (error) {
-    wsLogger.error(`Failed to broadcast enriched task update for task ${payload.taskId || payload.id}:`, error);
-    
-    // Fallback to basic broadcast
-    const taskData = {
-      taskId: payload.taskId || payload.id,
-      id: payload.id || payload.taskId,
-      status: payload.status,
-      progress: payload.progress,
-      metadata: payload.metadata || {}
-    };
-
-    broadcast('task_updated', taskData);
-    broadcast('task_update', taskData);
   }
 }
 
@@ -507,7 +405,6 @@ export function broadcastFormSubmission(payload: Omit<FormSubmissionCompletedMes
   // Also broadcast a task update for form submission to ensure clients receive the updates
   if (payload.taskId) {
     broadcastTaskUpdate({
-      id: payload.taskId,
       taskId: payload.taskId,
       status: payload.status,
       progress: payload.progress || 100,

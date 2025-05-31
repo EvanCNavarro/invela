@@ -5,7 +5,6 @@ import { Info } from "lucide-react";
 import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -19,21 +18,6 @@ interface OnboardingWrapperProps {
  */
 export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
-  const [isConnected, setIsConnected] = React.useState(false);
-  
-  // Monitor WebSocket connection status using event-driven approach
-  React.useEffect(() => {
-    // Connect immediately and set initial status
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    // Listen for connection state changes via connection events
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
   
   // State for showing the onboarding modal - with localStorage backup
   const [showModal, setShowModal] = React.useState(false);
@@ -43,15 +27,6 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
     enabled: !!user && showModal, // Only fetch if we need to show the modal
   });
   
-  // WebSocket connection status monitoring - only log actual changes
-  const prevConnectedRef = React.useRef(isConnected);
-  React.useEffect(() => {
-    if (prevConnectedRef.current !== isConnected) {
-      console.log(`[OnboardingWrapper] WebSocket ${isConnected ? 'connected' : 'disconnected'} - modal rendering ${isConnected ? 'enabled' : 'disabled'}`);
-      prevConnectedRef.current = isConnected;
-    }
-  }, [isConnected]);
-
   // Enhanced onboarding check with demo persona session refresh
   React.useEffect(() => {
     if (!user) return;
@@ -71,7 +46,7 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
         });
         
         // For demo users: Check if there's a database/session data mismatch and refresh if needed
-        if (!user.onboarding_user_completed && (user as any).is_demo_user && (user as any).demo_persona_type !== 'new-data-recipient') {
+        if (!user.onboarding_user_completed && user.is_demo_user && user.demo_persona_type !== 'new-data-recipient') {
           console.log('[OnboardingWrapper] Detected potential session cache issue for demo persona - refreshing user data');
           
           // Invalidate and refetch user data to get fresh onboarding status from database
@@ -160,15 +135,13 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
         {children}
       </div>
       
-      {/* Include the onboarding modal for all pages - only render when WebSocket is connected to prevent race conditions */}
-      {isConnected && (
-        <AnimatedOnboardingModal 
-          isOpen={showModal}
-          setShowModal={setShowModal}
-          user={user as any}
-          currentCompany={(currentCompany || { id: 1, name: "Your Company", onboarding_company_completed: false }) as any}
-        />
-      )}
+      {/* Include the onboarding modal for all pages */}
+      <AnimatedOnboardingModal 
+        isOpen={showModal}
+        setShowModal={setShowModal}
+        user={user}
+        currentCompany={currentCompany || { id: 1, name: "Your Company" }}
+      />
     </div>
   );
 }

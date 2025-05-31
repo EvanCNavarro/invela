@@ -283,7 +283,7 @@ export async function updateTaskProgressAndStatusFixed(
       // Step 5: Broadcast the update if not skipped
       if (!skipBroadcast) {
         // Import broadcast function to avoid circular dependencies
-        const { broadcastTaskUpdate } = await import('./unified-websocket');
+        const { broadcastTaskUpdate } = await import('../services/websocket-enhanced.service');
         
         logger.debug(`Broadcasting task update with object format`, { taskId, status: newStatus });
         

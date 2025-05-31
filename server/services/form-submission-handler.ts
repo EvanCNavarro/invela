@@ -13,7 +13,7 @@ import { synchronizeTasks, unlockFileVaultAccess } from './synchronous-task-depe
 import { broadcastTaskUpdate as legacyBroadcastTaskUpdate } from './websocket';
 import { broadcastCompanyTabsUpdate, unlockDashboardAndInsightsTabs } from './company-tabs';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from './websocket-service';
 import { broadcast, broadcastTaskUpdate } from '../utils/unified-websocket';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 import * as fileCreationService from './fileCreation';

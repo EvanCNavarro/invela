@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentStatus, UploadedFile } from './types';
-import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
+import { wsService } from '@/lib/websocket';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 // Memoize handlers outside component to prevent recreation
 const createUploadProgressHandler = (toast: any) => (data: any) => {
@@ -145,7 +146,7 @@ export function DocumentUploadStep({
 }: DocumentUploadStepProps) {
   const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
-  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
+  const { connected } = useWebSocket();
   const subscriptionsRef = useRef<(() => void)[]>([]);
   const isInitialMount = useRef(true);
   const uploadProgressHandler = useRef(createUploadProgressHandler(toast));
@@ -247,7 +248,7 @@ export function DocumentUploadStep({
 
   React.useEffect(() => {
     // Only run on initial mount
-    if (!isInitialMount.current || !isConnected) return;
+    if (!isInitialMount.current || !connected) return;
 
     console.log('[DocumentUploadStep] Setting up WebSocket subscriptions (initial mount)', {
       timestamp: new Date().toISOString()
@@ -255,8 +256,8 @@ export function DocumentUploadStep({
 
     const setupSubscriptions = async () => {
       try {
-        const uploadSub = subscribe('UPLOAD_PROGRESS', uploadProgressHandler.current);
-        const countSub = subscribe('COUNT_UPDATE', countUpdateHandler.current);
+        const uploadSub = await wsService.subscribe('UPLOAD_PROGRESS', uploadProgressHandler.current);
+        const countSub = await wsService.subscribe('COUNT_UPDATE', countUpdateHandler.current);
 
         subscriptionsRef.current = [uploadSub, countSub];
 
@@ -291,7 +292,7 @@ export function DocumentUploadStep({
       });
       subscriptionsRef.current = [];
     };
-  }, [isConnected]); 
+  }, [connected]); 
 
   return (
     <div className="space-y-6">

@@ -26,8 +26,9 @@
  * @since 2025-05-23
  */
 
+import { useQuery } from '@tanstack/react-query';
 import { userContext } from '@/lib/user-context';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('CurrentCompany');
@@ -46,74 +47,16 @@ export interface Company {
 }
 
 export function useCurrentCompany() {
-  const [company, setCompany] = useState<Company | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    // HTTP-first authentication: Load initial company data via reliable HTTP request
-    const loadInitialCompanyData = async () => {
-      try {
-        setIsLoading(true);
-        setIsError(false);
-        setError(null);
-        
-        const response = await fetch('/api/companies/current', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch company data: ${response.status}`);
-        }
-        
-        const companyData = await response.json();
-        
-        if (isMounted) {
-          logger.info('Loaded initial company data via HTTP:', companyData);
-          setCompany(companyData);
-          setIsLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          logger.error('Failed to load initial company data:', err);
-          setIsError(true);
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setIsLoading(false);
-        }
-      }
-    };
-
-    // Load initial data immediately
-    loadInitialCompanyData();
-
-    // Set up WebSocket for live updates after initial HTTP load
-    let websocketCleanup: (() => void) | null = null;
-    
-    import('@/services/websocket-unified').then(({ unifiedWebSocketService }) => {
-      // Subscribe to company data updates (real-time updates only)
-      websocketCleanup = unifiedWebSocketService.subscribe('company_data', (data: Company) => {
-        if (isMounted) {
-          logger.info('Received real-time company data update:', data);
-          setCompany(data);
-        }
-      });
-    }).catch((err) => {
-      logger.error('Failed to setup WebSocket listeners for company updates:', err);
-    });
-
-    return () => {
-      isMounted = false;
-      if (websocketCleanup) {
-        websocketCleanup();
-      }
-    };
-  }, []);
+  const { 
+    data: company, 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery<Company>({ 
+    queryKey: ['/api/companies/current'],
+    retry: 2,
+    refetchOnWindowFocus: false
+  });
 
   // Store company ID in user context when it changes
   // This is CRITICAL for proper data isolation between companies

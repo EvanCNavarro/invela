@@ -60,7 +60,8 @@ import { createCompany } from "./services/company";
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 
 // WebSocket services for real-time communication
-// WebSocket functionality is now handled by unified-websocket
+import * as LegacyWebSocketService from './services/websocket';
+import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
 
 // Specialized route modules
@@ -944,56 +945,104 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
-  // GET endpoint for current user's company data (HTTP authentication flow)
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
+      const now = Date.now();
       const companyId = req.user.company_id;
+      const cachedData = companyCache.get(companyId);
       
-      if (!companyId) {
-        return res.status(400).json({ 
-          message: "User is not associated with a company",
-          code: "NO_COMPANY"
-        });
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < COMPANY_CACHE_TTL) {
+        // Only log cache hits occasionally to reduce log noise
+        if (Math.random() < 0.05) { // Log ~5% of cache hits
+          console.log('[Current Company] Using cached company data:', companyId);
+        }
+        return res.json(cachedData.company);
       }
       
-      console.log(`[Company API] Fetching current company data for company ${companyId}`);
-      
-      // Fetch current company data
+      console.log('[Current Company] Fetching company for user:', {
+        userId: req.user.id,
+        companyId: companyId
+      });
+
+      // Use a direct query to get the most updated company data including the risk_score
+      // Be explicit about the fields we select to avoid errors with missing columns
       const [company] = await db.select({
         id: companies.id,
         name: companies.name,
         category: companies.category,
-        description: companies.description,
-        available_tabs: companies.available_tabs,
+        is_demo: companies.is_demo,
+        revenue_tier: companies.revenue_tier,
         onboarding_company_completed: companies.onboarding_company_completed,
         risk_score: companies.risk_score,
         chosen_score: companies.chosen_score,
-        is_demo: companies.is_demo,
+        accreditation_status: companies.accreditation_status,
         website_url: companies.website_url,
+        num_employees: companies.num_employees,
+        incorporation_year: companies.incorporation_year,
+        available_tabs: companies.available_tabs,
         logo_id: companies.logo_id,
         created_at: companies.created_at,
-        updated_at: companies.updated_at
+        updated_at: companies.updated_at,
+        risk_clusters: companies.risk_clusters
       })
       .from(companies)
-      .where(eq(companies.id, companyId))
-      .limit(1);
-      
+      .where(eq(companies.id, companyId));
+
       if (!company) {
-        return res.status(404).json({
-          message: "Company not found",
-          code: "NOT_FOUND"
-        });
+        console.error('[Current Company] Company not found:', companyId);
+        return res.status(404).json({ message: "Company not found" });
       }
-      
-      console.log(`[Company API] Successfully fetched current company: ${company.name}`);
-      
-      return res.json(company);
-    } catch (error) {
-      console.error('[Company API] Error fetching current company:', error);
-      return res.status(500).json({
-        message: "Failed to fetch company data",
-        code: "SERVER_ERROR"
+
+      // Make sure the company data includes risk score and is_demo in the logged info
+      console.log('[Current Company] Found company:', {
+        id: company.id,
+        name: company.name,
+        onboardingCompleted: company.onboarding_company_completed,
+        riskScore: company.risk_score,
+        chosenScore: company.chosen_score,
+        isDemo: company.is_demo
       });
+
+      // Get user's onboarding status to ensure consistent state across company and user
+      const userOnboardingStatus = req.user?.onboarding_user_completed || false;
+      
+      // Log detailed onboarding status for debugging
+      console.log('[Current Company] Onboarding status check:', {
+        userId: req.user?.id,
+        companyId: companyId,
+        userOnboardingStatus: userOnboardingStatus,
+        companyOnboardingStatus: company.onboarding_company_completed,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Transform response to include both risk_score and riskScore consistently
+      // Also include isDemo for frontend usage (camelCase)
+      // And onboardingCompleted for the modal check
+      const transformedCompany = {
+        ...company,
+        risk_score: company.risk_score,                 // Keep the original property
+        riskScore: company.risk_score,                  // Add the frontend expected property name
+        chosen_score: company.chosen_score,             // Keep the original property
+        chosenScore: company.chosen_score,              // Add camelCase version for frontend
+        isDemo: company.is_demo,                        // Add camelCase version for frontend
+        onboarding_company_completed: company.onboarding_company_completed, // Original DB field
+        // CRITICAL FIX: Only use user's onboarding status, not company's
+        // This ensures onboarding modal only appears when the current user hasn't completed onboarding
+        onboardingCompleted: userOnboardingStatus
+      };
+      
+      // Update the cache with the transformed data
+      companyCache.set(companyId, { 
+        company: transformedCompany, 
+        timestamp: now 
+      });
+
+      // Return the transformed data to the client
+      res.json(transformedCompany);
+    } catch (error) {
+      console.error("[Current Company] Error fetching company:", error);
+      res.status(500).json({ message: "Error fetching company details" });
     }
   });
 
@@ -1669,23 +1718,27 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
           tasksCache.delete(cacheKey);
         }
         
-        // DISABLED: Automatic task unlocking to prevent artificial updates
-        // Task unlocking should only happen on genuine user actions (form submissions, etc.)
+        // Always process task dependencies and ensure all tasks are unlocked
+        // This makes the dependency chain optional rather than enforced
         try {
-          console.log('[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates', {
+          console.log('[Tasks] Automatically unlocking all tasks for company', {
             userId,
             companyId,
-            requestedBy: 'event_driven_only'
+            requestedBy: 'automatic_task_unlock'
           });
           
-          // DISABLED: This automatic unlocking was causing artificial WebSocket updates every ~30 seconds
-          // Use event-driven updates only - tasks unlock when users actually complete prerequisites
-          console.log('[Tasks] Skipping automatic task unlocking - using event-driven updates only');
+          // Import and use task dependency processors
+          // Use dynamic import to handle the ESM module properly
+          const taskDependencies = await import('./routes/task-dependencies');
+          const unlockAllTasks = taskDependencies.unlockAllTasks;
           
-          // Note: Task cache clearing is still needed for accurate data retrieval
+          // Unlock ALL tasks for this company regardless of dependencies
+          await unlockAllTasks(companyId);
+          
+          // Clear task cache to ensure updated task status is returned
           tasksCache.delete(cacheKey);
           
-          console.log('[Tasks] Using event-driven task updates only for company:', companyId);
+          console.log('[Tasks] Successfully unlocked all tasks for company:', companyId);
         } catch (depError) {
             console.error('[Tasks] Error unlocking all tasks:', {
               userId,

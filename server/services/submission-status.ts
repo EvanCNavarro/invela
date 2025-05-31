@@ -8,7 +8,7 @@
 import { db } from '@db';
 import { tasks, TaskStatus } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
+import { broadcastTaskUpdate } from './websocket';
 
 /**
  * Update a task's status to submitted and broadcast the update to all clients
@@ -40,13 +40,14 @@ export async function updateAndBroadcastSubmissionStatus(
     // Update the task status in the database
     await db.update(tasks)
       .set({
-        status: TaskStatus.SUBMITTED as any,
+        status: TaskStatus.SUBMITTED,
         progress: 100,
         updated_at: new Date(),
         metadata: {
           ...task.metadata,
           ...(fileId ? { kybFormFile: fileId } : {}),
           submissionDate: submissionDate,
+          status: 'submitted', // Explicit flag for status
           formVersion: task.metadata?.formVersion || '1.0',
           statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
             .filter((v, i, a) => a.indexOf(v) === i)
@@ -58,12 +59,12 @@ export async function updateAndBroadcastSubmissionStatus(
     console.log(`[SubmissionService] Broadcasting submission update for task ${taskId}`);
     broadcastTaskUpdate({
       id: taskId,
-      taskId: taskId,
       status: TaskStatus.SUBMITTED,
       progress: 100,
       metadata: {
         ...(fileId ? { kybFormFile: fileId } : {}),
-        submissionDate: submissionDate
+        submissionDate: submissionDate,
+        status: 'submitted'
       }
     });
     

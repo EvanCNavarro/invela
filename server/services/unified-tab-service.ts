@@ -2,7 +2,7 @@ import { db } from '@db';
 import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { tabLogger } from '../utils/tab-access-logger';
-import { broadcast } from '../utils/unified-websocket';
+import { broadcast } from '../utils/websocket';
 
 
 /**

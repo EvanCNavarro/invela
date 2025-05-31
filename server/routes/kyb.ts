@@ -6,7 +6,7 @@ import { eq, and, or, ilike, sql } from 'drizzle-orm';
 // Import using actual module name conventions
 import * as FileCreationService from '../services/fileCreation';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { CompanyTabsService } from '../services/companyTabsService';
 // Import CompanyTabsService directly, we don't need the patch function anymore
@@ -340,24 +340,15 @@ const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?
   }
 };
 
-// Dynamic task unlocking check - DISABLED to prevent artificial updates
+// Dynamic task unlocking check - used when accessing the Task Center
 export const checkAndUnlockSecurityTasks = async (companyId: number, userId?: number) => {
   try {
-    logger.info('DISABLED: Automatic task unlocking to prevent artificial updates', {
+    logger.info('Performing dynamic task unlocking check for company', {
       companyId,
       userId
     });
     
-    // DISABLED: This automatic unlocking was causing artificial WebSocket updates every ~30 seconds
-    // Task unlocking should only happen on genuine user actions (form submissions, etc.)
-    logger.info('Skipping automatic task unlocking - using event-driven updates only');
-    return { 
-      success: true, 
-      unlocked: false, 
-      message: 'Automatic unlocking disabled - event-driven only' 
-    };
-
-    // DISABLED CODE - First, check if there's a completed KYB task for this company
+    // First, check if there's a completed KYB task for this company
     const kybTasks = await db.select()
       .from(tasks)
       .where(
@@ -1553,7 +1544,7 @@ router.post('/api/kyb/save', async (req, res) => {
       WebSocketService.broadcast('submission_status', { taskId, status: 'submitted' });
 
       // Also broadcast the task update for dashboard real-time updates
-      broadcastTaskUpdate({
+      WebSocketService.broadcastTaskUpdate({
         id: taskId,
         status: TaskStatus.SUBMITTED,
         progress: 100,

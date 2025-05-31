@@ -313,57 +313,37 @@ const HeaderChip: React.FC = () => (
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex-1 bg-primary/5 relative border-l border-slate-100 min-w-0 min-h-[400px]">
-    <div className="absolute inset-0 flex items-center justify-center p-6">
+  <div className="hidden md:block bg-primary/5 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+    <div className="absolute inset-0 flex items-center justify-center">
       {children}
     </div>
   </div>
 );
 
-// Component for consistent step image with comprehensive debugging
+// Component for consistent step image with loading indicator and professional styling
 const StepImage: React.FC<{ 
   src: string | undefined; 
   alt: string | undefined;
+  isLoaded: boolean;
 }> = ({ 
   src, 
-  alt = 'Onboarding step image'
-}) => {
-  const [imageStatus, setImageStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
-  console.log(`[StepImage] Rendering with src: ${src}, alt: ${alt}`);
-
-  return (
-    <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
-      
-      {src ? (
-        <>
-          <img 
-            src={src} 
-            alt={alt || 'Onboarding step image'}
-            className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
-            loading="eager"
-            decoding="async"
-            onError={(e) => {
-              const error = `Failed to load: ${src}`;
-              console.error(`[StepImage] ${error}`, e);
-              setImageStatus('error');
-              setErrorMessage(error);
-            }}
-            onLoad={() => {
-              console.log(`[StepImage] Successfully loaded: ${src}`);
-              setImageStatus('loaded');
-            }}
-          />
-        </>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-400">
-          No image available
-        </div>
-      )}
-    </div>
-  );
-};
+  alt = 'Onboarding step image',
+  isLoaded
+}) => (
+  <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
+    {isLoaded ? (
+      <img 
+        src={src || ''} 
+        alt={alt || 'Onboarding step image'}
+        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
+      />
+    ) : (
+      <div className="w-full h-full flex items-center justify-center">
+        <Skeleton className="w-full h-full rounded-xl animate-pulse bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200" />
+      </div>
+    )}
+  </div>
+);
 
 // Independent component for step layout to avoid JSX nesting issues
 const StepLayout: React.FC<{ 
@@ -383,78 +363,64 @@ const StepLayout: React.FC<{
   description,
   rightImageSrc
 }) => {
+  // Track image loading status
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  console.log(`[AnimatedOnboardingModal] StepLayout render:`, {
-    title,
-    imageSrc,
-    rightImageSrc,
-    finalImageSrc: imgSrc,
-    hasChildren: !!children
-  });
+  // Use cached image or preload with optimized loading strategy
+  useEffect(() => {
+    if (!imgSrc) {
+      setImageLoaded(true); // No image to load
+      return;
+    }
+    
+    setImageLoaded(false); // Reset loading state
+    
+    // Use cached image or preload
+    if (globalImageCache.has(imgSrc)) {
+      setImageLoaded(true);
+    } else {
+      preloadImage(imgSrc)
+        .then(() => setImageLoaded(true))
+        .catch(() => {
+          console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
+          setImageLoaded(true); // Show content even if image fails
+        });
+    }
+  }, [imgSrc]);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
       {/* Left side: Text content with fixed height and consistent padding */}
       <div className="md:w-[50%] px-8 py-6 flex flex-col">
         <div className="flex flex-col h-full">
-          {/* Header chip - static fade only */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <HeaderChip />
-          </motion.div>
+          {/* Header chip for consistent styling */}
+          <HeaderChip />
           
-          {/* Page title - content reveal with delay */}
-          <motion.h2 
-            className="text-2xl font-bold text-primary mb-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0.4, 
-              ease: [0.22, 1, 0.36, 1],
-              delay: 0.1 
-            }}
-          >
+          {/* Page title with proper spacing */}
+          <h2 className="text-2xl font-bold text-primary mb-4">
             {title}
-          </motion.h2>
+          </h2>
           
-          {/* Content area with staggered entrance */}
-          <motion.div 
-            className="flex-grow content-area pr-2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 0.4, 
-              ease: [0.22, 1, 0.36, 1],
-              delay: 0.2 
-            }}
-          >
+          {/* Content area with fixed height and no scrolling */}
+          <div className="flex-grow content-area pr-2">
             {children}
-          </motion.div>
+          </div>
         </div>
       </div>
       
-      {/* Right side: Image with delayed reveal */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ 
-          duration: 0.4, 
-          ease: [0.22, 1, 0.36, 1],
-          delay: 0.3 
-        }}
-      >
-        <RightImageContainer>
+      {/* Right side: Image with consistent container */}
+      <RightImageContainer>
+        {imgSrc && (
           <StepImage 
             src={imgSrc} 
             alt={imageAlt || title}
+            isLoaded={imageLoaded} 
           />
-        </RightImageContainer>
-      </motion.div>
+        )}
+      </RightImageContainer>
     </div>
   );
 };
@@ -522,13 +488,10 @@ export function AnimatedOnboardingModal({
   useEffect(() => {
     if (isOpen) {
       const imagesToPreload = [
-        "/assets/welcome_1.png",
-        "/assets/welcome_2.png", 
-        "/assets/welcome_3.png",
-        "/assets/welcome_4.png",
-        "/assets/welcome_5.png",
-        "/assets/welcome_6.png",
-        "/assets/welcome_7.png"
+        "/images/onboarding/step1-welcome.jpg",
+        "/images/onboarding/step2-company.jpg", 
+        "/images/onboarding/step3-team.jpg",
+        "/images/onboarding/step4-tasks.jpg"
       ];
     
       imagesToPreload.forEach(src => {
@@ -1331,13 +1294,10 @@ export function AnimatedOnboardingModal({
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ 
-            duration: 0.4, 
-            ease: [0.22, 1, 0.36, 1] 
-          }}
+          initial={{ opacity: 0, x: transitionDirection === 'next' ? 50 : -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: transitionDirection === 'next' ? -50 : 50 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
           className="w-full h-full"
         >
           {getCurrentStepContent()}
@@ -1360,66 +1320,56 @@ export function AnimatedOnboardingModal({
           {renderStepContent()}
         </div>
         
-        {/* Footer buttons - static fade only */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ 
-            duration: 0.4, 
-            ease: [0.22, 1, 0.36, 1],
-            delay: 0.4 
-          }}
-        >
-          <DialogFooter className="p-4 border-t flex items-center">
-            <div className="flex-1 text-left">
-              {currentStep > 0 ? (
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={handleBackStep}
-                  disabled={false}
-                >
-                  Back
-                </Button>
-              ) : (
-                <div></div> // Empty div to maintain spacing when back button is hidden
-              )}
-            </div>
-            
-            {/* Step indicator in the footer - centered */}
-            <div className="flex-1 flex justify-center">
-              {renderStepIndicator()}
-            </div>
-            
-            <div className="flex-1 text-right">
+        {/* Footer buttons */}
+        <DialogFooter className="p-4 border-t flex items-center">
+          <div className="flex-1 text-left">
+            {currentStep > 0 ? (
               <Button 
                 type="button"
-                onClick={handleNextStep}
-                disabled={!canProceed || (currentStep === 6 && isSubmitting)}
-                className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
+                variant="outline"
+                onClick={handleBackStep}
+                disabled={false}
               >
-                {currentStep === 6 ? (
-                  isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    <>
-                      Start 
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )
+                Back
+              </Button>
+            ) : (
+              <div></div> // Empty div to maintain spacing when back button is hidden
+            )}
+          </div>
+          
+          {/* Step indicator in the footer - centered */}
+          <div className="flex-1 flex justify-center">
+            {renderStepIndicator()}
+          </div>
+          
+          <div className="flex-1 text-right">
+            <Button 
+              type="button"
+              onClick={handleNextStep}
+              disabled={!canProceed || (currentStep === 6 && isSubmitting)}
+              className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
+            >
+              {currentStep === 6 ? (
+                isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting up...
+                  </>
                 ) : (
                   <>
-                    Next
+                    Start 
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
-                )}
-              </Button>
-            </div>
-          </DialogFooter>
-        </motion.div>
+                )
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

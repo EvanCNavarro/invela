@@ -55,13 +55,9 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     this._companyId = companyId;
     this._taskId = taskId;
     
-    // DISABLED: Prevent automatic batch updates to stop artificial 60-second polling
-    this.batchUpdateInterval = Infinity; // Disable automatic batch updates
-    
-    logger.info('[Unified KY3P] Initializing service with batch updates DISABLED', {
+    logger.info('[Unified KY3P] Initializing service', {
       companyId,
       taskId,
-      batchUpdateInterval: this.batchUpdateInterval,
       timestamp: new Date().toISOString()
     });
   }
@@ -172,12 +168,12 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     // Clear any existing timer
     if (this.batchUpdateTimer) {
       clearTimeout(this.batchUpdateTimer);
-      this.batchUpdateTimer = null;
     }
     
-    // COMPLETELY DISABLED: No automatic batch updates to eliminate artificial polling
-    // Using event-driven updates only via WebSocket
-    logger.debug('[Unified KY3P] Batch update timer disabled - using event-driven updates only');
+    // Schedule a batch update
+    this.batchUpdateTimer = setTimeout(() => {
+      this.flushPendingUpdates(taskId);
+    }, this.batchUpdateInterval);
   }
   
   /**
@@ -428,9 +424,8 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
    * @returns Promise that resolves when progress is saved
    */
   async saveProgress(taskId?: number): Promise<void> {
-    // DISABLED: Skip artificial batch updates to prevent polling
-    // Using event-driven updates only via WebSocket
-    // await this.flushPendingUpdates(taskId);
+    // Ensure all pending updates are processed first
+    await this.flushPendingUpdates(taskId);
     
     // Calculate current progress
     const progress = this.calculateProgress();
@@ -809,11 +804,10 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     }
     
     try {
-      // DISABLED: Skip artificial batch updates to prevent polling
-      // Using event-driven updates only via WebSocket
-      // if (Object.keys(this.pendingUpdates).length > 0) {
-      //   await this.flushPendingUpdates(taskId);
-      // }
+      // Flush any pending updates before submitting
+      if (Object.keys(this.pendingUpdates).length > 0) {
+        await this.flushPendingUpdates(taskId);
+      }
       
       // Send the submission request to the server
       const response = await fetch(`/api/forms/submit-form`, {

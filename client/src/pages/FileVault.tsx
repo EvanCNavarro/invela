@@ -18,10 +18,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast, unifiedToast } from "@/hooks/use-unified-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchBar } from "@/components/ui/search-bar";
@@ -31,24 +30,10 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .PNG,
 
 export const FileVault: React.FC = () => {
   const { toast } = useToast();
-  const unifiedToastHook = useUnifiedToast();
+  const unifiedToast = useUnifiedToast();
   const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // Monitor WebSocket connection status
-  useEffect(() => {
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    // Listen for connection state changes
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
@@ -58,7 +43,6 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [isPageChanging, setIsPageChanging] = useState(false);
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -72,30 +56,26 @@ export const FileVault: React.FC = () => {
       totalPages: number
     }
   }>({
-    queryKey: ['/api/files', user?.company_id],
+    queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }],
     enabled: !!user?.company_id,
-    staleTime: 30000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
     queryFn: async ({ queryKey }) => {
-      // Use current pagination state instead of query key params
-      const company_id = queryKey[1] as number;
+      // Extract params from query key for consistency
+      const params = queryKey[1] as { company_id?: number, page: number, pageSize: number };
       
       console.log('[FileVault Debug] Starting API request:', {
         userId: user?.id,
-        companyId: company_id,
-        page: currentPage,
-        pageSize: itemsPerPage,
+        companyId: params.company_id,
+        page: params.page,
+        pageSize: params.pageSize,
         timestamp: new Date().toISOString()
       });
 
       const url = new URL('/api/files', window.location.origin);
-      if (company_id) {
-        url.searchParams.append('company_id', company_id.toString());
+      if (params.company_id) {
+        url.searchParams.append('company_id', params.company_id.toString());
       }
-      url.searchParams.append('page', currentPage.toString());
-      url.searchParams.append('pageSize', itemsPerPage.toString());
+      url.searchParams.append('page', params.page.toString());
+      url.searchParams.append('pageSize', params.pageSize.toString());
       
       const response = await fetch(url);
 
@@ -279,17 +259,22 @@ export const FileVault: React.FC = () => {
     const endIndex = startIndex + itemsPerPage;
     
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      // When using server pagination, return the entire server response without additional slicing
-      // The server already handles pagination with LIMIT/OFFSET
-      console.log('[FileVault Debug] Using server pagination - displaying full API response:', {
+      // When using server data with pagination, apply proper slicing based on current page
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const endIdx = Math.min(startIdx + itemsPerPage, files.length);
+      const slicedFiles = files.slice(startIdx, endIdx);
+      
+      console.log('[FileVault Debug] Using server pagination with client-side slicing:', {
         page: currentPage,
         totalItems: serverPagination?.totalItems || 0,
         itemsPerPage,
-        serverReturnedFiles: files.length,
-        displayedFiles: files.length
+        startIdx,
+        endIdx,
+        availableFiles: files.length,
+        displayedFiles: slicedFiles.length
       });
       
-      return files;
+      return slicedFiles;
     } else {
       // Use client-side filtering and pagination when filters are applied
       const result = filteredFiles.slice(startIndex, endIndex);
@@ -321,49 +306,86 @@ export const FileVault: React.FC = () => {
     }
   }, [filteredFiles.length, itemsPerPage, searchQuery, statusFilter, uploadingFiles.length, serverPagination]);
 
-  // Refetch when page changes - use manual refetch instead of query invalidation
+  // Refetch when page changes to get new data from server
   useEffect(() => {
+    // Only refetch from server if we're using server-side pagination
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      refetch();
+      // Invalidate the query to trigger a refetch with the new page
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+      });
     }
-  }, [currentPage, refetch, searchQuery, statusFilter, uploadingFiles.length]);
+  }, [currentPage, queryClient, searchQuery, statusFilter, uploadingFiles.length, user?.company_id, itemsPerPage]);
   
   // Listen for WebSocket file_vault_update events to refresh file list automatically
   useEffect(() => {
-    if (!isConnected || !user?.company_id) {
-      return;
-    }
-
-    console.log('[FileVault Debug] Setting up unified WebSocket listener for file vault updates');
+    console.log('[FileVault Debug] Setting up WebSocket listener for file vault updates');
     
     // This function will be called whenever a file_vault_update event is received
-    const handleFileVaultUpdate = (data: any) => {
-      console.log('[FileVault Debug] Received file_vault_update event:', data);
+    const handleFileVaultUpdate = (payload: any) => {
+      console.log('[FileVault Debug] Received file_vault_update event:', payload);
       
       // Check if this update is for our company
-      if (data.companyId && data.companyId === user.company_id) {
-        console.log('[FileVault Debug] Refreshing file list for company:', data.companyId);
+      if (payload.companyId && user?.company_id && payload.companyId === user.company_id) {
+        console.log('[FileVault Debug] Refreshing file list for company:', payload.companyId);
         
-        // Invalidate all file queries for this company regardless of pagination
+        // Invalidate and refetch the files query
         queryClient.invalidateQueries({ 
-          queryKey: ['/api/files']
+          queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
         });
       }
     };
     
-    // Subscribe to file vault updates using unified WebSocket service
-    console.log('[FileVault Debug] Subscribing to file_vault_update events');
-    const unsubscribeHandler = unifiedWebSocketService.subscribe('file_vault_update', handleFileVaultUpdate);
-    console.log('[FileVault Debug] Subscription result:', unsubscribeHandler);
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', (event: any) => {
+        if (event.detail) {
+          handleFileVaultUpdate(event.detail);
+        }
+      });
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', (event: any) => {
+        // Check if this is a file vault update event
+        if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+          handleFileVaultUpdate(event.detail.payload);
+        }
+      });
+    }
+    
+    // Keep references to the actual event listeners so we can remove them properly
+    const fileVaultEventHandler = (event: any) => {
+      if (event.detail) {
+        handleFileVaultUpdate(event.detail);
+      }
+    };
+    
+    const wsMessageEventHandler = (event: any) => {
+      // Check if this is a file vault update event
+      if (event.detail?.type === 'file_vault_update' && event.detail?.payload) {
+        handleFileVaultUpdate(event.detail.payload);
+      }
+    };
+    
+    // We need to access the global WebSocket service
+    if (typeof window !== 'undefined') {
+      // Add event listener for the file_vault_update message type
+      window.addEventListener('file_vault_update', fileVaultEventHandler);
+      
+      // Also listen for generic ws_message events that might contain file_vault_update
+      window.addEventListener('ws_message', wsMessageEventHandler);
+    }
     
     return () => {
-      // Clean up subscription
-      if (unsubscribeHandler) {
-        unsubscribeHandler();
+      // Clean up event listeners when component unmounts
+      if (typeof window !== 'undefined') {
+        // Remove event listeners by referencing the same function instances
+        window.removeEventListener('file_vault_update', fileVaultEventHandler);
+        window.removeEventListener('ws_message', wsMessageEventHandler);
       }
-      console.log('[FileVault Debug] Cleaned up WebSocket listener for file vault updates');
     };
-  }, [queryClient, user?.company_id, currentPage, itemsPerPage, isConnected]);
+  }, [queryClient, user?.company_id, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
@@ -453,9 +475,9 @@ export const FileVault: React.FC = () => {
       // Update local state
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
       
-      // Invalidate with the stable query key structure
+      // Invalidate with the complete query key structure to match our fetch
       queryClient.invalidateQueries({ 
-        queryKey: ['/api/files', user?.company_id] 
+        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
       // First explicitly dismiss the uploading toast
@@ -467,7 +489,7 @@ export const FileVault: React.FC = () => {
       
       // Then after a brief delay, show the success toast
       setTimeout(() => {
-        unifiedToastHook.fileUploadSuccess(file.name);
+        unifiedToast.fileUploadSuccess(file.name);
         console.log('[FileVault] Showed success toast for file:', file.name);
       }, 300);
       
@@ -496,7 +518,7 @@ export const FileVault: React.FC = () => {
       
       // Then show the error toast
       setTimeout(() => {
-        unifiedToastHook.fileUploadError(
+        unifiedToast.fileUploadError(
           file.name, 
           error instanceof Error ? error.message : "Upload failed"
         );
@@ -709,28 +731,16 @@ export const FileVault: React.FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => {
-                      if (currentPage !== 1 && !isPageChanging) {
-                        setIsPageChanging(true);
-                        setCurrentPage(1);
-                        setTimeout(() => setIsPageChanging(false), 100);
-                      }
-                    }}
-                    disabled={currentPage === 1 || isPageChanging}
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
                   >
                     <ChevronsLeftIcon className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => {
-                      if (currentPage > 1 && !isPageChanging) {
-                        setIsPageChanging(true);
-                        setCurrentPage(p => Math.max(1, p - 1));
-                        setTimeout(() => setIsPageChanging(false), 100);
-                      }
-                    }}
-                    disabled={currentPage === 1 || isPageChanging}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
@@ -742,28 +752,16 @@ export const FileVault: React.FC = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => {
-                      if (currentPage < totalPages && !isPageChanging) {
-                        setIsPageChanging(true);
-                        setCurrentPage(p => Math.min(totalPages, p + 1));
-                        setTimeout(() => setIsPageChanging(false), 100);
-                      }
-                    }}
-                    disabled={currentPage === totalPages || isPageChanging}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => {
-                      if (currentPage !== totalPages && !isPageChanging) {
-                        setIsPageChanging(true);
-                        setCurrentPage(totalPages);
-                        setTimeout(() => setIsPageChanging(false), 100);
-                      }
-                    }}
-                    disabled={currentPage === totalPages || isPageChanging}
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
                   >
                     <ChevronsRightIcon className="h-4 w-4" />
                   </Button>
