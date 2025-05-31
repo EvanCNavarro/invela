@@ -38,7 +38,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { useQuery } from "@tanstack/react-query";
 
 interface CompanySnapshotProps {
   companyData: any;
@@ -48,34 +48,13 @@ interface CompanySnapshotProps {
 
 export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySnapshotProps) {
   const [, setLocation] = useLocation();
-  const [relationships, setRelationships] = useState<any[]>([]);
-  const [isLoadingRelationships, setIsLoadingRelationships] = useState(true);
   
-  // Subscribe to network relationships via WebSocket
-  useEffect(() => {
-    if (!companyData?.id) return;
-
-    const unsubscribeRelationships = unifiedWebSocketService.subscribe('network_data', (data: any) => {
-      if (data.relationships && Array.isArray(data.relationships)) {
-        setRelationships(data.relationships);
-        setIsLoadingRelationships(false);
-        console.log('[CompanySnapshot] Network relationships updated from WebSocket:', data.relationships.length);
-      }
-    });
-
-    const unsubscribeInitialData = unifiedWebSocketService.subscribe('initial_data', (data: any) => {
-      if (data.relationships && Array.isArray(data.relationships)) {
-        setRelationships(data.relationships);
-        setIsLoadingRelationships(false);
-        console.log('[CompanySnapshot] Initial network relationships from WebSocket:', data.relationships.length);
-      }
-    });
-
-    return () => {
-      unsubscribeRelationships();
-      unsubscribeInitialData();
-    };
-  }, [companyData?.id]);
+  // Restore HTTP-based network relationships fetching
+  const { data: relationships = [], isLoading: isLoadingRelationships } = useQuery({
+    queryKey: ["/api/network/relationships", companyData?.id],
+    enabled: !!companyData?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // For risk score changes, we'll use a static value of 11 as suggested
   const riskScoreChanges = 11;
