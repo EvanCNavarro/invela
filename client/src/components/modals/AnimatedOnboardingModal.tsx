@@ -990,49 +990,18 @@ export function AnimatedOnboardingModal({
               </p>
               
               <div className="space-y-4">
-                <CheckListItem>
-                  Faster assessment completion through automated data extraction
-                </CheckListItem>
-                <CheckListItem>
-                  Auto-filled forms with data from your uploaded documents
-                </CheckListItem>
-                <CheckListItem>
-                  Auditable paper trail for compliance verification
-                </CheckListItem>
-                <CheckListItem>
-                  Secure file vault with SOC 2 Type II compliant storage
-                </CheckListItem>
-                
                 <div className="bg-slate-50 p-4 rounded-lg border">
-                  <h4 className="font-medium text-sm text-gray-900 mb-3">Recommended Documents to Upload (Updated):</h4>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      SOC 2 Audit
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      ISO/IEC 27001 Certification
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      Penetration Test Report
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      Business Continuity Plan (BCP)
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      GDPR/CCPA Compliance Assessment
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      API Security Review
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      Data Protection Controls Assessment
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      OAuth Security Certification
-                    </span>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      FDX (Financial Data Exchange) Certification
-                    </span>
+                  <h4 className="font-medium text-sm text-gray-900 mb-3">Suggested Files to Upload:</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <div>SOC 2 Audit Report</div>
+                    <div>ISO/IEC 27001 Certification</div>
+                    <div>Penetration Test Report</div>
+                    <div>Business Continuity Plan (BCP)</div>
+                    <div>GDPR/CCPA Compliance Assessment</div>
+                    <div>API Security Review</div>
+                    <div>Data Protection Controls Assessment</div>
+                    <div>OAuth Security Certification</div>
+                    <div>FDX (Financial Data Exchange) Certification</div>
                   </div>
                 </div>
               </div>
