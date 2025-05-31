@@ -1,0 +1,144 @@
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-31T07:50:02.969Z] [App] Communication phase initializing 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-31T07:50:02.969Z] [App] Application ready for user interaction 
+[2025-05-31T07:50:02.969Z] [PhaseStartup] Phase ready marked as completed immediately 
+[Router] Current location: /
+[WebSocketAuth] Setting user context: 
+Object {userId: 536, companyId: 755}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 536, email: "rward@meridianresearchunited.com", timestamp: "2025-05-31T07:50:03.189Z"}
+[2025-05-31T07:50:03.194Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=755, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 755
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[DashboardLayout] Tab "dashboard" is locked. Redirecting to task-center.
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[Router] Current location: /task-center
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=755, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 755
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[UnifiedWebSocket] Authentication sent 
+Object {userId: 536, companyId: 755}
+[UnifiedWebSocket] Connection established (ID: z8yo0ck5o, Total: 1)
+[2025-05-31T07:50:03.554Z] [App] Unified WebSocket service connected successfully 
+[2025-05-31T07:50:03.554Z] [PhaseStartup] Phase communication completed successfully 
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:50:03.758Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:50:03.981Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:50:35.372Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:50:35.851Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:50:36.110Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:51:07.341Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:51:07.556Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:51:35.201Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:51:50.889Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:51:51.154Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:52:22.343Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:52:22.559Z"}
+companyId: 755
+hasCountObject: false
+receivedAt: "2025-05-31T07:52:22.559Z"
+relevantToCurrentCompany: true
+taskId: 1103
+[[Prototype]]: Object
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:52:35.137Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:53:06.047Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T07:53:06.277Z"}
