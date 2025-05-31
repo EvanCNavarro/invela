@@ -16,6 +16,8 @@
 - `grep "refetchInterval\|staleTime.*60"` - Found various intervals but none matching pattern
 - `grep "setInterval\|setTimeout" in forms` - Found timeouts but none at 60s (800ms, 150ms, 50ms, 5s)
 - `grep "FormBatchUpdater"` - Found singleton usage in use-form-data-manager.ts hook
+- `grep "auto.*save"` - Found auto-save functionality in StandardizedUniversalForm.tsx
+- **CONFIRMED**: Timer still fires at 09:51:31 despite BatchUpdateManager changes
 
 ## Current Hypotheses 🤔
 1. **React useEffect with setInterval** - Form component creating 60s timer (most likely)
