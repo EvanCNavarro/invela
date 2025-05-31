@@ -67,13 +67,13 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
       }
     };
 
-    const unsubscribe = subscribe('task_update', handleTaskUpdate);
+    const unsubscribe = unifiedWebSocketService.subscribe('task_update', handleTaskUpdate);
 
     return () => {
       console.log('[TaskDetailsModal] Cleaning up unified WebSocket listeners for task:', task.id);
       unsubscribe();
     };
-  }, [isConnected, task, subscribe]);
+  }, [isConnected, task]);
 
   if (!task) return null;
 

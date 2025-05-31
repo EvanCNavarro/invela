@@ -61,7 +61,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     });
 
     // Subscribe to individual task updates
-    const unsubTaskUpdate = subscribe('task_updated', (data) => {
+    const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', (data) => {
       const taskId = data?.taskId || data?.id;
       if (taskId) {
         setTasks(prevTasks => 
