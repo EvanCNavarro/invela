@@ -1,442 +1,286 @@
 /**
- * Task WebSocket Routes
+ * Task WebSocket Routes - MIGRATED TO UNIFIED SERVICE
  * 
  * This module provides WebSocket routes for task-related updates
  * including progress calculations, status changes, and reconciliation.
  * 
- * It allows clients to subscribe to task updates and request progress
- * recalculation when inconsistencies are detected.
+ * MIGRATION NOTE: Converted from direct WebSocket server to unified service
+ * to eliminate parallel connections and improve architecture consistency.
+ * 
+ * @version 2.0.0 - Unified WebSocket Migration
+ * @since 2025-05-31
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import { Request } from 'express';
-import { parse } from 'url';
-import { Server } from 'http';
+import { Router } from 'express';
 import { db } from '@db';
 import { tasks, companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { reconcileTaskProgress } from '../utils/task-reconciliation';
-import { triggerManualReconciliation } from '../utils/periodic-task-reconciliation';
 import { updateTaskProgress } from '../utils/progress';
+import { broadcastTaskUpdate } from '../utils/unified-websocket';
 
-// Extended WebSocket interface with client information
-interface ExtendedWebSocket extends WebSocket {
-  clientId?: string;
-  userId?: number | null;
-  companyId?: number | null;
-}
+const router = Router();
 
 /**
- * Configure WebSocket routes for task progress updates
+ * Task Progress Reconciliation Endpoint
  * 
- * @param server HTTP server instance
- * @param wss WebSocket server instance
+ * Triggers manual reconciliation of task progress and broadcasts updates
+ * via the unified WebSocket service.
  */
-export function configureTaskWebSocketRoutes(server: Server, wss: WebSocketServer) {
-  // Add a connection handler
-  wss.on('connection', async (socket, request) => {
-    try {
-      // Parse URL to get query parameters
-      const { query } = parse(request.url || '', true);
-      const clientId = query.clientId as string || 'unknown';
-      const userId = query.userId ? parseInt(query.userId as string) : null;
-      const companyId = query.companyId ? parseInt(query.companyId as string) : null;
-      
-      console.log(`[TaskWebSocket] New client connected: ${clientId}`, {
-        userId,
-        companyId,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Associate socket with clientId, userId, and companyId
-      const extSocket = socket as ExtendedWebSocket;
-      extSocket.clientId = clientId;
-      extSocket.userId = userId;
-      extSocket.companyId = companyId;
-      
-      // Listen for messages from the client
-      socket.on('message', async (message) => {
-        try {
-          // Parse message as JSON
-          const data = JSON.parse(message.toString());
-          
-          // Log incoming message
-          console.log(`[TaskWebSocket] Received message from client ${clientId}:`, {
-            type: data.type,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Handle different message types
-          switch (data.type) {
-            case 'authenticate':
-              // Handle authentication requests
-              await handleAuthentication(socket as ExtendedWebSocket, data);
-              break;
-              
-            case 'ping':
-              // Handle ping messages (heartbeat)
-              socket.send(JSON.stringify({
-                type: 'pong',
-                timestamp: new Date().toISOString()
-              }));
-              break;
-              
-            case 'reconcile-task-progress':
-              // Trigger reconciliation for a specific task
-              await handleTaskReconciliation(socket as ExtendedWebSocket, data.taskId);
-              break;
-              
-            case 'reconcile-company-tasks':
-              // Reconcile all tasks for a company
-              await handleCompanyTaskReconciliation(socket as ExtendedWebSocket, data.companyId || companyId);
-              break;
-              
-            case 'update-task-progress':
-              // Manually update task progress
-              await handleUpdateTaskProgress(socket as ExtendedWebSocket, data);
-              break;
-              
-            default:
-              // Send error for unknown message types
-              socket.send(JSON.stringify({
-                type: 'error',
-                message: `Unknown message type: ${data.type}`,
-                timestamp: new Date().toISOString()
-              }));
-          }
-        } catch (error) {
-          console.error('[TaskWebSocket] Error processing message:', error);
-          
-          // Send error response
-          socket.send(JSON.stringify({
-            type: 'error',
-            message: error instanceof Error ? error.message : 'Error processing message',
-            timestamp: new Date().toISOString()
-          }));
-        }
-      });
-      
-      // Handle disconnection
-      socket.on('close', () => {
-        console.log(`[TaskWebSocket] Client disconnected: ${clientId}`);
-      });
-      
-      // Send initial connection confirmation
-      socket.send(JSON.stringify({
-        type: 'connected',
-        clientId,
-        userId,
-        companyId,
-        timestamp: new Date().toISOString()
-      }));
-    } catch (error) {
-      console.error('[TaskWebSocket] Error handling connection:', error);
+router.post('/reconcile/:taskId', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    if (!taskId) {
+      return res.status(400).json({ error: 'Invalid task ID' });
     }
-  });
-}
+
+    console.log(`[TaskWebSocket] Manual reconciliation requested for task ${taskId}`, {
+      timestamp: new Date().toISOString()
+    });
+
+    await handleTaskReconciliation(taskId);
+    
+    res.json({
+      success: true,
+      message: `Task ${taskId} reconciliation completed`,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[TaskWebSocket] Error reconciling task:`, error);
+    res.status(500).json({ 
+      error: 'Failed to reconcile task progress',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * Company Task Reconciliation Endpoint
+ * 
+ * Triggers reconciliation for all tasks in a company and broadcasts updates
+ * via the unified WebSocket service.
+ */
+router.post('/reconcile/company/:companyId', async (req, res) => {
+  try {
+    const companyId = parseInt(req.params.companyId);
+    if (!companyId) {
+      return res.status(400).json({ error: 'Invalid company ID' });
+    }
+
+    console.log(`[TaskWebSocket] Company reconciliation requested for company ${companyId}`, {
+      timestamp: new Date().toISOString()
+    });
+
+    await handleCompanyTaskReconciliation(companyId);
+    
+    res.json({
+      success: true,
+      message: `Company ${companyId} task reconciliation completed`,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[TaskWebSocket] Error reconciling company tasks:`, error);
+    res.status(500).json({ 
+      error: 'Failed to reconcile company tasks',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * Manual Task Progress Update Endpoint
+ * 
+ * Updates task progress manually and broadcasts via unified WebSocket service.
+ */
+router.post('/update-progress/:taskId', async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId);
+    const { progress, status } = req.body;
+
+    if (!taskId) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+
+    console.log(`[TaskWebSocket] Manual progress update for task ${taskId}`, {
+      progress,
+      status,
+      timestamp: new Date().toISOString()
+    });
+
+    await handleUpdateTaskProgress({ taskId, progress, status });
+    
+    res.json({
+      success: true,
+      message: `Task ${taskId} progress updated`,
+      taskId,
+      progress,
+      status,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[TaskWebSocket] Error updating task progress:`, error);
+    res.status(500).json({ 
+      error: 'Failed to update task progress',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
 
 /**
  * Handle task progress reconciliation requests
  * 
- * @param socket WebSocket client
  * @param taskId Task ID to reconcile
  */
-async function handleTaskReconciliation(socket: ExtendedWebSocket, taskId: number) {
+async function handleTaskReconciliation(taskId: number) {
   try {
-    if (!taskId || isNaN(taskId)) {
-      throw new Error('Invalid task ID');
-    }
+    console.log(`[TaskWebSocket] Starting reconciliation for task ${taskId}`);
     
-    console.log(`[TaskWebSocket] Reconciling task ${taskId}`);
-    
-    // Get current task data
+    // Get task details
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
+      where: eq(tasks.id, taskId),
+      with: {
+        company: true
+      }
     });
-    
+
     if (!task) {
       throw new Error(`Task ${taskId} not found`);
     }
-    
-    // Send starting message
-    socket.send(JSON.stringify({
-      type: 'reconciliation-started',
-      taskId,
-      timestamp: new Date().toISOString()
-    }));
-    
+
     // Perform reconciliation
-    await reconcileTaskProgress(taskId, { forceUpdate: true, debug: true });
+    const reconciliationResult = await reconcileTaskProgress(taskId);
     
-    // Get updated task data
-    const updatedTask = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
-    
-    // Send completion message
-    socket.send(JSON.stringify({
-      type: 'reconciliation-completed',
-      taskId,
-      before: {
-        progress: task.progress,
-        status: task.status
-      },
-      after: {
-        progress: updatedTask?.progress,
-        status: updatedTask?.status
-      },
-      timestamp: new Date().toISOString()
-    }));
+    console.log(`[TaskWebSocket] Reconciliation completed for task ${taskId}:`, reconciliationResult);
+
+    // Broadcast the update via unified WebSocket service
+    if (reconciliationResult && task.company_id) {
+      await broadcastTaskUpdate({
+        taskId: taskId,
+        companyId: task.company_id,
+        progress: reconciliationResult.progress || task.progress,
+        status: reconciliationResult.status || task.status,
+        metadata: {
+          reconciled: true,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
+    return reconciliationResult;
   } catch (error) {
-    console.error(`[TaskWebSocket] Error reconciling task ${taskId}:`, error);
-    
-    // Send error message
-    socket.send(JSON.stringify({
-      type: 'reconciliation-error',
-      taskId,
-      message: error instanceof Error ? error.message : 'Error reconciling task',
-      timestamp: new Date().toISOString()
-    }));
+    console.error(`[TaskWebSocket] Error in task reconciliation:`, error);
+    throw error;
   }
 }
 
 /**
  * Handle company-wide task reconciliation requests
  * 
- * @param socket WebSocket client
  * @param companyId Company ID to reconcile tasks for
  */
-async function handleCompanyTaskReconciliation(socket: ExtendedWebSocket, companyId: number) {
+async function handleCompanyTaskReconciliation(companyId: number) {
   try {
-    if (!companyId || isNaN(companyId)) {
-      throw new Error('Invalid company ID');
-    }
+    console.log(`[TaskWebSocket] Starting company-wide reconciliation for company ${companyId}`);
     
-    console.log(`[TaskWebSocket] Reconciling tasks for company ${companyId}`);
-    
-    // Check if company exists
-    const company = await db.query.companies.findFirst({
-      where: eq(companies.id, companyId)
+    // Get all tasks for the company
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, companyId)
     });
-    
-    if (!company) {
-      throw new Error(`Company ${companyId} not found`);
-    }
-    
-    // Find active tasks for the company
-    const companyTasks = await db.select({ id: tasks.id, type: tasks.task_type })
-      .from(tasks)
-      .where(eq(tasks.company_id, companyId));
-    
-    // Send starting message
-    socket.send(JSON.stringify({
-      type: 'company-reconciliation-started',
-      companyId,
-      taskCount: companyTasks.length,
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Extract task IDs
-    const taskIds = companyTasks.map(task => task.id);
-    
-    // Trigger reconciliation for all tasks
-    if (taskIds.length > 0) {
-      await triggerManualReconciliation(taskIds);
-    }
-    
-    // Send completion message
-    socket.send(JSON.stringify({
-      type: 'company-reconciliation-completed',
-      companyId,
-      taskCount: taskIds.length,
-      taskIds,
-      timestamp: new Date().toISOString()
-    }));
-  } catch (error) {
-    console.error(`[TaskWebSocket] Error reconciling company tasks:`, error);
-    
-    // Send error message
-    socket.send(JSON.stringify({
-      type: 'company-reconciliation-error',
-      companyId,
-      message: error instanceof Error ? error.message : 'Error reconciling company tasks',
-      timestamp: new Date().toISOString()
-    }));
-  }
-}
 
-/**
- * Handle client authentication requests
- * 
- * @param socket WebSocket client
- * @param data Authentication data
- */
-async function handleAuthentication(socket: ExtendedWebSocket, data: any) {
-  try {
-    // Extract authentication data
-    const { userId, companyId, token } = data;
+    console.log(`[TaskWebSocket] Found ${companyTasks.length} tasks for company ${companyId}`);
+
+    const reconciliationResults = [];
     
-    // Log authentication attempt
-    console.log(`[TaskWebSocket] Authentication attempt:`, {
-      userId,
-      companyId,
-      hasToken: !!token,
-      timestamp: new Date().toISOString()
+    // Reconcile each task
+    for (const task of companyTasks) {
+      try {
+        const result = await reconcileTaskProgress(task.id);
+        reconciliationResults.push({
+          taskId: task.id,
+          result
+        });
+
+        // Broadcast individual task updates
+        if (result) {
+          await broadcastTaskUpdate({
+            taskId: task.id,
+            companyId: companyId,
+            progress: result.progress || task.progress,
+            status: result.status || task.status,
+            metadata: {
+              reconciled: true,
+              companyWideReconciliation: true,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+      } catch (taskError) {
+        console.error(`[TaskWebSocket] Error reconciling task ${task.id}:`, taskError);
+        reconciliationResults.push({
+          taskId: task.id,
+          error: taskError instanceof Error ? taskError.message : 'Unknown error'
+        });
+      }
+    }
+
+    console.log(`[TaskWebSocket] Company reconciliation completed for ${companyId}`, {
+      totalTasks: companyTasks.length,
+      results: reconciliationResults.length
     });
-    
-    // Validate user ID if provided
-    if (userId && !isNaN(parseInt(userId))) {
-      socket.userId = parseInt(userId);
-    }
-    
-    // Validate company ID if provided
-    if (companyId && !isNaN(parseInt(companyId))) {
-      socket.companyId = parseInt(companyId);
-    }
-    
-    // TODO: In the future, implement token validation against the session store
-    
-    // Update clientId if available
-    if (data.clientId) {
-      socket.clientId = data.clientId;
-    }
-    
-    // Send authentication response with both data and payload fields for compatibility
-    // with different client implementations
-    const timestamp = new Date().toISOString();
-    socket.send(JSON.stringify({
-      type: 'authenticated',
-      userId: socket.userId,
-      companyId: socket.companyId,
-      clientId: socket.clientId,
-      // Include both data and payload for compatibility
-      data: {
-        userId: socket.userId,
-        companyId: socket.companyId,
-        clientId: socket.clientId,
-        status: 'authenticated',
-        timestamp
-      },
-      payload: {
-        userId: socket.userId,
-        companyId: socket.companyId,
-        clientId: socket.clientId,
-        status: 'authenticated',
-        timestamp
-      },
-      timestamp
-    }));
-    
-    console.log(`[TaskWebSocket] Client authenticated:`, {
-      clientId: socket.clientId,
-      userId: socket.userId,
-      companyId: socket.companyId,
-      timestamp: new Date().toISOString()
-    });
+
+    return reconciliationResults;
   } catch (error) {
-    console.error(`[TaskWebSocket] Authentication error:`, error);
-    
-    // Send error message with data and payload fields for compatibility
-    const errorTimestamp = new Date().toISOString();
-    const errorMessage = error instanceof Error ? error.message : 'Authentication error';
-    socket.send(JSON.stringify({
-      type: 'authentication-error',
-      message: errorMessage,
-      // Include data and payload fields for client compatibility
-      data: {
-        message: errorMessage,
-        status: 'error',
-        timestamp: errorTimestamp
-      },
-      payload: {
-        message: errorMessage,
-        status: 'error',
-        timestamp: errorTimestamp
-      },
-      timestamp: errorTimestamp
-    }));
+    console.error(`[TaskWebSocket] Error in company reconciliation:`, error);
+    throw error;
   }
 }
 
 /**
  * Handle manual task progress update requests
  * 
- * @param socket WebSocket client
  * @param data Update data
  */
-async function handleUpdateTaskProgress(socket: ExtendedWebSocket, data: any) {
+async function handleUpdateTaskProgress(data: any) {
   try {
-    const { taskId, taskType } = data;
+    const { taskId, progress, status } = data;
     
-    if (!taskId || isNaN(taskId)) {
-      throw new Error('Invalid task ID');
-    }
+    console.log(`[TaskWebSocket] Updating task ${taskId} progress:`, { progress, status });
     
-    if (!taskType) {
-      throw new Error('Task type is required');
-    }
+    // Update task progress
+    const updateResult = await updateTaskProgress(taskId, progress, status);
     
-    console.log(`[TaskWebSocket] Manually updating task progress:`, {
-      taskId,
-      taskType,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Get current task data
+    // Get task details for broadcasting
     const task = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
-    
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
-    
-    // Send starting message
-    socket.send(JSON.stringify({
-      type: 'progress-update-started',
-      taskId,
-      taskType,
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Perform progress update
-    await updateTaskProgress(taskId, taskType, { 
-      debug: true, 
-      metadata: {
-        updateSource: 'websocket-manual-update',
-        timestamp: new Date().toISOString(),
-        requestedBy: data.userId || socket.userId
+      where: eq(tasks.id, taskId),
+      with: {
+        company: true
       }
     });
+
+    if (task && task.company_id) {
+      // Broadcast the update via unified WebSocket service
+      await broadcastTaskUpdate({
+        taskId: taskId,
+        companyId: task.company_id,
+        progress: progress || task.progress,
+        status: status || task.status,
+        metadata: {
+          manualUpdate: true,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
+    console.log(`[TaskWebSocket] Task ${taskId} progress update completed`);
     
-    // Get updated task data
-    const updatedTask = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId)
-    });
-    
-    // Send completion message
-    socket.send(JSON.stringify({
-      type: 'progress-update-completed',
-      taskId,
-      before: {
-        progress: task.progress,
-        status: task.status
-      },
-      after: {
-        progress: updatedTask?.progress,
-        status: updatedTask?.status
-      },
-      timestamp: new Date().toISOString()
-    }));
+    return updateResult;
   } catch (error) {
     console.error(`[TaskWebSocket] Error updating task progress:`, error);
-    
-    // Send error message
-    socket.send(JSON.stringify({
-      type: 'progress-update-error',
-      taskId: data?.taskId,
-      message: error instanceof Error ? error.message : 'Error updating task progress',
-      timestamp: new Date().toISOString()
-    }));
+    throw error;
   }
 }
+
+export default router;
