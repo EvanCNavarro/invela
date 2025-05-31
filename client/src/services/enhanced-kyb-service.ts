@@ -1162,26 +1162,8 @@ export class EnhancedKybFormService implements FormServiceInterface {
         console.log('[Form Submission] Form submitted successfully, updating task status to submitted');
         this.taskStatus = 'submitted';
         
-        // As a fallback, manually trigger a WebSocket submission event
-        try {
-          // Import and use the WebSocket service directly
-          const { wsService } = await import('./websocket-unified');
-          
-          console.log('[Form Submission] Emitting local submission_status event as fallback');
-          // Send local websocket event with a small delay to let the server event arrive first
-          setTimeout(() => {
-            wsService.emit('submission_status', {
-              taskId: options.taskId,
-              status: 'submitted',
-              timestamp: Date.now(),
-              source: 'client-fallback'
-            }).catch(err => {
-              console.error('[Form Submission] Error emitting fallback event:', err);
-            });
-          }, 1000);
-        } catch (wsError) {
-          console.error('[Form Submission] Error with WebSocket fallback:', wsError);
-        }
+        // WebSocket submission events are handled by server-side unified broadcaster
+        console.log('[Form Submission] Form submitted successfully - server will broadcast updates');
       }
       
       return result;
