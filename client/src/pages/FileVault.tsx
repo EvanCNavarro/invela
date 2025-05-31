@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast, unifiedToast } from "@/hooks/use-unified-toast";
 import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchBar } from "@/components/ui/search-bar";
@@ -35,7 +35,20 @@ export const FileVault: React.FC = () => {
   const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
-  const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Monitor WebSocket connection status
+  useEffect(() => {
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    // Listen for connection state changes
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
@@ -340,17 +353,17 @@ export const FileVault: React.FC = () => {
     
     // Subscribe to file vault updates using unified WebSocket service
     console.log('[FileVault Debug] Subscribing to file_vault_update events');
-    const unsubscribeHandler = subscribe('file_vault_update', handleFileVaultUpdate);
+    const unsubscribeHandler = unifiedWebSocketService.subscribe('file_vault_update', handleFileVaultUpdate);
     console.log('[FileVault Debug] Subscription result:', unsubscribeHandler);
     
     return () => {
       // Clean up subscription
       if (unsubscribeHandler) {
-        unsubscribe('file_vault_update', handleFileVaultUpdate);
+        unsubscribeHandler();
       }
       console.log('[FileVault Debug] Cleaned up WebSocket listener for file vault updates');
     };
-  }, [queryClient, user?.company_id, currentPage, itemsPerPage, isConnected, subscribe, unsubscribe]);
+  }, [queryClient, user?.company_id, currentPage, itemsPerPage, isConnected]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {

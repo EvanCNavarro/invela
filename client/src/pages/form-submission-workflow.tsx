@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import FormSubmissionListener, { FormSubmissionEvent } from '@/components/forms/FormSubmissionListener';
 import { SubmissionSuccessModal } from '@/components/modals/SubmissionSuccessModal';
-import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
+import { unifiedWebSocketService } from '@/services/websocket-unified';
 
 export default function FormSubmissionWorkflowPage() {
   // Form state
