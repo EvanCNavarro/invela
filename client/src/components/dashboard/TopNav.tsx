@@ -27,6 +27,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import React, { useState, useMemo } from "react";
 // Playground functionality has been removed during cleanup
 import { cn } from "@/lib/utils";
@@ -38,6 +43,17 @@ export function TopNav() {
   const { company } = useCurrentCompany();
   const [location, setLocation] = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isWebsitePopoverOpen, setIsWebsitePopoverOpen] = useState(false);
+  
+  // Handle popover timing for smooth interactions
+  const handlePopoverEnter = () => {
+    setIsWebsitePopoverOpen(true);
+  };
+  
+  const handlePopoverLeave = () => {
+    // Small delay to prevent flickering when moving between trigger and content
+    setTimeout(() => setIsWebsitePopoverOpen(false), 100);
+  };
   
   // Prevent any automatic focus when the component mounts or refreshes
   usePreventFocus();
@@ -114,9 +130,72 @@ export function TopNav() {
               <BellIcon className="h-4 w-4" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <GlobeIcon className="h-4 w-4" />
-            </Button>
+            <Popover open={isWebsitePopoverOpen} onOpenChange={setIsWebsitePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 shrink-0"
+                  onMouseEnter={handlePopoverEnter}
+                  onMouseLeave={handlePopoverLeave}
+                  aria-label="Learn more about Invela Trust Network"
+                  aria-describedby="invela-popover"
+                >
+                  <GlobeIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                id="invela-popover"
+                className="w-80 p-0 shadow-lg border border-gray-200" 
+                align="end"
+                sideOffset={8}
+                onMouseEnter={handlePopoverEnter}
+                onMouseLeave={handlePopoverLeave}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+              >
+                <div className="p-4 space-y-4">
+                  {/* Header with Logo */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <GlobeIcon className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Invela Trust Network</h3>
+                      <p className="text-xs text-muted-foreground">Compliance Made Simple</p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <p className="text-sm text-foreground leading-relaxed">
+                      The comprehensive platform for financial compliance and risk management across the modern fintech ecosystem.
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium">
+                        Risk Assessment
+                      </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-50 text-green-700 text-xs font-medium">
+                        Compliance
+                      </span>
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-purple-50 text-purple-700 text-xs font-medium">
+                        Trust Network
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Call to Action */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => window.open('https://invela.com', '_blank')}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                    >
+                      <GlobeIcon className="h-3.5 w-3.5" />
+                      Visit invela.com
+                    </button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
           {/* PAIR Support Button - Only shown for FinTech companies */}
