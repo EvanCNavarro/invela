@@ -138,13 +138,12 @@ class UnifiedWebSocketService {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
       
-      // Debug log all messages except pings
-      if (message.type !== 'pong' && message.type !== 'ping') {
-        console.log('[UnifiedWebSocket Debug] Received message:', {
-          type: message.type,
-          data: message.data,
-          timestamp: message.timestamp
-        });
+      // Minimal debug logging for task updates only
+      if (message.type === 'task_updated' || message.type === 'task_update') {
+        const taskId = message.data?.taskId || (message as any).payload?.taskId || (message as any).taskId;
+        if (taskId) {
+          console.log(`[WebSocket] ${message.type} for task ${taskId}`);
+        }
       }
       
       // Handle system messages
@@ -155,11 +154,10 @@ class UnifiedWebSocketService {
       // Route message to subscribers
       const handlers = this.subscribers.get(message.type);
       if (handlers) {
-        console.log(`[UnifiedWebSocket Debug] Routing ${message.type} to ${handlers.size} handler(s)`);
         handlers.forEach(handler => {
           try {
-            // Check for data in multiple possible locations for compatibility
-            const messageData = message.data || (message as any).payload || message;
+            // Extract data from the proper location - server sends payload structure
+            const messageData = (message as any).payload || message.data || message;
             handler(messageData);
           } catch (error) {
             console.error('[WebSocket] Error in message handler:', error);
