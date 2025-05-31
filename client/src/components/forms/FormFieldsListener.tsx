@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
+import { unifiedWebSocketService } from '@/services/websocket-unified';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
