@@ -52,38 +52,67 @@ export function useCurrentCompany() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Import unified WebSocket service directly
-    import('@/services/websocket-unified').then(({ unifiedWebSocketService }) => {
-      // Subscribe to company data updates (replaces HTTP polling)
-      const unsubscribe = unifiedWebSocketService.subscribe('company_data', (data: Company) => {
-        logger.info('Received company data update:', data);
-        setCompany(data);
-        setIsLoading(false);
+    let isMounted = true;
+    
+    // HTTP-first authentication: Load initial company data via reliable HTTP request
+    const loadInitialCompanyData = async () => {
+      try {
+        setIsLoading(true);
         setIsError(false);
         setError(null);
-      });
-
-      // Subscribe to initial data (includes company data)
-      const unsubscribeInitial = unifiedWebSocketService.subscribe('initial_data', (data: any) => {
-        if (data.company) {
-          logger.info('Received initial company data:', data.company);
-          setCompany(data.company);
+        
+        const response = await fetch('/api/companies/current', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch company data: ${response.status}`);
+        }
+        
+        const companyData = await response.json();
+        
+        if (isMounted) {
+          logger.info('Loaded initial company data via HTTP:', companyData);
+          setCompany(companyData);
           setIsLoading(false);
-          setIsError(false);
-          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          logger.error('Failed to load initial company data:', err);
+          setIsError(true);
+          setError(err instanceof Error ? err : new Error(String(err)));
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Load initial data immediately
+    loadInitialCompanyData();
+
+    // Set up WebSocket for live updates after initial HTTP load
+    let websocketCleanup: (() => void) | null = null;
+    
+    import('@/services/websocket-unified').then(({ unifiedWebSocketService }) => {
+      // Subscribe to company data updates (real-time updates only)
+      websocketCleanup = unifiedWebSocketService.subscribe('company_data', (data: Company) => {
+        if (isMounted) {
+          logger.info('Received real-time company data update:', data);
+          setCompany(data);
         }
       });
-
-      return () => {
-        unsubscribe();
-        unsubscribeInitial();
-      };
     }).catch((err) => {
-      logger.error('Failed to setup WebSocket listeners for company data:', err);
-      setIsError(true);
-      setError(err);
-      setIsLoading(false);
+      logger.error('Failed to setup WebSocket listeners for company updates:', err);
     });
+
+    return () => {
+      isMounted = false;
+      if (websocketCleanup) {
+        websocketCleanup();
+      }
+    };
   }, []);
 
   // Store company ID in user context when it changes
