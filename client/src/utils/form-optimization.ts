@@ -301,7 +301,9 @@ class BatchUpdateManagerImpl<T = any> {
    * @param initialValues Optional initial values to populate the queue with
    */
   constructor(delay = 1500, initialValues?: Record<string, T>) {
-    this._delay = delay;
+    // COMPLETELY DISABLED: Set delay to Infinity to disable automatic batch processing
+    // This eliminates the persistent 60-second timer causing artificial polling
+    this._delay = Infinity;
     
     // Initialize with any provided values
     if (initialValues) {
