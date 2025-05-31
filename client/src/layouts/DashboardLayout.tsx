@@ -32,18 +32,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
-  const queryClient = useQueryClient();
 
-  // Use the optimized query options for frequently accessed endpoints
+  // Use the optimized query options for tasks (keeping HTTP for tasks for now)
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     ...getOptimizedQueryOptions("/api/tasks"),
   });
 
-  // Use WebSocket-driven company data (eliminates HTTP polling)
+  // Use WebSocket-driven company data (eliminates all HTTP polling)
   const { company: currentCompany, isLoading: isLoadingCompany } = useCurrentCompany();
 
-  
   // WebSocket-driven company tab updates (eliminated HTTP polling)
   useEffect(() => {
     // Handler for company tabs updates via WebSocket
@@ -56,185 +54,132 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         cacheInvalidation,
         eventType: event.type,
         currentCompanyId: currentCompany?.id,
-        currentAvailableTabs: currentCompany?.available_tabs
       });
-      
-      // Only process if it affects the current company
-      if (companyId === currentCompany?.id) {
-        console.log('[DashboardLayout] Processing update for current company');
+
+      // Only process if it's relevant to current company
+      if (companyId && currentCompany?.id && companyId === currentCompany.id) {
+        console.log('[DashboardLayout] Processing relevant company tabs update for company:', companyId);
         
-        // Enhanced approach with better cache handling:
-        // 1. Remove the cached data first
-        queryClient.removeQueries({ queryKey: ['/api/companies/current'] });
-        
-        // 2. Immediately update the cache with the new tabs - this provides instant UI feedback
-        //    even before the API refetch completes
-        if (currentCompany && Array.isArray(availableTabs)) {
-          console.log('[DashboardLayout] Directly updating query cache with new tabs:', availableTabs);
-          
-          queryClient.setQueryData(['/api/companies/current'], {
-            ...currentCompany,
-            available_tabs: availableTabs
-          });
-        }
-        
-        // 3. Still refetch from the server to ensure full sync
-        console.log('[DashboardLayout] Also refetching company data from server for complete sync');
-        queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-        refetchCompany();
+        // Update company data via WebSocket-driven mechanisms only
+        console.log('[DashboardLayout] Company tabs updated via WebSocket:', availableTabs);
       }
     };
-    
-    // Register event listeners
-    window.addEventListener('websocket-reconnected', handleWebSocketReconnect);
-    window.addEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
-    
-    // Cleanup on unmount
+
+    // Listen for company tabs update events
+    window.addEventListener('company-tabs-update', handleCompanyTabsUpdate as EventListener);
+
+    // Cleanup event listener
     return () => {
-      window.removeEventListener('websocket-reconnected', handleWebSocketReconnect);
-      window.removeEventListener('company-tabs-updated', handleCompanyTabsUpdate as EventListener);
+      window.removeEventListener('company-tabs-update', handleCompanyTabsUpdate as EventListener);
     };
-  }, [currentCompany?.id, queryClient, refetchCompany]);
+  }, [currentCompany?.id]);
 
-  const relevantTasks = tasks.filter(task => {
-    if (task.company_id !== currentCompany?.id) {
-      return false;
+  // Check if current route requires authentication and company data
+  useEffect(() => {
+    // Only check for company loading and redirect logic if we have user but no company
+    if (user && !isLoadingCompany && !currentCompany) {
+      console.log('[DashboardLayout] User authenticated but no company data available');
+      // Allow the app to continue - WebSocket data may be loading
     }
+  }, [user, currentCompany, isLoadingCompany]);
 
+  // Filter tasks for current user and company
+  const userTasks = Array.isArray(tasks) ? tasks.filter((task: Task) => {
+    if (!user || !currentCompany) return false;
+    
+    // Show tasks if user is assigned or if it's a company-scoped task for their company
+    return (task.assigned_to === user.id) || 
+           (task.task_scope === 'company' && task.company_id === currentCompany.id);
+  }) : [];
+
+  // Split path to check which section we're in
+  const pathSegments = location.split('/').filter(Boolean);
+  const currentSection = pathSegments[0] || '';
+
+  // Determine available tabs based on WebSocket-driven company data
+  const availableTabs = currentCompany?.available_tabs || [];
+
+  // Check if user has access to current route
+  const hasAccess = (path: string): boolean => {
+    if (!user || !currentCompany) return false;
+    
+    // Always allow root dashboard
+    if (path === '' || path === 'dashboard') return true;
+    
+    // Check specific tab access
+    if (path === 'file-vault') return availableTabs.includes('file-vault');
+    if (path === 'task-center') return availableTabs.includes('task-center');
+    if (path.startsWith('tasks/') && userTasks.length > 0) return true;
+    
+    return false;
+  };
+
+  // Redirect logic for unauthorized access
+  useEffect(() => {
+    if (!isLoadingCompany && currentCompany && !hasAccess(currentSection)) {
+      console.log(`[DashboardLayout] Access denied to ${currentSection}, redirecting to root`);
+      navigate('/');
+    }
+  }, [currentSection, currentCompany, isLoadingCompany, navigate]);
+
+  // Show loading state while company data is being fetched via WebSocket
+  if (isLoadingCompany || !currentCompany) {
     return (
-      task.assigned_to === user?.id ||
-      (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
-      (task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id))
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading company data...</p>
+        </div>
+      </div>
     );
-  });
+  }
 
-  const getCurrentTab = () => {
-    const path = location.split('/')[1] || 'dashboard';
-    return path === '' ? 'dashboard' : path;
-  };
-
-  // All routes are now accessible by default - we've removed the locking logic
-  const isRouteAccessible = () => {
-    // Log the current tab and available tabs for debugging purposes only
-    const availableTabs = currentCompany?.available_tabs || ['task-center'];
-    const currentTab = getCurrentTab();
-    
-    console.log('[DashboardLayout] Checking route access:', {
-      currentTab,
-      availableTabs,
-      isLoadingCompany
-    });
-
-    // Always return true - all tabs are accessible
-    console.log(`[DashboardLayout] Tab "${currentTab}" accessible: true`);
-    
-    return true;
-  };
-
-  // Add redirection functionality to automatically redirect users from locked tabs to the Task Center
-  useEffect(() => {
-    if (!isLoadingCompany && currentCompany) {
-      const availableTabs = currentCompany?.available_tabs || ['task-center'];
-      const currentTab = getCurrentTab();
-      
-      // Check if the current tab is accessible
-      const isCurrentTabAccessible = currentTab === 'task-center' || 
-        availableTabs.includes(currentTab) || 
-        (currentTab === 'risk-score-configuration' && availableTabs.includes('risk-score'));
-      
-      // If the current tab is not accessible, redirect to the Task Center
-      if (!isCurrentTabAccessible) {
-        console.log(`[DashboardLayout] Tab "${currentTab}" is locked. Redirecting to task-center.`);
-        navigate('/task-center');
-      }
-    }
-  }, [currentCompany, isLoadingCompany, location, navigate]);
-  
-  // Override tab visibility on route change to prevent any flickering issues
-  useEffect(() => {
-    const stopFlickering = () => {
-      const company = queryClient.getQueryData(['/api/companies/current']) as any;
-      if (company && location.includes('file-vault') && !company.available_tabs?.includes('file-vault')) {
-        console.log('[DashboardLayout] CRITICAL FIX: Correcting file-vault visibility in navigation');
-        
-        // If we're on the file-vault route but it's not in available tabs, add it
-        queryClient.setQueryData(['/api/companies/current'], {
-          ...company,
-          available_tabs: [...(company.available_tabs || []), 'file-vault']
-        });
-      }
-    };
-    
-    // Check multiple times with decreasing frequency
-    stopFlickering();
-    const timer1 = setTimeout(stopFlickering, 50);
-    const timer2 = setTimeout(stopFlickering, 200);
-    const timer3 = setTimeout(stopFlickering, 500);
-    
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, [location, queryClient]);
-
-  // We've removed the locked section screen
-  // All sections are now accessible by default
+  // Show access denied for unauthorized sections
+  if (!hasAccess(currentSection)) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center space-y-4">
+          <Lock className="h-16 w-16 text-muted-foreground mx-auto" />
+          <div>
+            <h2 className="text-xl font-semibold">Access Restricted</h2>
+            <p className="text-muted-foreground">
+              You don't have permission to access this section.
+            </p>
+            <button 
+              onClick={() => navigate('/')}
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#FAFCFD] relative flex flex-col">
-      <aside
-        className={cn(
-          "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
-          isExpanded ? "w-64" : "w-20"
-        )}
-      >
-        <div className="h-full bg-background border-r flex flex-col">
-          <Sidebar
-            isExpanded={isExpanded}
-            onToggleExpanded={toggleExpanded}
-            notificationCount={relevantTasks.length}
-            showInvelaTabs={false}
-            isPlayground={false}
-            variant="default"
-            availableTabs={currentCompany?.available_tabs || ['task-center']}
-            category={currentCompany?.category}
-          />
-        </div>
-      </aside>
-
-      {/* Fixed navbar that spans across the entire width minus sidebar */}
-      <header 
-        className={cn(
-          "fixed top-0 right-0 z-30 h-14 bg-background/90 backdrop-blur-sm border-b flex-shrink-0",
-          "transition-all duration-300 ease-in-out",
-          isExpanded ? "left-64" : "left-20"
-        )}
-      >
-        <TopNav />
-      </header>
-
-      {/* Content area with proper spacing for fixed navbar */}
-      <div
-        className={cn(
-          "min-h-screen flex flex-col pt-14 transition-all duration-300 ease-in-out", 
-          isExpanded ? "ml-64" : "ml-20"
-        )}
-      >
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <div className={cn(
-            "px-4 sm:px-6 md:px-8 py-4",
-            "transition-all duration-300 ease-in-out",
-            "container mx-auto max-w-full flex-1 flex flex-col"
-          )}>
-            {children}
-          </div>
+    <div className="flex h-screen bg-background">
+      <Sidebar 
+        currentCompany={currentCompany} 
+        isLoadingCompany={isLoadingCompany} 
+        navigate={navigate} 
+      />
+      
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-200",
+        isExpanded ? "ml-64" : "ml-16"
+      )}>
+        <TopNav 
+          currentCompany={currentCompany}
+          isLoadingCompany={isLoadingCompany}
+        />
+        
+        <main className="flex-1 overflow-auto">
+          {children}
         </main>
       </div>
-
-      <WelcomeModal />
       
-
+      <WelcomeModal />
     </div>
   );
 }
