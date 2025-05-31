@@ -17,21 +17,41 @@
 - `grep "setInterval\|setTimeout" in forms` - Found timeouts but none at 60s (800ms, 150ms, 50ms, 5s)
 - `grep "FormBatchUpdater"` - Found singleton usage in use-form-data-manager.ts hook
 - `grep "auto.*save"` - Found auto-save functionality in StandardizedUniversalForm.tsx
-- **CONFIRMED**: Timer still fires at 09:51:31 despite BatchUpdateManager changes
+- **CONFIRMED**: Timer fires consistently: 09:51:31 → 09:52:31 → 09:53:31 (exact 60s intervals)
+- **SOURCE LOCATION**: KY3P form page `/task-center/task/1103` confirmed by referer header
+- **API CALLS FOUND**: Multiple files call `/api/ky3p/batch-update/` endpoint:
+  - `fix-ky3p-bulk-update.ts` - Manual call function
+  - `standardized-ky3p-update.ts` - Standardized update function  
+  - `enhanced-ky3p-form-service.ts` - Service with timer disabled but calls endpoint
 
-## Current Hypotheses 🤔
-1. **React useEffect with setInterval** - Form component creating 60s timer (most likely)
-2. **Multiple BatchUpdateManager instances** - New instances created after page loads
-3. **React Query auto-refetch** - Hidden configuration triggering updates
-4. **WebSocket heartbeat/reconnection** - Triggering form sync every 60s
+## UNVALIDATED Hypotheses - Need Proof 🤔
+1. **Assumption**: React component creating timer - NO EVIDENCE YET
+2. **Assumption**: 60-second interval - PATTERN OBSERVED but SOURCE UNKNOWN  
+3. **Assumption**: BatchUpdateManager disabled - CHANGES MADE but TIMER PERSISTS
+4. **Assumption**: Timer on KY3P form page - REFERER SUGGESTS but NOT CONFIRMED
+
+## Evidence Required
+- [ ] Actual timer source identification via stack trace
+- [ ] Validation of exact interval timing 
+- [ ] Proof of component/service creating timer
+- [ ] Elimination of other potential sources
 
 ## Files to Investigate Next 📋
-- [ ] Search for React useEffect hooks in form components
-- [x] Check KY3P form components for timer creation - Found standardized-ky3p-update.ts (API endpoint)
-- [ ] Look for auto-save or sync mechanisms  
-- [ ] Investigate form data managers and listeners
-- [ ] Check standardized form update components
-- [ ] Find the KY3P form component that loads on task page /task-center/task/1103
+
+**High Priority - Need to Check for Timer Creation:**
+- [ ] `client/src/components/forms/UniversalFormNew.tsx` - Main form component loaded on KY3P page
+- [ ] `client/src/hooks/form/use-form-data-manager.ts` - Form hook with BatchUpdater usage
+- [ ] `client/src/components/forms/standardized-ky3p-update.ts` - Makes batch-update calls
+- [ ] `client/src/services/unified-ky3p-form-service.ts` - Service layer
+
+**React Query Sources to Check:**
+- [ ] Check if any React Query has `refetchInterval: 60000` specifically for KY3P
+
+**Pattern Tracking:**
+- 09:51:31 ✓
+- 09:52:31 ✓ 
+- 09:53:31 ✓
+- 09:54:31 ✓ (JUST FIRED)
 
 ## Key Insights 💡
 - Timer starts immediately when KY3P form page loads
