@@ -124,13 +124,13 @@ export default function TaskCenterPage() {
       });
 
       // Subscribe to company data updates (replaces HTTP company polling)
-      const unsubCompanyData = subscribe('company_data', (data: any) => {
+      const unsubCompanyData = unifiedWebSocketService.subscribe('company_data', (data: any) => {
         console.log('[TaskCenter] Received company data update:', data);
         setCurrentCompany(data);
       });
 
       // Subscribe to individual task updates
-      const unsubTaskUpdate = subscribe('task_update', (data: any) => {
+      const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_update', (data: any) => {
         console.log('[TaskCenter] Unified task update received:', data);
         
         const taskData = data?.payload || data;
@@ -162,7 +162,7 @@ export default function TaskCenterPage() {
       subscriptions.push(unsubInitialData, unsubTaskData, unsubCompanyData, unsubTaskUpdate);
       
       // Subscribe to test notifications
-      const unsubTestNotification = subscribe('task_test_notification', (data: any) => {
+      const unsubTestNotification = unifiedWebSocketService.subscribe('task_test_notification', (data: any) => {
         console.log('[TaskCenter] Test notification received:', data);
         const taskId = data?.id || data?.taskId;
         if (taskId) {
@@ -183,7 +183,7 @@ export default function TaskCenterPage() {
         });
       };
     }
-  }, [isConnected, subscribe, queryClient]);
+  }, [isConnected, queryClient]);
 
   const myTasksCount = !isLoading && currentCompany?.id
     ? tasks.filter(task => 
