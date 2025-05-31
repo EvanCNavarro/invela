@@ -331,16 +331,10 @@ export function broadcast<T extends WebSocketPayload>(
   
   const messageString = JSON.stringify(message);
   
-  // Debug logging to see what we're actually sending
+  // Minimal logging for task updates
   if (type === 'task_update' || type === 'task_updated') {
-    wsLogger.info(`Broadcasting ${type} with message structure:`, {
-      messageType: type,
-      hasPayload: !!message.payload,
-      payloadKeys: message.payload ? Object.keys(message.payload) : [],
-      rootKeys: Object.keys(message),
-      taskId: message.payload?.taskId || message.taskId,
-      id: message.payload?.id || message.id
-    });
+    const taskId = message.payload?.taskId || message.taskId;
+    wsLogger.debug(`Broadcasting ${type} for task ${taskId}`);
   }
   
   let sentCount = 0;
