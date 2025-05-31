@@ -79,7 +79,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/no-close-dialog';
-import { useToast } from '@/hooks/use-toast';
+
 
 // Revenue formatting utilities - updated to match demo system format
 const formatRevenue = (amount: number): string => {
@@ -892,11 +892,10 @@ export function AnimatedOnboardingModal({
       
       // Still show success to prevent user from getting stuck
       // The localStorage is already updated, so the modal won't show again
-      toastFn({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed, but some details could not be saved.",
-        variant: "default"
-      });
+      successToast(
+        "Welcome aboard!",
+        "Your onboarding has been completed, but some details could not be saved."
+      );
       
       // Close the modal even with unexpected errors
       // User can update details later if needed
