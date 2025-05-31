@@ -48,6 +48,14 @@ class UnifiedWebSocketService {
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private connectionPromise: Promise<void> | null = null;
   private userContext: { userId?: number; companyId?: number } = {};
+  private connectionMetrics = {
+    connectionsCreated: 0,
+    reconnectCount: 0,
+    messagesReceived: 0,
+    messagesSent: 0,
+    lastActivity: null as Date | null,
+    connectionId: Math.random().toString(36).substr(2, 9)
+  };
   
   // Static instance for singleton pattern
   private static instance: UnifiedWebSocketService | null = null;
@@ -94,12 +102,14 @@ class UnifiedWebSocketService {
           this.status = 'connected';
           this.reconnectAttempts = 0;
           this.connectionPromise = null;
+          this.connectionMetrics.connectionsCreated++;
+          this.connectionMetrics.lastActivity = new Date();
           this.startHeartbeat();
           
           // Send authentication with user context
           this.sendAuthenticationIfAvailable();
           
-          console.log('[UnifiedWebSocket] Connection established successfully');
+          console.log(`[UnifiedWebSocket] Connection established (ID: ${this.connectionMetrics.connectionId}, Total: ${this.connectionMetrics.connectionsCreated})`);
           resolve();
         };
         
@@ -142,6 +152,8 @@ class UnifiedWebSocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
+      this.connectionMetrics.messagesReceived++;
+      this.connectionMetrics.lastActivity = new Date();
       
       // Minimal debug logging for task updates only
       if (message.type === 'task_updated' || message.type === 'task_update') {

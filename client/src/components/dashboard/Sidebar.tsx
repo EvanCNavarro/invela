@@ -228,27 +228,34 @@ export function Sidebar({
          * @param {TaskCountData} data - The task count data from WebSocket
          */
         const handleTaskCountUpdate = (data: any) => {
-          // Safe logging with explicit type checking to aid debugging
-          console.log(`[Sidebar] Processing task update event:`, {
-            hasCountObject: !!data?.count,
-            taskId: data?.taskId,
-            companyId: data?.companyId,
-            receivedAt: new Date().toISOString(),
-          });
-          
           try {
-            // FIXED: Add robust null/undefined checking for the count property
-            // Only update task count state if we have valid count data
+            // OPTIMIZATION: Only process updates for our current company
+            const currentCompanyId = company?.id;
+            const updateCompanyId = data?.companyId || data?.context?.companyId;
+            
+            // Early exit if not for our company - this prevents unnecessary processing
+            if (currentCompanyId && updateCompanyId && currentCompanyId !== updateCompanyId) {
+              return; // Skip processing updates for other companies
+            }
+            
+            // Only log relevant updates to reduce console noise
+            if (data?.count?.total !== undefined || updateCompanyId === currentCompanyId) {
+              console.log(`[Sidebar] Processing relevant task update:`, {
+                hasCountObject: !!data?.count,
+                taskId: data?.taskId,
+                companyId: updateCompanyId,
+                relevantToCurrentCompany: updateCompanyId === currentCompanyId,
+                receivedAt: new Date().toISOString(),
+              });
+            }
+            
+            // Update task count if valid count data provided
             if (data?.count?.total !== undefined) {
               console.log(`[Sidebar] Updating task count to: ${data.count.total}`);
               setTaskCount(data.count.total);
             }
             
-            // FIXED: Add proper defensive checks for company-specific updates
-            // Check if this update is relevant to our current company context
-            const currentCompanyId = company?.id;
-            const updateCompanyId = data?.companyId;
-            
+            // Invalidate queries only for relevant company updates to avoid unnecessary API calls
             if (currentCompanyId && updateCompanyId && currentCompanyId === updateCompanyId) {
               console.log(`[Sidebar] Invalidating tasks query for company ${currentCompanyId}`);
               queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
