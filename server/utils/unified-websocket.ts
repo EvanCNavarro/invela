@@ -383,7 +383,13 @@ export function getWebSocketServer(): WebSocketServer | null {
  * 
  * @param payload Task update payload
  */
-export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): Promise<void> {
+export async function broadcastTaskUpdate(payload: {
+  taskId?: number;
+  id?: number;
+  status?: string;
+  progress?: number;
+  metadata?: any;
+}): Promise<void> {
   try {
     // Import database utilities to fetch context
     const { db } = await import("@db");
@@ -399,17 +405,21 @@ export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type
 
     // Fetch complete task context from database
     const taskWithContext = await db.query.tasks.findFirst({
-      where: eq(tasks.id, taskId),
-      with: {
-        company: true,
-        assignedUser: true
-      }
+      where: eq(tasks.id, taskId)
     });
 
     if (!taskWithContext) {
       wsLogger.warn(`Task ${taskId} not found for context enrichment`);
       return;
     }
+
+    // Fetch company data separately
+    const { companies } = await import("@db/schema");
+    const companyData = taskWithContext.company_id 
+      ? await db.query.companies.findFirst({
+          where: eq(companies.id, taskWithContext.company_id)
+        })
+      : null;
 
     // Create enriched payload with context data that components need
     const enrichedData = {
@@ -422,7 +432,7 @@ export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type
       context: {
         userId: taskWithContext.assigned_to,
         companyId: taskWithContext.company_id,
-        companyName: taskWithContext.company?.name,
+        companyName: companyData?.name,
         taskType: taskWithContext.task_type,
         taskScope: taskWithContext.task_scope
       },
@@ -433,11 +443,11 @@ export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type
 
     wsLogger.debug(`Broadcasting enriched task_updated for task ${taskId}`, {
       companyId: taskWithContext.company_id,
-      companyName: taskWithContext.company?.name
+      companyName: companyData?.name
     });
 
     // Broadcast enriched message with company filtering for efficiency
-    broadcast<TaskUpdateMessage>('task_updated', enrichedData, (client) => 
+    broadcast('task_updated', enrichedData, (client) => 
       client.companyId === taskWithContext.company_id
     );
     broadcast('task_update', enrichedData, (client) => 
@@ -461,7 +471,7 @@ export async function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type
       metadata: payload.metadata || {}
     };
 
-    broadcast<TaskUpdateMessage>('task_updated', taskData);
+    broadcast('task_updated', taskData);
     broadcast('task_update', taskData);
   }
 }
