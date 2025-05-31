@@ -38,18 +38,45 @@ interface TaskSummary {
 }
 
 export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProps) {
-  // DISABLED: Task data polling - using WebSocket-only updates for true event-driven architecture
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['/api/tasks'],
-    queryFn: () => fetch('/api/tasks').then(res => res.json()) as Promise<SelectTask[]>,
-    enabled: false, // DISABLED - no automatic polling
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-    staleTime: Infinity,
-    select: (data: SelectTask[]) => data || []
-  });
+  // WebSocket-only data state - NO HTTP polling
+  const [tasks, setTasks] = useState<SelectTask[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // WebSocket subscription for task data
+  const { subscribe } = useUnifiedWebSocket();
+  
+  useEffect(() => {
+    // Subscribe to initial data
+    const unsubInitialData = subscribe('initial_data', (data) => {
+      if (data.tasks) {
+        setTasks(data.tasks);
+        setIsLoading(false);
+      }
+    });
+
+    // Subscribe to task data updates
+    const unsubTaskData = subscribe('task_data', (data) => {
+      setTasks(data);
+    });
+
+    // Subscribe to individual task updates
+    const unsubTaskUpdate = subscribe('task_updated', (data) => {
+      const taskId = data?.taskId || data?.id;
+      if (taskId) {
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === taskId ? { ...task, ...data } : task
+          )
+        );
+      }
+    });
+
+    return () => {
+      unsubInitialData();
+      unsubTaskData();
+      unsubTaskUpdate();
+    };
+  }, [subscribe]);
 
   // Calculate task summary metrics
   const taskSummary: TaskSummary = {
