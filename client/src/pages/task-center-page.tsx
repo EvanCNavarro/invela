@@ -97,7 +97,7 @@ export default function TaskCenterPage() {
       const subscriptions: (() => void)[] = [];
       
       // Subscribe to initial data broadcast (replaces HTTP GET /api/tasks)
-      const unsubInitialData = subscribe('initial_data', (data: any) => {
+      const unsubInitialData = unifiedWebSocketService.subscribe('initial_data', (data: any) => {
         console.log('[TaskCenter] Received initial data broadcast:', data);
         if (data.tasks) {
           setTasks(data.tasks);
@@ -114,7 +114,7 @@ export default function TaskCenterPage() {
       });
 
       // Subscribe to task data updates (replaces HTTP polling)
-      const unsubTaskData = subscribe('task_data', (data: any) => {
+      const unsubTaskData = unifiedWebSocketService.subscribe('task_data', (data: any) => {
         console.log('[TaskCenter] Received task data update:', data);
         setTasks(data);
         const now = Date.now();
