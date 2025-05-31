@@ -327,7 +327,7 @@ export const queryClient = new QueryClient({
       // These are the global defaults, but individual queries should use getOptimizedQueryOptions
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 30000,             // 30 seconds (shorter than previous Infinity)
+      staleTime: Infinity,          // DISABLED: Prevent artificial 30-second polling that triggers fake updates
       retry: false,
     },
     mutations: {
