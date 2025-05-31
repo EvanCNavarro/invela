@@ -52,11 +52,18 @@ export function useUnifiedWebSocket() {
 
     wsRef.current.onmessage = (event) => {
       try {
+        console.log('[WebSocket] Raw message received:', event.data);
         const message: WebSocketMessage = JSON.parse(event.data);
+        console.log('[WebSocket] Parsed message:', message);
         const handlers = subscriptionsRef.current.get(message.type);
         
+        console.log(`[WebSocket] Found ${handlers?.size || 0} handlers for message type: ${message.type}`);
+        
         if (handlers) {
-          handlers.forEach(handler => handler(message.payload));
+          handlers.forEach(handler => {
+            console.log('[WebSocket] Calling handler with payload:', message.payload);
+            handler(message.payload);
+          });
         }
       } catch (error) {
         console.error('[WebSocket] Failed to parse message:', error);
