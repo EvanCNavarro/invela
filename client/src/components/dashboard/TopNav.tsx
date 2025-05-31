@@ -122,7 +122,7 @@ export function TopNav() {
           {/* PAIR Support Button - Only shown for FinTech companies */}
           {companyProfile.companyType === "FinTech" && (
             <Button 
-              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-gray-100 border-2 border-transparent relative hover:bg-gray-200 transition-colors"
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-gray-100 border-2 border-transparent relative hover:bg-gray-50 transition-colors"
               style={{
                 backgroundClip: 'padding-box',
                 position: 'relative',

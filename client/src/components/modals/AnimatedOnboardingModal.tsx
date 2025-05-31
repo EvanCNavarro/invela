@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUnifiedToast } from '@/hooks/use-unified-toast.tsx';
 
 // Global image cache for preloading and instant access
 const globalImageCache = new Map<string, HTMLImageElement>();
@@ -526,8 +527,8 @@ export function AnimatedOnboardingModal({
     },
   ]);
   
-  // Get toast function
-  const { toast: toastFn } = useToast();
+  // Get unified toast function
+  const { success: successToast, error: errorToast } = useUnifiedToast();
   
   // Get query client for invalidating queries after completing onboarding
   const queryClient = useQueryClient();
@@ -845,11 +846,10 @@ export function AnimatedOnboardingModal({
         
         // Show success toast for successful invitations
         if (successfulInvites > 0) {
-          toastFn({
-            title: "Team invitations sent",
-            description: `Successfully sent ${successfulInvites} team member invitation${successfulInvites > 1 ? 's' : ''}.`,
-            variant: "default"
-          });
+          successToast(
+            "Team invitations sent",
+            `Successfully sent ${successfulInvites} team member invitation${successfulInvites > 1 ? 's' : ''}.`
+          );
         }
         
         if (inviteErrors.length > 0) {
@@ -865,11 +865,10 @@ export function AnimatedOnboardingModal({
       if (hasErrors) {
         // Still show success message even with errors
         // This prevents the user from getting stuck in the onboarding flow
-        toastFn({
-          title: "Onboarding completed",
-          description: "Your onboarding is complete, but some optional details could not be saved. You can update them later.",
-          variant: "default"
-        });
+        successToast(
+          "Onboarding completed",
+          "Your onboarding is complete, but some optional details could not be saved. You can update them later."
+        );
         
         // Log detailed information about errors for debugging
         logDebug('Onboarding completed with some errors', { 
@@ -878,11 +877,10 @@ export function AnimatedOnboardingModal({
         });
       } else {
         // Show success message for complete success
-        toastFn({
-          title: "Welcome aboard!",
-          description: "Your onboarding has been completed successfully.",
-          variant: "default"
-        });
+        successToast(
+          "Welcome aboard!",
+          "Your onboarding has been completed successfully."
+        );
       }
       
       // Close the modal regardless of company/team errors
