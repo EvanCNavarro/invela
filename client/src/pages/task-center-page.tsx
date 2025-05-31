@@ -96,13 +96,8 @@ export default function TaskCenterPage() {
   const isCompanyOnboarded = currentCompany?.onboarding_company_completed ?? false;
   const isLoading = isTasksLoading || isCompanyLoading;
 
-  // Force task status refresh when navigating to task center
-  useEffect(() => {
-    const refreshTasks = async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-    };
-    refreshTasks();
-  }, [queryClient]);
+  // REMOVED: Automatic task refresh on navigation - using event-driven WebSocket updates only
+  // Tasks will update via WebSocket when their status actually changes
 
   // Unified WebSocket subscription
   useEffect(() => {
