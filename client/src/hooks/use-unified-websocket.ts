@@ -1,147 +1,105 @@
 /**
- * ========================================
  * Unified WebSocket Hook
- * ========================================
  * 
- * React hook that provides unified WebSocket functionality across all components.
- * Replaces multiple competing hooks to eliminate race conditions.
- * 
- * Key Features:
- * - Single connection management
- * - Automatic subscription cleanup
- * - Connection status monitoring
- * - Type-safe message handling
- * 
- * @module hooks/use-unified-websocket
- * @version 1.0.0
- * @since 2025-05-30
+ * Provides a centralized interface for WebSocket communication throughout the application.
+ * Handles connection management, message subscription, and automatic reconnection.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { unifiedWebSocketService, type MessageHandler, type ConnectionStatus } from '@/services/websocket-unified';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { userContext } from '@/lib/user-context';
 
-// ========================================
-// HOOK INTERFACE
-// ========================================
-
-interface UseUnifiedWebSocketReturn {
-  status: ConnectionStatus;
-  isConnected: boolean;
-  subscribe: (messageType: string, handler: MessageHandler) => () => void;
-  unsubscribe: (messageType: string, handler: MessageHandler) => void;
-  send: (type: string, data?: any) => boolean;
-  connect: () => Promise<void>;
-  disconnect: () => void;
+interface WebSocketMessage {
+  type: string;
+  payload: any;
+  timestamp: string;
 }
 
-// ========================================
-// UNIFIED WEBSOCKET HOOK
-// ========================================
+type MessageHandler = (data: any) => void;
 
-export function useUnifiedWebSocket(): UseUnifiedWebSocketReturn {
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
-  const subscriptionsRef = useRef<Map<string, Map<MessageHandler, () => void>>>(new Map());
-  
-  // ========================================
-  // STATUS MONITORING
-  // ========================================
-  
-  useEffect(() => {
-    // Initial status
-    setStatus(unifiedWebSocketService.getStatus());
-    
-    // Monitor status changes by subscribing to connection events
-    // Status updates handled by real-time WebSocket events, no polling needed
-    const currentStatus = unifiedWebSocketService.getStatus();
-    setStatus(currentStatus);
-  }, []);
-  
-  // ========================================
-  // SUBSCRIPTION MANAGEMENT
-  // ========================================
-  
-  const subscribe = useCallback((messageType: string, handler: MessageHandler) => {
-    // Get or create subscription map for this message type
-    if (!subscriptionsRef.current.has(messageType)) {
-      subscriptionsRef.current.set(messageType, new Map());
+export function useUnifiedWebSocket() {
+  const wsRef = useRef<WebSocket | null>(null);
+  const subscriptionsRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
+  const [isConnected, setIsConnected] = useState(false);
+
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
     }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
-    const handlersMap = subscriptionsRef.current.get(messageType)!;
-    
-    // Subscribe to the service and store the unsubscribe function
-    const unsubscribeFromService = unifiedWebSocketService.subscribe(messageType, handler);
-    handlersMap.set(handler, unsubscribeFromService);
-    
-    // Return the unsubscribe function
-    return unsubscribeFromService;
-  }, []);
-  
-  const unsubscribe = useCallback((messageType: string, handler: MessageHandler) => {
-    const handlersMap = subscriptionsRef.current.get(messageType);
-    if (handlersMap) {
-      const unsubscribeFromService = handlersMap.get(handler);
-      if (unsubscribeFromService) {
-        unsubscribeFromService();
-        handlersMap.delete(handler);
+    wsRef.current = new WebSocket(wsUrl);
+
+    wsRef.current.onopen = () => {
+      console.log('[WebSocket] Connected to unified WebSocket server');
+      
+      // For now, authenticate with stored user data
+      const companyId = userContext.getCompanyId();
+      
+      if (companyId) {
+        const authMessage = {
+          type: 'authenticate',
+          userId: 536, // Using demo user ID for now
+          companyId: companyId,
+          timestamp: new Date().toISOString()
+        };
         
-        // Clean up empty message type maps
-        if (handlersMap.size === 0) {
-          subscriptionsRef.current.delete(messageType);
-        }
+        wsRef.current?.send(JSON.stringify(authMessage));
       }
-    }
-  }, []);
-  
-  // ========================================
-  // CONNECTION METHODS
-  // ========================================
-  
-  const connect = useCallback(async () => {
-    try {
-      await unifiedWebSocketService.connect();
-      setStatus(unifiedWebSocketService.getStatus());
-    } catch (error) {
-      console.error('[useUnifiedWebSocket] Connection failed:', error);
-      setStatus('error');
-    }
-  }, []);
-  
-  const disconnect = useCallback(() => {
-    unifiedWebSocketService.disconnect();
-    setStatus('disconnected');
-  }, []);
-  
-  const send = useCallback((type: string, data?: any) => {
-    return unifiedWebSocketService.send(type, data);
-  }, []);
-  
-  // ========================================
-  // CLEANUP
-  // ========================================
-  
-  useEffect(() => {
-    return () => {
-      // Clean up all subscriptions when component unmounts
-      subscriptionsRef.current.forEach((handlersMap) => {
-        handlersMap.forEach((unsubscribeFromService) => {
-          unsubscribeFromService();
-        });
-      });
-      subscriptionsRef.current.clear();
+    };
+
+    wsRef.current.onmessage = (event) => {
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data);
+        const handlers = subscriptionsRef.current.get(message.type);
+        
+        if (handlers) {
+          handlers.forEach(handler => handler(message.payload));
+        }
+      } catch (error) {
+        console.error('[WebSocket] Failed to parse message:', error);
+      }
+    };
+
+    wsRef.current.onclose = () => {
+      console.log('[WebSocket] Connection closed, attempting to reconnect...');
+      setTimeout(connect, 3000);
+    };
+
+    wsRef.current.onerror = (error) => {
+      console.error('[WebSocket] Connection error:', error);
     };
   }, []);
-  
-  // ========================================
-  // RETURN INTERFACE
-  // ========================================
-  
+
+  const subscribe = useCallback((messageType: string, handler: MessageHandler) => {
+    if (!subscriptionsRef.current.has(messageType)) {
+      subscriptionsRef.current.set(messageType, new Set());
+    }
+    
+    subscriptionsRef.current.get(messageType)?.add(handler);
+
+    // Return unsubscribe function
+    return () => {
+      subscriptionsRef.current.get(messageType)?.delete(handler);
+    };
+  }, []);
+
+  const unsubscribe = useCallback((messageType: string, handler: MessageHandler) => {
+    subscriptionsRef.current.get(messageType)?.delete(handler);
+  }, []);
+
+  // Initialize connection on mount
+  useEffect(() => {
+    connect();
+
+    return () => {
+      wsRef.current?.close();
+    };
+  }, [connect]);
+
   return {
-    status,
-    isConnected: status === 'connected',
     subscribe,
-    unsubscribe,
-    send,
-    connect,
-    disconnect
+    unsubscribe
   };
 }

@@ -53,7 +53,7 @@ export function useCurrentCompany() {
 
   useEffect(() => {
     // Import WebSocket hook dynamically to avoid circular dependencies
-    import('@/hooks/useUnifiedWebSocket').then(({ useUnifiedWebSocket }) => {
+    import('@/hooks/use-unified-websocket').then(({ useUnifiedWebSocket }) => {
       const { subscribe } = useUnifiedWebSocket();
       
       // Subscribe to company data updates (replaces HTTP polling)
