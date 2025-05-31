@@ -340,15 +340,24 @@ const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?
   }
 };
 
-// Dynamic task unlocking check - used when accessing the Task Center
+// Dynamic task unlocking check - DISABLED to prevent artificial updates
 export const checkAndUnlockSecurityTasks = async (companyId: number, userId?: number) => {
   try {
-    logger.info('Performing dynamic task unlocking check for company', {
+    logger.info('DISABLED: Automatic task unlocking to prevent artificial updates', {
       companyId,
       userId
     });
     
-    // First, check if there's a completed KYB task for this company
+    // DISABLED: This automatic unlocking was causing artificial WebSocket updates every ~30 seconds
+    // Task unlocking should only happen on genuine user actions (form submissions, etc.)
+    logger.info('Skipping automatic task unlocking - using event-driven updates only');
+    return { 
+      success: true, 
+      unlocked: false, 
+      message: 'Automatic unlocking disabled - event-driven only' 
+    };
+
+    // DISABLED CODE - First, check if there's a completed KYB task for this company
     const kybTasks = await db.select()
       .from(tasks)
       .where(
