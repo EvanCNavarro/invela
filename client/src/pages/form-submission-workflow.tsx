@@ -49,7 +49,20 @@ export default function FormSubmissionWorkflowPage() {
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
   
   // Unified WebSocket integration
-  const { isConnected } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Monitor WebSocket connection status
+  useEffect(() => {
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    // Listen for connection state changes
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
   
   // Reset form to initial state
   const resetForm = useCallback(() => {

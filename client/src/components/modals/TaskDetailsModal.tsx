@@ -6,7 +6,7 @@ import { TaskStatus } from "@db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 import { Wifi, WifiOff } from "lucide-react";
 
 interface TaskDetailsModalProps {

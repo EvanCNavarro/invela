@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 // Task type definition
 interface Task {
@@ -58,7 +58,20 @@ export function Sidebar({
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
   const queryClient = useQueryClient();
-  const { subscribe, unsubscribe } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Monitor WebSocket connection status
+  useEffect(() => {
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    // Listen for connection state changes
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
   
   // Get current company data
   const { data: company } = useQuery<{ id: number; name: string; available_tabs?: string[] }>({
