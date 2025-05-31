@@ -8,8 +8,8 @@
  * the unified task management system to provide real-time updates.
  */
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useUnifiedWebSocket } from '@/hooks/useUnifiedWebSocket';
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
