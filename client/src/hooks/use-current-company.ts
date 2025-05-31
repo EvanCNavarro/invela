@@ -52,12 +52,10 @@ export function useCurrentCompany() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Import WebSocket hook dynamically to avoid circular dependencies
-    import('@/hooks/use-unified-websocket').then(({ useUnifiedWebSocket }) => {
-      const { subscribe } = useUnifiedWebSocket();
-      
+    // Import unified WebSocket service directly
+    import('@/services/websocket-unified').then(({ unifiedWebSocketService }) => {
       // Subscribe to company data updates (replaces HTTP polling)
-      const unsubscribe = subscribe('company_data', (data: Company) => {
+      const unsubscribe = unifiedWebSocketService.subscribe('company_data', (data: Company) => {
         logger.info('Received company data update:', data);
         setCompany(data);
         setIsLoading(false);
@@ -66,7 +64,7 @@ export function useCurrentCompany() {
       });
 
       // Subscribe to initial data (includes company data)
-      const unsubscribeInitial = subscribe('initial_data', (data: any) => {
+      const unsubscribeInitial = unifiedWebSocketService.subscribe('initial_data', (data: any) => {
         if (data.company) {
           logger.info('Received initial company data:', data.company);
           setCompany(data.company);

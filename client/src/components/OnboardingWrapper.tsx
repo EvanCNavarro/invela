@@ -5,7 +5,7 @@ import { Info } from "lucide-react";
 import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
