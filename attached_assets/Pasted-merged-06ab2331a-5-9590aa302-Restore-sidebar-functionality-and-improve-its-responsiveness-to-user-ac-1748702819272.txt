@@ -1,0 +1,87 @@
+merged 06ab2331a 5 9590aa302
+Restore sidebar functionality and improve its responsiveness to user actions
+∞ EvanCNavarro 5 minutes ago
+
+• Restore sidebar functionality and improve its responsiveness to user actions
+∞ EvanCNavarro 5 minutes ago
+
+merged 2fefde61f 5 e76b9fd6b
+Restore ability to retrieve current company data via API endpoint
+@ EvanCNavarro 6 minutes ago
+
+• Restore ability to retrieve current company data via API endpoint
+@ EvanCNavarro 6 minutes ago
+
+merged ecbd4351f 5 94bb2b771
+Revert to standard data fetching to fix loading issues and app errors
+a Evanunavalro suminutes d?o
+
+• Revert to standard data fetching to fix loading issues and app errors
+@ EvanCNavarro 10 minutes ago
+
+merged 109a3d6f4 5 22d34e530
+Show application initialization and WebSocket server setup in the logs
+∞ EvanCNavarro 15 minutes ago
+
+• Show application initialization and WebSocket server setup in the logs
+∞ EvanCNavarro 15 minutes ago
+
+merged dcebidcff 5 eb9faa61a
+Update internal navigation links to improve routing within the application
+@ EvanCNavarro 21 minutes ago
+
+• Update internal navigation links to improve routing within the application
+w EvanuNavalro 21 minutes ago
+
+merged dd60cc067 5, ba2f35123
+Make the sidebar navigation functional by correctly routing user clicks
+@ EvanCNavarro 23 minutes ago
+
+• Make the sidebar navigation functional by correctly routing user clicks
+@ EvanCNavarro 23 minutes ago
+
+merged 68422c5a3 5 c5369f1d1
+Update company data display with real-time info via enhanced web sockets
+∞ EvanCNavarro 32 minutes ago
+
+• Update company data display with real-time info via enhanced web sockets
+∞ EvanCNavarro 32 minutes ago
+
+merged 58e68b325 5 ae6a3cbe1
+Refactor the system to use event-driven architecture and remove polling
+@ EvanCNavarro 45 minutes ago
+
+• Refactor the system to use event-driven architecture and remove polling
+@ EvanCNavarro 45 minutes ago
+
+merged e61241b9d S b86437f97
+Prepare repository for upcoming feature implementation and code changes
+@ EvanCNavarro 47 minutes ago
+
+• Prepare repository for upcoming feature implementation and code changes
+@ EvanCNavarro 47 minutes ago
+
+merged 4a2957ee2 5 1964de5b4
+Improve sidebar data loading with WebSocket for real-time updates
+∞ EvanCNavarro 47 minutes ago
+
+• Improve sidebar data loading with WebSocket for real-time updates
+∞ EvanCNavarro 47 minutes ago
+
+merged eaeOb0dc3 5 1bcee78f7
+Created a checkpoint
+@ EvanCNavarro 53 minutes ago
+
+• Created a checkpoint
+@ EvanCNavarro 53 minutes ago
+
+merged fbefebcc8 5 c869e54f7
+Ensure form listeners are only active when the WebSocket connection is established
+a) EvanCNavarro 2 hours ago
+
+• Ensure form listeners are only active when the WebSocket connection is established
+∞ EvanCNavarro 2 hours ago
+
+merged a53f120be $ 0e9334cb9
+Refactor form submission updates to use centralized WebSocket service
+∞ EvanCNavarro 2 hours ago
