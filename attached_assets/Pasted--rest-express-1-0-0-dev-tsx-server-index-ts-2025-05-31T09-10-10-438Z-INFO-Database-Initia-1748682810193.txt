@@ -1,0 +1,308 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-31T09:10:10.438Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-31T09:10:10.443Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":103,"timestamp":"2025-05-31T09:10:10.443Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-31T09:10:10.589Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-31T09:10:10.700Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"n0tnei","timestamp":"2025-05-31T09:10:10.700Z"}
+[2025-05-31T09:10:10.700Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-31T09:10:10.700Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-31T09:10:10.700Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-31T09:10:10.700Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-31T09:10:10.700Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-31T09:10:10.700Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-31T09:10:10.701Z] [INFO] [App] Setting up Vite development server 
+[2025-05-31T09:10:10.702Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (production mode) 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ENV] Environment=production 
+[2025-05-31T09:10:10.703Z] [INFO] [App] [ENV] Configuration: Production mode 
+[2025-05-31T09:10:10.719Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-05-31T09:10:10.719Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-31T09:10:10.748Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-31T09:10:10.748Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-31T09:10:10.748Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-31T09:10:10.748Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-31T09:10:10.749Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-31T09:10:11.776Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-31T09:10:11.777Z] [INFO] [App] TESTING: Periodic task reconciliation system DISABLED to test real-time WebSocket 
+[2025-05-31T09:10:11.777Z] [INFO] [App] Task reconciliation system DISABLED for testing 
+[2025-05-31T09:10:14.084Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-31T09:10:14.582Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-31T09:10:15.598Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748682615597-696nmg1","clients":1}
+[2025-05-31T09:10:16.131Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-31T09:10:16.170Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1748682615597-696nmg1","code":1001,"reason":"","remainingClients":0}
+[2025-05-31T09:10:16.777Z] [INFO] [App] Running background health checks... 
+[2025-05-31T09:10:16.777Z] [StartupChecks] Running application startup health checks... 
+[2025-05-31T09:10:16.778Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-31T09:10:16.778Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-31T09:10:16.971Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-31T09:10:16.999Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-31T09:10:17.036Z] [DBConnectionService] Database connection check successful 
+[2025-05-31T09:10:17.036Z] [StartupChecks] Database health check passed 
+[2025-05-31T09:10:17.036Z] [StartupChecks] All startup health checks passed! 
+[2025-05-31T09:10:17.036Z] [INFO] [App] All background health checks passed successfully. 
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-31T09:10:24.203Z] [INFO] [App] DISABLED: Automatic task unlocking to prevent artificial updates {"companyId":755,"userId":536}
+[2025-05-31T09:10:24.203Z] [INFO] [App] Skipping automatic task unlocking - using event-driven updates only 
+[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates { userId: 536, companyId: 755, requestedBy: 'event_driven_only' }
+[Tasks] Skipping automatic task unlocking - using event-driven updates only
+[Tasks] Using event-driven task updates only for company: 755
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-31T09:10:24.230Z'
+}
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[2025-05-31T09:10:24.259Z] [INFO] [App] GET /api/companies/current 304 in 59ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... 
+[Tasks] Tasks found: { count: 3 }
+[2025-05-31T09:10:24.319Z] [INFO] [App] GET /api/tasks 200 in 117ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:10:24.439Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 536 
+[2025-05-31T09:10:24.439Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-31T09:10:24.439Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-31T09:10:24.439Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 536 
+[2025-05-31T09:10:24.466Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748682624466-gxfo3sr","clients":1}
+[2025-05-31T09:10:24.469Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 536 
+[2025-05-31T09:10:24.497Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 59ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-31T09:10:24.586Z] [INFO] [WebSocket] Received message from client client-1748682624466-gxfo3sr {"module":"WebSocket","type":"authenticate","userId":536,"companyId":755,"timestamp":"2025-05-31T09:10:24.425Z"}
+[2025-05-31T09:10:24.586Z] [INFO] [WebSocket] Authentication from client client-1748682624466-gxfo3sr {"module":"WebSocket","userId":536,"companyId":755,"hasToken":true}
+[KY3P API] Received batch update for task 1103 with 120 fields
+[KY3P API] Request source: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+[KY3P API] Request origin: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev
+[KY3P API] Request referer: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/task-center/task/1103
+[KY3P API] Stack trace: Error
+    at <anonymous> (/home/runner/workspace/server/routes/ky3p-enhanced.routes.ts:113:44)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/home/runner/workspace/server/middleware/auth.ts:24:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at param (/home/runner/workspace/server/node_modules/express/lib/router/index.js:365:14)
+[KY3P] Task 1103 progress updated: 0% (0/0 fields complete)
+[2025-05-31T09:10:34.961Z] [INFO] [App] POST /api/ky3p/batch-update/1103 200 in 3924ms :: {"success":true,"message":"Successfully processed 120 field updates","process... 
+[2025-05-31T09:10:34.991Z] [DEBUG] [WebSocket] Broadcasting enriched task_updated for task 1103 {"module":"WebSocket","companyId":755,"companyName":"Meridian Research United"}
+[2025-05-31T09:10:34.992Z] [DEBUG] [WebSocket] Broadcasting task_updated for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:10:34.992Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:10:34.992Z] [DEBUG] [WebSocket] Broadcasting task_update for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:10:34.992Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:10:34.992Z] [INFO] [WebSocket] Enriched task update broadcast completed for task 1103 {"module":"WebSocket","companyId":755,"messageId":"msg_1748682634991_v6e24w2cu"}
+[2025-05-31T09:10:35.231Z] [INFO] [App] GET /api/tasks 304 in 32ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:10:50.448Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-31T09:11:05.637Z] [INFO] [App] DISABLED: Automatic task unlocking to prevent artificial updates {"companyId":755,"userId":536}
+[2025-05-31T09:11:05.637Z] [INFO] [App] Skipping automatic task unlocking - using event-driven updates only 
+[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates { userId: 536, companyId: 755, requestedBy: 'event_driven_only' }
+[Tasks] Skipping automatic task unlocking - using event-driven updates only
+[Tasks] Using event-driven task updates only for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-31T09:11:05.751Z] [INFO] [App] GET /api/tasks 200 in 115ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:11:20.961Z] [INFO] [App] GET /api/tasks 304 in 29ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-31T09:11:25.841Z'
+}
+[KY3P API] Received batch update for task 1103 with 120 fields
+[KY3P API] Request source: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+[KY3P API] Request origin: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev
+[KY3P API] Request referer: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/task-center/task/1103
+[KY3P API] Stack trace: Error
+    at <anonymous> (/home/runner/workspace/server/routes/ky3p-enhanced.routes.ts:113:44)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/home/runner/workspace/server/middleware/auth.ts:24:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at param (/home/runner/workspace/server/node_modules/express/lib/router/index.js:365:14)
+[Current Company] Using cached company data: 755
+[KY3P] Task 1103 progress updated: 0% (0/0 fields complete)
+[2025-05-31T09:11:34.892Z] [INFO] [App] POST /api/ky3p/batch-update/1103 200 in 3839ms :: {"success":true,"message":"Successfully processed 120 field updates","process... 
+[2025-05-31T09:11:34.919Z] [DEBUG] [WebSocket] Broadcasting enriched task_updated for task 1103 {"module":"WebSocket","companyId":755,"companyName":"Meridian Research United"}
+[2025-05-31T09:11:34.920Z] [DEBUG] [WebSocket] Broadcasting task_updated for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:11:34.920Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:11:34.920Z] [DEBUG] [WebSocket] Broadcasting task_update for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:11:34.920Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:11:34.920Z] [INFO] [WebSocket] Enriched task update broadcast completed for task 1103 {"module":"WebSocket","companyId":755,"messageId":"msg_1748682694919_rx52gv4fi"}
+[2025-05-31T09:11:35.129Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:11:36.098Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... [sampled: request 11] 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-31T09:11:50.310Z] [INFO] [App] DISABLED: Automatic task unlocking to prevent artificial updates {"companyId":755,"userId":536}
+[2025-05-31T09:11:50.310Z] [INFO] [App] Skipping automatic task unlocking - using event-driven updates only 
+[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates { userId: 536, companyId: 755, requestedBy: 'event_driven_only' }
+[Tasks] Skipping automatic task unlocking - using event-driven updates only
+[Tasks] Using event-driven task updates only for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-31T09:11:50.423Z] [INFO] [App] GET /api/tasks 200 in 113ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:12:05.637Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 536, company_id: 755, email: 'rward@meridianresearchunited.com' }
+[2025-05-31T09:12:20.846Z] [INFO] [App] DISABLED: Automatic task unlocking to prevent artificial updates {"companyId":755,"userId":536}
+[2025-05-31T09:12:20.846Z] [INFO] [App] Skipping automatic task unlocking - using event-driven updates only 
+[Tasks] DISABLED: Automatic task unlocking to prevent artificial updates { userId: 536, companyId: 755, requestedBy: 'event_driven_only' }
+[Tasks] Skipping automatic task unlocking - using event-driven updates only
+[Tasks] Using event-driven task updates only for company: 755
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 536',
+    condition2: 'tasks.created_by = 536',
+    condition3: "tasks.company_id = 755 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rward@meridianresearchunited.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-31T09:12:20.962Z] [INFO] [App] GET /api/tasks 304 in 117ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[Current Company] Fetching company for user: { userId: 536, companyId: 755 }
+[Current Company] Found company: {
+  id: 755,
+  name: 'Meridian Research United',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 536,
+  companyId: 755,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-31T09:12:27.273Z'
+}
+[KY3P API] Received batch update for task 1103 with 120 fields
+[KY3P API] Request source: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36
+[KY3P API] Request origin: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev
+[KY3P API] Request referer: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/task-center/task/1103
+[KY3P API] Stack trace: Error
+    at <anonymous> (/home/runner/workspace/server/routes/ky3p-enhanced.routes.ts:113:44)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/home/runner/workspace/server/middleware/auth.ts:24:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/workspace/server/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/workspace/server/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/workspace/server/node_modules/express/lib/router/index.js:284:15
+    at param (/home/runner/workspace/server/node_modules/express/lib/router/index.js:365:14)
+[2025-05-31T09:12:32.199Z] [INFO] [App] GET /api/tasks/1103 200 in 68ms :: {"id":1103,"title":"2. S&P KY3P Security Assessment: Meridian Research United... 
+[Task Templates API] Fetching template for task type: ky3p, user: 536
+[Task Templates API] Found template: 48 (S&P KY3P Security Assessment) for task type: ky3p
+[2025-05-31T09:12:33.252Z] [INFO] [App] GET /api/tasks/1103 304 in 59ms :: {"id":1103,"title":"2. S&P KY3P Security Assessment: Meridian Research United... 
+[Task Templates API] Retrieved 10 configuration items for template ID: 48
+[2025-05-31T09:12:33.290Z] [INFO] [App] GET /api/task-templates/by-type/ky3p 304 in 99ms :: {"id":48,"name":"S&P KY3P Security Assessment","description":"S&P KY3P Securi... 
+[2025-05-31T09:12:34.431Z] [INFO] [App] Fetching all KY3P fields 
+[2025-05-31T09:12:34.539Z] [INFO] [App] Successfully retrieved 120 KY3P fields 
+[2025-05-31T09:12:34.573Z] [INFO] [App] GET /api/ky3p-fields 304 in 140ms :: [{"id":1,"order":1,"field_key":"externalSystems","display_name":"External Sys... 
+[KY3P] Task 1103 progress updated: 0% (0/0 fields complete)
+[2025-05-31T09:12:34.670Z] [INFO] [App] POST /api/ky3p/batch-update/1103 200 in 3674ms :: {"success":true,"message":"Successfully processed 120 field updates","process... 
+[2025-05-31T09:12:34.701Z] [DEBUG] [WebSocket] Broadcasting enriched task_updated for task 1103 {"module":"WebSocket","companyId":755,"companyName":"Meridian Research United"}
+[2025-05-31T09:12:34.702Z] [DEBUG] [WebSocket] Broadcasting task_updated for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:12:34.704Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:12:34.704Z] [DEBUG] [WebSocket] Broadcasting task_update for task 1103 {"module":"WebSocket"}
+[2025-05-31T09:12:34.704Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 1 clients {"module":"WebSocket","messageType":"task_update","recipients":1,"totalClients":1,"filtered":true}
+[2025-05-31T09:12:34.704Z] [INFO] [WebSocket] Enriched task update broadcast completed for task 1103 {"module":"WebSocket","companyId":755,"messageId":"msg_1748682754701_a4gmawvgo"}
+[2025-05-31T09:12:34.750Z] [INFO] [App] Fetching KY3P progress for task 1103 
+[2025-05-31T09:12:34.811Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:34.877Z] [INFO] [App] GET /api/ky3p/progress/1103 200 in 125ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:34.931Z] [INFO] [App] GET /api/tasks 304 in 29ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:12:35.068Z] [INFO] [App] Fetching KY3P progress for task 1103 
+[2025-05-31T09:12:35.125Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:35.189Z] [INFO] [App] GET /api/ky3p/progress/1103 304 in 120ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:35.219Z] [INFO] [App] GET /api/tasks/1103 200 in 60ms :: {"id":1103,"title":"2. S&P KY3P Security Assessment: Meridian Research United... 
+[2025-05-31T09:12:35.403Z] [INFO] [App] Fetching KY3P responses for task 1103 
+[2025-05-31T09:12:35.426Z] [INFO] [App] GET /api/tasks/1103 304 in 61ms :: {"id":1103,"title":"2. S&P KY3P Security Assessment: Meridian Research United... 
+[2025-05-31T09:12:35.461Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:35.493Z] [INFO] [App] GET /api/tasks/1103/ky3p-responses 200 in 89ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:35.650Z] [INFO] [App] Fetching KY3P responses for task 1103 
+[2025-05-31T09:12:35.665Z] [INFO] [App] Fetching KY3P progress for task 1103 
+[2025-05-31T09:12:35.717Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:35.726Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:35.749Z] [INFO] [App] GET /api/tasks/1103/ky3p-responses 304 in 99ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:35.790Z] [INFO] [App] GET /api/ky3p/progress/1103 304 in 124ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:35.966Z] [INFO] [App] Fetching KY3P progress for task 1103 
+[2025-05-31T09:12:36.023Z] [INFO] [App] Retrieved 120 responses for task 1103 
+[2025-05-31T09:12:36.088Z] [INFO] [App] GET /api/ky3p/progress/1103 304 in 121ms :: {"success":true,"taskId":1103,"status":"in_progress","responses":[{"id":25573... 
+[2025-05-31T09:12:41.121Z] [INFO] [App] GET /api/tasks 304 in 29ms :: [{"id":1104,"title":"3. Open Banking Survey: Meridian Research United","descr... 
+[2025-05-31T09:12:51.344Z] [INFO] [App] GET /api/companies/current 304 in 29ms :: {"id":755,"name":"Meridian Research United","category":"FinTech","is_demo":tr... [sampled: request 21] 
