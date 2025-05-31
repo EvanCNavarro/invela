@@ -40,7 +40,7 @@ export async function updateAndBroadcastSubmissionStatus(
     // Update the task status in the database
     await db.update(tasks)
       .set({
-        status: TaskStatus.SUBMITTED,
+        status: TaskStatus.SUBMITTED as any,
         progress: 100,
         updated_at: new Date(),
         metadata: {
@@ -57,6 +57,7 @@ export async function updateAndBroadcastSubmissionStatus(
     // Broadcast the status update to all connected clients
     console.log(`[SubmissionService] Broadcasting submission update for task ${taskId}`);
     broadcastTaskUpdate({
+      id: taskId,
       taskId: taskId,
       status: TaskStatus.SUBMITTED,
       progress: 100,
