@@ -47,6 +47,7 @@ class UnifiedWebSocketService {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private connectionPromise: Promise<void> | null = null;
+  private userContext: { userId?: number; companyId?: number } = {};
   
   // Static instance for singleton pattern
   private static instance: UnifiedWebSocketService | null = null;
@@ -94,6 +95,10 @@ class UnifiedWebSocketService {
           this.reconnectAttempts = 0;
           this.connectionPromise = null;
           this.startHeartbeat();
+          
+          // Send authentication with user context
+          this.sendAuthenticationIfAvailable();
+          
           console.log('[UnifiedWebSocket] Connection established successfully');
           resolve();
         };
@@ -181,6 +186,39 @@ class UnifiedWebSocketService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Set user context for authentication
+   */
+  setUserContext(userId: number, companyId: number): void {
+    this.userContext = { userId, companyId };
+    
+    // If already connected, send authentication immediately
+    if (this.status === 'connected') {
+      this.sendAuthenticationIfAvailable();
+    }
+  }
+
+  /**
+   * Send authentication if user context is available
+   */
+  private sendAuthenticationIfAvailable(): void {
+    if (this.userContext.userId && this.userContext.companyId && this.socket?.readyState === WebSocket.OPEN) {
+      const authMessage = {
+        type: 'authenticate',
+        userId: this.userContext.userId,
+        companyId: this.userContext.companyId,
+        timestamp: new Date().toISOString()
+      };
+      
+      this.socket.send(JSON.stringify(authMessage));
+      
+      console.log('[UnifiedWebSocket] Authentication sent', {
+        userId: this.userContext.userId,
+        companyId: this.userContext.companyId
+      });
+    }
   }
   
   // ========================================
