@@ -278,18 +278,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     };
   }
   
-  // Tasks endpoint - COMPLETELY DISABLED polling for true WebSocket architecture
-  if (urlStr.includes('/api/tasks')) {
-    return {
-      refetchInterval: false,       // DISABLED - no polling at all
-      refetchOnWindowFocus: false,  // DISABLED - no automatic fetching
-      staleTime: Infinity,          // DISABLED - cache forever until WebSocket invalidates
-      retry: false,
-      gcTime: 30 * 60 * 1000,       // 30 minutes - garbage collection time (React Query v5)
-      refetchOnReconnect: false,    // DISABLED - no automatic refetching
-      refetchOnMount: false,        // DISABLED - no automatic mounting fetch
-    };
-  }
+
   
   // KYB fields - aggressive caching since form fields rarely change
   if (urlStr.includes('/api/kyb/fields') || urlStr.includes('/api/form-fields/')) {
