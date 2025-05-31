@@ -94,6 +94,7 @@ class UnifiedWebSocketService {
           this.reconnectAttempts = 0;
           this.connectionPromise = null;
           this.startHeartbeat();
+          console.log('[UnifiedWebSocket] Connection established successfully');
           resolve();
         };
         
