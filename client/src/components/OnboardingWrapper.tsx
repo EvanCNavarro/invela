@@ -21,6 +21,20 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
   const [isConnected, setIsConnected] = React.useState(false);
   
+  // Monitor WebSocket connection status using event-driven approach
+  React.useEffect(() => {
+    // Connect immediately and set initial status
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    // Listen for connection state changes via connection events
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
+  
   // State for showing the onboarding modal - with localStorage backup
   const [showModal, setShowModal] = React.useState(false);
   // Fetch current company data only for display purposes
