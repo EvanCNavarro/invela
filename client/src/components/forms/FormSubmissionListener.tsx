@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
+import { unifiedWebSocketService } from '@/services/websocket-unified';
 import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
 import {
@@ -89,7 +89,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onInProgress,
   showToasts = false // Default to false to prevent duplicate toasts
 }) => {
-  const { subscribe, unsubscribe, isConnected } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = React.useState(false);
   
   // Use refs to track listener state and prevent unnecessary reattachment
   const handleMessageRef = useRef<(() => void) | null>(null);
@@ -131,6 +131,16 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
 
   // Main effect for setting up WebSocket listeners
   useEffect(() => {
+    // Connect to WebSocket service
+    unifiedWebSocketService.connect().then(() => {
+      setIsConnected(true);
+    }).catch(console.error);
+    
+    // Subscribe to connection status
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected || false);
+    });
+    
     // Only proceed if we actually have a connection
     if (!isConnected) {
       // Don't show warnings during initial page load - only when we've been connected before
@@ -138,7 +148,9 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         reconnectionAttemptsRef.current += 1;
         logger.warn(`WebSocket not connected (attempt ${reconnectionAttemptsRef.current}), form submission updates will not be received`);
       }
-      return;
+      return () => {
+        unsubscribeConnection();
+      };
     }
     
     // Reset reconnection counter when connected
@@ -166,8 +178,8 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Clean up any existing listener if we're setting up a new one
     if (hasSetupListenerRef.current && handleMessageRef.current) {
       try {
-        unsubscribe('form_submission_complete', handleMessageRef.current);
-        unsubscribe('task_submission_complete', handleMessageRef.current);
+        handleMessageRef.current();
+        handleMessageRef.current = null;
         logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
       } catch (e) {
         // Ignore errors removing listeners from potentially closed connections
@@ -477,11 +489,11 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     hasSetupListenerRef.current = true;
     
     // Subscribe to unified WebSocket events
-    const unsubscribeFormSubmission = subscribe('form_submission', handleMessage);
-    const unsubscribeFormSubmitted = subscribe('form_submitted', handleMessage);
-    const unsubscribeTaskUpdate = subscribe('task_update', handleMessage);
-    const unsubscribeTaskUpdated = subscribe('task_updated', handleMessage);
-    const unsubscribeFormCompleted = subscribe('form_submission_completed', handleMessage);
+    const unsubscribeFormSubmission = unifiedWebSocketService.subscribe('form_submission', handleMessage);
+    const unsubscribeFormSubmitted = unifiedWebSocketService.subscribe('form_submitted', handleMessage);
+    const unsubscribeTaskUpdate = unifiedWebSocketService.subscribe('task_update', handleMessage);
+    const unsubscribeTaskUpdated = unifiedWebSocketService.subscribe('task_updated', handleMessage);
+    const unsubscribeFormCompleted = unifiedWebSocketService.subscribe('form_submission_completed', handleMessage);
     
     // Store unsubscribe function for cleanup
     handleMessageRef.current = () => {
@@ -506,7 +518,7 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
         }
       }
     };
-  }, [subscribe, isConnected, taskId, formType]); // Updated dependencies
+  }, [isConnected, taskId, formType]); // Updated dependencies
 
   return null; // This component doesn't render anything
 };
