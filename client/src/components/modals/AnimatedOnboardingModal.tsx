@@ -991,17 +991,35 @@ export function AnimatedOnboardingModal({
               
               <div className="space-y-4">
                 <div className="bg-slate-50 p-4 rounded-lg border">
-                  <h4 className="font-medium text-sm text-gray-900 mb-3">Suggested Files to Upload:</h4>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <div>SOC 2 Audit Report</div>
-                    <div>ISO/IEC 27001 Certification</div>
-                    <div>Penetration Test Report</div>
-                    <div>Business Continuity Plan (BCP)</div>
-                    <div>GDPR/CCPA Compliance Assessment</div>
-                    <div>API Security Review</div>
-                    <div>Data Protection Controls Assessment</div>
-                    <div>OAuth Security Certification</div>
-                    <div>FDX (Financial Data Exchange) Certification</div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-4">Suggested Files to Upload:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      SOC 2 Audit
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      ISO 27001
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      Penetration Test
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      Business Continuity
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      GDPR/CCPA
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      API Security
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      Data Protection
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      OAuth Security
+                    </div>
+                    <div className="bg-blue-600/10 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-200/50 hover:bg-blue-600/15 transition-colors">
+                      FDX Certification
+                    </div>
                   </div>
                 </div>
               </div>
