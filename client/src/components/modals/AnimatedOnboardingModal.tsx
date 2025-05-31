@@ -5,7 +5,9 @@ import {
   CheckCircle, 
   ArrowRight, 
   ArrowDown, 
-  Loader2
+  Loader2,
+  Shield,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1349,30 +1351,51 @@ export function AnimatedOnboardingModal({
         return (
           <StepLayout
             headerChip="Step 7"
-            title="You're Ready to Begin!"
-            description="Your company has been set up successfully. Click 'Start' to begin using Invela Risk."
+            title="Join the Invela Trust Network"
+            description="Begin your accreditation journey and unlock your risk score to build trust with partners."
             rightImageSrc="/assets/welcome_7.png"
           >
-            <div className="space-y-6 mt-6">
-              <p className="text-gray-600">
-                We've prepared the following tasks for you to get started:
+            <div className="space-y-5 mt-4">
+              <p className="text-lg text-gray-700 leading-relaxed">
+                You're about to join a trusted network of verified businesses. Complete your accreditation to:
               </p>
               
               <div className="space-y-4">
-                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-primary">Know Your Business (KYB) Form</div>
-                  <div className="text-xs text-gray-500 mt-1">Basic information about your business operations and structure</div>
+                <div className="flex items-start gap-3">
+                  <div className="h-6 w-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">Get Your Official Risk Score</div>
+                    <div className="text-sm text-gray-600">Industry-standard assessment for business credibility</div>
+                  </div>
                 </div>
                 
-                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-primary">S&P KY3P Security Assessment</div>
-                  <div className="text-xs text-gray-500 mt-1">Industry-standard security questionnaire</div>
+                <div className="flex items-start gap-3">
+                  <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">Build Partner Trust</div>
+                    <div className="text-sm text-gray-600">Demonstrate compliance and security readiness</div>
+                  </div>
                 </div>
                 
-                <div className="bg-primary/5 p-3 rounded-lg shadow-[3px_3px_6px_rgba(0,0,0,0.05),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-primary">Open Banking Survey</div>
-                  <div className="text-xs text-gray-500 mt-1">Data access and sharing practices assessment</div>
+                <div className="flex items-start gap-3">
+                  <div className="h-6 w-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">Accelerate Business Growth</div>
+                    <div className="text-sm text-gray-600">Access new opportunities with verified credentials</div>
+                  </div>
                 </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-primary/10 to-blue-50 p-4 rounded-xl border border-primary/20">
+                <p className="text-sm text-primary font-medium text-center">
+                  Ready to start your accreditation process? Click "Start" below.
+                </p>
               </div>
               
               {/* Error messages section */}
