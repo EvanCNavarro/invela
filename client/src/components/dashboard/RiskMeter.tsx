@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { InfoIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface RiskMeterProps {
   score: number;
@@ -27,7 +26,7 @@ export function RiskMeter({
   // Use system score or chosen score, whichever is available
   const displayScore = chosenScore ?? systemScore;
   
-  const queryClient = useQueryClient();
+
 
   const getRiskLevel = (score: number) => {
     if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
