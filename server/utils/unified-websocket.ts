@@ -271,7 +271,7 @@ export function initializeWebSocketServer(server: Server, path: string = '/ws'):
  * @param clientId Client ID
  * @param message Authentication message
  */
-function handleAuthentication(clientId: string, message: AuthMessage): void {
+async function handleAuthentication(clientId: string, message: AuthMessage): Promise<void> {
   const client = clients.get(clientId);
   
   if (!client) {
@@ -300,6 +300,14 @@ function handleAuthentication(clientId: string, message: AuthMessage): void {
     timestamp: new Date().toISOString(),
     message: 'Authentication successful'
   }));
+
+  // Broadcast initial data to newly authenticated client
+  try {
+    const { broadcastInitialData } = await import('./websocket-data-broadcaster');
+    await broadcastInitialData(message.userId, message.companyId, clientId);
+  } catch (error) {
+    wsLogger.error('Failed to broadcast initial data on authentication', { error, clientId });
+  }
 }
 
 /**

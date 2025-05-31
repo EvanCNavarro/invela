@@ -58,16 +58,43 @@ export function Sidebar({
     enabled: !isPlayground
   });
 
-  // DISABLED: Task data polling - using WebSocket-only updates for true event-driven architecture
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["/api/tasks"],
-    enabled: false, // DISABLED - no automatic polling for genuine event-driven architecture
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-    staleTime: Infinity,
-  });
+  // WebSocket-only data state - NO HTTP polling
+  const [tasks, setTasks] = useState<Task[]>([]);
+  
+  // WebSocket subscription for task data
+  const { subscribe } = useUnifiedWebSocket();
+  
+  useEffect(() => {
+    // Subscribe to initial data
+    const unsubInitialData = subscribe('initial_data', (data) => {
+      if (data.tasks) {
+        setTasks(data.tasks);
+      }
+    });
+
+    // Subscribe to task data updates
+    const unsubTaskData = subscribe('task_data', (data) => {
+      setTasks(data);
+    });
+
+    // Subscribe to individual task updates
+    const unsubTaskUpdate = subscribe('task_updated', (data) => {
+      const taskId = data?.taskId || data?.id;
+      if (taskId) {
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task.id === taskId ? { ...task, ...data } : task
+          )
+        );
+      }
+    });
+
+    return () => {
+      unsubInitialData();
+      unsubTaskData();
+      unsubTaskUpdate();
+    };
+  }, [subscribe]);
 
   // Enhanced monitoring of availableTabs
   useEffect(() => {
