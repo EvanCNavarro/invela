@@ -78,7 +78,7 @@ export default function TaskCenterPage() {
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 5000,
-    refetchInterval: wsConnected ? false : 15000,
+    refetchInterval: false, // DISABLED: Using WebSocket-only updates for true event-driven architecture
     select: (data) => {
       const now = Date.now();
       data.forEach(task => {
