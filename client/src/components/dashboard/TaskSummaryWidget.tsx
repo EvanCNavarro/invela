@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
+import { unifiedWebSocketService } from '@/services/websocket-unified';
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +43,12 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
   const [isLoading, setIsLoading] = useState(true);
   
   // WebSocket subscription for task data
-  const { subscribe } = useUnifiedWebSocket();
   
   useEffect(() => {
-    // Subscribe to initial data
-    const unsubInitialData = subscribe('initial_data', (data) => {
+    // Connect and subscribe to initial data
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    const unsubInitialData = unifiedWebSocketService.subscribe('initial_data', (data) => {
       if (data.tasks) {
         setTasks(data.tasks);
         setIsLoading(false);
@@ -55,7 +56,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     });
 
     // Subscribe to task data updates
-    const unsubTaskData = subscribe('task_data', (data) => {
+    const unsubTaskData = unifiedWebSocketService.subscribe('task_data', (data) => {
       setTasks(data);
     });
 
