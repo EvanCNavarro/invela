@@ -105,6 +105,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'onboarding-modal-ui-improvements-2025-05-31',
+    date: '2025-05-31',
+    type: 'enhancement',
+    title: 'Onboarding Modal UI Improvements',
+    description: 'Enhanced visual consistency and messaging across all onboarding steps for better user experience',
+    details: [
+      'Fixed StepLayout component to properly render description text',
+      'Simplified final step content with clear action-focused messaging',
+      'Replaced verbose marketing copy with specific task overview',
+      'Applied consistent spacing and typography across all 7 steps',
+      'Enhanced user flow with "Join the Invela Trust Network" messaging',
+      'Improved visual alignment using CheckListItem components'
+    ],
+    version: '1.9.2',
+    audience: 'product'
+  },
+  {
     id: 'changelog-audience-filtering-2025-05-30',
     date: '2025-05-30',
     type: 'feature',
