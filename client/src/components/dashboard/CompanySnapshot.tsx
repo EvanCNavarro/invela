@@ -25,7 +25,7 @@
  * @since 2025-05-23
  */
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Building2, 
   Award,
@@ -38,7 +38,6 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 
 interface CompanySnapshotProps {
   companyData: any;
@@ -49,11 +48,10 @@ interface CompanySnapshotProps {
 export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySnapshotProps) {
   const [, setLocation] = useLocation();
   
-  // Restore HTTP-based network relationships fetching
-  const { data: relationships = [], isLoading: isLoadingRelationships } = useQuery({
-    queryKey: ["/api/network/relationships", companyData?.id],
+  // Fetch network relationships to get the count
+  const { data: relationships, isLoading: isLoadingRelationships } = useQuery<any[]>({
+    queryKey: ["/api/relationships"],
     enabled: !!companyData?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // For risk score changes, we'll use a static value of 11 as suggested

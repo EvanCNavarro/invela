@@ -160,10 +160,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar 
-        isExpanded={isExpanded}
-        onToggleExpanded={toggleExpanded}
-        availableTabs={availableTabs}
-        category={currentCompany?.category}
+        currentCompany={currentCompany} 
+        isLoadingCompany={isLoadingCompany} 
+        navigate={navigate} 
       />
       
       <div className={cn(
