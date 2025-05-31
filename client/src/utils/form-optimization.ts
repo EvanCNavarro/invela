@@ -359,15 +359,12 @@ class BatchUpdateManagerImpl<T = any> {
     if (immediate) {
       this.processQueue();
     } else {
-      // Only set a new timeout if one doesn't exist
-      // This ensures we accumulate as many updates as possible
-      // before processing, which is more efficient
-      if (this.timeout === null) {
-        this.timeout = window.setTimeout(() => this.processQueue(), this._delay);
-      }
+      // COMPLETELY DISABLED: Never create automatic timers to eliminate persistent polling
+      // This prevents the 60-second timer that was causing artificial API calls every minute
+      // All batch processing must now be triggered manually via processQueue() calls
+      // This ensures genuine event-driven architecture without artificial timers
       
-      // Don't reset timeout for each update - let it accumulate updates
-      // until the timeout fires
+      // Timer creation is completely disabled - no automatic batch processing
     }
     
     performanceMonitor.endTimer('batchUpdate_add');
