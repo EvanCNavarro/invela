@@ -41,8 +41,15 @@
 **High Priority - Need to Check for Timer Creation:**
 - [x] `client/src/hooks/form/use-form-data-manager.ts` - Form hook with BatchUpdater usage (CHECKED - uses FormBatchUpdater.queueUpdate, no direct timers)
 - [x] `client/src/services/unified-ky3p-form-service.ts` - Service layer (CHECKED - no setInterval/setTimeout found)
-- [ ] `client/src/components/forms/UniversalFormNew.tsx` - Main form component loaded on KY3P page
+- [x] `client/src/components/dev/BatchUpdateDebugger.tsx` - CHECKED - Has setInterval but only used in FormPerformancePage, not KY3P
+- [x] `client/src/components/forms/ky3p-batch-update.ts` - CHECKED - Helper functions only, no timers
+- [x] `client/src/services/neon-connection-manager.ts` - CHECKED - Has 60s health check but unrelated to KY3P
+- [x] `client/src/components/forms/UniversalFormNew.tsx` - CHECKED - Multiple setTimeout calls but all short delays (50ms, 500ms, 10s), no 60s intervals
 - [ ] `client/src/components/forms/standardized-ky3p-update.ts` - Makes batch-update calls
+- [ ] `client/src/hooks/use-unified-websocket.ts` - Unified WebSocket service
+- [ ] `client/src/components/layout/Navbar.tsx` - Navigation component
+- [ ] `client/src/components/layout/Sidebar.tsx` - Sidebar component
+- [ ] `client/src/pages/ky3p-task-page.tsx` - KY3P task page itself
 
 **React Query Sources to Check:**
 - [ ] Check if any React Query has `refetchInterval: 60000` specifically for KY3P
@@ -52,8 +59,9 @@
 - 09:52:31 ✓ 
 - 09:53:31 ✓
 - 09:54:31 ✓ 
-- 09:55:30 ✓ 
-- 09:56:31 ✓ (EXPECTED - investigating source)
+- **ASSUMPTION CHECK**: Need to verify if timer still fires after 10:08:00
+- **CONFIRMED ACTIVE**: Timer fired at 10:12:20.688Z - still processing batch updates every 60s
+- **URGENT**: Need to find timer source immediately
 
 ## Key Insights 💡
 - Timer starts immediately when KY3P form page loads
