@@ -428,8 +428,9 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
    * @returns Promise that resolves when progress is saved
    */
   async saveProgress(taskId?: number): Promise<void> {
-    // Ensure all pending updates are processed first
-    await this.flushPendingUpdates(taskId);
+    // DISABLED: Skip artificial batch updates to prevent polling
+    // Using event-driven updates only via WebSocket
+    // await this.flushPendingUpdates(taskId);
     
     // Calculate current progress
     const progress = this.calculateProgress();
@@ -808,10 +809,11 @@ export class UnifiedKY3PFormService implements FormServiceInterface {
     }
     
     try {
-      // Flush any pending updates before submitting
-      if (Object.keys(this.pendingUpdates).length > 0) {
-        await this.flushPendingUpdates(taskId);
-      }
+      // DISABLED: Skip artificial batch updates to prevent polling
+      // Using event-driven updates only via WebSocket
+      // if (Object.keys(this.pendingUpdates).length > 0) {
+      //   await this.flushPendingUpdates(taskId);
+      // }
       
       // Send the submission request to the server
       const response = await fetch(`/api/forms/submit-form`, {
