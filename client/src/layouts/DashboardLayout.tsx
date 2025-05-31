@@ -4,11 +4,12 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/EmptyWelcomeModal";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
+import { useCurrentCompany } from "@/hooks/use-current-company";
 
 interface Company {
   id: number;
@@ -39,29 +40,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     ...getOptimizedQueryOptions("/api/tasks"),
   });
 
-  // Use the optimized query options for frequently accessed endpoints
-  // But make sure we use aggressive refetching settings to reflect unlocked features
-  const { data: currentCompany, isLoading: isLoadingCompany, refetch: refetchCompany } = useQuery<Company>({
-    queryKey: ["/api/companies/current"],
-    ...getOptimizedQueryOptions("/api/companies/current"),
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Consider data stale immediately to ensure fresh data
-    
-    // Reduced polling frequency to reduce server load
-    // We rely on WebSocket events for real-time updates instead
-    refetchInterval: 10000, // Poll every 10 seconds as a fallback
-  });
+  // Use WebSocket-driven company data (eliminates HTTP polling)
+  const { company: currentCompany, isLoading: isLoadingCompany } = useCurrentCompany();
+
   
-  // Listen for WebSocket events to refresh company data in real-time
+  // WebSocket-driven company tab updates (eliminated HTTP polling)
   useEffect(() => {
-    // Handler for WebSocket connection status changes
-    const handleWebSocketReconnect = () => {
-      console.log('[DashboardLayout] WebSocket reconnected, refreshing company data');
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-      refetchCompany();
-    };
-    
     // Handler for company tabs updates via WebSocket
     const handleCompanyTabsUpdate = (event: CustomEvent) => {
       const { companyId, availableTabs, cacheInvalidation } = event.detail || {};
