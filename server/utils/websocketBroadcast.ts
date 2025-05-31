@@ -107,25 +107,7 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
     return;
   }
   
-  // Set up server-side ping interval to detect dead connections
-  const pingInterval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      // @ts-ignore - we're adding isAlive property
-      if (ws.isAlive === false) {
-        return ws.terminate();
-      }
-      
-      // @ts-ignore - mark as not alive until we get a response
-      ws.isAlive = false;
-      
-      // Send ping
-      try {
-        ws.send(JSON.stringify({ type: 'server_ping', timestamp: new Date().toISOString() }));
-      } catch (e) {
-        // Ignore errors on potentially dead connections
-      }
-    });
-  }, 40000); // 40 second interval
+  // Connection health is handled by unified WebSocket service - no artificial pings needed
   
   // Handle new connections
   wss.on('connection', (ws, req) => {
@@ -267,7 +249,6 @@ export function setupWebSocketServerHandlers(wss: WebSocketServer): void {
   
   // Handle server shutdown
   wss.on('close', () => {
-    clearInterval(pingInterval);
     logInfo('WebSocket server closed');
   });
   
