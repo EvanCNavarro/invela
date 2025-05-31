@@ -18,8 +18,8 @@ export default function TaskCenter() {
 
   const { data: tasks = [], isLoading } = useQuery<SelectTask[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
+    // REMOVED: refetchInterval polling - using event-driven WebSocket updates only
   });
 
   const filteredTasks = selectedStatus === 'all'
