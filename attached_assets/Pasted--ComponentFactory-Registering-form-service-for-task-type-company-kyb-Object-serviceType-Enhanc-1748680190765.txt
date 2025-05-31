@@ -1,0 +1,135 @@
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-05-31T08:27:49.482Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-31T08:27:49.482Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-31T08:27:49.482Z] [App] Communication phase initializing 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-31T08:27:49.482Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-31T08:27:49.483Z] [App] Application ready for user interaction 
+[2025-05-31T08:27:49.483Z] [PhaseStartup] Phase ready marked as completed immediately 
+[Router] Current location: /task-center
+[WebSocketAuth] Setting user context: 
+Object {userId: 536, companyId: 755}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 536, email: "rward@meridianresearchunited.com", timestamp: "2025-05-31T08:27:49.696Z"}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=undefined, path=/task-center, file-vault-unlocked=false
+[2025-05-31T08:27:49.698Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=755, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 755
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[UnifiedWebSocket] Authentication sent 
+Object {userId: 536, companyId: 755}
+[UnifiedWebSocket] Connection established (ID: 0zb0pw2u6, Total: 1)
+[2025-05-31T08:27:50.002Z] [App] Unified WebSocket service connected successfully 
+[2025-05-31T08:27:50.002Z] [PhaseStartup] Phase communication completed successfully 
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:28:05.813Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:28:06.051Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:28:34.811Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:28:50.509Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:28:50.734Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1104
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1104, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:29:21.998Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1104
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:29:22.201Z"}
+companyId: 755
+hasCountObject: false
+receivedAt: "2025-05-31T08:29:22.201Z"
+relevantToCurrentCompany: true
+taskId: 1103
+[[Prototype]]: Object
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing relevant task update: 
+Object {hasCountObject: false, taskId: 1103, companyId: 755, relevantToCurrentCompany: true, receivedAt: "2025-05-31T08:29:34.744Z"}
+[Sidebar] Invalidating tasks query for company 755
+[WebSocket] task_update for task 1103
