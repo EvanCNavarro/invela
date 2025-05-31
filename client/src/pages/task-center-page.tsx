@@ -77,8 +77,11 @@ export default function TaskCenterPage() {
 
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 5000,
-    refetchInterval: false, // DISABLED: Using WebSocket-only updates for true event-driven architecture
+    staleTime: Infinity, // Cache forever - only update via WebSocket invalidation
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
     select: (data) => {
       const now = Date.now();
       data.forEach(task => {
@@ -130,7 +133,8 @@ export default function TaskCenterPage() {
         
         if (!prevTimestamp || serverTimestamp >= prevTimestamp) {
           taskTimestampRef.current[taskId] = serverTimestamp;
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          // REMOVED: Automatic query invalidation - using manual updates only for true event-driven architecture
+          // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         }
       });
       
@@ -141,7 +145,8 @@ export default function TaskCenterPage() {
         console.log('[TaskCenter] Test notification received:', data);
         const taskId = data?.id || data?.taskId;
         if (taskId) {
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          // REMOVED: Automatic query invalidation - using manual updates only for true event-driven architecture
+          // queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         }
       });
       
