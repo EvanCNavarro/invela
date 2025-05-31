@@ -42,7 +42,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 
 // Authentication and security
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+
+// WebSocket services
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 // UI components and notifications
 import { Toaster } from "@/components/ui/toaster";
@@ -55,7 +58,6 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 
 // Real-time communication - unified approach
-import { unifiedWebSocketService } from "@/services/websocket-unified";
 
 // Service initialization and management
 import { initializeServices } from "./services/unified-service-registration";
@@ -173,6 +175,29 @@ function ProtectedLayout({ children }: ProtectedLayoutProps): JSX.Element {
       {children}
     </div>
   );
+}
+
+/**
+ * WebSocket Authentication Handler Component
+ * 
+ * Manages WebSocket authentication by setting user context when
+ * user authentication data becomes available. This enables proper
+ * message filtering and delivery in the unified WebSocket system.
+ */
+function WebSocketAuthHandler(): JSX.Element {
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (user?.id && user?.company_id) {
+      console.log('[WebSocketAuth] Setting user context:', {
+        userId: user.id,
+        companyId: user.company_id
+      });
+      unifiedWebSocketService.setUserContext(user.id, user.company_id);
+    }
+  }, [user?.id, user?.company_id]);
+
+  return null; // This is a utility component with no UI
 }
 
 /**
@@ -600,6 +625,7 @@ export default function App(): JSX.Element {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
+          <WebSocketAuthHandler />
           <Router />
           <Toaster />
         </AuthProvider>
