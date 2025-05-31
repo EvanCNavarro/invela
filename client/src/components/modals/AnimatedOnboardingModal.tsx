@@ -406,6 +406,13 @@ const StepLayout: React.FC<{
             {title}
           </h2>
           
+          {/* Description text for consistency across steps */}
+          {description && (
+            <p className="text-lg text-gray-700 mb-4">
+              {description}
+            </p>
+          )}
+          
           {/* Content area with fixed height and no scrolling */}
           <div className="flex-grow content-area pr-2">
             {children}
@@ -1350,78 +1357,23 @@ export function AnimatedOnboardingModal({
       case 6: // Complete
         return (
           <StepLayout
-            headerChip="Step 7"
             title="Join the Invela Trust Network"
-            description="Begin your accreditation journey and unlock your risk score to build trust with partners."
-            rightImageSrc="/assets/welcome_7.png"
+            description="Click the Start button to begin your Accreditation process."
+            imageSrc="/assets/welcome_7.png"
+            imageAlt="Join the Invela Trust Network"
           >
-            <div className="space-y-5 mt-4">
-              <p className="text-lg text-gray-700 leading-relaxed">
-                You're about to join a trusted network of verified businesses. Complete your accreditation to:
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Check className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">Get Your Official Risk Score</div>
-                    <div className="text-sm text-gray-600">Industry-standard assessment for business credibility</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">Build Partner Trust</div>
-                    <div className="text-sm text-gray-600">Demonstrate compliance and security readiness</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <TrendingUp className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">Accelerate Business Growth</div>
-                    <div className="text-sm text-gray-600">Access new opportunities with verified credentials</div>
-                  </div>
-                </div>
+            <div className="mt-0 space-y-4">
+              <div className="space-y-3">
+                <CheckListItem>
+                  Complete your assigned company tasks
+                </CheckListItem>
+                <CheckListItem>
+                  Provide documentation
+                </CheckListItem>
+                <CheckListItem>
+                  Manage your S&P Data Access Risk Score and Accreditation Status
+                </CheckListItem>
               </div>
-              
-              <div className="bg-gradient-to-r from-primary/10 to-blue-50 p-4 rounded-xl border border-primary/20">
-                <p className="text-sm text-primary font-medium text-center">
-                  Ready to start your accreditation process? Click "Start" below.
-                </p>
-              </div>
-              
-              {/* Error messages section */}
-              {(operationErrors.userStatus || operationErrors.companyDetails || (operationErrors.teamInvites && operationErrors.teamInvites.length > 0)) && (
-                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">There were errors completing your onboarding</h3>
-                      <div className="mt-2 text-sm text-red-700">
-                        <ul className="list-disc pl-5 space-y-1">
-                          {operationErrors.userStatus && (
-                            <li>{operationErrors.userStatus}</li>
-                          )}
-                          {operationErrors.companyDetails && (
-                            <li>{operationErrors.companyDetails}</li>
-                          )}
-                          {operationErrors.teamInvites && operationErrors.teamInvites.map((error, index) => (
-                            <li key={index}>{error}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </StepLayout>
         );
