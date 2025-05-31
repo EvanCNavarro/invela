@@ -35,19 +35,22 @@ export function useUnifiedWebSocket() {
       console.log('[WebSocket] Connected to unified WebSocket server');
       setIsConnected(true);
       
-      // For now, authenticate with stored user data
-      const companyId = userContext.getCompanyId();
-      
-      if (companyId) {
-        const authMessage = {
-          type: 'authenticate',
-          userId: 536, // Using demo user ID for now
-          companyId: companyId,
-          timestamp: new Date().toISOString()
-        };
+      // Wait a brief moment to ensure all subscriptions are registered
+      setTimeout(() => {
+        const companyId = userContext.getCompanyId();
         
-        wsRef.current?.send(JSON.stringify(authMessage));
-      }
+        if (companyId) {
+          const authMessage = {
+            type: 'authenticate',
+            userId: 536, // Using demo user ID for now
+            companyId: companyId,
+            timestamp: new Date().toISOString()
+          };
+          
+          console.log('[UnifiedWebSocket] Authentication sent', { userId: 536, companyId });
+          wsRef.current?.send(JSON.stringify(authMessage));
+        }
+      }, 100); // Small delay to ensure subscribers are ready
     };
 
     wsRef.current.onmessage = (event) => {
