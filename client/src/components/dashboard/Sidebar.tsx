@@ -267,21 +267,21 @@ export function Sidebar({
                 isExpanded={isExpanded}
               />
               <SidebarTab
-                to="/playground/form-performance"
+                href="/playground/form-performance"
                 icon={FileText}
                 label="Form Performance"
                 isActive={location === "/playground/form-performance"}
                 isExpanded={isExpanded}
               />
               <SidebarTab
-                to="/playground/chart-gallery"
+                href="/playground/chart-gallery"
                 icon={BarChart2}
                 label="Chart Gallery"
                 isActive={location === "/playground/chart-gallery"}
                 isExpanded={isExpanded}
               />
               <SidebarTab
-                to="/playground/performance-monitor"
+                href="/playground/performance-monitor"
                 icon={Gauge}
                 label="Performance Monitor"
                 isActive={location === "/playground/performance-monitor"}
