@@ -1,0 +1,93 @@
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 2 for file-vault
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TutorialManager] Loading image for file-vault, step 1: /assets/tutorials/modal_file_1.png
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(2), hasFileVault: true, hasDashboard: false, hasTaskCenter: true, currentRoute: "/file-vault", …}
+[Sidebar] Tab state check: company=755, path=/file-vault, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 755
+[Tutorial:TabTutorials] Updating local state for file-vault: 
+Object {exists: true, completed: true, currentStep: 1, lastSeenAt: "2025-05-31T06:37:59.119Z", completedAt: "2025-05-30T19:33:40.562Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=1, totalSteps=4
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for file-vault with 2 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: false, …}
+[FileTable Debug] Component mounted/updated: 
+Object {dataLength: 5, firstItem: {…}, selectedItemsCount: 0, isLoading: false}
+[useUser] Successfully fetched user data: 
+Object {id: 536, email: "rward@meridianresearchunited.com", full_name: "Riley Ward", first_name: null, last_name: null, …}
+[FileVault Debug] Component state updated: 
+Object {hasFiles: true, isLoading: false, serverPagination: {…}, userContext: {…}, timestamp: "2025-05-31T06:44:23.627Z"}
+[FileVault Debug] Starting API request: 
+Object {userId: 536, companyId: 755, page: 1, pageSize: 5, timestamp: "2025-05-31T06:44:23.627Z"}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 536, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 1, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial already completed for tab: file-vault
+[FileTable Debug] Rendering row: 
+Object {id: "1033", name: "7_Data_Protection_Questions.csv", size: 5229, status: "uploaded", createdAt: "2025-05-30T19:38:03.078Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1032", name: "4_Business_Continuity_Plan_Questions.csv", size: 5215, status: "uploaded", createdAt: "2025-05-30T19:38:02.520Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1031", name: "9_FDX_Certification_Questions.csv", size: 5005, status: "uploaded", createdAt: "2025-05-30T19:35:42.764Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1030", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T19:33:47.154Z", …}
+[FileTable Debug] Rendering row: 
+Object {id: "1029", name: "2_ISO_27001_Questions.csv", size: 4405, status: "uploaded", createdAt: "2025-05-30T17:51:43.579Z", …}
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for file-vault
+[FileVault Debug] Setting up unified WebSocket listener for file vault updates
+[FileVault Debug] Subscribing to file_vault_update events
+[FileVault Debug] Subscription result: () => {
+      handlers.delete(handler);
+      if (handlers.size === 0) {
+        this.subscribers.delete(messageType);
+      }
+    }
+[OnboardingWrapper] WebSocket connected - modal rendering enabled
+[FileVault Debug] API Response received: 
+Object {responseData: {…}, responseStructure: Array(2), fileCount: 5, firstFile: {…}, pagination: {…}, …}
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: 1103, companyId: undefined, receivedAt: "2025-05-31T06:44:34.832Z"}
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: 1103, companyId: undefined, receivedAt: "2025-05-31T06:45:34.682Z"}
+[WebSocket] task_update for task 1103
+[WebSocket] task_updated for task 1103
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: 1103, companyId: undefined, receivedAt: "2025-05-31T06:46:34.755Z"}
+companyId: undefined
+hasCountObject: false
+receivedAt: "2025-05-31T06:46:34.755Z"
+taskId: 1103
+[[Prototype]]: Object
