@@ -534,6 +534,20 @@ export function AnimatedOnboardingModal({
   // Track invitation success for validation styling
   const [invitationStatus, setInvitationStatus] = useState<{[key: string]: 'pending' | 'success' | 'error'}>({});
   
+  // Track field validation states for color scheme
+  const [fieldStates, setFieldStates] = useState<{
+    [role: string]: {
+      focused: boolean;
+      touched: boolean;
+      nameComplete: boolean;
+      emailComplete: boolean;
+      hasBeenFocused: boolean;
+    }
+  }>({
+    CFO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false },
+    CISO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false }
+  });
+  
   // Reset state when modal is opened
   useEffect(() => {
     if (isOpen) {
@@ -558,8 +572,89 @@ export function AnimatedOnboardingModal({
           formType: 'KY3P Assessment',
         },
       ]);
+      // Reset field states
+      setFieldStates({
+        CFO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false },
+        CISO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false }
+      });
+      logDebug('Modal opened - reset all states');
     }
   }, [isOpen]);
+
+  // Field state update functions
+  const updateFieldState = (role: string, updates: Partial<typeof fieldStates.CFO>) => {
+    setFieldStates(prev => ({
+      ...prev,
+      [role]: { ...prev[role], ...updates }
+    }));
+    logDebug(`Updated field state for ${role}`, { role, updates });
+  };
+
+  const handleFieldFocus = (role: string) => {
+    updateFieldState(role, { focused: true, hasBeenFocused: true });
+    logDebug(`Field focused for ${role}`, { role });
+  };
+
+  const handleFieldBlur = (role: string) => {
+    updateFieldState(role, { focused: false, touched: true });
+    logDebug(`Field blurred for ${role}`, { role });
+  };
+
+  const updateFieldCompletion = (role: string, fieldType: 'name' | 'email', value: string) => {
+    const isComplete = value.trim() !== '';
+    const updates = fieldType === 'name' 
+      ? { nameComplete: isComplete }
+      : { emailComplete: isComplete };
+    
+    updateFieldState(role, updates);
+    logDebug(`Field completion updated for ${role}.${fieldType}`, { role, fieldType, isComplete, value: value ? '[REDACTED]' : 'empty' });
+  };
+
+  // Determine block color state based on validation rules
+  const getBlockColorState = (role: string): 'gray' | 'blue' | 'green' | 'yellow' => {
+    const state = fieldStates[role];
+    const inviteSuccess = invitationStatus[role] === 'success';
+    
+    // Green: invitation sent successfully OR both fields complete
+    if (inviteSuccess || (state.nameComplete && state.emailComplete)) {
+      logDebug(`Block state: GREEN for ${role}`, { inviteSuccess, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
+      return 'green';
+    }
+    
+    // Blue: currently focused on any field in this block
+    if (state.focused) {
+      logDebug(`Block state: BLUE for ${role}`, { focused: state.focused });
+      return 'blue';
+    }
+    
+    // Yellow: has been focused before, touched, but incomplete
+    if (state.hasBeenFocused && state.touched && (!state.nameComplete || !state.emailComplete)) {
+      logDebug(`Block state: YELLOW for ${role}`, { hasBeenFocused: state.hasBeenFocused, touched: state.touched, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
+      return 'yellow';
+    }
+    
+    // Gray: default state (not touched or not focused yet)
+    logDebug(`Block state: GRAY for ${role}`, { state });
+    return 'gray';
+  };
+
+  // Get CSS classes for block based on color state
+  const getBlockClasses = (role: string): string => {
+    const colorState = getBlockColorState(role);
+    const baseClasses = "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500";
+    
+    switch (colorState) {
+      case 'green':
+        return `${baseClasses} bg-green-50 border-green-200`;
+      case 'blue':
+        return `${baseClasses} bg-blue-50 border-blue-200`;
+      case 'yellow':
+        return `${baseClasses} bg-yellow-50 border-yellow-200`;
+      case 'gray':
+      default:
+        return `${baseClasses} bg-gray-50 border-gray-200`;
+    }
+  };
   
   // Check if current step is valid to proceed
   const canProceed = useMemo(() => {
@@ -1035,12 +1130,7 @@ export function AnimatedOnboardingModal({
             imageAlt="Invite Team"
           >
             <div className="mt-0 space-y-4">
-              <div className={cn(
-                "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500",
-                invitationStatus['CFO'] === 'success' 
-                  ? "bg-green-50 border-green-200" 
-                  : "bg-primary/5 border-primary/10"
-              )}>
+              <div className={getBlockClasses('CFO')}>
                 <div className="flex items-center mb-3">
                   <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CFO
@@ -1057,13 +1147,15 @@ export function AnimatedOnboardingModal({
                     <Input
                       id="cfo-name"
                       value={teamMembers[0].fullName}
+                      onFocus={() => handleFieldFocus('CFO')}
+                      onBlur={() => handleFieldBlur('CFO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[0].fullName = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CFO', 'name', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-
                     />
                   </div>
                   <div>
@@ -1074,24 +1166,21 @@ export function AnimatedOnboardingModal({
                       id="cfo-email"
                       type="email"
                       value={teamMembers[0].email}
+                      onFocus={() => handleFieldFocus('CFO')}
+                      onBlur={() => handleFieldBlur('CFO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[0].email = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CFO', 'email', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-
                     />
                   </div>
                 </div>
               </div>
               
-              <div className={cn(
-                "p-6 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-500",
-                invitationStatus['CISO'] === 'success' 
-                  ? "bg-green-50 border-green-200" 
-                  : "bg-primary/5 border-primary/10"
-              )}>
+              <div className={getBlockClasses('CISO')}>
                 <div className="flex items-center mb-3">
                   <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                     CISO
@@ -1110,13 +1199,15 @@ export function AnimatedOnboardingModal({
                     <Input
                       id="ciso-name"
                       value={teamMembers[1].fullName}
+                      onFocus={() => handleFieldFocus('CISO')}
+                      onBlur={() => handleFieldBlur('CISO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[1].fullName = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CISO', 'name', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-
                     />
                   </div>
                   <div>
@@ -1127,13 +1218,15 @@ export function AnimatedOnboardingModal({
                       id="ciso-email"
                       type="email"
                       value={teamMembers[1].email}
+                      onFocus={() => handleFieldFocus('CISO')}
+                      onBlur={() => handleFieldBlur('CISO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[1].email = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CISO', 'email', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-
                     />
                   </div>
                 </div>
