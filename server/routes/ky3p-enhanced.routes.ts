@@ -105,19 +105,22 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       });
     }
     
-    // TEMPORARY: Block artificial batch updates to prevent repeat messages
-    console.log(`[KY3P API] BLOCKED artificial batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
-    console.log(`[KY3P API] Request source: ${req.headers['user-agent'] || 'Unknown'}`);
-    console.log(`[KY3P API] Request referer: ${req.headers.referer || 'No referer'}`);
+    // Log batch update request for monitoring
+    console.log(`[KY3P API] Processing batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
     
-    // Return success immediately to prevent errors but skip actual processing
-    return res.status(200).json({
-      success: true,
-      message: `BLOCKED: Artificial batch update prevented (${Object.keys(responses).length} fields)`,
-      processedCount: 0,
-      skippedCount: Object.keys(responses).length,
-      debug: 'Automatic batch updates disabled to eliminate repeat messages'
-    });
+    // Check if this is a legitimate update or artificial polling
+    const userAgent = req.headers['user-agent'] || '';
+    const referer = req.headers.referer || '';
+    const isFromForm = referer.includes('/task-center/task/');
+    
+    if (!isFromForm) {
+      console.log(`[KY3P API] Rejecting batch update - not from task form page`);
+      return res.status(400).json({
+        success: false,
+        message: 'Batch updates only allowed from task form pages',
+        processedCount: 0
+      });
+    }
     
     // Get all fields for field type validation and ID mapping
     const fields = await db.select().from(ky3pFields);
