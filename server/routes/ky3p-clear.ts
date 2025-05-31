@@ -4,7 +4,7 @@ import { db } from '@db';
 import { ky3pResponses, tasks, TaskStatus } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
 // Import both WebSocket broadcasting implementations
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
+import { broadcastTaskUpdate } from '../services/websocket';
 import { broadcastTaskUpdate as unifiedBroadcastTaskUpdate } from '../utils/unified-websocket';
 import { logger } from '../utils/logger';
 

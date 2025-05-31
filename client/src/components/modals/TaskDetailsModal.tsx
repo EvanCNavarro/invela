@@ -6,7 +6,7 @@ import { TaskStatus } from "@db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Wifi, WifiOff } from "lucide-react";
 
 interface TaskDetailsModalProps {
@@ -30,30 +30,20 @@ const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: TaskDetailsModalProps) {
   const [task, setTask] = useState(initialTask);
-  const [isConnected, setIsConnected] = useState(false);
-  
-  useEffect(() => {
-    setIsConnected(unifiedWebSocketService.isConnected());
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected === true);
-    });
-    
-    return unsubscribeConnection;
-  }, []);
+  const { socket, connected, error } = useWebSocket();
 
   useEffect(() => {
     setTask(initialTask);
   }, [initialTask]);
 
   useEffect(() => {
-    if (!isConnected || !task) return;
+    if (!socket || !connected || !task) return;
 
-    console.log('[TaskDetailsModal] Setting up unified WebSocket listeners for task:', task.id);
+    console.log('[TaskDetailsModal] Setting up WebSocket listeners for task:', task.id);
 
-    const handleTaskUpdate = (data: any) => {
+    const handleMessage = (event: MessageEvent) => {
       try {
+        const data = JSON.parse(event.data);
         if (data.type === 'task_update' && data.payload?.taskId === task.id) {
           console.log('[TaskDetailsModal] Received task update:', data.payload);
           setTask(current => ({
@@ -63,17 +53,17 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
           }));
         }
       } catch (error) {
-        console.error('[TaskDetailsModal] Error handling task update:', error);
+        console.error('[TaskDetailsModal] Error handling WebSocket message:', error);
       }
     };
 
-    const unsubscribe = unifiedWebSocketService.subscribe('task_update', handleTaskUpdate);
+    socket.addEventListener('message', handleMessage);
 
     return () => {
-      console.log('[TaskDetailsModal] Cleaning up unified WebSocket listeners for task:', task.id);
-      unsubscribe();
+      console.log('[TaskDetailsModal] Cleaning up WebSocket listeners for task:', task.id);
+      socket.removeEventListener('message', handleMessage);
     };
-  }, [isConnected, task]);
+  }, [socket, connected, task]);
 
   if (!task) return null;
 
@@ -91,7 +81,7 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
           <Badge variant="secondary">
             {taskStatusMap[task.status as TaskStatus] || task.status}
           </Badge>
-          {isConnected ? (
+          {connected ? (
             <Wifi className="h-4 w-4 text-green-500" />
           ) : (
             <WifiOff className="h-4 w-4 text-red-500" />
@@ -124,6 +114,11 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
+            {error && (
+              <div className="text-sm text-red-500 mb-4">
+                WebSocket Error: {error.message}
+              </div>
+            )}
             {taskFields.map((field, index) => (
               <div key={index}>
                 <div className="grid grid-cols-3 gap-4">

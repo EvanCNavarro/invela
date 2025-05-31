@@ -7,7 +7,7 @@
 import { db } from '@db';
 import { companies } from '@db/schema';
 import { eq } from 'drizzle-orm';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from './websocket';
 import { invalidateCompanyCache } from '../routes';
 
 export const CompanyTabsService = {

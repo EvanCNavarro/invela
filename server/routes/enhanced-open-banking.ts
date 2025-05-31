@@ -12,7 +12,7 @@ import { eq, and, or } from 'drizzle-orm';
 import { processSubmission } from '../services/enhanced-form-submission-handler';
 import { executeWithRetry } from '../services/db-connection-service';
 import { Logger } from '../services/logger';
-import { broadcastTaskUpdate } from '../utils/unified-websocket';
+import { WebSocketService } from '../websocket-server';
 import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
@@ -82,7 +82,7 @@ router.post('/prepare/:taskId', requireAuth, async (req, res) => {
     );
     
     // Broadcast update via WebSocket
-    broadcastTaskUpdate({
+    WebSocketService.broadcastTaskUpdate({
       taskId,
       status: 'ready_for_submission',
       timestamp: new Date().toISOString()

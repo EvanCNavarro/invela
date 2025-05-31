@@ -790,12 +790,65 @@ export class EnhancedKybFormService implements FormServiceInterface {
       this.saveProgressTimer = null;
     }
     
-    // DISABLED: Auto-save timer mechanism replaced with event-driven WebSocket updates
-    // Automatic polling every ~30 seconds has been eliminated for genuine real-time communication
-    console.log('[Enhanced KYB Service] Auto-save timer disabled - using event-driven WebSocket updates only');
-    
-    // Note: Manual saves can still be triggered by user actions via saveKybProgress()
-    // This ensures data persistence while eliminating automatic polling behavior
+    // Schedule a new save operation after a short delay
+    this.saveProgressTimer = setTimeout(async () => {
+      // If already saving, the next save will pick up latest data from writeBuffer
+      if (this.isSaving) {
+        return;
+      }
+      
+      this.isSaving = true;
+      
+      let dataToSave: TimestampedFormData | null = null;
+      
+      try {
+        // Use the data from our write buffer to ensure we save the most recent changes
+        if (this.writeBuffer) {
+          dataToSave = { ...this.writeBuffer };
+          this.writeBuffer = null;
+        } else {
+          dataToSave = { ...this.timestampedFormData };
+        }
+        
+        // Calculate progress and status
+        const progress = this.calculateProgress();
+        const status = this.calculateTaskStatus();
+        
+        // Extract form values
+        const formValues = extractValues(dataToSave);
+        
+        // Save the data with timestamps
+        const result = await this.saveKybProgress(
+          taskId, 
+          progress, 
+          formValues, 
+          dataToSave.timestamps,
+          status
+        );
+        
+        if (result && result.success) {
+          // Store the last saved data for change detection
+          this.lastSavedData = JSON.stringify(formValues);
+          
+          // Process server response if it contains form data
+          if (result.savedData && result.savedData.formData) {
+            this.processServerResponse(
+              result.savedData.formData,
+              result.savedData.timestamps
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Exception during save:', error);
+      } finally {
+        this.isSaving = false;
+        
+        // Check if write buffer changed during save - if so, save again
+        if (this.writeBuffer) {
+          this.saveProgress(taskId);
+        }
+      }
+    }, this.saveDebounceMs);
   }
   
   /**
@@ -1162,8 +1215,26 @@ export class EnhancedKybFormService implements FormServiceInterface {
         console.log('[Form Submission] Form submitted successfully, updating task status to submitted');
         this.taskStatus = 'submitted';
         
-        // WebSocket submission events are handled by server-side unified broadcaster
-        console.log('[Form Submission] Form submitted successfully - server will broadcast updates');
+        // As a fallback, manually trigger a WebSocket submission event
+        try {
+          // Import and use the WebSocket service directly
+          const { wsService } = await import('../lib/websocket');
+          
+          console.log('[Form Submission] Emitting local submission_status event as fallback');
+          // Send local websocket event with a small delay to let the server event arrive first
+          setTimeout(() => {
+            wsService.emit('submission_status', {
+              taskId: options.taskId,
+              status: 'submitted',
+              timestamp: Date.now(),
+              source: 'client-fallback'
+            }).catch(err => {
+              console.error('[Form Submission] Error emitting fallback event:', err);
+            });
+          }, 1000);
+        } catch (wsError) {
+          console.error('[Form Submission] Error with WebSocket fallback:', wsError);
+        }
       }
       
       return result;
@@ -1447,9 +1518,24 @@ class EnhancedKybServiceFactory {
    * Data isolation fix: Now properly uses company-specific instances when possible.
    */
   getDefaultInstance(): EnhancedKybFormService {
-    // Use direct factory fallback to avoid circular dependency issues
-    // Company context will be provided through factory parameters when available
-    this.logger.info('No company context found, using global instance');
+    // CRITICAL DATA ISOLATION FIX: Import user context manager
+    // Using dynamic import to avoid circular dependencies
+    try {
+      // Import from userContext directly here to avoid circular dependencies
+      const { userContext } = require('@/lib/user-context');
+      const companyId = userContext.getCompanyId();
+      
+      if (companyId) {
+        this.logger.info(`Data isolation: Using company-specific instance for: ${companyId}`);
+        // Use a placeholder taskId when we don't have a specific one
+        return this.getInstance(companyId, 'default-context');
+      }
+    } catch (error) {
+      this.logger.warn('Error accessing user context manager:', error);
+    }
+
+    // When no company ID is available, fall back to app instance while logging a warning
+    this.logger.warn('No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES');
     return this.getAppInstance();
   }
   
@@ -1460,8 +1546,22 @@ class EnhancedKybServiceFactory {
    * Data isolation fix: now checks for company ID in user context before returning a global instance.
    */
   getAppInstance(): EnhancedKybFormService {
-    // Create app-level instance with direct instantiation
-    // Company context will be provided through factory parameters when available
+    // CRITICAL DATA ISOLATION FIX: Use proper user context manager
+    try {
+      // Import userContext directly here to avoid circular dependencies
+      const { userContext } = require('@/lib/user-context');
+      const companyId = userContext.getCompanyId();
+      
+      if (companyId) {
+        this.logger.info(`Data isolation: Using company-specific instance for app-level request: ${companyId}`);
+        // Use a placeholder taskId when we don't have a specific one
+        return this.getInstance(companyId, 'global-context');
+      }
+    } catch (error) {
+      this.logger.warn('Error accessing user context manager:', error);
+    }
+
+    // Fallback to truly global instance when no company context found
     const instanceKey = 'app-global-context';
     
     if (!this.instances.has(instanceKey)) {

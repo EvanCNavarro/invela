@@ -42,10 +42,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 
 // Authentication and security
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-
-// WebSocket services
-import { unifiedWebSocketService } from "@/services/websocket-unified";
+import { AuthProvider } from "@/hooks/use-auth";
 
 // UI components and notifications
 import { Toaster } from "@/components/ui/toaster";
@@ -57,7 +54,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 
-// Real-time communication - unified approach
+// Real-time communication
+import { WebSocketProvider } from "@/providers/websocket-provider";
 
 // Service initialization and management
 import { initializeServices } from "./services/unified-service-registration";
@@ -102,7 +100,7 @@ import DiagnosticPage from "@/pages/diagnostic-page";
 import NotFound from "@/pages/not-found";
 // Development and testing utility pages
 import TaskFix from "@/pages/TaskFix";
-
+import WebSocketDemoPage from "@/pages/websocket-demo-page";
 import { ComponentLibrary } from "@/pages/component-library";
 
 // Route protection utilities
@@ -175,29 +173,6 @@ function ProtectedLayout({ children }: ProtectedLayoutProps): JSX.Element {
       {children}
     </div>
   );
-}
-
-/**
- * WebSocket Authentication Handler Component
- * 
- * Manages WebSocket authentication by setting user context when
- * user authentication data becomes available. This enables proper
- * message filtering and delivery in the unified WebSocket system.
- */
-function WebSocketAuthHandler(): JSX.Element {
-  const { user } = useAuth();
-  
-  useEffect(() => {
-    if (user?.id && user?.company_id) {
-      console.log('[WebSocketAuth] Setting user context:', {
-        userId: user.id,
-        companyId: user.company_id
-      });
-      unifiedWebSocketService.setUserContext(user.id, user.company_id);
-    }
-  }, [user?.id, user?.company_id]);
-
-  return null; // This is a utility component with no UI
 }
 
 /**
@@ -429,7 +404,12 @@ function Router(): JSX.Element {
           <DiagnosticPage />
         </Route>
 
-
+        {/* WebSocket Demo Page */}
+        <Route path="/websocket-demo">
+          <ProtectedLayout>
+            <WebSocketDemoPage />
+          </ProtectedLayout>
+        </Route>
         
         {/* Removed test route */}
         
@@ -547,12 +527,6 @@ export default function App(): JSX.Element {
       setStartupPhase('services');
       
       try {
-        // CRITICAL: Clear all cached service instances to eliminate persistent timers
-        // This prevents the 60-second timer from cached KY3P service instances
-        logger.info('Clearing cached service instances to eliminate persistent timers');
-        const { emergencyServiceReset } = await import('@/utils/clear-cached-services');
-        emergencyServiceReset();
-        
         // KISS: Use only one service registration system to avoid conflicts
         // This is a critical fix to prevent double registration of services
         logger.info('Initializing unified service registration');
@@ -573,13 +547,7 @@ export default function App(): JSX.Element {
     phaseStartup.registerPhaseCallback('communication', async () => {
       logger.info('Communication phase initializing');
       setStartupPhase('communication');
-      // Initialize unified WebSocket service
-      try {
-        await unifiedWebSocketService.connect();
-        logger.info('Unified WebSocket service connected successfully');
-      } catch (error) {
-        logger.error('Failed to connect unified WebSocket service:', error);
-      }
+      // WebSocket initialization happens in provider
     });
     
     // Phase 5: Ready - Application ready for user interaction
@@ -631,9 +599,10 @@ export default function App(): JSX.Element {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <WebSocketAuthHandler />
-          <Router />
-          <Toaster />
+          <WebSocketProvider>
+            <Router />
+            <Toaster />
+          </WebSocketProvider>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

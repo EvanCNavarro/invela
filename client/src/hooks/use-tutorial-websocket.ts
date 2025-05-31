@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
-import { unifiedWebSocketService } from '@/services/websocket-unified';
 
 // Create a dedicated logger for the WebSocket component
 const logger = createTutorialLogger('TutorialWebSocket');
@@ -28,7 +27,6 @@ interface TutorialUpdate {
  */
 export function useTutorialWebSocket(tabName: string) {
   const [tutorialUpdate, setTutorialUpdate] = useState<TutorialUpdate | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   
   // Normalize tab name for comparison using the shared function
   const normalizeTabName = (inputTabName: string): string => {
@@ -67,51 +65,40 @@ export function useTutorialWebSocket(tabName: string) {
   // Apply normalization
   const normalizedTabName = normalizeTabName(tabName);
   
-  // Subscribe to WebSocket events using unified service
+  // Subscribe to WebSocket events
   useEffect(() => {
-    // Connect to WebSocket service
-    unifiedWebSocketService.connect().then(() => {
-      setIsConnected(true);
-    }).catch(console.error);
-    
-    // Subscribe to connection status
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected || false);
-    });
-    
-    if (!isConnected) {
-      logger.info(`App WebSocket not available, using event bridge only`);
-      return () => {
-        unsubscribeConnection();
-      };
-    }
-
     logger.info(`Setting up WebSocket listener for ${normalizedTabName}`);
     
     /**
-     * Handle tutorial update messages from unified WebSocket
+     * Handle tutorial update messages from WebSocket
+     * 
+     * This function processes 'tutorial_updated' messages from the unified
+     * WebSocket implementation and updates the local state if the message
+     * is relevant to the current tab.
      */
-    const handleTutorialUpdate = (data: any) => {
+    const handleWebSocketMessage = (event: MessageEvent) => {
       try {
+        const message = JSON.parse(event.data);
+        
         // Check if this is a tutorial update message
-        if (data.type === 'tutorial_updated') {
-          logger.info(`Received tutorial update message:`, data);
+        if (message.type === 'tutorial_updated') {
+          logger.info(`Received tutorial update message:`, message);
           
           // Normalize the message tab name for comparison
-          const messageTabName = normalizeTabName(data.tabName || '');
+          const messageTabName = normalizeTabName(message.tabName || '');
           
           // Only process messages for this tab (using normalized names)
           if (messageTabName === normalizedTabName) {
-            logger.info(`Processing update for ${normalizedTabName} (original message tab: ${data.tabName}):`, data);
+            logger.info(`Processing update for ${normalizedTabName} (original message tab: ${message.tabName}):`, message);
             
             // Update local state with the message data
             setTutorialUpdate({
               tabName: normalizedTabName, // Use normalized name for consistency
-              userId: data.userId,
-              currentStep: data.currentStep,
-              completed: data.completed,
-              timestamp: data.timestamp,
-              metadata: data.metadata
+              userId: message.userId,
+              currentStep: message.currentStep,
+              completed: message.completed,
+              timestamp: message.timestamp,
+              metadata: message.metadata
             });
           }
         }
@@ -120,18 +107,39 @@ export function useTutorialWebSocket(tabName: string) {
       }
     };
     
-    // Subscribe to tutorial updates using unified WebSocket service
-    const unsubscribeHandler = unifiedWebSocketService.subscribe('tutorial_updated', handleTutorialUpdate);
-    
-    // Clean up subscription
-    return () => {
-      if (unsubscribeHandler) {
-        unsubscribeHandler();
+    // Connect to the global WebSocket manager
+    window.addEventListener('message', (event) => {
+      // Check if this is a WebSocket message event from our bridge
+      if (event.data?.source === 'websocket-bridge' && 
+          event.data?.messageType === 'tutorial_updated') {
+        logger.info(`Received bridged tutorial update:`, event.data);
+        
+        // Process the message if it's for our tab
+        if (event.data.message?.tabName?.toLowerCase() === normalizedTabName) {
+          setTutorialUpdate(event.data.message);
+        }
       }
-      unsubscribeConnection();
+    });
+    
+    // Get the WebSocket instance if available
+    const webSocket = (window as any).appWebSocket;
+    
+    // If we have direct access to the WebSocket, listen for messages
+    if (webSocket && webSocket.addEventListener) {
+      webSocket.addEventListener('message', handleWebSocketMessage);
+      logger.info(`Attached listener to app WebSocket`);
+    } else {
+      logger.warn(`App WebSocket not available, using event bridge only`);
+    }
+    
+    // Clean up
+    return () => {
+      if (webSocket && webSocket.removeEventListener) {
+        webSocket.removeEventListener('message', handleWebSocketMessage);
+      }
       logger.info(`Cleaned up WebSocket listener for ${normalizedTabName}`);
     };
-  }, [normalizedTabName, isConnected]);
+  }, [normalizedTabName]);
   
   return {
     tutorialUpdate

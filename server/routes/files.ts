@@ -7,7 +7,7 @@ import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import { aggregateAnswers } from '../services/answerAggregation';
 import { FileCreationService } from '../services/file-creation';
 import { FileDetectionService } from '../services/file-detection';

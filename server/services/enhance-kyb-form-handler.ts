@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, files } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from './websocket';
 
 // Use logger with a specific context for this service
 const serviceLogger = {
@@ -92,7 +92,7 @@ export async function updateTaskWithFileInfo(
       .where(eq(files.id, Number(fileId)));
       
     // Broadcast task update via WebSocket
-    broadcastTaskUpdate(taskId, 'submitted', {
+    WebSocketService.broadcastTaskUpdate(taskId, 'submitted', {
       fileId,
       fileName
     });

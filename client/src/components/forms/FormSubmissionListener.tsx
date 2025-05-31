@@ -11,18 +11,34 @@
  * to ensure that the same event is never processed twice across the application.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { unifiedWebSocketService } from '@/services/websocket-unified';
+import React, { useEffect, useContext, useRef } from 'react';
+import { WebSocketContext } from '@/providers/websocket-provider';
 import { toast } from '@/hooks/use-toast';
 import getLogger from '@/utils/logger';
-import {
-  generateMessageId,
-  processMessageWithDeduplication,
-  incrementActiveListeners,
-  decrementActiveListeners
-} from '@/utils/websocket-event-deduplication';
 
 const logger = getLogger('FormSubmissionListener');
+
+// Global tracking of processed messages and active listeners
+// These static variables are shared across all instances of the component
+// We use window object to make it globally accessible for both component and hook
+const GLOBAL_STATE = {
+  // Global set to track processed submission messages across all instances
+  // This ensures we never process the same message twice, even across different components
+  processedMessages: new Set<string>(),
+  
+  // Map of active listeners by task and form type
+  // Used to prevent duplicate listeners for the same task+form combination
+  activeListeners: new Map<string, boolean>(),
+  
+  // Get a unique key for a task+form combination
+  getListenerKey(taskId: number, formType: string): string {
+    return `${taskId}:${formType}`;
+  }
+};
+
+// Make the global state available to other modules through the window object
+// This allows the useFormSubmissionEvents hook to access the same state
+(window as any).__FORM_SUBMISSION_GLOBAL_STATE = GLOBAL_STATE;
 
 export interface SubmissionAction {
   type: string;       // Type of action: "task_completion", "file_generation", etc.
@@ -89,10 +105,10 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   onInProgress,
   showToasts = false // Default to false to prevent duplicate toasts
 }) => {
-  const [isConnected, setIsConnected] = React.useState(false);
+  const { socket, isConnected } = useContext(WebSocketContext);
   
   // Use refs to track listener state and prevent unnecessary reattachment
-  const handleMessageRef = useRef<(() => void) | null>(null);
+  const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
   const listenerInfoRef = useRef<{taskId: number; formType: string} | null>(null);
   const hasSetupListenerRef = useRef<boolean>(false);
   
@@ -117,48 +133,50 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
   
   // Process messages after reconnection
   useEffect(() => {
-    // If we're connected and we've previously had a connection (were disconnected)
-    if (isConnected && reconnectionAttemptsRef.current > 0) {
+    // If we have a socket and it's connected, and we've previously had a connection (were disconnected)
+    if (socket && isConnected && reconnectionAttemptsRef.current > 0 && handleMessageRef.current) {
       logger.info(`WebSocket reconnected after ${reconnectionAttemptsRef.current} attempts, checking for missed messages`);
       
       // Reset reconnection counter when successfully reconnected
       reconnectionAttemptsRef.current = 0;
       
-      // Note: Unified WebSocket handles missed events automatically
-      logger.info(`Reconnection handled by unified WebSocket for task ${taskId}`);
+      // Request any missed form submission events
+      try {
+        // Send a message to the server requesting any missed events for this task
+        socket.send(JSON.stringify({
+          type: 'request_missed_events',
+          taskId,
+          formType,
+          lastMessageId: lastProcessedMessageIdRef.current,
+          timestamp: new Date().toISOString()
+        }));
+        
+        logger.info(`Requested missed events for task ${taskId}`);
+      } catch (error) {
+        logger.error('Error requesting missed events:', error);
+      }
     }
-  }, [isConnected, taskId, formType]);
+  }, [socket, isConnected, taskId, formType]);
 
   // Main effect for setting up WebSocket listeners
   useEffect(() => {
-    // Connect to WebSocket service
-    unifiedWebSocketService.connect().then(() => {
-      setIsConnected(true);
-    }).catch(console.error);
-    
-    // Subscribe to connection status
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected || false);
-    });
-    
-    // Only proceed if we actually have a connection
-    if (!isConnected) {
+    // Only proceed if we actually have a socket and it's connected
+    if (!socket || !isConnected) {
       // Don't show warnings during initial page load - only when we've been connected before
       if (hasSetupListenerRef.current) {
         reconnectionAttemptsRef.current += 1;
         logger.warn(`WebSocket not connected (attempt ${reconnectionAttemptsRef.current}), form submission updates will not be received`);
       }
-      return () => {
-        unsubscribeConnection();
-      };
+      return;
     }
     
     // Reset reconnection counter when connected
     reconnectionAttemptsRef.current = 0;
     
-    // Handle scenario where connection reconnected but the component did not remount
-    // We check for existing listener attachment status
-    const needsReattachment = isConnected &&
+    // Handle scenario where socket reconnected but the component did not remount
+    // We check both for new task and for existing socket listener attachment
+    const needsReattachment = socket &&
+      (socket.readyState === WebSocket.OPEN) &&
       handleMessageRef.current && 
       !hasSetupListenerRef.current;
     
@@ -178,23 +196,19 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     // Clean up any existing listener if we're setting up a new one
     if (hasSetupListenerRef.current && handleMessageRef.current) {
       try {
-        handleMessageRef.current();
-        handleMessageRef.current = null;
+        socket.removeEventListener('message', handleMessageRef.current);
         logger.info(`Cleaned up form submission listener for task ${listenerInfoRef.current?.taskId}`);
       } catch (e) {
-        // Ignore errors removing listeners from potentially closed connections
+        // Ignore errors removing listeners from potentially closed sockets
       }
     }
 
     logger.info(`Setting up form submission listener for task ${taskId} (${formType})`);
 
-    // Create new message handler for unified WebSocket
-    const handleMessage = (data: any) => {
+    // Create new message handler
+    const handleMessage = (event: MessageEvent) => {
       try {
-        // Validate data exists and has required structure
-        if (!data || typeof data !== 'object') {
-          return;
-        }
+        const data = JSON.parse(event.data);
         
         // Process form-related events including task update events which carry form submission status
         // Added support for form_submission_completed which indicates all operations are complete
@@ -206,15 +220,30 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
           return;
         }
         
-        // Generate message ID for deduplication
-        const taskId = data.taskId || data.payload?.taskId;
-        const timestamp = data.timestamp || data.payload?.timestamp;
+        // Message deduplication: check if we've already processed this message globally
         const messageId = data.messageId || (data.payload?.messageId) || 
-                          generateMessageId('submission', taskId, data.type, timestamp);
+                          `${data.type}_${data.taskId || data.payload?.taskId}_${data.timestamp || data.payload?.timestamp}`;
         
-        // Use shared deduplication utility - this handles all the complex logic
-        if (!processMessageWithDeduplication(messageId, taskId, taskId, undefined, undefined)) {
+        // Skip if we've already processed this message (globally across all components)
+        if (messageId && GLOBAL_STATE.processedMessages.has(messageId)) {
+          logger.debug(`Skipping duplicate message: ${messageId} (globally)`);
           return;
+        }
+        
+        // Add to both the global processed messages set and our local component set
+        if (messageId) {
+          // Add to global set to prevent any other component from processing this same message
+          GLOBAL_STATE.processedMessages.add(messageId);
+          
+          // Also add to our local component set for cleanup on unmount
+          processedMessagesRef.current.add(messageId);
+          
+          // Limit size of global processed messages set to avoid memory leaks
+          if (GLOBAL_STATE.processedMessages.size > 500) {
+            // Keep only the most recent 250 messages
+            const messagesToKeep = Array.from(GLOBAL_STATE.processedMessages).slice(-250);
+            GLOBAL_STATE.processedMessages = new Set(messagesToKeep);
+          }
         }
         
         // Add debug logging to help troubleshoot WebSocket events
@@ -485,40 +514,28 @@ export const FormSubmissionListener: React.FC<FormSubmissionListenerProps> = ({
     };
 
     // Store refs for cleanup
+    handleMessageRef.current = handleMessage;
     listenerInfoRef.current = { taskId, formType };
     hasSetupListenerRef.current = true;
     
-    // Subscribe to unified WebSocket events
-    const unsubscribeFormSubmission = unifiedWebSocketService.subscribe('form_submission', handleMessage);
-    const unsubscribeFormSubmitted = unifiedWebSocketService.subscribe('form_submitted', handleMessage);
-    const unsubscribeTaskUpdate = unifiedWebSocketService.subscribe('task_update', handleMessage);
-    const unsubscribeTaskUpdated = unifiedWebSocketService.subscribe('task_updated', handleMessage);
-    const unsubscribeFormCompleted = unifiedWebSocketService.subscribe('form_submission_completed', handleMessage);
-    
-    // Store unsubscribe function for cleanup
-    handleMessageRef.current = () => {
-      unsubscribeFormSubmission();
-      unsubscribeFormSubmitted();
-      unsubscribeTaskUpdate();
-      unsubscribeTaskUpdated();
-      unsubscribeFormCompleted();
-    };
+    // Add the event listener
+    socket.addEventListener('message', handleMessage);
 
     // Cleanup function - only execute on unmount or when task/form changes
     return () => {
-      if (handleMessageRef.current) {
+      if (socket && handleMessageRef.current) {
         try {
-          handleMessageRef.current();
+          socket.removeEventListener('message', handleMessageRef.current);
           logger.info(`Cleaned up form submission listener for task ${taskId}`);
         } catch (e) {
-          // Ignore errors during cleanup
+          // Ignore errors removing listeners from potentially closed sockets
         } finally {
           hasSetupListenerRef.current = false;
           handleMessageRef.current = null;
         }
       }
     };
-  }, [isConnected, taskId, formType]); // Updated dependencies
+  }, [socket, isConnected, taskId, formType]); // Remove callback dependencies
 
   return null; // This component doesn't render anything
 };

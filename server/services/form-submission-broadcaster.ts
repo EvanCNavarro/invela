@@ -9,7 +9,7 @@
  */
 
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from './websocket-service';
 import { broadcast as unifiedBroadcast } from '../utils/unified-websocket';
 
 interface FormSubmissionData {

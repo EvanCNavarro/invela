@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import { requireAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
 

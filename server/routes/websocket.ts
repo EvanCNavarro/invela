@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { WebSocketServer } from 'ws';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import { registerWebSocketServer, broadcastWebSocketMessage } from '../utils/task-update';
 import { logger } from '../utils/logger';
 

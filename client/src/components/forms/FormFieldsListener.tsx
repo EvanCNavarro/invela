@@ -8,21 +8,19 @@
  * multiple client sessions.
  */
 
-import React, { useEffect, useRef } from 'react';
-import { unifiedWebSocketService } from '@/services/websocket-unified';
+import React, { useEffect, useContext, useRef } from 'react';
+import { WebSocketContext } from '@/providers/websocket-provider';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  generateMessageId,
-  processMessageWithDeduplication,
-  incrementActiveListeners,
-  decrementActiveListeners
-} from '@/utils/websocket-event-deduplication';
 
-// Add type declaration for the last clear operation tracking
+// Add type declaration for the fieldEventTracker global object
 declare global {
   interface Window {
+    fieldEventTracker?: {
+      processedEventIds: Set<string>;
+      activeListeners: number;
+    };
     _lastClearOperation?: {
       taskId: number;
       formType: string;
@@ -31,6 +29,15 @@ declare global {
       operationId: string;
     };
   }
+}
+
+// Global tracking of processed messages and active listeners
+// These static variables are shared across all instances of the component
+if (typeof window !== 'undefined' && !window.fieldEventTracker) {
+  window.fieldEventTracker = {
+    processedEventIds: new Set<string>(),
+    activeListeners: 0
+  };
 }
 
 export interface FieldsEventPayload {
@@ -72,28 +79,16 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
   onFieldsCleared,
   showToasts = true
 }) => {
-  const [isConnected, setIsConnected] = React.useState(false);
+  const { socket, isConnected } = useContext(WebSocketContext);
   const queryClient = useQueryClient();
-  const handleMessageRef = useRef<(() => void) | null>(null);
+  const handleMessageRef = useRef<((event: MessageEvent) => void) | null>(null);
   const listenerInfoRef = useRef({ taskId, formType });
   const hasSetupListenerRef = useRef(false);
 
   useEffect(() => {
-    // Connect to WebSocket service
-    unifiedWebSocketService.connect().then(() => {
-      setIsConnected(true);
-    }).catch(console.error);
-    
-    // Subscribe to connection status
-    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
-      setIsConnected(data.connected || false);
-    });
-    
-    // We need an active connection for unified WebSocket
-    if (!isConnected) {
-      return () => {
-        unsubscribeConnection();
-      };
+    // We need both the socket and an active connection
+    if (!socket || !isConnected) {
+      return;
     }
 
     // Skip if we've already set up a listener for this task/form
@@ -110,9 +105,11 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
 
     logger.info(`Setting up form fields listener for task ${taskId} (${formType})`);
 
-    // Define message handler for unified WebSocket
-    const handleMessage = (message: any): void => {
+    // Define message handler
+    const handleMessage = (messageEvent: MessageEvent): void => {
       try {
+        // Parse incoming message
+        const message = JSON.parse(messageEvent.data);
         
         // Process both 'form_fields' and 'clear_fields' type messages
         if (message.type !== 'form_fields' && message.type !== 'clear_fields') {
@@ -171,11 +168,23 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
         }
 
         // Create a unique message ID to prevent duplicate processing
-        const messageId = generateMessageId('field', payload.taskId, payload.action, payload.timestamp);
+        const messageId = `field_${payload.action}_${payload.taskId}_${payload.timestamp || Date.now()}`;
         
-        // Use shared deduplication utility to check if message should be processed
-        if (!processMessageWithDeduplication(messageId, payload.taskId, taskId, payload.formType, formType)) {
+        // Skip if we've already processed this message (global deduplication)
+        if (typeof window !== 'undefined' && window.fieldEventTracker?.processedEventIds.has(messageId)) {
+          logger.debug(`Skipping already processed message: ${messageId}`);
           return;
+        }
+        
+        // Mark this message as processed
+        if (typeof window !== 'undefined' && window.fieldEventTracker) {
+          window.fieldEventTracker.processedEventIds.add(messageId);
+          
+          // Prevent the set from growing too large
+          if (window.fieldEventTracker.processedEventIds.size > 100) {
+            const values = Array.from(window.fieldEventTracker.processedEventIds);
+            window.fieldEventTracker.processedEventIds = new Set(values.slice(-50));
+          }
         }
 
         // Create a standardized event object
@@ -295,37 +304,33 @@ const FormFieldsListener: React.FC<FormFieldsListenerProps> = ({
     };
 
     // Store refs for cleanup
+    handleMessageRef.current = handleMessage;
     listenerInfoRef.current = { taskId, formType };
     hasSetupListenerRef.current = true;
     
-    // Subscribe to both message types using unified WebSocket
-    const unsubscribeFormFields = unifiedWebSocketService.subscribe('form_fields', handleMessage);
-    const unsubscribeClearFields = unifiedWebSocketService.subscribe('clear_fields', handleMessage);
-    
-    // Store unsubscribe function for cleanup
-    handleMessageRef.current = () => {
-      unsubscribeFormFields();
-      unsubscribeClearFields();
-    };
+    // Add the event listener
+    socket.addEventListener('message', handleMessage);
 
     // Cleanup function - only execute on unmount or when task/form changes
     return () => {
-      if (handleMessageRef.current) {
+      if (socket && handleMessageRef.current) {
         try {
-          handleMessageRef.current();
+          socket.removeEventListener('message', handleMessageRef.current);
           logger.info(`Cleaned up form fields listener for task ${taskId}`);
           
-          // Update active listener count using shared utility
-          decrementActiveListeners();
+          // Update active listener count
+          if (typeof window !== 'undefined' && window.fieldEventTracker) {
+            window.fieldEventTracker.activeListeners = Math.max(0, window.fieldEventTracker.activeListeners - 1);
+          }
         } catch (e) {
-          // Ignore errors during cleanup
+          // Ignore errors removing listeners from potentially closed sockets
         } finally {
           hasSetupListenerRef.current = false;
           handleMessageRef.current = null;
         }
       }
     };
-  }, [isConnected, taskId, formType, onFieldsCleared, showToasts]);
+  }, [socket, isConnected, taskId, formType, onFieldsCleared, showToasts]);
 
   return null; // This component doesn't render anything
 };

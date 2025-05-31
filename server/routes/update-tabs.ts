@@ -3,7 +3,7 @@ import { db } from '../../db';
 import { sql } from 'drizzle-orm';
 import { companies } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { getWebSocketServer } from '../utils/unified-websocket';
+import { getWebSocketServer } from '../services/websocket';
 
 /**
  * Updates all Invela and Bank category companies to have the Claims and S&P Risk Score tabs

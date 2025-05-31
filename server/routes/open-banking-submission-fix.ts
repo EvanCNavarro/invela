@@ -15,7 +15,7 @@ import { tasks, companies } from '@db/schema';
 import { eq, and, or } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { UnifiedTabService } from '../services/unified-tab-service';
-import { WebSocketService } from '../utils/unified-websocket';
+import { WebSocketService } from '../services/websocket';
 import { Logger } from '../utils/logger';
 
 const router = express.Router();

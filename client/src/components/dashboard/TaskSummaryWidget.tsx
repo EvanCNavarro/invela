@@ -8,8 +8,8 @@
  * the unified task management system to provide real-time updates.
  */
 
-import { useState, useEffect } from "react";
-import { unifiedWebSocketService } from '@/services/websocket-unified';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,46 +38,13 @@ interface TaskSummary {
 }
 
 export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProps) {
-  // WebSocket-only data state - NO HTTP polling
-  const [tasks, setTasks] = useState<SelectTask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // WebSocket subscription for task data
-  
-  useEffect(() => {
-    // Connect and subscribe to initial data
-    unifiedWebSocketService.connect().catch(console.error);
-    
-    const unsubInitialData = unifiedWebSocketService.subscribe('initial_data', (data) => {
-      if (data.tasks) {
-        setTasks(data.tasks);
-        setIsLoading(false);
-      }
-    });
-
-    // Subscribe to task data updates
-    const unsubTaskData = unifiedWebSocketService.subscribe('task_data', (data) => {
-      setTasks(data);
-    });
-
-    // Subscribe to individual task updates
-    const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', (data) => {
-      const taskId = data?.taskId || data?.id;
-      if (taskId) {
-        setTasks(prevTasks => 
-          prevTasks.map(task => 
-            task.id === taskId ? { ...task, ...data } : task
-          )
-        );
-      }
-    });
-
-    return () => {
-      unsubInitialData();
-      unsubTaskData();
-      unsubTaskUpdate();
-    };
-  }, [subscribe]);
+  // Fetch task data using the existing tasks API
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ['/api/tasks'],
+    queryFn: () => fetch('/api/tasks').then(res => res.json()) as Promise<SelectTask[]>,
+    ...getOptimizedQueryOptions('/api/tasks'),
+    select: (data: SelectTask[]) => data || []
+  });
 
   // Calculate task summary metrics
   const taskSummary: TaskSummary = {

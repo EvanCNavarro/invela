@@ -44,7 +44,8 @@ import { queryClient } from "./lib/queryClient";
 import { initializeAppServices } from "./lib/app-initialization";
 
 // Real-time communication infrastructure
-// Legacy imports removed to prevent dual WebSocket initialization
+import wsManager from "./lib/websocket-connector";
+import webSocketManager from "./lib/web-socket-manager";
 
 // ========================================
 // APPLICATION INITIALIZATION
@@ -53,11 +54,24 @@ import { initializeAppServices } from "./lib/app-initialization";
 /**
  * Initialize WebSocket Communication Systems
  * 
- * WebSocket initialization now handled by unified provider in App.tsx
- * Legacy dual initialization removed to prevent connection multiplication
+ * Bootstraps both legacy and unified WebSocket management systems
+ * to ensure backwards compatibility during the transition period.
+ * This dual initialization ensures reliable real-time communication
+ * across all application features.
  */
 function initializeWebSocketSystems(): void {
-  console.info('[Main] WebSocket initialization delegated to unified provider');
+  try {
+    // Legacy WebSocket system (maintained for backwards compatibility)
+    wsManager.initialize();
+    
+    // Unified WebSocket system (new implementation)
+    webSocketManager.connect();
+    
+    console.info('[Main] WebSocket connection managers initialized successfully');
+  } catch (error) {
+    console.error('[Main] Failed to initialize WebSocket systems:', error);
+    throw new Error('Critical failure in WebSocket initialization');
+  }
 }
 
 /**
@@ -114,7 +128,7 @@ function initializeReactApplication(): void {
   try {
     console.info('[Main] Starting application bootstrap sequence');
     
-    // Step 1: WebSocket systems now handled by unified provider
+    // Step 1: Initialize WebSocket communication systems
     initializeWebSocketSystems();
     
     // Step 2: Initialize application-wide services

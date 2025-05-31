@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, files, companies, kybResponses, ky3pResponses, openBankingResponses, openBankingFields, kybFields, ky3pFields } from '@db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import { broadcastTaskUpdate } from "../utils/unified-websocket";
+import * as WebSocketService from '../services/websocket';
 import * as FileCreationService from '../services/fileCreation';
 import * as UnifiedTabService from '../services/unified-tab-service';
 import * as TransactionManager from '../services/transaction-manager';
@@ -1376,7 +1376,7 @@ export async function broadcastFormSubmissionResult(
     });
     
     // Broadcast task update
-    await broadcastTaskUpdate(taskId, 'submitted', 100);
+    await WebSocketService.broadcastTaskUpdate(taskId, 'submitted', 100);
     
     // Broadcast file creation if a file was created
     if (result.fileId) {

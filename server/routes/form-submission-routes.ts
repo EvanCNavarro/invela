@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as fileCreation from '../services/fileCreation';
 import UnifiedTabService from '../services/unified-tab-service';
-import { broadcast, broadcastFormSubmission } from '../utils/unified-websocket';
+import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
 // Add namespace context to logs

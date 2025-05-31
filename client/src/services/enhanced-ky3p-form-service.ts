@@ -42,15 +42,11 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
    * @param taskId Optional task ID
    */
   constructor(companyId?: number, taskId?: number) {
-    // Only log when we have actual context data to avoid undefined spam
-    if (companyId && taskId) {
-      logger.info('Initializing EnhancedKY3PFormService with autosave DISABLED', {
-        companyId,
-        taskId,
-        autoSaveDisabled: true,
-        timestamp: new Date().toISOString()
-      });
-    }
+    logger.info('Initializing EnhancedKY3PFormService', {
+      companyId,
+      taskId,
+      timestamp: new Date().toISOString()
+    });
     
     // Create the fixed KY3P service that resolves the ReferenceError issues
     this.originalService = createFixedKY3PFormService(companyId, taskId);
@@ -244,12 +240,12 @@ export class EnhancedKY3PFormService implements FormServiceInterface {
     // Clear any existing timer
     if (this.batchUpdateTimer) {
       clearTimeout(this.batchUpdateTimer);
-      this.batchUpdateTimer = null;
     }
     
-    // COMPLETELY DISABLED: No automatic batch updates to eliminate artificial polling
-    // Using event-driven updates only via WebSocket
-    logger.debug('[Enhanced KY3P] Batch update timer disabled - using event-driven updates only');
+    // Schedule a batch update
+    this.batchUpdateTimer = setTimeout(() => {
+      this.flushPendingUpdates(taskId);
+    }, this.batchUpdateInterval);
   }
   
   /**

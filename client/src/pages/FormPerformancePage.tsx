@@ -76,7 +76,7 @@ const FormPerformancePage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value={DemoTabs.BATCHED} className="bg-white rounded-lg shadow p-4 border">
-          <BatchUpdateDebugger initialDelay={500} maxQueueSize={25} autoFlushEnabled={false} />
+          <BatchUpdateDebugger initialDelay={500} maxQueueSize={25} autoFlushEnabled={true} />
         </TabsContent>
 
         <TabsContent value={DemoTabs.OPTIMIZATION} className="bg-white rounded-lg shadow p-4 border">

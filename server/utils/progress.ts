@@ -1,5 +1,5 @@
 import { TaskStatus } from '../types';
-import * as WebSocketService from '../utils/unified-websocket';
+import * as WebSocketService from '../services/websocket';
 import { db } from '@db';
 import { eq, and, sql } from 'drizzle-orm';
 import { 
@@ -42,7 +42,7 @@ export function broadcastFieldUpdate(
   const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   
   // Broadcast the field update with standard payload structure
-  WebSocketService.broadcastFieldUpdate({
+  WebSocketService.broadcast('field_update', {
     taskId: numericTaskId,
     fieldKey,
     value,
@@ -76,7 +76,7 @@ export function broadcastSubmissionStatus(
   const numericTaskId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   
   // Broadcast the submission status
-  WebSocketService.broadcastSubmissionUpdate({
+  WebSocketService.broadcast('submission_status', {
     taskId: numericTaskId,
     status,
     ...details,
@@ -570,26 +570,15 @@ export async function updateTaskProgress(
       // After successful transaction completion, broadcast the update if needed
       if (!skipBroadcast && result) {
         // Broadcasting is done outside of transaction as it doesn't require rollback
-        setTimeout(async () => {
-          // Use unified WebSocket system for consistent message format
-          try {
-            const { broadcastTaskUpdate } = await import('../utils/unified-websocket');
-            broadcastTaskUpdate({
-              taskId: taskId,
-              id: taskId,
-              status: result.status,
-              progress: newProgress,
-              metadata: {
-                ...result.metadata,
-                updatedVia: 'progress-update',
-                timestamp: new Date().toISOString(),
-                diagnosticId: options.diagnosticId || `update-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-              }
-            });
-            console.log(`[Progress] Successfully broadcast task update via unified WebSocket for task ${taskId}`);
-          } catch (error) {
-            console.error(`[Progress] Error broadcasting via unified WebSocket:`, error);
-          }
+        setTimeout(() => {
+          // Pass diagnostic ID for end-to-end tracking
+          broadcastProgressUpdate(
+            taskId,
+            newProgress,
+            result.status as TaskStatus,
+            result.metadata || {},
+            options.diagnosticId || `update-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+          );
         }, 0);
       }
       
@@ -750,9 +739,8 @@ export function broadcastProgressUpdate(
   
   // Broadcast the update to all connected clients with the appropriate status
   try {
-    WebSocketService.broadcastTaskUpdate({
+    WebSocketService.broadcast('task_update', {
       id: taskId,
-      taskId: taskId, // Include both formats for compatibility
       status: finalStatus || status || TaskStatus.IN_PROGRESS,
       progress: validatedProgress,
       metadata: metadata || {},

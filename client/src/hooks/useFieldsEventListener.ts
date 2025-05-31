@@ -8,16 +8,10 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useUnifiedWebSocket } from './use-unified-websocket';
+import { useWebSocketContext } from '../providers/websocket-provider';
 import { useQueryClient } from '@tanstack/react-query';
 import { handleWebSocketClearFields } from '../components/forms/enhancedClearFields';
 import { toast } from '../hooks/use-toast';
-import {
-  generateMessageId,
-  processMessageWithDeduplication,
-  incrementActiveListeners,
-  decrementActiveListeners
-} from '@/utils/websocket-event-deduplication';
 
 export interface FieldsEventPayload {
   taskId: number;
@@ -60,30 +54,50 @@ export function useFieldsEventListener({
   onBatchUpdate,
   showToasts = true,
 }: UseFieldsEventListenerProps) {
-  const { subscribe, isConnected } = useUnifiedWebSocket();
+  const { socket } = useWebSocketContext();
   const queryClient = useQueryClient();
   const [lastEvent, setLastEvent] = useState<FieldsEvent | null>(null);
   
-
+  // Ref to keep track of processed events to avoid duplicates
+  const processedEvents = useRef<Set<string>>(new Set());
   
-  // Set up listener tracking using shared utility
+  // Set up event tracker on window to manage multiple listeners
   useEffect(() => {
-    incrementActiveListeners();
-    
-    // Cleanup on unmount
-    return () => {
-      decrementActiveListeners();
-    };
+    if (typeof window !== 'undefined') {
+      // Initialize the event tracker if it doesn't exist
+      if (!window.fieldEventTracker) {
+        window.fieldEventTracker = {
+          processedEventIds: new Set<string>(),
+          activeListeners: 0
+        };
+      }
+      
+      // Increment active listeners count
+      window.fieldEventTracker.activeListeners++;
+      
+      // Cleanup on unmount
+      return () => {
+        if (window.fieldEventTracker) {
+          window.fieldEventTracker.activeListeners--;
+          
+          // Clean up the tracker if there are no active listeners
+          if (window.fieldEventTracker.activeListeners <= 0) {
+            delete window.fieldEventTracker;
+          }
+        }
+      };
+    }
   }, []);
   
   // Handle WebSocket messages
   useEffect(() => {
-    if (!isConnected || !taskId || !formType) {
+    if (!socket || !taskId || !formType) {
       return;
     }
     
-    const handleMessage = (data: any) => {
+    const handleMessage = (event: MessageEvent) => {
       try {
+        const data = JSON.parse(event.data);
         
         // Check if this is a fields event
         if (
@@ -92,12 +106,27 @@ export function useFieldsEventListener({
           data.payload.taskId === taskId &&
           data.payload.formType === formType
         ) {
-          // Generate message ID and use shared deduplication utility
-          const eventId = generateMessageId('field', data.payload.taskId, data.type, data.payload.timestamp);
+          // Create an event ID to track processed events
+          const eventId = `${data.type}_${data.payload.taskId}_${data.payload.formType}_${data.payload.timestamp || Date.now()}`;
           
-          // Use shared deduplication utility
-          if (!processMessageWithDeduplication(eventId, data.payload.taskId, taskId, data.payload.formType, formType)) {
+          // Skip if this event has already been processed
+          if (window.fieldEventTracker?.processedEventIds.has(eventId)) {
+            console.log(`[FieldsEventListener] Skipping already processed event: ${eventId}`);
             return;
+          }
+          
+          // Mark this event as processed
+          if (window.fieldEventTracker) {
+            window.fieldEventTracker.processedEventIds.add(eventId);
+            
+            // Limit the size of the processed events set to prevent memory leaks
+            if (window.fieldEventTracker.processedEventIds.size > 100) {
+              const iterator = window.fieldEventTracker.processedEventIds.values();
+              const firstValue = iterator.next().value;
+              if (firstValue) {
+                window.fieldEventTracker.processedEventIds.delete(firstValue);
+              }
+            }
           }
           
           // Format the event data
@@ -176,20 +205,34 @@ export function useFieldsEventListener({
       }
     };
     
-    // Subscribe to unified WebSocket events
-    const unsubscribeFormFields = subscribe('form_fields', handleMessage);
-    const unsubscribeClearFields = subscribe('clear_fields', handleMessage);
+    // Add the message event listener
+    socket.addEventListener('message', handleMessage);
     
-    // Remove the event listeners when the component unmounts
+    // Remove the event listener when the component unmounts
     return () => {
-      unsubscribeFormFields();
-      unsubscribeClearFields();
+      socket.removeEventListener('message', handleMessage);
     };
-  }, [subscribe, taskId, formType, onFieldsCleared, onFieldUpdated, onBatchUpdate, queryClient, showToasts]);
+  }, [socket, taskId, formType, onFieldsCleared, onFieldUpdated, onBatchUpdate, queryClient, showToasts]);
   
   return {
     lastEvent,
-    isConnected
+    socket
   };
 }
 
+// Add window augmentation for TypeScript
+declare global {
+  interface Window {
+    fieldEventTracker?: {
+      processedEventIds: Set<string>;
+      activeListeners: number;
+    };
+    _lastClearOperation?: {
+      taskId: number;
+      formType: string;
+      timestamp: number;
+      blockExpiration: number;
+      operationId: string;
+    };
+  }
+}
