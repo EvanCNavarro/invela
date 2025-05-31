@@ -58,10 +58,15 @@ export function Sidebar({
     enabled: !isPlayground
   });
 
-  // Only fetch real data if not in playground mode
+  // DISABLED: Task data polling - using WebSocket-only updates for true event-driven architecture
   const { data: tasks = [] } = useQuery({
     queryKey: ["/api/tasks"],
-    enabled: !isPlayground,
+    enabled: false, // DISABLED - no automatic polling for genuine event-driven architecture
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
 
   // Enhanced monitoring of availableTabs

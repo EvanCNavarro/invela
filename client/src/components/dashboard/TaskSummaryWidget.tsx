@@ -38,11 +38,16 @@ interface TaskSummary {
 }
 
 export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProps) {
-  // Fetch task data using the existing tasks API
+  // DISABLED: Task data polling - using WebSocket-only updates for true event-driven architecture
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['/api/tasks'],
     queryFn: () => fetch('/api/tasks').then(res => res.json()) as Promise<SelectTask[]>,
-    ...getOptimizedQueryOptions('/api/tasks'),
+    enabled: false, // DISABLED - no automatic polling
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity,
     select: (data: SelectTask[]) => data || []
   });
 
