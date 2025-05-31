@@ -31,7 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskStatus } from "@db/schema";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 import { TaskTable } from "@/components/tasks/TaskTable";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
@@ -71,7 +71,7 @@ export default function TaskCenterPage() {
   
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { isConnected, subscribe } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
   
   const taskTimestampRef = useRef<Record<number, number>>({});
 

@@ -19,7 +19,7 @@ interface OnboardingWrapperProps {
  */
 export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
-  const { isConnected, subscribe, unsubscribe } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = React.useState(false);
   
   // State for showing the onboarding modal - with localStorage backup
   const [showModal, setShowModal] = React.useState(false);
