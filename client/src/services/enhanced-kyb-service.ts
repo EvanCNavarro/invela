@@ -790,67 +790,12 @@ export class EnhancedKybFormService implements FormServiceInterface {
       this.saveProgressTimer = null;
     }
     
-    // DISABLED: Auto-save mechanism replaced with event-driven WebSocket updates
-    // Schedule a new save operation after a short delay
-    // this.saveProgressTimer = setTimeout(async () => {
-      // If already saving, the next save will pick up latest data from writeBuffer
-      if (this.isSaving) {
-        return;
-      }
-      
-      this.isSaving = true;
-      
-      let dataToSave: TimestampedFormData | null = null;
-      
-      try {
-        // Use the data from our write buffer to ensure we save the most recent changes
-        if (this.writeBuffer) {
-          dataToSave = { ...this.writeBuffer };
-          this.writeBuffer = null;
-        } else {
-          dataToSave = { ...this.timestampedFormData };
-        }
-        
-        // Calculate progress and status
-        const progress = this.calculateProgress();
-        const status = this.calculateTaskStatus();
-        
-        // Extract form values
-        const formValues = extractValues(dataToSave);
-        
-        // Save the data with timestamps
-        const result = await this.saveKybProgress(
-          taskId, 
-          progress, 
-          formValues, 
-          dataToSave.timestamps,
-          status
-        );
-        
-        if (result && result.success) {
-          // Store the last saved data for change detection
-          this.lastSavedData = JSON.stringify(formValues);
-          
-          // Process server response if it contains form data
-          if (result.savedData && result.savedData.formData) {
-            this.processServerResponse(
-              result.savedData.formData,
-              result.savedData.timestamps
-            );
-          }
-        }
-      } catch (error) {
-        console.error('Exception during save:', error);
-      } finally {
-        this.isSaving = false;
-        
-        // DISABLED: Auto-save recursion replaced with event-driven WebSocket updates
-        // Check if write buffer changed during save - if so, save again
-        // if (this.writeBuffer) {
-        //   this.saveProgress(taskId);
-        // }
-      // }
-    // }, this.saveDebounceMs);
+    // DISABLED: Auto-save timer mechanism replaced with event-driven WebSocket updates
+    // Automatic polling every ~30 seconds has been eliminated for genuine real-time communication
+    console.log('[Enhanced KYB Service] Auto-save timer disabled - using event-driven WebSocket updates only');
+    
+    // Note: Manual saves can still be triggered by user actions via saveKybProgress()
+    // This ensures data persistence while eliminating automatic polling behavior
   }
   
   /**
