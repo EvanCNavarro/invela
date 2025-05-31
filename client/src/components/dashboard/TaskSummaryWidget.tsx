@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useUnifiedWebSocket } from '@/hooks/useUnifiedWebSocket';
+import { useUnifiedWebSocket } from '@/hooks/use-unified-websocket';
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

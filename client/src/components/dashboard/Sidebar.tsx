@@ -22,6 +22,14 @@ import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
 import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
 
+// Task type definition
+interface Task {
+  id: number;
+  title: string;
+  status: string;
+  progress: number;
+}
+
 interface SidebarProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
@@ -60,9 +68,6 @@ export function Sidebar({
 
   // WebSocket-only data state - NO HTTP polling
   const [tasks, setTasks] = useState<Task[]>([]);
-  
-  // WebSocket subscription for task data
-  const { subscribe } = useUnifiedWebSocket();
   
   useEffect(() => {
     // Subscribe to initial data
