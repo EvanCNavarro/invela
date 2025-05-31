@@ -83,20 +83,22 @@ export function Sidebar({
   const [tasks, setTasks] = useState<Task[]>([]);
   
   useEffect(() => {
-    // Subscribe to initial data
-    const unsubInitialData = subscribe('initial_data', (data) => {
+    // Connect and subscribe to initial data
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    const unsubInitialData = unifiedWebSocketService.subscribe('initial_data', (data) => {
       if (data.tasks) {
         setTasks(data.tasks);
       }
     });
 
     // Subscribe to task data updates
-    const unsubTaskData = subscribe('task_data', (data) => {
+    const unsubTaskData = unifiedWebSocketService.subscribe('task_data', (data) => {
       setTasks(data);
     });
 
     // Subscribe to individual task updates
-    const unsubTaskUpdate = subscribe('task_updated', (data) => {
+    const unsubTaskUpdate = unifiedWebSocketService.subscribe('task_updated', (data) => {
       const taskId = data?.taskId || data?.id;
       if (taskId) {
         setTasks(prevTasks => 
@@ -169,15 +171,15 @@ export function Sidebar({
     const unsubscribeFunctions: Array<() => void> = [];
     
     // Subscribe to the company_tabs_update event using unified WebSocket
-    const unsubCompanyTabsUpdate = subscribe('company_tabs_update', handleTabsUpdate);
+    const unsubCompanyTabsUpdate = unifiedWebSocketService.subscribe('company_tabs_update', handleTabsUpdate);
     unsubscribeFunctions.push(unsubCompanyTabsUpdate);
     
     // Subscribe to the company_tabs_updated event (alternative format)
-    const unsubCompanyTabsUpdated = subscribe('company_tabs_updated', handleTabsUpdate);
+    const unsubCompanyTabsUpdated = unifiedWebSocketService.subscribe('company_tabs_updated', handleTabsUpdate);
     unsubscribeFunctions.push(unsubCompanyTabsUpdated);
     
     // Subscribe to the sidebar_refresh_tabs event
-    const unsubSidebarRefresh = subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
+    const unsubSidebarRefresh = unifiedWebSocketService.subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
     unsubscribeFunctions.push(unsubSidebarRefresh);
     
     // Real-time tab updates handled by WebSocket events, no polling needed
@@ -317,11 +319,11 @@ export function Sidebar({
         };
         
         // Subscribe to task creation using unified WebSocket
-        const unsubTaskCreate = subscribe('task_created', handleTaskCountUpdate);
+        const unsubTaskCreate = unifiedWebSocketService.subscribe('task_created', handleTaskCountUpdate);
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
-        const unsubTaskDelete = subscribe('task_deleted', handleTaskCountUpdate);
+        const unsubTaskDelete = unifiedWebSocketService.subscribe('task_deleted', handleTaskCountUpdate);
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
