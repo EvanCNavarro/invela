@@ -944,64 +944,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
   
-  // Get current company for authenticated user
-  app.get("/api/companies/current", requireAuth, async (req, res) => {
-    try {
-      const companyId = req.user.company_id;
-      
-      if (!companyId) {
-        return res.status(400).json({
-          message: "User is not associated with a company",
-          code: "NO_COMPANY"
-        });
-      }
-
-      const [company] = await db.select({
-        id: companies.id,
-        name: companies.name,
-        description: companies.description,
-        category: companies.category,
-        website_url: companies.website_url,
-        onboarding_company_completed: companies.onboarding_company_completed,
-        risk_score: companies.risk_score,
-        chosen_score: companies.chosen_score,
-        available_tabs: companies.available_tabs,
-        is_demo: companies.is_demo
-      })
-      .from(companies)
-      .where(eq(companies.id, companyId));
-
-      if (!company) {
-        return res.status(404).json({
-          message: "Company not found",
-          code: "COMPANY_NOT_FOUND"
-        });
-      }
-
-      // Transform to match frontend interface
-      const responseData = {
-        id: company.id,
-        name: company.name,
-        description: company.description,
-        category: company.category,
-        website_url: company.website_url,
-        onboarding_company_completed: company.onboarding_company_completed,
-        risk_score: company.risk_score,
-        riskScore: company.risk_score, // Alias for compatibility
-        chosen_score: company.chosen_score,
-        available_tabs: company.available_tabs || [],
-        isDemo: company.is_demo
-      };
-
-      res.json(responseData);
-    } catch (error) {
-      console.error('[Company API] Error fetching current company:', error);
-      res.status(500).json({
-        message: "Failed to fetch company data",
-        code: "SERVER_ERROR"
-      });
-    }
-  });
+  // NOTE: /api/companies/current endpoint removed - replaced with WebSocket-driven company data broadcasting
+  // Company data is now pushed via WebSocket messages on authentication and mutations
 
   // Get company by ID
   app.get("/api/companies/:id", requireAuth, async (req, res) => {

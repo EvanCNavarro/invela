@@ -26,9 +26,8 @@
  * @since 2025-05-23
  */
 
-import { useQuery } from '@tanstack/react-query';
 import { userContext } from '@/lib/user-context';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import getLogger from '@/utils/logger';
 
 const logger = getLogger('CurrentCompany');
@@ -43,28 +42,49 @@ export interface Company {
   risk_score?: number;
   riskScore?: number;
   chosen_score?: number;
-  available_tabs?: string[];
   isDemo?: boolean;
 }
 
 export function useCurrentCompany() {
-  // Restore HTTP-based company data fetching for authentication
-  const { 
-    data: company, 
-    isLoading, 
-    isError, 
-    error 
-  } = useQuery<Company>({
-    queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error: any) => {
-      // Don't retry on authentication errors
-      if (error?.status === 401 || error?.status === 403) {
-        return false;
-      }
-      return failureCount < 2;
-    },
-  });
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    // Import unified WebSocket service directly
+    import('@/services/websocket-unified').then(({ unifiedWebSocketService }) => {
+      // Subscribe to company data updates (replaces HTTP polling)
+      const unsubscribe = unifiedWebSocketService.subscribe('company_data', (data: Company) => {
+        logger.info('Received company data update:', data);
+        setCompany(data);
+        setIsLoading(false);
+        setIsError(false);
+        setError(null);
+      });
+
+      // Subscribe to initial data (includes company data)
+      const unsubscribeInitial = unifiedWebSocketService.subscribe('initial_data', (data: any) => {
+        if (data.company) {
+          logger.info('Received initial company data:', data.company);
+          setCompany(data.company);
+          setIsLoading(false);
+          setIsError(false);
+          setError(null);
+        }
+      });
+
+      return () => {
+        unsubscribe();
+        unsubscribeInitial();
+      };
+    }).catch((err) => {
+      logger.error('Failed to setup WebSocket listeners for company data:', err);
+      setIsError(true);
+      setError(err);
+      setIsLoading(false);
+    });
+  }, []);
 
   // Store company ID in user context when it changes
   // This is CRITICAL for proper data isolation between companies

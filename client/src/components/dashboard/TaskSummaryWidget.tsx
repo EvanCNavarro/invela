@@ -21,7 +21,7 @@ import {
   ArrowRight,
   Activity
 } from "lucide-react";
-
+import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import type { SelectTask, TaskStatus } from "@db/schema";
 
 interface TaskSummaryWidgetProps {
