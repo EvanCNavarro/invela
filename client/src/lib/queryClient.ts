@@ -265,10 +265,10 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     };
   }
   
-  // Frequently accessed endpoints - moderate caching but ensure updates are reflected for company permissions
+  // Company current endpoint - DISABLED for WebSocket-only data flow
   if (urlStr.includes('/api/companies/current')) {
     return {
-      refetchInterval: 180000,      // 3 minutes - poll more frequently to catch permission changes
+      refetchInterval: false,       // DISABLED - using WebSocket data only
       refetchOnWindowFocus: true,   // Fetch when tab becomes active to check for updated permissions
       staleTime: 60000,             // 1 minute - keep data fresh for less time to reflect permission changes
       retry: false,
