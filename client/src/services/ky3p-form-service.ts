@@ -41,14 +41,17 @@ export class KY3PFormService extends EnhancedKybFormService {
   constructor(companyId?: number, taskId?: number) {
     super();
     
+    // DISABLED: Automatic saving to prevent artificial updates every 60 seconds
+    (this as any).autoSaveEnabled = false;
+    
     // Store task ID as a private property following our architectural pattern
     if (taskId) {
       (this as any).taskId = taskId;
     }
     
     logger.info(
-      '[KY3P Form Service] Initializing KY3P Form Service',
-      { companyId, taskId }
+      '[KY3P Form Service] Initializing KY3P Form Service with autosave DISABLED',
+      { companyId, taskId, autoSaveEnabled: false }
     );
   }
   
