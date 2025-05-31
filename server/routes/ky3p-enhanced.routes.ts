@@ -105,8 +105,12 @@ router.post('/api/ky3p/batch-update/:taskId', requireAuth, async (req, res) => {
       });
     }
     
-    // Log the request details
+    // Log the request details with source tracing
     console.log(`[KY3P API] Received batch update for task ${taskId} with ${Object.keys(responses).length} fields`);
+    console.log(`[KY3P API] Request source: ${req.headers['user-agent'] || 'Unknown'}`);
+    console.log(`[KY3P API] Request origin: ${req.headers.origin || 'No origin'}`);
+    console.log(`[KY3P API] Request referer: ${req.headers.referer || 'No referer'}`);
+    console.log(`[KY3P API] Stack trace:`, new Error().stack);
     
     // Get all fields for field type validation and ID mapping
     const fields = await db.select().from(ky3pFields);
