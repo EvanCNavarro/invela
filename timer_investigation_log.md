@@ -70,8 +70,21 @@
 - Headers show User-Agent and Referer from form page
 - Pattern is too precise to be coincidental - intentional timer somewhere
 
+## CRITICAL UPDATE: TIMER STILL ACTIVE ❌
+
+**Latest Evidence (2025-05-31T10:23:20.478Z):**
+- Changes to UnifiedKY3PFormService saveProgress/submitForm methods were INEFFECTIVE
+- Timer continues firing exactly every 60 seconds: 10:21:20.460Z → 10:22:20.528Z → 10:23:20.478Z
+- Need to find the ACTUAL timer source that's creating these calls
+- **NEW INSIGHT**: User navigated away from task 1103 but timer STILL continues - suggests a global service
+
+**Pattern Analysis:**
+- GET /api/companies/current calls happening regularly
+- GET /api/tasks calls happening every ~15 seconds  
+- POST /api/ky3p/batch-update/1103 calls happening every 60 seconds PRECISELY
+
 ## Next Actions 🎯
-1. Search React components for 60-second intervals
-2. Find useEffect hooks in form-related files
-3. Trace call chain from form components to batch update
-4. Identify and disable timer source without breaking functionality
+1. Search for setInterval/setTimeout with 60000ms or 60*1000 patterns
+2. Check if task-center page or task-page component has timer
+3. Look for React Query refetchInterval: 60000 specifically
+4. Find what's triggering the precise 60-second pattern
