@@ -330,7 +330,7 @@ const StepImage: React.FC<{
   alt = 'Onboarding step image',
   isLoaded
 }) => (
-  <div className="w-[280px] h-[280px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
+  <div className="w-[360px] h-[360px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
     {isLoaded ? (
       <img 
         src={src || ''} 
