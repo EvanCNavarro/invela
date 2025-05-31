@@ -1934,12 +1934,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Refresh immediately and then at intervals with more frequent refreshes
         refreshTask();
         
-        // More frequent refreshes to ensure we catch the submitted state
-        setTimeout(() => refreshTask && refreshTask(), 500);
-        setTimeout(() => refreshTask && refreshTask(), 1000);
-        setTimeout(() => refreshTask && refreshTask(), 2000);
-        setTimeout(() => refreshTask && refreshTask(), 3000);
-        setTimeout(() => refreshTask && refreshTask(), 5000);
+        // Real-time submission state handled by WebSocket events, no fallback polling needed
       }
       
       // Note: The success feedback will be handled via WebSocket events now

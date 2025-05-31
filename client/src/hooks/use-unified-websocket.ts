@@ -51,14 +51,9 @@ export function useUnifiedWebSocket(): UseUnifiedWebSocketReturn {
     setStatus(unifiedWebSocketService.getStatus());
     
     // Monitor status changes by subscribing to connection events
-    const statusCheckInterval = setInterval(() => {
-      const currentStatus = unifiedWebSocketService.getStatus();
-      setStatus(currentStatus);
-    }, 1000);
-    
-    return () => {
-      clearInterval(statusCheckInterval);
-    };
+    // Status updates handled by real-time WebSocket events, no polling needed
+    const currentStatus = unifiedWebSocketService.getStatus();
+    setStatus(currentStatus);
   }, []);
   
   // ========================================
