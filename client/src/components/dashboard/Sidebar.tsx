@@ -130,10 +130,7 @@ export function Sidebar({
     const unsubSidebarRefresh = subscribe('sidebar_refresh_tabs', handleSidebarRefresh);
     unsubscribeFunctions.push(unsubSidebarRefresh);
     
-    // Start polling more frequently when we know an update might be coming
-    const intervalId = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['/api/companies/current'] });
-    }, 3000); // Check every 3 seconds instead of 10 seconds
+    // Real-time tab updates handled by WebSocket events, no polling needed
     
     return () => {
       // Unsubscribe from all WebSocket subscriptions
@@ -145,8 +142,7 @@ export function Sidebar({
         }
       });
       
-      // Clear the polling interval
-      clearInterval(intervalId);
+      // No polling intervals to clear - using real-time WebSocket events only
     };
   }, [company?.id, queryClient]);
   
