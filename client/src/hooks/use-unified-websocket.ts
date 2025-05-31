@@ -33,6 +33,7 @@ export function useUnifiedWebSocket() {
 
     wsRef.current.onopen = () => {
       console.log('[WebSocket] Connected to unified WebSocket server');
+      setIsConnected(true);
       
       // For now, authenticate with stored user data
       const companyId = userContext.getCompanyId();
@@ -64,11 +65,13 @@ export function useUnifiedWebSocket() {
 
     wsRef.current.onclose = () => {
       console.log('[WebSocket] Connection closed, attempting to reconnect...');
+      setIsConnected(false);
       setTimeout(connect, 3000);
     };
 
     wsRef.current.onerror = (error) => {
       console.error('[WebSocket] Connection error:', error);
+      setIsConnected(false);
     };
   }, []);
 
@@ -100,6 +103,7 @@ export function useUnifiedWebSocket() {
 
   return {
     subscribe,
-    unsubscribe
+    unsubscribe,
+    isConnected
   };
 }
