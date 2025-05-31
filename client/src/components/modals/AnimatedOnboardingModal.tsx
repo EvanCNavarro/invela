@@ -1004,7 +1004,7 @@ export function AnimatedOnboardingModal({
                 </CheckListItem>
                 
                 <div className="bg-slate-50 p-4 rounded-lg border">
-                  <h4 className="font-medium text-sm text-gray-900 mb-3">Recommended Documents to Upload:</h4>
+                  <h4 className="font-medium text-sm text-gray-900 mb-3">Recommended Documents to Upload (Updated):</h4>
                   <div className="flex flex-wrap gap-2">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                       SOC 2 Audit
