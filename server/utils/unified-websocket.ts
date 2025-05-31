@@ -46,7 +46,10 @@ type InternalMessageType =
   | 'form_submission_completed'
   | 'tabs_updated'
   | 'notification'
-  | 'tutorial_updated';
+  | 'tutorial_updated'
+  | 'initial_data'
+  | 'company_data'
+  | 'task_data';
 
 // Union type that includes all possible message types
 type MessageType = InternalMessageType | AppMessageType;
