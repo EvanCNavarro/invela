@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { TabTutorialModal, TutorialStep } from '../TabTutorialModal';
 import { useTabTutorials } from '@/hooks/use-tab-tutorials';
 import { useTutorialAssets } from '@/hooks/use-tutorial-assets';
-import { useTutorialWebSocket } from '@/services/websocket-service';
+import { useTutorialWebSocket } from '@/hooks/use-tutorial-websocket';
 
 // Tutorial steps for Claims Risk tab
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -48,7 +48,7 @@ export function ClaimsRiskTutorial() {
   } = useTabTutorials('claims-risk');
   
   // Connect to WebSocket for real-time updates
-  const { tutorialProgress, tutorialCompleted } = useTutorialWebSocket('claims-risk');
+  const { tutorialUpdate } = useTutorialWebSocket('claims-risk');
   
   // Load tutorial assets
   const { isLoading: assetLoading, imageUrl } = useTutorialAssets(
@@ -61,18 +61,20 @@ export function ClaimsRiskTutorial() {
   
   // Handle WebSocket tutorial updates
   useEffect(() => {
-    if (tutorialCompleted) {
-      // If we received a completion notification via WebSocket, update our local state
-      // This effect will only run when the tutorial is completed by another client
-      console.log('[Tutorial] Received claims-risk tutorial completion notification via WebSocket');
+    if (tutorialUpdate) {
+      if (tutorialUpdate.completed) {
+        // If we received a completion notification via WebSocket, update our local state
+        // This effect will only run when the tutorial is completed by another client
+        console.log('[Tutorial] Received claims-risk tutorial completion notification via WebSocket');
+      }
+      
+      if (tutorialUpdate.currentStep !== undefined && tutorialUpdate.currentStep !== currentStep) {
+        // If we received a progress update via WebSocket and it differs from our current step,
+        // we could choose to update our local state to match
+        console.log('[Tutorial] Received claims-risk tutorial progress update via WebSocket:', tutorialUpdate);
+      }
     }
-    
-    if (tutorialProgress && tutorialProgress.currentStep !== currentStep) {
-      // If we received a progress update via WebSocket and it differs from our current step,
-      // we could choose to update our local state to match
-      console.log('[Tutorial] Received claims-risk tutorial progress update via WebSocket:', tutorialProgress);
-    }
-  }, [tutorialProgress, tutorialCompleted, currentStep]);
+  }, [tutorialUpdate, currentStep]);
 
   if (!tutorialEnabled || isCompleted) {
     return null;
