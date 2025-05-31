@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useUnifiedWebSocket } from "@/hooks/use-unified-websocket";
+import { unifiedWebSocketService } from "@/services/websocket-unified";
 import { WebSocketStatus } from "@/components/websocket-status";
 
 import { 
@@ -17,7 +17,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function WebSocketPlayground() {
   const { user } = useAuth();
-  const { isConnected } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  useEffect(() => {
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
   const [activeTab, setActiveTab] = useState("demo");
 
   return (

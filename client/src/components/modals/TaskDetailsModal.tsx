@@ -30,7 +30,18 @@ const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: TaskDetailsModalProps) {
   const [task, setTask] = useState(initialTask);
-  const { isConnected, subscribe } = useUnifiedWebSocket();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  useEffect(() => {
+    setIsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setIsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
 
   useEffect(() => {
     setTask(initialTask);

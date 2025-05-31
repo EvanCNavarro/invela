@@ -587,7 +587,18 @@ export const OnboardingKYBFormPlayground = ({
   const { toast } = useToast();
   const unifiedToast = useUnifiedToast();
   const queryClient = useQueryClient();
-  const { send } = useUnifiedWebSocket();
+  const [wsConnected, setWsConnected] = useState(false);
+  
+  useEffect(() => {
+    setWsConnected(unifiedWebSocketService.isConnected());
+    unifiedWebSocketService.connect().catch(console.error);
+    
+    const unsubscribeConnection = unifiedWebSocketService.subscribe('connection_status', (data: any) => {
+      setWsConnected(data.connected === true);
+    });
+    
+    return unsubscribeConnection;
+  }, []);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
