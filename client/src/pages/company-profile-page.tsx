@@ -555,32 +555,48 @@ export default function CompanyProfilePage() {
       companyAge
     });
     
-    // Temporary fix - simple content to test rendering
-    return (
-      <div className="space-y-6">
-        <div className="bg-white p-6 rounded-lg border">
-          <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-600">Description:</label>
-              <p className="text-sm">{company?.description || 'Not available'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Category:</label>
-              <p className="text-sm">{company?.category || 'Not available'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Website:</label>
-              <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Risk Score:</label>
-              <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
+    try {
+      console.log("[CompanyProfile] Starting renderOverviewTab rendering");
+      
+      // Temporary fix - simple content to test rendering
+      console.log("[CompanyProfile] renderOverviewTab content created successfully");
+      return (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg border">
+            <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-600">Description:</label>
+                <p className="text-sm">{company?.description || 'Not available'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Category:</label>
+                <p className="text-sm">{company?.category || 'Not available'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Website:</label>
+                <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Risk Score:</label>
+                <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
+      );
+      
+    } catch (error) {
+      console.error("[CompanyProfile] Error in renderOverviewTab:", error);
+      return (
+        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+          <h3 className="text-red-800 font-medium">Error rendering overview</h3>
+          <p className="text-red-600 text-sm">
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </p>
+        </div>
+      );
+    }
   };
   
   // Original overview tab design, now replaced by BentoOverview
@@ -957,12 +973,20 @@ export default function CompanyProfilePage() {
   );
 
   console.log("[CompanyProfile] Rendering main content with activeTab:", activeTab);
+  console.log("[CompanyProfile] About to render with company data:", {
+    hasCompany: !!company,
+    companyName: company?.name,
+    companyId: company?.id,
+    activeTab,
+    timestamp: new Date().toISOString()
+  });
   
-  return (
-    <DashboardLayout>
-      <PageTemplate>
-        <TutorialManager tabName="company-profile">
-          <div className="space-y-6">
+  try {
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <TutorialManager tabName="company-profile">
+            <div className="space-y-6">
             {/* Breadcrumb navigation - using same pattern as claims tab */}
           <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
             <Link href="/" className="hover:text-foreground">
@@ -1065,5 +1089,26 @@ export default function CompanyProfilePage() {
         </TutorialManager>
       </PageTemplate>
     </DashboardLayout>
-  );
+    );
+  } catch (renderError) {
+    console.error("[CompanyProfile] Rendering error:", renderError);
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-10 h-10 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800">Rendering Error</h2>
+            <p className="text-gray-600 max-w-md">
+              There was an error displaying this company profile. Error: {renderError instanceof Error ? renderError.message : 'Unknown error'}
+            </p>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
 }
