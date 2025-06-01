@@ -295,30 +295,123 @@ export default function SimpleCompanyProfile() {
 
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   <div className="space-y-6">
+                    {/* Risk Score Overview */}
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Shield className="w-5 h-5" />
-                          Risk Analysis
+                          <TrendingUp className="w-5 h-5" />
+                          Risk Score Overview - {company?.name}
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-center p-8">
-                            <div className="text-center">
-                              <div className="text-4xl font-bold text-gray-900 mb-2">
-                                {company?.riskScore || 0}
-                              </div>
-                              <p className="text-sm text-gray-500 mb-3">Overall Risk Score</p>
-                              <Badge variant={company?.riskScore && company.riskScore < 30 ? "default" : company?.riskScore && company.riskScore < 70 ? "secondary" : "destructive"}>
-                                {company?.riskScore && company.riskScore < 30 ? "Low Risk" : company?.riskScore && company.riskScore < 70 ? "Medium Risk" : "High Risk"}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="text-center">
+                            <div className="text-6xl font-bold text-gray-900 mb-2">
+                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}
+                            </div>
+                            <p className="text-sm text-gray-500 mb-3">S&P DARS Risk Score</p>
+                            <Badge variant={
+                              (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 30 ? "default" : 
+                              (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 70 ? "secondary" : 
+                              "destructive"
+                            }>
+                              {(company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 30 ? "Low Risk" : 
+                               (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 70 ? "Medium Risk" : 
+                               "High Risk"}
+                            </Badge>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Company</label>
+                              <p className="text-lg font-semibold text-gray-900">{company?.name}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Category</label>
+                              <p className="text-gray-900">{company?.category}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Assessment Status</label>
+                              <Badge variant="outline" className="text-green-700 border-green-300">
+                                Current Assessment
                               </Badge>
                             </div>
                           </div>
-                          <p className="text-gray-600 text-center">Detailed risk analysis and recommendations would be displayed here.</p>
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Risk Radar Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Target className="w-5 h-5" />
+                          Risk Radar Analysis - {company?.name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0 pb-8">
+                        {company?.id ? (
+                          <div className="w-full aspect-[2.5/1.5] max-w-[900px] mx-auto">
+                            <RiskRadarChart 
+                              companyId={company.id}
+                              showDropdown={false}
+                              className="shadow-none border-none"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-[300px]">
+                            <div className="text-sm text-gray-500">Loading risk analysis...</div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Risk Dimensions Detail */}
+                    {company?.risk_clusters && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Shield className="w-5 h-5" />
+                            Risk Dimensions Breakdown
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Object.entries(company.risk_clusters)
+                              .filter(([key]) => {
+                                // Show the six main risk dimensions
+                                const mainDimensions = [
+                                  'Cyber Security', 'Financial Stability', 'Potential Liability',
+                                  'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
+                                ];
+                                return mainDimensions.includes(key);
+                              })
+                              .map(([key, value]) => (
+                                <div key={key} className="bg-gray-50 rounded-lg p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="text-sm font-medium text-gray-700">{key}</div>
+                                    <div className={`w-3 h-3 rounded-full ${
+                                      value > 66 ? 'bg-red-500' : 
+                                      value > 33 ? 'bg-yellow-500' : 
+                                      'bg-green-500'
+                                    }`}></div>
+                                  </div>
+                                  <div className="text-2xl font-bold text-gray-900 mb-1">{value}/100</div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className={`h-2 rounded-full transition-all duration-300 ${
+                                        value > 66 ? 'bg-red-500' : 
+                                        value > 33 ? 'bg-yellow-500' : 
+                                        'bg-green-500'
+                                      }`}
+                                      style={{ width: `${Math.min(value, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 </TabsContent>
               </div>
