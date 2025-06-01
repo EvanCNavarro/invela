@@ -7,7 +7,9 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, ArrowLeft, Globe, Users, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User } from "lucide-react";
+import { CompanyLogo } from "@/components/ui/company-logo";
 
 interface CompanyData {
   id: number;
@@ -22,6 +24,7 @@ interface CompanyData {
 export default function SimpleCompanyProfile() {
   const params = useParams();
   const companyId = params.companyId;
+  const [activeTab, setActiveTab] = useState("overview");
   const { user, isLoading: authLoading } = useAuth();
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
@@ -63,133 +66,227 @@ export default function SimpleCompanyProfile() {
     <DashboardLayout>
       <PageTemplate>
         <div className="space-y-6">
-          {/* Back button */}
-          <Link href="/network">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Network
-            </Button>
-          </Link>
+          {/* Breadcrumb navigation */}
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+            <Link href="/" className="hover:text-foreground">
+              <div className="relative w-4 h-4">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+                </svg>
+              </div>
+            </Link>
+            <span>&gt;</span>
+            <Link href="/network" className="hover:text-foreground hover:underline">Network</Link>
+            <span>&gt;</span>
+            <span className="font-semibold text-foreground">{company?.name || 'Loading...'}</span>
+          </div>
 
-          {/* Company header */}
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
-              <p className="text-gray-600 mt-1">{company.category}</p>
-              {company.riskScore && (
-                <div className="mt-2">
-                  <Badge variant="secondary">
-                    Risk Score: {company.riskScore}
-                  </Badge>
+          {/* Company header with logo, title, and status boxes */}
+          <div className="bg-white rounded-lg p-5 mb-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="flex items-center gap-3">
+                <CompanyLogo
+                  companyId={company?.id}
+                  companyName={company?.name}
+                  size="lg"
+                />
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">{company?.name || 'Loading...'}</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {company?.category || 'Loading...'}
+                  </p>
                 </div>
-              )}
+              </div>
+              
+              <div className="flex gap-5 flex-grow justify-end ml-auto">
+                {/* Risk Score Box */}
+                <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
+                  <div className="flex flex-col items-center justify-center h-full py-2">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                      RISK SCORE
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      {company?.riskScore || "0"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Company details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5" />
-                  Company Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Company Name</label>
-                  <p className="text-gray-900">{company.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Category</label>
-                  <p className="text-gray-900">{company.category}</p>
-                </div>
-                {company.description && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Description</label>
-                    <p className="text-gray-900">{company.description}</p>
-                  </div>
-                )}
-                {company.websiteUrl && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Website</label>
-                    <a 
-                      href={company.websiteUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      <Globe className="w-4 h-4" />
-                      {company.websiteUrl}
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="risk" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Risk Analysis
+              </TabsTrigger>
+            </TabsList>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Company Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {company.numEmployees && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Number of Employees</label>
-                    <p className="text-gray-900">{company.numEmployees}</p>
-                  </div>
-                )}
-                {company.incorporationYear && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Incorporation Year</label>
-                    <p className="text-gray-900 flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {company.incorporationYear}
-                    </p>
-                  </div>
-                )}
-                {company.riskScore && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Risk Assessment</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-gray-900">{company.riskScore}</span>
-                      <Badge variant={company.riskScore < 30 ? "default" : company.riskScore < 70 ? "secondary" : "destructive"}>
-                        {company.riskScore < 30 ? "Low Risk" : company.riskScore < 70 ? "Medium Risk" : "High Risk"}
-                      </Badge>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+              <div className="p-6">
+                <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5" />
+                            Company Information
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Company Name</label>
+                            <p className="text-gray-900">{company?.name || 'Loading...'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Category</label>
+                            <p className="text-gray-900">{company?.category || 'Loading...'}</p>
+                          </div>
+                          {company?.description && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Description</label>
+                              <p className="text-gray-900">{company.description}</p>
+                            </div>
+                          )}
+                          {company?.websiteUrl && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Website</label>
+                              <a 
+                                href={company.websiteUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline flex items-center gap-1"
+                              >
+                                <Globe className="w-4 h-4" />
+                                {company.websiteUrl}
+                              </a>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5" />
+                            Company Details
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {company?.numEmployees && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Number of Employees</label>
+                              <p className="text-gray-900">{company.numEmployees}</p>
+                            </div>
+                          )}
+                          {company?.incorporationYear && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Incorporation Year</label>
+                              <p className="text-gray-900 flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {company.incorporationYear}
+                              </p>
+                            </div>
+                          )}
+                          {company?.riskScore !== undefined && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Risk Assessment</label>
+                              <div className="flex items-center gap-2">
+                                <span className="text-2xl font-bold text-gray-900">{company.riskScore}</span>
+                                <Badge variant={company.riskScore < 30 ? "default" : company.riskScore < 70 ? "secondary" : "destructive"}>
+                                  {company.riskScore < 30 ? "Low Risk" : company.riskScore < 70 ? "Medium Risk" : "High Risk"}
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Additional information */}
-          {(company.productsServices || company.keyClientsPartners) && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Business Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {company.productsServices && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Products & Services</label>
-                    <p className="text-gray-900">{company.productsServices}</p>
+                    {/* Additional business information */}
+                    {(company?.productsServices || company?.keyClientsPartners) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Business Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {company.productsServices && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Products & Services</label>
+                              <p className="text-gray-900">{company.productsServices}</p>
+                            </div>
+                          )}
+                          {company.keyClientsPartners && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
+                              <p className="text-gray-900">{company.keyClientsPartners}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
-                )}
-                {company.keyClientsPartners && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
-                    <p className="text-gray-900">{company.keyClientsPartners}</p>
+                </TabsContent>
+
+                <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <User className="w-5 h-5" />
+                          Company Users
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600">User management functionality for {company?.name || 'this company'} would be displayed here.</p>
+                      </CardContent>
+                    </Card>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </TabsContent>
+
+                <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Shield className="w-5 h-5" />
+                          Risk Analysis
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-center p-8">
+                            <div className="text-center">
+                              <div className="text-4xl font-bold text-gray-900 mb-2">
+                                {company?.riskScore || 0}
+                              </div>
+                              <p className="text-sm text-gray-500 mb-3">Overall Risk Score</p>
+                              <Badge variant={company?.riskScore && company.riskScore < 30 ? "default" : company?.riskScore && company.riskScore < 70 ? "secondary" : "destructive"}>
+                                {company?.riskScore && company.riskScore < 30 ? "Low Risk" : company?.riskScore && company.riskScore < 70 ? "Medium Risk" : "High Risk"}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 text-center">Detailed risk analysis and recommendations would be displayed here.</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </div>
+            </div>
+          </Tabs>
         </div>
       </PageTemplate>
     </DashboardLayout>
