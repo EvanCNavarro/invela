@@ -228,12 +228,21 @@ const getAccreditationStatusLabel = (status: string | null | undefined): React.R
 };
 
 export default function CompanyProfilePage() {
+  console.log("[CompanyProfile] Component starting to render");
+  
   const params = useParams();
   const companyId = params.companySlug;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [openUserModal, setOpenUserModal] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
+  
+  console.log("[CompanyProfile] Initial state:", { 
+    companyId, 
+    authLoading,
+    paramsReceived: params,
+    companySlugValue: params.companySlug 
+  });
 
   const handleBackClick = () => {
     window.history.back();
