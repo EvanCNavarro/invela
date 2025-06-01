@@ -160,6 +160,10 @@ export const companies = pgTable("companies", {
   demo_cleanup_eligible: boolean("demo_cleanup_eligible").default(true),
   demo_session_id: text("demo_session_id"),
   demo_persona_type: text("demo_persona_type"),
+  // Accreditation tracking fields
+  current_accreditation_id: integer("current_accreditation_id"),
+  first_accredited_date: timestamp("first_accredited_date"),
+  accreditation_count: integer("accreditation_count").default(0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
