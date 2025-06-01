@@ -59,7 +59,7 @@ export class AccreditationService {
     
     console.log('[AccreditationService] Creating new accreditation', logContext);
     
-    return await db.transaction(async (trx) => {
+    const executeTransaction = async (transactionContext: any) => {
       // Get current accreditation count for this company
       const company = await trx
         .select({ accreditation_count: companies.accreditation_count })

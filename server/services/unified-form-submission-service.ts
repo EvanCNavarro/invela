@@ -16,7 +16,7 @@ import * as UnifiedTabService from '../services/unified-tab-service';
 import * as TransactionManager from '../services/transaction-manager';
 import { synchronizeTasks } from '../services/synchronous-task-dependencies';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
-import { AccreditationService } from './accreditation-service';
+import { accreditationHistory } from '@db/schema';
 
 // Create a context object for logging
 const baseLogContext = { service: 'UnifiedFormSubmissionService' };
@@ -922,13 +922,65 @@ async function handleOpenBankingPostSubmission(
       
       const category = companyData[0]?.category || 'FinTech';
       
+      // Create accreditation history entry within transaction
+      // Get current accreditation count for this company
+      const currentCompany = await trx
+        .select({ accreditation_count: companies.accreditation_count })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      const currentCount = currentCompany[0]?.accreditation_count || 0;
+      const newAccreditationNumber = currentCount + 1;
+      
+      // Determine expiration date based on company category
+      const issuedDate = new Date();
+      let expiresDate: Date | null = null;
+      
+      // Data Recipients (FinTech) get 365-day expiration
+      // Data Providers (Banks) and Invela get permanent accreditation
+      if (category === 'FinTech') {
+        expiresDate = new Date(issuedDate);
+        expiresDate.setDate(expiresDate.getDate() + 365);
+      }
+      
       // Create accreditation history entry
-      const accreditationInfo = await AccreditationService.createAccreditation({
-        companyId,
-        riskScore,
-        riskClusters,
-        category
-      });
+      const [newAccreditation] = await trx
+        .insert(accreditationHistory)
+        .values({
+          company_id: companyId,
+          accreditation_number: newAccreditationNumber,
+          risk_score: riskScore,
+          issued_date: issuedDate,
+          expires_date: expiresDate,
+          status: 'ACTIVE',
+          risk_clusters: riskClusters
+        })
+        .returning();
+      
+      // Update company record with new accreditation info
+      await trx
+        .update(companies)
+        .set({
+          current_accreditation_id: newAccreditation.id,
+          accreditation_count: newAccreditationNumber,
+          first_accredited_date: currentCount === 0 ? issuedDate : undefined,
+          accreditation_status: 'APPROVED',
+          risk_score: riskScore,
+          risk_clusters: riskClusters,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId));
+      
+      const accreditationInfo = {
+        id: newAccreditation.id,
+        accreditationNumber: newAccreditationNumber,
+        issuedDate,
+        expiresDate,
+        status: 'ACTIVE',
+        daysUntilExpiration: expiresDate ? Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null,
+        isPermanent: expiresDate === null
+      };
       
       console.log(`[OpenBankingPostSubmission] ✅ Step 5/6 Complete: Created accreditation history entry ${accreditationInfo.accreditationNumber}`);
       stepResults.accreditationUpdated = true;
