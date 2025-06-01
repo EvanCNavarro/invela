@@ -16,6 +16,7 @@ import * as UnifiedTabService from '../services/unified-tab-service';
 import * as TransactionManager from '../services/transaction-manager';
 import { synchronizeTasks } from '../services/synchronous-task-dependencies';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
+import { AccreditationService } from './accreditation-service';
 
 // Create a context object for logging
 const baseLogContext = { service: 'UnifiedFormSubmissionService' };
@@ -909,52 +910,65 @@ async function handleOpenBankingPostSubmission(
       };
     }
     
-    // STEP 5: Update accreditation status to APPROVED, save risk score and clusters
+    // STEP 5: Create accreditation history entry and update status
     try {
-      console.log(`[OpenBankingPostSubmission] Step 5/5: Setting accreditation status to APPROVED and saving risk scores`);
-      const riskUpdateResult = await trx.update(companies)
-        .set({
-          accreditation_status: 'APPROVED', // Must be APPROVED per requirements
-          risk_score: riskScore,
-          risk_clusters: riskClusters,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, companyId))
-        .returning({ 
-          id: companies.id,
-          risk_score: companies.risk_score,
-          accreditation_status: companies.accreditation_status 
-        });
+      console.log(`[OpenBankingPostSubmission] Step 5/6: Creating accreditation history entry`);
       
-      if (riskUpdateResult && riskUpdateResult.length > 0) {
-        console.log(`[OpenBankingPostSubmission] ✅ Step 5/5 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
-        stepResults.accreditationUpdated = true;
-        
-        logger.info('Updated accreditation status and risk scores', { 
-          ...obPostLogContext,
-          step: 'update_accreditation_and_risk',
-          accreditation_status: 'APPROVED',
-          riskScore,
-          riskUpdateResult: riskUpdateResult || 'No result returned',
-          status: 'success',
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.warn(`[OpenBankingPostSubmission] ⚠️ Step 5/5: No rows updated for accreditation status and risk scores`);
-        logger.warn('No rows updated for accreditation and risk', {
-          ...obPostLogContext,
-          step: 'update_accreditation_and_risk'
-        });
-      }
-    } catch (accreditationError) {
-      console.error(`[OpenBankingPostSubmission] ❌ Failed to update accreditation status:`, accreditationError);
-      logger.error('Failed to update accreditation status', {
+      // Get company category to determine accreditation type
+      const companyData = await trx.select({ category: companies.category })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      const category = companyData[0]?.category || 'FinTech';
+      
+      // Create accreditation history entry
+      const accreditationInfo = await AccreditationService.createAccreditation({
+        companyId,
+        riskScore,
+        riskClusters,
+        category
+      });
+      
+      console.log(`[OpenBankingPostSubmission] ✅ Step 5/6 Complete: Created accreditation history entry ${accreditationInfo.accreditationNumber}`);
+      stepResults.accreditationUpdated = true;
+      
+      logger.info('Created accreditation history entry', { 
         ...obPostLogContext,
-        step: 'update_accreditation_and_risk',
+        step: 'create_accreditation_history',
+        accreditationId: accreditationInfo.id,
+        accreditationNumber: accreditationInfo.accreditationNumber,
+        expiresDate: accreditationInfo.expiresDate?.toISOString() || 'permanent',
+        isPermanent: accreditationInfo.isPermanent,
+        status: 'success',
+        timestamp: new Date().toISOString()
+      });
+    } catch (accreditationError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to create accreditation history:`, accreditationError);
+      logger.error('Failed to create accreditation history', {
+        ...obPostLogContext,
+        step: 'create_accreditation_history',
         error: accreditationError instanceof Error ? accreditationError.message : String(accreditationError),
         status: 'failed'
       });
-      // At this point, we've tried all the main operations
+      
+      // Fallback: Update company record directly if accreditation service fails
+      try {
+        console.log(`[OpenBankingPostSubmission] Step 5/6 Fallback: Setting accreditation status to APPROVED`);
+        await trx.update(companies)
+          .set({
+            accreditation_status: 'APPROVED',
+            risk_score: riskScore,
+            risk_clusters: riskClusters,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId));
+        
+        console.log(`[OpenBankingPostSubmission] ✅ Fallback completed: Updated accreditation status to APPROVED`);
+        stepResults.accreditationUpdated = true;
+      } catch (fallbackError) {
+        console.error(`[OpenBankingPostSubmission] ❌ Fallback also failed:`, fallbackError);
+      }
     }
     
     // Final verification step - verify all updates were applied
