@@ -20,6 +20,11 @@
  * @returns The accreditation status string or undefined if not found
  */
 export function getCompanyAccreditationStatus(company: any): string | undefined {
+  // Guard against null/undefined company object
+  if (!company || typeof company !== 'object') {
+    return undefined;
+  }
+  
   // First check for camelCase version (standardized)
   if (company.accreditationStatus) {
     return company.accreditationStatus;

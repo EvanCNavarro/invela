@@ -296,7 +296,7 @@ export default function CompanyProfilePage() {
   // More specific error handling - only treat company data errors as fatal
   const isAuthError = error?.message === "Authentication required";
   const isLoadingData = authLoading || companyLoading;
-  const hasCriticalError = error && !usersError; // Only company errors are critical
+  const hasCriticalError = error; // Only company errors are critical
 
   // Debug logging
   console.log("[CompanyProfile] Debug state:", {
@@ -375,6 +375,34 @@ export default function CompanyProfilePage() {
             <div className="flex space-x-4">
               <Button variant="outline" onClick={() => window.location.reload()}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={handleBackClick}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Critical guard: Ensure company exists before proceeding
+  if (!company) {
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <Building2 className="w-10 h-10 text-gray-500" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800">Company Not Found</h2>
+            <p className="text-gray-600 max-w-md">
+              The requested company could not be loaded. This may be due to a temporary issue or the company may not exist.
+            </p>
+            <div className="flex space-x-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
                 Try Again
               </Button>
               <Button variant="outline" onClick={handleBackClick}>

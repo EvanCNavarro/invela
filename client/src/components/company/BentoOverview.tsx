@@ -45,6 +45,15 @@ const revenueValueMap: Record<string, number> = {
 };
 
 /**
+ * Safe accessor function to get company properties with fallback
+ */
+const safeGet = (obj: any, path: string, fallback: any = 'Not available') => {
+  if (!obj || typeof obj !== 'object') return fallback;
+  const value = obj[path];
+  return (value !== null && value !== undefined && value !== '') ? value : fallback;
+};
+
+/**
  * Formats a value with proper display
  */
 const formatValue = (value: any, formatter?: (val: any) => string) => {
@@ -78,7 +87,7 @@ export function BentoOverview({
           <CardContent className="pt-4">
             {/* Company Description */}
             <div className="space-y-1 mb-4">
-              <p className="text-sm text-gray-700 leading-relaxed">{company.description || 'Not available'}</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{safeGet(company, 'description')}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
