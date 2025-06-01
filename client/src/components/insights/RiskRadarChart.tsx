@@ -52,6 +52,16 @@ interface CompanyWithRiskClusters {
   accreditationStatus?: string;
   accreditation_status?: string;
   description?: string;
+  // For relationships API response format
+  relatedCompany?: {
+    id: number;
+    name: string;
+    category: string;
+    logoId: number | null;
+    accreditationStatus: string;
+    riskScore: number | null;
+    isDemo: boolean;
+  };
 }
 
 // Define relationship type for network companies
@@ -216,17 +226,23 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       new Map(companies.map(company => [company.id, company])).values()
     );
     
-    // Filter for approved companies with complete risk cluster data
+    // Filter for approved companies with valid risk scores
     const approvedCompanies = uniqueCompanies.filter(company => {
-      const hasValidRiskScore = (company.risk_score && company.risk_score > 0) || 
-                               (company.riskScore && company.riskScore > 0);
-      const isApproved = company.accreditationStatus === 'APPROVED' || 
-                        company.accreditation_status === 'APPROVED';
-      const hasRiskClusters = company.risk_clusters && 
-                             typeof company.risk_clusters === 'object' &&
-                             Object.keys(company.risk_clusters).length > 0;
+      // Handle different data source formats
+      const riskScore = company.risk_score || company.riskScore || company.relatedCompany?.riskScore;
+      const accreditationStatus = company.accreditationStatus || 
+                                 company.accreditation_status || 
+                                 company.relatedCompany?.accreditationStatus;
       
-      return hasValidRiskScore && isApproved && hasRiskClusters;
+      const hasValidRiskScore = riskScore && riskScore > 0;
+      const isApproved = accreditationStatus === 'APPROVED';
+      
+      // Simplified logging for approved companies
+      if (isApproved && hasValidRiskScore) {
+        console.log('[RiskRadarChart] ✓ Approved company:', company.name || company.relatedCompany?.name);
+      }
+      
+      return hasValidRiskScore && isApproved;
     });
     
     // Sort alphabetically by name
@@ -235,13 +251,26 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     );
     
     // Enhanced debugging to help track data sources and company availability
-    console.log('[RiskRadarChart] Filtered companies list:', {
+    console.log('[RiskRadarChart] Data source analysis:', {
       allCompaniesCount: allCompaniesData?.length || 0,
       relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
       visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
       uniqueCompaniesCount: uniqueCompanies.length,
       approvedCompaniesCount: sortedCompanies.length,
       firstFewApproved: sortedCompanies.slice(0, 5).map(c => `${c.name} (${c.accreditationStatus || c.accreditation_status})`),
+      sampleCompanyFields: uniqueCompanies.slice(0, 3).map(c => ({
+        id: c.id,
+        name: c.name || c.relatedCompany?.name,
+        hasAccreditationStatus: !!c.accreditationStatus,
+        hasAccreditation_status: !!c.accreditation_status,
+        hasRelatedCompanyAccreditation: !!c.relatedCompany?.accreditationStatus,
+        hasRisk_score: !!c.risk_score,
+        hasRiskScore: !!c.riskScore,
+        hasRelatedCompanyRiskScore: !!c.relatedCompany?.riskScore,
+        actualAccreditationValue: c.accreditationStatus || c.accreditation_status || c.relatedCompany?.accreditationStatus,
+        actualRiskValue: c.risk_score || c.riskScore || c.relatedCompany?.riskScore,
+        dataStructure: c.relatedCompany ? 'nested' : 'flat'
+      })),
       userType: company?.category
     });
     
