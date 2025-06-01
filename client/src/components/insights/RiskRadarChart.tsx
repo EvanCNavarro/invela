@@ -217,10 +217,17 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     enabled: isBankOrInvela && !!company?.id,
   });
   
-  // 4. Combine all company sources and filter for accredited companies with risk data
+  // 4. Use fresh companies data as primary source
   const combinedCompanies = React.useMemo(() => {
-    // Start with the direct companies
-    let companies: CompanyWithRiskClusters[] = [...(allCompaniesData || [])];
+    // Prioritize fresh companies data from cache-bypassing endpoint
+    if (allCompaniesData && allCompaniesData.length > 0) {
+      console.log('[RiskRadarChart] Using fresh companies data:', allCompaniesData.length);
+      // Fresh data is already properly formatted with risk_score and accreditation_status
+      return allCompaniesData;
+    }
+    
+    // Fallback to other sources only if fresh data is unavailable
+    let companies: CompanyWithRiskClusters[] = [];
     
     // Add relationship companies
     if (networkCompaniesData?.companies) {
@@ -242,53 +249,52 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       companies = [...companies, ...visualizationCompanies];
     }
     
-    // Remove duplicates based on company ID
-    const uniqueCompanies = Array.from(
-      new Map(companies.map(company => [company.id, company])).values()
-    );
-    
-    // Filter for approved companies with valid risk scores
-    const approvedCompanies = uniqueCompanies.filter(company => {
-      // Handle different data source formats
+    return companies;
+  }, [allCompaniesData, networkCompaniesData?.companies, networkVisualizationData]);
+
+  // 5. Filter for approved companies with valid risk scores
+  const approvedCompanies = React.useMemo(() => {
+    return combinedCompanies.filter(company => {
+      // Handle different data source formats - backend sends snake_case
       const riskScore = company.risk_score || company.riskScore || company.relatedCompany?.riskScore;
       const riskClusters = company.risk_clusters || company.riskClusters || company.relatedCompany?.riskClusters;
-      const accreditationStatus = company.accreditationStatus || 
-                                 company.accreditation_status || 
+      const accreditationStatus = company.accreditation_status || 
+                                 company.accreditationStatus || 
                                  company.relatedCompany?.accreditationStatus;
       
       const hasValidRiskScore = riskScore && riskScore > 0;
       const hasRiskClusters = !!riskClusters;
       const isApproved = accreditationStatus === 'APPROVED';
       
-      // Debug logging for filtering logic
-      if (hasValidRiskScore && hasRiskClusters) {
-        console.log('[RiskRadarChart] Company with risk data:', {
-          name: company.name || company.relatedCompany?.name,
-          riskScore,
-          hasRiskClusters,
-          accreditationStatus,
-          isApproved,
-          willBeIncluded: hasValidRiskScore && isApproved
-        });
-      }
+      console.log('[RiskRadarChart] Filtering company:', {
+        name: company.name || company.relatedCompany?.name,
+        riskScore,
+        hasRiskClusters,
+        accreditationStatus,
+        isApproved,
+        willBeIncluded: hasValidRiskScore && isApproved
+      });
       
       return hasValidRiskScore && isApproved;
     });
-    
-    // Sort alphabetically by name
-    const sortedCompanies = approvedCompanies.sort((a, b) => 
+  }, [combinedCompanies]);
+
+  // Sort alphabetically by name
+  const sortedCompanies = React.useMemo(() => {
+    return approvedCompanies.sort((a, b) => 
       (a.name || '').localeCompare(b.name || '')
     );
-    
-    // Enhanced debugging to help track data sources and company availability
-    console.log('[RiskRadarChart] Data source analysis:', {
-      allCompaniesCount: allCompaniesData?.length || 0,
-      relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
-      visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
-      uniqueCompaniesCount: uniqueCompanies.length,
-      approvedCompaniesCount: sortedCompanies.length,
-      firstFewApproved: sortedCompanies.slice(0, 5).map(c => `${c.name} (${c.accreditationStatus || c.accreditation_status})`),
-      sampleCompanyFields: uniqueCompanies.slice(0, 3).map(c => ({
+  }, [approvedCompanies]);
+
+  // Enhanced debugging to help track data sources and company availability
+  console.log('[RiskRadarChart] Data source analysis:', {
+    allCompaniesCount: allCompaniesData?.length || 0,
+    relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
+    visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
+    uniqueCompaniesCount: combinedCompanies.length,
+    approvedCompaniesCount: sortedCompanies.length,
+    firstFewApproved: sortedCompanies.slice(0, 5).map(c => `${c.name} (${c.accreditationStatus || c.accreditation_status})`),
+    sampleCompanyFields: combinedCompanies.slice(0, 3).map(c => ({
         id: c.id,
         name: c.name || c.relatedCompany?.name,
         hasAccreditationStatus: !!c.accreditationStatus,
