@@ -44,10 +44,13 @@ interface CompanyWithRiskClusters {
   name: string;
   category: string;
   risk_score: number;
+  riskScore?: number;
   chosen_score?: number;
   risk_clusters?: RiskClusters;
   isDemo?: boolean;
   status?: string;
+  accreditationStatus?: string;
+  accreditation_status?: string;
   description?: string;
 }
 
@@ -183,7 +186,7 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     enabled: isBankOrInvela && !!company?.id,
   });
   
-  // 4. Combine all company sources and create a comprehensive list
+  // 4. Combine all company sources and filter for accredited companies with risk data
   const combinedCompanies = React.useMemo(() => {
     // Start with the direct companies
     let companies: CompanyWithRiskClusters[] = [...(allCompaniesData || [])];
@@ -201,7 +204,8 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
           id: node.id,
           name: node.name,
           category: node.category,
-          risk_score: node.riskScore || 0
+          risk_score: node.riskScore || 0,
+          accreditationStatus: node.accreditationStatus
         } as CompanyWithRiskClusters));
       
       companies = [...companies, ...visualizationCompanies];
@@ -212,18 +216,29 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       new Map(companies.map(company => [company.id, company])).values()
     );
     
+    // Filter for approved companies with valid risk assessment data
+    const approvedCompanies = uniqueCompanies.filter(company => {
+      const hasValidRiskScore = (company.risk_score && company.risk_score > 0) || 
+                               (company.riskScore && company.riskScore > 0);
+      const isApproved = company.accreditationStatus === 'APPROVED' || 
+                        company.accreditation_status === 'APPROVED';
+      
+      return hasValidRiskScore && isApproved;
+    });
+    
     // Sort alphabetically by name
-    const sortedCompanies = uniqueCompanies.sort((a, b) => 
+    const sortedCompanies = approvedCompanies.sort((a, b) => 
       (a.name || '').localeCompare(b.name || '')
     );
     
     // Enhanced debugging to help track data sources and company availability
-    console.log('[RiskRadarChart] Combined companies list:', {
+    console.log('[RiskRadarChart] Filtered companies list:', {
       allCompaniesCount: allCompaniesData?.length || 0,
       relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
       visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
-      uniqueCompaniesCount: sortedCompanies.length,
-      firstFewCompanies: sortedCompanies.slice(0, 5).map(c => c.name),
+      uniqueCompaniesCount: uniqueCompanies.length,
+      approvedCompaniesCount: sortedCompanies.length,
+      firstFewApproved: sortedCompanies.slice(0, 5).map(c => `${c.name} (${c.accreditationStatus || c.accreditation_status})`),
       userType: company?.category
     });
     
@@ -653,8 +668,8 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
               ) : (
                 <p className="text-xs text-blue-600">
                   {networkCompanies?.length > 0 
-                    ? `Found ${networkCompanies.length} companies in your network` 
-                    : "No companies found in your network"}
+                    ? `Found ${networkCompanies.length} accredited companies in your network` 
+                    : "No accredited companies found in your network"}
                 </p>
               )}
             </div>
