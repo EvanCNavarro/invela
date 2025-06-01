@@ -300,7 +300,7 @@ export default function CompanyProfilePage() {
 
   // Debug logging
   console.log("[CompanyProfile] Debug state:", {
-    id,
+    companyId,
     isLoadingData,
     hasCriticalError,
     isAuthError,
@@ -346,7 +346,7 @@ export default function CompanyProfilePage() {
                           error?.message?.includes("connection") ||
                           error?.message?.includes("terminating");
 
-  if (hasCriticalError || !company) {
+  if (hasCriticalError && !company) {
     return (
       <DashboardLayout>
         <PageTemplate>
