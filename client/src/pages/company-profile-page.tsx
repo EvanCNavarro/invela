@@ -546,63 +546,33 @@ export default function CompanyProfilePage() {
   const riskClusters = company.risk_clusters || defaultRiskClusters;
 
   const renderOverviewTab = () => {
-    console.log("[CompanyProfile] renderOverviewTab called with:", {
-      hasCompany: !!company,
-      companyName: company?.name,
-      hasUsers: !!users,
-      usersCount: users?.length || 0,
-      productServicesCount: productServices?.length || 0,
-      clientsPartnersCount: clientsPartners?.length || 0,
-      companyAge
-    });
+    console.log("[CompanyProfile] renderOverviewTab called - company:", company?.name, "activeTab:", activeTab);
     
-    try {
-      console.log("[CompanyProfile] Starting renderOverviewTab rendering");
-      
-      // Temporary fix - simple content to test rendering
-      console.log("[CompanyProfile] renderOverviewTab content created successfully");
-      const content = (
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg border">
-            <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-600">Description:</label>
-                <p className="text-sm">{company?.description || 'Not available'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Category:</label>
-                <p className="text-sm">{company?.category || 'Not available'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Website:</label>
-                <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Risk Score:</label>
-                <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
-              </div>
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Description:</label>
+              <p className="text-sm">{company?.description || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Category:</label>
+              <p className="text-sm">{company?.category || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Website:</label>
+              <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Risk Score:</label>
+              <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
             </div>
           </div>
         </div>
-      );
-      
-      console.log("[CompanyProfile] About to return content from renderOverviewTab");
-      console.log("[CompanyProfile] Content type:", typeof content);
-      console.log("[CompanyProfile] Content is valid React element:", React.isValidElement(content));
-      return content;
-      
-    } catch (error) {
-      console.error("[CompanyProfile] Error in renderOverviewTab:", error);
-      return (
-        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-          <h3 className="text-red-800 font-medium">Error rendering overview</h3>
-          <p className="text-red-600 text-sm">
-            {error instanceof Error ? error.message : 'Unknown error occurred'}
-          </p>
-        </div>
-      );
-    }
+      </div>
+    );
   };
   
   // Original overview tab design, now replaced by BentoOverview
@@ -1080,20 +1050,22 @@ export default function CompanyProfilePage() {
               
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {(() => {
-                    console.log("[CompanyProfile] About to call renderOverviewTab, activeTab:", activeTab);
-                    const overviewContent = renderOverviewTab();
-                    console.log("[CompanyProfile] renderOverviewTab returned:", overviewContent);
-                    console.log("[CompanyProfile] Type of returned content:", typeof overviewContent);
-                    console.log("[CompanyProfile] Is React element?", React.isValidElement(overviewContent));
-                    return overviewContent;
-                  })()}
+                  <div style={{ border: "3px solid red", padding: "10px", margin: "10px" }}>
+                    <h1 style={{ color: "red", fontSize: "24px" }}>OVERVIEW TAB VISIBLE TEST</h1>
+                    {renderOverviewTab()}
+                  </div>
                 </TabsContent>
                 <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderUsersTab()}
+                  <div style={{ border: "3px solid blue", padding: "10px", margin: "10px" }}>
+                    <h1 style={{ color: "blue", fontSize: "24px" }}>USERS TAB VISIBLE TEST</h1>
+                    {renderUsersTab()}
+                  </div>
                 </TabsContent>
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderRiskTab()}
+                  <div style={{ border: "3px solid green", padding: "10px", margin: "10px" }}>
+                    <h1 style={{ color: "green", fontSize: "24px" }}>RISK TAB VISIBLE TEST</h1>
+                    {renderRiskTab()}
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>
