@@ -354,10 +354,10 @@ function ConsentActivityChartInternal({
         }
       },
       padding: {
-        top: 10,
-        right: 10,
-        bottom: 20,
-        left: 10
+        top: 20,
+        right: 40,
+        bottom: 30,
+        left: 40
       }
     },
     xaxis: {
@@ -376,8 +376,10 @@ function ConsentActivityChartInternal({
           hour: timeframe === '1day' ? 'HH:mm' : undefined,
         },
         offsetY: 8,
+        offsetX: 0,
         rotate: 0,
         trim: false,
+        textAnchor: 'middle',
       },
       tooltip: {
         enabled: false
