@@ -49,7 +49,7 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "bg-red-100 border-l-4 border-red-500 px-4 rounded-md mb-0 h-10 flex items-center",
+        "bg-red-25 border-l-2 border-red-300 px-4 rounded-md mb-0 h-10 flex items-center",
         className
       )}
     >

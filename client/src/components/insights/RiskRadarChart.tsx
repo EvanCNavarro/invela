@@ -327,7 +327,7 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     }
   }, [riskClusters, displayCompany, isTransitioning]);
   
-  // Handle missing risk cluster data
+  // Handle missing risk cluster data and reset transition state
   useEffect(() => {
     if (displayCompany && !riskClusters) {
       console.warn('[RiskRadarChart] Risk clusters data missing for company:', {
@@ -337,16 +337,14 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
         usingCachedData: !!prevRiskClusters
       });
       
-      // If the company was selected from the dropdown and is missing risk clusters,
-      // we should invalidate the query to trigger a refetch with our enhanced query function
-      if (selectedCompanyId && selectedCompanyId === displayCompany.id && selectedCompanyId !== company?.id) {
-        logChartUpdate('Invalidating query to refetch with risk data', {
-          selectedCompanyId,
-          currentCompanyId: company?.id
-        });
+      // Reset transition state if we don't have data after a reasonable time
+      if (isTransitioning) {
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 2000);
       }
     }
-  }, [displayCompany, riskClusters, selectedCompanyId, company?.id, prevRiskClusters]);
+  }, [displayCompany, riskClusters, selectedCompanyId, company?.id, prevRiskClusters, isTransitioning]);
   
   // The actual risk clusters to display - use cached data during transitions
   const displayRiskClusters = riskClusters || (isTransitioning ? prevRiskClusters : null);
@@ -473,7 +471,7 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       }
     },
     xaxis: {
-      categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
+      categories: displayRiskClusters ? formatCategoryNames(Object.keys(displayRiskClusters)) : [],
       labels: {
         style: {
           fontSize: className?.includes("border-none") ? '11px' : '12px',
@@ -574,8 +572,17 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
         dimensions: Object.keys(displayRiskClusters).length
       });
       
-      // Update just the series data without re-rendering the entire chart
-      // This is the key to smooth animations between data sets
+      // Update both categories and series data to ensure proper chart display
+      const categories = formatCategoryNames(Object.keys(displayRiskClusters));
+      
+      chartInstance.updateOptions({
+        xaxis: {
+          ...chartOptions.xaxis,
+          categories: categories
+        }
+      }, false, true);
+      
+      // Update the series data
       chartInstance.updateSeries([{
         name: 'Risk Score',
         data: Object.values(displayRiskClusters)

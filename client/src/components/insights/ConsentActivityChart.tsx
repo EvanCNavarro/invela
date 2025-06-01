@@ -354,10 +354,10 @@ function ConsentActivityChartInternal({
         }
       },
       padding: {
-        top: 20,
-        right: 40,
-        bottom: 30,
-        left: 40
+        top: 30,
+        right: 50,
+        bottom: 40,
+        left: 50
       }
     },
     xaxis: {
