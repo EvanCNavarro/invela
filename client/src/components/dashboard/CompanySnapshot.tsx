@@ -188,6 +188,23 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             <div className="text-lg sm:text-xl font-semibold text-black">
               {displayStatus}
             </div>
+            {accreditationData && (
+              <div className="text-xs text-muted-foreground mt-1 text-center">
+                {accreditationData.isPermanent ? (
+                  <span className="text-green-600">No expiration</span>
+                ) : accreditationData.daysUntilExpiration !== null ? (
+                  accreditationData.daysUntilExpiration < 0 ? (
+                    <span className="text-red-600">Expired {Math.abs(accreditationData.daysUntilExpiration)} days ago</span>
+                  ) : accreditationData.daysUntilExpiration === 0 ? (
+                    <span className="text-orange-600">Expires today</span>
+                  ) : accreditationData.daysUntilExpiration <= 30 ? (
+                    <span className="text-orange-600">Expires in {accreditationData.daysUntilExpiration} days</span>
+                  ) : (
+                    <span className="text-blue-600">Expires in {Math.ceil(accreditationData.daysUntilExpiration / 30)} months</span>
+                  )
+                ) : null}
+              </div>
+            )}
           </Card>
         </div>
       </div>
