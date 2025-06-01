@@ -970,14 +970,14 @@ export default function CompanyProfilePage() {
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex items-center gap-3">
                 <CompanyLogo
-                  companyId={company.id}
-                  companyName={company.name}
+                  companyId={company?.id}
+                  companyName={company?.name}
                   size="lg"
                 />
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+                  <h1 className="text-xl font-semibold text-gray-900">{company?.name || 'Loading...'}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {company.category}
+                    {company?.category || 'Loading...'}
                   </p>
                 </div>
               </div>
