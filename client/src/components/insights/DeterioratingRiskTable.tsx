@@ -76,14 +76,14 @@ const calculateStatus = (
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'Blocked':
-      return 'bg-red-50 text-red-700 border border-red-200/70 shadow-sm';
+      return 'bg-red-25 text-red-600 border border-red-100/50';
     case 'Approaching Block':
-      return 'bg-amber-50 text-amber-700 border border-amber-200/70 shadow-sm';
+      return 'bg-amber-25 text-amber-600 border border-amber-100/50';
     case 'Monitoring':
-      return 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-sm';
+      return 'bg-blue-25 text-blue-600 border border-blue-100/50';
     case 'Stable':
     default:
-      return 'bg-green-50 text-green-700 border border-green-200/70 shadow-sm';
+      return 'bg-gray-25 text-gray-600 border border-gray-100/50';
   }
 };
 
