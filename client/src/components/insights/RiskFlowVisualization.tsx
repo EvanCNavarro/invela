@@ -377,11 +377,11 @@ export function RiskFlowVisualization() {
         </div>
         <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#0C195B' }}></span>
-          <span>Bank</span>
+          <span>Data Provider</span>
         </div>
         <div className="flex items-center">
           <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#C2C4EA' }}></span>
-          <span>FinTech</span>
+          <span>Data Recipient</span>
         </div>
         <div className="flex items-center">
           <span className="mx-2">|</span>
