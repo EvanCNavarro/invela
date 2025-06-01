@@ -961,7 +961,7 @@ export default function CompanyProfilePage() {
             <span>&gt;</span>
             <Link href="/network" className="hover:text-foreground hover:underline">Network</Link>
             <span>&gt;</span>
-            <span className="font-semibold text-foreground">{company.name}</span>
+            <span className="font-semibold text-foreground">{company?.name || 'Loading...'}</span>
           </div>
 
           {/* Back to Network button removed as requested */}
@@ -1051,25 +1051,4 @@ export default function CompanyProfilePage() {
       </PageTemplate>
     </DashboardLayout>
     );
-  } catch (renderError) {
-    console.error("[CompanyProfile] Rendering error:", renderError);
-    return (
-      <DashboardLayout>
-        <PageTemplate>
-          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-10 h-10 text-red-500" />
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-800">Rendering Error</h2>
-            <p className="text-gray-600 max-w-md">
-              There was an error displaying this company profile. Error: {renderError instanceof Error ? renderError.message : 'Unknown error'}
-            </p>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        </PageTemplate>
-      </DashboardLayout>
-    );
-  }
 }
