@@ -1,0 +1,23 @@
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/488
+[Tutorial:TabTutorials] Updating local state for company-profile: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-01T18:50:28.734Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=5
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/488
+[2025-06-01T19:23:08.932Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1748805786461_hzwsuq6vs", hasUserData: true, hasCompanyData: true}
+[2025-06-01T19:23:09.051Z] [WebSocket] Received message of type: authenticated 
+[2025-06-01T19:23:09.051Z] [WebSocket] WebSocket authentication confirmed for client: unknown 

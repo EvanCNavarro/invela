@@ -240,8 +240,7 @@ export default function CompanyProfilePage() {
   console.log("[CompanyProfile] Initial state:", { 
     companyId, 
     authLoading,
-    paramsReceived: params,
-    companySlugValue: params.companySlug 
+    paramsReceived: params
   });
 
   const handleBackClick = () => {
