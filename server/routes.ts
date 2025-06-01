@@ -1046,11 +1046,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-
-  
   // Force unlock file vault endpoint - direct API call to ensure immediate visibility
   // CRITICAL FIX: Direct route to unlock file vault - highest priority implementation
-app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) => {
+  app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) => {
     try {
       console.log('[API] Force unlock file vault request received:', {
         userId: req.user?.id,
