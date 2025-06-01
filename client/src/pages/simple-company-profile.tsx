@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User } from "lucide-react";
+import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
+import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
 interface CompanyData {
   id: number;
@@ -21,6 +22,16 @@ interface CompanyData {
   [key: string]: any;
 }
 
+interface AccreditationData {
+  id: number;
+  accreditationNumber: number;
+  issuedDate: string;
+  expiresDate: string | null;
+  status: string;
+  daysUntilExpiration: number | null;
+  isPermanent: boolean;
+}
+
 export default function SimpleCompanyProfile() {
   const params = useParams();
   const companyId = params.companyId;
@@ -29,6 +40,12 @@ export default function SimpleCompanyProfile() {
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
     queryKey: [`/api/companies/${companyId}/profile`],
+    enabled: !!companyId && !authLoading,
+  });
+
+  // Fetch accreditation data from separate endpoint like dashboard does
+  const { data: accreditationData } = useQuery<AccreditationData>({
+    queryKey: [`/api/companies/${companyId}/accreditation`],
     enabled: !!companyId && !authLoading,
   });
 
@@ -120,18 +137,14 @@ export default function SimpleCompanyProfile() {
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       ACCREDITATION
                     </span>
-                    <span className={`text-sm font-bold uppercase ${
-                      (company?.accreditation_status || company?.accreditationStatus) === 'APPROVED' || (company?.accreditation_status || company?.accreditationStatus) === 'VALID'
-                        ? 'text-green-600'
-                        : (company?.accreditation_status || company?.accreditationStatus) === 'PENDING'
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
-                    }`}>
-                      {(company?.accreditation_status || company?.accreditationStatus) === 'VALID' ? 'APPROVED' : (company?.accreditation_status || company?.accreditationStatus || 'PENDING')}
+                    <span className="text-2xl font-bold text-gray-900">
+                      {accreditationData?.status === 'ACTIVE' ? 'APPROVED' : (company?.accreditation_status || 'PENDING')}
                     </span>
-                    {company?.accreditation_expires_at && (
+                    {accreditationData && accreditationData.daysUntilExpiration !== null && accreditationData.daysUntilExpiration !== undefined && (
                       <span className="text-xs text-gray-500 mt-0.5">
-                        Exp: {new Date(company.accreditation_expires_at).toLocaleDateString()}
+                        {accreditationData.isPermanent ? 'No expiration' : 
+                         accreditationData.daysUntilExpiration > 0 ? 
+                         `${accreditationData.daysUntilExpiration} days` : 'Expired'}
                       </span>
                     )}
                   </div>
