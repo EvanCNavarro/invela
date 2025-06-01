@@ -156,9 +156,20 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
   
   // 1. Get direct companies data from API - similar to ConsentActivityInsight approach
   const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
-    queryKey: ['/api/companies'],
+    queryKey: ['/api/companies', 'with-risk-data', Date.now()],
+    queryFn: async () => {
+      // Force fresh API call with cache-busting parameter
+      const response = await fetch(`/api/companies?_t=${Date.now()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch companies');
+      }
+      return response.json();
+    },
     // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown
+    enabled: isBankOrInvela && !!company?.id && showDropdown,
+    // Force fresh data to get updated risk fields
+    staleTime: 0,
+    gcTime: 0
   });
   
   // Define the network visualization data type for better type safety
