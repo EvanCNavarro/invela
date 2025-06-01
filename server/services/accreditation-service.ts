@@ -59,75 +59,76 @@ export class AccreditationService {
     
     console.log('[AccreditationService] Creating new accreditation', logContext);
     
-    const executeTransaction = async (transactionContext: any) => {
-      // Get current accreditation count for this company
-      const company = await trx
-        .select({ accreditation_count: companies.accreditation_count })
-        .from(companies)
-        .where(eq(companies.id, params.companyId))
-        .limit(1);
-      
-      if (!company || company.length === 0) {
-        throw new Error(`Company with ID ${params.companyId} not found`);
-      }
-      
-      const currentCount = company[0].accreditation_count || 0;
-      const newAccreditationNumber = currentCount + 1;
-      
-      // Determine expiration date based on company category
-      const issuedDate = new Date();
-      let expiresDate: Date | null = null;
-      
-      // Data Recipients (FinTech) get 365-day expiration
-      // Data Providers (Banks) and Invela get permanent accreditation
-      if (params.category === 'FinTech') {
-        expiresDate = new Date(issuedDate);
-        expiresDate.setDate(expiresDate.getDate() + 365);
-      }
-      
-      // Create accreditation history entry
-      const [newAccreditation] = await trx
-        .insert(accreditationHistory)
-        .values({
-          company_id: params.companyId,
-          accreditation_number: newAccreditationNumber,
-          risk_score: params.riskScore,
-          issued_date: issuedDate,
-          expires_date: expiresDate,
-          status: 'ACTIVE',
-          risk_clusters: params.riskClusters
-        })
-        .returning();
-      
-      // Update company record with new accreditation info
-      await trx
-        .update(companies)
-        .set({
-          current_accreditation_id: newAccreditation.id,
-          accreditation_count: newAccreditationNumber,
-          first_accredited_date: currentCount === 0 ? issuedDate : undefined,
-          accreditation_status: 'APPROVED',
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, params.companyId));
-      
-      console.log('[AccreditationService] Accreditation created successfully', {
-        ...logContext,
-        accreditationId: newAccreditation.id,
-        accreditationNumber: newAccreditationNumber,
-        expiresDate: expiresDate?.toISOString() || 'permanent'
-      });
-      
-      return {
-        id: newAccreditation.id,
-        accreditationNumber: newAccreditationNumber,
-        issuedDate,
-        expiresDate,
+    // Use provided transaction or create new one
+    const dbContext = trx || db;
+    
+    // Get current accreditation count for this company
+    const company = await dbContext
+      .select({ accreditation_count: companies.accreditation_count })
+      .from(companies)
+      .where(eq(companies.id, params.companyId))
+      .limit(1);
+    
+    if (!company || company.length === 0) {
+      throw new Error(`Company with ID ${params.companyId} not found`);
+    }
+    
+    const currentCount = company[0].accreditation_count || 0;
+    const newAccreditationNumber = currentCount + 1;
+    
+    // Determine expiration date based on company category
+    const issuedDate = new Date();
+    let expiresDate: Date | null = null;
+    
+    // Data Recipients (FinTech) get 365-day expiration
+    // Data Providers (Banks) and Invela get permanent accreditation
+    if (params.category === 'FinTech') {
+      expiresDate = new Date(issuedDate);
+      expiresDate.setDate(expiresDate.getDate() + 365);
+    }
+    
+    // Create accreditation history entry
+    const [newAccreditation] = await dbContext
+      .insert(accreditationHistory)
+      .values({
+        company_id: params.companyId,
+        accreditation_number: newAccreditationNumber,
+        risk_score: params.riskScore,
+        issued_date: issuedDate,
+        expires_date: expiresDate,
         status: 'ACTIVE',
-        daysUntilExpiration: expiresDate ? this.calculateDaysUntilExpiration(expiresDate) : null,
-        isPermanent: expiresDate === null
-      };
+        risk_clusters: params.riskClusters
+      })
+      .returning();
+    
+    // Update company record with new accreditation info
+    await dbContext
+      .update(companies)
+      .set({
+        current_accreditation_id: newAccreditation.id,
+        accreditation_count: newAccreditationNumber,
+        first_accredited_date: currentCount === 0 ? issuedDate : undefined,
+        accreditation_status: 'APPROVED',
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, params.companyId));
+    
+    console.log('[AccreditationService] Accreditation created successfully', {
+      ...logContext,
+      accreditationId: newAccreditation.id,
+      accreditationNumber: newAccreditationNumber,
+      expiresDate: expiresDate?.toISOString() || 'permanent'
     });
+    
+    return {
+      id: newAccreditation.id,
+      accreditationNumber: newAccreditationNumber,
+      issuedDate,
+      expiresDate,
+      status: 'ACTIVE',
+      daysUntilExpiration: expiresDate ? this.calculateDaysUntilExpiration(expiresDate) : null,
+      isPermanent: expiresDate === null
+    };
   }
   
   /**
