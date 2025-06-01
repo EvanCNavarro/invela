@@ -287,9 +287,9 @@ function Router(): JSX.Element {
         />
 
         <ProtectedRoute 
-          path="/network/company/:companySlug" 
-          component={({ params }: { params: { companySlug: string } }) => {
-            console.log('[Router] Rendering company profile page for ID:', params.companySlug);
+          path="/network/company/:companyId" 
+          component={({ params }: { params: { companyId: string } }) => {
+            console.log('[Router] Rendering company profile page for ID:', params.companyId);
             return (
               <ProtectedLayout>
                 <OnboardingWrapper>
