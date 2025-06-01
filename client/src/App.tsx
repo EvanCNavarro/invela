@@ -82,7 +82,7 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 
 // Company and profile management pages
-import CompanyProfilePage from "@/pages/company-profile-page";
+import SimpleCompanyProfile from "@/pages/simple-company-profile";
 import FileVault from "@/pages/FileVault";
 
 // Task and form workflow pages
@@ -293,7 +293,7 @@ function Router(): JSX.Element {
             return (
               <ProtectedLayout>
                 <OnboardingWrapper>
-                  <CompanyProfilePage />
+                  <SimpleCompanyProfile />
                 </OnboardingWrapper>
               </ProtectedLayout>
             );
