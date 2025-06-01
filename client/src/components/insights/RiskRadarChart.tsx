@@ -23,7 +23,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Label } from '@/components/ui/label';
 import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
-import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
+import { ContainerAwareChartWrapper, ChartLibraryAdapters } from '@/components/ui/container-aware-chart-wrapper';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -765,7 +765,15 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
               
               {/* The chart itself with event handlers to capture the chart instance */}
               <ReactApexChart 
-                options={chartOptions} 
+                options={{
+                  ...chartOptions,
+                  chart: {
+                    ...chartOptions.chart,
+                    width: "100%",
+                    height: height,
+                    responsive: []
+                  }
+                }} 
                 series={series} 
                 type="radar" 
                 height={height}
@@ -797,13 +805,14 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
 export function RiskRadarChart({ className, companyId, showDropdown }: { className?: string; companyId?: number; showDropdown?: boolean }) {
   return (
     <ChartErrorBoundary>
-      <ResponsiveChartWrapper
+      <ContainerAwareChartWrapper
         minWidth={400}
         minHeight={300}
         aspectRatio={1.6}
+        fallbackHeight={450}
         className={className}
       >
-        {({ width, height }) => (
+        {({ width, height }: { width: number; height: number }) => (
           <RiskRadarChartInternal
             className={className}
             companyId={companyId}
@@ -812,7 +821,7 @@ export function RiskRadarChart({ className, companyId, showDropdown }: { classNa
             height={height}
           />
         )}
-      </ResponsiveChartWrapper>
+      </ContainerAwareChartWrapper>
     </ChartErrorBoundary>
   );
 }

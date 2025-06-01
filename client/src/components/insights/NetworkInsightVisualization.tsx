@@ -9,7 +9,7 @@ import {
   riskBucketColors 
 } from '@/components/network/types';
 import { Loader2, CheckCircle } from 'lucide-react';
-import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
+import { ContainerAwareChartWrapper } from '@/components/ui/container-aware-chart-wrapper';
 import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
 
 interface NetworkInsightVisualizationProps {
@@ -413,20 +413,21 @@ function NetworkInsightVisualizationInternal({
 export function NetworkInsightVisualization({ className }: { className?: string }) {
   return (
     <ChartErrorBoundary chartName="NetworkInsightVisualization">
-      <ResponsiveChartWrapper
+      <ContainerAwareChartWrapper
         className={className}
         minWidth={400}
         minHeight={350}
         aspectRatio={16/10}
+        fallbackHeight={500}
       >
-        {({ width, height }) => (
+        {({ width, height }: { width: number; height: number }) => (
           <NetworkInsightVisualizationInternal 
             className={className}
             width={width}
             height={height}
           />
         )}
-      </ResponsiveChartWrapper>
+      </ContainerAwareChartWrapper>
     </ChartErrorBoundary>
   );
 }
