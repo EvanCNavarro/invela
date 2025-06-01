@@ -744,8 +744,22 @@ export async function registerRoutes(app: Express): Promise<Express> {
           id: c.id,
           name: c.name,
           hasLogo: !!c.logo_id,
-          hasRelationship: c.has_relationship
+          hasRelationship: c.has_relationship,
+          hasRiskScore: !!c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          riskScore: c.risk_score,
+          accreditationStatus: c.accreditation_status
         }))
+      });
+      
+      console.log('[Companies] Sample risk data check:', {
+        firstCompanyRiskData: networkCompanies[0] ? {
+          id: networkCompanies[0].id,
+          name: networkCompanies[0].name,
+          risk_score: networkCompanies[0].risk_score,
+          risk_clusters: networkCompanies[0].risk_clusters ? 'PRESENT' : 'MISSING',
+          accreditation_status: networkCompanies[0].accreditation_status
+        } : 'NO_COMPANIES'
       });
 
       // Transform the data to match frontend expectations
@@ -1183,6 +1197,107 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
     }
   });
+
+  // NEW: Companies with risk data endpoint (cache-bypassing)
+  app.get("/api/companies-with-risk", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Companies-Risk] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Companies-Risk] Fetching companies with risk data for user:', {
+        userId: req.user.id,
+        company_id: req.user.company_id
+      });
+
+      // Get all companies that either:
+      // 1. The user's own company
+      // 2. Companies that have a relationship with the user's company
+      const networkCompanies = await db.select({
+        id: companies.id,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
+        accreditation_status: companies.accreditation_status,
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+        is_demo: companies.is_demo,
+        has_relationship: sql<boolean>`
+          CASE 
+            WHEN ${companies.id} = ${req.user.company_id} THEN true
+            WHEN EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+            ) THEN true
+            ELSE false
+          END
+        `
+      })
+        .from(companies)
+        .where(
+          or(
+            eq(companies.id, req.user.company_id),
+            sql`EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+          )`
+          )
+        )
+        .orderBy(companies.name);
+
+      console.log('[Companies-Risk] Query successful, found companies with risk data:', {
+        count: networkCompanies.length,
+        companiesWithRiskData: networkCompanies.filter(c => c.risk_score && c.risk_clusters).length,
+        sampleRiskData: networkCompanies.slice(0, 3).map(c => ({
+          id: c.id,
+          name: c.name,
+          risk_score: c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          accreditation_status: c.accreditation_status
+        }))
+      });
+
+      // Transform to match frontend expectations with explicit field names
+      const transformedCompanies = networkCompanies.map(company => ({
+        id: company.id,
+        name: company.name,
+        category: company.category,
+        description: company.description,
+        accreditation_status: company.accreditation_status,
+        accreditationStatus: company.accreditation_status, // Both formats
+        risk_score: company.risk_score,
+        riskScore: company.risk_score, // Both formats
+        chosen_score: company.chosen_score,
+        chosenScore: company.chosen_score, // Both formats
+        risk_clusters: company.risk_clusters,
+        riskClusters: company.risk_clusters, // Both formats
+        is_demo: company.is_demo,
+        isDemo: company.is_demo, // Both formats
+        has_relationship: company.has_relationship,
+        hasRelationship: company.has_relationship // Both formats
+      }));
+
+      // Add cache headers to prevent caching
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
+      res.json(transformedCompanies);
+    } catch (error) {
+      console.error("[Companies-Risk] Error details:", error);
+      res.status(500).json({
+        message: "Error fetching companies with risk data",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
   
   // Get a specific company with risk clusters data
   app.get("/api/companies/:id", requireAuth, async (req, res) => {
@@ -1248,20 +1363,20 @@ export async function registerRoutes(app: Express): Promise<Express> {
         name: companies.name,
         description: companies.description,
         category: companies.category,
-        riskScore: companies.risk_score,
-        chosenScore: companies.chosen_score,
-        riskClusters: companies.risk_clusters,
-        onboardingCompleted: companies.onboarding_company_completed,
-        isDemo: companies.is_demo,
-        revenueTier: companies.revenue_tier,
-        accreditationStatus: companies.accreditation_status,
-        websiteUrl: companies.website_url,
-        numEmployees: companies.num_employees,
-        incorporationYear: companies.incorporation_year,
-        availableTabs: companies.available_tabs,
-        logoId: companies.logo_id,
-        createdAt: companies.created_at,
-        updatedAt: companies.updated_at
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+        onboarding_company_completed: companies.onboarding_company_completed,
+        is_demo: companies.is_demo,
+        revenue_tier: companies.revenue_tier,
+        accreditation_status: companies.accreditation_status,
+        website_url: companies.website_url,
+        num_employees: companies.num_employees,
+        incorporation_year: companies.incorporation_year,
+        available_tabs: companies.available_tabs,
+        logo_id: companies.logo_id,
+        created_at: companies.created_at,
+        updated_at: companies.updated_at
       })
       .from(companies)
       .where(eq(companies.id, companyId))
