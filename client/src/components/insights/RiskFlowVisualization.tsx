@@ -7,6 +7,8 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 interface SankeyNode {
   id: string;
@@ -272,7 +274,12 @@ const CustomTooltip = ({ active, payload }: any) => {
   }
 };
 
-export function RiskFlowVisualization() {
+interface RiskFlowVisualizationProps {
+  width?: number;
+  height?: number;
+}
+
+function RiskFlowVisualizationInternal({ width = 900, height = 650 }: RiskFlowVisualizationProps) {
   const { data, isLoading, error } = useQuery<SankeyData>({
     queryKey: ['/api/risk-flow-visualization'],
   });
