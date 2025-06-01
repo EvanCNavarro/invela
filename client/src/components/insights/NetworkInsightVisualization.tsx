@@ -405,3 +405,28 @@ function NetworkInsightVisualizationInternal({
     </div>
   );
 }
+
+/**
+ * Responsive NetworkInsightVisualization component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function NetworkInsightVisualization({ className }: { className?: string }) {
+  return (
+    <ChartErrorBoundary chartName="NetworkInsightVisualization">
+      <ResponsiveChartWrapper
+        className={className}
+        minWidth={400}
+        minHeight={350}
+        aspectRatio={16/10}
+      >
+        {({ width, height }) => (
+          <NetworkInsightVisualizationInternal 
+            className={className}
+            width={width}
+            height={height}
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
+  );
+}
