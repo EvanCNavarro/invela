@@ -190,8 +190,8 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[120px] pl-4">Claim ID</TableHead>
-                <TableHead className="w-[150px]">Bank</TableHead>
-                <TableHead className="w-[150px]">FinTech</TableHead>
+                <TableHead className="w-[150px]">Data Provider</TableHead>
+                <TableHead className="w-[150px]">Data Recipient</TableHead>
                 <TableHead className="w-[120px]">Date</TableHead>
                 <TableHead className="w-[120px] text-right">Amount</TableHead>
                 <TableHead className="w-[150px]">Status</TableHead>
