@@ -100,16 +100,40 @@ export default function SimpleCompanyProfile() {
               </div>
               
               <div className="flex gap-5 flex-grow justify-end ml-auto">
-                {/* Risk Score Box */}
+                {/* S&P DARS Risk Score Box */}
                 <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
-                      RISK SCORE
+                      S&P DARS
                     </span>
                     <span className="text-2xl font-bold text-gray-900">
-                      {company?.riskScore || "0"}
+                      {company?.risk_score || company?.riskScore || company?.chosen_score || "0"}
                     </span>
+                  </div>
+                </div>
+
+                {/* Accreditation Status Box */}
+                <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 to-green-300"></div>
+                  <div className="flex flex-col items-center justify-center h-full py-2">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                      ACCREDITATION
+                    </span>
+                    <span className={`text-sm font-bold uppercase ${
+                      (company?.accreditation_status || company?.accreditationStatus) === 'APPROVED' || (company?.accreditation_status || company?.accreditationStatus) === 'VALID'
+                        ? 'text-green-600'
+                        : (company?.accreditation_status || company?.accreditationStatus) === 'PENDING'
+                        ? 'text-yellow-600'
+                        : 'text-red-600'
+                    }`}>
+                      {(company?.accreditation_status || company?.accreditationStatus) === 'VALID' ? 'APPROVED' : (company?.accreditation_status || company?.accreditationStatus || 'PENDING')}
+                    </span>
+                    {company?.accreditation_expires_at && (
+                      <span className="text-xs text-gray-500 mt-0.5">
+                        Exp: {new Date(company.accreditation_expires_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
