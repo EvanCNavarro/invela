@@ -449,10 +449,10 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 50,
-        bottom: 50,
-        left: 50, 
-        right: 50
+        top: className?.includes("border-none") ? 40 : 60,
+        bottom: className?.includes("border-none") ? 40 : 60,
+        left: className?.includes("border-none") ? 40 : 70, 
+        right: className?.includes("border-none") ? 40 : 70
       }
     },
     yaxis: {
@@ -528,8 +528,8 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     },
     plotOptions: {
       radar: {
-        size: 190,
-        offsetY: 0,
+        size: className?.includes("border-none") ? 140 : 170,
+        offsetY: className?.includes("border-none") ? -5 : -10,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',

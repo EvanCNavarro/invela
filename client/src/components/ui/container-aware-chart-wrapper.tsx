@@ -58,104 +58,109 @@ export function useContainerAwareDimensions(
   const [dimensions, setDimensions] = useState<Dimensions>({ width: minWidth, height: minHeight });
   const resizeTimeoutRef = useRef<NodeJS.Timeout>();
   const [layoutComplete, setLayoutComplete] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const dimensionsCacheRef = useRef<Map<string, Dimensions>>(new Map());
 
   /**
-   * Enhanced dimension calculation that handles container context failures
+   * Smart dimension calculation with caching to prevent jittery resizing
    */
   const calculateDimensions = useCallback(() => {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
     
-    // Wait for layout completion using multiple detection methods
-    const waitForLayout = () => {
-      return new Promise<void>((resolve) => {
-        // Method 1: requestAnimationFrame for layout completion
-        requestAnimationFrame(() => {
-          // Method 2: Short timeout for container stabilization
-          setTimeout(() => {
-            resolve();
-          }, 16); // Single frame delay
-        });
-      });
-    };
+    // Create cache key based on container context
+    const cacheKey = `${minWidth}-${minHeight}-${maxWidth}-${maxHeight}-${aspectRatio || 'auto'}`;
+    
+    // Check cache first for instant loading
+    const cachedDimensions = dimensionsCacheRef.current.get(cacheKey);
+    if (cachedDimensions && isInitialLoad && !layoutComplete) {
+      setDimensions(cachedDimensions);
+      setLayoutComplete(true);
+      setIsInitialLoad(false);
+      return;
+    }
 
-    waitForLayout().then(() => {
+    // Single calculation with proper timing
+    const performCalculation = () => {
       const rect = container.getBoundingClientRect();
       let { width, height } = rect;
 
-      // Handle zero height from failed CSS inheritance
+      // Intelligent height detection
       if (height === 0 || height < minHeight) {
-        // Traverse up to find first parent with defined height
         let parent = container.parentElement;
-        let foundHeight = 0;
+        let bestHeight = fallbackHeight;
         
-        while (parent && foundHeight === 0 && parent !== document.body) {
+        // Look for first meaningful parent height
+        while (parent && parent !== document.body) {
           const parentRect = parent.getBoundingClientRect();
-          if (parentRect.height > 0) {
-            // Calculate available height considering padding and margins
+          if (parentRect.height > minHeight) {
             const computedStyle = window.getComputedStyle(parent);
-            const paddingTop = parseFloat(computedStyle.paddingTop);
-            const paddingBottom = parseFloat(computedStyle.paddingBottom);
-            const marginTop = parseFloat(computedStyle.marginTop);
-            const marginBottom = parseFloat(computedStyle.marginBottom);
+            const usableHeight = parentRect.height - 
+              parseFloat(computedStyle.paddingTop) - 
+              parseFloat(computedStyle.paddingBottom) - 20; // Buffer for content
             
-            foundHeight = parentRect.height - paddingTop - paddingBottom - marginTop - marginBottom;
-            
-            // Reserve space for siblings if in flex container
-            if (computedStyle.display === 'flex') {
-              foundHeight = Math.max(foundHeight * 0.8, fallbackHeight);
+            if (usableHeight > minHeight) {
+              bestHeight = Math.min(usableHeight, maxHeight);
+              break;
             }
           }
           parent = parent.parentElement;
         }
-        
-        height = foundHeight > 0 ? foundHeight : fallbackHeight;
+        height = bestHeight;
       }
 
-      // Handle zero width (rare but possible)
+      // Width handling
       if (width === 0) {
-        width = container.offsetWidth || minWidth;
+        width = container.offsetWidth || container.parentElement?.clientWidth || minWidth;
       }
 
-      // Apply constraints with container boundary respect
-      const maxAvailableWidth = Math.min(maxWidth, container.offsetParent?.clientWidth || width);
-      width = Math.max(minWidth, Math.min(maxAvailableWidth, width));
+      // Apply constraints
+      width = Math.max(minWidth, Math.min(maxWidth, width));
       height = Math.max(minHeight, Math.min(maxHeight, height));
 
-      // Apply aspect ratio without breaking container boundaries
+      // Apply aspect ratio precisely once
       if (aspectRatio) {
-        const calculatedHeight = width / aspectRatio;
-        const calculatedWidth = height * aspectRatio;
-        
-        // Choose the dimension that respects container boundaries
-        if (calculatedHeight <= maxHeight && calculatedHeight >= minHeight && calculatedHeight <= height) {
-          height = calculatedHeight;
-        } else if (calculatedWidth <= maxAvailableWidth && calculatedWidth >= minWidth) {
-          width = calculatedWidth;
+        const aspectHeight = width / aspectRatio;
+        if (aspectHeight <= maxHeight && aspectHeight >= minHeight) {
+          height = aspectHeight;
+        } else {
+          width = height * aspectRatio;
+          width = Math.max(minWidth, Math.min(maxWidth, width));
         }
-        // If neither fits perfectly, prioritize width constraint
       }
 
+      const newDimensions = { width: Math.round(width), height: Math.round(height) };
+      
+      // Only update if significantly different (prevents micro-adjustments)
       setDimensions(prev => {
-        // More sensitive change detection for better responsiveness
-        if (Math.abs(prev.width - width) > 1 || Math.abs(prev.height - height) > 1) {
-          console.debug('[ContainerAwareChart] Dimensions updated:', { 
-            width, 
-            height, 
-            containerHeight: rect.height,
-            calculatedFromParent: rect.height === 0 
-          });
-          return { width, height };
+        const significantChange = Math.abs(prev.width - newDimensions.width) > 5 || 
+                                Math.abs(prev.height - newDimensions.height) > 5;
+        
+        if (significantChange || !layoutComplete) {
+          // Cache the result
+          dimensionsCacheRef.current.set(cacheKey, newDimensions);
+          
+          if (!layoutComplete) {
+            setLayoutComplete(true);
+            setIsInitialLoad(false);
+          }
+          
+          return newDimensions;
         }
         return prev;
       });
+    };
 
-      if (!layoutComplete) {
-        setLayoutComplete(true);
-      }
-    });
-  }, [containerRef, minWidth, minHeight, maxWidth, maxHeight, aspectRatio, fallbackHeight, layoutComplete]);
+    // Execute calculation after layout settles
+    if (isInitialLoad) {
+      // Fast initial calculation
+      requestAnimationFrame(performCalculation);
+    } else {
+      // Standard debounced calculation for resize events
+      performCalculation();
+    }
+  }, [containerRef, minWidth, minHeight, maxWidth, maxHeight, aspectRatio, fallbackHeight, layoutComplete, isInitialLoad]);
 
   const debouncedCalculateDimensions = useCallback(() => {
     if (resizeTimeoutRef.current) {
@@ -168,23 +173,17 @@ export function useContainerAwareDimensions(
     const container = containerRef.current;
     if (!container) return;
 
-    // Initial calculation with slight delay for DOM stabilization
-    const initialCalculation = setTimeout(calculateDimensions, 50);
+    // Immediate calculation for cached dimensions, delayed for new ones
+    const delay = isInitialLoad ? 16 : 100; // Single frame for cached, longer for uncached
+    const initialCalculation = setTimeout(calculateDimensions, delay);
 
-    // Set up ResizeObserver for container changes
+    // Set up ResizeObserver only for actual resize events (not initial load)
     let resizeObserver: ResizeObserver | null = null;
     
-    if (window.ResizeObserver) {
+    if (!isInitialLoad && window.ResizeObserver) {
       resizeObserver = new ResizeObserver(debouncedCalculateDimensions);
       resizeObserver.observe(container);
-      
-      // Also observe parent containers for layout changes
-      let parent = container.parentElement;
-      while (parent && parent !== document.body) {
-        resizeObserver.observe(parent);
-        parent = parent.parentElement;
-      }
-    } else {
+    } else if (!isInitialLoad) {
       // Fallback for older browsers
       window.addEventListener('resize', debouncedCalculateDimensions);
     }
@@ -197,11 +196,11 @@ export function useContainerAwareDimensions(
       
       if (resizeObserver) {
         resizeObserver.disconnect();
-      } else {
+      } else if (!isInitialLoad) {
         window.removeEventListener('resize', debouncedCalculateDimensions);
       }
     };
-  }, [calculateDimensions, debouncedCalculateDimensions]);
+  }, [calculateDimensions, debouncedCalculateDimensions, isInitialLoad]);
 
   return { ...dimensions, layoutComplete };
 }
@@ -246,11 +245,13 @@ export function ContainerAwareChartWrapper({
     >
       {layoutComplete ? children({ width, height }) : (
         <div 
-          className="w-full h-full flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center bg-gray-50/50"
           style={{ minHeight }}
         >
-          <div className="animate-pulse">
-            <div className="h-4 w-32 bg-gray-200 rounded mb-2"></div>
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-20 h-20 rounded-full bg-gray-200 mb-4 flex items-center justify-center">
+              <div className="w-10 h-10 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
+            </div>
             <div className="h-3 w-24 bg-gray-200 rounded"></div>
           </div>
         </div>
