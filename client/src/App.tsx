@@ -286,13 +286,19 @@ function Router(): JSX.Element {
           )} 
         />
 
-        <Route path="/network/company/:companySlug" component={({ params }: { params: { companySlug: string } }) => (
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <CompanyProfilePage />
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        )} />
+        <ProtectedRoute 
+          path="/network/company/:companySlug" 
+          component={({ params }: { params: { companySlug: string } }) => {
+            console.log('[Router] Rendering company profile page for ID:', params.companySlug);
+            return (
+              <ProtectedLayout>
+                <OnboardingWrapper>
+                  <CompanyProfilePage />
+                </OnboardingWrapper>
+              </ProtectedLayout>
+            );
+          }} 
+        />
 
         {/* Main nested task route - will handle both task types and IDs */}
         <ProtectedRoute 
