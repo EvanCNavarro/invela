@@ -28,7 +28,7 @@ export default function SimpleCompanyProfile() {
   const { user, isLoading: authLoading } = useAuth();
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
-    queryKey: ['/api/companies', companyId],
+    queryKey: [`/api/companies/${companyId}/profile`],
     enabled: !!companyId && !authLoading,
   });
 
