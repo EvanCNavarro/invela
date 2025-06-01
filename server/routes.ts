@@ -1311,31 +1311,59 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
       
-      // Fetch the company data
+      console.log(`[Companies] Fetching complete company data for ID: ${companyId}`);
+      
+      // Fetch comprehensive company data matching CompanyProfileData interface
       const companyData = await db.select({
         id: companies.id,
         name: companies.name,
         description: companies.description,
         category: companies.category,
+        // Risk scoring fields
         riskScore: companies.risk_score,
         chosenScore: companies.chosen_score,
         riskClusters: companies.risk_clusters,
+        // Business information fields
+        websiteUrl: companies.website_url,
+        numEmployees: companies.num_employees,
+        incorporationYear: companies.incorporation_year,
+        productsServices: companies.products_services,
+        keyClientsPartners: companies.key_clients_partners,
+        investors: companies.investors,
+        fundingStage: companies.funding_stage,
+        legalStructure: companies.legal_structure,
+        hqAddress: companies.hq_address,
+        // Status and compliance fields
+        accreditationStatus: companies.accreditation_status,
+        revenueTier: companies.revenue_tier,
+        // System fields
         onboardingCompleted: companies.onboarding_company_completed,
         isDemo: companies.is_demo,
+        logoId: companies.logo_id,
+        availableTabs: companies.available_tabs,
+        createdAt: companies.created_at,
+        updatedAt: companies.updated_at,
+        // Additional fields for comprehensive profile
+        certificationsCompliance: companies.certifications_compliance,
+        foundersAndLeadership: companies.founders_and_leadership
       })
       .from(companies)
       .where(eq(companies.id, companyId))
       .limit(1);
       
       if (!companyData || companyData.length === 0) {
+        console.log(`[Companies] Company not found for ID: ${companyId}`);
         return res.status(404).json({
           message: "Company not found",
           code: "NOT_FOUND"
         });
       }
       
-      // Return the company data
-      return res.json(companyData[0]);
+      const company = companyData[0];
+      console.log(`[Companies] Successfully fetched company: ${company.name} (${company.id})`);
+      
+      // Return the complete company data
+      return res.json(company);
     } catch (error) {
       console.error("[Companies] Error fetching company data:", error);
       return res.status(500).json({
