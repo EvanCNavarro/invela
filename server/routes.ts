@@ -3706,6 +3706,43 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Get users for a specific company - for company profile page
+  app.get("/api/companies/:id/users", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Fetch users associated with this company
+      const companyUsers = await db.select({
+        id: users.id,
+        email: users.email,
+        full_name: users.full_name,
+        role: users.role,
+        onboarding_user_completed: users.onboarding_user_completed,
+        created_at: users.created_at
+      })
+      .from(users)
+      .where(eq(users.company_id, companyId))
+      .orderBy(users.created_at);
+      
+      console.log(`[Companies] Found ${companyUsers.length} users for company ${companyId}`);
+      
+      res.json(companyUsers);
+    } catch (error) {
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ 
+        message: "Error fetching company users",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
