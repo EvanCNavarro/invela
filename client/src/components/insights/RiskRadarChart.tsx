@@ -216,14 +216,17 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       new Map(companies.map(company => [company.id, company])).values()
     );
     
-    // Filter for approved companies with valid risk assessment data
+    // Filter for approved companies with complete risk cluster data
     const approvedCompanies = uniqueCompanies.filter(company => {
       const hasValidRiskScore = (company.risk_score && company.risk_score > 0) || 
                                (company.riskScore && company.riskScore > 0);
       const isApproved = company.accreditationStatus === 'APPROVED' || 
                         company.accreditation_status === 'APPROVED';
+      const hasRiskClusters = company.risk_clusters && 
+                             typeof company.risk_clusters === 'object' &&
+                             Object.keys(company.risk_clusters).length > 0;
       
-      return hasValidRiskScore && isApproved;
+      return hasValidRiskScore && isApproved && hasRiskClusters;
     });
     
     // Sort alphabetically by name
