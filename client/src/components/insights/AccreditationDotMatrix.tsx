@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 // Interface for each company in our visualization
 interface CompanyDot {

@@ -777,7 +777,6 @@ export function ComparativeVisualization({ className, ...props }: { className?: 
         className={className}
         aspectRatio={16/10}
         minWidth={400}
-        enableDebugLogging={false}
       >
         {({ width, height }) => (
           <ComparativeVisualizationInternal 
