@@ -1,0 +1,104 @@
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.378Z", id: 1033, status: "completed", progress: 100, …}
+[2025-06-01T17:45:45.317Z] [WebSocket] Received message of type: task_updated 
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.317Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.317Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.410Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.410Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.410Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.410Z", id: 991, status: "completed", progress: 100, …}
+[2025-06-01T17:45:45.346Z] [WebSocket] Received message of type: task_updated 
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.346Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.346Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.440Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.440Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.440Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-01T17:45:45.440Z", id: 172, status: "completed", progress: 100, …}
+[2025-06-01T17:45:45.377Z] [WebSocket] Received message of type: task_updated 
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.377Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-06-01T17:45:45.377Z"}
+[Router] Current location: /network/company/512
+[Router] Rendering company profile page for ID: 512
+[CompanyProfile] Debug state: 
+Object {companyId: "512", isLoadingData: true, hasCriticalError: null, isAuthError: false, hasCompany: false, …}
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for network
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/network/company/512", …}
+[Sidebar] Tab state check: company=1, path=/network/company/512, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[WebSocketEventBridge] Initializing event bridge
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[CompanyProfile] Debug state: 
+Object {companyId: "512", isLoadingData: false, hasCriticalError: null, isAuthError: false, hasCompany: true, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Tutorial:TabTutorials] Fetching tutorial status for: company-profile
+[API Request] GET /api/user-tab-tutorials/company-profile/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for company-profile
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for company-profile with 4 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "company-profile", normalizedTabName: "company-profile", currentStep: 0, totalSteps: 5, enabled: false, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+[API Response] GET /api/user-tab-tutorials/company-profile/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for company-profile: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-01T17:10:24.420Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: company-profile (original: company-profile)
+[Tutorial:TabTutorials] Current state for company-profile: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: false - no expected route for tab company-profile
+[Tutorial:TutorialManager] Tutorial not shown - not on base route for tab: company-profile, path: /network/company/512
+[Tutorial:TabTutorials] Updating local state for company-profile: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-01T17:10:24.420Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=5
+[Tutorial:TutorialManager] 🚀 Initializing for tab: company-profile
+[Tutorial:TutorialManager] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
+[Tutorial:TabTutorials] Normalizing tab name from 'company-profile' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'company-profile'
