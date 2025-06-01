@@ -942,8 +942,7 @@ export default function CompanyProfilePage() {
     timestamp: new Date().toISOString()
   });
   
-  try {
-    return (
+  return (
       <DashboardLayout>
         <PageTemplate>
           <TutorialManager tabName="company-profile">
