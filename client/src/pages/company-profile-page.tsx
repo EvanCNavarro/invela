@@ -293,12 +293,10 @@ export default function CompanyProfilePage() {
     refetchOnWindowFocus: false
   });
 
-  // Add variables to track different states
-  const isAuthError = error?.message === "Authentication required" || 
-                      usersError?.message === "Authentication required";
-  
+  // More specific error handling - only treat company data errors as fatal
+  const isAuthError = error?.message === "Authentication required";
   const isLoadingData = authLoading || companyLoading;
-  const hasError = error || usersError;
+  const hasCriticalError = error && !usersError; // Only company errors are critical
   
   if (isLoadingData) {
     return (
