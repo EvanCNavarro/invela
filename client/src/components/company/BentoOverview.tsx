@@ -96,19 +96,22 @@ export function BentoOverview({
                 <Globe className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-700">Website</h3>
-                  {company.websiteUrl ? (
-                    <a 
-                      href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex items-center"
-                    >
-                      {company.websiteUrl}
-                      <ExternalLink className="ml-1 h-3 w-3" />
-                    </a>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">Not available</p>
-                  )}
+                  {(() => {
+                    const websiteUrl = safeGet(company, 'websiteUrl', null);
+                    return websiteUrl ? (
+                      <a 
+                        href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex items-center"
+                      >
+                        {websiteUrl}
+                        <ExternalLink className="ml-1 h-3 w-3" />
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Not available</p>
+                    );
+                  })()}
                 </div>
               </div>
               
@@ -117,7 +120,7 @@ export function BentoOverview({
                 <Tag className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-700">Category</h3>
-                  <p className="text-sm text-gray-700">{company.category || 'Not available'}</p>
+                  <p className="text-sm text-gray-700">{safeGet(company, 'category')}</p>
                 </div>
               </div>
               
@@ -126,7 +129,7 @@ export function BentoOverview({
                 <Users className="h-4 w-4 text-gray-500 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-700">Employees</h3>
-                  <p className="text-sm text-gray-700">{company.numEmployees || 'Not available'}</p>
+                  <p className="text-sm text-gray-700">{safeGet(company, 'numEmployees')}</p>
                 </div>
               </div>
               
