@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 interface CompanyLogoProps {
-  companyId: number;
-  companyName: string;
+  companyId?: number;
+  companyName?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -16,6 +16,21 @@ const sizeClasses = {
 };
 
 export const CompanyLogo = memo(({ companyId, companyName, size = "sm", className }: CompanyLogoProps) => {
+  // Early return for invalid props
+  if (!companyId || !companyName) {
+    return (
+      <div className={cn(
+        sizeClasses[size],
+        "flex items-center justify-center rounded-md bg-muted",
+        className
+      )}>
+        <span className="text-xs font-medium text-muted-foreground">
+          {companyName ? companyName.charAt(0).toUpperCase() : "?"}
+        </span>
+      </div>
+    );
+  }
+
   const { data: logoResult, error } = useQuery({
     queryKey: [`company-logo-${companyId}`],
     queryFn: async () => {
@@ -38,13 +53,14 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
         const blob = await response.blob();
         return { url: URL.createObjectURL(blob) };
       } catch (error) {
-        console.error(`Error fetching logo for ${companyName}:`, error);
+        console.error(`Error fetching logo for ${companyName || 'unknown'}:`, error);
         return { error: { message: "Network error", code: "FETCH_ERROR" } };
       }
     },
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
     retry: false,
+    enabled: !!companyId && !!companyName,
   });
 
   if (error || (logoResult && 'error' in logoResult)) {
@@ -83,7 +99,7 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
                 "w-full h-full flex items-center justify-center rounded-md bg-primary/10"
               );
               fallback.innerHTML = `
-                <span class="text-xs font-medium text-primary">${companyName.charAt(0).toUpperCase()}</span>
+                <span class="text-xs font-medium text-primary">${(companyName || '?').charAt(0).toUpperCase()}</span>
               `;
               parent.replaceChild(fallback, img);
             }
