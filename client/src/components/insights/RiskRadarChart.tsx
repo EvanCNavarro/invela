@@ -307,11 +307,8 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
         actualRiskValue: c.risk_score || c.riskScore || c.relatedCompany?.riskScore,
         dataStructure: c.relatedCompany ? 'nested' : 'flat'
       })),
-      userType: company?.category
-    });
-    
-    return sortedCompanies;
-  }, [allCompaniesData, networkCompaniesData, networkVisualizationData]);
+    userType: company?.category
+  });
   
   // Use the combined list for the dropdown
   const networkCompanies = combinedCompanies;
