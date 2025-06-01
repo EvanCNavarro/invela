@@ -72,6 +72,23 @@ export function BentoOverview({
   companyAge,
   setActiveTab
 }: BentoOverviewProps) {
+  // Debug logging
+  console.log("[BentoOverview] Rendering with data:", {
+    hasCompany: !!company,
+    companyName: company?.name,
+    companyKeys: company ? Object.keys(company) : [],
+    hasUsers: !!users,
+    usersCount: users?.length || 0,
+    productServicesCount: productServices?.length || 0,
+    clientsPartnersCount: clientsPartners?.length || 0,
+    companyAge
+  });
+
+  if (!company) {
+    console.log("[BentoOverview] No company data provided");
+    return <div>No company data available</div>;
+  }
+
   return (
     <div className="space-y-8">
       {/* Top row with main company information and preview cards */}
