@@ -341,7 +341,7 @@ function ClaimsProcessFlowChartInternal({
         
         // If there's a decision node in the next level, create a fork-like layout
         const nextLevel = sortedLevels[levelIndex + 1];
-        const hasDecisionNodeNextLevel = nextLevel === decisionNodeLevel;
+        const hasDecisionNodeNextLevel = decisionNodeLevel !== null && nextLevel === decisionNodeLevel;
         
         if (hasDecisionNodeNextLevel) {
           // Position nodes in a way that flows into the decision node
