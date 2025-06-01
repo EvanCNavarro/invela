@@ -775,11 +775,11 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded mr-2"></div>
-            <span className="text-xs">Bank Actions</span>
+            <span className="text-xs">Data Provider Actions</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded mr-2"></div>
-            <span className="text-xs">FinTech Actions</span>
+            <span className="text-xs">Data Recipient Actions</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
