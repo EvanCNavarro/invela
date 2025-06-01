@@ -2682,6 +2682,75 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
+  // Get accreditation information for a company
+  app.get("/api/companies/:id/accreditation", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      console.log('[Accreditation] Fetching accreditation for company:', companyId);
+
+      // Query accreditation history directly to avoid import issues
+      const accreditationResult = await db
+        .select({
+          id: accreditationHistory.id,
+          accreditation_number: accreditationHistory.accreditation_number,
+          issued_date: accreditationHistory.issued_date,
+          expires_date: accreditationHistory.expires_date,
+          status: accreditationHistory.status
+        })
+        .from(accreditationHistory)
+        .where(
+          and(
+            eq(accreditationHistory.company_id, companyId),
+            eq(accreditationHistory.status, 'ACTIVE')
+          )
+        )
+        .orderBy(desc(accreditationHistory.created_at))
+        .limit(1);
+      
+      if (!accreditationResult || accreditationResult.length === 0) {
+        return res.json(null);
+      }
+      
+      const accreditation = accreditationResult[0];
+      const isPermanent = accreditation.expires_date === null;
+      
+      // Calculate days until expiration
+      let daysUntilExpiration = null;
+      if (!isPermanent && accreditation.expires_date) {
+        const now = new Date();
+        const diffTime = accreditation.expires_date.getTime() - now.getTime();
+        daysUntilExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+      
+      const result = {
+        id: accreditation.id,
+        accreditationNumber: accreditation.accreditation_number,
+        issuedDate: accreditation.issued_date,
+        expiresDate: accreditation.expires_date,
+        status: accreditation.status,
+        daysUntilExpiration,
+        isPermanent
+      };
+      
+      console.log('[Accreditation] Found accreditation:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('[Accreditation] Error fetching accreditation:', error);
+      res.status(500).json({ 
+        message: "Error fetching accreditation details",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+
   // Add this endpoint to handle fintech company check
   app.post("/api/fintech/check-company", requireAuth, async (req, res) => {
     try {
