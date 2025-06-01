@@ -54,6 +54,12 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
     enabled: !!companyData?.id,
   });
 
+  // Fetch accreditation information
+  const { data: accreditationData } = useQuery({
+    queryKey: ['/api/companies', companyData?.id, 'accreditation'],
+    enabled: !!companyData?.id
+  });
+
   // For risk score changes, we'll use a static value of 11 as suggested
   const riskScoreChanges = 11;
 
