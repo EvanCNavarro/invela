@@ -297,6 +297,18 @@ export default function CompanyProfilePage() {
   const isAuthError = error?.message === "Authentication required";
   const isLoadingData = authLoading || companyLoading;
   const hasCriticalError = error && !usersError; // Only company errors are critical
+
+  // Debug logging
+  console.log("[CompanyProfile] Debug state:", {
+    id,
+    isLoadingData,
+    hasCriticalError,
+    isAuthError,
+    hasCompany: !!company,
+    companyName: company?.name,
+    errorMessage: error?.message,
+    usersErrorMessage: usersError?.message
+  });
   
   if (isLoadingData) {
     return (
@@ -334,7 +346,7 @@ export default function CompanyProfilePage() {
                           error?.message?.includes("connection") ||
                           error?.message?.includes("terminating");
 
-  if (hasError || !company) {
+  if (hasCriticalError || !company) {
     return (
       <DashboardLayout>
         <PageTemplate>
