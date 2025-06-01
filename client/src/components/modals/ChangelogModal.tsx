@@ -105,6 +105,25 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'terminology-standardization-2025-06-01',
+    date: '2025-06-01',
+    type: 'enhancement',
+    title: 'UI Terminology Standardization',
+    description: 'Systematic update of user-facing terminology from "Bank/FinTech" to "Data Provider/Data Recipient" across the platform',
+    details: [
+      'Updated Claims modal section headers and form labels to use "Data Recipient"',
+      'Changed Claims table column headers to display "Data Provider" and "Data Recipient"',
+      'Modified Claims detail page sections and field labels throughout',
+      'Updated Risk Flow Visualization legend terminology',
+      'Revised skeleton loading state comments for consistency',
+      'Updated navigation menu descriptions for liability insurance',
+      'Preserved all backend business logic and database schema',
+      'Maintained internal categorization systems for data integrity'
+    ],
+    version: '1.9.3',
+    audience: 'product'
+  },
+  {
     id: 'onboarding-modal-ui-improvements-2025-05-31',
     date: '2025-05-31',
     type: 'enhancement',
