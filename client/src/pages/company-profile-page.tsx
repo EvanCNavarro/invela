@@ -229,20 +229,12 @@ const getAccreditationStatusLabel = (status: string | null | undefined): React.R
 };
 
 export default function CompanyProfilePage() {
-  console.log("[CompanyProfile] Component starting to render");
-  
   const params = useParams();
   const companyId = params.companyId;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [openUserModal, setOpenUserModal] = useState(false);
   const { user, isLoading: authLoading } = useAuth();
-  
-  console.log("[CompanyProfile] Initial state:", { 
-    companyId, 
-    authLoading,
-    paramsReceived: params
-  });
 
   const handleBackClick = () => {
     window.history.back();
@@ -320,16 +312,9 @@ export default function CompanyProfilePage() {
   const hasCriticalError = error; // Only company errors are critical
 
   // Debug logging
-  console.log("[CompanyProfile] Debug state:", {
-    companyId,
-    isLoadingData,
-    hasCriticalError,
-    isAuthError,
-    hasCompany: !!company,
-    companyName: company?.name,
-    errorMessage: error?.message,
-    usersErrorMessage: usersError?.message
-  });
+  if (company) {
+    console.log("Company data loaded:", company.name);
+  }
   
   if (isLoadingData) {
     return (
@@ -1026,7 +1011,7 @@ export default function CompanyProfilePage() {
           </div>
           
           <div className="bg-white rounded-md overflow-hidden shadow-sm">
-            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue="overview" className="w-full">
               <TabsList className="flex h-12 border-b border-gray-200 w-full justify-start rounded-none bg-transparent p-0">
                 <TabsTrigger
                   value="overview"
@@ -1050,22 +1035,13 @@ export default function CompanyProfilePage() {
               
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div style={{ border: "3px solid red", padding: "10px", margin: "10px" }}>
-                    <h1 style={{ color: "red", fontSize: "24px" }}>OVERVIEW TAB VISIBLE TEST</h1>
-                    {renderOverviewTab()}
-                  </div>
+                  {renderOverviewTab()}
                 </TabsContent>
                 <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div style={{ border: "3px solid blue", padding: "10px", margin: "10px" }}>
-                    <h1 style={{ color: "blue", fontSize: "24px" }}>USERS TAB VISIBLE TEST</h1>
-                    {renderUsersTab()}
-                  </div>
+                  {renderUsersTab()}
                 </TabsContent>
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div style={{ border: "3px solid green", padding: "10px", margin: "10px" }}>
-                    <h1 style={{ color: "green", fontSize: "24px" }}>RISK TAB VISIBLE TEST</h1>
-                    {renderRiskTab()}
-                  </div>
+                  {renderRiskTab()}
                 </TabsContent>
               </div>
             </Tabs>
