@@ -438,8 +438,8 @@ router.post('/demo/company/create', async (req, res) => {
 
       const accreditationInfo = await AccreditationService.createAccreditation({
         companyId: company.id,
-        riskScore: businessDetails.risk_score,
-        riskClusters: businessDetails.risk_clusters,
+        riskScore: businessDetails.risk_score || 0,
+        riskClusters: businessDetails.risk_clusters || {},
         category: personaConfig.category
       });
 

@@ -17,8 +17,8 @@
  * @since 2025-06-01
  */
 
-import { db } from '../db/index.js';
-import { companies, accreditationHistory } from '../db/schema.js';
+import { db } from '@db';
+import { companies, accreditationHistory } from '@db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 export interface CreateAccreditationParams {
