@@ -14,6 +14,7 @@ import {
 } from './utils/demo-data-transformer';
 import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
 import { generateFinTechCompanies } from './utils/fintech-company-generator';
+import { AccreditationService } from './services/accreditation-service.js';
 
 /**
  * Generate randomized risk clusters that sum up to the total score
@@ -423,6 +424,35 @@ router.post('/demo/company/create', async (req, res) => {
       shouldCreateNetwork: transformedData.shouldCreateNetwork,
       processingTime: Date.now() - startTime
     });
+
+    // ========================================
+    // ACCREDITATION CREATION
+    // ========================================
+
+    try {
+      console.log('[DemoAPI] Creating accreditation history for demo company:', {
+        companyId: company.id,
+        category: personaConfig.category,
+        riskScore: businessDetails.risk_score
+      });
+
+      const accreditationInfo = await AccreditationService.createAccreditation({
+        companyId: company.id,
+        riskScore: businessDetails.risk_score,
+        riskClusters: businessDetails.risk_clusters,
+        category: personaConfig.category
+      });
+
+      console.log('[DemoAPI] ✅ Accreditation created successfully:', {
+        accreditationId: accreditationInfo.id,
+        accreditationNumber: accreditationInfo.accreditationNumber,
+        expiresDate: accreditationInfo.expiresDate?.toISOString() || 'permanent',
+        isPermanent: accreditationInfo.isPermanent
+      });
+    } catch (accreditationError) {
+      console.error('[DemoAPI] ❌ Failed to create accreditation, continuing with demo creation:', accreditationError);
+      // Continue with demo creation even if accreditation fails
+    }
 
     // ========================================
     // TASK CREATION FOR NEW DATA RECIPIENTS
