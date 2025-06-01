@@ -500,17 +500,44 @@ export default function CompanyProfilePage() {
   // Use company's risk clusters or fallback to defaults
   const riskClusters = company.risk_clusters || defaultRiskClusters;
 
-  const renderOverviewTab = () => (
-    <BentoOverview 
-      company={company}
-      users={users}
-      usersLoading={usersLoading}
-      productServices={productServices}
-      clientsPartners={clientsPartners}
-      companyAge={companyAge}
-      setActiveTab={setActiveTab}
-    />
-  );
+  const renderOverviewTab = () => {
+    console.log("[CompanyProfile] renderOverviewTab called with:", {
+      hasCompany: !!company,
+      companyName: company?.name,
+      hasUsers: !!users,
+      usersCount: users?.length || 0,
+      productServicesCount: productServices?.length || 0,
+      clientsPartnersCount: clientsPartners?.length || 0,
+      companyAge
+    });
+    
+    // Temporary fix - simple content to test rendering
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Description:</label>
+              <p className="text-sm">{company?.description || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Category:</label>
+              <p className="text-sm">{company?.category || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Website:</label>
+              <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Risk Score:</label>
+              <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   // Original overview tab design, now replaced by BentoOverview
   const _renderOriginalOverviewTab = () => (
@@ -885,6 +912,8 @@ export default function CompanyProfilePage() {
     </div>
   );
 
+  console.log("[CompanyProfile] Rendering main content with activeTab:", activeTab);
+  
   return (
     <DashboardLayout>
       <PageTemplate>
