@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Label } from '@/components/ui/label';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -66,9 +68,11 @@ interface RiskRadarChartProps {
   className?: string;
   companyId?: number;
   showDropdown?: boolean;
+  width?: number;
+  height?: number;
 }
 
-export function RiskRadarChart({ className, companyId, showDropdown = true }: RiskRadarChartProps) {
+function RiskRadarChartInternal({ className, companyId, showDropdown = true, width = 800, height = 500 }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
@@ -697,7 +701,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         {/* Title and description hidden as requested */}
       </CardHeader>
       <CardContent className="p-6">
-        <div className="w-full" style={{ height: '500px' }}>
+        <div className="w-full" style={{ height: `${height}px` }}>
           {!displayCompany ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="flex flex-col items-center">
@@ -764,7 +768,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
                 options={chartOptions} 
                 series={series} 
                 type="radar" 
-                height="500"
+                height={height}
                 width="100%"
                 className={`apex-charts-wrapper ${!chartInstance ? 'chart-initializing' : ''}`}
                 key={`chart-${displayCompany?.id || 'default'}`}
@@ -783,5 +787,32 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Responsive RiskRadarChart component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function RiskRadarChart({ className, companyId, showDropdown }: { className?: string; companyId?: number; showDropdown?: boolean }) {
+  return (
+    <ChartErrorBoundary>
+      <ResponsiveChartWrapper
+        minWidth={400}
+        minHeight={300}
+        aspectRatio={1.6}
+        className={className}
+      >
+        {({ width, height }) => (
+          <RiskRadarChartInternal
+            className={className}
+            companyId={companyId}
+            showDropdown={showDropdown}
+            width={width}
+            height={height}
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 }
