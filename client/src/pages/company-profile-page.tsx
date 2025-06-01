@@ -231,7 +231,7 @@ export default function CompanyProfilePage() {
   console.log("[CompanyProfile] Component starting to render");
   
   const params = useParams();
-  const companyId = params.companySlug;
+  const companyId = params.companyId;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [openUserModal, setOpenUserModal] = useState(false);
