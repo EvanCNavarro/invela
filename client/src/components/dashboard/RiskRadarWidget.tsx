@@ -48,12 +48,14 @@ export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWid
       headerClassName="pb-1" /* Reduce padding below header */
       className="h-full flex flex-col"
     >
-      <div className="flex-grow">
-        <RiskRadarChart 
-          companyId={companyId} 
-          showDropdown={false}
-          className="shadow-none border-none h-full p-0"
-        />
+      <div className="flex-grow overflow-hidden min-h-0">
+        <div className="w-full h-full max-h-[350px] min-h-[280px]">
+          <RiskRadarChart 
+            companyId={companyId} 
+            showDropdown={false}
+            className="shadow-none border-none"
+          />
+        </div>
       </div>
     </Widget>
   )

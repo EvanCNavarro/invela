@@ -806,10 +806,11 @@ export function RiskRadarChart({ className, companyId, showDropdown }: { classNa
   return (
     <ChartErrorBoundary>
       <ContainerAwareChartWrapper
-        minWidth={400}
-        minHeight={300}
-        aspectRatio={1.6}
-        fallbackHeight={450}
+        minWidth={280}
+        minHeight={250}
+        maxHeight={400}
+        aspectRatio={1.2}
+        fallbackHeight={320}
         className={className}
       >
         {({ width, height }: { width: number; height: number }) => (
