@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle, RefreshCw } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -251,28 +251,40 @@ export default function CompanyProfilePage() {
   const { 
     data: company, 
     isLoading: companyLoading, 
-    error 
+    error,
+    refetch: refetchCompany 
   } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies", companyId],
     queryFn: async () => {
       if (!companyId) throw new Error("No company ID provided");
+      
+      console.log(`[CompanyProfile] Fetching data for company ID: ${companyId}`);
+      
       try {
         const response = await fetch(`/api/companies/${companyId}`);
         if (!response.ok) {
           if (response.status === 401) {
             throw new Error("Authentication required");
           }
-          throw new Error("Error fetching company details");
+          if (response.status === 404) {
+            throw new Error("Company not found");
+          }
+          throw new Error(`Server error: ${response.status}`);
         }
-        return response.json();
+        
+        const data = await response.json();
+        console.log(`[CompanyProfile] Successfully fetched data for: ${data.name || 'Unknown'}`);
+        return data;
       } catch (error) {
-        console.error("Error fetching company:", error);
+        console.error("[CompanyProfile] Error fetching company:", error);
         throw error;
       }
     },
-    retry: 1,
-    enabled: !authLoading,
-    refetchOnWindowFocus: false
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: !authLoading && !!companyId,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 
   const { 
@@ -382,8 +394,8 @@ export default function CompanyProfilePage() {
               }
             </p>
             <div className="flex space-x-4">
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+              <Button variant="outline" onClick={() => refetchCompany()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
               </Button>
               <Button variant="outline" onClick={handleBackClick}>
