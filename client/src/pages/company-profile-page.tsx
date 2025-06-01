@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -560,7 +561,7 @@ export default function CompanyProfilePage() {
       
       // Temporary fix - simple content to test rendering
       console.log("[CompanyProfile] renderOverviewTab content created successfully");
-      return (
+      const content = (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg border">
             <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
@@ -585,6 +586,11 @@ export default function CompanyProfilePage() {
           </div>
         </div>
       );
+      
+      console.log("[CompanyProfile] About to return content from renderOverviewTab");
+      console.log("[CompanyProfile] Content type:", typeof content);
+      console.log("[CompanyProfile] Content is valid React element:", React.isValidElement(content));
+      return content;
       
     } catch (error) {
       console.error("[CompanyProfile] Error in renderOverviewTab:", error);
@@ -1074,7 +1080,14 @@ export default function CompanyProfilePage() {
               
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  {renderOverviewTab()}
+                  {(() => {
+                    console.log("[CompanyProfile] About to call renderOverviewTab, activeTab:", activeTab);
+                    const overviewContent = renderOverviewTab();
+                    console.log("[CompanyProfile] renderOverviewTab returned:", overviewContent);
+                    console.log("[CompanyProfile] Type of returned content:", typeof overviewContent);
+                    console.log("[CompanyProfile] Is React element?", React.isValidElement(overviewContent));
+                    return overviewContent;
+                  })()}
                 </TabsContent>
                 <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   {renderUsersTab()}
