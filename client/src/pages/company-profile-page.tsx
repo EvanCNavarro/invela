@@ -425,8 +425,32 @@ export default function CompanyProfilePage() {
     );
   }
 
-  const companyAge = company.incorporationYear
-    ? new Date().getFullYear() - company.incorporationYear
+  // Enhanced data validation with safe access patterns
+  const safeCompanyData = {
+    id: company.id || 0,
+    name: company.name || "Unknown Company",
+    description: company.description || "No description available",
+    websiteUrl: company.websiteUrl || company.website_url || null,
+    numEmployees: company.numEmployees || company.num_employees || null,
+    incorporationYear: company.incorporationYear || company.incorporation_year || null,
+    productsServices: company.productsServices || company.products_services || "Not specified",
+    keyClientsPartners: company.keyClientsPartners || company.key_clients_partners || "Not specified",
+    investors: company.investors || "Not specified",
+    fundingStage: company.fundingStage || company.funding_stage || "Not specified",
+    legalStructure: company.legalStructure || company.legal_structure || "Not specified",
+    hqAddress: company.hqAddress || company.hq_address || "Not specified",
+    riskScore: company.riskScore || company.risk_score || 0,
+    chosenScore: company.chosenScore || company.chosen_score || null,
+    accreditationStatus: company.accreditationStatus || company.accreditation_status || "PENDING",
+    revenueTier: company.revenueTier || company.revenue_tier || "Not specified",
+    category: company.category || "Unknown",
+    riskClusters: company.riskClusters || company.risk_clusters || null,
+    certificationsCompliance: company.certificationsCompliance || company.certifications_compliance || "Not specified",
+    foundersAndLeadership: company.foundersAndLeadership || company.founders_and_leadership || "Not specified"
+  };
+
+  const companyAge = safeCompanyData.incorporationYear
+    ? new Date().getFullYear() - safeCompanyData.incorporationYear
     : null;
 
   // Helper function to format data with proper handling of empty values
