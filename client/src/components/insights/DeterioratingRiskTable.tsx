@@ -289,10 +289,7 @@ const RiskTable: React.FC<{
               <TableRow 
                 key={company.id}
                 className={cn(
-                  onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : "",
-                  company.status === 'Blocked' ? "bg-gradient-to-r from-red-50/70 to-red-50/30" : 
-                  company.status === 'Approaching Block' ? "bg-gradient-to-r from-amber-50/60 to-amber-50/20" :
-                  company.status === 'Monitoring' ? "bg-gradient-to-r from-blue-50/40 to-blue-50/10" : ""
+                  onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : ""
                 )}
                 onClick={() => onCompanyClick && onCompanyClick(company.id)}
               >
