@@ -230,14 +230,14 @@ export default function ClaimDetailsPage() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Bank Information</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Data Provider Information</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium mb-1">Bank Name</p>
+                        <p className="text-sm font-medium mb-1">Data Provider Name</p>
                         <p>{claim?.bank_name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium mb-1">Bank ID</p>
+                        <p className="text-sm font-medium mb-1">Data Provider ID</p>
                         <p>{claim?.bank_id}</p>
                       </div>
                       <div>
@@ -248,10 +248,10 @@ export default function ClaimDetailsPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-4">FinTech & Policy</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Data Recipient & Policy</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium mb-1">FinTech</p>
+                        <p className="text-sm font-medium mb-1">Data Recipient</p>
                         <p>{claim?.fintech_name}</p>
                       </div>
                       <div>
@@ -457,7 +457,7 @@ export default function ClaimDetailsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Bank Information</CardTitle>
+                <CardTitle>Data Provider Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3 mb-6">
@@ -480,7 +480,7 @@ export default function ClaimDetailsPage() {
                     <p>(555) 123-4567</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium mb-1">Bank ID</p>
+                    <p className="text-sm font-medium mb-1">Data Provider ID</p>
                     <p>{claim?.bank_id}</p>
                   </div>
                 </div>
