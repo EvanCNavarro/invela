@@ -154,20 +154,30 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     companies: CompanyWithRiskClusters[];
   }
   
-  // 1. Get direct companies data from API - similar to ConsentActivityInsight approach
+  // 1. Get direct companies data from new cache-bypassing API endpoint
   const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
-    queryKey: ['/api/companies', 'with-risk-data', Date.now()],
+    queryKey: ['/api/companies-with-risk'],
     queryFn: async () => {
-      // Force fresh API call with cache-busting parameter
-      const response = await fetch(`/api/companies?_t=${Date.now()}`);
+      const response = await fetch('/api/companies-with-risk');
       if (!response.ok) {
-        throw new Error('Failed to fetch companies');
+        throw new Error('Failed to fetch companies with risk data');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('[RiskRadarChart] Fresh companies data received:', {
+        count: data.length,
+        sampleWithRisk: data.slice(0, 3).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          hasRiskScore: !!c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          accreditationStatus: c.accreditation_status
+        }))
+      });
+      return data;
     },
-    // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown,
-    // Force fresh data to get updated risk fields
+    // Enable for all Bank and Invela users (both with and without dropdown)
+    enabled: isBankOrInvela && !!company?.id,
+    // Force fresh data
     staleTime: 0,
     gcTime: 0
   });
@@ -241,16 +251,25 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     const approvedCompanies = uniqueCompanies.filter(company => {
       // Handle different data source formats
       const riskScore = company.risk_score || company.riskScore || company.relatedCompany?.riskScore;
+      const riskClusters = company.risk_clusters || company.riskClusters || company.relatedCompany?.riskClusters;
       const accreditationStatus = company.accreditationStatus || 
                                  company.accreditation_status || 
                                  company.relatedCompany?.accreditationStatus;
       
       const hasValidRiskScore = riskScore && riskScore > 0;
+      const hasRiskClusters = !!riskClusters;
       const isApproved = accreditationStatus === 'APPROVED';
       
-      // Simplified logging for approved companies
-      if (isApproved && hasValidRiskScore) {
-        console.log('[RiskRadarChart] ✓ Approved company:', company.name || company.relatedCompany?.name);
+      // Debug logging for filtering logic
+      if (hasValidRiskScore && hasRiskClusters) {
+        console.log('[RiskRadarChart] Company with risk data:', {
+          name: company.name || company.relatedCompany?.name,
+          riskScore,
+          hasRiskClusters,
+          accreditationStatus,
+          isApproved,
+          willBeIncluded: hasValidRiskScore && isApproved
+        });
       }
       
       return hasValidRiskScore && isApproved;
