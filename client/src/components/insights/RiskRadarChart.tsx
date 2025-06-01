@@ -407,14 +407,14 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 500,
+        speed: 600,
         animateGradually: {
           enabled: true,
-          delay: 150
+          delay: 100
         },
         dynamicAnimation: {
           enabled: true,
-          speed: 350
+          speed: 400
         }
       }
     },
