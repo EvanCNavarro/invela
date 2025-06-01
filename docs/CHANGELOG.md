@@ -4,6 +4,32 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.4 - 2025-06-01
+
+#### 🚀 Accreditation Validity System Implementation
+- **Complete Accreditation Lifecycle Management**
+  - Built comprehensive AccreditationService with 365-day expiration tracking for Data Recipients
+  - Implemented permanent accreditation status for Data Providers and Invela
+  - Added automatic accreditation number generation with incremental tracking
+  - Created accreditation history table with proper expiration date calculations
+
+- **Dashboard Integration**
+  - Enhanced CompanySnapshot component to display accreditation expiration dates
+  - Added visual indicators for expiration status (days remaining, expired, permanent)
+  - Integrated accreditation information across dashboard views
+  - Implemented real-time accreditation status checking
+
+- **Demo Company Coverage**
+  - Fixed critical gap: demo companies now receive proper accreditation records during creation
+  - Integrated AccreditationService into demo API workflow
+  - Added comprehensive error handling for accreditation creation process
+  - Ensured consistent accreditation data across all company types
+
+- **API Endpoints**
+  - Created `/api/companies/:id/accreditation` endpoint for accreditation retrieval
+  - Added accreditation history tracking and display functionality
+  - Implemented proper error handling and validation throughout API layer
+
 ### Version 1.9.2 - 2025-05-31
 
 #### 🚀 Onboarding Modal UI Improvements

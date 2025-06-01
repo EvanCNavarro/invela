@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'accreditation-validity-system-2025-06-01',
+    date: '2025-06-01',
+    type: 'feature',
+    title: 'Accreditation Validity System Implementation',
+    description: 'Complete accreditation lifecycle management with 365-day expiration tracking for Data Recipients and permanent status for Data Providers',
+    details: [
+      'Built comprehensive AccreditationService with automatic expiration date calculation',
+      'Enhanced dashboard to display accreditation status and days until expiration',
+      'Fixed critical gap: demo companies now receive proper accreditation records',
+      'Added accreditation history tracking with incremental numbering system',
+      'Created API endpoints for accreditation retrieval and status checking',
+      'Implemented visual indicators for expired, expiring, and permanent accreditations',
+      'Integrated accreditation creation into demo company workflow with error handling'
+    ],
+    version: '1.9.4',
+    audience: 'product'
+  },
+  {
     id: 'terminology-standardization-2025-06-01',
     date: '2025-06-01',
     type: 'enhancement',
