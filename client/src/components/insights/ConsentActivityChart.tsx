@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { NetworkNode } from '@/components/network/types';
 import { Loader2 } from 'lucide-react';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 // Define the timeframe options
 export type TimeframeOption = '1day' | '30days' | '1year';
@@ -25,6 +27,8 @@ interface ConsentActivityChartProps {
   companyId?: number;
   timeframe: TimeframeOption;
   showDropdown?: boolean;
+  width?: number;
+  height?: number;
 }
 
 /**
@@ -204,13 +208,15 @@ const formatYAxisNumber = (value: number): string => {
 };
 
 /**
- * Main component for Consent Activity Chart
+ * Internal component that renders the consent activity chart with responsive dimensions
  */
-export function ConsentActivityChart({ 
+function ConsentActivityChartInternal({ 
   className = '',
   companyId,
   timeframe = '1year',
-  showDropdown = true
+  showDropdown = true,
+  width = 800,
+  height = 500
 }: ConsentActivityChartProps) {
   // Reference for the ApexCharts component
   const chartRef = useRef<any>(null);
@@ -295,7 +301,8 @@ export function ConsentActivityChart({
   const chartOptions = {
     chart: {
       type: 'area',
-      height: 450,
+      height: height,
+      width: width,
       fontFamily: 'inherit',
       toolbar: {
         show: false,
@@ -459,7 +466,7 @@ export function ConsentActivityChart({
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[450px]">
+      <div className="flex items-center justify-center" style={{ height }}>
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -467,7 +474,7 @@ export function ConsentActivityChart({
   
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-[450px] space-y-2">
+      <div className="flex flex-col items-center justify-center space-y-2" style={{ height }}>
         <div className="text-destructive font-medium">Failed to load data</div>
         <div className="text-xs text-muted-foreground max-w-md">
           {error instanceof Error ? error.message : 'Check console for details'}
@@ -480,17 +487,17 @@ export function ConsentActivityChart({
     <Card className={`${className}`}>
       <CardContent className="p-6">
         {!chartComponentLoaded ? (
-          <div className="flex items-center justify-center h-[450px]">
+          <div className="flex items-center justify-center" style={{ height }}>
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="h-[450px] w-full">
+          <div style={{ height, width }}>
             {ReactApexChart && (
               <ReactApexChart
                 options={chartOptions}
                 series={chartSeries}
                 type="area"
-                height="450"
+                height={height}
                 width="100%"
               />
             )}
@@ -498,5 +505,29 @@ export function ConsentActivityChart({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Responsive ConsentActivityChart component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function ConsentActivityChart({ className, ...props }: { className?: string } & Omit<ConsentActivityChartProps, 'width' | 'height'>) {
+  return (
+    <ChartErrorBoundary>
+      <ResponsiveChartWrapper 
+        className={className}
+        aspectRatio={16/10}
+        minWidth={400}
+      >
+        {({ width, height }) => (
+          <ConsentActivityChartInternal 
+            width={width} 
+            height={height} 
+            {...props} 
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 }
