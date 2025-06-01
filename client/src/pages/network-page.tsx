@@ -297,7 +297,9 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       {/* Add tutorial manager for network page */}
-      <TutorialManager tabName="network" />
+      <TutorialManager tabName="network">
+        <div />
+      </TutorialManager>
       
       <PageTemplate
         showBreadcrumbs
