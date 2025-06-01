@@ -161,7 +161,7 @@ export const companies = pgTable("companies", {
   demo_session_id: text("demo_session_id"),
   demo_persona_type: text("demo_persona_type"),
   // Accreditation tracking fields
-  current_accreditation_id: integer("current_accreditation_id"),
+  current_accreditation_id: integer("current_accreditation_id").references(() => accreditationHistory.id),
   first_accredited_date: timestamp("first_accredited_date"),
   accreditation_count: integer("accreditation_count").default(0),
   created_at: timestamp("created_at").defaultNow(),
@@ -408,6 +408,31 @@ export const selectUserTabTutorialSchema = createSelectSchema(userTabTutorials);
 export type UserTabTutorial = z.infer<typeof selectUserTabTutorialSchema>;
 export type NewUserTabTutorial = z.infer<typeof insertUserTabTutorialSchema>;
 
+export const accreditationHistory = pgTable("accreditation_history", {
+  id: serial("id").primaryKey(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  accreditation_number: integer("accreditation_number").notNull(), // 1st, 2nd, 3rd accreditation
+  risk_score: integer("risk_score"), // Score at time of accreditation
+  issued_date: timestamp("issued_date").notNull().defaultNow(),
+  expires_date: timestamp("expires_date"), // NULL for permanent (Banks/Invela)
+  status: text("status").notNull().default('ACTIVE'), // 'ACTIVE', 'EXPIRED', 'REVOKED'
+  risk_clusters: jsonb("risk_clusters").$type<{
+    "Dark Web Data": number,
+    "Cyber Security": number,
+    "Public Sentiment": number,
+    "Data Access Scope": number,
+    "Financial Stability": number,
+    "Potential Liability": number
+  }>(), // Snapshot at time of accreditation
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAccreditationHistorySchema = createInsertSchema(accreditationHistory);
+export const selectAccreditationHistorySchema = createSelectSchema(accreditationHistory);
+export type AccreditationHistory = z.infer<typeof selectAccreditationHistorySchema>;
+export type NewAccreditationHistory = z.infer<typeof insertAccreditationHistorySchema>;
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -419,10 +444,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   completedTabTutorials: many(userTabTutorials),
 }));
 
-export const companiesRelations = relations(companies, ({ many }) => ({
+export const companiesRelations = relations(companies, ({ many, one }) => ({
   users: many(users),
   tasks: many(tasks),
-  logos: many(companyLogos)
+  logos: many(companyLogos),
+  accreditationHistory: many(accreditationHistory),
+  currentAccreditation: one(accreditationHistory, {
+    fields: [companies.current_accreditation_id],
+    references: [accreditationHistory.id]
+  })
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
@@ -766,6 +796,13 @@ export const documentAnswersRelations = relations(documentAnswers, ({ one }) => 
     fields: [documentAnswers.response_id],
     references: [cardResponses.id],
   }),
+}));
+
+export const accreditationHistoryRelations = relations(accreditationHistory, ({ one }) => ({
+  company: one(companies, {
+    fields: [accreditationHistory.company_id],
+    references: [companies.id]
+  })
 }));
 
 
