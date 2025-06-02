@@ -66,14 +66,28 @@ export default function SimpleCompanyProfile() {
 
   // Parse URL query parameters to get the tab
   const getTabFromURL = (): string => {
-    const urlParams = new URLSearchParams(location.split('?')[1] || '');
-    const tabParam = urlParams.get('tab');
-    // Validate tab parameter against allowed values
-    const validTabs = ['overview', 'users', 'risk'];
-    return validTabs.includes(tabParam || '') ? (tabParam || 'overview') : 'overview';
+    try {
+      const urlParams = new URLSearchParams(location.split('?')[1] || '');
+      const tabParam = urlParams.get('tab');
+      // Validate tab parameter against allowed values
+      const validTabs = ['overview', 'users', 'risk'];
+      const result = validTabs.includes(tabParam || '') ? (tabParam || 'overview') : 'overview';
+      console.log('[Tab Debug] getTabFromURL - location:', location, 'tabParam:', tabParam, 'result:', result);
+      return result;
+    } catch (error) {
+      console.error('[Tab Debug] Error parsing URL:', error, 'location:', location);
+      return 'overview';
+    }
   };
 
-  const [activeTab, setActiveTab] = useState(getTabFromURL);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Phase 2: Sync with URL on component mount
+  useEffect(() => {
+    const initialTab = getTabFromURL();
+    console.log('[Tab Debug] Mount - parsing URL for initial tab:', initialTab, 'from location:', location);
+    setActiveTab(initialTab);
+  }, []); // Empty dependency - runs once on mount
 
   // Handle tab changes with URL updates
   const handleTabChange = (newTab: string) => {
@@ -84,9 +98,10 @@ export default function SimpleCompanyProfile() {
     navigate(newURL);
   };
 
-  // Update active tab when URL changes
+  // Phase 3: Update active tab when URL changes
   useEffect(() => {
     const newTab = getTabFromURL();
+    console.log('[Tab Debug] Location change - updating tab from:', activeTab, 'to:', newTab, 'location:', location);
     setActiveTab(newTab);
   }, [location]);
 
