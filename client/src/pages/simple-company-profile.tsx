@@ -389,27 +389,27 @@ export default function SimpleCompanyProfile() {
                             <label className="text-xs font-medium text-gray-500">Category</label>
                             <p className="text-sm text-gray-900">{company?.category}</p>
                           </div>
-                          {company?.risk_clusters && (
-                            <div className="lg:col-span-2">
-                              <label className="text-xs font-medium text-gray-500">Risk Dimensions</label>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                                {Object.entries(company.risk_clusters)
-                                  .filter(([key]) => {
-                                    const mainDimensions = [
-                                      'Cyber Security', 'Financial Stability', 'Potential Liability',
-                                      'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
-                                    ];
-                                    return mainDimensions.includes(key);
-                                  })
-                                  .map(([key, value]) => (
-                                    <div key={key} className="text-sm">
-                                      <span className="text-gray-500">{key}:</span> <span className="text-gray-900">{value as number}/100</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
+                        {company?.risk_clusters && (
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <label className="text-xs font-medium text-gray-500">Risk Dimensions</label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                              {Object.entries(company.risk_clusters)
+                                .filter(([key]) => {
+                                  const mainDimensions = [
+                                    'Cyber Security', 'Financial Stability', 'Potential Liability',
+                                    'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
+                                  ];
+                                  return mainDimensions.includes(key);
+                                })
+                                .map(([key, value]) => (
+                                  <div key={key} className="text-sm">
+                                    <span className="text-gray-500">{key}:</span> <span className="text-gray-900">{value as number}/100</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 
@@ -421,17 +421,19 @@ export default function SimpleCompanyProfile() {
                           Risk Radar Analysis
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="pt-0 pb-4">
+                      <CardContent className="pt-0 pb-6">
                         {company?.id ? (
-                          <div className="w-full aspect-[2.5/1.5] max-w-[900px] mx-auto">
-                            <RiskRadarChart 
-                              companyId={company.id}
-                              showDropdown={false}
-                              className="shadow-none border-none"
-                            />
+                          <div className="w-full max-w-[1000px] mx-auto">
+                            <div className="aspect-[2.5/1.5] w-full">
+                              <RiskRadarChart 
+                                companyId={company.id}
+                                showDropdown={false}
+                                className="shadow-none border-none w-full h-full"
+                              />
+                            </div>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center h-[300px]">
+                          <div className="flex items-center justify-center h-[400px]">
                             <div className="text-sm text-gray-500">Loading risk analysis...</div>
                           </div>
                         )}
@@ -439,9 +441,9 @@ export default function SimpleCompanyProfile() {
                     </Card>
                   </div>
                 </TabsContent>
-              </div>
+              </Tabs>
             </div>
-          </Tabs>
+          </div>
         </div>
       </PageTemplate>
     </DashboardLayout>
