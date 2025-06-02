@@ -169,28 +169,28 @@ export default function SimpleCompanyProfile() {
                 </div>
               </div>
               
-              <div className="flex gap-5 flex-grow justify-end ml-auto">
+              <div className="flex gap-4 flex-grow justify-end ml-auto">
                 {/* S&P DARS Risk Score Box */}
-                <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
+                <div className="border rounded-lg flex flex-col h-18 px-5 min-w-[180px] relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       S&P DARS
                     </span>
-                    <span className="text-2xl font-bold text-gray-900">
+                    <span className="text-xl font-bold text-gray-900">
                       {company?.risk_score || company?.riskScore || company?.chosen_score || "0"}
                     </span>
                   </div>
                 </div>
 
                 {/* Accreditation Status Box */}
-                <div className="border rounded-lg flex flex-col h-20 px-6 min-w-[200px] relative overflow-hidden">
+                <div className="border rounded-lg flex flex-col h-18 px-5 min-w-[180px] relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 to-green-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
                       ACCREDITATION
                     </span>
-                    <span className="text-2xl font-bold text-gray-900">
+                    <span className="text-xl font-bold text-gray-900">
                       {accreditationData?.status === 'ACTIVE' ? 'APPROVED' : (company?.accreditation_status || 'PENDING')}
                     </span>
                   </div>
