@@ -1,0 +1,39 @@
+Logo fetch failed for Invela: 
+Object {status: 404, code: "LOGO_FILE_MISSING", message: "Logo file not found on disk"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748849162120-ryjw13b", timestamp: "2025-06-02T07:26:02.121Z", message: "Connection established"}
+[2025-06-02T07:26:02.103Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748849162693-bk8ecye", timestamp: "2025-06-02T07:26:02.694Z", message: "Connection established"}
+[Company Profile Debug] Received company data: 
+Object {id: 1, name: "Invela", description: "A stealth startup revolutionizing open banking security; enabling Banks, FinTechs, and Consumers to…", category: "Invela", risk_score: 0, …}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Invela", market_position: null, founders_and_leadership: "Steve Smith, Nathanael Coffing, Preston McFarland, Darek Nehrebecki, Gaby Sulbaran, Dev Kurbur,…", key_clients_partners: "Bank of America, S&P Global", investors: "The Stena Group", …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748849163195-j129shx", timestamp: "2025-06-02T07:26:03.195Z", message: "Connection established"}
+API error 500: {"message":"Error fetching company users","code":"FETCH_ERROR"}...
+[TanStack Query] Error fetching /api/companies/1/users: 
+Error {}
+
+[Company Profile Debug] Received company data: 
+Object {id: 1, name: "Invela", description: "A stealth startup revolutionizing open banking security; enabling Banks, FinTechs, and Consumers to…", category: "Invela", risk_score: 0, …}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Invela", market_position: null, founders_and_leadership: "Steve Smith, Nathanael Coffing, Preston McFarland, Darek Nehrebecki, Gaby Sulbaran, Dev Kurbur,…", key_clients_partners: "Bank of America, S&P Global", investors: "The Stena Group", …}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-06-02T07:26:04.218Z] [WebSocket] WebSocket connection established 
+[2025-06-02T07:26:04.218Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-02T07:26:04.219Z] [WebSocket] Received message of type: connection_established 
+[2025-06-02T07:26:04.219Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748849164241-mmp33jq 
+[2025-06-02T07:26:04.655Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1748849162103_xrkj7yb2f", hasUserData: true, hasCompanyData: true}
+[2025-06-02T07:26:04.776Z] [WebSocket] Received message of type: authenticated 
+[2025-06-02T07:26:04.776Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:26:31.730Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:26:32.819Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:26:33.324Z", echo: {…}}
