@@ -324,21 +324,21 @@ export default function SimpleCompanyProfile() {
               
               <div className="flex gap-3 flex-grow justify-end ml-auto">
                 {/* S&P DARS Risk Score Box */}
-                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
+                <div className="border rounded-lg flex flex-col h-16 px-3 min-w-[130px] relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-0.5">
                       S&P DARS
                     </span>
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="text-lg font-bold text-gray-900">
                       {company?.risk_score || company?.riskScore || company?.chosen_score || "0"}
                     </span>
                   </div>
                 </div>
 
                 {/* Network Status Box */}
-                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${
+                <div className="border rounded-lg flex flex-col h-16 px-3 min-w-[130px] relative overflow-hidden">
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
                     networkStatus.color === 'green' ? 'from-green-600 to-green-300' :
                     networkStatus.color === 'yellow' ? 'from-yellow-600 to-yellow-300' :
                     networkStatus.color === 'red' ? 'from-red-600 to-red-300' :
@@ -346,29 +346,28 @@ export default function SimpleCompanyProfile() {
                     'from-gray-600 to-gray-300'
                   }`}></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-0.5">
                       Network
                     </span>
-                    <span className={`text-sm font-bold ${
-                      networkStatus.color === 'green' ? 'text-green-700' :
-                      networkStatus.color === 'yellow' ? 'text-yellow-700' :
-                      networkStatus.color === 'red' ? 'text-red-700' :
-                      networkStatus.color === 'orange' ? 'text-orange-700' :
-                      'text-gray-700'
-                    }`}>
+                    <span className="text-lg font-bold text-gray-900">
                       {networkStatus.status}
                     </span>
                   </div>
                 </div>
 
                 {/* Accreditation Status Box */}
-                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 to-green-300"></div>
+                <div className="border rounded-lg flex flex-col h-16 px-3 min-w-[130px] relative overflow-hidden">
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                    (accreditationData?.status === 'ACTIVE' || company?.accreditation_status === 'APPROVED') ? 'from-green-600 to-green-300' :
+                    company?.accreditation_status === 'PENDING' ? 'from-orange-600 to-orange-300' :
+                    company?.accreditation_status === 'EXPIRED' ? 'from-red-600 to-red-300' :
+                    'from-gray-600 to-gray-300'
+                  }`}></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
-                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
-                      ACCREDITATION
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-0.5">
+                      Accreditation
                     </span>
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="text-lg font-bold text-gray-900">
                       {accreditationData?.status === 'ACTIVE' ? 'APPROVED' : (company?.accreditation_status || 'PENDING')}
                     </span>
                   </div>
