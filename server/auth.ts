@@ -267,13 +267,54 @@ export function setupAuth(app: Express) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    try {
+      authLogger.debug('Deserializing user', { userId: id });
+      
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
 
-    done(null, user);
+      if (!user) {
+        authLogger.warn('User not found during deserialization', { userId: id });
+        return done(null, false);
+      }
+
+      authLogger.debug('User deserialized successfully', { userId: id });
+      done(null, user);
+    } catch (error) {
+      authLogger.error('Database error during user deserialization', {
+        userId: id,
+        error: error.message,
+        code: error.code,
+        timestamp: new Date().toISOString()
+      });
+
+      // On database connection errors, retry once
+      if (error.code === '57P01' || error.code === 'ECONNRESET') {
+        authLogger.info('Retrying user deserialization after connection error', { userId: id });
+        try {
+          const [retryUser] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, id))
+            .limit(1);
+          
+          authLogger.info('User deserialization retry successful', { userId: id });
+          return done(null, retryUser || false);
+        } catch (retryError) {
+          authLogger.error('User deserialization retry failed', {
+            userId: id,
+            error: retryError.message,
+            code: retryError.code
+          });
+        }
+      }
+
+      // For any error, continue without user but don't break the session
+      done(null, false);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {
