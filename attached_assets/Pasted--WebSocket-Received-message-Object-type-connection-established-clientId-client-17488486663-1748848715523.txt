@@ -1,0 +1,32 @@
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748848666306-csx4l6u", timestamp: "2025-06-02T07:17:46.306Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748848666818-7cul3bp", timestamp: "2025-06-02T07:17:46.819Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-06-02T07:17:47.863Z] [WebSocket] WebSocket connection established 
+[2025-06-02T07:17:47.863Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-02T07:17:47.864Z] [WebSocket] Received message of type: connection_established 
+[2025-06-02T07:17:47.864Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748848667895-l4bsjqo 
+[2025-06-02T07:17:48.295Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1748848665759_mgl4l2f9q", hasUserData: true, hasCompanyData: true}
+[Company Profile Debug] Received company data: 
+Object {id: 1, name: "Invela", description: "A stealth startup revolutionizing open banking security; enabling Banks, FinTechs, and Consumers to…", category: "Invela", risk_score: 0, …}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Invela", market_position: null, founders_and_leadership: "Steve Smith, Nathanael Coffing, Preston McFarland, Darek Nehrebecki, Gaby Sulbaran, Dev Kurbur,…", key_clients_partners: "Bank of America, S&P Global", investors: "The Stena Group", …}
+[2025-06-02T07:17:48.423Z] [WebSocket] Received message of type: authenticated 
+[2025-06-02T07:17:48.423Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+API error 500: {"message":"Error fetching company users","code":"FETCH_ERROR"}...
+[TanStack Query] Error fetching /api/companies/1/users: 
+Error {}
+
+[Company Profile Debug] Received company data: 
+Object {id: 1, name: "Invela", description: "A stealth startup revolutionizing open banking security; enabling Banks, FinTechs, and Consumers to…", category: "Invela", risk_score: 0, …}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Invela", market_position: null, founders_and_leadership: "Steve Smith, Nathanael Coffing, Preston McFarland, Darek Nehrebecki, Gaby Sulbaran, Dev Kurbur,…", key_clients_partners: "Bank of America, S&P Global", investors: "The Stena Group", …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:18:15.412Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:18:16.431Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-02T07:18:16.937Z", echo: {…}}
