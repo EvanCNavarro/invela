@@ -38,10 +38,23 @@ interface UserData {
   id: number;
   email: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
+  company_id: number;
+  onboarding_user_completed: boolean;
   created_at: string;
   updated_at: string;
-  last_login: string | null;
-  is_demo: boolean;
+  is_demo_user?: boolean;
+}
+
+interface CompanyUsersResponse {
+  users: UserData[];
+  meta: {
+    count: number;
+    companyId: number;
+    requestId: string;
+    queryTime: string;
+  };
 }
 
 export default function SimpleCompanyProfile() {
@@ -81,24 +94,56 @@ export default function SimpleCompanyProfile() {
   });
 
   // Fetch users associated with this company
-  const { data: users, isLoading: usersLoading } = useQuery<UserData[]>({
+  const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({
     queryKey: [`/api/companies/${companyId}/users`],
+    queryFn: async () => {
+      console.log(`[Users Debug] Fetching users for company ${companyId}`);
+      const response = await fetch(`/api/companies/${companyId}/users`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(`[Users Debug] Received response:`, data);
+      return data;
+    },
     enabled: !!companyId && !authLoading && activeTab === "users",
   });
 
+  // Extract users array from structured response
+  const users = usersResponse?.users || [];
+  
+  // Debug logging for users data
+  console.log(`[Users Debug] Users extracted:`, {
+    usersResponse,
+    usersCount: users.length,
+    firstUser: users[0],
+    activeTab,
+    searchTerm
+  });
+
   // Initialize Fuse instance for fuzzy search on users
-  const fuse = useMemo(() => new Fuse(users || [], {
-    keys: ['full_name', 'email'],
-    threshold: 0.3,
-    includeMatches: true,
-  }), [users]);
+  const fuse = useMemo(() => {
+    console.log(`[Users Debug] Initializing Fuse with ${users.length} users`);
+    return new Fuse(users || [], {
+      keys: ['full_name', 'email'],
+      threshold: 0.3,
+      includeMatches: true,
+    });
+  }, [users]);
 
   // Filter users using fuzzy search
   const filteredUsers = useMemo(() => {
-    if (!users) return [];
-    if (!searchTerm) return users;
+    if (!users || users.length === 0) {
+      console.log(`[Users Debug] No users available for filtering`);
+      return [];
+    }
+    if (!searchTerm) {
+      console.log(`[Users Debug] No search term, returning all ${users.length} users`);
+      return users;
+    }
     
     const fuseResults = fuse.search(searchTerm);
+    console.log(`[Users Debug] Fuzzy search for "${searchTerm}" found ${fuseResults.length} results`);
     return fuseResults.map(result => result.item);
   }, [users, searchTerm, fuse]);
 
@@ -531,8 +576,8 @@ export default function SimpleCompanyProfile() {
                                   <span className="text-sm text-gray-700">{user.email}</span>
                                 </td>
                                 <td className="py-3 px-6">
-                                  <Badge variant={user.is_demo ? "secondary" : "default"} className="text-xs">
-                                    {user.is_demo ? "Demo" : "Standard"}
+                                  <Badge variant={user.is_demo_user ? "secondary" : "default"} className="text-xs">
+                                    {user.is_demo_user ? "Demo" : "Standard"}
                                   </Badge>
                                 </td>
                                 <td className="py-3 px-6">
@@ -568,6 +613,13 @@ export default function SimpleCompanyProfile() {
                             : `${users.length} total users`
                           }
                         </div>
+                      </div>
+                    )}
+                    
+                    {/* Debug info for development */}
+                    {usersResponse && (
+                      <div className="px-6 py-2 border-t bg-blue-50/50 text-xs text-blue-600">
+                        Debug: API returned {usersResponse.meta.count} users in {usersResponse.meta.queryTime}
                       </div>
                     )}
                   </div>
