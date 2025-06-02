@@ -184,31 +184,31 @@ export default function SimpleCompanyProfile() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-100">
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
 
                     {/* Essential Details */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
-                          <Building2 className="w-5 h-5 text-gray-600" />
+                    <Card className="lg:col-span-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base text-gray-900">
+                          <Building2 className="w-4 h-4 text-gray-600" />
                           Essential Details
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4">
+                      <CardContent className="pt-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Legal Name</label>
-                            <p className="text-gray-900">{company?.name}</p>
+                            <label className="text-xs font-medium text-gray-500">Legal Name</label>
+                            <p className="text-sm text-gray-900">{company?.name}</p>
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Industry</label>
-                            <p className="text-gray-900">{company?.category}</p>
+                            <label className="text-xs font-medium text-gray-500">Industry</label>
+                            <p className="text-sm text-gray-900">{company?.category}</p>
                           </div>
                           {company?.description && (
                             <div className="lg:col-span-2">
-                              <label className="text-sm font-medium text-gray-500">Description</label>
-                              <p className="text-gray-900 leading-relaxed">{company.description}</p>
+                              <label className="text-xs font-medium text-gray-500">Description</label>
+                              <p className="text-sm text-gray-900 leading-relaxed">{company.description}</p>
                             </div>
                           )}
                           {(company?.incorporation_year || company?.incorporationYear) && (
@@ -261,29 +261,29 @@ export default function SimpleCompanyProfile() {
 
                     {/* Business Information */}
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
-                          <Users className="w-5 h-5 text-gray-600" />
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base text-gray-900">
+                          <Users className="w-4 h-4 text-gray-600" />
                           Business Information
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="pt-0 space-y-3">
                         {company?.products_services && (
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Products & Services</label>
-                            <p className="text-gray-900 leading-relaxed">{company.products_services}</p>
+                            <label className="text-xs font-medium text-gray-500">Products & Services</label>
+                            <p className="text-sm text-gray-900 leading-relaxed">{company.products_services}</p>
                           </div>
                         )}
                         {company?.market_position && (
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Market Position</label>
-                            <p className="text-gray-900 capitalize">{company.market_position}</p>
+                            <label className="text-xs font-medium text-gray-500">Market Position</label>
+                            <p className="text-sm text-gray-900 capitalize">{company.market_position}</p>
                           </div>
                         )}
                         {company?.founders_and_leadership && (
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Leadership</label>
-                            <p className="text-gray-900 leading-relaxed">{company.founders_and_leadership}</p>
+                            <label className="text-xs font-medium text-gray-500">Leadership</label>
+                            <p className="text-sm text-gray-900 leading-relaxed">{company.founders_and_leadership}</p>
                           </div>
                         )}
                       </CardContent>
@@ -291,13 +291,13 @@ export default function SimpleCompanyProfile() {
 
                     {/* Partnerships & Funding */}
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
-                          <TrendingUp className="w-5 h-5 text-gray-600" />
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base text-gray-900">
+                          <TrendingUp className="w-4 h-4 text-gray-600" />
                           Partnerships & Funding
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="pt-0 space-y-3">
                         {company?.key_clients_partners && (
                           <div>
                             <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
