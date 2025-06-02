@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search as SearchIcon, X } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
 import Fuse from 'fuse.js';
 
@@ -335,7 +336,9 @@ export default function SimpleCompanyProfile() {
                     {company?.name || 'Loading...'}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    {company?.category || 'Loading...'}
+                    {company?.category === 'FinTech' ? 'Data Recipient' : 
+                     company?.category === 'Bank' ? 'Data Provider' : 
+                     company?.category || 'Loading...'}
                   </p>
                 </div>
               </div>
@@ -433,7 +436,11 @@ export default function SimpleCompanyProfile() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Industry</label>
-                            <p className="text-sm text-gray-900">{company?.category}</p>
+                            <p className="text-sm text-gray-900">
+                              {company?.category === 'FinTech' ? 'Data Recipient' : 
+                               company?.category === 'Bank' ? 'Data Provider' : 
+                               company?.category || 'N/A'}
+                            </p>
                           </div>
                           {company?.description && (
                             <div className="lg:col-span-2">
@@ -603,7 +610,11 @@ export default function SimpleCompanyProfile() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Category</label>
-                            <p className="text-sm text-gray-900">{company?.category}</p>
+                            <p className="text-sm text-gray-900">
+                              {company?.category === 'FinTech' ? 'Data Recipient' : 
+                               company?.category === 'Bank' ? 'Data Provider' : 
+                               company?.category || 'N/A'}
+                            </p>
                           </div>
                         </div>
                         {company?.risk_clusters && (
@@ -626,6 +637,22 @@ export default function SimpleCompanyProfile() {
                             </div>
                           </div>
                         )}
+                      </CardContent>
+                    </Card>
+
+                    {/* 30-Day Risk Trend */}
+                    <Card className="lg:col-span-2">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base text-gray-900">
+                          <TrendingUp className="w-4 h-4 text-gray-600" />
+                          30-Day Risk Trend
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <RiskMonitoringInsight 
+                          className="shadow-none border-none"
+                          isWidget={false}
+                        />
                       </CardContent>
                     </Card>
 
