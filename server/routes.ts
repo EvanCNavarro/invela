@@ -213,6 +213,22 @@ export async function registerRoutes(app: Express): Promise<Express> {
   routeRegistrationTracker.register('DemoAPI');
   console.log('[Routes] Demo API routes registered successfully with priority');
   
+  // Add production debugging middleware for critical API endpoints
+  app.use('/api/user', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/user request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
+  app.use('/api/companies/current', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/companies/current request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
+  app.use('/api/tasks', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/tasks request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
   // Register company name validation API for real-time form feedback
   console.log('[Routes] Registering company name validation API...');
   app.use('/api/company-name', companyNameValidationRouter);

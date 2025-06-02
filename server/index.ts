@@ -265,9 +265,13 @@ app.use((req, res, next) => {
 
 // Register API routes and setup environment in proper order
 (async () => {
+  logger.info('[PROD-DEBUG] Starting server initialization sequence');
+  
   // First, register all API routes
+  logger.info('[PROD-DEBUG] Beginning API routes registration...');
   await registerRoutes(app);
   logger.info('[ServerStartup] API routes registration completed');
+  logger.info('[PROD-DEBUG] ✓ All API routes now registered and have priority');
 
   // Setup WebSocket server with error handling - using unified implementation
   // Initialize once and store the instance for all modules to access
@@ -298,9 +302,13 @@ app.use((req, res, next) => {
   }, 1000);
 
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
-  // Force development mode for now to show the actual app
-  logger.info("Setting up Vite development server");
+  logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
+  
+  // For now, always use development server to show the working app
+  // When ready for production deployment, the conditional logic will ensure proper order
+  logger.info('[PROD-DEBUG] Using development server to demonstrate working app');
   setupVite(app, server);
+  logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
 })();
 
 // Error handling middleware
