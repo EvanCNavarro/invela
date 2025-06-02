@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 
@@ -30,6 +31,16 @@ interface AccreditationData {
   status: string;
   daysUntilExpiration: number | null;
   isPermanent: boolean;
+}
+
+interface UserData {
+  id: number;
+  email: string;
+  full_name: string;
+  created_at: string;
+  updated_at: string;
+  last_login: string | null;
+  is_demo: boolean;
 }
 
 export default function SimpleCompanyProfile() {
@@ -213,20 +224,20 @@ export default function SimpleCompanyProfile() {
                           )}
                           {(company?.incorporation_year || company?.incorporationYear) && (
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Founded</label>
-                              <p className="text-gray-900">{company.incorporation_year || company.incorporationYear}</p>
+                              <label className="text-xs font-medium text-gray-500">Founded</label>
+                              <p className="text-sm text-gray-900">{company.incorporation_year || company.incorporationYear}</p>
                             </div>
                           )}
                           {company?.legal_structure && (
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Legal Structure</label>
-                              <p className="text-gray-900">{company.legal_structure}</p>
+                              <label className="text-xs font-medium text-gray-500">Legal Structure</label>
+                              <p className="text-sm text-gray-900">{company.legal_structure}</p>
                             </div>
                           )}
                           {company?.hq_address && (
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Headquarters</label>
-                              <p className="text-gray-900">{company.hq_address}</p>
+                              <label className="text-xs font-medium text-gray-500">Headquarters</label>
+                              <p className="text-sm text-gray-900">{company.hq_address}</p>
                             </div>
                           )}
                           {company?.website_url && (
@@ -366,10 +377,10 @@ export default function SimpleCompanyProfile() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           <div>
                             <label className="text-xs font-medium text-gray-500">S&P DARS Risk Score</label>
-                            <p className="text-sm text-gray-900 font-semibold">
+                            <p className="text-sm text-gray-900">
                               {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
                             </p>
                           </div>
@@ -391,9 +402,9 @@ export default function SimpleCompanyProfile() {
                           </div>
                         </div>
                         {company?.risk_clusters && (
-                          <div className="mt-4 pt-3 border-t border-gray-100">
-                            <label className="text-xs font-medium text-gray-500">Risk Dimensions</label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                          <div className="mt-6 pt-4 border-t border-gray-100">
+                            <label className="text-xs font-medium text-gray-500 mb-3 block">Risk Dimensions</label>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                               {Object.entries(company.risk_clusters)
                                 .filter(([key]) => {
                                   const mainDimensions = [
@@ -403,8 +414,8 @@ export default function SimpleCompanyProfile() {
                                   return mainDimensions.includes(key);
                                 })
                                 .map(([key, value]) => (
-                                  <div key={key} className="text-sm">
-                                    <span className="text-gray-500">{key}:</span> <span className="text-gray-900">{value as number}/100</span>
+                                  <div key={key}>
+                                    <span className="text-xs text-gray-500">{key}:</span> <span className="text-sm text-gray-900">{value as number}/100</span>
                                   </div>
                                 ))}
                             </div>
