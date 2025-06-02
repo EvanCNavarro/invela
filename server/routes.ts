@@ -2972,6 +2972,127 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Get risk trend data for a company
+  app.get("/api/companies/:id/risk-trend", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      // Get current company data
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          previous_risk_score: true,
+          updated_at: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      const currentRisk = company.risk_score || 0;
+      const previousRisk = company.previous_risk_score || currentRisk;
+      const change = currentRisk - previousRisk;
+      
+      let direction: 'up' | 'down' | 'stable' = 'stable';
+      if (change > 0) direction = 'up';
+      else if (change < 0) direction = 'down';
+
+      const percentage = previousRisk > 0 ? Math.abs((change / previousRisk) * 100) : 0;
+
+      res.json({
+        change,
+        direction,
+        percentage: Math.round(percentage * 100) / 100
+      });
+
+    } catch (error) {
+      console.error(`[Risk Trend] Error fetching risk trend for company ${req.params.id}:`, error);
+      res.status(500).json({
+        message: "Error fetching risk trend data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
+  // Get risk status summary for a company
+  app.get("/api/companies/:id/risk-status", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      // Get current company data
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          updated_at: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      const riskScore = company.risk_score || 0;
+      
+      // Calculate risk status based on score
+      let status = 'Stable';
+      if (riskScore >= 70) {
+        status = 'Blocked';
+      } else if (riskScore >= 50) {
+        status = 'Approaching Block';
+      }
+
+      // Calculate days in current status (simplified for now)
+      const updatedAt = new Date(company.updated_at);
+      const now = new Date();
+      const daysInStatus = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Determine trend based on risk score
+      let trend: 'improving' | 'stable' | 'deteriorating' = 'stable';
+      if (riskScore < 30) trend = 'improving';
+      else if (riskScore > 60) trend = 'deteriorating';
+
+      res.json({
+        status,
+        daysInStatus: Math.max(1, daysInStatus),
+        trend
+      });
+
+    } catch (error) {
+      console.error(`[Risk Status] Error fetching risk status for company ${req.params.id}:`, error);
+      res.status(500).json({
+        message: "Error fetching risk status data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     const startTime = Date.now();
     try {
