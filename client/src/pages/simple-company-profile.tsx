@@ -87,9 +87,7 @@ export default function SimpleCompanyProfile() {
   // Update active tab when URL changes
   useEffect(() => {
     const newTab = getTabFromURL();
-    if (newTab !== activeTab) {
-      setActiveTab(newTab);
-    }
+    setActiveTab(newTab);
   }, [location]);
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
