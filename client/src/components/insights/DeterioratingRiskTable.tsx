@@ -16,6 +16,11 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { TrendingDown, TrendingUp, Minus, ArrowRight, ArrowDown, ArrowUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  calculateRiskStatus, 
+  getRiskStatusColor,
+  type RiskMonitoringStatus 
+} from '@/lib/riskCalculations';
 
 
 // Define the types for our data
