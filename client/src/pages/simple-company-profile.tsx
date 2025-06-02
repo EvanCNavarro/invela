@@ -159,6 +159,46 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
+  // Fetch relationship data to determine network status
+  const { data: relationshipsData = [] } = useQuery<any[]>({
+    queryKey: ['/api/relationships'],
+    enabled: !!user && !!companyId,
+  });
+
+  // Calculate network relationship status for the current company
+  const networkStatus = useMemo(() => {
+    if (!relationshipsData || relationshipsData.length === 0 || !companyId) {
+      return { status: 'No Network', color: 'gray', description: 'Not in network' };
+    }
+
+    const companyIdNum = parseInt(companyId);
+    
+    // Find relationship for current company being viewed
+    const currentRelationship = relationshipsData.find(rel => 
+      rel.relatedCompanyId === companyIdNum || rel.relatedCompany?.id === companyIdNum
+    );
+
+    if (!currentRelationship) {
+      return { status: 'External', color: 'blue', description: 'External entity' };
+    }
+
+    // Map relationship status to display status
+    const relStatus = currentRelationship.status?.toLowerCase() || 'active';
+    
+    switch (relStatus) {
+      case 'active':
+        return { status: 'Active', color: 'green', description: 'Active network member' };
+      case 'monitoring':
+        return { status: 'Monitoring', color: 'yellow', description: 'Under monitoring' };
+      case 'blocked':
+        return { status: 'Blocked', color: 'red', description: 'Access blocked' };
+      case 'pending':
+        return { status: 'Pending', color: 'orange', description: 'Pending approval' };
+      default:
+        return { status: 'Active', color: 'green', description: 'Network member' };
+    }
+  }, [relationshipsData, companyId]);
+
   // Fetch users associated with this company
   const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({
     queryKey: [`/api/companies/${companyId}/users`],
@@ -273,16 +313,18 @@ export default function SimpleCompanyProfile() {
                   size="lg"
                 />
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900">{company?.name || 'Loading...'}</h1>
+                  <h1 className={`font-semibold text-gray-900 ${company?.name && company.name.length > 25 ? 'text-lg' : 'text-xl'}`}>
+                    {company?.name || 'Loading...'}
+                  </h1>
                   <p className="text-sm text-muted-foreground">
                     {company?.category || 'Loading...'}
                   </p>
                 </div>
               </div>
               
-              <div className="flex gap-4 flex-grow justify-end ml-auto">
+              <div className="flex gap-3 flex-grow justify-end ml-auto">
                 {/* S&P DARS Risk Score Box */}
-                <div className="border rounded-lg flex flex-col h-18 px-5 min-w-[180px] relative overflow-hidden">
+                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-blue-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
@@ -294,8 +336,33 @@ export default function SimpleCompanyProfile() {
                   </div>
                 </div>
 
+                {/* Network Status Box */}
+                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${
+                    networkStatus.color === 'green' ? 'from-green-600 to-green-300' :
+                    networkStatus.color === 'yellow' ? 'from-yellow-600 to-yellow-300' :
+                    networkStatus.color === 'red' ? 'from-red-600 to-red-300' :
+                    networkStatus.color === 'orange' ? 'from-orange-600 to-orange-300' :
+                    'from-gray-600 to-gray-300'
+                  }`}></div>
+                  <div className="flex flex-col items-center justify-center h-full py-2">
+                    <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
+                      Network
+                    </span>
+                    <span className={`text-sm font-bold ${
+                      networkStatus.color === 'green' ? 'text-green-700' :
+                      networkStatus.color === 'yellow' ? 'text-yellow-700' :
+                      networkStatus.color === 'red' ? 'text-red-700' :
+                      networkStatus.color === 'orange' ? 'text-orange-700' :
+                      'text-gray-700'
+                    }`}>
+                      {networkStatus.status}
+                    </span>
+                  </div>
+                </div>
+
                 {/* Accreditation Status Box */}
-                <div className="border rounded-lg flex flex-col h-18 px-5 min-w-[180px] relative overflow-hidden">
+                <div className="border rounded-lg flex flex-col h-18 px-4 min-w-[140px] relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 to-green-300"></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-1">
