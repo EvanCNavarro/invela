@@ -109,87 +109,69 @@ export function BentoOverview({
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {/* Website */}
-              <div className="flex items-start space-x-2">
-                <Globe className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Website</h3>
-                  {(() => {
-                    const websiteUrl = safeGet(company, 'websiteUrl', null);
-                    return websiteUrl ? (
-                      <a 
-                        href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline flex items-center"
-                      >
-                        {websiteUrl}
-                        <ExternalLink className="ml-1 h-3 w-3" />
-                      </a>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">Not available</p>
-                    );
-                  })()}
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Website</label>
+                {(() => {
+                  const websiteUrl = safeGet(company, 'websiteUrl', null);
+                  return websiteUrl ? (
+                    <a 
+                      href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline flex items-center"
+                    >
+                      {websiteUrl}
+                      <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  ) : (
+                    <span className="text-sm text-gray-900">Not available</span>
+                  );
+                })()}
               </div>
               
               {/* Category */}
-              <div className="flex items-start space-x-2">
-                <Tag className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Category</h3>
-                  <p className="text-sm text-gray-700">{safeGet(company, 'category')}</p>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Category</label>
+                <span className="text-sm text-gray-900">{safeGet(company, 'category')}</span>
               </div>
               
               {/* Employees */}
-              <div className="flex items-start space-x-2">
-                <Users className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Employees</h3>
-                  <p className="text-sm text-gray-700">{safeGet(company, 'numEmployees')}</p>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Employees</label>
+                <span className="text-sm text-gray-900">{safeGet(company, 'numEmployees')}</span>
               </div>
               
               {/* Founded */}
-              <div className="flex items-start space-x-2">
-                <Calendar className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Founded</h3>
-                  <p className="text-sm text-gray-700">
-                    {company.incorporationYear ? (
-                      <>
-                        {company.incorporationYear} <span className="text-gray-500">({companyAge} years ago)</span>
-                      </>
-                    ) : (
-                      'Not available'
-                    )}
-                  </p>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Founded</label>
+                <span className="text-sm text-gray-900">
+                  {company.incorporationYear ? (
+                    <>
+                      {company.incorporationYear} <span className="text-gray-500">({companyAge} years ago)</span>
+                    </>
+                  ) : (
+                    'Not available'
+                  )}
+                </span>
               </div>
               
               {/* Headquarters */}
-              <div className="flex items-start space-x-2">
-                <Building2 className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Headquarters</h3>
-                  <p className="text-sm text-gray-700">{company.hqAddress || 'Not available'}</p>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Headquarters</label>
+                <span className="text-sm text-gray-900">{company.hqAddress || 'Not available'}</span>
               </div>
               
               {/* Revenue Tier */}
-              <div className="flex items-start space-x-2">
-                <DollarSign className="h-4 w-4 text-gray-500 mt-0.5" />
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700">Annual Revenue</h3>
-                  <p className="text-sm text-gray-700">
-                    {company.revenue ? 
-                      formatRevenue(company.revenue) : 
-                      (company.revenueTier || company.revenue_tier) ? 
-                        formatRevenue(revenueValueMap[(company.revenueTier || company.revenue_tier).toLowerCase()]) :
-                        'Not available'
-                    }
-                  </p>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Annual Revenue</label>
+                <span className="text-sm text-gray-900">
+                  {company.revenue ? 
+                    formatRevenue(company.revenue) : 
+                    (company.revenueTier || company.revenue_tier) ? 
+                      formatRevenue(revenueValueMap[(company.revenueTier || company.revenue_tier).toLowerCase()]) :
+                      'Not available'
+                  }
+                </span>
               </div>
             </div>
           </CardContent>
@@ -276,14 +258,14 @@ export function BentoOverview({
             {/* Leadership Section */}
             {(company.foundersAndLeadership || company.founders_and_leadership) ? (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-1">Leadership</h3>
-                <p className="text-sm text-gray-700">{company.foundersAndLeadership || company.founders_and_leadership}</p>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Leadership</label>
+                <span className="text-sm text-gray-900">{company.foundersAndLeadership || company.founders_and_leadership}</span>
               </div>
             ) : null}
             
             {/* Users Preview */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-1">Team Members</h3>
+              <label className="text-xs font-medium text-gray-500 block mb-1">Team Members</label>
               {usersLoading ? (
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
@@ -380,15 +362,15 @@ export function BentoOverview({
             <div className="space-y-3">
               {/* Legal Structure */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700">Legal Structure</h3>
-                <p className="text-sm text-gray-700">{formatValue(company.legalStructure)}</p>
+                <label className="text-xs font-medium text-gray-500 block">Legal Structure</label>
+                <span className="text-sm text-gray-900">{formatValue(company.legalStructure)}</span>
               </div>
               
               {/* Certifications */}
               {company.certifications_compliance && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Certifications</h3>
-                  <p className="text-sm text-gray-700">{company.certifications_compliance}</p>
+                  <label className="text-xs font-medium text-gray-500 block">Certifications</label>
+                  <span className="text-sm text-gray-900">{company.certifications_compliance}</span>
                 </div>
               )}
             </div>

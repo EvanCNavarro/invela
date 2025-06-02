@@ -36,7 +36,7 @@
 import express, { Express, Router } from 'express';
 
 // Database ORM and query builders
-import { eq, and, gt, sql, or, isNull, inArray, desc } from 'drizzle-orm';
+import { eq, and, gt, sql, or, isNull, inArray, desc, asc } from 'drizzle-orm';
 import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus, accreditationHistory } from '@db/schema';
 
