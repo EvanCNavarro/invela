@@ -290,6 +290,8 @@ function Router(): JSX.Element {
           path="/network/company/:companyId" 
           component={({ params }: { params: { companyId: string } }) => {
             console.log('[Router] Rendering company profile page for ID:', params.companyId);
+            console.log('[Router Debug] Full location when rendering company profile:', location);
+            console.log('[Router Debug] Query parameters present:', location.includes('?') ? location.split('?')[1] : 'none');
             return (
               <ProtectedLayout>
                 <OnboardingWrapper>

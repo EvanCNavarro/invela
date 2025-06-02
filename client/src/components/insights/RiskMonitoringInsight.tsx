@@ -116,9 +116,21 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     logInsight('Company clicked - navigating to profile', { companyId });
     
     try {
-      // Navigate to company profile with Risk tab active
-      navigate(`/network/company/${companyId}?tab=risk`);
+      const targetUrl = `/network/company/${companyId}?tab=risk`;
+      console.log('[Navigation Debug] About to navigate to:', targetUrl);
+      console.log('[Navigation Debug] Current location before navigation:', location);
+      
+      // Use wouter's navigate function
+      navigate(targetUrl);
+      
+      // Additional debugging
+      setTimeout(() => {
+        console.log('[Navigation Debug] Location after navigate call:', location);
+        console.log('[Navigation Debug] Window location after navigate:', window.location.href);
+      }, 100);
+      
     } catch (error) {
+      console.error('[Navigation Debug] Navigation failed:', error);
       logInsight('Navigation error', { 
         error: error instanceof Error ? error.message : 'Unknown error',
         companyId 
