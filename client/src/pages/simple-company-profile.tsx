@@ -550,9 +550,7 @@ export default function SimpleCompanyProfile() {
                               <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Email
                               </th>
-                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Account Type
-                              </th>
+
                               <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Created
                               </th>
@@ -566,19 +564,14 @@ export default function SimpleCompanyProfile() {
                               <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
                                 <td className="py-3 px-6">
                                   <div className="flex items-center">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                      <User className="w-4 h-4 text-blue-600" />
+                                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                      <User className="w-3 h-3 text-blue-600" />
                                     </div>
                                     <span className="text-sm font-medium text-gray-900">{user.full_name}</span>
                                   </div>
                                 </td>
                                 <td className="py-3 px-6">
                                   <span className="text-sm text-gray-700">{user.email}</span>
-                                </td>
-                                <td className="py-3 px-6">
-                                  <Badge variant={user.is_demo_user ? "secondary" : "default"} className="text-xs">
-                                    {user.is_demo_user ? "Demo" : "Standard"}
-                                  </Badge>
                                 </td>
                                 <td className="py-3 px-6">
                                   <span className="text-sm text-gray-700">
@@ -616,12 +609,7 @@ export default function SimpleCompanyProfile() {
                       </div>
                     )}
                     
-                    {/* Debug info for development */}
-                    {usersResponse && (
-                      <div className="px-6 py-2 border-t bg-blue-50/50 text-xs text-blue-600">
-                        Debug: API returned {usersResponse.meta.count} users in {usersResponse.meta.queryTime}
-                      </div>
-                    )}
+
                   </div>
                 </TabsContent>
               </div>
