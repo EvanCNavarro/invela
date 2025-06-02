@@ -140,13 +140,6 @@ export default function SimpleCompanyProfile() {
                     <span className="text-2xl font-bold text-gray-900">
                       {accreditationData?.status === 'ACTIVE' ? 'APPROVED' : (company?.accreditation_status || 'PENDING')}
                     </span>
-                    {accreditationData && accreditationData.daysUntilExpiration !== null && accreditationData.daysUntilExpiration !== undefined && (
-                      <span className="text-xs text-gray-500 mt-0.5">
-                        {accreditationData.isPermanent ? 'No expiration' : 
-                         accreditationData.daysUntilExpiration > 0 ? 
-                         `${accreditationData.daysUntilExpiration} days` : 'Expired'}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -166,7 +159,7 @@ export default function SimpleCompanyProfile() {
               </TabsTrigger>
               <TabsTrigger value="risk" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
-                Risk Analysis
+                Risk
               </TabsTrigger>
             </TabsList>
 
@@ -174,101 +167,178 @@ export default function SimpleCompanyProfile() {
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5" />
-                            Company Information
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium text-gray-500">Company Name</label>
-                            <p className="text-gray-900">{company?.name || 'Loading...'}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-500">Category</label>
-                            <p className="text-gray-900">{company?.category || 'Loading...'}</p>
-                          </div>
+                    {/* Company Header Summary */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          <CompanyLogo
+                            companyId={company?.id}
+                            companyName={company?.name}
+                            size="xl"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{company?.name}</h2>
+                          <p className="text-lg text-gray-600 mb-3">{company?.category}</p>
                           {company?.description && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Description</label>
-                              <p className="text-gray-900">{company.description}</p>
-                            </div>
+                            <p className="text-gray-700 leading-relaxed">{company.description}</p>
                           )}
-                          {company?.websiteUrl && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Website</label>
-                              <a 
-                                href={company.websiteUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline flex items-center gap-1"
-                              >
-                                <Globe className="w-4 h-4" />
-                                {company.websiteUrl}
-                              </a>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
+                    </div>
 
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Users className="w-5 h-5" />
+                    {/* Key Metrics Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">
+                          {company?.risk_score || company?.riskScore || company?.chosen_score || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500">Risk Score</div>
+                      </div>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-green-600 mb-1">
+                          {accreditationData?.status === 'ACTIVE' ? 'APPROVED' : (company?.accreditation_status || 'PENDING')}
+                        </div>
+                        <div className="text-sm text-gray-500">Accreditation</div>
+                      </div>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600 mb-1">
+                          {company?.numEmployees || company?.employee_count || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500">Employees</div>
+                      </div>
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                        <div className="text-2xl font-bold text-orange-600 mb-1">
+                          {company?.incorporationYear || company?.founded_year || "N/A"}
+                        </div>
+                        <div className="text-sm text-gray-500">Founded</div>
+                      </div>
+                    </div>
+
+                    {/* Detailed Information Sections */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Company Details */}
+                      <Card className="h-fit">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center gap-2 text-lg">
+                            <Building2 className="w-5 h-5 text-blue-600" />
                             Company Details
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          {company?.numEmployees && (
+                          <div className="grid grid-cols-1 gap-3">
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Number of Employees</label>
-                              <p className="text-gray-900">{company.numEmployees}</p>
+                              <label className="text-sm font-medium text-gray-500">Legal Name</label>
+                              <p className="text-gray-900 font-medium">{company?.name}</p>
                             </div>
-                          )}
-                          {company?.incorporationYear && (
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Incorporation Year</label>
-                              <p className="text-gray-900 flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                {company.incorporationYear}
-                              </p>
+                              <label className="text-sm font-medium text-gray-500">Industry</label>
+                              <p className="text-gray-900">{company?.category}</p>
                             </div>
-                          )}
-                          {company?.riskScore !== undefined && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Risk Assessment</label>
-                              <div className="flex items-center gap-2">
-                                <span className="text-2xl font-bold text-gray-900">{company.riskScore}</span>
-                                <Badge variant={company.riskScore < 30 ? "default" : company.riskScore < 70 ? "secondary" : "destructive"}>
-                                  {company.riskScore < 30 ? "Low Risk" : company.riskScore < 70 ? "Medium Risk" : "High Risk"}
-                                </Badge>
+                            {company?.websiteUrl && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Website</label>
+                                <a 
+                                  href={company.websiteUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                  <Globe className="w-4 h-4" />
+                                  {company.websiteUrl}
+                                </a>
                               </div>
-                            </div>
-                          )}
+                            )}
+                            {company?.phone && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Phone</label>
+                                <p className="text-gray-900">{company.phone}</p>
+                              </div>
+                            )}
+                            {company?.address && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Address</label>
+                                <p className="text-gray-900">{company.address}</p>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Business Information */}
+                      <Card className="h-fit">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center gap-2 text-lg">
+                            <Users className="w-5 h-5 text-green-600" />
+                            Business Information
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 gap-3">
+                            {(company?.incorporationYear || company?.founded_year) && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Founded</label>
+                                <p className="text-gray-900 flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {company.incorporationYear || company.founded_year}
+                                </p>
+                              </div>
+                            )}
+                            {(company?.numEmployees || company?.employee_count) && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Number of Employees</label>
+                                <p className="text-gray-900">{company.numEmployees || company.employee_count}</p>
+                              </div>
+                            )}
+                            {company?.revenue_tier && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Revenue Category</label>
+                                <p className="text-gray-900">{company.revenue_tier}</p>
+                              </div>
+                            )}
+                            {company?.business_model && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Business Model</label>
+                                <p className="text-gray-900">{company.business_model}</p>
+                              </div>
+                            )}
+                            {company?.target_market && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-500">Target Market</label>
+                                <p className="text-gray-900">{company.target_market}</p>
+                              </div>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     </div>
 
-                    {/* Additional business information */}
-                    {(company?.productsServices || company?.keyClientsPartners) && (
+                    {/* Services and Partnerships */}
+                    {(company?.productsServices || company?.keyClientsPartners || company?.services_offered) && (
                       <Card>
-                        <CardHeader>
-                          <CardTitle>Business Information</CardTitle>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center gap-2 text-lg">
+                            <TrendingUp className="w-5 h-5 text-purple-600" />
+                            Products & Services
+                          </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          {company.productsServices && (
+                          {(company?.productsServices || company?.services_offered) && (
                             <div>
                               <label className="text-sm font-medium text-gray-500">Products & Services</label>
-                              <p className="text-gray-900">{company.productsServices}</p>
+                              <p className="text-gray-900 leading-relaxed">{company.productsServices || company.services_offered}</p>
                             </div>
                           )}
-                          {company.keyClientsPartners && (
+                          {company?.keyClientsPartners && (
                             <div>
                               <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
-                              <p className="text-gray-900">{company.keyClientsPartners}</p>
+                              <p className="text-gray-900 leading-relaxed">{company.keyClientsPartners}</p>
+                            </div>
+                          )}
+                          {company?.compliance_certifications && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">Compliance & Certifications</label>
+                              <p className="text-gray-900 leading-relaxed">{company.compliance_certifications}</p>
                             </div>
                           )}
                         </CardContent>
