@@ -263,47 +263,51 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes (including demo API) - wrap in async function
+// Register API routes and setup environment in proper order
 (async () => {
+  // First, register all API routes
   await registerRoutes(app);
-})();
+  logger.info('[ServerStartup] API routes registration completed');
 
-// Setup WebSocket server with error handling - using unified implementation
-// Initialize once and store the instance for all modules to access
-// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
-const wssInstance = setupWebSocketServer(server);
-logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+  // Setup WebSocket server with error handling - using unified implementation
+  // Initialize once and store the instance for all modules to access
+  // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
+  const wssInstance = setupWebSocketServer(server);
+  logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
-// Ensure old-style handlers can still access the WebSocket server
-// by importing functions from the utilities that need access
-import { registerWebSocketServer } from './utils/task-update';
-import { setWebSocketServer } from './utils/task-broadcast';
+  // Ensure old-style handlers can still access the WebSocket server
+  // by importing functions from the utilities that need access
+  const { registerWebSocketServer } = await import('./utils/task-update');
+  const { setWebSocketServer } = await import('./utils/task-broadcast');
 
-// Register WebSocket server with task-update utility for backward compatibility
-registerWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+  // Register WebSocket server with task-update utility for backward compatibility
+  registerWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-update utility');
 
-// Set WebSocket server reference for task-broadcast utility
-setWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+  // Set WebSocket server reference for task-broadcast utility
+  setWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
 
-// Log WebSocket server initialization details for debugging
-setTimeout(() => {
-  if (wssInstance && wssInstance.clients) {
-    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+  // Log WebSocket server initialization details for debugging
+  setTimeout(() => {
+    if (wssInstance && wssInstance.clients) {
+      logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+    } else {
+      logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+    }
+  }, 1000);
+
+  // CRITICAL: Set up frontend serving AFTER API routes are fully registered
+  if (process.env.NODE_ENV !== "production") {
+    logger.info("Setting up Vite development server");
+    setupVite(app, server);
   } else {
-    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+    // Serve static files only in production, AFTER API routes are fully registered
+    logger.info("Setting up production static file serving");
+    serveStatic(app);
+    logger.info('[ServerStartup] Production static file serving configured');
   }
-}, 1000);
-
-// Set up development environment
-if (process.env.NODE_ENV !== "production") {
-  logger.info("Setting up Vite development server");
-  setupVite(app, server);
-} else {
-  // Serve static files only in production, after API routes
-  serveStatic(app);
-}
+})();
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
