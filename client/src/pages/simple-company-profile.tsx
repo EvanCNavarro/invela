@@ -441,9 +441,9 @@ export default function SimpleCompanyProfile() {
                     </Card>
                   </div>
                 </TabsContent>
-              </Tabs>
+              </div>
             </div>
-          </div>
+          </Tabs>
         </div>
       </PageTemplate>
     </DashboardLayout>
