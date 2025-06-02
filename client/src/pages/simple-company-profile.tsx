@@ -43,6 +43,24 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
+  // Debug logging after data is received
+  if (company) {
+    console.log('[Company Profile Debug] Received company data:', company);
+    console.log('[Company Profile Debug] Business fields check:', {
+      products_services: company?.products_services,
+      market_position: company?.market_position,
+      founders_and_leadership: company?.founders_and_leadership,
+      key_clients_partners: company?.key_clients_partners,
+      investors: company?.investors,
+      funding_stage: company?.funding_stage,
+      certifications_compliance: company?.certifications_compliance
+    });
+  }
+
+  if (error) {
+    console.error('[Company Profile Debug] Error fetching company:', error);
+  }
+
   // Fetch accreditation data from separate endpoint like dashboard does
   const { data: accreditationData } = useQuery<AccreditationData>({
     queryKey: [`/api/companies/${companyId}/accreditation`],
