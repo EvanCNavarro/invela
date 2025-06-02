@@ -196,7 +196,7 @@ export default function SimpleCompanyProfile() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           <div>
                             <label className="text-sm font-medium text-gray-500">Legal Name</label>
                             <p className="text-gray-900">{company?.name}</p>
@@ -254,68 +254,64 @@ export default function SimpleCompanyProfile() {
                     </Card>
 
                     {/* Business Information */}
-                    {(company?.products_services || company?.market_position || company?.founders_and_leadership) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
-                            <Users className="w-5 h-5 text-gray-600" />
-                            Business Information
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {company?.products_services && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Products & Services</label>
-                              <p className="text-gray-900 leading-relaxed">{company.products_services}</p>
-                            </div>
-                          )}
-                          {company?.market_position && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Market Position</label>
-                              <p className="text-gray-900 capitalize">{company.market_position}</p>
-                            </div>
-                          )}
-                          {company?.founders_and_leadership && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Leadership</label>
-                              <p className="text-gray-900 leading-relaxed">{company.founders_and_leadership}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
+                          <Users className="w-5 h-5 text-gray-600" />
+                          Business Information
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {company?.products_services && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Products & Services</label>
+                            <p className="text-gray-900 leading-relaxed">{company.products_services}</p>
+                          </div>
+                        )}
+                        {company?.market_position && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Market Position</label>
+                            <p className="text-gray-900 capitalize">{company.market_position}</p>
+                          </div>
+                        )}
+                        {company?.founders_and_leadership && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Leadership</label>
+                            <p className="text-gray-900 leading-relaxed">{company.founders_and_leadership}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
 
                     {/* Partnerships & Funding */}
-                    {(company?.key_clients_partners || company?.investors || company?.funding_stage) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
-                            <TrendingUp className="w-5 h-5 text-gray-600" />
-                            Partnerships & Funding
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {company?.key_clients_partners && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
-                              <p className="text-gray-900 leading-relaxed">{company.key_clients_partners}</p>
-                            </div>
-                          )}
-                          {company?.investors && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Investors</label>
-                              <p className="text-gray-900 leading-relaxed">{company.investors}</p>
-                            </div>
-                          )}
-                          {company?.funding_stage && (
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Funding Stage</label>
-                              <p className="text-gray-900">{company.funding_stage}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
+                          <TrendingUp className="w-5 h-5 text-gray-600" />
+                          Partnerships & Funding
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {company?.key_clients_partners && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Key Clients & Partners</label>
+                            <p className="text-gray-900 leading-relaxed">{company.key_clients_partners}</p>
+                          </div>
+                        )}
+                        {company?.investors && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Investors</label>
+                            <p className="text-gray-900 leading-relaxed">{company.investors}</p>
+                          </div>
+                        )}
+                        {company?.funding_stage && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Funding Stage</label>
+                            <p className="text-gray-900">{company.funding_stage}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
 
                     {/* Compliance & Certifications */}
                     {company?.certifications_compliance && (
