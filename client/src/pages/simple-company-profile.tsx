@@ -67,15 +67,21 @@ export default function SimpleCompanyProfile() {
   // Parse URL query parameters to get the tab
   const getTabFromURL = (): string => {
     try {
-      const urlParams = new URLSearchParams(location.split('?')[1] || '');
+      // Use window.location.search directly instead of wouter's location
+      // This ensures we always get query parameters regardless of router behavior
+      const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
+      
       // Validate tab parameter against allowed values
       const validTabs = ['overview', 'users', 'risk'];
       const result = validTabs.includes(tabParam || '') ? (tabParam || 'overview') : 'overview';
-      console.log('[Tab Debug] getTabFromURL - location:', location, 'tabParam:', tabParam, 'result:', result);
+      
+      console.log('[Tab Debug] getTabFromURL - window.location.search:', window.location.search, 
+                  'tabParam:', tabParam, 'result:', result);
+      console.log('[Tab Debug] getTabFromURL - wouter location for comparison:', location);
       return result;
     } catch (error) {
-      console.error('[Tab Debug] Error parsing URL:', error, 'location:', location);
+      console.error('[Tab Debug] Error parsing URL parameters:', error, 'window.location.search:', window.location.search);
       return 'overview';
     }
   };
@@ -84,9 +90,15 @@ export default function SimpleCompanyProfile() {
 
   // Phase 2: Sync with URL on component mount
   useEffect(() => {
-    const initialTab = getTabFromURL();
-    console.log('[Tab Debug] Mount - parsing URL for initial tab:', initialTab, 'from location:', location);
-    setActiveTab(initialTab);
+    try {
+      const initialTab = getTabFromURL();
+      console.log('[Tab Debug] Mount - parsing URL for initial tab:', initialTab, 'from window.location.search:', window.location.search);
+      console.log('[Tab Debug] Mount - wouter location for comparison:', location);
+      setActiveTab(initialTab);
+    } catch (error) {
+      console.error('[Tab Debug] Error during mount tab parsing:', error);
+      setActiveTab('overview'); // Safe fallback
+    }
   }, []); // Empty dependency - runs once on mount
 
   // Handle tab changes with URL updates
@@ -99,11 +111,24 @@ export default function SimpleCompanyProfile() {
   };
 
   // Phase 3: Update active tab when URL changes
+  // Listen to both wouter location changes and browser navigation events
   useEffect(() => {
     const newTab = getTabFromURL();
-    console.log('[Tab Debug] Location change - updating tab from:', activeTab, 'to:', newTab, 'location:', location);
+    console.log('[Tab Debug] Location change - updating tab from:', activeTab, 'to:', newTab, 'wouter location:', location);
     setActiveTab(newTab);
   }, [location]);
+
+  // Additional listener for direct browser navigation (back/forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const newTab = getTabFromURL();
+      console.log('[Tab Debug] Browser navigation - updating tab to:', newTab);
+      setActiveTab(newTab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
     queryKey: [`/api/companies/${companyId}/profile`],
