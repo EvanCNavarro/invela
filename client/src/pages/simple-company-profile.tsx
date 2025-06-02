@@ -167,25 +167,7 @@ export default function SimpleCompanyProfile() {
               <div className="p-6">
                 <TabsContent value="overview" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   <div className="space-y-6">
-                    {/* Company Header */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <CompanyLogo
-                            companyId={company?.id}
-                            companyName={company?.name}
-                            size="lg"
-                          />
-                        </div>
-                        <div className="flex-grow">
-                          <h1 className="text-2xl font-bold text-gray-900 mb-1">{company?.name}</h1>
-                          <p className="text-gray-600 mb-3">{company?.category}</p>
-                          {company?.description && (
-                            <p className="text-gray-700 leading-relaxed">{company.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+
 
                     {/* Essential Details */}
                     <Card>
@@ -196,7 +178,7 @@ export default function SimpleCompanyProfile() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-4">
                           <div>
                             <label className="text-sm font-medium text-gray-500">Legal Name</label>
                             <p className="text-gray-900">{company?.name}</p>
@@ -205,6 +187,12 @@ export default function SimpleCompanyProfile() {
                             <label className="text-sm font-medium text-gray-500">Industry</label>
                             <p className="text-gray-900">{company?.category}</p>
                           </div>
+                          {company?.description && (
+                            <div className="lg:col-span-2">
+                              <label className="text-sm font-medium text-gray-500">Description</label>
+                              <p className="text-gray-900 leading-relaxed">{company.description}</p>
+                            </div>
+                          )}
                           {(company?.incorporation_year || company?.incorporationYear) && (
                             <div>
                               <label className="text-sm font-medium text-gray-500">Founded</label>

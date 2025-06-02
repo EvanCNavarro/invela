@@ -1404,7 +1404,17 @@ export async function registerRoutes(app: Express): Promise<Express> {
         available_tabs: companies.available_tabs,
         logo_id: companies.logo_id,
         created_at: companies.created_at,
-        updated_at: companies.updated_at
+        updated_at: companies.updated_at,
+        // Business information fields
+        products_services: companies.products_services,
+        market_position: companies.market_position,
+        founders_and_leadership: companies.founders_and_leadership,
+        key_clients_partners: companies.key_clients_partners,
+        investors: companies.investors,
+        funding_stage: companies.funding_stage,
+        legal_structure: companies.legal_structure,
+        hq_address: companies.hq_address,
+        certifications_compliance: companies.certifications_compliance
       })
       .from(companies)
       .where(eq(companies.id, companyId))
