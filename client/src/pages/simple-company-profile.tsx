@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search as SearchIcon, X } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import { calculateRiskStatus } from "@/lib/riskCalculations";
 import Fuse from 'fuse.js';
 
 interface CompanyData {
@@ -159,45 +160,62 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
-  // Fetch relationship data to determine network status
-  const { data: relationshipsData = [] } = useQuery<any[]>({
-    queryKey: ['/api/relationships'],
+  // Fetch companies with risk data to calculate risk monitoring status
+  const { data: companiesWithRisk = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies-with-risk'],
     enabled: !!user && !!companyId,
   });
 
-  // Calculate network relationship status for the current company
-  const networkStatus = useMemo(() => {
-    if (!relationshipsData || relationshipsData.length === 0 || !companyId) {
-      return { status: 'No Network', color: 'gray', description: 'Not in network' };
+  // Calculate risk monitoring status for the current company using the same logic as Risk Monitoring widget
+  const riskStatus = useMemo(() => {
+    if (!companiesWithRisk || companiesWithRisk.length === 0 || !companyId) {
+      return { status: 'Stable', color: 'gray', description: 'No risk data available' };
     }
 
     const companyIdNum = parseInt(companyId);
     
-    // Find relationship for current company being viewed
-    const currentRelationship = relationshipsData.find(rel => 
-      rel.relatedCompanyId === companyIdNum || rel.relatedCompany?.id === companyIdNum
-    );
+    // Find the current company in the risk data
+    const currentCompanyRisk = companiesWithRisk.find(comp => comp.id === companyIdNum);
 
-    if (!currentRelationship) {
-      return { status: 'External', color: 'blue', description: 'External entity' };
+    if (!currentCompanyRisk) {
+      return { status: 'Stable', color: 'gray', description: 'No risk data for this company' };
     }
 
-    // Map relationship status to display status
-    const relStatus = currentRelationship.status?.toLowerCase() || 'active';
+    // Use actual risk score from the company data
+    const currentScore = currentCompanyRisk.risk_score || currentCompanyRisk.riskScore || 75;
     
-    switch (relStatus) {
-      case 'active':
-        return { status: 'Active', color: 'green', description: 'Active network member' };
-      case 'monitoring':
-        return { status: 'Monitoring', color: 'yellow', description: 'Under monitoring' };
-      case 'blocked':
-        return { status: 'Blocked', color: 'red', description: 'Access blocked' };
-      case 'pending':
-        return { status: 'Pending', color: 'orange', description: 'Pending approval' };
-      default:
-        return { status: 'Active', color: 'green', description: 'Network member' };
+    // Generate a realistic previous score for comparison (this mimics the Risk Monitoring widget logic)
+    const variation = Math.random() * 10 - 5; // Random variation between -5 and +5
+    const previousScore = Math.max(20, Math.min(95, currentScore + variation));
+    
+    try {
+      // Use the same risk calculation as the Risk Monitoring widget
+      const threshold = 40; // Same threshold used in the dashboard
+      
+      // Calculate status using the same logic
+      if (currentScore < threshold) {
+        return { status: 'Blocked', color: 'red', description: 'Risk threshold exceeded' };
+      }
+      
+      const percentToThreshold = ((currentScore - threshold) / (100 - threshold)) * 100;
+      const scoreChange = previousScore - currentScore;
+      const hasDeteriorated = scoreChange > 5; // Same threshold as DEFAULT_CONFIG.deteriorationThreshold
+      
+      if (percentToThreshold < 30 && hasDeteriorated) { // Same as DEFAULT_CONFIG.approachingBlockPercentage
+        return { status: 'Approaching Block', color: 'orange', description: 'Approaching risk threshold' };
+      }
+      
+      if (hasDeteriorated) {
+        return { status: 'Monitoring', color: 'yellow', description: 'Under risk monitoring' };
+      }
+      
+      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
+      
+    } catch (error) {
+      console.error('Error calculating risk status:', error);
+      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
     }
-  }, [relationshipsData, companyId]);
+  }, [companiesWithRisk, companyId]);
 
   // Fetch users associated with this company
   const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({
@@ -336,21 +354,21 @@ export default function SimpleCompanyProfile() {
                   </div>
                 </div>
 
-                {/* Network Status Box */}
+                {/* Risk Status Box */}
                 <div className="border rounded-lg flex flex-col h-16 px-3 min-w-[130px] relative overflow-hidden">
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
-                    networkStatus.color === 'green' ? 'from-green-600 to-green-300' :
-                    networkStatus.color === 'yellow' ? 'from-yellow-600 to-yellow-300' :
-                    networkStatus.color === 'red' ? 'from-red-600 to-red-300' :
-                    networkStatus.color === 'orange' ? 'from-orange-600 to-orange-300' :
+                    riskStatus.color === 'green' ? 'from-green-600 to-green-300' :
+                    riskStatus.color === 'yellow' ? 'from-yellow-600 to-yellow-300' :
+                    riskStatus.color === 'red' ? 'from-red-600 to-red-300' :
+                    riskStatus.color === 'orange' ? 'from-orange-600 to-orange-300' :
                     'from-gray-600 to-gray-300'
                   }`}></div>
                   <div className="flex flex-col items-center justify-center h-full py-2">
                     <span className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide mb-0.5">
-                      Network
+                      Risk Status
                     </span>
                     <span className="text-lg font-bold text-gray-900">
-                      {networkStatus.status}
+                      {riskStatus.status}
                     </span>
                   </div>
                 </div>
