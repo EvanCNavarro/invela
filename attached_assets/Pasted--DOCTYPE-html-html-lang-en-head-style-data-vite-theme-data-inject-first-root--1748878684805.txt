@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style data-vite-theme="" data-inject-first="">:root {
+    --background: 0 0% 100%;
+--foreground: 20 14.3% 4.1%;
+--muted: 60 4.8% 95.9%;
+--muted-foreground: 25 5.3% 44.7%;
+--popover: 0 0% 100%;
+--popover-foreground: 20 14.3% 4.1%;
+--card: 0 0% 100%;
+--card-foreground: 20 14.3% 4.1%;
+--border: 20 5.9% 90%;
+--input: 20 5.9% 90%;
+--primary: 202 66% 36%;
+--primary-foreground: 206 37% 98%;
+--secondary: 60 4.8% 95.9%;
+--secondary-foreground: 24 9.8% 10%;
+--accent: 60 4.8% 95.9%;
+--accent-foreground: 24 9.8% 10%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 20 14.3% 4.1%;
+--radius: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+      --background: 240 10% 3.9%;
+--foreground: 0 0% 98%;
+--muted: 240 3.7% 15.9%;
+--muted-foreground: 240 5% 64.9%;
+--popover: 240 10% 3.9%;
+--popover-foreground: 0 0% 98%;
+--card: 240 10% 3.9%;
+--card-foreground: 0 0% 98%;
+--border: 240 3.7% 15.9%;
+--input: 240 3.7% 15.9%;
+--primary: 202 66% 36%;
+--primary-foreground: 206 37% 98%;
+--secondary: 240 3.7% 15.9%;
+--secondary-foreground: 0 0% 98%;
+--accent: 240 3.7% 15.9%;
+--accent-foreground: 0 0% 98%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 240 4.9% 83.9%;
+--radius: 0.5rem;
+  }
+}
+.light {
+    --background: 0 0% 100%;
+--foreground: 20 14.3% 4.1%;
+--muted: 60 4.8% 95.9%;
+--muted-foreground: 25 5.3% 44.7%;
+--popover: 0 0% 100%;
+--popover-foreground: 20 14.3% 4.1%;
+--card: 0 0% 100%;
+--card-foreground: 20 14.3% 4.1%;
+--border: 20 5.9% 90%;
+--input: 20 5.9% 90%;
+--primary: 202 66% 36%;
+--primary-foreground: 206 37% 98%;
+--secondary: 60 4.8% 95.9%;
+--secondary-foreground: 24 9.8% 10%;
+--accent: 60 4.8% 95.9%;
+--accent-foreground: 24 9.8% 10%;
+--destructive: 0 84.2% 60.2%;
+--destructive-foreground: 60 9.1% 97.8%;
+--ring: 20 14.3% 4.1%;
+--radius: 0.5rem;
+}
+.dark {
+    --background: 240 10% 3.9%;
+--foreground: 0 0% 98%;
+--muted: 240 3.7% 15.9%;
+--muted-foreground: 240 5% 64.9%;
+--popover: 240 10% 3.9%;
+--popover-foreground: 0 0% 98%;
+--card: 240 10% 3.9%;
+--card-foreground: 0 0% 98%;
+--border: 240 3.7% 15.9%;
+--input: 240 3.7% 15.9%;
+--primary: 202 66% 36%;
+--primary-foreground: 206 37% 98%;
+--secondary: 240 3.7% 15.9%;
+--secondary-foreground: 0 0% 98%;
+--accent: 240 3.7% 15.9%;
+--accent-foreground: 0 0% 98%;
+--destructive: 0 62.8% 30.6%;
+--destructive-foreground: 0 0% 98%;
+--ring: 240 4.9% 83.9%;
+--radius: 0.5rem;
+}</style>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invela</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Allow all hosts for Vite preview in Replit -->
+    <script>
+      window.__vite_allow_replit_domain = true;
+      console.log('✅ Vite host restrictions override enabled');
+    </script>
+    <!-- Proper fix for Vite WebSocket connection issues in Replit environment -->
+    <script>
+      /**
+       * Smart WebSocket Connection Manager for Vite HMR in Replit
+       * 
+       * This implementation correctly handles WebSocket connections for Vite in the Replit environment:
+       * 1. It properly detects and fixes incorrect 'undefined' port issues
+       * 2. It implements connection backoff to prevent excessive reconnection attempts
+       * 3. It maintains a proper connection lifecycle with events and state tracking
+       * 4. It provides a clean fallback mechanism when connections cannot be established
+       * 5. It completely eliminates connection log spam
+       */
+      (function() {
+        // Original WebSocket implementation
+        const OriginalWebSocket = window.WebSocket;
+        
+        // Connection management
+        const CONNECTION_STATE = {
+          // Track all active connection attempts by URL
+          pendingConnections: new Map(),
+          
+          // Track failed connection attempts to implement backoff
+          failedAttempts: new Map(),
+          
+          // Maximum reconnection attempts before giving up
+          maxReconnectAttempts: 3,
+          
+          // Base delay for exponential backoff (in ms)
+          baseReconnectDelay: 1000,
+          
+          // Logging control - only log first occurrence of each unique issue
+          seenMessages: new Set(),
+          
+          // Initialize - run only once
+          initialized: false
+        };
+        
+        // Custom WebSocket implementation with proper connection handling
+        class SmartWebSocket {
+          constructor(url, protocols) {
+            this._url = url;
+            this._protocols = protocols;
+            this._callbacks = {
+              open: null,
+              message: null,
+              close: null,
+              error: null
+            };
+            
+            // Handle events properly
+            this._listeners = {
+              open: new Set(),
+              message: new Set(),
+              close: new Set(),
+              error: new Set()
+            };
+            
+            // Initialize with correct state
+            this.readyState = 0; // CONNECTING
+            this.CONNECTING = 0;
+            this.OPEN = 1;
+            this.CLOSING = 2;
+            this.CLOSED = 3;
+            
+            // Connect with proper URL handling
+            this._connect();
+          }
+          
+          // Fix the URL if needed and establish connection
+          _connect() {
+            let connectionUrl = this._url;
+            
+            // Only fix Vite HMR URLs with undefined port
+            if (typeof connectionUrl === 'string' && 
+                connectionUrl.includes('vite') && 
+                (connectionUrl.includes('localhost:undefined') || connectionUrl.endsWith(':undefined/'))) {
+              
+              // Fix the URL with the correct port
+              const oldUrl = connectionUrl;
+              connectionUrl = connectionUrl.replace(/localhost:undefined/, 'localhost:5000');
+              
+              // Log the URL fix only once per unique URL pattern
+              const logKey = `fixed-${oldUrl}-to-${connectionUrl}`;
+              if (!CONNECTION_STATE.seenMessages.has(logKey)) {
+                console.log(`[WebSocket] Fixed Vite URL: ${oldUrl} → ${connectionUrl}`);
+                CONNECTION_STATE.seenMessages.add(logKey);
+              }
+              
+              // Check if we should implement backoff for this URL
+              const failCount = CONNECTION_STATE.failedAttempts.get(connectionUrl) || 0;
+              if (failCount > CONNECTION_STATE.maxReconnectAttempts) {
+                // Too many failures, use a dummy socket
+                this._setupDummySocket();
+                
+                // Log backoff only once
+                const backoffKey = `backoff-${connectionUrl}`;
+                if (!CONNECTION_STATE.seenMessages.has(backoffKey)) {
+                  console.warn(`[WebSocket] Too many failed connection attempts to ${connectionUrl}, using fallback mode`);
+                  CONNECTION_STATE.seenMessages.add(backoffKey);
+                }
+                return;
+              }
+              
+              // Implement backoff delay if we have previous failures
+              if (failCount > 0) {
+                const delay = CONNECTION_STATE.baseReconnectDelay * Math.pow(2, failCount - 1);
+                setTimeout(() => this._establishConnection(connectionUrl), delay);
+                return;
+              }
+            }
+            
+            // Establish connection directly for initial or non-Vite connections
+            this._establishConnection(connectionUrl);
+          }
+          
+          // Create the actual WebSocket connection
+          _establishConnection(url) {
+            try {
+              // Track this connection attempt
+              CONNECTION_STATE.pendingConnections.set(url, Date.now());
+              
+              // Create the actual WebSocket
+              this._socket = new OriginalWebSocket(url, this._protocols);
+              
+              // Set up event handling with proper binding
+              this._socket.onopen = (event) => this._handleOpen(event);
+              this._socket.onmessage = (event) => this._handleMessage(event);
+              this._socket.onclose = (event) => this._handleClose(event);
+              this._socket.onerror = (event) => this._handleError(event);
+            } catch (err) {
+              // Connection failed immediately
+              this._recordFailure(url);
+              this._setupDummySocket();
+              
+              // Log error only once per URL
+              const errorKey = `error-${url}-${err.name}`;
+              if (!CONNECTION_STATE.seenMessages.has(errorKey)) {
+                console.warn(`[WebSocket] Connection to ${url} failed:`, err.message);
+                CONNECTION_STATE.seenMessages.add(errorKey);
+              }
+            }
+          }
+          
+          // Record connection failure for backoff implementation
+          _recordFailure(url) {
+            const currentCount = CONNECTION_STATE.failedAttempts.get(url) || 0;
+            CONNECTION_STATE.failedAttempts.set(url, currentCount + 1);
+            CONNECTION_STATE.pendingConnections.delete(url);
+          }
+          
+          // Event handlers with proper propagation
+          _handleOpen(event) {
+            this.readyState = this.OPEN;
+            if (this._callbacks.open) this._callbacks.open.call(this, event);
+            this._listeners.open.forEach(listener => listener.call(this, event));
+            
+            // Connection succeeded, reset failure count
+            CONNECTION_STATE.failedAttempts.delete(this._url);
+            CONNECTION_STATE.pendingConnections.delete(this._url);
+          }
+          
+          _handleMessage(event) {
+            if (this._callbacks.message) this._callbacks.message.call(this, event);
+            this._listeners.message.forEach(listener => listener.call(this, event));
+          }
+          
+          _handleClose(event) {
+            this.readyState = this.CLOSED;
+            if (this._callbacks.close) this._callbacks.close.call(this, event);
+            this._listeners.close.forEach(listener => listener.call(this, event));
+            
+            // Record closure as potential failure for Vite connections
+            if (typeof this._url === 'string' && this._url.includes('vite')) {
+              this._recordFailure(this._url);
+            }
+          }
+          
+          _handleError(event) {
+            if (this._callbacks.error) this._callbacks.error.call(this, event);
+            this._listeners.error.forEach(listener => listener.call(this, event));
+            
+            // Record error as failure
+            this._recordFailure(this._url);
+          }
+          
+          // Set up a dummy non-functional socket for fallback
+          _setupDummySocket() {
+            this.readyState = this.CLOSED;
+            this._socket = null;
+            
+            // Dispatch close event to notify listeners
+            setTimeout(() => {
+              const closeEvent = new CloseEvent('close', { 
+                code: 1006, 
+                reason: 'Connection abandoned after multiple failures',
+                wasClean: false
+              });
+              this._handleClose(closeEvent);
+            }, 0);
+          }
+          
+          // --- Standard WebSocket API ---
+          
+          // Send method - only works if we have a real socket
+          send(data) {
+            if (this._socket && this.readyState === this.OPEN) {
+              this._socket.send(data);
+            }
+          }
+          
+          // Close method
+          close(code, reason) {
+            if (this._socket) {
+              this.readyState = this.CLOSING;
+              this._socket.close(code, reason);
+            } else {
+              this.readyState = this.CLOSED;
+            }
+          }
+          
+          // Event handling methods
+          addEventListener(type, listener) {
+            if (this._listeners[type]) {
+              this._listeners[type].add(listener);
+            }
+          }
+          
+          removeEventListener(type, listener) {
+            if (this._listeners[type]) {
+              this._listeners[type].delete(listener);
+            }
+          }
+          
+          // Event handler properties
+          set onopen(callback) {
+            this._callbacks.open = callback;
+          }
+          
+          set onmessage(callback) {
+            this._callbacks.message = callback;
+          }
+          
+          set onclose(callback) {
+            this._callbacks.close = callback;
+          }
+          
+          set onerror(callback) {
+            this._callbacks.error = callback;
+          }
+          
+          get onopen() {
+            return this._callbacks.open;
+          }
+          
+          get onmessage() {
+            return this._callbacks.message;
+          }
+          
+          get onclose() {
+            return this._callbacks.close;
+          }
+          
+          get onerror() {
+            return this._callbacks.error;
+          }
+        }
+        
+        // Replace the global WebSocket constructor with our smart implementation
+        window.WebSocket = function(url, protocols) {
+          return new SmartWebSocket(url, protocols);
+        };
+        
+        // Copy static properties and ensure constructor compatibility
+        Object.keys(OriginalWebSocket).forEach(key => {
+          window.WebSocket[key] = OriginalWebSocket[key];
+        });
+        
+        // Initialization logging - only output once
+        if (!CONNECTION_STATE.initialized) {
+          console.log('[WebSocket] Smart WebSocket connection manager initialized');
+          CONNECTION_STATE.initialized = true;
+          
+          // Clean up stale connection tracking periodically
+          setInterval(() => {
+            const now = Date.now();
+            for (const [url, timestamp] of CONNECTION_STATE.pendingConnections.entries()) {
+              if (now - timestamp > 30000) { // 30 seconds timeout
+                CONNECTION_STATE.pendingConnections.delete(url);
+              }
+            }
+          }, 60000); // Clean up every minute
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BCatpAv9.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-LqAvjYUP.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
