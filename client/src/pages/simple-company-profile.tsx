@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useParams, Link } from "wouter";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -60,9 +60,37 @@ interface CompanyUsersResponse {
 export default function SimpleCompanyProfile() {
   const params = useParams();
   const companyId = params.companyId;
-  const [activeTab, setActiveTab] = useState("overview");
+  const [location, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const { user, isLoading: authLoading } = useAuth();
+
+  // Parse URL query parameters to get the tab
+  const getTabFromURL = (): string => {
+    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    const tabParam = urlParams.get('tab');
+    // Validate tab parameter against allowed values
+    const validTabs = ['overview', 'users', 'risk'];
+    return validTabs.includes(tabParam || '') ? (tabParam || 'overview') : 'overview';
+  };
+
+  const [activeTab, setActiveTab] = useState(getTabFromURL);
+
+  // Handle tab changes with URL updates
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    // Update URL with new tab parameter
+    const currentPath = location.split('?')[0];
+    const newURL = `${currentPath}?tab=${newTab}`;
+    navigate(newURL);
+  };
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    const newTab = getTabFromURL();
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [location]);
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
     queryKey: [`/api/companies/${companyId}/profile`],
@@ -245,7 +273,7 @@ export default function SimpleCompanyProfile() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs value={activeTab || "overview"} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
