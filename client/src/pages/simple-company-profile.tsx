@@ -444,19 +444,17 @@ export default function SimpleCompanyProfile() {
                       </CardHeader>
                       <CardContent className="pt-0 pb-6">
                         <div className="w-full max-w-[1000px] mx-auto">
-                          <div className="h-[400px] w-full">
-                            {company?.id ? (
-                              <RiskRadarChart 
-                                companyId={company.id}
-                                showDropdown={false}
-                                className="shadow-none border-none w-full h-full"
-                              />
-                            ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <div className="text-sm text-gray-500">Loading risk analysis...</div>
-                              </div>
-                            )}
-                          </div>
+                          {company?.id ? (
+                            <RiskRadarChart 
+                              companyId={company.id}
+                              showDropdown={false}
+                              className="shadow-none border-none w-full"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-[300px]">
+                              <div className="text-sm text-gray-500">Loading risk analysis...</div>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
