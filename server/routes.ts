@@ -4541,21 +4541,14 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: 'Invalid company ID' });
       }
 
-      // Fetch users associated with this company
-      const companyUsers = await db
-        .select({
-          id: users.id,
-          email: users.email,
-          full_name: users.full_name,
-          first_name: users.first_name,
-          last_name: users.last_name,
-          company_id: users.company_id,
-          onboarding_user_completed: users.onboarding_user_completed,
-          created_at: users.created_at,
-          updated_at: users.updated_at
-        })
-        .from(users)
-        .where(eq(users.company_id, companyId));
+      // Fetch users associated with this company using direct PostgreSQL pool to bypass Drizzle issues
+      const { pool } = await import('@db');
+      const result = await pool.query(
+        'SELECT id, email, full_name, first_name, last_name, company_id, onboarding_user_completed, created_at, updated_at FROM users WHERE company_id = $1',
+        [companyId]
+      );
+      
+      const companyUsers = result.rows;
 
       console.log(`[CompanyUsers] Found ${companyUsers.length} users for company ${companyId}`);
       res.json(companyUsers);
