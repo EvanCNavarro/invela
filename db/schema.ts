@@ -194,6 +194,16 @@ export const users = pgTable("users", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Password reset tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull().unique(),
+  expires_at: timestamp("expires_at").notNull(),
+  used_at: timestamp("used_at"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 export const relationships = pgTable("relationships", {
   id: serial("id").primaryKey(),
   company_id: integer("company_id").references(() => companies.id).notNull(),

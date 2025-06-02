@@ -45,9 +45,10 @@ import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 // Database schema and operations
-import { users, insertUserSchema, type SelectUser } from "@db/schema";
+import { users, insertUserSchema, type SelectUser, passwordResetTokens } from "@db/schema";
 import { db, pool } from "@db";
 import { eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
@@ -482,5 +483,150 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Password reset request endpoint
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          message: "Email is required",
+          code: "MISSING_EMAIL"
+        });
+      }
+
+      const normalizedEmail = email.toLowerCase();
+      authLogger.info(`Password reset requested for email: ${normalizedEmail}`);
+
+      // Check if user exists
+      const [user] = await getUserByEmail(normalizedEmail);
+      
+      // Always return success to prevent email enumeration
+      if (!user) {
+        authLogger.warn(`Password reset requested for non-existent email: ${normalizedEmail}`);
+        return res.json({
+          message: "If an account with that email exists, you will receive a password reset link.",
+          code: "RESET_REQUESTED"
+        });
+      }
+
+      // Generate secure reset token
+      const resetToken = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+
+      // Save reset token to database
+      await db.insert(passwordResetTokens).values({
+        user_id: user.id,
+        token: resetToken,
+        expires_at: expiresAt
+      });
+
+      authLogger.info(`Password reset token generated for user: ${user.id}`);
+
+      // Here you would typically send an email with the reset link
+      // For now, we'll log the token (in production, only send via email)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[DEV] Password reset token for ${normalizedEmail}: ${resetToken}`);
+      }
+
+      res.json({
+        message: "If an account with that email exists, you will receive a password reset link.",
+        code: "RESET_REQUESTED"
+      });
+
+    } catch (error) {
+      authLogger.error('Password reset request error', { error });
+      res.status(500).json({
+        message: "An error occurred while processing your request",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+
+  // Password reset confirmation endpoint
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({
+          message: "Token and new password are required",
+          code: "MISSING_FIELDS"
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          message: "Password must be at least 8 characters long",
+          code: "PASSWORD_TOO_SHORT"
+        });
+      }
+
+      // Find valid reset token
+      const [resetTokenRecord] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(eq(passwordResetTokens.token, token))
+        .limit(1);
+
+      if (!resetTokenRecord) {
+        authLogger.warn(`Invalid reset token used: ${token}`);
+        return res.status(400).json({
+          message: "Invalid or expired reset token",
+          code: "INVALID_TOKEN"
+        });
+      }
+
+      if (resetTokenRecord.used_at) {
+        authLogger.warn(`Already used reset token attempted: ${token}`);
+        return res.status(400).json({
+          message: "This reset token has already been used",
+          code: "TOKEN_USED"
+        });
+      }
+
+      if (new Date() > new Date(resetTokenRecord.expires_at)) {
+        authLogger.warn(`Expired reset token attempted: ${token}`);
+        return res.status(400).json({
+          message: "This reset token has expired",
+          code: "TOKEN_EXPIRED"
+        });
+      }
+
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update user password and mark token as used
+      await db.transaction(async (tx) => {
+        await tx
+          .update(users)
+          .set({ 
+            password: hashedPassword,
+            updated_at: new Date()
+          })
+          .where(eq(users.id, resetTokenRecord.user_id));
+
+        await tx
+          .update(passwordResetTokens)
+          .set({ used_at: new Date() })
+          .where(eq(passwordResetTokens.id, resetTokenRecord.id));
+      });
+
+      authLogger.info(`Password successfully reset for user: ${resetTokenRecord.user_id}`);
+
+      res.json({
+        message: "Password has been successfully reset",
+        code: "PASSWORD_RESET_SUCCESS"
+      });
+
+    } catch (error) {
+      authLogger.error('Password reset confirmation error', { error });
+      res.status(500).json({
+        message: "An error occurred while resetting your password",
+        code: "SERVER_ERROR"
+      });
+    }
   });
 }
