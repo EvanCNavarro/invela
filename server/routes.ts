@@ -1427,10 +1427,33 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
       
-      console.log(`[Company Profile] Retrieved profile for company ${companyId}: ${companyProfile[0].name}`);
+      const company = companyProfile[0];
+      console.log(`[Company Profile] Retrieved profile for company ${companyId}: ${company.name}`);
+      console.log(`[Company Profile Debug] API returning data:`, {
+        id: company.id,
+        name: company.name,
+        hasBusinessFields: {
+          products_services: !!company.products_services,
+          market_position: !!company.market_position,
+          founders_and_leadership: !!company.founders_and_leadership,
+          key_clients_partners: !!company.key_clients_partners,
+          investors: !!company.investors,
+          funding_stage: !!company.funding_stage,
+          certifications_compliance: !!company.certifications_compliance
+        },
+        businessFieldValues: {
+          products_services: company.products_services,
+          market_position: company.market_position,
+          founders_and_leadership: company.founders_and_leadership,
+          key_clients_partners: company.key_clients_partners,
+          investors: company.investors,
+          funding_stage: company.funding_stage,
+          certifications_compliance: company.certifications_compliance
+        }
+      });
       
       // Return the complete company profile data
-      return res.json(companyProfile[0]);
+      return res.json(company);
     } catch (error) {
       console.error("[Company Profile] Error fetching company profile:", error);
       return res.status(500).json({
