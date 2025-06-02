@@ -377,10 +377,9 @@ export default function SimpleCompanyProfile() {
 
 
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div className="min-h-[800px]">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     {/* Risk Assessment Overview */}
-                    <Card className="lg:col-span-2">
+                    <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base text-gray-900">
                           <TrendingUp className="w-4 h-4 text-gray-600" />
@@ -436,7 +435,7 @@ export default function SimpleCompanyProfile() {
                     </Card>
 
                     {/* Risk Radar Chart */}
-                    <Card className="lg:col-span-2">
+                    <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base text-gray-900">
                           <Target className="w-4 h-4 text-gray-600" />
@@ -461,7 +460,6 @@ export default function SimpleCompanyProfile() {
                         </div>
                       </CardContent>
                     </Card>
-                    </div>
                   </div>
                 </TabsContent>
 
