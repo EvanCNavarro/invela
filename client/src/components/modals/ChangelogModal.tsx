@@ -105,21 +105,22 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
-    id: 'company-profile-users-tab-2025-06-02',
+    id: 'company-profile-complete-overhaul-2025-06-02',
     date: '2025-06-02',
-    type: 'fix',
-    title: 'Company Profile Users Tab Complete Fix',
-    description: 'Fully resolved the blank Users tab issue in company profiles with comprehensive backend and frontend fixes',
+    type: 'feature',
+    title: 'Complete Company Profile System Overhaul',
+    description: 'Comprehensive rebuild of network company profile pages with new routing, enhanced UI, and full functionality restoration',
     details: [
-      'Fixed critical route registration: moved /api/companies/:id/users endpoint inside registerRoutes() function',
-      'Resolved frontend data structure mismatch: updated UserData interface to match database schema',
-      'Created CompanyUsersResponse interface to handle structured API response format',
-      'Implemented custom React Query setup with proper data extraction from {users: [...], meta: {...}} response',
-      'Enhanced fuzzy search functionality with Fuse.js for name and email filtering',
-      'Added comprehensive debug logging throughout the data flow pipeline',
-      'Streamlined UI: removed Account Type column and debug footer',
-      'Reduced user avatar size for cleaner appearance',
-      'Users tab now displays all 12 users with working search and proper table layout'
+      'Migrated from legacy company profile to new simple-company-profile component architecture',
+      'Fixed critical network routing: company profiles now properly accessible from network page clicks',
+      'Implemented three-tab layout: Overview (business details), Users (team members), and Risk (assessment data)',
+      'Built comprehensive bento grid layout with standardized typography and consistent styling',
+      'Resolved Users tab backend API: fixed route registration and data structure handling',
+      'Enhanced fuzzy search functionality with name and email filtering across all company users',
+      'Added proper loading states, error handling, and debug logging throughout the system',
+      'Streamlined UI design: removed unnecessary columns and optimized avatar sizing',
+      'Complete data flow restoration: backend → API → frontend → UI now fully functional',
+      'Professional fact sheet design displaying S&P DARS scores, accreditation status, and business information'
     ],
     version: '1.9.5',
     audience: 'product'
