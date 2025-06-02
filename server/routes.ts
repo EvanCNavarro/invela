@@ -4532,6 +4532,35 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Company users endpoint
+  app.get('/api/companies/:id/users', optionalAuth, async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (!companyId || isNaN(companyId)) {
+        return res.status(400).json({ error: 'Invalid company ID' });
+      }
+
+      // Fetch users associated with this company
+      const companyUsers = await db.query.users.findMany({
+        where: eq(users.company_id, companyId),
+        columns: {
+          id: true,
+          email: true,
+          full_name: true,
+          created_at: true,
+          updated_at: true,
+          is_demo: true
+        }
+      });
+
+      res.json(companyUsers);
+    } catch (error) {
+      console.error('[CompanyUsers] Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch company users' });
+    }
+  });
+
   // Demo API routes are now registered early in the process via synchronous import
   // This ensures API endpoints have proper priority over frontend catch-all routes
 
