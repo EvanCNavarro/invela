@@ -357,53 +357,64 @@ export default function SimpleCompanyProfile() {
 
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Risk Score Overview */}
+                    {/* Risk Assessment Overview */}
                     <Card className="lg:col-span-2">
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base text-gray-900">
                           <TrendingUp className="w-4 h-4 text-gray-600" />
-                          Risk Score Overview
+                          Risk Assessment
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="text-center">
-                            <div className="text-6xl font-bold text-gray-900 mb-2">
-                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}
-                            </div>
-                            <p className="text-xs text-gray-500 mb-2">S&P DARS Risk Score</p>
-                            <Badge variant={
-                              (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 30 ? "default" : 
-                              (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 70 ? "secondary" : 
-                              "destructive"
-                            }>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">S&P DARS Risk Score</label>
+                            <p className="text-sm text-gray-900 font-semibold">
+                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
+                            </p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Risk Level</label>
+                            <p className="text-sm text-gray-900">
                               {(company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 30 ? "Low Risk" : 
                                (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 70 ? "Medium Risk" : 
                                "High Risk"}
-                            </Badge>
+                            </p>
                           </div>
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Company</label>
-                              <p className="text-lg font-semibold text-gray-900">{company?.name}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-medium text-gray-500">Category</label>
-                              <p className="text-sm text-gray-900">{company?.category}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-medium text-gray-500">Assessment Status</label>
-                              <Badge variant="outline" className="text-green-700 border-green-300 text-xs">
-                                Current Assessment
-                              </Badge>
-                            </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Assessment Status</label>
+                            <p className="text-sm text-gray-900">Current Assessment</p>
                           </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Category</label>
+                            <p className="text-sm text-gray-900">{company?.category}</p>
+                          </div>
+                          {company?.risk_clusters && (
+                            <div className="lg:col-span-2">
+                              <label className="text-xs font-medium text-gray-500">Risk Dimensions</label>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                                {Object.entries(company.risk_clusters)
+                                  .filter(([key]) => {
+                                    const mainDimensions = [
+                                      'Cyber Security', 'Financial Stability', 'Potential Liability',
+                                      'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
+                                    ];
+                                    return mainDimensions.includes(key);
+                                  })
+                                  .map(([key, value]) => (
+                                    <div key={key} className="text-sm">
+                                      <span className="text-gray-500">{key}:</span> <span className="text-gray-900">{value as number}/100</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
 
                     {/* Risk Radar Chart */}
-                    <Card>
+                    <Card className="lg:col-span-2">
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base text-gray-900">
                           <Target className="w-4 h-4 text-gray-600" />
@@ -426,54 +437,6 @@ export default function SimpleCompanyProfile() {
                         )}
                       </CardContent>
                     </Card>
-
-                    {/* Risk Dimensions Detail */}
-                    {company?.risk_clusters && (
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="flex items-center gap-2 text-base text-gray-900">
-                            <Shield className="w-4 h-4 text-gray-600" />
-                            Risk Dimensions Breakdown
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {Object.entries(company.risk_clusters)
-                              .filter(([key]) => {
-                                // Show the six main risk dimensions
-                                const mainDimensions = [
-                                  'Cyber Security', 'Financial Stability', 'Potential Liability',
-                                  'Dark Web Data', 'Public Sentiment', 'Data Access Scope'
-                                ];
-                                return mainDimensions.includes(key);
-                              })
-                              .map(([key, value]) => (
-                                <div key={key} className="bg-gray-50 rounded-lg p-3">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="text-xs font-medium text-gray-700">{key}</div>
-                                    <div className={`w-2 h-2 rounded-full ${
-                                      value > 66 ? 'bg-red-500' : 
-                                      value > 33 ? 'bg-yellow-500' : 
-                                      'bg-green-500'
-                                    }`}></div>
-                                  </div>
-                                  <div className="text-lg font-bold text-gray-900 mb-1">{value}/100</div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div 
-                                      className={`h-2 rounded-full transition-all duration-300 ${
-                                        value > 66 ? 'bg-red-500' : 
-                                        value > 33 ? 'bg-yellow-500' : 
-                                        'bg-green-500'
-                                      }`}
-                                      style={{ width: `${Math.min(value, 100)}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
                   </div>
                 </TabsContent>
               </div>
