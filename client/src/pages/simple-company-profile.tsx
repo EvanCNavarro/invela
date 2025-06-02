@@ -374,21 +374,7 @@ export default function SimpleCompanyProfile() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="users" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <User className="w-5 h-5" />
-                          Company Users
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-gray-600">User management functionality for {company?.name || 'this company'} would be displayed here.</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
+
 
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

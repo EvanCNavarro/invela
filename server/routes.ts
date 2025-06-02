@@ -4548,7 +4548,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         full_name: users.full_name,
         created_at: users.created_at,
         updated_at: users.updated_at,
-        is_demo: users.is_demo
+        is_demo_user: users.is_demo_user
       })
       .from(users)
       .where(eq(users.company_id, companyId))
