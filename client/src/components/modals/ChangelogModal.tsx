@@ -105,6 +105,26 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'company-profile-users-tab-2025-06-02',
+    date: '2025-06-02',
+    type: 'fix',
+    title: 'Company Profile Users Tab Complete Fix',
+    description: 'Fully resolved the blank Users tab issue in company profiles with comprehensive backend and frontend fixes',
+    details: [
+      'Fixed critical route registration: moved /api/companies/:id/users endpoint inside registerRoutes() function',
+      'Resolved frontend data structure mismatch: updated UserData interface to match database schema',
+      'Created CompanyUsersResponse interface to handle structured API response format',
+      'Implemented custom React Query setup with proper data extraction from {users: [...], meta: {...}} response',
+      'Enhanced fuzzy search functionality with Fuse.js for name and email filtering',
+      'Added comprehensive debug logging throughout the data flow pipeline',
+      'Streamlined UI: removed Account Type column and debug footer',
+      'Reduced user avatar size for cleaner appearance',
+      'Users tab now displays all 12 users with working search and proper table layout'
+    ],
+    version: '1.9.5',
+    audience: 'product'
+  },
+  {
     id: 'accreditation-validity-system-2025-06-01',
     date: '2025-06-01',
     type: 'feature',
