@@ -1,0 +1,706 @@
+> rest-express@1.0.0 dev
+[2025-06-02T09:30:45.896Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-02T09:30:45.900Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":107,"timestamp":"2025-06-02T09:30:45.900Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-02T09:30:46.032Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-02T09:30:46.146Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-02T09:30:46.146Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"syd7rx","timestamp":"2025-06-02T09:30:46.146Z"}
+[2025-06-02T09:30:46.147Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-02T09:30:46.147Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-02T09:30:46.147Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-02T09:30:46.147Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-02T09:30:46.147Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-02T09:30:46.147Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-02T09:30:46.147Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-02T09:30:46.147Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-02T09:30:46.147Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-02T09:30:46.147Z] [INFO] [App] Setting up Vite development server 
+[2025-06-02T09:30:46.148Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-02T09:30:46.149Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-02T09:30:46.160Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-06-02T09:30:46.160Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-06-02T09:30:46.161Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-02T09:30:46.161Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-02T09:30:46.161Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-02T09:30:46.161Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-02T09:30:46.188Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-02T09:30:46.188Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-02T09:30:46.188Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-02T09:30:46.189Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-02T09:30:46.190Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-02T09:30:46.788Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-02T09:30:47.440Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-02T09:30:49.879Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-02T09:30:50.371Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-02T09:30:56.162Z] [INFO] [App] Running background health checks... 
+[2025-06-02T09:30:56.163Z] [StartupChecks] Running application startup health checks... 
+[2025-06-02T09:30:56.163Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-02T09:30:56.164Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-02T09:30:56.339Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-02T09:30:56.366Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-02T09:30:56.406Z] [DBConnectionService] Database connection check successful 
+[2025-06-02T09:30:56.406Z] [StartupChecks] Database health check passed 
+[2025-06-02T09:30:56.406Z] [StartupChecks] All startup health checks passed! 
+[2025-06-02T09:30:56.406Z] [INFO] [App] All background health checks passed successfully. 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 546,
+  company_id: 764,
+  email: 'nmyers@standardsolutionsalliance.com'
+}
+[2025-06-02T09:30:59.806Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":764,"userId":546}
+[Current Company] Fetching company for user: { userId: 546, companyId: 764 }
+[2025-06-02T09:30:59.835Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":764}
+[Tasks] Automatically unlocking all tasks for company { userId: 546, companyId: 764, requestedBy: 'automatic_task_unlock' }
+[2025-06-02T09:30:59.836Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":764}
+[Current Company] Found company: {
+  id: 764,
+  name: 'Standard Solutions Alliance',
+  onboardingCompleted: true,
+  riskScore: 5,
+  chosenScore: 33,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 546,
+  companyId: 764,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-02T09:30:59.838Z'
+}
+[2025-06-02T09:30:59.864Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":764}
+[Tasks] Successfully unlocked all tasks for company: 764
+[2025-06-02T09:30:59.867Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856659867-d2x1o3j","clients":1}
+[2025-06-02T09:30:59.869Z] [INFO] [App] GET /api/companies/current 304 in 61ms :: {"id":764,"name":"Standard Solutions Alliance","category":"Bank","is_demo":tr... 
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 546',
+    condition2: 'tasks.created_by = 546',
+    condition3: "tasks.company_id = 764 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('nmyers@standardsolutionsalliance.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-02T09:30:59.954Z] [INFO] [App] GET /api/tasks 304 in 151ms :: [] 
+[2025-06-02T09:30:59.990Z] [INFO] [WebSocket] Received message from client client-1748856659867-d2x1o3j {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-02T09:30:59.881Z"}}
+[2025-06-02T09:30:59.990Z] [INFO] [WebSocket] Authentication from client client-1748856659867-d2x1o3j {"module":"WebSocket","hasToken":true}
+[2025-06-02T09:31:00.066Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 546 
+[2025-06-02T09:31:00.066Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-02T09:31:00.066Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-02T09:31:00.066Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 546 
+[2025-06-02T09:31:00.129Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 546: completed=false, step=0 
+[2025-06-02T09:31:00.160Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 94ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-02T09:... 
+[Relationships] Fetching network for company: 764
+[2025-06-02T09:31:00.372Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856660372-963o02n","clients":2}
+[Accreditation] Fetching accreditation for company: 764
+[Network Visualization] Fetching network data for company: 764
+[Companies] Fetching companies for user: { userId: 546, company_id: 764 }
+[Companies-Risk] Fetching companies with risk data for user: { userId: 546, company_id: 764 }
+[Relationships] Found network members: { count: 45 }
+[Accreditation] Found accreditation: {
+  id: 113,
+  accreditationNumber: 1,
+  issuedDate: 2025-06-02T08:32:04.345Z,
+  expiresDate: null,
+  status: 'ACTIVE',
+  daysUntilExpiration: null,
+  isPermanent: true
+}
+[2025-06-02T09:31:00.468Z] [INFO] [App] GET /api/relationships 304 in 109ms :: [{"id":985,"companyId":764,"relatedCompanyId":488,"relationshipType":"data_pr... 
+[Companies] Query successful, found companies: {
+  count: 46,
+  companies: [
+    {
+      id: 488,
+      name: 'Advanced Gaming Technologies',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 505,
+      name: 'Allied Evaluation Specialists',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 459,
+      name: 'BankingAPI Gateway',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 475,
+      name: 'BlockTrade Exchange',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 55,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 494,
+      name: 'Bridge Quality Consultants',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 37,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 458,
+      name: 'ClimateFinance Labs',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 31,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 498,
+      name: 'Coin Tracker',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 55,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 461,
+      name: 'CommodityTrade Hub',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 69,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 477,
+      name: 'CrowdFund Crypto',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 36,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 504,
+      name: 'Crown Strategy Consortium',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 36,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 489,
+      name: 'Cyber Studio Works',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 49,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 452,
+      name: 'DeFi Bridge Protocol',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 61,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 485,
+      name: 'DecentralizedID Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 57,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 436,
+      name: 'DigitalVault Security',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 63,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 514,
+      name: 'Edge Lab Global',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 30,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 474,
+      name: 'FastPay Innovations',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 67,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 446,
+      name: 'FraudShield AI',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 47,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 480,
+      name: 'GigWorker Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 32,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 659,
+      name: 'Horizon Regulatory Tech',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 447,
+      name: 'InvestorPortal Pro',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 62,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 476,
+      name: 'MicroInvest Network',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 57,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 445,
+      name: 'MicroLend Network',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 49,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 468,
+      name: 'MortgageTech Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 42,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 481,
+      name: 'NFT Marketplace Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 48,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 503,
+      name: 'National Guard Edge',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 58,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 502,
+      name: 'Network Studio Advisors',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 57,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 478,
+      name: 'PayLater Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 42,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 442,
+      name: 'PayStream Global',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 48,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 455,
+      name: 'PayrollTech Innovations',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 47,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 457,
+      name: 'QuantTrading Systems',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 69,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 462,
+      name: 'RetailCredit Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 44,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 465,
+      name: 'SmallBiz Banking',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 40,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 483,
+      name: 'StableCoin Protocol',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 764,
+      name: 'Standard Solutions Alliance',
+      hasLogo: false,
+      hasRelationship: true,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 5,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 497,
+      name: 'Sterling Consulting United',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 41,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 491,
+      name: 'Stream Portfolio Base',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 499,
+      name: 'Synergy Infrastructure Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 58,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 444,
+      name: 'TaxTech Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 69,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 430,
+      name: 'TechFlow Financial',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 59,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 438,
+      name: 'TradeFi Connect',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 39,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 451,
+      name: 'TradingBot Analytics',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 41,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 484,
+      name: 'TradingBot Retail',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 63,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 463,
+      name: 'TreasuryTech Pro',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 507,
+      name: 'Wave Consulting Alliance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 43,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 486,
+      name: 'Wave Insights Leaders',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 40,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 164,
+      name: 'Wealthfront',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    }
+  ]
+}
+[Companies] Sample risk data check: {
+  firstCompanyRiskData: {
+    id: 488,
+    name: 'Advanced Gaming Technologies',
+    risk_score: 34,
+    risk_clusters: 'PRESENT',
+    accreditation_status: 'APPROVED'
+  }
+}
+[Companies-Risk] Query successful, found companies with risk data: {
+  count: 46,
+  companiesWithRiskData: 46,
+  sampleRiskData: [
+    {
+      id: 488,
+      name: 'Advanced Gaming Technologies',
+      risk_score: 34,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    },
+    {
+      id: 505,
+      name: 'Allied Evaluation Specialists',
+      risk_score: 38,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    },
+    {
+      id: 459,
+      name: 'BankingAPI Gateway',
+      risk_score: 34,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    }
+  ]
+}
+[2025-06-02T09:31:00.497Z] [INFO] [App] GET /api/companies/764/accreditation 304 in 115ms :: {"id":113,"accreditationNumber":1,"issuedDate":"2025-06-02T08:32:04.345Z","ex... 
+[Network Visualization] Found network relationships: { count: 45 }
+[Network Visualization] Returning visualization data: { centerNode: 'Standard Solutions Alliance', nodeCount: 45 }
+[2025-06-02T09:31:00.508Z] [INFO] [App] GET /api/companies 304 in 120ms :: [{"id":488,"name":"Advanced Gaming Technologies","category":"FinTech","descri... 
+[2025-06-02T09:31:00.527Z] [INFO] [App] GET /api/companies-with-risk 200 in 116ms :: [{"id":488,"name":"Advanced Gaming Technologies","category":"FinTech","descri... 
+[2025-06-02T09:31:00.533Z] [INFO] [App] GET /api/network/visualization 304 in 148ms :: {"center":{"id":764,"name":"Standard Solutions Alliance","riskScore":5,"riskB... 
+[Relationships] Fetching network for company: 764
+[Relationships] Found network members: { count: 45 }
+[2025-06-02T09:31:00.842Z] [INFO] [App] GET /api/relationships 304 in 63ms :: [{"id":985,"companyId":764,"relatedCompanyId":488,"relationshipType":"data_pr... 
+[2025-06-02T09:31:01.554Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 546 
+[2025-06-02T09:31:01.554Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-02T09:31:01.554Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-02T09:31:01.554Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 546 
+[2025-06-02T09:31:01.616Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial dashboard for user 546 
+[2025-06-02T09:31:01.647Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 94ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-06-02T09:31:01.827Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 546 
+[2025-06-02T09:31:01.827Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-02T09:31:01.827Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-02T09:31:01.827Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 546 
+[2025-06-02T09:31:01.875Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856661875-b5d9r99","clients":3}
+[2025-06-02T09:31:01.887Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 546: completed=false, step=0 
+[2025-06-02T09:31:01.918Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 92ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-02T09:... 
+[2025-06-02T09:31:02.374Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856662374-uss0we2","clients":4}
+[2025-06-02T09:31:02.876Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856662876-rlxlbme","clients":5}
+[2025-06-02T09:31:03.032Z] [INFO] [WebSocket] Received message from client client-1748856662876-rlxlbme {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748856659133_8eqkorjno","timestamp":"2025-06-02T09:31:02.891Z"}
+[2025-06-02T09:31:03.033Z] [INFO] [WebSocket] Authentication from client client-1748856662876-rlxlbme {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Accreditation] Fetching accreditation for company: 451
+[Accreditation] Found accreditation: {
+  id: 62,
+  accreditationNumber: 1,
+  issuedDate: 2025-05-27T11:16:01.247Z,
+  expiresDate: 2026-05-27T11:16:01.247Z,
+  status: 'ACTIVE',
+  daysUntilExpiration: 360,
+  isPermanent: false
+}
+[Company Profile] Retrieved profile for company 451: TradingBot Analytics
+[Company Profile Debug] API returning data: {
+  id: 451,
+  name: 'TradingBot Analytics',
+  hasBusinessFields: {
+    products_services: true,
+    market_position: true,
+    founders_and_leadership: true,
+    key_clients_partners: true,
+    investors: true,
+    funding_stage: true,
+    certifications_compliance: true
+  },
+  businessFieldValues: {
+    products_services: 'Algorithmic trading, market analytics, portfolio optimization',
+    market_position: 'established',
+    founders_and_leadership: 'Andrew Kim (CEO), Maria Gonzalez (CTO), Peter Liu (Chief Quantitative Officer)',
+    key_clients_partners: 'Renaissance Technologies, Two Sigma, Citadel',
+    investors: 'Series B: Founders Fund, General Atlantic',
+    funding_stage: 'Series B',
+    certifications_compliance: 'SEC registered, FINRA member, CFTC registered, SOC 2 Type II'
+  }
+}
+[2025-06-02T09:31:03.156Z] [INFO] [App] GET /api/companies/451/accreditation 304 in 61ms :: {"id":62,"accreditationNumber":1,"issuedDate":"2025-05-27T11:16:01.247Z","exp... 
+[2025-06-02T09:31:03.158Z] [INFO] [App] GET /api/companies/451/profile 304 in 62ms :: {"id":451,"name":"TradingBot Analytics","description":"Algorithmic trading pl... 
+[Company Logo] Fetching logo for company ID: 451
+[Company Logo] No logo assigned for company: TradingBot Analytics (451)
+[2025-06-02T09:31:03.396Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748856663396-x737du2","clients":6}
+[2025-06-02T09:31:03.405Z] [WARN] [App] GET /api/companies/451/logo 404 in 62ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-02T09:31:03.957Z] [INFO] [WebSocket] Received message from client client-1748856663396-x737du2 {"module":"WebSocket","type":"authenticate","userId":546,"companyId":764,"clientId":"ws_1748856660420_thx9plvto","timestamp":"2025-06-02T09:31:03.849Z"}
+[2025-06-02T09:31:03.958Z] [INFO] [WebSocket] Authentication from client client-1748856663396-x737du2 {"module":"WebSocket","userId":546,"companyId":764,"hasToken":true}
