@@ -33,7 +33,7 @@
 // ========================================
 
 // Express framework and routing
-import express, { Express, Router } from 'express';
+import express, { Express, Router, Request, Response } from 'express';
 
 // Database ORM and query builders
 import { eq, and, gt, sql, or, isNull, inArray, desc, asc } from 'drizzle-orm';
@@ -560,6 +560,98 @@ export async function registerRoutes(app: Express): Promise<Express> {
   
   // Register fix-missing-file API router for regenerating files
   app.use(fixMissingFileRouter);
+  
+  // ========================================
+  // COMPANY USERS ENDPOINT
+  // ========================================
+  
+  /**
+   * Company Users API Endpoint
+   * 
+   * Provides access to users associated with a specific company.
+   * Uses direct PostgreSQL pool access for optimal performance and
+   * to bypass known Drizzle ORM issues with complex queries.
+   * 
+   * Security: Requires authentication via optionalAuth middleware
+   * Performance: Direct database pool access with connection monitoring
+   * Error Handling: Comprehensive logging and structured error responses
+   */
+  app.get('/api/companies/:id/users', optionalAuth, async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    const requestId = `company-users-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // Request validation and logging
+      const companyId = parseInt(req.params.id);
+      
+      console.log(`[CompanyUsers] ${requestId} - Request initiated`, {
+        companyId,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!companyId || isNaN(companyId)) {
+        console.log(`[CompanyUsers] ${requestId} - Invalid company ID provided:`, req.params.id);
+        return res.status(400).json({ 
+          error: 'Invalid company ID',
+          code: 'INVALID_COMPANY_ID',
+          requestId 
+        });
+      }
+
+      // Database query with direct PostgreSQL pool for reliability
+      console.log(`[CompanyUsers] ${requestId} - Executing database query for company ${companyId}`);
+      
+      const { pool } = await import('@db');
+      const result = await pool.query(
+        'SELECT id, email, full_name, first_name, last_name, company_id, onboarding_user_completed, created_at, updated_at FROM users WHERE company_id = $1 ORDER BY full_name ASC',
+        [companyId]
+      );
+      
+      const companyUsers = result.rows;
+      const queryTime = Date.now() - startTime;
+
+      console.log(`[CompanyUsers] ${requestId} - Query successful`, {
+        companyId,
+        userCount: companyUsers.length,
+        queryTime: `${queryTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
+      // Return structured response
+      res.json({
+        users: companyUsers,
+        meta: {
+          count: companyUsers.length,
+          companyId,
+          requestId,
+          queryTime: `${queryTime}ms`
+        }
+      });
+      
+    } catch (error) {
+      const queryTime = Date.now() - startTime;
+      
+      console.error(`[CompanyUsers] ${requestId} - Database error:`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        companyId: req.params.id,
+        queryTime: `${queryTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.status(500).json({ 
+        message: 'Error fetching company users',
+        code: 'FETCH_ERROR',
+        requestId,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // Register the company users endpoint in the tracking system
+  routeRegistrationTracker.register('CompanyUsers');
   
   // Register task broadcast router for WebSocket notifications
   app.use('/api/tasks', taskBroadcastRouter);
@@ -4532,34 +4624,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Company users endpoint
-  app.get('/api/companies/:id/users', optionalAuth, async (req: Request, res: Response) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      
-      if (!companyId || isNaN(companyId)) {
-        return res.status(400).json({ error: 'Invalid company ID' });
-      }
-
-      // Fetch users associated with this company using direct PostgreSQL pool to bypass Drizzle issues
-      const { pool } = await import('@db');
-      const result = await pool.query(
-        'SELECT id, email, full_name, first_name, last_name, company_id, onboarding_user_completed, created_at, updated_at FROM users WHERE company_id = $1',
-        [companyId]
-      );
-      
-      const companyUsers = result.rows;
-
-      console.log(`[CompanyUsers] Found ${companyUsers.length} users for company ${companyId}`);
-      res.json(companyUsers);
-    } catch (error) {
-      console.error('[CompanyUsers] Error fetching users:', error);
-      res.status(500).json({ 
-        message: 'Error fetching company users',
-        code: 'FETCH_ERROR'
-      });
-    }
-  });
+  // Company users endpoint moved to proper registration location within registerRoutes() function
 
   // Demo API routes are now registered early in the process via synchronous import
   // This ensures API endpoints have proper priority over frontend catch-all routes
