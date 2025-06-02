@@ -482,7 +482,20 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    console.log('[AUTH-DEBUG] /api/user request:', {
+      isAuthenticated: req.isAuthenticated(),
+      hasUser: !!req.user,
+      hasSession: !!req.session,
+      sessionId: req.sessionID,
+      cookies: req.headers.cookie
+    });
+    
+    if (!req.isAuthenticated()) {
+      console.log('[AUTH-DEBUG] Authentication failed for /api/user');
+      return res.sendStatus(401);
+    }
+    
+    console.log('[AUTH-DEBUG] Authentication successful for /api/user, user:', req.user?.id);
     res.json(req.user);
   });
 
