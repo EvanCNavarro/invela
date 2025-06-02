@@ -11,7 +11,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BlockedDataRecipientsAlert from './BlockedDataRecipientsAlert';
-import DeterioratingRiskTable, { CompanyRiskData } from './DeterioratingRiskTable';
+import DeterioratingRiskTable from './DeterioratingRiskTable';
+import { type CompanyRiskData } from '@/lib/riskCalculations';
 import { cn } from '@/lib/utils';
 import { 
   generateRealisticRiskData, 

@@ -23,14 +23,8 @@ import {
 } from '@/lib/riskCalculations';
 
 
-// Define the types for our data
-export interface CompanyRiskData {
-  id: number;
-  name: string;
-  currentScore: number;
-  previousScore: number;
-  category: string;
-}
+// Import shared type from risk calculations service
+import type { CompanyRiskData } from '@/lib/riskCalculations';
 
 interface DeterioratingRiskTableProps {
   companies: CompanyRiskData[];
@@ -47,50 +41,7 @@ const logTable = (action: string, details?: any) => {
   console.log(`[DeterioratingRiskTable] ${action}`, details || '');
 };
 
-/**
- * Calculate the status based on score and threshold
- */
-const calculateStatus = (
-  currentScore: number, 
-  previousScore: number, 
-  threshold: number
-): 'Stable' | 'Monitoring' | 'Approaching Block' | 'Blocked' => {
-  // If below threshold, the company is blocked
-  if (currentScore < threshold) {
-    return 'Blocked';
-  }
-  
-  // Calculate percentage to threshold
-  const percentToThreshold = ((currentScore - threshold) / (100 - threshold)) * 100;
-  
-  // Significant negative trend
-  const hasDeteriorated = previousScore - currentScore > 5;
-  
-  if (percentToThreshold < 20 && hasDeteriorated) {
-    return 'Approaching Block';
-  } else if (hasDeteriorated) {
-    return 'Monitoring';
-  }
-  
-  return 'Stable';
-};
-
-/**
- * Get the color for the status badge
- */
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case 'Blocked':
-      return 'bg-red-25 text-red-600 border border-red-100/50';
-    case 'Approaching Block':
-      return 'bg-amber-25 text-amber-600 border border-amber-100/50';
-    case 'Monitoring':
-      return 'bg-blue-25 text-blue-600 border border-blue-100/50';
-    case 'Stable':
-    default:
-      return 'bg-gray-25 text-gray-600 border border-gray-100/50';
-  }
-};
+// Status calculation and styling now handled by shared service
 
 /**
  * DeterioratingRiskTable Component
@@ -122,8 +73,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       const scoreChange = (company.previousScore - company.currentScore) * 
                           deteriorationMultiplier;
       
-      // Calculate status
-      const status = calculateStatus(
+      // Calculate status using shared service
+      const status = calculateRiskStatus(
         company.currentScore, 
         company.previousScore, 
         blockThreshold
@@ -321,7 +272,7 @@ const RiskTable: React.FC<{
                 <TableCell>
                   <span className={cn(
                     "px-2.5 py-1 rounded-full text-xs font-medium",
-                    getStatusColor(company.status)
+                    getRiskStatusColor(company.status as RiskMonitoringStatus)
                   )}>
                     {company.status}
                   </span>
