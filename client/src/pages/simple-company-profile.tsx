@@ -377,7 +377,8 @@ export default function SimpleCompanyProfile() {
 
 
                 <TabsContent value="risk" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="min-h-[800px]">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Risk Assessment Overview */}
                     <Card className="lg:col-span-2">
                       <CardHeader className="pb-3">
@@ -443,23 +444,24 @@ export default function SimpleCompanyProfile() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0 pb-6">
-                        {company?.id ? (
-                          <div className="w-full max-w-[1000px] mx-auto">
-                            <div className="aspect-[2.5/1.5] w-full">
+                        <div className="w-full max-w-[1000px] mx-auto">
+                          <div className="h-[400px] w-full">
+                            {company?.id ? (
                               <RiskRadarChart 
                                 companyId={company.id}
                                 showDropdown={false}
                                 className="shadow-none border-none w-full h-full"
                               />
-                            </div>
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <div className="text-sm text-gray-500">Loading risk analysis...</div>
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <div className="flex items-center justify-center h-[400px]">
-                            <div className="text-sm text-gray-500">Loading risk analysis...</div>
-                          </div>
-                        )}
+                        </div>
                       </CardContent>
                     </Card>
+                    </div>
                   </div>
                 </TabsContent>
 
