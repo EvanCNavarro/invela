@@ -298,15 +298,9 @@ app.use((req, res, next) => {
   }, 1000);
 
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
-  if (process.env.NODE_ENV !== "production") {
-    logger.info("Setting up Vite development server");
-    setupVite(app, server);
-  } else {
-    // Serve static files only in production, AFTER API routes are fully registered
-    logger.info("Setting up production static file serving");
-    serveStatic(app);
-    logger.info('[ServerStartup] Production static file serving configured');
-  }
+  // Force development mode for now to show the actual app
+  logger.info("Setting up Vite development server");
+  setupVite(app, server);
 })();
 
 // Error handling middleware
