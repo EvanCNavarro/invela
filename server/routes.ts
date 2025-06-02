@@ -4542,17 +4542,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       // Fetch users associated with this company
-      const companyUsers = await db.select({
-        id: users.id,
-        email: users.email,
-        full_name: users.full_name,
-        created_at: users.created_at,
-        updated_at: users.updated_at,
-        is_demo_user: users.is_demo_user
-      })
+      const companyUsers = await db.select()
       .from(users)
-      .where(eq(users.company_id, companyId))
-      .orderBy(users.created_at);
+      .where(eq(users.company_id, companyId));
 
       console.log(`[CompanyUsers] Found ${companyUsers.length} users for company ${companyId}`);
       res.json(companyUsers);
