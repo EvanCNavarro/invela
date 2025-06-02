@@ -304,11 +304,16 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // For now, always use development server to show the working app
-  // When ready for production deployment, the conditional logic will ensure proper order
-  logger.info('[PROD-DEBUG] Using development server to demonstrate working app');
-  setupVite(app, server);
-  logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
+  if (process.env.NODE_ENV === "production") {
+    logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
+    logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
+    serveStatic(app);
+    logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
+  } else {
+    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
+    setupVite(app, server);
+    logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
+  }
 })();
 
 // Error handling middleware
