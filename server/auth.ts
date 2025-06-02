@@ -216,9 +216,10 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store,
     cookie: {
-      secure: false, // Disable secure cookies to fix production authentication
+      secure: false, // Allow cookies over HTTP for Replit environment
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: 'lax' // Help with CSRF protection
+      sameSite: 'lax', // Help with CSRF protection
+      httpOnly: true // Prevent XSS attacks
     }
   };
 
