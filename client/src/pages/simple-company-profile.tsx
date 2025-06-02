@@ -480,16 +480,6 @@ export default function SimpleCompanyProfile() {
                 {/* Users Tab */}
                 <TabsContent value="users" className="space-y-6">
                   <div className="bg-white rounded-lg border">
-                    {/* Header */}
-                    <div className="px-6 py-4 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-gray-600" />
-                          <h3 className="text-base font-medium text-gray-900">Company Users</h3>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Search and Filters */}
                     <div className="px-6 py-4 border-b bg-gray-50/50">
                       <div className="flex items-center gap-4">

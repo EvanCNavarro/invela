@@ -4542,22 +4542,26 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       // Fetch users associated with this company
-      const companyUsers = await db.query.users.findMany({
-        where: eq(users.company_id, companyId),
-        columns: {
-          id: true,
-          email: true,
-          full_name: true,
-          created_at: true,
-          updated_at: true,
-          is_demo: true
-        }
-      });
+      const companyUsers = await db.select({
+        id: users.id,
+        email: users.email,
+        full_name: users.full_name,
+        created_at: users.created_at,
+        updated_at: users.updated_at,
+        is_demo: users.is_demo
+      })
+      .from(users)
+      .where(eq(users.company_id, companyId))
+      .orderBy(users.created_at);
 
+      console.log(`[CompanyUsers] Found ${companyUsers.length} users for company ${companyId}`);
       res.json(companyUsers);
     } catch (error) {
       console.error('[CompanyUsers] Error fetching users:', error);
-      res.status(500).json({ error: 'Failed to fetch company users' });
+      res.status(500).json({ 
+        message: 'Error fetching company users',
+        code: 'FETCH_ERROR'
+      });
     }
   });
 
