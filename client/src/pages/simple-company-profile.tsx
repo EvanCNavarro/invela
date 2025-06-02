@@ -14,6 +14,8 @@ import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
+import { RiskTrendIndicator } from "@/components/risk/RiskTrendIndicator";
+import { RiskStatusSummary } from "@/components/risk/RiskStatusSummary";
 import Fuse from 'fuse.js';
 
 interface CompanyData {
@@ -592,9 +594,14 @@ export default function SimpleCompanyProfile() {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           <div>
                             <label className="text-xs font-medium text-gray-500">S&P DARS Risk Score</label>
-                            <p className="text-sm text-gray-900">
-                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm text-gray-900">
+                                {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
+                              </p>
+                              {company?.id && (
+                                <RiskTrendIndicator companyId={company.id} />
+                              )}
+                            </div>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Risk Level</label>
@@ -605,8 +612,10 @@ export default function SimpleCompanyProfile() {
                             </p>
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-gray-500">Assessment Status</label>
-                            <p className="text-sm text-gray-900">Current Assessment</p>
+                            <label className="text-xs font-medium text-gray-500">30-Day Trend</label>
+                            {company?.id && (
+                              <RiskStatusSummary companyId={company.id} />
+                            )}
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Category</label>
@@ -637,22 +646,6 @@ export default function SimpleCompanyProfile() {
                             </div>
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-
-                    {/* 30-Day Risk Trend */}
-                    <Card className="lg:col-span-2">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base text-gray-900">
-                          <TrendingUp className="w-4 h-4 text-gray-600" />
-                          30-Day Risk Trend
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <RiskMonitoringInsight 
-                          className="shadow-none border-none"
-                          isWidget={false}
-                        />
                       </CardContent>
                     </Card>
 
