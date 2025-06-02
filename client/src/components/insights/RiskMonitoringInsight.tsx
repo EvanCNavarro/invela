@@ -8,10 +8,16 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BlockedDataRecipientsAlert from './BlockedDataRecipientsAlert';
 import DeterioratingRiskTable, { CompanyRiskData } from './DeterioratingRiskTable';
 import { cn } from '@/lib/utils';
+import { 
+  generateRealisticRiskData, 
+  calculateRiskMetrics,
+  type RiskMonitoringStatus 
+} from '@/lib/riskCalculations';
 
 // Default risk threshold if company configuration is not available
 const DEFAULT_RISK_THRESHOLD = 40;
@@ -28,59 +34,7 @@ const logInsight = (action: string, details?: any) => {
   console.log(`[RiskMonitoringInsight] ${action}`, details || '');
 };
 
-/**
- * Generate synthetic historical data for development/demo purposes
- * In a production environment, this would use actual historical data
- */
-const generateHistoricalData = (companies: any[], riskThreshold: number): CompanyRiskData[] => {
-  // Filter to only include companies that are data recipients (fintech)
-  const dataRecipients = companies.filter(company => 
-    company.category === 'FinTech'
-  );
-  
-  logInsight('Generating historical data', { 
-    dataRecipientsCount: dataRecipients.length,
-    threshold: riskThreshold
-  });
 
-  // Generate risk data with different patterns
-  return dataRecipients.map((company, index) => {
-    // Current score from company data or default to a random value
-    const currentScore = company.risk_score || 
-      Math.max(20, Math.min(95, Math.floor(Math.random() * 100)));
-    
-    // Create different patterns of risk change
-    let previousScore;
-    
-    // Every third company is improving (but might still be below threshold)
-    if (index % 3 === 0) {
-      previousScore = Math.max(20, currentScore - (Math.random() * 15 + 2));
-    } 
-    // Every third company has deteriorated but is still above threshold
-    else if (index % 3 === 1) {
-      previousScore = Math.min(99, currentScore + (Math.random() * 15 + 5));
-    } 
-    // Every third company has deteriorated and is now below threshold
-    else {
-      const belowThreshold = currentScore < riskThreshold;
-      if (belowThreshold) {
-        // Already below threshold - was above before
-        previousScore = riskThreshold + (Math.random() * 10 + 3);
-      } else {
-        // Still above threshold - show deterioration
-        previousScore = currentScore + (Math.random() * 8 + 2);
-      }
-    }
-    
-    return {
-      id: company.id,
-      name: company.name,
-      currentScore: Math.round(currentScore),
-      previousScore: Math.round(previousScore),
-      category: company.category
-    };
-  });
-};
 
 /**
  * RiskMonitoringInsight Component
@@ -124,11 +78,22 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     return ['Bank', 'Invela'].includes(currentCompany.category);
   }, [currentCompany]);
 
-  // Generate company risk data
+  // Generate company risk data using shared service
   const companyRiskData = useMemo(() => {
     if (!companies.length) return [];
-    return generateHistoricalData(companies, riskThreshold);
+    
+    logInsight('Generating risk data with shared service', {
+      companiesCount: companies.length,
+      threshold: riskThreshold
+    });
+    
+    return generateRealisticRiskData(companies, riskThreshold);
   }, [companies, riskThreshold]);
+
+  // Calculate risk metrics using shared service
+  const riskMetrics = useMemo(() => {
+    return calculateRiskMetrics(companyRiskData, riskThreshold);
+  }, [companyRiskData, riskThreshold]);
 
   // Filter for blocked companies (below threshold)
   const blockedCompanies = useMemo(() => {
@@ -142,11 +107,22 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   // Filter state is now controlled only by table interactions
 
+  // Add navigation hook
+  const [, navigate] = useLocation();
+
   // Handle clicking on a company in the table
   const handleCompanyClick = (companyId: number) => {
-    logInsight('Company clicked', { companyId });
-    // In a real implementation, this could navigate to company details
-    // or show a modal with more information
+    logInsight('Company clicked - navigating to profile', { companyId });
+    
+    try {
+      // Navigate to company profile with Risk tab active
+      navigate(`/network/company/${companyId}?tab=risk`);
+    } catch (error) {
+      logInsight('Navigation error', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        companyId 
+      });
+    }
   };
 
   // Don't render if company can't view this insight
