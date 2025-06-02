@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search } from "lucide-react";
+import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search as SearchIcon, X } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
+import Fuse from 'fuse.js';
 
 interface CompanyData {
   id: number;
@@ -47,6 +48,7 @@ export default function SimpleCompanyProfile() {
   const params = useParams();
   const companyId = params.companyId;
   const [activeTab, setActiveTab] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
   const { user, isLoading: authLoading } = useAuth();
 
   const { data: company, isLoading, error } = useQuery<CompanyData>({
@@ -77,6 +79,28 @@ export default function SimpleCompanyProfile() {
     queryKey: [`/api/companies/${companyId}/accreditation`],
     enabled: !!companyId && !authLoading,
   });
+
+  // Fetch users associated with this company
+  const { data: users, isLoading: usersLoading } = useQuery<UserData[]>({
+    queryKey: [`/api/companies/${companyId}/users`],
+    enabled: !!companyId && !authLoading && activeTab === "users",
+  });
+
+  // Initialize Fuse instance for fuzzy search on users
+  const fuse = useMemo(() => new Fuse(users || [], {
+    keys: ['full_name', 'email'],
+    threshold: 0.3,
+    includeMatches: true,
+  }), [users]);
+
+  // Filter users using fuzzy search
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    if (!searchTerm) return users;
+    
+    const fuseResults = fuse.search(searchTerm);
+    return fuseResults.map(result => result.item);
+  }, [users, searchTerm, fuse]);
 
   if (authLoading || isLoading) {
     return (
@@ -450,6 +474,128 @@ export default function SimpleCompanyProfile() {
                         )}
                       </CardContent>
                     </Card>
+                  </div>
+                </TabsContent>
+
+                {/* Users Tab */}
+                <TabsContent value="users" className="space-y-6">
+                  <div className="bg-white rounded-lg border">
+                    {/* Header */}
+                    <div className="px-6 py-4 border-b">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-gray-600" />
+                          <h3 className="text-base font-medium text-gray-900">Company Users</h3>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Search and Filters */}
+                    <div className="px-6 py-4 border-b bg-gray-50/50">
+                      <div className="flex items-center gap-4">
+                        <div className="relative flex-1">
+                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search users by name or email..."
+                            className="pl-9 pr-9 bg-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                          {searchTerm && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-transparent"
+                              onClick={() => setSearchTerm("")}
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Users Table */}
+                    <div className="overflow-x-auto">
+                      {usersLoading ? (
+                        <div className="flex items-center justify-center h-32">
+                          <div className="text-sm text-muted-foreground">Loading users...</div>
+                        </div>
+                      ) : filteredUsers.length > 0 ? (
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b bg-muted/50">
+                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Name
+                              </th>
+                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Email
+                              </th>
+                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Account Type
+                              </th>
+                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Created
+                              </th>
+                              <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Last Updated
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredUsers.map((user) => (
+                              <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
+                                <td className="py-3 px-6">
+                                  <div className="flex items-center">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                      <User className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">{user.full_name}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-6">
+                                  <span className="text-sm text-gray-700">{user.email}</span>
+                                </td>
+                                <td className="py-3 px-6">
+                                  <Badge variant={user.is_demo ? "secondary" : "default"} className="text-xs">
+                                    {user.is_demo ? "Demo" : "Standard"}
+                                  </Badge>
+                                </td>
+                                <td className="py-3 px-6">
+                                  <span className="text-sm text-gray-700">
+                                    {new Date(user.created_at).toLocaleDateString()}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-6">
+                                  <span className="text-sm text-gray-700">
+                                    {new Date(user.updated_at).toLocaleDateString()}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-32 text-center">
+                          <User className="w-8 h-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">
+                            {searchTerm ? "No users found matching your search" : "No users found for this company"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer with result count */}
+                    {users && users.length > 0 && (
+                      <div className="px-6 py-3 border-t bg-gray-50/50">
+                        <div className="text-xs text-muted-foreground">
+                          {searchTerm 
+                            ? `Showing ${filteredUsers.length} of ${users.length} users`
+                            : `${users.length} total users`
+                          }
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </div>
