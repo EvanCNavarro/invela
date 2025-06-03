@@ -304,8 +304,30 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // Force development mode until build files are available
-  const isProduction = false;
+  // Use standard Node.js environment detection with detailed logging
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Deployment diagnostic logging
+  logger.info(`[DEPLOYMENT-CHECK] Environment Variables:
+    NODE_ENV: ${process.env.NODE_ENV}
+    PORT: ${process.env.PORT}
+    DEPLOYMENT_MODE: ${process.env.DEPLOYMENT_MODE || 'not set'}
+    IS_PRODUCTION: ${isProduction}`);
+  
+  logger.info(`[DEPLOYMENT-CHECK] File System Check:
+    Current Directory: ${process.cwd()}
+    Dist Directory Exists: ${fs.existsSync(path.resolve(process.cwd(), 'dist/public'))}
+    Server Public Exists: ${fs.existsSync(path.resolve(process.cwd(), 'server/public'))}`);
+  
+  if (fs.existsSync(path.resolve(process.cwd(), 'dist/public'))) {
+    const distFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist/public'));
+    logger.info(`[DEPLOYMENT-CHECK] Dist Files: ${JSON.stringify(distFiles)}`);
+  }
+  
+  if (fs.existsSync(path.resolve(process.cwd(), 'server/public'))) {
+    const serverFiles = fs.readdirSync(path.resolve(process.cwd(), 'server/public'));
+    logger.info(`[DEPLOYMENT-CHECK] Server Public Files: ${JSON.stringify(serverFiles)}`);
+  }
   
   if (isProduction) {
     logger.info('[PROD-DEBUG] Production deployment: Setting up static file serving');
@@ -319,20 +341,30 @@ app.use((req, res, next) => {
     logger.info(`[PROD-DEBUG] Server expects files at: ${serverPublic}`);
     
     if (fs.existsSync(distPublic) && !fs.existsSync(serverPublic)) {
-      logger.info('[PROD-DEBUG] Creating symlink from dist/public to server/public');
+      logger.info('[DEPLOYMENT-SUCCESS] ✓ Build files found - Creating symlink from dist/public to server/public');
       try {
         fs.symlinkSync(distPublic, serverPublic, 'dir');
-        logger.info('[PROD-DEBUG] ✓ Symlink created successfully');
+        logger.info('[DEPLOYMENT-SUCCESS] ✓ Symlink created successfully - React app will be served');
       } catch (error) {
-        logger.warn('[PROD-DEBUG] Symlink failed, copying files instead');
+        logger.warn('[DEPLOYMENT-FALLBACK] Symlink failed, copying files instead');
         const { execSync } = require('child_process');
         execSync(`cp -r "${distPublic}" "${path.dirname(serverPublic)}"`);
-        logger.info('[PROD-DEBUG] ✓ Files copied successfully');
+        logger.info('[DEPLOYMENT-SUCCESS] ✓ Files copied successfully - React app will be served');
       }
     } else if (fs.existsSync(serverPublic)) {
-      logger.info('[PROD-DEBUG] Server public directory already exists');
+      logger.info('[DEPLOYMENT-INFO] Server public directory already exists');
+      const serverFiles = fs.readdirSync(serverPublic);
+      if (serverFiles.includes('index.html')) {
+        logger.info('[DEPLOYMENT-SUCCESS] ✓ index.html found - React app should load correctly');
+      } else {
+        logger.error('[DEPLOYMENT-ERROR] ❌ No index.html found - Will show blank page');
+      }
+    } else if (!fs.existsSync(distPublic)) {
+      logger.error('[DEPLOYMENT-ERROR] ❌ CRITICAL: No build files found at ' + distPublic);
+      logger.error('[DEPLOYMENT-ERROR] ❌ This means npm run build was not executed during deployment');
+      logger.error('[DEPLOYMENT-ERROR] ❌ User will see blank page - Build process failed');
     } else {
-      logger.error(`[PROD-DEBUG] Build files not found at ${distPublic}`);
+      logger.error('[DEPLOYMENT-ERROR] ❌ UNKNOWN: Build files exist but server directory missing');
     }
     
     serveStatic(app);
