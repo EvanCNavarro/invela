@@ -50,7 +50,7 @@ export function useTutorialAssets(tabName: string, stepIndex: number, shouldLoad
       
       // Construct the image path using the new naming convention
       // We need to add 1 to stepIndex because our internal indexing is 0-based but image filenames are 1-based
-      const computedPath = `/attached_assets/${prefix}${stepIndex + 1}.png`;
+      const computedPath = `/assets/tutorials/${prefix}${stepIndex + 1}.png`;
       
       // Set the image URL directly - we'll handle errors in the component
       setImageUrl(computedPath);
