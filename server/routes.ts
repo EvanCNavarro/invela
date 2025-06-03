@@ -215,15 +215,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
   
 
   
-  app.use('/api/companies/current', (req, res, next) => {
-    console.log(`[PROD-DEBUG] /api/companies/current request received: ${req.method} - Route handler active`);
-    next();
-  });
+
   
-  app.use('/api/tasks', (req, res, next) => {
-    console.log(`[PROD-DEBUG] /api/tasks request received: ${req.method} - Route handler active`);
-    next();
-  });
+
   
   // Register company name validation API for real-time form feedback
   console.log('[Routes] Registering company name validation API...');
