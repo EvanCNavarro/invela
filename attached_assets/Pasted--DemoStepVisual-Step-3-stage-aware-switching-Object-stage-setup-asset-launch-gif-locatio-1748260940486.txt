@@ -1,0 +1,33 @@
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Creating "CyberShield Systems" organization 
+Object {id: "create-company", label: "Creating "CyberShield Systems" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.171Z", messageId: "msg_1748260931171_xeyeog001"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.171Z", messageId: "msg_1748260931171_xeyeog001"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.171Z", messageId: "msg_1748260931171_xeyeog001"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.171Z", messageId: "msg_1748260931171_xeyeog001"}
+[2025-05-26T12:02:11.184Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.226Z", messageId: "msg_1748260931226_seik8eoxo"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.226Z", messageId: "msg_1748260931226_seik8eoxo"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.226Z", messageId: "msg_1748260931226_seik8eoxo"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T12:02:11.226Z", messageId: "msg_1748260931226_seik8eoxo"}
+[2025-05-26T12:02:11.235Z] [WebSocket] Received message of type: demo_action_error 
+[DemoAPI] REAL API FAILED for: Creating &quot;CyberShield Systems&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;CyberShield Systems&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "CyberShield Systems" organization
+[DemoStep3] Rendering results and next steps

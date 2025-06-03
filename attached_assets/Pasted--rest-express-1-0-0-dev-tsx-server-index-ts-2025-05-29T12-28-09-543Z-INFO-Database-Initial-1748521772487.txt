@@ -1,0 +1,728 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-29T12:28:09.543Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-29T12:28:09.547Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-29T12:28:09.547Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-29T12:28:09.689Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-29T12:28:09.795Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-29T12:28:09.796Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"b5dfkv","timestamp":"2025-05-29T12:28:09.796Z"}
+[2025-05-29T12:28:09.796Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-29T12:28:09.796Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-29T12:28:09.796Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-29T12:28:09.796Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-29T12:28:09.796Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-29T12:28:09.796Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-29T12:28:09.796Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-29T12:28:09.796Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-29T12:28:09.796Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-29T12:28:09.797Z] [INFO] [App] Setting up Vite development server 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-29T12:28:09.798Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-29T12:28:09.816Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-29T12:28:09.817Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-29T12:28:09.817Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-29T12:28:09.817Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-29T12:28:09.817Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-29T12:28:09.817Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-05-29T12:28:09.845Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-29T12:28:09.845Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-29T12:28:09.845Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-29T12:28:09.846Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-29T12:28:09.847Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-29T12:28:10.773Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T12:28:10.797Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-29T12:28:14.251Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T12:28:14.342Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-29T12:28:19.817Z] [INFO] [App] Running background health checks... 
+[2025-05-29T12:28:19.818Z] [StartupChecks] Running application startup health checks... 
+[2025-05-29T12:28:19.818Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-29T12:28:19.818Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-29T12:28:20.002Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-29T12:28:20.031Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-29T12:28:20.064Z] [DBConnectionService] Database connection check successful 
+[2025-05-29T12:28:20.064Z] [StartupChecks] Database health check passed 
+[2025-05-29T12:28:20.064Z] [StartupChecks] All startup health checks passed! 
+[2025-05-29T12:28:20.064Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-29T12:28:21.703Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521701703-skg8kgm","clients":1}
+[2025-05-29T12:28:21.821Z] [INFO] [WebSocket] Received message from client client-1748521701703-skg8kgm {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-29T12:28:21.682Z"}}
+[2025-05-29T12:28:21.821Z] [INFO] [WebSocket] Authentication from client client-1748521701703-skg8kgm {"module":"WebSocket","hasToken":true}
+[2025-05-29T12:28:22.184Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521702184-wkgbqgx","clients":2}
+[2025-05-29T12:28:22.665Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521702665-3712dy2","clients":3}
+[2025-05-29T12:28:23.144Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521703144-nkgcodw","clients":4}
+[2025-05-29T12:28:23.624Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521703624-7etg4b9","clients":5}
+[2025-05-29T12:28:23.927Z] [INFO] [WebSocket] Received message from client client-1748521703624-7etg4b9 {"module":"WebSocket","type":"authenticate","userId":"510","companyId":"704","clientId":"ws_1748521702227_emgsvd422","timestamp":"2025-05-29T12:28:23.789Z"}
+[2025-05-29T12:28:23.927Z] [INFO] [WebSocket] Authentication from client client-1748521703624-7etg4b9 {"module":"WebSocket","userId":"510","companyId":"704","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-29T12:28:30.445Z',
+  requestId: 'req_1748521710445_s7hs1q214'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-29T12:28:30.448Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean short portmanteau name {
+  timestamp: '2025-05-29T12:28:30.448Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean short portmanteau name',
+  baseName: 'Demo Company',
+  generatedName: 'MarketConsultants',
+  nameLength: 'short',
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'MarketConsultants',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-29T12:28:30.448Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'MarketConsultants',
+  nameLength: 17
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-29T12:28:30.498Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'MarketConsultants',
+  duration: 50
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'MarketConsultants',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 53,
+  timestamp: '2025-05-29T12:28:30.498Z'
+}
+[2025-05-29T12:28:30.530Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 86ms :: {"success":true,"companyName":"MarketConsultants","wasModified":false,"origin... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'MarketConsultants',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-29T12:28:39.302Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'MarketConsultants',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'MarketConsultants',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-29T12:28:39.302Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 2
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] Generated business details: {
+  persona: 'new-data-recipient',
+  isApproved: false,
+  fieldsGenerated: 17
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 709,
+  name: 'MarketConsultants',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 53
+}
+[DemoAPI] 📋 Creating onboarding tasks for New Data Recipient: {
+  companyId: 709,
+  companyName: 'MarketConsultants',
+  persona: 'new-data-recipient'
+}
+[DemoAPI] ✅ Tasks created successfully for New Data Recipient: {
+  companyId: 709,
+  companyName: 'MarketConsultants',
+  tasksCreated: 3,
+  taskTypes: [ 'company_kyb', 'ky3p', 'open_banking' ],
+  firstTaskId: 1086,
+  allTaskIds: [ 1086, 1087, 1088 ]
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 709,
+  companyName: 'MarketConsultants',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 91
+}
+[2025-05-29T12:28:39.422Z] [INFO] [App] POST /api/demo/company/create 200 in 122ms :: {"success":true,"company":{"id":709,"name":"MarketConsultants","description":... 
+[2025-05-29T12:28:39.848Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":3,"taskIds":[1086,1087,1088]}
+[Task Progress] Calculated progress for task 1086 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1087 (ky3p): 0/0 = 0%
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Robert Lewis',
+  email: 'rlewis@marketconsultants.com',
+  companyId: 709,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748521717721_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-29T12:28:37.721Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 709,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 709
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-29T12:28:40.172Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Robert Lewis',
+    email: 'rlewis@marketconsultants.com',
+    companyId: 709,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Robert Lewis',
+    email: 'rlewis@marketconsultants.com',
+    companyId: 709,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-29T12:28:40.172Z'
+}
+[Task Progress] Calculated progress for task 1088 (open_banking): 0/44 = 0%
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'user',
+  persona: 'new-data-recipient',
+  shouldCompleteOnboarding: false,
+  onboardingUserCompleted: false,
+  logic: 'New Data Recipient - onboarding_user_completed = FALSE (triggers modal)',
+  modalWillShow: true
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 517,
+  email: 'rlewis@marketconsultants.com',
+  fullName: 'Robert Lewis',
+  companyId: 709,
+  role: 'user',
+  onboardingCompleted: false
+}
+[2025-05-29T12:28:40.305Z] [INFO] [App] POST /api/demo/user/create 200 in 134ms :: {"success":true,"user":{"id":517,"email":"rlewis@marketconsultants.com","full... 
+[2025-05-29T12:28:41.093Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 517,
+  companyId: 709,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-29T12:28:41.842Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 517,
+  email: 'rlewis@marketconsultants.com',
+  companyId: 709,
+  fullName: 'Robert Lewis'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: false, alreadyCompleted: false, category: 'FinTech' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 517,
+  email: 'rlewis@marketconsultants.com',
+  companyId: 709,
+  environmentId: 'env_demo_1748521721874_517',
+  authenticated: true,
+  totalDuration: 135,
+  timestamp: '2025-05-29T12:28:41.977Z'
+}
+[2025-05-29T12:28:42.006Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 165ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-29T12:28:43.742Z] [INFO] [WebSocket] Received message from client client-1748521703624-7etg4b9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:28:43.604Z","connectionId":"ws_1748521702227_emgsvd422"}
+[Current Company] Fetching company for user: { userId: 517, companyId: 709 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 517, company_id: 709, email: 'rlewis@marketconsultants.com' }
+[2025-05-29T12:28:45.338Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":709,"userId":517}
+[Current Company] Found company: {
+  id: 709,
+  name: 'MarketConsultants',
+  onboardingCompleted: false,
+  riskScore: 40,
+  chosenScore: 34,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 517,
+  companyId: 709,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-29T12:28:45.358Z'
+}
+[2025-05-29T12:28:45.366Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":709}
+[Tasks] Automatically unlocking all tasks for company { userId: 517, companyId: 709, requestedBy: 'automatic_task_unlock' }
+[2025-05-29T12:28:45.367Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":709}
+[2025-05-29T12:28:45.388Z] [INFO] [App] GET /api/companies/current 200 in 59ms :: {"id":709,"name":"MarketConsultants","category":"FinTech","is_demo":true,"rev... 
+[2025-05-29T12:28:45.396Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":709,"count":3,"taskIds":[1086,1087,1088],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1087]}
+[UnifiedProgress] Starting progress update for task 1086 (company_kyb) {
+  taskId: 1086,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748521725398-726',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1086 (company_kyb)
+[UnifiedProgressCalc] Task 1086 (company_kyb) progress: 0/30 = 0%
+[2025-05-29T12:28:45.544Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 5 clients {"module":"WebSocket","messageType":"task_updated","recipients":5,"totalClients":5,"filtered":false}
+[2025-05-29T12:28:45.544Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 5 clients {"module":"WebSocket","messageType":"task_update","recipients":5,"totalClients":5,"filtered":false}
+[2025-05-29T12:28:45.544Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1086,"messageId":"msg_1748521725543_8tzj7jg1"}
+[2025-05-29T12:28:45.544Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1086 {"progress":0,"status":"not_started","messageId":"msg_1748521725543_8tzj7jg1"}
+[2025-05-29T12:28:45.545Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1086,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-29T12:28:45.545Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1087,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-29T12:28:45.545Z"}
+[UnifiedProgress] Starting progress update for task 1087 (ky3p) {
+  taskId: 1087,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748521725545-809',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-29T12:28:45.569Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 517 
+[2025-05-29T12:28:45.569Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-29T12:28:45.569Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-29T12:28:45.569Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 517 
+[UnifiedProgressCalc] Calculating progress for task 1087 (ky3p)
+[2025-05-29T12:28:45.608Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 517 
+[2025-05-29T12:28:45.628Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748521725628-fivuab8","clients":6}
+[2025-05-29T12:28:45.638Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 70ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[KY3P Progress] Calculated progress for task 1087: {
+  taskId: 1087,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-29T12:28:45.665Z'
+}
+[UnifiedProgressCalc] Task 1087 (ky3p) progress: 0/120 = 0%
+[2025-05-29T12:28:45.695Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:28:45.695Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:28:45.695Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1087,"messageId":"msg_1748521725694_osd2qs12"}
+[2025-05-29T12:28:45.695Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1087 {"progress":0,"status":"not_started","messageId":"msg_1748521725694_osd2qs12"}
+[2025-05-29T12:28:45.695Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1087,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1088 (open_banking) {
+  taskId: 1088,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748521725696-356',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-29T12:28:45.743Z] [INFO] [WebSocket] Received message from client client-1748521725628-fivuab8 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748521700958_ris6trog3","timestamp":"2025-05-29T12:28:45.606Z"}
+[2025-05-29T12:28:45.743Z] [INFO] [WebSocket] Authentication from client client-1748521725628-fivuab8 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[UnifiedProgressCalc] Calculating progress for task 1088 (open_banking)
+[UnifiedProgressCalc] Task 1088 (open_banking) progress: 0/44 = 0%
+[2025-05-29T12:28:45.839Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:28:45.840Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:28:45.840Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1088,"messageId":"msg_1748521725838_jwon2tod"}
+[2025-05-29T12:28:45.840Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1088 {"progress":0,"status":"not_started","messageId":"msg_1748521725838_jwon2tod"}
+[2025-05-29T12:28:45.840Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1088,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-29T12:28:45.840Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":709,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 709
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 517',
+    condition2: 'tasks.created_by = 517',
+    condition3: "tasks.company_id = 709 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rlewis@marketconsultants.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-29T12:28:45.931Z] [INFO] [App] GET /api/tasks 200 in 594ms :: [{"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task... 
+[2025-05-29T12:28:51.821Z] [INFO] [WebSocket] Received message from client client-1748521701703-skg8kgm {"module":"WebSocket","type":"ping"}
+[2025-05-29T12:28:52.783Z] [INFO] [WebSocket] Received message from client client-1748521702665-3712dy2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:28:52.644Z","connectionId":"ws_1748521702643_vixxqn6l8"}
+[2025-05-29T12:28:53.262Z] [INFO] [WebSocket] Received message from client client-1748521703144-nkgcodw {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:28:53.124Z","connectionId":"ws_1748521702162_a691gpao3"}
+[Complete Onboarding] Processing request for user: { userId: 517, companyId: 709, timestamp: '2025-05-29T12:28:59.007Z' }
+[Complete Onboarding] BLOCKED: New Data Recipient demo users should not complete onboarding: {
+  userId: 517,
+  demoPersonaType: 'new-data-recipient',
+  isDemoUser: true,
+  reason: 'New Data Recipients must show onboarding modal for authentic persona experience'
+}
+[2025-05-29T12:28:59.065Z] [INFO] [App] POST /api/users/complete-onboarding 200 in 59ms :: {"message":"Onboarding completion blocked for New Data Recipient persona","su... 
+[Company API] Updating company 709 with data: { revenue: 100000000, revenue_tier: 'xlarge', num_employees: 150 }
+[Company API] Processed update data: { revenue: 100000000, revenue_tier: 'xlarge', num_employees: 150 }
+[Cache] Invalidating company cache for company 709
+[Company API] Successfully updated company 709
+[2025-05-29T12:28:59.304Z] [INFO] [App] PATCH /api/companies/current 200 in 64ms :: {"success":true,"message":"Company updated successfully","data":{"id":709,"na... 
+[Current Company] Fetching company for user: { userId: 517, companyId: 709 }
+[Current Company] Found company: {
+  id: 709,
+  name: 'MarketConsultants',
+  onboardingCompleted: false,
+  riskScore: 40,
+  chosenScore: 34,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 517,
+  companyId: 709,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-29T12:28:59.508Z'
+}
+[2025-05-29T12:29:01.138Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task... 
+[Current Company] Using cached company data: 709
+[2025-05-29T12:29:03.742Z] [INFO] [WebSocket] Received message from client client-1748521703624-7etg4b9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:29:03.604Z","connectionId":"ws_1748521702227_emgsvd422"}
+[2025-05-29T12:29:08.536Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":709,"name":"MarketConsultants","category":"FinTech","is_demo":true,"rev... [sampled: request 11] 
+[2025-05-29T12:29:08.569Z] [INFO] [App] GET /api/tasks/1086 200 in 58ms :: {"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task_... 
+[Task Templates API] Fetching template for task type: company_kyb, user: 517
+[Task Templates API] Found template: 1 (KYB Form) for task type: company_kyb
+[2025-05-29T12:29:09.621Z] [INFO] [App] GET /api/tasks/1086 304 in 65ms :: {"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task_... 
+[Task Templates API] Retrieved 9 configuration items for template ID: 1
+[2025-05-29T12:29:09.675Z] [INFO] [App] GET /api/task-templates/by-type/company_kyb 304 in 121ms :: {"id":1,"name":"KYB Form","description":"Know Your Business form for company ... 
+[2025-05-29T12:29:10.493Z] [INFO] [App] Fetching KYB fields 
+[2025-05-29T12:29:10.552Z] [INFO] [App] KYB fields retrieved successfully {"fieldCount":30,"groups":["companyProfile","financialProfile","governanceLeadership","operationsCompliance"]}
+[2025-05-29T12:29:10.582Z] [INFO] [App] GET /api/kyb/fields 304 in 89ms :: [{"id":1,"field_key":"legalEntityName","display_name":"Legal Entity Name","fi... 
+[KYB API Debug] Loading progress for task: 1086
+[Task Reconciliation] Task submission indicators: {
+  taskId: 1086,
+  status: 'not_started',
+  progress: 0,
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  submissionDate: undefined,
+  isTerminalState: false,
+  hasBeenSubmitted: false
+}
+[Task Reconciliation] Found 0 responses for task 1086 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 0,
+  currentStatus: 'not_started',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: false,
+  effectiveHasResponses: false,
+  timestamp: '2025-05-29T12:29:10.826Z'
+}
+[STATUS DETERMINATION] Task has 0% progress and no responses, setting to NOT_STARTED
+[Task Reconciliation] Progress calculation: {
+  taskId: 1086,
+  currentProgress: 0,
+  calculatedProgress: 0,
+  currentStatus: 'not_started',
+  calculatedStatus: 'not_started',
+  responseCount: 0,
+  completeCount: 0
+}
+[Task Reconciliation] No updates needed for task 1086
+[KYB API Debug] Retrieved task: {
+  taskId: 1086,
+  status: 'not_started',
+  progress: 0,
+  metadata: [
+    'persona',
+    'unlocked',
+    'createdBy',
+    'isInitialTask',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-29T12:29:10.856Z'
+}
+[KYB API Debug] Retrieved responses: { responseCount: 0, fields: [], timestamp: '2025-05-29T12:29:10.886Z' }
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 1086,
+  responseCount: 0,
+  progress: 0,
+  status: 'not_started',
+  formDataKeys: []
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-29T12:29:10.886Z
+[SERVER DEBUG] Task ID: 1086, Found 0 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field goodStanding in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: NOT PRESENT
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 0 fields, status: not_started, progress: 0%
+===============================================
+[2025-05-29T12:29:10.916Z] [INFO] [App] GET /api/kyb/progress/1086 200 in 152ms :: {"formData":{},"progress":0,"status":"not_started"} 
+[KYB API Debug] Loading progress for task: 1086
+[Task Reconciliation] Task submission indicators: {
+  taskId: 1086,
+  status: 'not_started',
+  progress: 0,
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasFileId: false,
+  submissionDate: undefined,
+  isTerminalState: false,
+  hasBeenSubmitted: false
+}
+[Task Reconciliation] Found 0 responses for task 1086 (type: company_kyb)
+[STATUS DETERMINATION] Calculating status for task with: {
+  progress: 0,
+  currentStatus: 'not_started',
+  hasSubmissionDate: false,
+  hasSubmittedFlag: false,
+  hasResponses: false,
+  effectiveHasResponses: false,
+  timestamp: '2025-05-29T12:29:11.148Z'
+}
+[STATUS DETERMINATION] Task has 0% progress and no responses, setting to NOT_STARTED
+[Task Reconciliation] Progress calculation: {
+  taskId: 1086,
+  currentProgress: 0,
+  calculatedProgress: 0,
+  currentStatus: 'not_started',
+  calculatedStatus: 'not_started',
+  responseCount: 0,
+  completeCount: 0
+}
+[Task Reconciliation] No updates needed for task 1086
+[KYB API Debug] Retrieved task: {
+  taskId: 1086,
+  status: 'not_started',
+  progress: 0,
+  metadata: [
+    'persona',
+    'unlocked',
+    'createdBy',
+    'isInitialTask',
+    'lastProgressReconciliation'
+  ],
+  timestamp: '2025-05-29T12:29:11.180Z'
+}
+[KYB API Debug] Retrieved responses: { responseCount: 0, fields: [], timestamp: '2025-05-29T12:29:11.211Z' }
+[SERVER DEBUG] No savedFormData found in task table
+[SERVER DEBUG] No KYB form file ID found in task metadata
+[KYB API Debug] Retrieved task data: {
+  id: 1086,
+  responseCount: 0,
+  progress: 0,
+  status: 'not_started',
+  formDataKeys: []
+}
+===============================================
+[SERVER DEBUG] PREPARING GET RESPONSE at 2025-05-29T12:29:11.212Z
+[SERVER DEBUG] Task ID: 1086, Found 0 fields in database
+===============================================
+[SERVER DEBUG] Checking field corporateRegistration in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field goodStanding in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field regulatoryActions in retrieved data: NOT PRESENT
+[SERVER DEBUG] Checking field investigationsIncidents in retrieved data: NOT PRESENT
+[SERVER DEBUG] No fields with value "asdf" found in GET response data
+[SERVER DEBUG] Sending GET response with 0 fields, status: not_started, progress: 0%
+===============================================
+[2025-05-29T12:29:11.243Z] [INFO] [App] GET /api/kyb/progress/1086 304 in 154ms :: {"formData":{},"progress":0,"status":"not_started"} 
+[Current Company] Using cached company data: 709
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 517, company_id: 709, email: 'rlewis@marketconsultants.com' }
+[2025-05-29T12:29:15.675Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":709,"userId":517}
+[2025-05-29T12:29:15.703Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":709}
+[Tasks] Automatically unlocking all tasks for company { userId: 517, companyId: 709, requestedBy: 'automatic_task_unlock' }
+[2025-05-29T12:29:15.704Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":709}
+[2025-05-29T12:29:15.739Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":709,"count":3,"taskIds":[1086,1087,1088],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1087]}
+[UnifiedProgress] Starting progress update for task 1086 (company_kyb) {
+  taskId: 1086,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748521755739-297',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1086 (company_kyb)
+[UnifiedProgressCalc] Task 1086 (company_kyb) progress: 0/30 = 0%
+[2025-05-29T12:29:15.895Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:15.895Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:15.895Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1086,"messageId":"msg_1748521755894_yki9bqkb"}
+[2025-05-29T12:29:15.895Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1086 {"progress":0,"status":"not_started","messageId":"msg_1748521755894_yki9bqkb"}
+[2025-05-29T12:29:15.895Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1086,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-29T12:29:15.895Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1087,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-29T12:29:15.895Z"}
+[UnifiedProgress] Starting progress update for task 1087 (ky3p) {
+  taskId: 1087,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748521755896-676',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1087 (ky3p)
+[KY3P Progress] Calculated progress for task 1087: {
+  taskId: 1087,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-29T12:29:16.015Z'
+}
+[UnifiedProgressCalc] Task 1087 (ky3p) progress: 0/120 = 0%
+[2025-05-29T12:29:16.043Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:16.043Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:16.043Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1087,"messageId":"msg_1748521756042_kg3345ag"}
+[2025-05-29T12:29:16.043Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1087 {"progress":0,"status":"not_started","messageId":"msg_1748521756042_kg3345ag"}
+[2025-05-29T12:29:16.043Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1087,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1088 (open_banking) {
+  taskId: 1088,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748521756044-484',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1088 (open_banking)
+[UnifiedProgressCalc] Task 1088 (open_banking) progress: 0/44 = 0%
+[2025-05-29T12:29:16.183Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:16.184Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-29T12:29:16.184Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1088,"messageId":"msg_1748521756183_4urelydd"}
+[2025-05-29T12:29:16.184Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1088 {"progress":0,"status":"not_started","messageId":"msg_1748521756183_4urelydd"}
+[2025-05-29T12:29:16.184Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":709,"taskId":1088,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-29T12:29:16.184Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":709,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 709
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 517',
+    condition2: 'tasks.created_by = 517',
+    condition3: "tasks.company_id = 709 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rlewis@marketconsultants.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-29T12:29:16.271Z] [INFO] [App] GET /api/tasks 304 in 597ms :: [{"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task... 
+[2025-05-29T12:29:16.472Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":1086,"title":"1. KYB Form: MarketConsultants","description":null,"task... 
+[2025-05-29T12:29:21.822Z] [INFO] [WebSocket] Received message from client client-1748521701703-skg8kgm {"module":"WebSocket","type":"ping"}
+[2025-05-29T12:29:22.784Z] [INFO] [WebSocket] Received message from client client-1748521702665-3712dy2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:29:22.644Z","connectionId":"ws_1748521702643_vixxqn6l8"}
+[2025-05-29T12:29:23.264Z] [INFO] [WebSocket] Received message from client client-1748521703144-nkgcodw {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:29:23.124Z","connectionId":"ws_1748521702162_a691gpao3"}
+[2025-05-29T12:29:23.744Z] [INFO] [WebSocket] Received message from client client-1748521703624-7etg4b9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-29T12:29:23.604Z","connectionId":"ws_1748521702227_emgsvd422"}

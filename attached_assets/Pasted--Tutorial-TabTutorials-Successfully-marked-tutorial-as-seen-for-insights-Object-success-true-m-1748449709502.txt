@@ -1,0 +1,94 @@
+[Tutorial:TabTutorials] Successfully marked tutorial as seen for insights: 
+Object {success: true, message: "Tutorial created and marked as seen successfully", tutorialStatus: {…}}
+[Tutorial:TabTutorials] Fetching tutorial status for: insights
+[API Request] GET /api/user-tab-tutorials/insights/status without body data 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[API Response] GET /api/user-tab-tutorials/insights/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for insights: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-05-28T16:28:14.480Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[Tutorial:TabTutorials] Updating local state for insights: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-05-28T16:28:14.480Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[ConsentActivityInsight] Company selected: 488
+[ConsentActivityChart] Calculated consents data: 
+Object {companyId: 488, activeConsents: 9743962, newlyGranted: 1002851}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[Router] Current location: /login

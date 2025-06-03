@@ -1,0 +1,33 @@
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Creating "CloudWave Technologies" organization 
+Object {id: "create-company", label: "Creating "CloudWave Technologies" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.053Z", messageId: "msg_1748253949053_7772qr44x"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.053Z", messageId: "msg_1748253949053_7772qr44x"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.053Z", messageId: "msg_1748253949053_7772qr44x"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.053Z", messageId: "msg_1748253949053_7772qr44x"}
+[2025-05-26T10:05:49.055Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.138Z", messageId: "msg_1748253949138_u034wesb0"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.138Z", messageId: "msg_1748253949138_u034wesb0"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.138Z", messageId: "msg_1748253949138_u034wesb0"}
+[2025-05-26T10:05:49.142Z] [WebSocket] Received message of type: demo_action_error 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-26T10:05:49.138Z", messageId: "msg_1748253949138_u034wesb0"}
+[DemoAPI] REAL API FAILED for: Creating &quot;CloudWave Technologies&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;CloudWave Technologies&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "CloudWave Technologies" organization
+[DemoStep3] Rendering results and next steps

@@ -1,0 +1,32 @@
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoStep3] Starting demo preparation with real API actions
+[DemoAPI] Executing: Creating "Strategic Consulting Group" organization 
+Object {id: "create-company", label: "Creating "Strategic Consulting Group" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.141Z", messageId: "msg_1748209520141_b0y2sy1kc"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.141Z", messageId: "msg_1748209520141_b0y2sy1kc"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.141Z", messageId: "msg_1748209520141_b0y2sy1kc"}
+[2025-05-25T21:45:20.083Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.144Z", messageId: "msg_1748209520144_cn4zufcw1"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.144Z", messageId: "msg_1748209520144_cn4zufcw1"}
+[2025-05-25T21:45:20.084Z] [WebSocket] Received message of type: demo_action_error 
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.141Z", messageId: "msg_1748209520141_b0y2sy1kc"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.144Z", messageId: "msg_1748209520144_cn4zufcw1"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:45:20.144Z", messageId: "msg_1748209520144_cn4zufcw1"}
+[DemoAPI] REAL API FAILED for: Creating &quot;Strategic Consulting Group&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;Strategic Consulting Group&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "Strategic Consulting Group" organization
+[DemoStep3] Rendering results and next steps

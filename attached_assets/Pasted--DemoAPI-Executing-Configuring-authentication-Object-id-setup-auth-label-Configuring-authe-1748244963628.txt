@@ -1,0 +1,53 @@
+[DemoAPI] Executing: Configuring authentication 
+Object {id: "setup-auth", label: "Configuring authentication", category: "auth", targetField: "userEmail", apiEndpoint: "/api/demo/auth/setup", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T07:35:54.302Z", echo: {…}}
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, credentials: {…}, timestamp: "2025-05-26T07:35:54.305Z"}
+[DemoAPI] Executing: Sending welcome email invitation 
+Object {id: "send-invitation", label: "Sending welcome email invitation", category: "notification", targetField: "emailInvitation", apiEndpoint: "/api/demo/email/send-invitation", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_email_sent", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.664Z", messageId: "msg_1748244954664_cnielkx1j"}
+[2025-05-26T07:35:54.669Z] [WebSocket] Received message of type: demo_email_sent 
+[WebSocket] Received message: 
+Object {type: "demo_email_sent", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.664Z", messageId: "msg_1748244954664_cnielkx1j"}
+[WebSocket] Received message: 
+Object {type: "demo_email_sent", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.664Z", messageId: "msg_1748244954664_cnielkx1j"}
+[WebSocket] Received message: 
+Object {type: "demo_email_sent", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.664Z", messageId: "msg_1748244954664_cnielkx1j"}
+[DemoAPI] Success: Sending welcome email invitation 
+Object {success: true, emailSent: true, messageId: "demo_invite_1748244954663_404", recipientEmail: "nsingh@dynamicholdings.com", invitationCode: "987343", …}
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T07:35:54.830Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "demo_completed", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.973Z", messageId: "msg_1748244954973_uemjh1157"}
+[2025-05-26T07:35:54.975Z] [WebSocket] Received message of type: demo_completed 
+[WebSocket] Received message: 
+Object {type: "demo_completed", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.973Z", messageId: "msg_1748244954973_uemjh1157"}
+[WebSocket] Received message: 
+Object {type: "demo_completed", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.973Z", messageId: "msg_1748244954973_uemjh1157"}
+[WebSocket] Received message: 
+Object {type: "demo_completed", payload: {…}, data: {…}, timestamp: "2025-05-26T07:35:54.973Z", messageId: "msg_1748244954973_uemjh1157"}
+[DemoAPI] Success: Finalizing demo environment 
+Object {success: true, demoReady: true, authenticated: true, loginRequired: false, accessUrl: "/dashboard", …}
+[DemoStep3] All demo actions completed successfully 
+Object {create-company: {…}, create-user: {…}, setup-auth: {…}, send-invitation: {…}, finalize-environment: {…}}
+create-company: Object
+create-user: Object
+finalize-environment: Object
+send-invitation: Object
+setup-auth: Object
+[[Prototype]]: Object
+[DemoStep3] Authentication analysis: 
+Object {isAuthenticated: true, loginRequired: false, accessUrl: "/dashboard", finalizationResult: "present"}
+[DemoStep3] Auto-login successful - redirecting to dashboard
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Navigating to authenticated dashboard
+[Router] Current location: /dashboard
+[Router] Current location: /login
+[AuthLayout] Rendering with mode: login, step: 1/3

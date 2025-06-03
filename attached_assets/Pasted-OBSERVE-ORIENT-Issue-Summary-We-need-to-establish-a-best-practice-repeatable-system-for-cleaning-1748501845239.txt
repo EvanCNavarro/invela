@@ -1,0 +1,148 @@
+OBSERVE & ORIENT
+Issue Summary: We need to establish a best-practice, repeatable system for cleaning up demo data from the Invela platform. This includes demo companies, users, tasks, files, relationships, and invitations that accumulate from demo flows.
+
+Initial Assumptions:
+
+A1: We need a dedicated cleanup API endpoint that can be called manually or scheduled
+A2: The cleanup should follow the existing deletion order (Tasks → Files → Invitations → Relationships → Users → Company Logos → Companies → Demo Sessions)
+A3: We should add safety mechanisms (dry-run mode, confirmation steps, logging)
+A4: The cleanup should be configurable (age-based, count-based, or manual selection)
+A5: We need monitoring/reporting capabilities to track what was cleaned up
+A6: The system should handle edge cases (dependencies, foreign keys, partial failures)
+VALIDATE ASSUMPTIONS
+A1: Dedicated cleanup API endpoint ✓ Confirmed
+
+Evidence: Current infrastructure in server/demo-api.ts already has deletion logic but it's embedded in other functions
+Need: Extract into dedicated endpoint for reusability
+A2: Existing deletion order ✓ Confirmed
+
+Evidence: Order specified in schema documentation and previous discussions
+This prevents foreign key constraint violations
+A3: Safety mechanisms ? Uncertain
+
+Current code has basic flags but lacks comprehensive safety features
+Need: Dry-run mode, detailed logging, confirmation requirements
+A4: Configurable cleanup ? Uncertain
+
+Current system uses simple boolean flags
+Need: More sophisticated filtering (age, persona type, batch size)
+A5: Monitoring/reporting ✗ Missing
+
+No current reporting on cleanup operations
+Need: Cleanup audit trail and summary reports
+A6: Edge case handling ? Uncertain
+
+Current code has basic error handling but may not cover all scenarios
+Need: Transaction-based cleanup, rollback capabilities
+REFINED ASSUMPTIONS
+RA1: Create a dedicated /api/admin/cleanup-demo-data endpoint with comprehensive safety features
+RA2: Implement configurable cleanup with filters (age, persona type, batch limits)
+RA3: Add dry-run mode and detailed audit logging
+RA4: Use database transactions for atomic operations
+RA5: Create cleanup reporting dashboard for administrators
+
+DECISION
+Root Cause: The current demo cleanup is embedded in other functions and lacks the robustness needed for regular maintenance operations.
+
+Research & Investigation Plan:
+
+Low effort: Review current deletion logic in server/demo-api.ts and server/utils/demo-data-transformer.ts
+Medium effort: Design cleanup API interface with safety features
+Medium effort: Create cleanup configuration system
+High effort: Implement comprehensive cleanup endpoint with reporting
+Proposed Fix Approach:
+
+Extract cleanup logic into dedicated service module
+Create admin-only cleanup API endpoint with multiple modes:
+Dry-run (preview what would be deleted)
+Selective (by age, persona type, specific criteria)
+Full cleanup (with confirmation)
+Add comprehensive logging and audit trail
+Create simple admin interface for triggering cleanup
+Add monitoring dashboard showing cleanup history
+Trade-offs:
+
+Pro: Reusable, safe, auditable cleanup system
+Pro: Can be automated or run manually as needed
+Con: Additional complexity and code to maintain
+Con: Requires careful testing to avoid data loss
+Estimated Effort: Medium (3-4 focused sessions)
+
+Should I proceed with implementing this comprehensive demo cleanup system?
+
+What would be beneficial actually is that you know there should almost be like a paired API like the actual removal and then maybe like one that shows the reason why I say all this is because like even if in the future we end up like wanting to see this stuff, it might be helpful to have a page and I don't want to create this now. I'm just saying to future proof this whole process to have a page where you can click to then get all of the demo data and then once you get all the demo data that be the first of the pair the secondary one would then be the delete and that would b exactly what you would be deleting, but just getting it first to showcase and see and maybe that would allow the user then to you know select certain things to not include or you know whatever else that can be done in a future refinement, but it seems like it'd be helpful to then like check what was gonna be deleted explicitly to make sure there isn't any false flags or things that should've shouldn't be included does that make sense?
+
+8 minutes ago
+EN
+
+EvanCNavarro
+Absolutely! That makes perfect sense - a paired API approach for safety and transparency:
+
+Preview API (GET /api/admin/demo-data/preview) - Shows what would be deleted
+Delete API (DELETE /api/admin/demo-data/cleanup) - Actually performs the deletion
+This gives you:
+
+Safety: See exactly what will be deleted before doing it
+Selectivity: Future ability to exclude specific items
+Audit trail: Clear record of what was reviewed vs deleted
+Confidence: No surprises or accidental deletions
+Proposed API Design:
+
+// Preview endpoint - shows what would be deleted
+GET /api/admin/demo-data/preview?filters=age:30d,persona:all,dryRun:true
+Response: {
+  summary: { companies: 45, users: 67, tasks: 234, files: 31, relationships: 95 },
+  details: { companies: [...], users: [...], tasks: [...] },
+  warnings: ["5 Invela admin users will be deleted"],
+  timestamp: "2025-05-29T06:46:00Z"
+}
+// Cleanup endpoint - performs actual deletion
+DELETE /api/admin/demo-data/cleanup
+Body: { 
+  confirmationToken: "preview_timestamp_hash",
+  excludeIds?: { companies: [1], users: [515] }
+}
+Benefits of this approach:
+
+You can inspect the preview, spot any issues (like Invela admin users)
+Future UI can show checkboxes to exclude specific items
+Confirmation token ensures you've reviewed the preview first
+Clear separation between "show me" and "do it"
+Should I implement this paired API system? It would create a robust foundation for both immediate cleanup needs and future UI enhancements.
+
+And just to make sure everything that you're talking about will have for instance, proper air logging and you know validation logging you know all all that stuff it's gonna have like a clear indication of best practices and it's gonna adhere to the coding standards
+
+8 minutes ago
+EN
+
+EvanCNavarro
+Absolutely! The implementation will follow all coding standards and best practices:
+
+Logging & Audit Trail:
+
+Comprehensive logging at each deletion phase
+Structured logging with proper log levels (INFO, WARN, ERROR)
+Audit trail tracking who performed cleanup and when
+Detailed error logging with context for debugging
+Validation & Safety:
+
+Input validation on all parameters
+Database transaction rollback on failures
+Confirmation token validation
+Rate limiting to prevent abuse
+Admin-only authorization checks
+Code Standards:
+
+TypeScript with proper typing
+Error handling with structured error responses
+Database queries using Drizzle ORM patterns
+Consistent with existing API structure in server/routes.ts
+Following the established patterns in server/demo-api.ts
+Documentation:
+
+Clear API documentation
+Inline code comments explaining business logic
+Error message clarity for troubleshooting
+This will create a production-ready cleanup system that integrates seamlessly with your existing codebase architecture.
+
+Should I proceed with implementing

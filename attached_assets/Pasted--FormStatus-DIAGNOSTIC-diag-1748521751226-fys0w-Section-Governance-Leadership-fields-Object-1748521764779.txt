@@ -1,0 +1,122 @@
+[FormStatus] [DIAGNOSTIC][diag_1748521751226_fys0w] Section "Governance & Leadership" fields 
+Object {fieldCount: 10, fields: Array(10)}
+[FormStatus] [DIAGNOSTIC][diag_1748521751226_fys0w] Processing section "Financial Profile" 
+Object {sectionId: "section-2", fieldCount: 4, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748521751226_fys0w] Section "Financial Profile" fields 
+Object {fieldCount: 4, fields: Array(4)}
+[FormStatus] [DIAGNOSTIC][diag_1748521751226_fys0w] Processing section "Operations & Compliance" 
+Object {sectionId: "section-3", fieldCount: 8, hasFields: true}
+[FormStatus] [DIAGNOSTIC][diag_1748521751226_fys0w] Section "Operations & Compliance" fields 
+Object {fieldCount: 8, fields: Array(8)}
+[TaskPage] Form progress updated: 0%
+[UniversalForm] Auto-navigating form on initial load based on task status and completion
+[UniversalForm] Found first incomplete section: Company Profile at index 0
+[UniversalSuccessModal] KYB form - filtering out dashboard tab from display
+[Router] Current location: /task-center
+[FormSubmissionListener] Cleaned up form submission listener for task 1086
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=709, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 709
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-29T12:29:15.476Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 517, databaseStatus: "not completed", localStorageStatus: "completed", showModal: false}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:15.873Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:15.873Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:15.873Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:15.894Z", taskId: 1086, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:15.894Z", taskId: 1086, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:15.894Z", taskId: 1086, progress: 0, status: "not_started", …}
+[2025-05-29T12:29:15.873Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:15.894Z", taskId: 1086, progress: 0, status: "not_started", …}
+[TaskCenter] Raw WebSocket task_update data: undefined
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: false, hasNestedPayload: false, hasData: false, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: null, status: undefined, progress: undefined, metadata: undefined, timestamp: "2025-05-29T12:29:15.874Z"}
+[TaskCenter] Missing task ID in WebSocket update
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:15.895Z", id: 1086, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:15.895Z", id: 1086, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:15.895Z", id: 1086, status: "not_started", progress: 100, …}
+[2025-05-29T12:29:15.874Z] [WebSocket] Received message of type: task_update 
+[2025-05-29T12:29:15.874Z] [WebSocket] Task update received: Task #1086 - Status: not_started, Progress: 100% 
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:15.895Z", id: 1086, status: "not_started", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.021Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.021Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.021Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.042Z", taskId: 1087, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.042Z", taskId: 1087, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.042Z", taskId: 1087, progress: 0, status: "not_started", …}
+[2025-05-29T12:29:16.021Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.042Z", taskId: 1087, progress: 0, status: "not_started", …}
+[TaskCenter] Raw WebSocket task_update data: undefined
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: false, hasNestedPayload: false, hasData: false, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: null, status: undefined, progress: undefined, metadata: undefined, timestamp: "2025-05-29T12:29:16.021Z"}
+[TaskCenter] Missing task ID in WebSocket update
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.043Z", id: 1087, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.043Z", id: 1087, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.043Z", id: 1087, status: "not_started", progress: 100, …}
+[2025-05-29T12:29:16.022Z] [WebSocket] Received message of type: task_update 
+[2025-05-29T12:29:16.022Z] [WebSocket] Task update received: Task #1087 - Status: not_started, Progress: 100% 
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.043Z", id: 1087, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.183Z", taskId: 1088, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.183Z", taskId: 1088, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.183Z", taskId: 1088, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-29T12:29:16.183Z", taskId: 1088, progress: 0, status: "not_started", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.161Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.161Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-29T12:29:16.161Z"}
+[TaskCenter] Raw WebSocket task_update data: undefined
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: false, hasNestedPayload: false, hasData: false, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: null, status: undefined, progress: undefined, metadata: undefined, timestamp: "2025-05-29T12:29:16.161Z"}
+[TaskCenter] Missing task ID in WebSocket update
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.183Z", id: 1088, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.183Z", id: 1088, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.183Z", id: 1088, status: "not_started", progress: 100, …}
+[2025-05-29T12:29:16.162Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-29T12:29:16.183Z", id: 1088, status: "not_started", progress: 100, …}
+[2025-05-29T12:29:16.163Z] [WebSocket] Received message of type: task_update 
+[2025-05-29T12:29:16.163Z] [WebSocket] Task update received: Task #1088 - Status: not_started, Progress: 100% 
+[Router] Current location: /login
+[AuthLayout] Rendering with mode: login, step: 1/3
+[WebSocketEventBridge] Cleaning up event bridge

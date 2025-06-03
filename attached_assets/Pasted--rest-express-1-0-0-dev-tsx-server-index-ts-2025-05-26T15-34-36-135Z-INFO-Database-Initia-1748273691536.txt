@@ -1,0 +1,65 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-26T15:34:36.135Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-26T15:34:36.140Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-26T15:34:36.140Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-26T15:34:36.274Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-26T15:34:36.380Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-26T15:34:36.380Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-26T15:34:36.380Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-26T15:34:36.380Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-26T15:34:36.381Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-26T15:34:36.383Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-26T15:34:36.383Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"9yllc6","timestamp":"2025-05-26T15:34:36.383Z"}
+[2025-05-26T15:34:36.383Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-26T15:34:36.383Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-26T15:34:36.383Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-26T15:34:36.383Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-26T15:34:36.384Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-26T15:34:36.384Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-26T15:34:36.384Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-26T15:34:36.384Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-26T15:34:36.384Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-26T15:34:36.384Z] [INFO] [App] Setting up Vite development server 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-26T15:34:36.385Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-26T15:34:36.386Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-26T15:34:36.386Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-26T15:34:36.386Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-26T15:34:36.398Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-26T15:34:36.398Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-26T15:34:36.398Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-26T15:34:36.398Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-26T15:34:36.398Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-26T15:34:36.399Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-26T15:34:37.116Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-26T15:34:37.713Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+3:34:39 PM [vite] Pre-transform error: Transform failed with 3 errors:
+/home/runner/workspace/client/src/pages/demo-page.tsx:2159:18: ERROR: Unexpected closing "motion.div" tag does not match opening "div" tag
+/home/runner/workspace/client/src/pages/demo-page.tsx:2165:18: ERROR: Unexpected closing "motion.div" tag does not match opening "div" tag
+/home/runner/workspace/client/src/pages/demo-page.tsx:2305:6: ERROR: Unexpected closing "motion.div" tag does not match opening "div" tag

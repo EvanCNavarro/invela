@@ -1,0 +1,37 @@
+[DemoStepVisual] Step 1 - Active: true, Asset: /assets/demo/steps/step-1-animated.gif
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:01:38.321Z", echo: {…}}
+[DemoPage] Advancing to step 2
+[DemoPage] Rendering step 2/3 
+Object {selectedPersona: "new-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 2/3
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "new-data-recipient"}
+[DemoStepVisual] Rendering with currentStep: 2
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] Preloading assets for step 3
+[DemoAssetPreloader] Successfully initiated preloading for 1 assets
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:01:38.809Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:01:39.322Z", echo: {…}}
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "new-data-recipient"}
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "new-data-recipient"}
+[DemoStep2] Rendering interactive demo 
+Object {selectedPersona: "new-data-recipient"}
+Cannot read properties of undefined (reading 'toLowerCase')
+Cannot read properties of undefined (reading 'toLowerCase')
+[DemoAssetPreloader] Cleaned up 1 preload links
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:02:08.321Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:02:08.809Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T09:02:09.323Z", echo: {…}}

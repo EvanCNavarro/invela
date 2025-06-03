@@ -1,0 +1,222 @@
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, firstFewCompanies: Array(0), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Premier Banking Solutions Partners", category: "Bank", isBankOrInvela: true, selectedCompanyId: 668, networkCompaniesCount: 0, …}
+[RiskMonitoringInsight] Generating historical data 
+Object {dataRecipientsCount: 0, threshold: 40}
+[DeterioratingRiskTable] Processing companies data 
+Object {timeframe: "7day", companyCount: 0}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 1, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 1, firstFewCompanies: Array(1), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Premier Banking Solutions Partners", category: "Bank", isBankOrInvela: true, selectedCompanyId: 668, networkCompaniesCount: 1, …}
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 1, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 1, firstFewCompanies: Array(1), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Premier Banking Solutions Partners", category: "Bank", isBankOrInvela: true, selectedCompanyId: 668, networkCompaniesCount: 1, …}
+[RiskRadarChart] Fetched relationship companies: 0
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 1, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 1, firstFewCompanies: Array(1), …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Premier Banking Solutions Partners", category: "Bank", isBankOrInvela: true, selectedCompanyId: 668, networkCompaniesCount: 1, …}
+[SidebarTab] Clicked Network tab, href=/network, isDisabled=false
+[Router] Current location: /network
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for dashboard
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(7), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/network", …}
+[Sidebar] Tab state check: company=668, path=/network, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 668
+[Tutorial:TabTutorials] Fetching tutorial status for: network
+[API Request] GET /api/user-tab-tutorials/network/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for network
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for network with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: false, …}
+[CurrentCompany] Setting company context: 668
+[WebSocketEventBridge] Initializing event bridge
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 476, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Router] Current location: /network
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+[API Response] GET /api/user-tab-tutorials/network/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for network: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "network"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for network: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "network"}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=5
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[Tutorial:TabTutorials] Skipping tutorial for network
+[Tutorial:TabTutorials] Marking tutorial as seen for network
+[API Request] POST /api/user-tab-tutorials/mark-seen with body data 
+Object {bodyPreview: "(Object)"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[API Response] POST /api/user-tab-tutorials/mark-seen - Status: 200
+[Tutorial:TabTutorials] Successfully marked tutorial as seen for network: 
+Object {success: true, message: "Tutorial created and marked as seen successfully", tutorialStatus: {…}}
+[Tutorial:TabTutorials] Fetching tutorial status for: network
+[API Request] GET /api/user-tab-tutorials/network/status without body data 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[API Response] GET /api/user-tab-tutorials/network/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for network: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-05-28T09:16:54.875Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[Tutorial:TabTutorials] Updating local state for network: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-05-28T09:16:54.875Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=5
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for network
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "network", normalizedTabName: "network", currentStep: 0, totalSteps: 5, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for network, step 1: /assets/tutorials/modal_network_1.png
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T09:17:00.843Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T09:17:01.882Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T09:17:02.429Z", echo: {…}}

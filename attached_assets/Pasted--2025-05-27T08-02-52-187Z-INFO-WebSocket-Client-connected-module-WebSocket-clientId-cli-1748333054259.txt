@@ -1,0 +1,234 @@
+[2025-05-27T08:02:52.187Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748332972187-yjs1su0","clients":2}
+[2025-05-27T08:02:52.703Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748332972703-igdzhf1","clients":3}
+[2025-05-27T08:02:53.207Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748332973207-4c2w88c","clients":4}
+[2025-05-27T08:02:53.717Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748332973717-8pm0xur","clients":5}
+[2025-05-27T08:02:54.038Z] [INFO] [WebSocket] Received message from client client-1748332973717-8pm0xur {"module":"WebSocket","type":"authenticate","userId":"454","companyId":"419","clientId":"ws_1748332972119_40acigxxs","timestamp":"2025-05-27T08:02:53.896Z"}
+[2025-05-27T08:02:54.038Z] [INFO] [WebSocket] Authentication from client client-1748332973717-8pm0xur {"module":"WebSocket","userId":"454","companyId":"419","hasToken":true}
+[2025-05-27T08:03:13.838Z] [INFO] [WebSocket] Received message from client client-1748332973717-8pm0xur {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:13.706Z","connectionId":"ws_1748332972119_40acigxxs"}
+[2025-05-27T08:03:21.799Z] [INFO] [WebSocket] Received message from client client-1748332971672-tmic51p {"module":"WebSocket","type":"ping"}
+[2025-05-27T08:03:22.834Z] [INFO] [WebSocket] Received message from client client-1748332972703-igdzhf1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:22.695Z","connectionId":"ws_1748332972697_a6dae0nna"}
+[2025-05-27T08:03:23.332Z] [INFO] [WebSocket] Received message from client client-1748332973207-4c2w88c {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:23.195Z","connectionId":"ws_1748332972176_45vheh179"}
+[2025-05-27T08:03:33.844Z] [INFO] [WebSocket] Received message from client client-1748332973717-8pm0xur {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:33.705Z","connectionId":"ws_1748332972119_40acigxxs"}
+[2025-05-27T08:03:51.798Z] [INFO] [WebSocket] Received message from client client-1748332971672-tmic51p {"module":"WebSocket","type":"ping"}
+[2025-05-27T08:03:52.827Z] [INFO] [WebSocket] Received message from client client-1748332972703-igdzhf1 {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:52.695Z","connectionId":"ws_1748332972697_a6dae0nna"}
+[2025-05-27T08:03:53.337Z] [INFO] [WebSocket] Received message from client client-1748332973207-4c2w88c {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:53.197Z","connectionId":"ws_1748332972176_45vheh179"}
+[2025-05-27T08:03:53.842Z] [INFO] [WebSocket] Received message from client client-1748332973717-8pm0xur {"module":"WebSocket","type":"ping","timestamp":"2025-05-27T08:03:53.704Z","connectionId":"ws_1748332972119_40acigxxs"}
+[DemoAPI] Company creation request received at: 2025-05-27T08:03:57.828Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '101',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "Elite Capital Ventures",
+  "type": "demo",
+  "persona": "new-data-recipient",
+  "companySize": "medium"
+}
+[DemoAPI] Creating demo session for tracking...
+[DemoSessionService] Creating new demo session: {
+  sessionId: 'demo_8ad30278-73e3-4581-826d-7c0f7ee15a38',
+  personaType: 'new-data-recipient',
+  expiresAt: '2025-05-30T08:03:57.828Z',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.',
+  ipAddress: '10.81.1.3'
+}
+[DemoSessionService] ✅ Demo session created successfully: demo_8ad30278-73e3-4581-826d-7c0f7ee15a38
+[DemoAPI] ✅ Demo session created: demo_8ad30278-73e3-4581-826d-7c0f7ee15a38
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'Elite Capital Ventures',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium',
+  riskProfile: undefined
+}
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748333037871_foapb4hln' }
+[2025-05-27T08:03:57.872Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Generating company data for: { persona: 'new-data-recipient', companySize: 'medium' }
+[DemoAPI] IMPLEMENTING DIRECT FIX for size: medium
+[DemoAPI] Configuring persona: new-data-recipient
+[DemoAPI] Configured non-accredited FinTech with basic access
+[DemoAPI] Processing company size: medium
+[DemoAPI] Generated medium company: $61M revenue, 150 employees
+[DemoAPI] Generated company data: {
+  category: 'FinTech',
+  accreditation_status: 'PENDING',
+  is_demo: true,
+  available_tabs: [ 'task-center' ],
+  revenue: '$28M',
+  num_employees: 158,
+  revenue_tier: 'medium'
+}
+[DemoAPI] ⏳ Skipping risk data for PENDING persona new-data-recipient - awaiting accreditation
+[DemoAPI] Generating comprehensive business details...
+[DemoAPI] Business Details - Persona: new-data-recipient, Mapped Type: fintech
+[DemoAPI] Generated business details: {
+  website: 'https://www.securepay.com',
+  hasAddress: true,
+  hasLeadership: true,
+  hasClients: true,
+  hasInvestors: true,
+  hasCertifications: true
+}
+[DemoAPI] Assembled complete company data for insertion
+[DemoAPI] Business details verification: {
+  websiteIncluded: true,
+  addressIncluded: true,
+  productsIncluded: true,
+  leadershipIncluded: true,
+  clientsIncluded: true,
+  investorsIncluded: true,
+  certificationsIncluded: true,
+  riskClustersIncluded: false
+}
+[DemoAPI] Final insert values: {
+  "name": "Elite Capital Ventures",
+  "description": "Professional fintech company specializing in secure data management and compliance",
+  "category": "FinTech",
+  "accreditation_status": "PENDING",
+  "is_demo": true,
+  "available_tabs": [
+    "task-center"
+  ],
+  "revenue": "$28M",
+  "num_employees": 158,
+  "revenue_tier": "medium",
+  "risk_score": null,
+  "risk_clusters": null,
+  "onboarding_company_completed": false,
+  "demo_persona_type": "new-data-recipient",
+  "demo_session_id": "demo_8ad30278-73e3-4581-826d-7c0f7ee15a38",
+  "demo_created_at": "2025-05-27T08:03:57.873Z",
+  "demo_expires_at": "2025-05-30T08:03:57.873Z",
+  "demo_cleanup_eligible": true,
+  "website_url": "https://www.securepay.com",
+  "hq_address": "1201 Third Avenue, Suite 4900, Seattle, WA 98101",
+  "products_services": "API-driven financial services, secure data analytics, automated compliance workflows",
+  "founders_and_leadership": "Thomas Anderson (CEO, Former Stripe VP), Rachel Davis (CTO, Ex-Meta Engineering Manager), Kevin Zhang (CFO, Former BlackRock Director)",
+  "key_clients_partners": "Bank of America, Goldman Sachs, Morgan Stanley, Charles Schwab, Fidelity",
+  "investors": "QED Investors, Nyca Partners, FinTech Collective, Commerce Ventures",
+  "certifications_compliance": "HIPAA Compliant, SOC 1 Type II, ISO 22301, COBIT 5, COSO Framework",
+  "legal_structure": "Corporation",
+  "market_position": "Established Player",
+  "incorporation_year": 2010,
+  "funding_stage": "Series C"
+}
+[DemoAPI] Company creation strategy: {
+  persona: 'new-data-recipient',
+  shouldCreateTasks: true,
+  strategy: 'Use task-enabled service (like FinTech invites)'
+}
+[DemoAPI] Attempting company creation with name: "Elite Capital Ventures" (attempt 1)
+[DemoAPI] 🎯 Creating New Data Recipient company with standard tasks (KYB, KY3P, Open Banking)
+[Company Service] Creating new company: Elite Capital Ventures {
+  hasExistingTransaction: false,
+  timestamp: '2025-05-27T08:03:57.873Z'
+}
+[Company Service] Creating new transaction for company creation
+[Company Service] Creating new company record in database
+[Company Service] Created company record: { id: 421, name: 'Elite Capital Ventures', duration: 84 }
+[Company Service] Creating tasks with creator ID: 1
+[Company Service] Creating KYB task for company: 421
+[Company Service] Failed to create tasks: {
+  error: error: insert or update on table "tasks" violates foreign key constraint "tasks_created_by_users_id_fk"
+      at /home/runner/workspace/node_modules/pg/lib/client.js:545:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+      at async createCompanyInternal (/home/runner/workspace/server/services/company.ts:103:23)
+      at async <anonymous> (/home/runner/workspace/server/services/company.ts:29:16)
+      at async NodePgSession.transaction (/home/runner/workspace/node_modules/src/node-postgres/session.ts:193:19)
+      at async createCompany (/home/runner/workspace/server/services/company.ts:28:14)
+      at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1352:43) {
+    length: 265,
+    severity: 'ERROR',
+    code: '23503',
+    detail: 'Key (created_by)=(1) is not present in table "users".',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'tasks',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'tasks_created_by_users_id_fk',
+    file: 'ri_triggers.c',
+    line: '2599',
+    routine: 'ri_ReportViolation'
+  },
+  companyId: 421,
+  duration: 118
+}
+[Company Service] Transaction failed: {
+  error: error: insert or update on table "tasks" violates foreign key constraint "tasks_created_by_users_id_fk"
+      at /home/runner/workspace/node_modules/pg/lib/client.js:545:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+      at async createCompanyInternal (/home/runner/workspace/server/services/company.ts:103:23)
+      at async <anonymous> (/home/runner/workspace/server/services/company.ts:29:16)
+      at async NodePgSession.transaction (/home/runner/workspace/node_modules/src/node-postgres/session.ts:193:19)
+      at async createCompany (/home/runner/workspace/server/services/company.ts:28:14)
+      at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1352:43) {
+    length: 265,
+    severity: 'ERROR',
+    code: '23503',
+    detail: 'Key (created_by)=(1) is not present in table "users".',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'tasks',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'tasks_created_by_users_id_fk',
+    file: 'ri_triggers.c',
+    line: '2599',
+    routine: 'ri_ReportViolation'
+  },
+  companyName: 'Elite Capital Ventures',
+  hasExistingTransaction: false,
+  duration: 149
+}
+[DemoAPI] Company creation error: {
+  error: 'insert or update on table "tasks" violates foreign key constraint "tasks_created_by_users_id_fk"',
+  persona: 'new-data-recipient',
+  shouldCreateTasks: true,
+  attempt: 1
+}
+[DemoAPI] Company creation error: error: insert or update on table "tasks" violates foreign key constraint "tasks_created_by_users_id_fk"
+    at /home/runner/workspace/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/node_modules/src/node-postgres/session.ts:104:19)
+    at async createCompanyInternal (/home/runner/workspace/server/services/company.ts:103:23)
+    at async <anonymous> (/home/runner/workspace/server/services/company.ts:29:16)
+    at async NodePgSession.transaction (/home/runner/workspace/node_modules/src/node-postgres/session.ts:193:19)
+    at async createCompany (/home/runner/workspace/server/services/company.ts:28:14)
+    at async <anonymous> (/home/runner/workspace/server/demo-api.ts:1352:43) {
+  length: 265,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (created_by)=(1) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'tasks',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'tasks_created_by_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2599',
+  routine: 'ri_ReportViolation'
+}
+[WebSocket] Broadcast demo_action_error to 5 clients (0 errors) { messageId: 'msg_1748333038023_g4zo91871' }
+[2025-05-27T08:03:58.023Z] [INFO] [App] Successfully broadcasted demo_action_error message 
+[2025-05-27T08:03:58.056Z] [ERROR] [App] POST /api/demo/company/create 500 in 227ms :: {"success":false,"error":"Failed to create company","timestamp":"2025-05-27T0... 

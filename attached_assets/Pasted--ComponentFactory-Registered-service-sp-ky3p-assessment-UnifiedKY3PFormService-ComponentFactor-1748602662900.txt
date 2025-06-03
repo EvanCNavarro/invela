@@ -1,0 +1,197 @@
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-05-30T10:56:48.972Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Phase services completed successfully 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Executing startup phase: communication 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-05-30T10:56:48.972Z] [App] Communication phase initializing 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Executing startup phase: ready 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-05-30T10:56:48.972Z] [App] Application ready for user interaction 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-05-30T10:56:48.972Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[2025-05-30T10:56:49.201Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 534, databaseStatus: "not completed", localStorageStatus: "not stored or not completed", showModal: true}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 534, email: "bmiller@guardchampions.com", timestamp: "2025-05-30T10:56:49.224Z"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=754, path=/, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 754
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[DashboardLayout] Tab "dashboard" is locked. Redirecting to task-center.
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "FinTech", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 534, databaseStatus: "not completed", localStorageStatus: "not stored or not completed", showModal: true}
+[Router] Current location: /task-center
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for dashboard
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=754, path=/task-center, file-vault-unlocked=false
+[CurrentCompany] Setting company context: 754
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-30T10:56:49.474Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 534, databaseStatus: "not completed", localStorageStatus: "not stored or not completed", showModal: true}
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748602609531-4nt8a5e", timestamp: "2025-05-30T10:56:49.531Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:56:49.644Z", taskId: 1098, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:56:49.644Z", id: 1098, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-30T10:56:49.656Z", message: "Authentication successful"}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "dashboard"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:56:49.792Z", taskId: 1099, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:56:49.793Z", id: 1099, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:56:49.933Z", taskId: 1100, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:56:49.933Z", id: 1100, status: "not_started", progress: 100, …}
+[2025-05-30T10:56:49.967Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748602610038-iq9w4ke", timestamp: "2025-05-30T10:56:50.039Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748602610543-slbbinr", timestamp: "2025-05-30T10:56:50.543Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748602611041-xroky2z", timestamp: "2025-05-30T10:56:51.041Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-05-30T10:56:52.076Z] [WebSocket] WebSocket connection established 
+[2025-05-30T10:56:52.077Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-05-30T10:56:52.078Z] [WebSocket] Received message of type: connection_established 
+[2025-05-30T10:56:52.078Z] [WebSocket] WebSocket server connection confirmed with ID: client-1748602612110-wi5ja8d 
+[2025-05-30T10:56:52.524Z] [WebSocket] Sending authentication message 
+Object {userId: 534, companyId: 754, connectionId: "ws_1748602609967_1zzisca6q", hasUserData: true, hasCompanyData: true}
+[2025-05-30T10:56:52.656Z] [WebSocket] Received message of type: authenticated 
+[2025-05-30T10:56:52.656Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[AnimatedOnboardingModal] Starting next step animation 
+Object {currentStep: 0}
+[AnimatedOnboardingModal] Next step animation completed 
+Object {newStep: 1}
+[AnimatedOnboardingModal] Starting next step animation 
+Object {currentStep: 1}
+[AnimatedOnboardingModal] Next step animation completed 
+Object {newStep: 2}
+[AnimatedOnboardingModal] Starting next step animation 
+Object {currentStep: 2}
+[AnimatedOnboardingModal] Next step animation completed 
+Object {newStep: 3}
+[AnimatedOnboardingModal] Starting next step animation 
+Object {currentStep: 3}
+[AnimatedOnboardingModal] Next step animation completed 
+Object {newStep: 4}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-30T10:57:19.659Z", echo: {…}}
+[2025-05-30T10:57:20.629Z] [WebSocket] Received message of type: task_updated 
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.626Z", taskId: 1098, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.626Z", taskId: 1098, progress: 0, status: "not_started", …}
+[2025-05-30T10:57:20.630Z] [WebSocket] Received message of type: task_update 
+[2025-05-30T10:57:20.630Z] [WebSocket] Task update received: Task #1098 - Status: not_started, Progress: 100% 
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.627Z", id: 1098, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.627Z", id: 1098, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.626Z", taskId: 1098, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.627Z", id: 1098, status: "not_started", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.632Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.632Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.632Z"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.626Z", taskId: 1098, progress: 0, status: "not_started", …}
+[TaskCenter] Raw WebSocket task_update data: undefined
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: false, hasNestedPayload: false, hasData: false, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: null, status: undefined, progress: undefined, metadata: undefined, timestamp: "2025-05-30T10:57:20.633Z"}
+[TaskCenter] Missing task ID in WebSocket update
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.627Z", id: 1098, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-30T10:57:20.662Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.769Z", taskId: 1099, progress: 0, status: "not_started", …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.770Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.770Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.770Z"}
+[2025-05-30T10:57:20.771Z] [WebSocket] Received message of type: task_updated 
+[TaskCenter] Raw WebSocket task_update data: undefined
+[TaskCenter] WebSocket message structure analysis: 
+Object {hasPayload: false, hasNestedPayload: false, hasData: false, hasNestedData: false, directTaskId: undefined, …}
+[TaskCenter] WebSocket task_update processed: 
+Object {taskId: null, status: undefined, progress: undefined, metadata: undefined, timestamp: "2025-05-30T10:57:20.771Z"}
+[TaskCenter] Missing task ID in WebSocket update
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.770Z", id: 1099, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.769Z", taskId: 1099, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.769Z", taskId: 1099, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-05-30T10:57:20.769Z", taskId: 1099, progress: 0, status: "not_started", …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.770Z", id: 1099, status: "not_started", progress: 100, …}
+[2025-05-30T10:57:20.772Z] [WebSocket] Received message of type: task_update 
+[2025-05-30T10:57:20.772Z] [WebSocket] Task update received: Task #1099 - Status: not_started, Progress: 100% 
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.770Z", id: 1099, status: "not_started", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_update", timestamp: "2025-05-30T10:57:20.770Z", id: 1099, status: "not_started", progress: 100, …}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.915Z"}
+[Sidebar] Processing task update event: 
+Object {hasCountObject: false, taskId: undefined, companyId: undefined, receivedAt: "2025-05-30T10:57:20.915Z"}

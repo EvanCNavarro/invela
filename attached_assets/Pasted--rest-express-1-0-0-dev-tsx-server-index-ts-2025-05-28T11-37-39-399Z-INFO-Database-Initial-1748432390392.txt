@@ -1,0 +1,504 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T11:37:39.399Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T11:37:39.404Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T11:37:39.404Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T11:37:39.550Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T11:37:39.663Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T11:37:39.664Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T11:37:39.664Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T11:37:39.664Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T11:37:39.665Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T11:37:39.669Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T11:37:39.669Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"bh211v","timestamp":"2025-05-28T11:37:39.669Z"}
+[2025-05-28T11:37:39.669Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T11:37:39.669Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T11:37:39.669Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T11:37:39.669Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T11:37:39.669Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T11:37:39.669Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T11:37:39.669Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T11:37:39.670Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T11:37:39.670Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T11:37:39.670Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T11:37:39.671Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T11:37:39.672Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T11:37:39.672Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T11:37:39.682Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T11:37:39.682Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T11:37:39.682Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T11:37:39.683Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T11:37:39.683Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T11:37:39.683Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T11:37:40.669Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T11:37:41.148Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:37:44.077Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:37:46.556Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T11:37:49.683Z] [INFO] [App] Running background health checks... 
+[2025-05-28T11:37:49.683Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T11:37:49.683Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T11:37:49.684Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T11:37:49.862Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T11:37:49.890Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T11:37:49.928Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T11:37:49.928Z] [StartupChecks] Database health check passed 
+[2025-05-28T11:37:49.928Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T11:37:49.928Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T11:37:52.727Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432272726-jv1ke1f","clients":1}
+[2025-05-28T11:37:52.846Z] [INFO] [WebSocket] Received message from client client-1748432272726-jv1ke1f {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T11:37:52.700Z"}}
+[2025-05-28T11:37:52.846Z] [INFO] [WebSocket] Authentication from client client-1748432272726-jv1ke1f {"module":"WebSocket","hasToken":true}
+[2025-05-28T11:37:53.225Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432273225-q8ltkot","clients":2}
+[2025-05-28T11:37:53.739Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432273739-7cl4yh2","clients":3}
+[2025-05-28T11:37:54.243Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432274243-k644zfi","clients":4}
+[2025-05-28T11:37:54.742Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432274742-6f52kza","clients":5}
+[2025-05-28T11:37:55.043Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"authenticate","userId":"477","companyId":"669","clientId":"ws_1748432273227_uds7oukn1","timestamp":"2025-05-28T11:37:54.900Z"}
+[2025-05-28T11:37:55.043Z] [INFO] [WebSocket] Authentication from client client-1748432274742-6f52kza {"module":"WebSocket","userId":"477","companyId":"669","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T11:37:56.647Z',
+  requestId: 'req_1748432276647_cwwyrwj7n'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T11:37:56.650Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T11:37:56.650Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Summit Treasury Platforms',
+  components: { prefix: 'Summit', core: 'Treasury', suffix: 'Platforms' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Summit Treasury Platforms',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T11:37:56.651Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Summit Treasury Platforms',
+  nameLength: 25
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T11:37:56.726Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Summit Treasury Platforms',
+  duration: 76
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Summit Treasury Platforms',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 79,
+  timestamp: '2025-05-28T11:37:56.726Z'
+}
+[2025-05-28T11:37:56.758Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 111ms :: {"success":true,"companyName":"Summit Treasury Platforms","wasModified":false... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Summit Treasury Platforms',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 5 }
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T11:38:03.556Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Summit Treasury Platforms',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Summit Treasury Platforms',
+    persona: 'Data Provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T11:38:03.557Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 679,
+  name: 'Summit Treasury Platforms',
+  category: 'Bank',
+  transformedPersona: 'Data Provider',
+  shouldCreateNetwork: true
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 679,
+  bankName: 'Summit Treasury Platforms',
+  targetNetworkSize: 5
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Summit Treasury Platforms',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '679-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Summit Treasury Platforms',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '679-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Summit Treasury Platforms',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '679-334'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Summit Treasury Platforms',
+  fintech: 'Finloft',
+  relationshipId: '679-9'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Summit Treasury Platforms',
+  fintech: 'Wealthfront',
+  relationshipId: '679-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'Summit Treasury Platforms',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[2025-05-28T11:38:03.846Z] [INFO] [App] POST /api/demo/company/create 200 in 291ms :: {"success":true,"company":{"id":679,"name":"Summit Treasury Platforms","descr... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Chloe Hassan',
+  email: 'chassan@summittreasuryplatforms.com',
+  companyId: 679,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748432281970_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T11:38:01.971Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 679,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 679
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T11:38:04.603Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Chloe Hassan',
+    email: 'chassan@summittreasuryplatforms.com',
+    companyId: 679,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Chloe Hassan',
+    email: 'chassan@summittreasuryplatforms.com',
+    companyId: 679,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'Data Provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T11:38:04.603Z'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 481,
+  email: 'chassan@summittreasuryplatforms.com',
+  fullName: 'Chloe Hassan',
+  companyId: 679,
+  role: 'provider'
+}
+[2025-05-28T11:38:04.730Z] [INFO] [App] POST /api/demo/user/create 200 in 128ms :: {"success":true,"user":{"id":481,"email":"chassan@summittreasuryplatforms.com... 
+[2025-05-28T11:38:05.516Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 481,
+  companyId: 679,
+  demoType: 'data-provider',
+  timestamp: '2025-05-28T11:38:06.271Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 481,
+  email: 'chassan@summittreasuryplatforms.com',
+  companyId: 679,
+  fullName: 'Chloe Hassan'
+}
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 481,
+  email: 'chassan@summittreasuryplatforms.com',
+  companyId: 679,
+  environmentId: 'env_demo_1748432286307_481',
+  authenticated: true,
+  totalDuration: 98,
+  timestamp: '2025-05-28T11:38:06.369Z'
+}
+[2025-05-28T11:38:06.399Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 129ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 481, companyId: 679 }
+[2025-05-28T11:38:09.726Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[999,964,965,973,969,1001,971,978,976,981]}
+[Current Company] Found company: {
+  id: 679,
+  name: 'Summit Treasury Platforms',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 481,
+  companyId: 679,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T11:38:09.753Z'
+}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 481,
+  company_id: 679,
+  email: 'chassan@summittreasuryplatforms.com'
+}
+[2025-05-28T11:38:09.758Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":679,"userId":481}
+[2025-05-28T11:38:09.784Z] [INFO] [App] GET /api/companies/current 200 in 60ms :: {"id":679,"name":"Summit Treasury Platforms","category":"Bank","is_demo":true... 
+[2025-05-28T11:38:09.799Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":679}
+[Tasks] Automatically unlocking all tasks for company { userId: 481, companyId: 679, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T11:38:09.801Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":679}
+[2025-05-28T11:38:09.833Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":679}
+[Tasks] Successfully unlocked all tasks for company: 679
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 481',
+    condition2: 'tasks.created_by = 481',
+    condition3: "tasks.company_id = 679 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('chassan@summittreasuryplatforms.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T11:38:09.929Z] [INFO] [App] GET /api/tasks 304 in 172ms :: [] 
+[2025-05-28T11:38:09.967Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 481 
+[2025-05-28T11:38:09.967Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T11:38:09.967Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T11:38:09.967Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 481 
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[2025-05-28T11:38:10.015Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 481 
+[2025-05-28T11:38:10.045Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 79ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T11:38:10.071Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748432290070-bh3ptn4","clients":6}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[2025-05-28T11:38:10.205Z] [INFO] [WebSocket] Received message from client client-1748432290070-bh3ptn4 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748432271956_quyzf0599","timestamp":"2025-05-28T11:38:10.060Z"}
+[2025-05-28T11:38:10.205Z] [INFO] [WebSocket] Authentication from client client-1748432290070-bh3ptn4 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[2025-05-28T11:38:14.860Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:14.716Z","connectionId":"ws_1748432273227_uds7oukn1"}
+[Current Company] Using cached company data: 679
+[Complete Onboarding] Processing request for user: { userId: 481, companyId: 679, timestamp: '2025-05-28T11:38:21.103Z' }
+[Complete Onboarding] Successfully updated user record: {
+  userId: 481,
+  companyId: 679,
+  userOnboardingStatus: true,
+  elapsedMs: 90
+}
+[updateOnboardingTaskStatus] Error updating task status: TypeError: undefined is not a function
+    at Array.find (<anonymous>)
+    at updateOnboardingTaskStatus (/home/runner/workspace/server/routes.ts:3686:139)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:3056:27)
+[Complete Onboarding] Successfully completed onboarding for user: { userId: 481, taskId: undefined, elapsedMs: 167 }
+[Cache] Invalidating company cache for company 679
+[2025-05-28T11:38:21.332Z] [INFO] [App] POST /api/users/complete-onboarding 200 in 229ms :: {"message":"Onboarding completed successfully","success":true,"user":{"id":48... 
+[Company API] Updating company 679 with data: { revenue: 10000000, revenue_tier: 'medium', num_employees: 150 }
+[Company API] Processed update data: { revenue: 10000000, revenue_tier: 'medium', num_employees: 150 }
+[Company API] Successfully updated company 679
+[2025-05-28T11:38:21.590Z] [INFO] [App] PATCH /api/companies/current 200 in 73ms :: {"success":true,"message":"Company updated successfully","data":{"id":679,"na... 
+[Current Company] Fetching company for user: { userId: 481, companyId: 679 }
+[Current Company] Found company: {
+  id: 679,
+  name: 'Summit Treasury Platforms',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 481,
+  companyId: 679,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T11:38:21.802Z'
+}
+[2025-05-28T11:38:22.844Z] [INFO] [WebSocket] Received message from client client-1748432272726-jv1ke1f {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:38:23.859Z] [INFO] [WebSocket] Received message from client client-1748432273739-7cl4yh2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:23.714Z","connectionId":"ws_1748432273713_u9sv9jyi8"}
+[2025-05-28T11:38:24.377Z] [INFO] [WebSocket] Received message from client client-1748432274243-k644zfi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:24.225Z","connectionId":"ws_1748432273216_c1qc99a96"}
+[2025-05-28T11:38:25.155Z] [INFO] [App] GET /api/tasks 304 in 35ms :: [] 
+[2025-05-28T11:38:34.011Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":679,"name":"Summit Treasury Platforms","category":"Bank","is_demo":true... [sampled: request 11] 
+[2025-05-28T11:38:34.861Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:34.717Z","connectionId":"ws_1748432273227_uds7oukn1"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 481,
+  company_id: 679,
+  email: 'chassan@summittreasuryplatforms.com'
+}
+[2025-05-28T11:38:40.345Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":679,"userId":481}
+[2025-05-28T11:38:40.375Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":679}
+[Tasks] Automatically unlocking all tasks for company { userId: 481, companyId: 679, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T11:38:40.376Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":679}
+[2025-05-28T11:38:40.410Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":679}
+[Tasks] Successfully unlocked all tasks for company: 679
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 481',
+    condition2: 'tasks.created_by = 481',
+    condition3: "tasks.company_id = 679 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('chassan@summittreasuryplatforms.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T11:38:40.511Z] [INFO] [App] GET /api/tasks 304 in 166ms :: [] 
+[2025-05-28T11:38:52.845Z] [INFO] [WebSocket] Received message from client client-1748432272726-jv1ke1f {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:38:53.859Z] [INFO] [WebSocket] Received message from client client-1748432273739-7cl4yh2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:53.714Z","connectionId":"ws_1748432273713_u9sv9jyi8"}
+[2025-05-28T11:38:54.369Z] [INFO] [WebSocket] Received message from client client-1748432274243-k644zfi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:54.224Z","connectionId":"ws_1748432273216_c1qc99a96"}
+[2025-05-28T11:38:54.867Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:38:54.717Z","connectionId":"ws_1748432273227_uds7oukn1"}
+[2025-05-28T11:38:55.727Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [] 
+[2025-05-28T11:39:04.011Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":679,"name":"Summit Treasury Platforms","category":"Bank","is_demo":true... [sampled: request 21] 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 481,
+  company_id: 679,
+  email: 'chassan@summittreasuryplatforms.com'
+}
+[2025-05-28T11:39:10.910Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":679,"userId":481}
+[2025-05-28T11:39:10.940Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":679}
+[Tasks] Automatically unlocking all tasks for company { userId: 481, companyId: 679, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T11:39:10.941Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":679}
+[2025-05-28T11:39:10.972Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":679}
+[Tasks] Successfully unlocked all tasks for company: 679
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 481',
+    condition2: 'tasks.created_by = 481',
+    condition3: "tasks.company_id = 679 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('chassan@summittreasuryplatforms.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T11:39:11.082Z] [INFO] [App] GET /api/tasks 304 in 172ms :: [] 
+[2025-05-28T11:39:14.863Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:39:14.717Z","connectionId":"ws_1748432273227_uds7oukn1"}
+[Current Company] Fetching company for user: { userId: 481, companyId: 679 }
+[Current Company] Found company: {
+  id: 679,
+  name: 'Summit Treasury Platforms',
+  onboardingCompleted: true,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 481,
+  companyId: 679,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T11:39:22.009Z'
+}
+[2025-05-28T11:39:22.847Z] [INFO] [WebSocket] Received message from client client-1748432272726-jv1ke1f {"module":"WebSocket","type":"ping"}
+[2025-05-28T11:39:23.867Z] [INFO] [WebSocket] Received message from client client-1748432273739-7cl4yh2 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:39:23.714Z","connectionId":"ws_1748432273713_u9sv9jyi8"}
+[2025-05-28T11:39:24.370Z] [INFO] [WebSocket] Received message from client client-1748432274243-k644zfi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:39:24.224Z","connectionId":"ws_1748432273216_c1qc99a96"}
+[2025-05-28T11:39:26.296Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [] 
+[2025-05-28T11:39:34.027Z] [INFO] [App] GET /api/companies/current 304 in 33ms :: {"id":679,"name":"Summit Treasury Platforms","category":"Bank","is_demo":true... [sampled: request 31] 
+[2025-05-28T11:39:34.862Z] [INFO] [WebSocket] Received message from client client-1748432274742-6f52kza {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T11:39:34.717Z","connectionId":"ws_1748432273227_uds7oukn1"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 481,
+  company_id: 679,
+  email: 'chassan@summittreasuryplatforms.com'
+}
+[2025-05-28T11:39:41.493Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":679,"userId":481}
+[2025-05-28T11:39:41.524Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":679}
+[Tasks] Automatically unlocking all tasks for company { userId: 481, companyId: 679, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T11:39:41.525Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":679}
+[2025-05-28T11:39:41.560Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":679}
+[Tasks] Successfully unlocked all tasks for company: 679
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 481',
+    condition2: 'tasks.created_by = 481',
+    condition3: "tasks.company_id = 679 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('chassan@summittreasuryplatforms.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T11:39:41.653Z] [INFO] [App] GET /api/tasks 304 in 160ms :: [] 

@@ -1,0 +1,110 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-25T17:45:36.614Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-25T17:45:36.618Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-25T17:45:36.618Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-25T17:45:36.749Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-05-25T17:45:36.857Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-25T17:45:36.857Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-25T17:45:36.857Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-25T17:45:36.857Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-25T17:45:36.859Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 12 modules initialized [CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-25T17:45:36.860Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-25T17:45:36.861Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"w5cz23","timestamp":"2025-05-25T17:45:36.861Z"}
+[2025-05-25T17:45:36.861Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-25T17:45:36.861Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-25T17:45:36.861Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-25T17:45:36.861Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-25T17:45:36.861Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-25T17:45:36.861Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-25T17:45:36.861Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-25T17:45:36.861Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-25T17:45:36.861Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-25T17:45:36.861Z] [INFO] [App] Setting up Vite development server 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-25T17:45:36.863Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-25T17:45:36.875Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-25T17:45:36.875Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-25T17:45:36.876Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-25T17:45:36.876Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-25T17:45:36.876Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-25T17:45:36.876Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-25T17:45:37.861Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-25T17:45:38.271Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T17:45:41.684Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T17:45:41.778Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T17:45:46.876Z] [INFO] [App] Running background health checks... 
+[2025-05-25T17:45:46.877Z] [StartupChecks] Running application startup health checks... 
+[2025-05-25T17:45:46.877Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-25T17:45:46.877Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-25T17:45:47.077Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-25T17:45:47.106Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-25T17:45:47.136Z] [DBConnectionService] Database connection check successful 
+[2025-05-25T17:45:47.136Z] [StartupChecks] Database health check passed 
+[2025-05-25T17:45:47.136Z] [StartupChecks] All startup health checks passed! 
+[2025-05-25T17:45:47.136Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-25T17:45:49.255Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748195149255-op8ake1","clients":1}
+[2025-05-25T17:45:49.372Z] [INFO] [WebSocket] Received message from client client-1748195149255-op8ake1 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-25T17:45:49.248Z"}}
+[2025-05-25T17:45:49.372Z] [INFO] [WebSocket] Authentication from client client-1748195149255-op8ake1 {"module":"WebSocket","hasToken":true}
+[2025-05-25T17:45:49.733Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748195149733-fq6ih8t","clients":2}
+[2025-05-25T17:45:50.262Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748195150262-dhgljbt","clients":3}
+[2025-05-25T17:45:50.749Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748195150749-e1qxxk9","clients":4}
+[2025-05-25T17:45:51.235Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748195151235-hwxs6dy","clients":5}
+[2025-05-25T17:45:51.591Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"authenticate","userId":"8","companyId":"1","clientId":"ws_1748195149797_7c8f0pkia","timestamp":"2025-05-25T17:45:51.468Z"}
+[2025-05-25T17:45:51.591Z] [INFO] [WebSocket] Authentication from client client-1748195151235-hwxs6dy {"module":"WebSocket","userId":"8","companyId":"1","hasToken":true}
+[2025-05-25T17:46:06.931Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[963,964,1000,999,965,1001,967,973,972,969]}
+[Task Progress] Calculated progress for task 963 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1000 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 967 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 972 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[2025-05-25T17:46:11.354Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:11.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}
+[2025-05-25T17:46:19.373Z] [INFO] [WebSocket] Received message from client client-1748195149255-op8ake1 {"module":"WebSocket","type":"ping"}
+[2025-05-25T17:46:20.380Z] [INFO] [WebSocket] Received message from client client-1748195150262-dhgljbt {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:20.257Z","connectionId":"ws_1748195150256_bqwoneet7"}
+[2025-05-25T17:46:20.871Z] [INFO] [WebSocket] Received message from client client-1748195150749-e1qxxk9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:20.745Z","connectionId":"ws_1748195149726_8419g8u1y"}
+[2025-05-25T17:46:31.353Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:31.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}
+[2025-05-25T17:46:49.372Z] [INFO] [WebSocket] Received message from client client-1748195149255-op8ake1 {"module":"WebSocket","type":"ping"}
+[2025-05-25T17:46:50.379Z] [INFO] [WebSocket] Received message from client client-1748195150262-dhgljbt {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:50.256Z","connectionId":"ws_1748195150256_bqwoneet7"}
+[2025-05-25T17:46:50.869Z] [INFO] [WebSocket] Received message from client client-1748195150749-e1qxxk9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:50.746Z","connectionId":"ws_1748195149726_8419g8u1y"}
+[2025-05-25T17:46:51.353Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:46:51.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}
+[2025-05-25T17:47:11.354Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:11.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}
+[2025-05-25T17:47:15.775Z] [INFO] [App] POST /api/demo/company/create 200 in 53ms 
+[2025-05-25T17:47:18.047Z] [INFO] [App] POST /api/demo/user/create 200 in 42ms 
+[2025-05-25T17:47:19.373Z] [INFO] [WebSocket] Received message from client client-1748195149255-op8ake1 {"module":"WebSocket","type":"ping"}
+[2025-05-25T17:47:19.819Z] [INFO] [App] POST /api/demo/auth/setup 200 in 40ms 
+[2025-05-25T17:47:20.383Z] [INFO] [WebSocket] Received message from client client-1748195150262-dhgljbt {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:20.257Z","connectionId":"ws_1748195150256_bqwoneet7"}
+[2025-05-25T17:47:20.870Z] [INFO] [WebSocket] Received message from client client-1748195150749-e1qxxk9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:20.746Z","connectionId":"ws_1748195149726_8419g8u1y"}
+[2025-05-25T17:47:21.093Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 37ms 
+[2025-05-25T17:47:31.353Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:31.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}
+[2025-05-25T17:47:49.373Z] [INFO] [WebSocket] Received message from client client-1748195149255-op8ake1 {"module":"WebSocket","type":"ping"}
+[2025-05-25T17:47:50.381Z] [INFO] [WebSocket] Received message from client client-1748195150262-dhgljbt {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:50.258Z","connectionId":"ws_1748195150256_bqwoneet7"}
+[2025-05-25T17:47:50.871Z] [INFO] [WebSocket] Received message from client client-1748195150749-e1qxxk9 {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:50.745Z","connectionId":"ws_1748195149726_8419g8u1y"}
+[2025-05-25T17:47:51.354Z] [INFO] [WebSocket] Received message from client client-1748195151235-hwxs6dy {"module":"WebSocket","type":"ping","timestamp":"2025-05-25T17:47:51.230Z","connectionId":"ws_1748195149797_7c8f0pkia"}

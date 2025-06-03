@@ -1,0 +1,414 @@
+✅ Vite host restrictions override enabled
+(index):384 [WebSocket] Smart WebSocket connection manager initialized
+index-CMZdBgTO.js:49 [EnhancedKybServiceFactory] Error accessing user context manager: ReferenceError: require is not defined
+    at KBe.getDefaultInstance (index-CMZdBgTO.js:689:128168)
+    at index-CMZdBgTO.js:689:129063
+overrideMethod @ hook.js:608
+warn @ index-CMZdBgTO.js:49
+getDefaultInstance @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:689Understand this warning
+index-CMZdBgTO.js:49 [EnhancedKybServiceFactory] No company context found, using global instance - THIS MAY CAUSE DATA ISOLATION ISSUES
+overrideMethod @ hook.js:608
+warn @ index-CMZdBgTO.js:49
+getDefaultInstance @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:689Understand this warning
+index-CMZdBgTO.js:49 [EnhancedKybServiceFactory] Error accessing user context manager: ReferenceError: require is not defined
+    at KBe.getAppInstance (index-CMZdBgTO.js:689:128592)
+    at KBe.getDefaultInstance (index-CMZdBgTO.js:689:128533)
+    at index-CMZdBgTO.js:689:129063
+overrideMethod @ hook.js:608
+warn @ index-CMZdBgTO.js:49
+getAppInstance @ index-CMZdBgTO.js:689
+getDefaultInstance @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:689Understand this warning
+index-CMZdBgTO.js:49 [EnhancedKybServiceFactory] Creating app-level EnhancedKybFormService instance
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:49 [KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service {companyId: undefined, taskId: undefined}
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:689 INFO: [OpenBankingFormService] Initializing Open Banking Form Service {companyId: undefined, taskId: undefined}
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:49 [EnhancedKybServiceFactory] No company context found, using global instance
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.720Z] [PhaseStartup] PhaseStartup manager initialized 
+index-CMZdBgTO.js:695 [TutorialManager] Tutorial debug utilities not available
+overrideMethod @ hook.js:608
+(anonymous) @ index-CMZdBgTO.js:695Understand this warning
+index-CMZdBgTO.js:4574 [Main] Starting application bootstrap sequence
+index-CMZdBgTO.js:4574 [WebSocket] Smart WebSocket connection manager initialized
+index-CMZdBgTO.js:4574 [WebSocket] Connecting to WebSocket: wss://invela.replit.app/ws
+index-CMZdBgTO.js:4571 [WebSocket] Connection attempt initiated
+index-CMZdBgTO.js:4574 [Main] WebSocket connection managers initialized successfully
+index-CMZdBgTO.js:4574 [Main] Application services initialized successfully
+index-CMZdBgTO.js:4574 [Main] React application rendered successfully
+index-CMZdBgTO.js:4574 [Main] Application bootstrap completed successfully
+index-CMZdBgTO.js:4574 [Router] Current location: /
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.953Z] [WebSocket] WebSocket connection manager initialized 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.953Z] [WebSocket] Scheduling initial WebSocket connection in 1000ms to ensure environment is ready 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.954Z] [App] Initializing application with phased startup approach 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.954Z] [PhaseStartup] Registering callback for phase: framework 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.954Z] [PhaseStartup] Registering callback for phase: context 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.954Z] [PhaseStartup] Registering callback for phase: services 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Registering callback for phase: communication 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Registering callback for phase: ready 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Starting phased application initialization 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Executing startup phase: framework 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Executing 1 callbacks for phase framework 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [PhaseStartup] Executing callback 1/1 for phase framework 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.955Z] [App] Framework phase initializing 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Phase framework completed successfully 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Phase context dependencies satisfied, executing... 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing startup phase: context 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing 1 callbacks for phase context 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing callback 1/1 for phase context 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [App] Context phase initializing 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Phase context completed successfully 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Phase services dependencies satisfied, executing... 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing startup phase: services 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing 1 callbacks for phase services 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [PhaseStartup] Executing callback 1/1 for phase services 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [App] Services phase initializing 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.956Z] [App] Initializing unified service registration 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Initializing all services with unified registration 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Registering all services with options: {useUnified: true, clearExisting: true}
+index-CMZdBgTO.js:689 [ComponentFactory] Getting all registered form services (0 total)
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] No existing service registrations found 
+index-CMZdBgTO.js:689 [ComponentFactory] Getting all registered form services (0 total)
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: kyb {serviceType: '$3', timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: company_kyb {serviceType: '$3', timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+index-CMZdBgTO.js:49 [UnifiedKY3PFormService] [Unified KY3P] Initializing service {companyId: undefined, taskId: undefined, timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: ky3p {serviceType: 'q3', timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+index-CMZdBgTO.js:49 [UnifiedKY3PFormService] [Unified KY3P] Initializing service {companyId: undefined, taskId: undefined, timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: sp_ky3p_assessment {serviceType: 'q3', timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3, sp_ky3p_assessment: q3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.957Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+index-CMZdBgTO.js:49 [UnifiedKY3PFormService] [Unified KY3P] Initializing service {companyId: undefined, taskId: undefined, timestamp: '2025-06-02T14:22:34.957Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: security {serviceType: 'q3', timestamp: '2025-06-02T14:22:34.958Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3, sp_ky3p_assessment: q3, security: q3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.958Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+index-CMZdBgTO.js:49 [UnifiedKY3PFormService] [Unified KY3P] Initializing service {companyId: undefined, taskId: undefined, timestamp: '2025-06-02T14:22:34.958Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: security_assessment {serviceType: 'q3', timestamp: '2025-06-02T14:22:34.958Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3, sp_ky3p_assessment: q3, security: q3, security_assessment: q3]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.958Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:689 INFO: [OpenBankingFormService] Initializing Open Banking Form Service {companyId: undefined, taskId: undefined}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: open_banking {serviceType: 'Vp', timestamp: '2025-06-02T14:22:34.958Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3, sp_ky3p_assessment: q3, security: q3, security_assessment: q3, open_banking: Vp]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.958Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+index-CMZdBgTO.js:49 [Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+index-CMZdBgTO.js:689 INFO: [OpenBankingFormService] Initializing Open Banking Form Service {companyId: undefined, taskId: undefined}
+index-CMZdBgTO.js:689 [ComponentFactory] Registering form service for task type: open_banking_survey {serviceType: 'Vp', timestamp: '2025-06-02T14:22:34.958Z'}
+index-CMZdBgTO.js:689 [ComponentFactory] Current registered services: [kyb: $3, company_kyb: $3, ky3p: q3, sp_ky3p_assessment: q3, security: q3, security_assessment: q3, open_banking: Vp, open_banking_survey: Vp]
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.958Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+index-CMZdBgTO.js:689 [ComponentFactory] Getting all registered form services (8 total)
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: kyb -> $3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: company_kyb -> $3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: ky3p -> q3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: sp_ky3p_assessment -> q3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: security -> q3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: security_assessment -> q3
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: open_banking -> Vp
+index-CMZdBgTO.js:689 [ComponentFactory] Registered service: open_banking_survey -> Vp
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.958Z] [UnifiedServiceRegistration] Successfully registered 8 services: (8) ['kyb', 'company_kyb', 'ky3p', 'sp_ky3p_assessment', 'security', 'security_assessment', 'open_banking', 'open_banking_survey']
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Phase services completed successfully 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Executing startup phase: communication 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [App] Communication phase initializing 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Executing startup phase: ready 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [App] Application ready for user interaction 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Phase ready marked as completed immediately 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [PhaseStartup] Phase communication completed successfully 
+index-CMZdBgTO.js:689 [2025-06-02T14:22:34.959Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+overrideMethod @ hook.js:608
+log @ index-CMZdBgTO.js:689
+warn @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:689
+Promise.then
+cUe @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:4574
+executePhase @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:689
+proceedToNextPhases @ index-CMZdBgTO.js:689
+executePhase @ index-CMZdBgTO.js:689
+await in executePhase
+(anonymous) @ index-CMZdBgTO.js:689
+proceedToNextPhases @ index-CMZdBgTO.js:689
+executePhase @ index-CMZdBgTO.js:689
+await in executePhase
+start @ index-CMZdBgTO.js:689
+(anonymous) @ index-CMZdBgTO.js:4574
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+$ae @ index-CMZdBgTO.js:41
+or @ index-CMZdBgTO.js:26
+Dr @ index-CMZdBgTO.js:26Understand this warning
+index-CMZdBgTO.js:4574 [Router] Current location: /
+index-CMZdBgTO.js:4571 [WebSocket] Connection attempt initiated
+index-CMZdBgTO.js:642 [Sidebar] Available tabs updated: {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: '/', …}
+index-CMZdBgTO.js:642 [Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+index-CMZdBgTO.js:682 [WebSocketEventBridge] Initializing event bridge
+index-CMZdBgTO.js:696 🔍 DASHBOARD RENDER DEBUG: {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+index-CMZdBgTO.js:689 [OnboardingWrapper] Checking onboarding status {userId: 557, databaseStatus: 'completed', localStorageStatus: 'not stored or not completed', showModal: false}
+index-CMZdBgTO.js:49 [Auth] User object in AuthProvider changed: {userId: 557, email: 'amin.swessi@invela.com', timestamp: '2025-06-02T14:22:35.212Z'}
+index-CMZdBgTO.js:4574 [WebSocket] WebSocket connection established
+index-CMZdBgTO.js:4574 [WebSocket] Received message: {type: 'connection_established', clientId: 'client-1748874155184-ln9jwry', timestamp: '2025-06-02T14:22:35.184Z', message: 'Connection established'}
+index-CMZdBgTO.js:4574 [WebSocket] Server connection confirmed: Connection established
+index-CMZdBgTO.js:4574 [WebSocket] Received message: {type: 'authenticated', timestamp: '2025-06-02T14:22:35.334Z', message: 'Authentication successful'}
+index-CMZdBgTO.js:49 [TanStack Query] HTML response received from /api/tasks, likely needs authentication
+overrideMethod @ hook.js:608
+(anonymous) @ index-CMZdBgTO.js:49
+await in (anonymous)
+I @ index-CMZdBgTO.js:49
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+$ae @ index-CMZdBgTO.js:41
+or @ index-CMZdBgTO.js:26
+Dr @ index-CMZdBgTO.js:26Understand this warning
+index-CMZdBgTO.js:41 TypeError: K.filter is not a function
+    at Ku (index-CMZdBgTO.js:682:43144)
+    at $7 (index-CMZdBgTO.js:39:17894)
+    at WF (index-CMZdBgTO.js:41:3150)
+    at Kae (index-CMZdBgTO.js:41:45459)
+    at Wae (index-CMZdBgTO.js:41:40329)
+    at bCe (index-CMZdBgTO.js:41:40252)
+    at bP (index-CMZdBgTO.js:41:40101)
+    at nR (index-CMZdBgTO.js:41:36392)
+    at lK (index-CMZdBgTO.js:41:37197)
+    at D_ (index-CMZdBgTO.js:39:3292)
+overrideMethod @ hook.js:608
+HF @ index-CMZdBgTO.js:41
+Mae.r.callback @ index-CMZdBgTO.js:41
+$Y @ index-CMZdBgTO.js:39
+aK @ index-CMZdBgTO.js:41
+Vae @ index-CMZdBgTO.js:41
+vCe @ index-CMZdBgTO.js:41
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+$ae @ index-CMZdBgTO.js:41
+or @ index-CMZdBgTO.js:26
+Dr @ index-CMZdBgTO.js:26Understand this error
+index-CMZdBgTO.js:682 Uncaught TypeError: K.filter is not a function
+    at Ku (index-CMZdBgTO.js:682:43144)
+    at $7 (index-CMZdBgTO.js:39:17894)
+    at WF (index-CMZdBgTO.js:41:3150)
+    at Kae (index-CMZdBgTO.js:41:45459)
+    at Wae (index-CMZdBgTO.js:41:40329)
+    at bCe (index-CMZdBgTO.js:41:40252)
+    at bP (index-CMZdBgTO.js:41:40101)
+    at nR (index-CMZdBgTO.js:41:36392)
+    at lK (index-CMZdBgTO.js:41:37197)
+    at D_ (index-CMZdBgTO.js:39:3292)
+Ku @ index-CMZdBgTO.js:682
+$7 @ index-CMZdBgTO.js:39
+WF @ index-CMZdBgTO.js:41
+Kae @ index-CMZdBgTO.js:41
+Wae @ index-CMZdBgTO.js:41
+bCe @ index-CMZdBgTO.js:41
+bP @ index-CMZdBgTO.js:41
+nR @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+$ae @ index-CMZdBgTO.js:41
+or @ index-CMZdBgTO.js:26
+Dr @ index-CMZdBgTO.js:26Understand this error
+index-CMZdBgTO.js:682 [WebSocketEventBridge] Cleaning up event bridge
+index-CMZdBgTO.js:49 [TanStack Query] HTML response received from /api/companies/current, likely needs authentication
+overrideMethod @ hook.js:608
+(anonymous) @ index-CMZdBgTO.js:49
+await in (anonymous)
+I @ index-CMZdBgTO.js:49
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+(anonymous) @ index-CMZdBgTO.js:41
+setTimeout
+h @ index-CMZdBgTO.js:49
+U @ index-CMZdBgTO.js:49
+batch @ index-CMZdBgTO.js:49
+p1 @ index-CMZdBgTO.js:49
+setData @ index-CMZdBgTO.js:49
+onSuccess @ index-CMZdBgTO.js:49
+Fe @ index-CMZdBgTO.js:49
+Promise.then
+ut @ index-CMZdBgTO.js:49
+start @ index-CMZdBgTO.js:49
+fetch @ index-CMZdBgTO.js:49
+e4 @ index-CMZdBgTO.js:49
+onSubscribe @ index-CMZdBgTO.js:49
+subscribe @ index-CMZdBgTO.js:49
+(anonymous) @ index-CMZdBgTO.js:49
+dae @ index-CMZdBgTO.js:39
+qI @ index-CMZdBgTO.js:41
+X3 @ index-CMZdBgTO.js:41
+lK @ index-CMZdBgTO.js:41
+D_ @ index-CMZdBgTO.js:39
+wCe @ index-CMZdBgTO.js:41
+Lw @ index-CMZdBgTO.js:41
+$ae @ index-CMZdBgTO.js:41
+or @ index-CMZdBgTO.js:26
+Dr @ index-CMZdBgTO.js:26Understand this warning
+index-CMZdBgTO.js:4571 [WebSocket] Connection established
+index-CMZdBgTO.js:4571 [WebSocket] Received message: {type: 'connection_established', clientId: 'client-1748874155465-5qmz13o', timestamp: '2025-06-02T14:22:35.465Z', message: 'Connection established'}clientId: "client-1748874155465-5qmz13o"message: "Connection established"timestamp: "2025-06-02T14:22:35.465Z"type: "connection_established"[[Prototype]]: Object
+index-CMZdBgTO.js:4571 [WebSocket] Connection established
+index-CMZdBgTO.js:4571 [WebSocket] Received message: {type: 'connection_established', clientId: 'client-1748874155754-iuu6x5f', timestamp: '2025-06-02T14:22:35.754Z', message: 'Connection established'}
+index-CMZdBgTO.js:682 [WebSocketEventBridge] Successfully subscribed to WebSocket events
+index-CMZdBgTO.js:4574 [WebSocket] Received message: {type: 'pong', timestamp: '2025-06-02T14:23:05.333Z', echo: {…}}
+index-CMZdBgTO.js:4571 [WebSocket] Received message: {type: 'pong', timestamp: '2025-06-02T14:23:05.889Z', echo: {…}}

@@ -1,0 +1,582 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T12:30:54.519Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T12:30:54.524Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T12:30:54.524Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T12:30:54.669Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T12:30:54.789Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T12:30:54.789Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T12:30:54.789Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T12:30:54.789Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T12:30:54.790Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T12:30:54.792Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T12:30:54.793Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"93qm57","timestamp":"2025-05-28T12:30:54.793Z"}
+[2025-05-28T12:30:54.793Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T12:30:54.793Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T12:30:54.793Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T12:30:54.793Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T12:30:54.793Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T12:30:54.793Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T12:30:54.793Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T12:30:54.793Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T12:30:54.793Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T12:30:54.794Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T12:30:54.795Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T12:30:54.795Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T12:30:54.795Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T12:30:54.796Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T12:30:54.811Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T12:30:54.811Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T12:30:54.811Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T12:30:54.811Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T12:30:54.811Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T12:30:54.812Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T12:30:55.795Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T12:30:56.389Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:30:59.702Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:30:59.796Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T12:31:04.812Z] [INFO] [App] Running background health checks... 
+[2025-05-28T12:31:04.812Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T12:31:04.813Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T12:31:04.813Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T12:31:05.057Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T12:31:05.086Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T12:31:05.117Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T12:31:05.117Z] [StartupChecks] Database health check passed 
+[2025-05-28T12:31:05.117Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T12:31:05.117Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T12:31:07.957Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435467957-9846y6o","clients":1}
+[2025-05-28T12:31:08.083Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T12:31:07.963Z"}}
+[2025-05-28T12:31:08.083Z] [INFO] [WebSocket] Authentication from client client-1748435467957-9846y6o {"module":"WebSocket","hasToken":true}
+[2025-05-28T12:31:08.515Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435468515-f0444lm","clients":2}
+[2025-05-28T12:31:09.056Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435469056-c6ufdc8","clients":3}
+[2025-05-28T12:31:09.573Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435469573-rvu74vc","clients":4}
+[2025-05-28T12:31:10.070Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435470070-mnr01kv","clients":5}
+[2025-05-28T12:31:10.380Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"authenticate","userId":"477","companyId":"669","clientId":"ws_1748435468447_8i7oe5x8d","timestamp":"2025-05-28T12:31:10.267Z"}
+[2025-05-28T12:31:10.380Z] [INFO] [WebSocket] Authentication from client client-1748435470070-mnr01kv {"module":"WebSocket","userId":"477","companyId":"669","hasToken":true}
+[2025-05-28T12:31:24.876Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[965,999,964,969,1001,973,971,981,976,978]}
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[2025-05-28T12:31:30.220Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:31:30.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:31:38.084Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:31:39.178Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:31:39.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:31:39.691Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:31:39.578Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:31:50.203Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:31:50.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:32:08.079Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:32:09.180Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:09.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:32:09.693Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:09.579Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:32:10.196Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:10.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:32:30.198Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:30.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:32:38.078Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:32:39.178Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:39.063Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:32:39.694Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:39.579Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:32:50.209Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:32:50.085Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:32:52.493Z] [ERROR] [NeonConnectionService] Pool error event: {"module":"NeonConnectionService","length":116,"name":"error","severity":"FATAL","code":"57P01","file":"postgres.c","line":"3318","routine":"ProcessInterrupts","client":{"_events":{},"_eventsCount":1,"connectionParameters":{"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","binary":false,"ssl":{},"client_encoding":"","isDomainSocket":false,"statement_timeout":false,"lock_timeout":false,"idle_in_transaction_session_timeout":false,"query_timeout":false,"connect_timeout":180},"user":"neondb_owner","database":"neondb","port":5432,"host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_types":{"_types":{"arrayParser":{},"builtins":{"BOOL":16,"BYTEA":17,"CHAR":18,"INT8":20,"INT2":21,"INT4":23,"REGPROC":24,"TEXT":25,"OID":26,"TID":27,"XID":28,"CID":29,"JSON":114,"XML":142,"PG_NODE_TREE":194,"SMGR":210,"PATH":602,"POLYGON":604,"CIDR":650,"FLOAT4":700,"FLOAT8":701,"ABSTIME":702,"RELTIME":703,"TINTERVAL":704,"CIRCLE":718,"MACADDR8":774,"MONEY":790,"MACADDR":829,"INET":869,"ACLITEM":1033,"BPCHAR":1042,"VARCHAR":1043,"DATE":1082,"TIME":1083,"TIMESTAMP":1114,"TIMESTAMPTZ":1184,"INTERVAL":1186,"TIMETZ":1266,"BIT":1560,"VARBIT":1562,"NUMERIC":1700,"REFCURSOR":1790,"REGPROCEDURE":2202,"REGOPER":2203,"REGOPERATOR":2204,"REGCLASS":2205,"REGTYPE":2206,"UUID":2950,"TXID_SNAPSHOT":2970,"PG_LSN":3220,"PG_NDISTINCT":3361,"PG_DEPENDENCIES":3402,"TSVECTOR":3614,"TSQUERY":3615,"GTSVECTOR":3642,"REGCONFIG":3734,"REGDICTIONARY":3769,"JSONB":3802,"REGNAMESPACE":4089,"REGROLE":4096}},"text":{},"binary":{}},"_ending":true,"_ended":false,"_connecting":false,"_connected":true,"_connectionError":false,"_queryable":false,"enableChannelBinding":false,"connection":{"_events":{"end":[null,null]},"_eventsCount":23,"stream":{"_tlsOptions":{"pipe":false,"secureContext":{"context":{}},"isServer":false,"requestCert":true,"rejectUnauthorized":true},"_secureEstablished":true,"_securePending":false,"_newSessionPending":false,"_controlReleased":true,"secureConnecting":false,"_SNICallback":null,"servername":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","alpnProtocol":false,"authorized":true,"authorizationError":null,"encrypted":true,"_events":{"end":[null,null],"newListener":[null,null]},"_eventsCount":6,"connecting":false,"_hadError":false,"_parent":{"connecting":false,"_hadError":false,"_parent":null,"_host":"ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech","_closeAfterHandlingError":false,"_events":{"close":[null,null,null],"error":[null,null]},"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_eventsCount":4,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","server":null,"_server":null,"autoSelectFamilyAttemptedAddresses":["52.20.107.131:5432"]},"_host":null,"_closeAfterHandlingError":false,"_readableState":{"highWaterMark":16384,"buffer":[],"bufferIndex":0,"length":0,"pipes":[],"awaitDrainWriters":null},"_writableState":{"highWaterMark":16384,"length":0,"corked":0,"writelen":0,"bufferedIndex":0,"pendingcb":0},"allowHalfOpen":false,"_sockname":null,"_pendingData":null,"_pendingEncoding":"","_server":null,"ssl":null,"_requestCert":true,"_rejectUnauthorized":true},"_keepAlive":false,"_keepAliveInitialDelayMillis":0,"lastBuffer":false,"parsedStatements":{},"ssl":{},"_ending":false,"_emitMessage":false,"_connecting":true},"queryQueue":[],"binary":false,"processID":990695907,"secretKey":-2084586396,"ssl":{},"_connectionTimeoutMillis":180000,"_connectionCallback":null,"connectionTimeoutHandle":{"_idleTimeout":-1,"_idlePrev":null,"_idleNext":null,"_idleStart":12033,"_onTimeout":null,"_repeat":null,"_destroyed":true},"saslSession":null,"activeQuery":null,"readyForQuery":true,"hasExecuted":true,"_poolUseCount":2}}
+[2025-05-28T12:32:52.497Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:32:52.497Z"}
+[2025-05-28T12:32:52.503Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:32:52.503Z"}
+[2025-05-28T12:32:52.504Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:32:52.504Z"}
+[2025-05-28T12:32:52.504Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:32:52.504Z"}
+[2025-05-28T12:32:52.505Z] [ERROR] [Database] Database client connection error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","timestamp":"2025-05-28T12:32:52.505Z"}
+[2025-05-28T12:32:52.505Z] [ERROR] [Database] Database pool encountered an error {"module":"Database","message":"terminating connection due to administrator command","code":"57P01","stack":"error: terminating connection due to administrator command\n    at Parser.parseErrorMessage (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:369:69)\n    at Parser.handlePacket (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:187:21)\n    at Parser.parse (/home/runner/workspace/node_modules/pg-protocol/src/parser.ts:102:30)\n    at TLSSocket.<anonymous> (/home/runner/workspace/node_modules/pg-protocol/src/index.ts:7:48)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)","timestamp":"2025-05-28T12:32:52.505Z"}
+[2025-05-28T12:33:08.082Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:33:09.178Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:09.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:33:09.693Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:09.580Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:33:10.199Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:10.085Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:33:30.202Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:30.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:33:38.081Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:33:39.181Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:39.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:33:39.693Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:39.579Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:33:50.211Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:33:50.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:34:08.079Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:34:09.177Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:09.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:34:09.725Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:09.580Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:34:10.214Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:10.094Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:34:15.583Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T12:34:15.682Z',
+  requestId: 'req_1748435655682_gvxbuhqfk'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T12:34:15.685Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T12:34:15.685Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Keystone Data Industries',
+  components: { prefix: 'Keystone', core: 'Data', suffix: 'Industries' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Keystone Data Industries',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T12:34:15.685Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Keystone Data Industries',
+  nameLength: 24
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T12:34:15.746Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Keystone Data Industries',
+  duration: 60
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Keystone Data Industries',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 64,
+  timestamp: '2025-05-28T12:34:15.746Z'
+}
+[2025-05-28T12:34:15.805Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 124ms :: {"success":true,"companyName":"Keystone Data Industries","wasModified":false,... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Keystone Data Industries',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 7 }
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T12:34:26.156Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Keystone Data Industries',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Keystone Data Industries',
+    persona: 'Data Provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T12:34:26.156Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 5,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: Data Provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'Data Provider',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 682,
+  name: 'Keystone Data Industries',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'Data Provider',
+  shouldCreateNetwork: true,
+  processingTime: 55
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 682,
+  bankName: 'Keystone Data Industries',
+  targetNetworkSize: 5,
+  persona: 'Data Provider'
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Keystone Data Industries',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '682-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Keystone Data Industries',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '682-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Keystone Data Industries',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '682-334'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Keystone Data Industries',
+  fintech: 'Finloft',
+  relationshipId: '682-9'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'Keystone Data Industries',
+  fintech: 'Wealthfront',
+  relationshipId: '682-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'Keystone Data Industries',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 682,
+  companyName: 'Keystone Data Industries',
+  persona: 'Data Provider',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: true,
+  totalProcessingTime: 265
+}
+[2025-05-28T12:34:26.457Z] [INFO] [App] POST /api/demo/company/create 200 in 302ms :: {"success":true,"company":{"id":682,"name":"Keystone Data Industries","descri... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'William Wang',
+  email: 'wwang@keystonedataindustries.com',
+  companyId: 682,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748435664595_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T12:34:24.595Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 682,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 682
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T12:34:27.319Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'William Wang',
+    email: 'wwang@keystonedataindustries.com',
+    companyId: 682,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'William Wang',
+    email: 'wwang@keystonedataindustries.com',
+    companyId: 682,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'Data Provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T12:34:27.319Z'
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 484,
+  email: 'wwang@keystonedataindustries.com',
+  fullName: 'William Wang',
+  companyId: 682,
+  role: 'provider'
+}
+[2025-05-28T12:34:27.542Z] [INFO] [App] POST /api/demo/user/create 200 in 224ms :: {"success":true,"user":{"id":484,"email":"wwang@keystonedataindustries.com","... 
+[2025-05-28T12:34:28.335Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [EmailInvite] Starting email invitation process: {
+  userEmail: '***@***.***',
+  userName: 'William Wang',
+  companyName: 'Keystone Data Industries',
+  loginCredentials: {
+    email: 'wwang@keystonedataindustries.com',
+    password: 'demo123',
+    loginUrl: '/login',
+    accountType: 'demo',
+    setupComplete: true
+  },
+  timestamp: '2025-05-28T12:34:29.119Z'
+}
+[DemoAPI] [EmailInvite] Input validation successful: {
+  userEmail: 'wwang@keystonedataindustries.com',
+  userName: 'William Wang',
+  companyName: 'Keystone Data Industries',
+  hasLoginCredentials: true
+}
+[DemoAPI] [EmailInvite] Verifying user exists...
+[DemoAPI] [EmailInvite] User verification successful: {
+  userId: 484,
+  email: 'wwang@keystonedataindustries.com',
+  companyId: 682,
+  fullName: 'William Wang'
+}
+[DemoAPI] [EmailInvite] Generating secure invitation code...
+[DemoAPI] [EmailInvite] Generated invitation code: { codeLength: 6, codeFormat: 'hex-uppercase', duration: 38 }
+[DemoAPI] [EmailInvite] Creating invitation database record...
+[DemoAPI] [EmailInvite] Invitation record created: {
+  invitationId: 444,
+  code: '0A0EE3',
+  expiresAt: 2025-06-04T12:34:29.157Z,
+  duration: 81
+}
+[DemoAPI] [EmailInvite] Preparing email content using emailService...
+[DemoAPI] [EmailInvite] Built invitation URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com
+[EmailService] Starting to send template email
+[EmailService] Template type: demo_invite
+[EmailService] Recipient: wwang@keystonedataindustries.com
+[EmailService] Template data (raw): {
+  "recipientName": "William Wang",
+  "recipientEmail": "wwang@keystonedataindustries.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Keystone Data Industries",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com",
+  "code": "0A0EE3"
+}
+[EmailService] Starting email validation for: wwang@keystonedataindustries.com
+[EmailService] Checking MX records for domain: keystonedataindustries.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND keystonedataindustries.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'keystonedataindustries.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: wwang@keystonedataindustries.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientName": "William Wang",
+  "recipientEmail": "wwang@keystonedataindustries.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Keystone Data Industries",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com",
+  "code": "0A0EE3"
+}
+[EmailService] Built invite URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com
+[EmailService] Transformed template data: {
+  "recipientName": "William Wang",
+  "recipientEmail": "wwang@keystonedataindustries.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Keystone Data Industries",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com",
+  "code": "0A0EE3"
+}
+[EmailService] Getting email template: demo_invite
+[EmailTemplate] Getting template: demo_invite
+[EmailTemplate] Template data: {
+  "recipientName": "William Wang",
+  "recipientEmail": "wwang@keystonedataindustries.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Keystone Data Industries",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com",
+  "code": "0A0EE3"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "William Wang",
+  "recipientEmail": "wwang@keystonedataindustries.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Keystone Data Industries",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=0A0EE3&email=wwang%40keystonedataindustries.com",
+  "code": "0A0EE3",
+  "inviteType": "demo"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'EvanCNavarro@gmail.com',
+  to: 'wwang@keystonedataindustries.com',
+  subject: 'Invitation to join Invela',
+  textLength: 722,
+  htmlLength: 1804
+}
+[EmailService] Email sent successfully to: wwang@keystonedataindustries.com
+[DemoAPI] [EmailInvite] Demo invitation email sent successfully
+[DemoAPI] [EmailInvite] Email process completed: {
+  recipientEmail: 'wwang@keystonedataindustries.com',
+  invitationCode: '0A0EE3',
+  messageId: 'demo_invite_1748435670058_444',
+  emailSent: true,
+  duration: 939
+}
+[DemoAPI] [EmailInvite] Process completed successfully: {
+  userId: 484,
+  companyId: 682,
+  invitationId: 444,
+  invitationCode: '0A0EE3',
+  emailSent: true,
+  totalDuration: 940
+}
+[2025-05-28T12:34:30.089Z] [INFO] [App] POST /api/demo/email/send-invitation 200 in 971ms :: {"success":true,"emailSent":true,"messageId":"demo_invite_1748435670058_444",... 
+[2025-05-28T12:34:30.209Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:30.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 484,
+  companyId: 682,
+  demoType: 'data-provider',
+  timestamp: '2025-05-28T12:34:30.891Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 484,
+  email: 'wwang@keystonedataindustries.com',
+  companyId: 682,
+  fullName: 'William Wang'
+}
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 484,
+  email: 'wwang@keystonedataindustries.com',
+  companyId: 682,
+  environmentId: 'env_demo_1748435670922_484',
+  authenticated: true,
+  totalDuration: 93,
+  timestamp: '2025-05-28T12:34:30.984Z'
+}
+[2025-05-28T12:34:31.014Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 124ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-28T12:34:36.104Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 484, company_id: 682, email: 'wwang@keystonedataindustries.com' }
+[2025-05-28T12:34:36.601Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":682,"userId":484}
+[Current Company] Fetching company for user: { userId: 484, companyId: 682 }
+[Current Company] Found company: {
+  id: 682,
+  name: 'Keystone Data Industries',
+  onboardingCompleted: false,
+  riskScore: null,
+  chosenScore: null,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 484,
+  companyId: 682,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T12:34:36.635Z'
+}
+[2025-05-28T12:34:36.645Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":682}
+[Tasks] Automatically unlocking all tasks for company { userId: 484, companyId: 682, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T12:34:36.646Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":682}
+[2025-05-28T12:34:36.667Z] [INFO] [App] GET /api/companies/current 200 in 63ms :: {"id":682,"name":"Keystone Data Industries","category":"FinTech","is_demo":tr... 
+[2025-05-28T12:34:36.675Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":682}
+[Tasks] Successfully unlocked all tasks for company: 682
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 484',
+    condition2: 'tasks.created_by = 484',
+    condition3: "tasks.company_id = 682 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('wwang@keystonedataindustries.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T12:34:36.775Z] [INFO] [App] GET /api/tasks 304 in 175ms :: [] 
+[2025-05-28T12:34:36.854Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 484 
+[2025-05-28T12:34:36.855Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T12:34:36.855Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T12:34:36.855Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 484 
+[2025-05-28T12:34:36.893Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 484 
+[2025-05-28T12:34:36.921Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748435676921-srzpr6i","clients":6}
+[2025-05-28T12:34:36.922Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 68ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T12:34:37.040Z] [INFO] [WebSocket] Received message from client client-1748435676921-srzpr6i {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748435467173_h9o5tfhzm","timestamp":"2025-05-28T12:34:36.926Z"}
+[2025-05-28T12:34:37.040Z] [INFO] [WebSocket] Authentication from client client-1748435676921-srzpr6i {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-05-28T12:34:38.084Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:34:39.180Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:39.064Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:34:39.692Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:39.580Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[Current Company] Using cached company data: 682
+[2025-05-28T12:34:50.203Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:34:50.084Z","connectionId":"ws_1748435468447_8i7oe5x8d"}
+[2025-05-28T12:34:51.994Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [] 
+[2025-05-28T12:35:03.890Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":682,"name":"Keystone Data Industries","category":"FinTech","is_demo":tr... [sampled: request 11] 
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 484, company_id: 682, email: 'wwang@keystonedataindustries.com' }
+[2025-05-28T12:35:07.180Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":682,"userId":484}
+[2025-05-28T12:35:07.208Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":682}
+[Tasks] Automatically unlocking all tasks for company { userId: 484, companyId: 682, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T12:35:07.209Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":682}
+[2025-05-28T12:35:07.238Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":682}
+[Tasks] Successfully unlocked all tasks for company: 682
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 484',
+    condition2: 'tasks.created_by = 484',
+    condition3: "tasks.company_id = 682 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('wwang@keystonedataindustries.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T12:35:07.326Z] [INFO] [App] GET /api/tasks 304 in 147ms :: [] 
+[2025-05-28T12:35:08.083Z] [INFO] [WebSocket] Received message from client client-1748435467957-9846y6o {"module":"WebSocket","type":"ping"}
+[2025-05-28T12:35:09.180Z] [INFO] [WebSocket] Received message from client client-1748435469056-c6ufdc8 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:35:09.065Z","connectionId":"ws_1748435469062_dixys0lz1"}
+[2025-05-28T12:35:09.706Z] [INFO] [WebSocket] Received message from client client-1748435469573-rvu74vc {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:35:09.580Z","connectionId":"ws_1748435468546_muug1vzo1"}
+[2025-05-28T12:35:10.204Z] [INFO] [WebSocket] Received message from client client-1748435470070-mnr01kv {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T12:35:10.085Z","connectionId":"ws_1748435468447_8i7oe5x8d"}

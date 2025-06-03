@@ -1,0 +1,157 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-01T09:43:10.922Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-01T09:43:10.926Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":107,"timestamp":"2025-06-01T09:43:10.926Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-01T09:43:11.056Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-01T09:43:11.165Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-01T09:43:11.165Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"1x7rdh","timestamp":"2025-06-01T09:43:11.165Z"}
+[2025-06-01T09:43:11.165Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-01T09:43:11.165Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-01T09:43:11.165Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-01T09:43:11.165Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-01T09:43:11.166Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-01T09:43:11.166Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-01T09:43:11.166Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-01T09:43:11.166Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-01T09:43:11.166Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-01T09:43:11.166Z] [INFO] [App] Setting up Vite development server 
+[2025-06-01T09:43:11.167Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-01T09:43:11.167Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-01T09:43:11.167Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-01T09:43:11.167Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-06-01T09:43:11.167Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-01T09:43:11.168Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-01T09:43:11.168Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-06-01T09:43:11.168Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-01T09:43:11.168Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-01T09:43:11.180Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-06-01T09:43:11.180Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-06-01T09:43:11.181Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-01T09:43:11.181Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-01T09:43:11.181Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-01T09:43:11.181Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-01T09:43:11.212Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-01T09:43:11.213Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-01T09:43:11.213Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-01T09:43:11.213Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-01T09:43:11.214Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 15 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-06-01T09:43:11.744Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-01T09:43:12.387Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-01T09:43:14.815Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-01T09:43:15.297Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-01T09:43:21.182Z] [INFO] [App] Running background health checks... 
+[2025-06-01T09:43:21.182Z] [StartupChecks] Running application startup health checks... 
+[2025-06-01T09:43:21.182Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-01T09:43:21.183Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-01T09:43:21.372Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-01T09:43:21.403Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-01T09:43:21.438Z] [DBConnectionService] Database connection check successful 
+[2025-06-01T09:43:21.438Z] [StartupChecks] Database health check passed 
+[2025-06-01T09:43:21.438Z] [StartupChecks] All startup health checks passed! 
+[2025-06-01T09:43:21.438Z] [INFO] [App] All background health checks passed successfully. 
+[Current Company] Fetching company for user: { userId: 541, companyId: 759 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 541, company_id: 759, email: 'lhussein@wealthplatforms.com' }
+[2025-06-01T09:43:24.419Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":759,"userId":541}
+[Current Company] Found company: {
+  id: 759,
+  name: 'WealthPlatforms',
+  onboardingCompleted: true,
+  riskScore: 28,
+  chosenScore: 64,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 541,
+  companyId: 759,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-01T09:43:24.438Z'
+}
+[2025-06-01T09:43:24.448Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":759}
+[Tasks] Automatically unlocking all tasks for company { userId: 541, companyId: 759, requestedBy: 'automatic_task_unlock' }
+[2025-06-01T09:43:24.449Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":759}
+[2025-06-01T09:43:24.468Z] [INFO] [App] GET /api/companies/current 304 in 61ms :: {"id":759,"name":"WealthPlatforms","category":"FinTech","is_demo":true,"reven... 
+[2025-06-01T09:43:24.477Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":759}
+[Tasks] Successfully unlocked all tasks for company: 759
+[2025-06-01T09:43:24.490Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771004490-qs1hyhn","clients":1}
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 541',
+    condition2: 'tasks.created_by = 541',
+    condition3: "tasks.company_id = 759 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('lhussein@wealthplatforms.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-01T09:43:24.564Z] [INFO] [App] GET /api/tasks 304 in 146ms :: [] 
+[2025-06-01T09:43:24.616Z] [INFO] [WebSocket] Received message from client client-1748771004490-qs1hyhn {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-01T09:43:24.424Z"}}
+[2025-06-01T09:43:24.617Z] [INFO] [WebSocket] Authentication from client client-1748771004490-qs1hyhn {"module":"WebSocket","hasToken":true}
+[2025-06-01T09:43:24.653Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 541 
+[2025-06-01T09:43:24.653Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-01T09:43:24.653Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-01T09:43:24.653Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 541 
+[2025-06-01T09:43:24.713Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 541: completed=false, step=0 
+[2025-06-01T09:43:24.742Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 90ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-01T09:... 
+[Relationships] Fetching network for company: 759
+[Companies] Fetching companies for user: { userId: 541, company_id: 759 }
+[Relationships] Found network members: { count: 0 }
+[Companies] Query successful, found companies: {
+  count: 1,
+  companies: [
+    {
+      id: 759,
+      name: 'WealthPlatforms',
+      hasLogo: false,
+      hasRelationship: true
+    }
+  ]
+}
+[2025-06-01T09:43:24.986Z] [INFO] [App] GET /api/relationships 304 in 59ms :: [] 
+[2025-06-01T09:43:24.997Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771004997-m3m63fy","clients":2}
+[2025-06-01T09:43:25.000Z] [INFO] [App] GET /api/companies 304 in 60ms :: [{"id":759,"name":"WealthPlatforms","category":"FinTech","description":"Accre... 
+[2025-06-01T09:43:25.497Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771005497-xt1jy95","clients":3}
+[2025-06-01T09:43:26.085Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771006085-g1dt02x","clients":4}
+[2025-06-01T09:43:26.240Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 541 
+[2025-06-01T09:43:26.240Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-01T09:43:26.240Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-01T09:43:26.240Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 541 
+[2025-06-01T09:43:26.299Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial dashboard for user 541 
+[2025-06-01T09:43:26.329Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 89ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-06-01T09:43:26.514Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 541 
+[2025-06-01T09:43:26.514Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-01T09:43:26.514Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-01T09:43:26.514Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 541 
+[2025-06-01T09:43:26.574Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 541: completed=false, step=0 
+[2025-06-01T09:43:26.582Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771006582-pjbyuw1","clients":5}
+[2025-06-01T09:43:26.604Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 90ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-01T09:... 
+[2025-06-01T09:43:26.704Z] [INFO] [WebSocket] Received message from client client-1748771006582-pjbyuw1 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748771003651_8orjo84ab","timestamp":"2025-06-01T09:43:26.513Z"}
+[2025-06-01T09:43:26.704Z] [INFO] [WebSocket] Authentication from client client-1748771006582-pjbyuw1 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-01T09:43:27.112Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748771007112-toro2cr","clients":6}
+[2025-06-01T09:43:27.682Z] [INFO] [WebSocket] Received message from client client-1748771007112-toro2cr {"module":"WebSocket","type":"authenticate","userId":541,"companyId":759,"clientId":"ws_1748771004936_iq1555ond","timestamp":"2025-06-01T09:43:27.480Z"}
+[2025-06-01T09:43:27.682Z] [INFO] [WebSocket] Authentication from client client-1748771007112-toro2cr {"module":"WebSocket","userId":541,"companyId":759,"hasToken":true}

@@ -1,0 +1,39 @@
+[DemoStep2] Email validation: valid (lwood@smarttrading.com)
+[DemoStep2] Field visibility check: riskProfile for new-data-recipient = false 
+Object {fieldTags: Array(1), personaId: "new-data-recipient", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: companySize for new-data-recipient = false 
+Object {fieldTags: Array(1), personaId: "new-data-recipient", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: networkSize for new-data-recipient = false 
+Object {fieldTags: Array(1), personaId: "new-data-recipient", isDefault: false, hasPersonaTag: false, shouldShow: false}
+[DemoStep2] Field visibility check: emailInvite for new-data-recipient = true 
+Object {fieldTags: Array(4), personaId: "new-data-recipient", isDefault: false, hasPersonaTag: true, shouldShow: true}
+[DemoStep2] Validating field: persona 
+Object {value: "New Data Recipient", formData: {…}}
+[DemoStep2] Persona validation: valid
+[DemoStep2] Validating field: companyName 
+Object {value: "Smart Trading Partners", formData: {…}}
+[DemoStep2] Company name validation: valid (22 chars)
+[DemoStep2] Validating field: userFullName 
+Object {value: "Layla Wood", formData: {…}}
+[DemoStep2] Full name validation: valid (10 chars, 2 parts)
+[DemoStep2] Validating field: userEmail 
+Object {value: "lwood@smarttrading.com", formData: {…}}
+[DemoStep2] Email validation: valid (lwood@smarttrading.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStep2] Company name generation failed after all retries
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "new-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStep3] Received form data: 
+Object {companyName: "Loading...", userFullName: "Layla Wood", hasValidCompanyName: false, timestamp: "2025-05-28T14:48:28.219Z"}
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed

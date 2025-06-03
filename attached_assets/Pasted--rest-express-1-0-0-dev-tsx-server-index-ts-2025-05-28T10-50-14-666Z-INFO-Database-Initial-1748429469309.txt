@@ -1,0 +1,183 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T10:50:14.666Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T10:50:14.674Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T10:50:14.674Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T10:50:14.809Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T10:50:14.927Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T10:50:14.927Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T10:50:14.928Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T10:50:14.928Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T10:50:14.929Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T10:50:14.931Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T10:50:14.931Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"hxanvx","timestamp":"2025-05-28T10:50:14.931Z"}
+[2025-05-28T10:50:14.931Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T10:50:14.931Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T10:50:14.931Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T10:50:14.932Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T10:50:14.932Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T10:50:14.932Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T10:50:14.932Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T10:50:14.932Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T10:50:14.932Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T10:50:14.932Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T10:50:14.934Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T10:50:14.946Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T10:50:14.946Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T10:50:14.947Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T10:50:14.947Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T10:50:14.947Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T10:50:14.947Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T10:50:15.932Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T10:50:15.973Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:50:20.456Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:50:20.546Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T10:50:24.947Z] [INFO] [App] Running background health checks... 
+[2025-05-28T10:50:24.947Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T10:50:24.948Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T10:50:24.948Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T10:50:25.147Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T10:50:25.176Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T10:50:25.205Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T10:50:25.205Z] [StartupChecks] Database health check passed 
+[2025-05-28T10:50:25.205Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T10:50:25.205Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T10:50:28.459Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748429428459-gms7hkw","clients":1}
+[2025-05-28T10:50:28.592Z] [INFO] [WebSocket] Received message from client client-1748429428459-gms7hkw {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T10:50:28.476Z"}}
+[2025-05-28T10:50:28.592Z] [INFO] [WebSocket] Authentication from client client-1748429428459-gms7hkw {"module":"WebSocket","hasToken":true}
+[2025-05-28T10:50:28.956Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748429428956-j4r64lv","clients":2}
+[2025-05-28T10:50:29.459Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748429429459-xf53a4u","clients":3}
+[2025-05-28T10:50:29.975Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748429429975-ccghpsi","clients":4}
+[2025-05-28T10:50:30.494Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748429430494-13k1rpi","clients":5}
+[2025-05-28T10:50:30.812Z] [INFO] [WebSocket] Received message from client client-1748429430494-13k1rpi {"module":"WebSocket","type":"authenticate","userId":"477","companyId":"669","clientId":"ws_1748429428979_w8po5sq5v","timestamp":"2025-05-28T10:50:30.706Z"}
+[2025-05-28T10:50:30.812Z] [INFO] [WebSocket] Authentication from client client-1748429430494-13k1rpi {"module":"WebSocket","userId":"477","companyId":"669","hasToken":true}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'TechVantage Group',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 5 }
+}
+[DemoTransformer] 🔄 Persona transformation: {
+  original: 'data-provider',
+  transformed: 'Data Provider',
+  category: 'Bank',
+  mappingFound: true,
+  timestamp: '2025-05-28T10:50:37.292Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'TechVantage Group',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'TechVantage Group',
+    persona: 'Data Provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T10:50:37.293Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 675,
+  name: 'TechVantage Group',
+  category: 'Bank',
+  transformedPersona: 'Data Provider',
+  shouldCreateNetwork: true
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: { bankId: 675, bankName: 'TechVantage Group', targetNetworkSize: 5 }
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [
+    'SigmaHub Ventures',
+    'Stream Path Solutions',
+    'Cornerstone Financial Group'
+  ]
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'TechVantage Group',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '675-603'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'TechVantage Group',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '675-642'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'TechVantage Group',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '675-334'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'TechVantage Group',
+  fintech: 'Finloft',
+  relationshipId: '675-9'
+}
+[DemoAPI] ✅ Relationship created: {
+  bank: 'TechVantage Group',
+  fintech: 'Wealthfront',
+  relationshipId: '675-164'
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'TechVantage Group',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[2025-05-28T10:50:37.592Z] [INFO] [App] POST /api/demo/company/create 200 in 302ms :: {"success":true,"company":{"id":675,"name":"TechVantage Group","description":... 
+[2025-05-28T10:50:44.985Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[980,982,977,984,1041,1042,986,1043,990,989]}
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 1041 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1042 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[Task Progress] Calculated progress for task 1043 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[2025-05-28T10:50:50.625Z] [INFO] [WebSocket] Received message from client client-1748429430494-13k1rpi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:50:50.515Z","connectionId":"ws_1748429428979_w8po5sq5v"}
+[2025-05-28T10:50:58.578Z] [INFO] [WebSocket] Received message from client client-1748429428459-gms7hkw {"module":"WebSocket","type":"ping"}
+[2025-05-28T10:50:59.586Z] [INFO] [WebSocket] Received message from client client-1748429429459-xf53a4u {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:50:59.476Z","connectionId":"ws_1748429429475_8crrcmgi2"}
+[2025-05-28T10:51:00.106Z] [INFO] [WebSocket] Received message from client client-1748429429975-ccghpsi {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T10:50:59.998Z","connectionId":"ws_1748429428973_ceyoi4e5r"}

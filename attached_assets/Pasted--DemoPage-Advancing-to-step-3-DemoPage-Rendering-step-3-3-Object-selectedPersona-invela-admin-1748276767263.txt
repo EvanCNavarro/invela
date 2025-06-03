@@ -1,0 +1,60 @@
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: false, step3WizardStage: review
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 review stage: 
+Object {stage: "review", asset: "regular-animated-gif"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoStep3] Starting demo preparation with real API actions
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "invela-admin"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3, isSystemSetup: true, step3WizardStage: setup
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 stage-aware switching: 
+Object {stage: "setup", asset: "launch-gif", location: "hero-section"}
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-launch.gif
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Creating account for Elizabeth Scott 
+Object {id: "create-user", label: "Creating account for Elizabeth Scott", category: "user", targetField: "userFullName", apiEndpoint: "/api/demo/user/create", …}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Success: Creating account for Elizabeth Scott 
+Object {success: true, userId: 446, userData: {…}, metadata: {…}, timestamp: "2025-05-26T16:25:08.014Z"}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Configuring authentication 
+Object {id: "setup-auth", label: "Configuring authentication", category: "auth", targetField: "userEmail", apiEndpoint: "/api/demo/auth/setup", …}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, credentials: {…}, timestamp: "2025-05-26T16:25:08.795Z"}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoStep3] Rendering results and next steps
+[DemoAPI] REAL API FAILED for: Finalizing demo environment 
+Error {}
+
+[DemoAPI] Error executing Finalizing demo environment: 
+Error {}
+
+[DemoStep3] Action failed: Finalizing demo environment
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:22.175Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:23.141Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:23.623Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:52.174Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:53.139Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-26T16:25:53.626Z", echo: {…}}

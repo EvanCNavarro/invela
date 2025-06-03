@@ -1,0 +1,31 @@
+[DemoAPI] Executing: Configuring authentication 
+Object {id: "setup-auth", label: "Configuring authentication", category: "auth", targetField: "userEmail", apiEndpoint: "/api/demo/auth/setup", …}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Adrian Martinez", demoSessionId: "demo_1748430736093_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Success: Configuring authentication 
+Object {success: true, message: "Auth setup complete"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Adrian Martinez", demoSessionId: "demo_1748430736278_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] Executing: Finalizing demo environment 
+Object {id: "finalize-environment", label: "Finalizing demo environment", category: "system", targetField: null, apiEndpoint: "/api/demo/environment/finalize", …}
+[DemoAPI] 🔄 Replaced placeholder companyId with actual ID: 677 
+Object {actionId: "finalize-environment", immediateResult: "available", source: "immediate_execution_result", timestamp: "2025-05-28T11:12:16.878Z"}
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Adrian Martinez", demoSessionId: "demo_1748430736879_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"
+[DemoAPI] REAL API FAILED for: Finalizing demo environment 
+SyntaxError {}
+
+[DemoAPI] Error executing Finalizing demo environment: 
+Error {}
+
+[DemoStep3] Action failed: Finalizing demo environment
+[DemoStep3] Rendering results and next steps
+[DemoPage] Building user payload with transformer: 
+Object {persona: "data-provider", userFullName: "Adrian Martinez", demoSessionId: "demo_1748430737173_data-provider", expectedRole: "other"}
+[DemoPage] Finalize payload: Using companyId "COMPANY_ID_FROM_STEP_1" for persona "data-provider"

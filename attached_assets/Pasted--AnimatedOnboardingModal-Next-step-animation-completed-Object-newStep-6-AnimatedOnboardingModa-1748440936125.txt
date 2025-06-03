@@ -1,0 +1,157 @@
+[AnimatedOnboardingModal] Next step animation completed 
+Object {newStep: 6}
+[AnimatedOnboardingModal] Starting onboarding completion process 
+Object {hasUser: true, hasCompany: true, companyInfo: {…}, teamMembersCount: 0}
+[AnimatedOnboardingModal] Successfully set localStorage onboarding status 
+Object {key: "onboarding_completed_488"}
+[AnimatedOnboardingModal] Updating user onboarding status 
+Object {userId: 488, status: true}
+[AnimatedOnboardingModal] Successfully updated localStorage onboarding status 
+Object {userId: 488, localStorageKey: "onboarding_completed_488"}
+[AnimatedOnboardingModal] Successfully updated user onboarding status in database 
+Object {userId: 488, data: {…}}
+[AnimatedOnboardingModal] User onboarding status updated successfully in database 
+Object {userId: 488}
+[AnimatedOnboardingModal] Updating company details 
+Object {companyId: 686, details: {…}, mappedEmployeeCount: 25, mappedRevenueValue: 1000000}
+[AnimatedOnboardingModal] Successfully updated company details 
+Object {companyId: 686, data: {…}}
+[AnimatedOnboardingModal] Company details updated successfully 
+Object {companyId: 686}
+[AnimatedOnboardingModal] Invalidating relevant queries after onboarding completion undefined
+[AnimatedOnboardingModal] Successfully invalidated user and company data queries undefined
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 488, databaseStatus: "completed", localStorageStatus: "completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 488, email: "cverma@optimaladvisors.com", timestamp: "2025-05-28T14:00:42.326Z"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[CurrentCompany] Setting company context: 686
+[RiskRadarChart] Setting selected company ID from companyId prop 686
+[RiskRadarChart] Company category check: 
+Object {category: "Bank", isBankOrInvela: true, isFintech: false, showDropdownProp: false}
+[RiskRadarChart] Display company updated: 
+Object {id: 686, name: "Optimal Banking Advisors", category: "Bank"}
+[RiskRadarChart] Risk clusters data missing for company: 
+Object {id: 686, name: "Optimal Banking Advisors", riskScore: null, usingCachedData: false}
+[CurrentCompany] Setting company context: 686
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "Bank", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 488, databaseStatus: "completed", localStorageStatus: "completed", showModal: false}
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:00:44.238Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:00:45.560Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:00:46.081Z", echo: {…}}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 5
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Optimal Banking Advisors", category: "Bank", isBankOrInvela: true, selectedCompanyId: 686, networkCompaniesCount: 6, …}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:14.236Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:15.635Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:16.089Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:44.237Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:45.555Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:01:46.084Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-28T14:02:14.235Z", echo: {…}}

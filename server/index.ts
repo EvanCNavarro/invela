@@ -383,10 +383,11 @@ const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Server configuration logging
-logger.info(`[ENV] Server will listen on PORT=${PORT}`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV || 'development'}`);
-logger.info(`[ENV] Host binding: ${HOST}`);
+// Simplified deployment logging for Replit's forced configuration approach
+// Best practice: Clear visibility into forced production settings
+logger.info(`[ENV] Server will listen on PORT=${PORT} (forced production mode)`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV} (forced production)`);
+logger.info(`[ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';

@@ -1,0 +1,205 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-25T22:50:51.594Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-25T22:50:51.598Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-25T22:50:51.598Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-25T22:50:51.735Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[2025-05-25T22:50:51.842Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-25T22:50:51.843Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-25T22:50:51.843Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-25T22:50:51.843Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-25T22:50:51.844Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 13 modules initialized [DemoAPI, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-25T22:50:51.847Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-25T22:50:51.847Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"86mh2k","timestamp":"2025-05-25T22:50:51.847Z"}
+[2025-05-25T22:50:51.847Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-25T22:50:51.847Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-25T22:50:51.847Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-25T22:50:51.847Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-25T22:50:51.847Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-25T22:50:51.847Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-25T22:50:51.847Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-25T22:50:51.847Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-25T22:50:51.847Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-25T22:50:51.848Z] [INFO] [App] Setting up Vite development server 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-25T22:50:51.849Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-25T22:50:51.850Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-25T22:50:51.862Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-25T22:50:51.862Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-25T22:50:51.862Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-25T22:50:51.863Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-25T22:50:51.863Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-25T22:50:51.863Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-25T22:50:52.848Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-25T22:50:54.861Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T22:50:58.270Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T22:51:00.160Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-25T22:51:01.863Z] [INFO] [App] Running background health checks... 
+[2025-05-25T22:51:01.863Z] [StartupChecks] Running application startup health checks... 
+[2025-05-25T22:51:01.863Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-25T22:51:01.864Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-25T22:51:02.122Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-25T22:51:02.157Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-25T22:51:02.189Z] [DBConnectionService] Database connection check successful 
+[2025-05-25T22:51:02.189Z] [StartupChecks] Database health check passed 
+[2025-05-25T22:51:02.189Z] [StartupChecks] All startup health checks passed! 
+[2025-05-25T22:51:02.189Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-25T22:51:06.448Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748213466448-i68lzl2","clients":1}
+[2025-05-25T22:51:06.570Z] [INFO] [WebSocket] Received message from client client-1748213466448-i68lzl2 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-25T22:51:06.358Z"}}
+[2025-05-25T22:51:06.571Z] [INFO] [WebSocket] Authentication from client client-1748213466448-i68lzl2 {"module":"WebSocket","hasToken":true}
+[2025-05-25T22:51:06.941Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748213466941-kjuykip","clients":2}
+[2025-05-25T22:51:07.441Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748213467441-8w4mrx9","clients":3}
+[2025-05-25T22:51:07.946Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748213467946-hg1hl7n","clients":4}
+[2025-05-25T22:51:08.458Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748213468458-bmiz6q2","clients":5}
+[2025-05-25T22:51:08.762Z] [INFO] [WebSocket] Received message from client client-1748213468458-bmiz6q2 {"module":"WebSocket","type":"authenticate","userId":"183","companyId":"5","clientId":"ws_1748213466899_8qfa8i0tu","timestamp":"2025-05-25T22:51:08.553Z"}
+[2025-05-25T22:51:08.762Z] [INFO] [WebSocket] Authentication from client client-1748213468458-bmiz6q2 {"module":"WebSocket","userId":"183","companyId":"5","hasToken":true}
+[DemoAPI] Company creation request received at: 2025-05-25T22:51:13.652Z
+[DemoAPI] Request method: POST
+[DemoAPI] Request headers: {
+  'content-type': 'application/json',
+  'content-length': '127',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Ap...',
+  origin: 'https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080'
+}
+[DemoAPI] Full request body received: {
+  "name": "CyberShield Systems",
+  "type": "live",
+  "persona": "accredited-data-recipient",
+  "riskProfile": 85,
+  "companySize": "extra-large"
+}
+[DemoAPI] Validating input parameters...
+[DemoAPI] Input validation passed successfully
+[DemoAPI] Extracted and validated fields: {
+  name: 'CyberShield Systems',
+  type: 'live',
+  persona: 'accredited-data-recipient',
+  companySize: 'extra-large',
+  riskProfile: 85
+}
+[DemoAPI] ✅ IMMEDIATE ENTERPRISE DETECTION - CREATING LARGE ENTERPRISE
+[2025-05-25T22:51:13.658Z] [INFO] [App] Successfully retrieved unified WebSocket server for broadcast 
+[WebSocket] Broadcast demo_action_start to 5 clients (0 errors) { messageId: 'msg_1748213473658_ls1fslno1' }
+[2025-05-25T22:51:13.659Z] [INFO] [App] Successfully broadcasted demo_action_start message 
+[DemoAPI] Immediate enterprise generated: $605M, 30800 employees
+[DemoAPI] Starting database insert operation for enterprise company
+[DemoAPI] Database connection status check...
+[DemoAPI] Database connection verified successfully
+[DemoAPI] Preparing company data for database insertion...
+[DemoAPI] Company data prepared: {
+  "name": "CyberShield Systems",
+  "description": "Enterprise FinTech specializing in advanced financial technology solutions",
+  "category": "FinTech",
+  "revenue": "$605M",
+  "num_employees": 30800,
+  "revenue_tier": "xlarge",
+  "is_demo": true,
+  "available_tabs": [
+    "dashboard",
+    "task-center",
+    "file-vault",
+    "insights"
+  ],
+  "accreditation_status": "APPROVED",
+  "website_url": "https://cybershieldsystems.com",
+  "hq_address": "300 Park Avenue, Midtown East, New York, NY 10022",
+  "founders_and_leadership": "Enterprise Leadership Team",
+  "key_clients_partners": "Fortune 500 Companies",
+  "investors": "Institutional Investors",
+  "certifications_compliance": "SOC 2 Type II, ISO 27001",
+  "incorporation_year": 2018,
+  "risk_score": 85
+}
+[DemoAPI] Executing database insert...
+[DemoAPI] Database insert completed successfully
+[DemoAPI] ✅ Enterprise company created successfully: {
+  id: 353,
+  name: 'CyberShield Systems',
+  description: 'Enterprise FinTech specializing in advanced financial technology solutions',
+  category: 'FinTech',
+  logo_id: null,
+  stock_ticker: null,
+  website_url: 'https://cybershieldsystems.com',
+  legal_structure: null,
+  market_position: null,
+  hq_address: '300 Park Avenue, Midtown East, New York, NY 10022',
+  products_services: null,
+  incorporation_year: 2018,
+  founders_and_leadership: 'Enterprise Leadership Team',
+  num_employees: 30800,
+  revenue: '$605M',
+  revenue_tier: 'xlarge',
+  key_clients_partners: 'Fortune 500 Companies',
+  investors: 'Institutional Investors',
+  funding_stage: null,
+  exit_strategy_history: null,
+  certifications_compliance: 'SOC 2 Type II, ISO 27001',
+  risk_score: 85,
+  chosen_score: null,
+  risk_clusters: null,
+  risk_configuration: null,
+  risk_priorities: null,
+  accreditation_status: 'APPROVED',
+  onboarding_company_completed: true,
+  registry_date: 2025-05-25T22:51:13.708Z,
+  files_public: [],
+  files_private: [],
+  available_tabs: [ 'dashboard', 'task-center', 'file-vault', 'insights' ],
+  is_demo: true,
+  created_at: 2025-05-25T22:51:13.708Z,
+  updated_at: 2025-05-25T22:51:13.708Z
+}
+[2025-05-25T22:51:13.780Z] [INFO] [App] POST /api/demo/company/create 200 in 129ms :: {"success":true,"company":{"id":353,"name":"CyberShield Systems","description... 
+[DemoAPI] Creating user: {
+  fullName: 'Jordan Carter',
+  email: 'jcarter@cybershieldsystems.com',
+  role: 'Accredited Data Recipient',
+  companyId: 353
+}
+[DemoAPI] Parsed company ID: 353
+[2025-05-25T22:51:14.253Z] [INFO] [App] POST /api/demo/user/create 200 in 306ms :: {"success":true,"userId":401,"userData":{"fullName":"Jordan Carter","email":"... 
+[DemoAPI] Setting up authentication: { userId: 401, email: 'jcarter@cybershieldsystems.com' }
+[2025-05-25T22:51:14.432Z] [INFO] [App] POST /api/demo/auth/setup 200 in 30ms :: {"success":true,"credentials":{"loginUrl":"/login","email":"jcarter@cybershie... 
+[DemoAPI] Sending invitation email: {
+  userEmail: 'jcarter@cybershieldsystems.com',
+  userName: 'Jordan Carter',
+  companyName: 'CyberShield Systems'
+}
+[2025-05-25T22:51:14.616Z] [INFO] [App] POST /api/demo/email/send-invitation 200 in 29ms :: {"success":true,"emailSent":true,"messageId":"msg_1748213474587","recipientEm... 
+[DemoAPI] Finalizing environment: { userId: 401, companyId: 353, demoType: 'accredited-data-recipient' }
+[2025-05-25T22:51:14.799Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 30ms :: {"success":true,"demoReady":true,"accessUrl":"/dashboard","environmentId":"en... 
+[2025-05-25T22:51:21.899Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[969,971,978,981,976,980,982,977,984,986]}
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%

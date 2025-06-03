@@ -1,0 +1,54 @@
+[DemoStep2] Email validation: valid (erogers@databridge.com)
+[DemoStep2] Form validation check: 
+Object {validationResults: {…}, allValid: true, formData: {…}}
+[DemoStepVisual] Rendering with currentStep: 2
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: true, Asset: /assets/demo/steps/step-2-animated.gif
+[DemoStepVisual] Step 3 - Active: false, Asset: /assets/demo/steps/step-3-static.png
+[DemoPage] Advancing to step 3
+[DemoPage] Rendering step 3/3 
+Object {selectedPersona: "accredited-data-recipient"}
+[AuthLayout] Rendering with mode: demo, step: 3/3
+[DemoStep3] Rendering results and next steps
+[DemoStepVisual] Rendering with currentStep: 3
+[DemoStepVisual] Step 1 - Active: false, Asset: /assets/demo/steps/step-1-static.png
+[DemoStepVisual] Step 2 - Active: false, Asset: /assets/demo/steps/step-2-static.png
+[DemoStepVisual] Step 3 - Active: true, Asset: /assets/demo/steps/step-3-animated.gif
+[DemoAssetPreloader] Cleaned up 1 preload links
+[DemoAssetPreloader] At final step 3, no preloading needed
+[DemoStep3] Starting demo preparation with real API actions
+[DemoAPI] Executing: Creating "DataBridge Analytics" organization 
+Object {id: "create-company", label: "Creating "DataBridge Analytics" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.887Z", messageId: "msg_1748209269887_gvi6jvlho"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.887Z", messageId: "msg_1748209269887_gvi6jvlho"}
+[2025-05-25T21:41:09.780Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.887Z", messageId: "msg_1748209269887_gvi6jvlho"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.887Z", messageId: "msg_1748209269887_gvi6jvlho"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.893Z", messageId: "msg_1748209269893_s84v1b5zz"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.893Z", messageId: "msg_1748209269893_s84v1b5zz"}
+data: Object
+messageId: "msg_1748209269893_s84v1b5zz"
+payload: Object
+timestamp: "2025-05-25T21:41:09.893Z"
+type: "demo_action_error"
+[[Prototype]]: Object
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.893Z", messageId: "msg_1748209269893_s84v1b5zz"}
+[2025-05-25T21:41:09.787Z] [WebSocket] Received message of type: demo_action_error 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:41:09.893Z", messageId: "msg_1748209269893_s84v1b5zz"}
+[DemoAPI] REAL API FAILED for: Creating &quot;DataBridge Analytics&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;DataBridge Analytics&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "DataBridge Analytics" organization
+[DemoStep3] Rendering results and next steps

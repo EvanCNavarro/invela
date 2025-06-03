@@ -1,0 +1,111 @@
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Guard Hub", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 696, networkCompaniesCount: 1, …}
+[SidebarTab] Clicked Task Center tab, href=/task-center, isDisabled=false
+[Router] Current location: /task-center
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for insights
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(4), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/task-center", …}
+[Sidebar] Tab state check: company=696, path=/task-center, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 696
+[WebSocketEventBridge] Initializing event bridge
+[2025-05-28T16:36:45.943Z] [INFO] [TaskCenter] Page loaded - refreshing task statuses
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 502, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[SidebarTab] Clicked Insights tab, href=/insights, isDisabled=false
+[Router] Current location: /insights
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[ConsentActivityChart] Using fallback data for timeframe: 1year
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(4), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/insights", …}
+[Sidebar] Tab state check: company=696, path=/insights, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 696
+[Tutorial:TabTutorials] Updating local state for insights: 
+Object {exists: false, completed: false, currentStep: 0, tabName: "insights"}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for insights
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for insights with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: false, …}
+[ConsentActivityInsight] Current company category: FinTech
+[WebSocketEventBridge] Initializing event bridge
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 502, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for insights
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "insights", normalizedTabName: "insights", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for insights, step 1: /assets/tutorials/modal_insights_1.png
+[RiskRadarChart] Combined companies list: 
+Object {allCompaniesCount: 1, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 1, firstFewCompanies: Array(1), …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 696
+[RiskRadarChart] Setting selected company ID from current company 696
+[RiskRadarChart] Company category check: 
+Object {category: "FinTech", isBankOrInvela: false, isFintech: true, showDropdownProp: true}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Display company updated: 
+Object {id: 696, name: "Network Guard Hub", category: "FinTech"}
+[RiskRadarChart] Risk clusters data missing for company: 
+Object {id: 696, name: "Network Guard Hub", riskScore: 40, usingCachedData: false}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Guard Hub", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 696, networkCompaniesCount: 1, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}

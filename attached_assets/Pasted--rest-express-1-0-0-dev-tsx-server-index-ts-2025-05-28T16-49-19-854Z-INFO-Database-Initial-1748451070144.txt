@@ -1,0 +1,659 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T16:49:19.854Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T16:49:19.858Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T16:49:19.858Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T16:49:19.998Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T16:49:20.127Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T16:49:20.127Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T16:49:20.127Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T16:49:20.127Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T16:49:20.129Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T16:49:20.130Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T16:49:20.131Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"okhrlc","timestamp":"2025-05-28T16:49:20.131Z"}
+[2025-05-28T16:49:20.131Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T16:49:20.131Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T16:49:20.131Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T16:49:20.131Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T16:49:20.131Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T16:49:20.131Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T16:49:20.131Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T16:49:20.131Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T16:49:20.131Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T16:49:20.132Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T16:49:20.133Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T16:49:20.149Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T16:49:20.149Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T16:49:20.150Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T16:49:20.150Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T16:49:20.150Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T16:49:20.150Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T16:49:20.766Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:49:21.427Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T16:49:24.464Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:49:24.492Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T16:49:30.150Z] [INFO] [App] Running background health checks... 
+[2025-05-28T16:49:30.150Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T16:49:30.150Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T16:49:30.151Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T16:49:30.332Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T16:49:30.360Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T16:49:30.390Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T16:49:30.390Z] [StartupChecks] Database health check passed 
+[2025-05-28T16:49:30.390Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T16:49:30.390Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T16:49:32.683Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450972683-m3s7to0","clients":1}
+[2025-05-28T16:49:32.805Z] [INFO] [WebSocket] Received message from client client-1748450972683-m3s7to0 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T16:49:32.637Z"}}
+[2025-05-28T16:49:32.805Z] [INFO] [WebSocket] Authentication from client client-1748450972683-m3s7to0 {"module":"WebSocket","hasToken":true}
+[2025-05-28T16:49:33.260Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450973260-u24pq7p","clients":2}
+[2025-05-28T16:49:33.760Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450973760-03ige2p","clients":3}
+[2025-05-28T16:49:34.278Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450974278-a700z7n","clients":4}
+[2025-05-28T16:49:34.793Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748450974793-z0x6v49","clients":5}
+[2025-05-28T16:49:35.126Z] [INFO] [WebSocket] Received message from client client-1748450974793-z0x6v49 {"module":"WebSocket","type":"authenticate","userId":"498","companyId":"694","clientId":"ws_1748450973081_ynqp6wmxq","timestamp":"2025-05-28T16:49:34.958Z"}
+[2025-05-28T16:49:35.126Z] [INFO] [WebSocket] Authentication from client client-1748450974793-z0x6v49 {"module":"WebSocket","userId":"498","companyId":"694","hasToken":true}
+[2025-05-28T16:49:50.184Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[964,965,999,969,1001,973,971,981,978,976]}
+[Task Progress] Calculated progress for task 964 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 965 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 999 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 969 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1001 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 973 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 971 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 981 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 978 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 976 (company_kyb): 0/30 = 0%
+[2025-05-28T16:49:56.072Z] [INFO] [WebSocket] Received message from client client-1748450974793-z0x6v49 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:49:55.862Z","connectionId":"ws_1748450973081_ynqp6wmxq"}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:50:02.794Z',
+  requestId: 'req_1748451002794_de8koqrtv'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:50:02.797Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:50:02.797Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Bridge Cloud Core',
+  components: { prefix: 'Bridge', core: 'Cloud', suffix: 'Core' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Bridge Cloud Core',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:50:02.797Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Bridge Cloud Core',
+  nameLength: 17
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:50:02.829Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Bridge Cloud Core',
+  duration: 32
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Bridge Cloud Core',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 36,
+  timestamp: '2025-05-28T16:50:02.830Z'
+}
+[2025-05-28T16:50:02.833Z] [INFO] [WebSocket] Received message from client client-1748450972683-m3s7to0 {"module":"WebSocket","type":"ping"}
+[2025-05-28T16:50:02.861Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 68ms :: {"success":true,"companyName":"Bridge Cloud Core","wasModified":false,"origin... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:50:03.126Z',
+  requestId: 'req_1748451003126_iq649zysk'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:50:03.127Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:50:03.127Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Smart Trust Associates',
+  components: { prefix: 'Smart', core: 'Trust', suffix: 'Associates' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Smart Trust Associates',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:50:03.127Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Smart Trust Associates',
+  nameLength: 22
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:50:03.156Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Smart Trust Associates',
+  duration: 29
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Smart Trust Associates',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 30,
+  timestamp: '2025-05-28T16:50:03.156Z'
+}
+[2025-05-28T16:50:03.187Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 61ms :: {"success":true,"companyName":"Smart Trust Associates","wasModified":false,"o... 
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T16:50:03.470Z',
+  requestId: 'req_1748451003470_uy8hug0ye'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T16:50:03.471Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T16:50:03.471Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'International Assessment Edge',
+  components: { prefix: 'International', core: 'Assessment', suffix: 'Edge' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'International Assessment Edge',
+  strategy: 'full_combinatorial',
+  duration: 1
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T16:50:03.472Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'International Assessment Edge',
+  nameLength: 29
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T16:50:03.500Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'International Assessment Edge',
+  duration: 28
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'International Assessment Edge',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 31,
+  timestamp: '2025-05-28T16:50:03.501Z'
+}
+[2025-05-28T16:50:03.531Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 61ms :: {"success":true,"companyName":"International Assessment Edge","wasModified":f... 
+[2025-05-28T16:50:03.922Z] [INFO] [WebSocket] Received message from client client-1748450973760-03ige2p {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:03.756Z","connectionId":"ws_1748450973755_wa3dd7g63"}
+[2025-05-28T16:50:04.427Z] [INFO] [WebSocket] Received message from client client-1748450974278-a700z7n {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:04.247Z","connectionId":"ws_1748450973247_kj45807p6"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'International Assessment Edge',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  metadata: { networkSize: 12 }
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T16:50:07.947Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 5,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'International Assessment Edge',
+    persona: 'data-provider',
+    networkSize: undefined
+  },
+  output: {
+    name: 'International Assessment Edge',
+    persona: 'data-provider',
+    category: 'Bank',
+    networkSize: 5,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T16:50:07.948Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 5,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: data-provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  onboardingRequired: false,
+  tabCount: 7
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 699,
+  name: 'International Assessment Edge',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  personaType: 'data-provider',
+  transformedPersona: 'data-provider',
+  shouldCreateNetwork: true,
+  processingTime: 37
+}
+[DemoAPI] ⏭️ Skipping task creation for persona: {
+  persona: 'data-provider',
+  reason: 'Not a New Data Recipient - tasks not required for this persona'
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 699,
+  bankName: 'International Assessment Edge',
+  targetNetworkSize: 5,
+  persona: 'data-provider'
+}
+[DemoAPI] 📊 FinTech discovery results: {
+  requestedSize: 5,
+  availableCount: 5,
+  firstFewNames: [ 'Stream Path Solutions', 'Finloft', 'Wealthfront' ]
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'International Assessment Edge',
+  fintech: 'Stream Path Solutions',
+  relationshipId: '699-642',
+  riskScore: 36,
+  chosenScore: 65
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'International Assessment Edge',
+  fintech: 'Finloft',
+  relationshipId: '699-9',
+  riskScore: 46,
+  chosenScore: 41
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'International Assessment Edge',
+  fintech: 'Wealthfront',
+  relationshipId: '699-164',
+  riskScore: 57,
+  chosenScore: 59
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'International Assessment Edge',
+  fintech: 'SigmaHub Ventures',
+  relationshipId: '699-603',
+  riskScore: 33,
+  chosenScore: 44
+}
+[DemoAPI] ✅ Relationship and risk scores created: {
+  bank: 'International Assessment Edge',
+  fintech: 'Cornerstone Financial Group',
+  relationshipId: '699-334',
+  riskScore: 41,
+  chosenScore: 31
+}
+[DemoAPI] 🎯 Network creation completed: {
+  bankName: 'International Assessment Edge',
+  targetSize: 5,
+  successfulRelationships: 5,
+  failedRelationships: 0,
+  successRate: '100.0%'
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 699,
+  companyName: 'International Assessment Edge',
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: 7,
+  networkCreated: true,
+  totalProcessingTime: 385
+}
+[2025-05-28T16:50:08.363Z] [INFO] [App] POST /api/demo/company/create 200 in 417ms :: {"success":true,"company":{"id":699,"name":"International Assessment Edge","d... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Riley Kapoor',
+  email: 'rkapoor@internationalassessmentedge.com',
+  companyId: 699,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1748451006315_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-05-28T16:50:06.315Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 699,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 699
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T16:50:09.143Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Riley Kapoor',
+    email: 'rkapoor@internationalassessmentedge.com',
+    companyId: 699,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Riley Kapoor',
+    email: 'rkapoor@internationalassessmentedge.com',
+    companyId: 699,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'data-provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T16:50:09.143Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'provider',
+  persona: 'data-provider',
+  shouldCompleteOnboarding: true,
+  onboardingUserCompleted: true,
+  logic: 'Other persona - onboarding_user_completed = TRUE (skips modal)',
+  modalWillShow: false
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 505,
+  email: 'rkapoor@internationalassessmentedge.com',
+  fullName: 'Riley Kapoor',
+  companyId: 699,
+  role: 'provider',
+  onboardingCompleted: true
+}
+[2025-05-28T16:50:09.264Z] [INFO] [App] POST /api/demo/user/create 200 in 122ms :: {"success":true,"user":{"id":505,"email":"rkapoor@internationalassessmentedge... 
+[2025-05-28T16:50:10.056Z] [INFO] [App] POST /api/demo/auth/setup 200 in 29ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 505,
+  companyId: 699,
+  demoType: 'data-provider',
+  timestamp: '2025-05-28T16:50:10.825Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 505,
+  email: 'rkapoor@internationalassessmentedge.com',
+  companyId: 699,
+  fullName: 'Riley Kapoor'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: true, alreadyCompleted: true, category: 'Bank' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 505,
+  email: 'rkapoor@internationalassessmentedge.com',
+  companyId: 699,
+  environmentId: 'env_demo_1748451010863_505',
+  authenticated: true,
+  totalDuration: 133,
+  timestamp: '2025-05-28T16:50:10.958Z'
+}
+[2025-05-28T16:50:10.988Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 163ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[Current Company] Fetching company for user: { userId: 505, companyId: 699 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 505,
+  company_id: 699,
+  email: 'rkapoor@internationalassessmentedge.com'
+}
+[2025-05-28T16:50:14.364Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":699,"userId":505}
+[Current Company] Found company: {
+  id: 699,
+  name: 'International Assessment Edge',
+  onboardingCompleted: true,
+  riskScore: 72,
+  chosenScore: 71,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 505,
+  companyId: 699,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-05-28T16:50:14.384Z'
+}
+[2025-05-28T16:50:14.395Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":699}
+[Tasks] Automatically unlocking all tasks for company { userId: 505, companyId: 699, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T16:50:14.398Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":699}
+[2025-05-28T16:50:14.418Z] [INFO] [App] GET /api/companies/current 200 in 67ms :: {"id":699,"name":"International Assessment Edge","category":"Bank","is_demo":... 
+[2025-05-28T16:50:14.428Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":699}
+[Tasks] Successfully unlocked all tasks for company: 699
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 505',
+    condition2: 'tasks.created_by = 505',
+    condition3: "tasks.company_id = 699 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rkapoor@internationalassessmentedge.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T16:50:14.519Z] [INFO] [App] GET /api/tasks 304 in 156ms :: [] 
+[2025-05-28T16:50:14.611Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 505 
+[2025-05-28T16:50:14.611Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T16:50:14.611Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T16:50:14.611Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 505 
+[2025-05-28T16:50:14.640Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 505 
+[2025-05-28T16:50:14.671Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 61ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[2025-05-28T16:50:14.679Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748451014679-k6jgrmn","clients":6}
+[2025-05-28T16:50:14.809Z] [INFO] [WebSocket] Received message from client client-1748451014679-k6jgrmn {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748450971812_h1csb1t6r","timestamp":"2025-05-28T16:50:14.642Z"}
+[2025-05-28T16:50:14.809Z] [INFO] [WebSocket] Authentication from client client-1748451014679-k6jgrmn {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[Network Visualization] Fetching network data for company: 699
+[Relationships] Fetching network for company: 699
+[Companies] Fetching companies for user: { userId: 505, company_id: 699 }
+[Relationships] Found network members: { count: 5 }
+[Companies] Query successful, found companies: {
+  count: 6,
+  companies: [
+    {
+      id: 334,
+      name: 'Cornerstone Financial Group',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    { id: 9, name: 'Finloft', hasLogo: true, hasRelationship: false },
+    {
+      id: 699,
+      name: 'International Assessment Edge',
+      hasLogo: false,
+      hasRelationship: true
+    },
+    {
+      id: 603,
+      name: 'SigmaHub Ventures',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 642,
+      name: 'Stream Path Solutions',
+      hasLogo: false,
+      hasRelationship: false
+    },
+    {
+      id: 164,
+      name: 'Wealthfront',
+      hasLogo: false,
+      hasRelationship: false
+    }
+  ]
+}
+[Network Visualization] Found network relationships: { count: 5 }
+[Network Visualization] Returning visualization data: { centerNode: 'International Assessment Edge', nodeCount: 5 }
+[2025-05-28T16:50:14.931Z] [INFO] [App] GET /api/relationships 200 in 62ms :: [{"id":638,"companyId":699,"relatedCompanyId":334,"relationshipType":"data_pr... 
+[2025-05-28T16:50:14.939Z] [INFO] [WebSocket] Received message from client client-1748450974793-z0x6v49 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:14.772Z","connectionId":"ws_1748450973081_ynqp6wmxq"}
+[2025-05-28T16:50:14.946Z] [INFO] [App] GET /api/companies 200 in 72ms :: [{"id":334,"name":"Cornerstone Financial Group","category":"FinTech","descrip... 
+[2025-05-28T16:50:14.959Z] [INFO] [App] GET /api/network/visualization 200 in 95ms :: {"center":{"id":699,"name":"International Assessment Edge","riskScore":72,"ri... 
+[Relationships] Fetching network for company: 699
+[Relationships] Found network members: { count: 5 }
+[2025-05-28T16:50:15.171Z] [INFO] [App] GET /api/relationships 304 in 62ms :: [{"id":638,"companyId":699,"relatedCompanyId":334,"relationshipType":"data_pr... 
+[Current Company] Using cached company data: 699
+[2025-05-28T16:50:32.814Z] [INFO] [WebSocket] Received message from client client-1748450972683-m3s7to0 {"module":"WebSocket","type":"ping"}
+[2025-05-28T16:50:33.923Z] [INFO] [WebSocket] Received message from client client-1748450973760-03ige2p {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:33.756Z","connectionId":"ws_1748450973755_wa3dd7g63"}
+[2025-05-28T16:50:34.418Z] [INFO] [WebSocket] Received message from client client-1748450974278-a700z7n {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:34.247Z","connectionId":"ws_1748450973247_kj45807p6"}
+[2025-05-28T16:50:34.941Z] [INFO] [WebSocket] Received message from client client-1748450974793-z0x6v49 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:34.772Z","connectionId":"ws_1748450973081_ynqp6wmxq"}
+[2025-05-28T16:50:44.646Z] [INFO] [App] GET /api/companies/current 304 in 37ms :: {"id":699,"name":"International Assessment Edge","category":"Bank","is_demo":... [sampled: request 11] 
+[Company Logo] Fetching logo for company ID: 642
+[Company Logo] Fetching logo for company ID: 603
+[2025-05-28T16:50:49.704Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 505 
+[2025-05-28T16:50:49.704Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T16:50:49.704Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T16:50:49.704Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 505 
+[Company Logo] Fetching logo for company ID: 9
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 505,
+  company_id: 699,
+  email: 'rkapoor@internationalassessmentedge.com'
+}
+[2025-05-28T16:50:49.736Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":699,"userId":505}
+[Company Logo] No logo assigned for company: Stream Path Solutions (642)
+[Company Logo] No logo assigned for company: SigmaHub Ventures (603)
+[2025-05-28T16:50:49.763Z] [INFO] [App] [TabTutorials] No tutorial status found for network for user 505 
+[Company Logo] Fetching logo for company ID: 334
+[2025-05-28T16:50:49.791Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":699}
+[Tasks] Automatically unlocking all tasks for company { userId: 505, companyId: 699, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T16:50:49.792Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":699}
+[2025-05-28T16:50:49.794Z] [WARN] [App] GET /api/companies/642/logo 404 in 120ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-28T16:50:49.820Z] [WARN] [App] GET /api/companies/603/logo 404 in 118ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[Company Logo] No logo assigned for company: Cornerstone Financial Group (334)
+[2025-05-28T16:50:49.822Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 119ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"network"} 
+[2025-05-28T16:50:49.849Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":699}
+[Tasks] Successfully unlocked all tasks for company: 699
+[Company Logo] Found logo record: {
+  id: 'f650d3c9-77c1-4bda-8b85-abe931fc58d7',
+  company_id: 9,
+  file_name: 'logo_ant-financial.svg',
+  file_path: 'logo_ant-financial.svg',
+  file_type: 'image/svg+xml',
+  uploaded_at: 2025-02-05T19:02:32.202Z
+}
+[Company Logo] Attempting to serve logo from: /home/runner/workspace/uploads/logos/logo_ant-financial.svg
+Logo file missing for company Finloft (9): /home/runner/workspace/uploads/logos/logo_ant-financial.svg
+[2025-05-28T16:50:49.852Z] [WARN] [App] GET /api/companies/334/logo 404 in 86ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 505',
+    condition2: 'tasks.created_by = 505',
+    condition3: "tasks.company_id = 699 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('rkapoor@internationalassessmentedge.com')"
+  }
+}
+[2025-05-28T16:50:49.884Z] [WARN] [App] GET /api/companies/9/logo 404 in 153ms :: {"message":"Logo file not found on disk","code":"LOGO_FILE_MISSING"} 
+[Tasks] Tasks found: { count: 0 }
+[2025-05-28T16:50:49.938Z] [INFO] [App] GET /api/tasks 304 in 202ms :: [] 
+[Company Logo] Fetching logo for company ID: 164
+[Relationships] Fetching network for company: 699
+[Company Logo] No logo assigned for company: Wealthfront (164)
+[Relationships] Found network members: { count: 5 }
+[2025-05-28T16:50:50.035Z] [WARN] [App] GET /api/companies/164/logo 404 in 59ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-05-28T16:50:50.066Z] [INFO] [App] GET /api/relationships 304 in 62ms :: [{"id":638,"companyId":699,"relatedCompanyId":334,"relationshipType":"data_pr... 
+[2025-05-28T16:50:51.039Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 505 
+[2025-05-28T16:50:51.039Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T16:50:51.039Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T16:50:51.039Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: network (raw: network), user: 505 
+[2025-05-28T16:50:51.103Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for network for user 505 
+[2025-05-28T16:50:51.134Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 95ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-05-28T16:50:51.318Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 505 
+[2025-05-28T16:50:51.318Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-05-28T16:50:51.318Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-05-28T16:50:51.318Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 505 
+[2025-05-28T16:50:51.382Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 505: completed=false, step=0 
+[2025-05-28T16:50:51.414Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 96ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-05-28T16:... 
+[2025-05-28T16:50:54.943Z] [INFO] [WebSocket] Received message from client client-1748450974793-z0x6v49 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:50:54.772Z","connectionId":"ws_1748450973081_ynqp6wmxq"}
+[2025-05-28T16:51:02.813Z] [INFO] [WebSocket] Received message from client client-1748450972683-m3s7to0 {"module":"WebSocket","type":"ping"}
+[2025-05-28T16:51:03.926Z] [INFO] [WebSocket] Received message from client client-1748450973760-03ige2p {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:51:03.756Z","connectionId":"ws_1748450973755_wa3dd7g63"}
+[2025-05-28T16:51:04.413Z] [INFO] [WebSocket] Received message from client client-1748450974278-a700z7n {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T16:51:04.246Z","connectionId":"ws_1748450973247_kj45807p6"}

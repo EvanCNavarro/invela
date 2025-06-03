@@ -1,0 +1,34 @@
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T21:55:57.616Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-05-25T21:55:58.126Z", echo: {…}}
+[DemoStep3] Starting demo preparation with real API actions
+[DemoAPI] Executing: Creating "DataBridge Analytics" organization 
+Object {id: "create-company", label: "Creating "DataBridge Analytics" organization", category: "company", targetField: "companyName", apiEndpoint: "/api/demo/company/create", …}
+[DemoStep3] Rendering results and next steps
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.614Z", messageId: "msg_1748210158614_bdy5ad4ch"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.614Z", messageId: "msg_1748210158614_bdy5ad4ch"}
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.614Z", messageId: "msg_1748210158614_bdy5ad4ch"}
+[2025-05-25T21:55:58.508Z] [WebSocket] Received message of type: demo_action_start 
+[WebSocket] Received message: 
+Object {type: "demo_action_start", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.614Z", messageId: "msg_1748210158614_bdy5ad4ch"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.615Z", messageId: "msg_1748210158615_9c44ok94y"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.615Z", messageId: "msg_1748210158615_9c44ok94y"}
+[2025-05-25T21:55:58.509Z] [WebSocket] Received message of type: demo_action_error 
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.615Z", messageId: "msg_1748210158615_9c44ok94y"}
+[WebSocket] Received message: 
+Object {type: "demo_action_error", payload: {…}, data: {…}, timestamp: "2025-05-25T21:55:58.615Z", messageId: "msg_1748210158615_9c44ok94y"}
+[DemoAPI] REAL API FAILED for: Creating &quot;DataBridge Analytics&quot; organization 
+Error {}
+
+[DemoAPI] Error executing Creating &quot;DataBridge Analytics&quot; organization: 
+Error {}
+
+[DemoStep3] Action failed: Creating "DataBridge Analytics" organization
+[DemoStep3] Rendering results and next steps

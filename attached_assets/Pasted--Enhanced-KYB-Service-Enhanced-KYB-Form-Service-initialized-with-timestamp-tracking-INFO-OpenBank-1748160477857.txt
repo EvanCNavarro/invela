@@ -1,0 +1,33 @@
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-05-25T08:07:20.796Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+[Main] Starting application bootstrap sequence
+[WebSocket] Smart WebSocket connection manager initialized
+[WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/ws
+[WebSocket] Connection attempt initiated
+[Main] WebSocket connection managers initialized successfully
+[Main] Application services initialized successfully
+[Main] React application rendered successfully
+[Main] Application bootstrap completed successfully
+Cannot read properties of null (reading 'useState')
+Cannot read properties of null (reading 'useState')
+[WebSocket] Connection attempt initiated
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748160441547-1euxsmh", timestamp: "2025-05-25T08:07:21.548Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-05-25T08:07:21.668Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748160442028-rex5uls", timestamp: "2025-05-25T08:07:22.028Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748160442510-ghnj3wq", timestamp: "2025-05-25T08:07:22.511Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1748160442996-8f9hecb", timestamp: "2025-05-25T08:07:22.997Z", message: "Connection established"}

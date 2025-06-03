@@ -1,0 +1,816 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-05-28T20:52:46.531Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-05-28T20:52:46.536Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":102,"timestamp":"2025-05-28T20:52:46.536Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-05-28T20:52:46.669Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-05-28T20:52:46.775Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-05-28T20:52:46.775Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-05-28T20:52:46.775Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-05-28T20:52:46.775Z] [INFO] [App] Registering KY3P field update routes 
+[2025-05-28T20:52:46.776Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 14 modules initialized [DemoAPI, CompanyNameValidation, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, TaskBroadcast]
+[2025-05-28T20:52:46.778Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-05-28T20:52:46.778Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"u71qe4","timestamp":"2025-05-28T20:52:46.778Z"}
+[2025-05-28T20:52:46.778Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-05-28T20:52:46.778Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-05-28T20:52:46.778Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-05-28T20:52:46.778Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-05-28T20:52:46.778Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-05-28T20:52:46.778Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-05-28T20:52:46.778Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-05-28T20:52:46.778Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-05-28T20:52:46.779Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-05-28T20:52:46.779Z] [INFO] [App] Setting up Vite development server 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] Environment explicitly set to production 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-05-28T20:52:46.780Z] [INFO] [App] [ENV] Server will listen on PORT=8080 (forced production mode) 
+[2025-05-28T20:52:46.781Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-05-28T20:52:46.781Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-05-28T20:52:46.795Z] [INFO] [App] Server running on 0.0.0.0:8080 
+[2025-05-28T20:52:46.796Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:8080
+[Deployment] Environment: production
+[Deployment] Port forwarding: Using Autoscale standard port (8080)
+[Deployment] Production mode: Optimized for deployment
+[2025-05-28T20:52:46.796Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-05-28T20:52:46.796Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-05-28T20:52:46.796Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-05-28T20:52:46.796Z] [INFO] [App] Task reconciliation system initialized successfully 
+[2025-05-28T20:52:47.779Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-05-28T20:52:47.884Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T20:52:51.091Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T20:52:51.579Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-05-28T20:52:56.796Z] [INFO] [App] Running background health checks... 
+[2025-05-28T20:52:56.796Z] [StartupChecks] Running application startup health checks... 
+[2025-05-28T20:52:56.797Z] [StartupChecks] Database health check attempt 1/3 
+[2025-05-28T20:52:56.797Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-05-28T20:52:56.978Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-05-28T20:52:57.006Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-05-28T20:52:57.038Z] [DBConnectionService] Database connection check successful 
+[2025-05-28T20:52:57.038Z] [StartupChecks] Database health check passed 
+[2025-05-28T20:52:57.038Z] [StartupChecks] All startup health checks passed! 
+[2025-05-28T20:52:57.038Z] [INFO] [App] All background health checks passed successfully. 
+[2025-05-28T20:52:59.529Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465579529-6sxnuzq","clients":1}
+[2025-05-28T20:52:59.652Z] [INFO] [WebSocket] Received message from client client-1748465579529-6sxnuzq {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-05-28T20:52:59.525Z"}}
+[2025-05-28T20:52:59.652Z] [INFO] [WebSocket] Authentication from client client-1748465579529-6sxnuzq {"module":"WebSocket","hasToken":true}
+[2025-05-28T20:53:00.096Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465580096-rlnlc4r","clients":2}
+[2025-05-28T20:53:00.609Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465580609-obdm8g3","clients":3}
+[2025-05-28T20:53:01.229Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465581229-ar8rh1m","clients":4}
+[2025-05-28T20:53:01.791Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465581791-ttpkbaf","clients":5}
+[2025-05-28T20:53:02.148Z] [INFO] [WebSocket] Received message from client client-1748465581791-ttpkbaf {"module":"WebSocket","type":"authenticate","userId":"510","companyId":"704","clientId":"ws_1748465579988_tv4xju6hm","timestamp":"2025-05-28T20:53:01.998Z"}
+[2025-05-28T20:53:02.148Z] [INFO] [WebSocket] Authentication from client client-1748465581791-ttpkbaf {"module":"WebSocket","userId":"510","companyId":"704","hasToken":true}
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-05-28T20:53:02.676Z',
+  requestId: 'req_1748465582676_n29b25bzw'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-05-28T20:53:02.678Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial'
+}
+[CompanyNameUtils] Generated full combinatorial name {
+  timestamp: '2025-05-28T20:53:02.679Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated full combinatorial name',
+  baseName: 'Demo Company',
+  generatedName: 'Benchmark Quality Foundation',
+  components: { prefix: 'Benchmark', core: 'Quality', suffix: 'Foundation' }
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Benchmark Quality Foundation',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-05-28T20:53:02.679Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Benchmark Quality Foundation',
+  nameLength: 28
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-05-28T20:53:02.734Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Benchmark Quality Foundation',
+  duration: 55
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Benchmark Quality Foundation',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 58,
+  timestamp: '2025-05-28T20:53:02.734Z'
+}
+[2025-05-28T20:53:02.766Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 91ms :: {"success":true,"companyName":"Benchmark Quality Foundation","wasModified":fa... 
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Benchmark Quality Foundation',
+  type: 'demo',
+  persona: 'new-data-recipient',
+  companySize: 'medium'
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T20:53:08.379Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: undefined,
+  persona: 'new-data-recipient',
+  defaultForPersona: 0,
+  validated: 0,
+  wasAdjusted: false
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Benchmark Quality Foundation',
+    persona: 'new-data-recipient',
+    networkSize: undefined
+  },
+  output: {
+    name: 'Benchmark Quality Foundation',
+    persona: 'new-data-recipient',
+    category: 'FinTech',
+    networkSize: 0,
+    shouldCreateNetwork: false
+  },
+  transformationSuccess: true,
+  timestamp: '2025-05-28T20:53:08.380Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'new-data-recipient',
+  transformedCategory: 'FinTech',
+  shouldCreateNetwork: false,
+  networkSize: 0,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: new-data-recipient
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  onboardingRequired: true,
+  tabCount: 1
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 705,
+  name: 'Benchmark Quality Foundation',
+  category: 'FinTech',
+  availableTabs: [ 'task-center' ],
+  personaType: 'new-data-recipient',
+  transformedPersona: 'new-data-recipient',
+  shouldCreateNetwork: false,
+  processingTime: 53
+}
+[DemoAPI] 📋 Creating onboarding tasks for New Data Recipient: {
+  companyId: 705,
+  companyName: 'Benchmark Quality Foundation',
+  persona: 'new-data-recipient'
+}
+[DemoAPI] ✅ Tasks created successfully for New Data Recipient: {
+  companyId: 705,
+  companyName: 'Benchmark Quality Foundation',
+  tasksCreated: 3,
+  taskTypes: [ 'company_kyb', 'ky3p', 'open_banking' ],
+  firstTaskId: 1082,
+  allTaskIds: [ 1082, 1083, 1084 ]
+}
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 705,
+  companyName: 'Benchmark Quality Foundation',
+  persona: 'new-data-recipient',
+  category: 'FinTech',
+  availableTabs: 1,
+  networkCreated: false,
+  totalProcessingTime: 91
+}
+[2025-05-28T20:53:08.500Z] [INFO] [App] POST /api/demo/company/create 200 in 122ms :: {"success":true,"company":{"id":705,"name":"Benchmark Quality Foundation","de... 
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Steven Chopra',
+  email: 'schopra@benchmarkqualityfoundation.com',
+  companyId: 705,
+  role: 'user',
+  persona: 'new-data-recipient',
+  demoSessionId: 'demo_1748465586756_new-data-recipient',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'new-data-recipient',
+    setupTimestamp: '2025-05-28T20:53:06.756Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 705,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 705
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'new-data-recipient',
+  preserved: 'new-data-recipient',
+  category: 'FinTech',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-05-28T20:53:09.255Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Steven Chopra',
+    email: 'schopra@benchmarkqualityfoundation.com',
+    companyId: 705,
+    companyIdType: 'number',
+    persona: 'new-data-recipient'
+  },
+  output: {
+    fullName: 'Steven Chopra',
+    email: 'schopra@benchmarkqualityfoundation.com',
+    companyId: 705,
+    companyIdType: 'number',
+    role: 'user',
+    persona: 'new-data-recipient'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-05-28T20:53:09.255Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'user',
+  persona: 'new-data-recipient',
+  shouldCompleteOnboarding: false,
+  onboardingUserCompleted: false,
+  logic: 'New Data Recipient - onboarding_user_completed = FALSE (triggers modal)',
+  modalWillShow: true
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 511,
+  email: 'schopra@benchmarkqualityfoundation.com',
+  fullName: 'Steven Chopra',
+  companyId: 705,
+  role: 'user',
+  onboardingCompleted: false
+}
+[2025-05-28T20:53:09.390Z] [INFO] [App] POST /api/demo/user/create 200 in 136ms :: {"success":true,"user":{"id":511,"email":"schopra@benchmarkqualityfoundation.... 
+[2025-05-28T20:53:10.176Z] [INFO] [App] POST /api/demo/auth/setup 200 in 32ms :: {"success":true,"message":"Auth setup complete"} 
+[DemoAPI] [EmailInvite] Starting email invitation process: {
+  userEmail: '***@***.***',
+  userName: 'Steven Chopra',
+  companyName: 'Benchmark Quality Foundation',
+  loginCredentials: {
+    email: 'schopra@benchmarkqualityfoundation.com',
+    password: 'demo123',
+    loginUrl: '/login',
+    accountType: 'demo',
+    setupComplete: true
+  },
+  timestamp: '2025-05-28T20:53:10.936Z'
+}
+[DemoAPI] [EmailInvite] Input validation successful: {
+  userEmail: 'schopra@benchmarkqualityfoundation.com',
+  userName: 'Steven Chopra',
+  companyName: 'Benchmark Quality Foundation',
+  hasLoginCredentials: true
+}
+[DemoAPI] [EmailInvite] Verifying user exists...
+[DemoAPI] [EmailInvite] User verification successful: {
+  userId: 511,
+  email: 'schopra@benchmarkqualityfoundation.com',
+  companyId: 705,
+  fullName: 'Steven Chopra'
+}
+[DemoAPI] [EmailInvite] Generating secure invitation code...
+[DemoAPI] [EmailInvite] Generated invitation code: { codeLength: 6, codeFormat: 'hex-uppercase', duration: 35 }
+[DemoAPI] [EmailInvite] Creating invitation database record...
+[DemoAPI] [EmailInvite] Invitation record created: {
+  invitationId: 455,
+  code: '3E476B',
+  expiresAt: 2025-06-04T20:53:10.972Z,
+  duration: 75
+}
+[DemoAPI] [EmailInvite] Preparing email content using emailService...
+[DemoAPI] [EmailInvite] Built invitation URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com
+[EmailService] Starting to send template email
+[EmailService] Template type: demo_invite
+[EmailService] Recipient: schopra@benchmarkqualityfoundation.com
+[EmailService] Template data (raw): {
+  "recipientName": "Steven Chopra",
+  "recipientEmail": "schopra@benchmarkqualityfoundation.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com",
+  "code": "3E476B"
+}
+[EmailService] Starting email validation for: schopra@benchmarkqualityfoundation.com
+[EmailService] Checking MX records for domain: benchmarkqualityfoundation.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND benchmarkqualityfoundation.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'benchmarkqualityfoundation.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: schopra@benchmarkqualityfoundation.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientName": "Steven Chopra",
+  "recipientEmail": "schopra@benchmarkqualityfoundation.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com",
+  "code": "3E476B"
+}
+[EmailService] Built invite URL: https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com
+[EmailService] Transformed template data: {
+  "recipientName": "Steven Chopra",
+  "recipientEmail": "schopra@benchmarkqualityfoundation.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com",
+  "code": "3E476B"
+}
+[EmailService] Getting email template: demo_invite
+[EmailTemplate] Getting template: demo_invite
+[EmailTemplate] Template data: {
+  "recipientName": "Steven Chopra",
+  "recipientEmail": "schopra@benchmarkqualityfoundation.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com",
+  "code": "3E476B"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "Steven Chopra",
+  "recipientEmail": "schopra@benchmarkqualityfoundation.com",
+  "senderName": "Invela Demo System",
+  "senderCompany": "Invela",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/login?code=3E476B&email=schopra%40benchmarkqualityfoundation.com",
+  "code": "3E476B",
+  "inviteType": "demo"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'EvanCNavarro@gmail.com',
+  to: 'schopra@benchmarkqualityfoundation.com',
+  subject: 'Invitation to join Invela',
+  textLength: 733,
+  htmlLength: 1815
+}
+[EmailService] Email sent successfully to: schopra@benchmarkqualityfoundation.com
+[DemoAPI] [EmailInvite] Demo invitation email sent successfully
+[DemoAPI] [EmailInvite] Email process completed: {
+  recipientEmail: 'schopra@benchmarkqualityfoundation.com',
+  invitationCode: '3E476B',
+  messageId: 'demo_invite_1748465592804_455',
+  emailSent: true,
+  duration: 1868
+}
+[DemoAPI] [EmailInvite] Process completed successfully: {
+  userId: 511,
+  companyId: 705,
+  invitationId: 455,
+  invitationCode: '3E476B',
+  emailSent: true,
+  totalDuration: 1868
+}
+[2025-05-28T20:53:12.834Z] [INFO] [App] POST /api/demo/email/send-invitation 200 in 1899ms :: {"success":true,"emailSent":true,"messageId":"demo_invite_1748465592804_455",... 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 511,
+  companyId: 705,
+  demoType: 'new-data-recipient',
+  timestamp: '2025-05-28T20:53:13.679Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 511,
+  email: 'schopra@benchmarkqualityfoundation.com',
+  companyId: 705,
+  fullName: 'Steven Chopra'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: false, alreadyCompleted: false, category: 'FinTech' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 511,
+  email: 'schopra@benchmarkqualityfoundation.com',
+  companyId: 705,
+  environmentId: 'env_demo_1748465593708_511',
+  authenticated: true,
+  totalDuration: 174,
+  timestamp: '2025-05-28T20:53:13.853Z'
+}
+[2025-05-28T20:53:13.883Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 204ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[2025-05-28T20:53:16.838Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":10,"taskIds":[982,980,977,984,1041,1042,986,1043,990,989]}
+[Task Progress] Calculated progress for task 982 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 980 (company_kyb): 30/30 = 100%
+[Task Progress] Calculated progress for task 977 (ky3p): 0/0 = 0%
+[Current Company] Fetching company for user: { userId: 511, companyId: 705 }
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 511,
+  company_id: 705,
+  email: 'schopra@benchmarkqualityfoundation.com'
+}
+[2025-05-28T20:53:17.226Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":705,"userId":511}
+[Current Company] Found company: {
+  id: 705,
+  name: 'Benchmark Quality Foundation',
+  onboardingCompleted: false,
+  riskScore: 24,
+  chosenScore: 40,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 511,
+  companyId: 705,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T20:53:17.249Z'
+}
+[2025-05-28T20:53:17.257Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":705}
+[Tasks] Automatically unlocking all tasks for company { userId: 511, companyId: 705, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T20:53:17.258Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":705}
+[2025-05-28T20:53:17.281Z] [INFO] [App] GET /api/companies/current 200 in 61ms :: {"id":705,"name":"Benchmark Quality Foundation","category":"FinTech","is_demo... 
+[2025-05-28T20:53:17.288Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":705,"count":3,"taskIds":[1082,1083,1084],"taskTypes":["company_kyb","ky3p","open_banking"],"ky3pTaskCount":1,"ky3pTaskIds":[1083]}
+[UnifiedProgress] Starting progress update for task 1082 (company_kyb) {
+  taskId: 1082,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748465597290-467',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[Task Progress] Calculated progress for task 984 (company_kyb): 30/30 = 100%
+[UnifiedProgressCalc] Calculating progress for task 1082 (company_kyb)
+[UnifiedProgressCalc] Task 1082 (company_kyb) progress: 0/30 = 0%
+[Task Progress] Calculated progress for task 1041 (company_kyb): 0/30 = 0%
+[2025-05-28T20:53:17.452Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 5 clients {"module":"WebSocket","messageType":"task_updated","recipients":5,"totalClients":5,"filtered":false}
+[2025-05-28T20:53:17.452Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 5 clients {"module":"WebSocket","messageType":"task_update","recipients":5,"totalClients":5,"filtered":false}
+[2025-05-28T20:53:17.453Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1082,"messageId":"msg_1748465597451_uc8n1qm8"}
+[2025-05-28T20:53:17.453Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1082 {"progress":0,"status":"not_started","messageId":"msg_1748465597451_uc8n1qm8"}
+[2025-05-28T20:53:17.453Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1082,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T20:53:17.453Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1083,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-28T20:53:17.453Z"}
+[UnifiedProgress] Starting progress update for task 1083 (ky3p) {
+  taskId: 1083,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748465597454-493',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-28T20:53:17.484Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 511 
+[2025-05-28T20:53:17.485Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-05-28T20:53:17.485Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-05-28T20:53:17.485Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 511 
+[UnifiedProgressCalc] Calculating progress for task 1083 (ky3p)
+[2025-05-28T20:53:17.543Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 511 
+[2025-05-28T20:53:17.546Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1748465597546-67wmfh4","clients":6}
+[2025-05-28T20:53:17.600Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 304 in 116ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[Task Progress] Calculated progress for task 1042 (ky3p): 0/0 = 0%
+[KY3P Progress] Calculated progress for task 1083: {
+  taskId: 1083,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-28T20:53:17.630Z'
+}
+[UnifiedProgressCalc] Task 1083 (ky3p) progress: 0/120 = 0%
+[2025-05-28T20:53:17.659Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:17.659Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:17.659Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1083,"messageId":"msg_1748465597658_gt0uxd6c"}
+[2025-05-28T20:53:17.659Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1083 {"progress":0,"status":"not_started","messageId":"msg_1748465597658_gt0uxd6c"}
+[2025-05-28T20:53:17.659Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1083,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1084 (open_banking) {
+  taskId: 1084,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748465597660-508',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[2025-05-28T20:53:17.665Z] [INFO] [WebSocket] Received message from client client-1748465597546-67wmfh4 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1748465578721_n5ifsybvm","timestamp":"2025-05-28T20:53:17.541Z"}
+[2025-05-28T20:53:17.665Z] [INFO] [WebSocket] Authentication from client client-1748465597546-67wmfh4 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[UnifiedProgressCalc] Calculating progress for task 1084 (open_banking)
+[Task Progress] Calculated progress for task 986 (open_banking): 44/44 = 100%
+[UnifiedProgressCalc] Task 1084 (open_banking) progress: 0/44 = 0%
+[2025-05-28T20:53:17.815Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:17.816Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:17.816Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1084,"messageId":"msg_1748465597814_gamwt32m"}
+[2025-05-28T20:53:17.816Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1084 {"progress":0,"status":"not_started","messageId":"msg_1748465597814_gamwt32m"}
+[2025-05-28T20:53:17.816Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1084,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T20:53:17.816Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":705,"count":3}
+[Tasks] Successfully unlocked all tasks for company: 705
+[Task Progress] Calculated progress for task 1043 (open_banking): 0/44 = 0%
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 511',
+    condition2: 'tasks.created_by = 511',
+    condition3: "tasks.company_id = 705 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('schopra@benchmarkqualityfoundation.com')"
+  }
+}
+[Tasks] Tasks found: { count: 3 }
+[2025-05-28T20:53:17.910Z] [INFO] [App] GET /api/tasks 200 in 685ms :: [{"id":1082,"title":"1. KYB Form: Benchmark Quality Foundation","description"... 
+[Task Progress] Calculated progress for task 990 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 989 (ky3p): 0/0 = 0%
+[2025-05-28T20:53:21.923Z] [INFO] [WebSocket] Received message from client client-1748465581791-ttpkbaf {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:53:21.792Z","connectionId":"ws_1748465579988_tv4xju6hm"}
+[2025-05-28T20:53:29.663Z] [INFO] [WebSocket] Received message from client client-1748465579529-6sxnuzq {"module":"WebSocket","type":"ping"}
+[2025-05-28T20:53:30.749Z] [INFO] [WebSocket] Received message from client client-1748465580609-obdm8g3 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:53:30.605Z","connectionId":"ws_1748465580604_qb98wfffz"}
+[2025-05-28T20:53:31.358Z] [INFO] [WebSocket] Received message from client client-1748465581229-ar8rh1m {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:53:31.233Z","connectionId":"ws_1748465580092_80gpmgon6"}
+[2025-05-28T20:53:33.139Z] [INFO] [App] GET /api/tasks 304 in 33ms :: [{"id":1082,"title":"1. KYB Form: Benchmark Quality Foundation","description"... 
+[Complete Onboarding] Processing request for user: { userId: 511, companyId: 705, timestamp: '2025-05-28T20:53:36.583Z' }
+[Complete Onboarding] BLOCKED: New Data Recipient demo users should not complete onboarding: {
+  userId: 511,
+  demoPersonaType: 'new-data-recipient',
+  isDemoUser: true,
+  reason: 'New Data Recipients must show onboarding modal for authentic persona experience'
+}
+[2025-05-28T20:53:36.645Z] [INFO] [App] POST /api/users/complete-onboarding 200 in 62ms :: {"message":"Onboarding completion blocked for New Data Recipient persona","su... 
+[Company API] Updating company 705 with data: { revenue: 50000000, revenue_tier: 'large', num_employees: 150 }
+[Company API] Processed update data: { revenue: 50000000, revenue_tier: 'large', num_employees: 150 }
+[Cache] Invalidating company cache for company 705
+[Company API] Successfully updated company 705
+[2025-05-28T20:53:36.895Z] [INFO] [App] PATCH /api/companies/current 200 in 63ms :: {"success":true,"message":"Company updated successfully","data":{"id":705,"na... 
+[Current Company] Fetching company for user: { userId: 511, companyId: 705 }
+[Current Company] Found company: {
+  id: 705,
+  name: 'Benchmark Quality Foundation',
+  onboardingCompleted: false,
+  riskScore: 24,
+  chosenScore: 40,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 511,
+  companyId: 705,
+  userOnboardingStatus: false,
+  companyOnboardingStatus: false,
+  timestamp: '2025-05-28T20:53:37.345Z'
+}
+[2025-05-28T20:53:37.562Z] [DEBUG] [App] Incoming invite request - Headers: {"host":"9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36","content-length":"188","accept":"*/*","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","content-type":"application/json","cookie":"connect.sid=s%3AC5KZU4oV90C15KkPJHuzc6Spt2djsoI0.7NE3BDhHE4GlYHtCntQNuGrCguzNR9blV3912lfpjNM","dnt":"1","origin":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080","referer":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:8080/task-center","sec-ch-ua":"\"Not.A/Brand\";v=\"99\", \"Chromium\";v=\"136\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","sec-fetch-storage-access":"active","x-forwarded-for":"79.117.186.58, 10.81.2.62","x-forwarded-proto":"https","x-replit-user-bio":"","x-replit-user-id":"","x-replit-user-name":"","x-replit-user-profile-image":"","x-replit-user-roles":"","x-replit-user-teams":"","x-replit-user-url":""} 
+[2025-05-28T20:53:37.562Z] [DEBUG] [App] Request body (raw): {"email":"kw@e.com","full_name":"Kris Wallace","company_id":705,"company_name":"Benchmark Quality Foundation","sender_name":"Steven Chopra","sender_company":"Benchmark Quality Foundation"} 
+[Invite] Starting invitation process
+[Invite] Request body: {
+  email: 'kw@e.com',
+  full_name: 'Kris Wallace',
+  company_id: 705,
+  company_name: 'Benchmark Quality Foundation',
+  sender_name: 'Steven Chopra',
+  sender_company: 'Benchmark Quality Foundation'
+}
+[Invite] Validated invite data: {
+  email: 'kw@e.com',
+  full_name: 'Kris Wallace',
+  company_id: 705,
+  company_name: 'Benchmark Quality Foundation',
+  sender_name: 'Steven Chopra',
+  sender_company: 'Benchmark Quality Foundation'
+}
+[Invite] Starting database transaction
+[Invite] Creating user account
+[EmailService] Starting to send template email
+[EmailService] Template type: user_invite
+[EmailService] Recipient: kw@e.com
+[EmailService] Template data (raw): {
+  "recipientEmail": "kw@e.com",
+  "recipientName": "Kris Wallace",
+  "senderName": "Steven Chopra",
+  "senderCompany": "Benchmark Quality Foundation",
+  "targetCompany": "Benchmark Quality Foundation",
+  "code": "8451DA",
+  "inviteUrl": "https://invela.replit.app//auth?code=8451DA"
+}
+[EmailService] Starting email validation for: kw@e.com
+[EmailService] Checking MX records for domain: e.com
+[EmailService] MX record check failed: Error: queryMx ENOTFOUND e.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19) {
+  errno: undefined,
+  code: 'ENOTFOUND',
+  syscall: 'queryMx',
+  hostname: 'e.com'
+}
+[EmailService] Continuing despite MX check failure
+[EmailService] Email validation successful for: kw@e.com
+[EmailService] Transforming template data
+[EmailService] Starting template data transformation
+[EmailService] Input template data: {
+  "recipientEmail": "kw@e.com",
+  "recipientName": "Kris Wallace",
+  "senderName": "Steven Chopra",
+  "senderCompany": "Benchmark Quality Foundation",
+  "targetCompany": "Benchmark Quality Foundation",
+  "code": "8451DA",
+  "inviteUrl": "https://invela.replit.app//auth?code=8451DA"
+}
+[EmailService] Built invite URL: https://invela.replit.app//auth?code=8451DA
+[EmailService] Transformed template data: {
+  "recipientName": "Kris Wallace",
+  "recipientEmail": "kw@e.com",
+  "senderName": "Steven Chopra",
+  "senderCompany": "Benchmark Quality Foundation",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://invela.replit.app//auth?code=8451DA",
+  "code": "8451DA"
+}
+[EmailService] Getting email template: user_invite
+[EmailTemplate] Getting template: user_invite
+[EmailTemplate] Template data: {
+  "recipientName": "Kris Wallace",
+  "recipientEmail": "kw@e.com",
+  "senderName": "Steven Chopra",
+  "senderCompany": "Benchmark Quality Foundation",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://invela.replit.app//auth?code=8451DA",
+  "code": "8451DA"
+}
+[Template:invitation] Received template data: {
+  "recipientName": "Kris Wallace",
+  "recipientEmail": "kw@e.com",
+  "senderName": "Steven Chopra",
+  "senderCompany": "Benchmark Quality Foundation",
+  "targetCompany": "Benchmark Quality Foundation",
+  "inviteUrl": "https://invela.replit.app//auth?code=8451DA",
+  "code": "8451DA",
+  "inviteType": "user"
+}
+[EmailService] Template generated successfully
+[EmailService] Preparing to send email with configuration: {
+  from: 'noreply@example.com',
+  to: 'kw@e.com',
+  subject: 'Invitation to join Invela',
+  textLength: 498,
+  htmlLength: 1585
+}
+[EmailService] Email sent successfully to: kw@e.com
+[2025-05-28T20:53:38.519Z] [INFO] [App] POST /api/users/invite 201 in 957ms :: {"message":"Invitation sent successfully","invitation":{"id":456,"email":"kw@... 
+[2025-05-28T20:53:38.731Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":705,"name":"Benchmark Quality Foundation","category":"FinTech","is_demo... [sampled: request 11] 
+[2025-05-28T20:53:41.918Z] [INFO] [WebSocket] Received message from client client-1748465581791-ttpkbaf {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:53:41.791Z","connectionId":"ws_1748465579988_tv4xju6hm"}
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 511,
+  company_id: 705,
+  email: 'schopra@benchmarkqualityfoundation.com'
+}
+[2025-05-28T20:53:48.338Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":705,"userId":511}
+[2025-05-28T20:53:48.368Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":705}
+[Tasks] Automatically unlocking all tasks for company { userId: 511, companyId: 705, requestedBy: 'automatic_task_unlock' }
+[2025-05-28T20:53:48.369Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":705}
+[2025-05-28T20:53:48.399Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":1085,"userEmail":"kw@e.com","currentStatus":"email_sent","currentProgress":100}
+[2025-05-28T20:53:48.399Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":705,"count":4,"taskIds":[1082,1083,1084,1085],"taskTypes":["company_kyb","ky3p","open_banking","user_onboarding"],"ky3pTaskCount":1,"ky3pTaskIds":[1083]}
+[UnifiedProgress] Starting progress update for task 1082 (company_kyb) {
+  taskId: 1082,
+  taskType: 'company_kyb',
+  diagnosticId: 'prog-1748465628400-34',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1082 (company_kyb)
+[UnifiedProgressCalc] Task 1082 (company_kyb) progress: 0/30 = 0%
+[2025-05-28T20:53:48.555Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.556Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.556Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1082,"messageId":"msg_1748465628555_u972lgr9"}
+[2025-05-28T20:53:48.556Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1082 {"progress":0,"status":"not_started","messageId":"msg_1748465628555_u972lgr9"}
+[2025-05-28T20:53:48.556Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1082,"taskType":"company_kyb","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T20:53:48.556Z] [INFO] [App] [TaskDependencies] Processing KY3P task {"taskId":1083,"taskType":"ky3p","currentProgress":0,"currentStatus":"not_started","timestamp":"2025-05-28T20:53:48.556Z"}
+[UnifiedProgress] Starting progress update for task 1083 (ky3p) {
+  taskId: 1083,
+  taskType: 'ky3p',
+  diagnosticId: 'prog-1748465628557-197',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1083 (ky3p)
+[KY3P Progress] Calculated progress for task 1083: {
+  taskId: 1083,
+  taskType: 'ky3p',
+  normalizedTaskType: 'ky3p',
+  totalFields: 120,
+  completedFields: 0,
+  progress: 0,
+  timeStamp: '2025-05-28T20:53:48.679Z'
+}
+[UnifiedProgressCalc] Task 1083 (ky3p) progress: 0/120 = 0%
+[2025-05-28T20:53:48.708Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.709Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.709Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1083,"messageId":"msg_1748465628708_qvjzz2kf"}
+[2025-05-28T20:53:48.709Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1083 {"progress":0,"status":"not_started","messageId":"msg_1748465628708_qvjzz2kf"}
+[2025-05-28T20:53:48.709Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1083,"taskType":"ky3p","isKy3pTask":true,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[UnifiedProgress] Starting progress update for task 1084 (open_banking) {
+  taskId: 1084,
+  taskType: 'open_banking',
+  diagnosticId: 'prog-1748465628710-682',
+  metadata: [
+    'locked',
+    'prerequisite_completed',
+    'prerequisite_completed_at',
+    'dependencyUnlockOperation',
+    'previousProgress',
+    'previousStatus',
+    'isKy3pTask',
+    'isUserOnboardingTask'
+  ]
+}
+[UnifiedProgressCalc] Calculating progress for task 1084 (open_banking)
+[UnifiedProgressCalc] Task 1084 (open_banking) progress: 0/44 = 0%
+[2025-05-28T20:53:48.856Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.857Z] [INFO] [WebSocket] Broadcast message of type 'task_update' sent to 6 clients {"module":"WebSocket","messageType":"task_update","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.857Z] [DEBUG] [App] [UnifiedProgressCalc] Successfully broadcast task update using unified implementation {"taskId":1084,"messageId":"msg_1748465628856_23ohujqx"}
+[2025-05-28T20:53:48.857Z] [INFO] [App] [UnifiedProgressCalc] Successfully broadcast task update for task 1084 {"progress":0,"status":"not_started","messageId":"msg_1748465628856_23ohujqx"}
+[2025-05-28T20:53:48.857Z] [INFO] [App] [TaskDependencies] Unlocked task using unified progress calculator {"companyId":705,"taskId":1084,"taskType":"open_banking","isKy3pTask":false,"calculatedProgress":0,"previousProgress":0,"wasPreserved":false}
+[2025-05-28T20:53:48.857Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":1085,"userEmail":"kw@e.com","timestamp":"2025-05-28T20:53:48.857Z"}
+[2025-05-28T20:53:48.893Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-05-28T20:53:48.894Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 6 clients {"module":"WebSocket","messageType":"task_updated","recipients":6,"totalClients":6,"filtered":false}
+[2025-05-28T20:53:48.894Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":1085,"status":"completed"}
+[2025-05-28T20:53:48.894Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":705,"count":4}
+[Tasks] Successfully unlocked all tasks for company: 705
+[Tasks] KYB tasks found: { count: 1 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 511',
+    condition2: 'tasks.created_by = 511',
+    condition3: "tasks.company_id = 705 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('schopra@benchmarkqualityfoundation.com')"
+  }
+}
+[Tasks] Tasks found: { count: 4 }
+[2025-05-28T20:53:48.991Z] [INFO] [App] GET /api/tasks 200 in 653ms :: [{"id":1085,"title":"New User Invitation: kw@e.com","description":"Invitation... 
+[Current Company] Using cached company data: 705
+[2025-05-28T20:53:59.651Z] [INFO] [WebSocket] Received message from client client-1748465579529-6sxnuzq {"module":"WebSocket","type":"ping"}
+[2025-05-28T20:54:00.739Z] [INFO] [WebSocket] Received message from client client-1748465580609-obdm8g3 {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:54:00.605Z","connectionId":"ws_1748465580604_qb98wfffz"}
+[2025-05-28T20:54:01.359Z] [INFO] [WebSocket] Received message from client client-1748465581229-ar8rh1m {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:54:01.234Z","connectionId":"ws_1748465580092_80gpmgon6"}
+[2025-05-28T20:54:01.921Z] [INFO] [WebSocket] Received message from client client-1748465581791-ttpkbaf {"module":"WebSocket","type":"ping","timestamp":"2025-05-28T20:54:01.792Z","connectionId":"ws_1748465579988_tv4xju6hm"}
