@@ -4,6 +4,42 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.5 - 2025-06-03
+
+#### 🆕 New Features
+
+**Risk Trend Analysis System**
+- Added RiskTrendIndicator component with visual up/down/stable trend indicators
+- Built risk monitoring widget with drill-down navigation to insights page
+- Implemented timeframe selection for 7-day/30-day risk change analysis
+- Created risk trend API endpoints with percentage change calculations
+- Enhanced company profiles with real-time risk status displays
+
+#### 🔧 Enhancements
+
+**Dashboard Widget System Improvements**
+- Implemented differentiated widget sets based on company type
+- Enhanced dashboard performance through selective widget loading
+- Added tab navigation with URL parameter synchronization
+- Created dynamic widget visibility based on company category
+- Improved user experience with "View Details" action buttons
+
+**Risk Assessment Data Validation Framework**
+- Built comprehensive test suite for risk assessment data validation
+- Implemented validation rules for new-data-recipient personas
+- Added automated testing for risk score consistency
+- Created validation scripts preventing invalid risk data assignments
+- Enhanced data integrity with cross-persona validation checks
+
+#### 🐛 Bug Fixes
+
+**Production Deployment Architecture Fixes**
+- Fixed critical production middleware order preventing API route interception
+- Implemented automatic environment detection using DEPLOYMENT_MODE variable
+- Resolved blank company profile pages in production deployments
+- Added comprehensive production debugging logs for troubleshooting
+- Eliminated need for manual server modifications during deployment
+
 ### Version 1.9.4 - 2025-06-01
 
 #### 🚀 Accreditation Validity System Implementation
