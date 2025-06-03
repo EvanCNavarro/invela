@@ -312,10 +312,11 @@ app.use((req, res, next) => {
     logger.info('[PROD-DEBUG] API routes have priority over catch-all HTML serving');
     
     // Create symlink from dist/public to server/public if needed
-    const fs = await import('fs');
-    const path = await import('path');
     const distPublic = path.resolve(process.cwd(), 'dist/public');
     const serverPublic = path.resolve(process.cwd(), 'server/public');
+    
+    logger.info(`[PROD-DEBUG] Checking for build files at: ${distPublic}`);
+    logger.info(`[PROD-DEBUG] Server expects files at: ${serverPublic}`);
     
     if (fs.existsSync(distPublic) && !fs.existsSync(serverPublic)) {
       logger.info('[PROD-DEBUG] Creating symlink from dist/public to server/public');
@@ -324,10 +325,14 @@ app.use((req, res, next) => {
         logger.info('[PROD-DEBUG] ✓ Symlink created successfully');
       } catch (error) {
         logger.warn('[PROD-DEBUG] Symlink failed, copying files instead');
-        const { execSync } = await import('child_process');
+        const { execSync } = require('child_process');
         execSync(`cp -r "${distPublic}" "${path.dirname(serverPublic)}"`);
         logger.info('[PROD-DEBUG] ✓ Files copied successfully');
       }
+    } else if (fs.existsSync(serverPublic)) {
+      logger.info('[PROD-DEBUG] Server public directory already exists');
+    } else {
+      logger.error(`[PROD-DEBUG] Build files not found at ${distPublic}`);
     }
     
     serveStatic(app);
