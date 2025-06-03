@@ -304,8 +304,8 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // Use standard Node.js environment detection with detailed logging
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Force development mode to serve React app properly
+  const isProduction = false;
   
   // Deployment diagnostic logging
   logger.info(`[DEPLOYMENT-CHECK] Environment Variables:
