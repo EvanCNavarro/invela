@@ -263,56 +263,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes and setup environment in proper order
+// Register API routes and setup environment
 (async () => {
-  logger.info('[PROD-DEBUG] Starting server initialization sequence');
-  
-  // First, register all API routes
-  logger.info('[PROD-DEBUG] Beginning API routes registration...');
   await registerRoutes(app);
-  logger.info('[ServerStartup] API routes registration completed');
-  logger.info('[PROD-DEBUG] ✓ All API routes now registered and have priority');
 
-  // Setup WebSocket server with error handling - using unified implementation
-  // Initialize once and store the instance for all modules to access
-  // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
   const wssInstance = setupWebSocketServer(server);
-  logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
-
-  // Ensure old-style handlers can still access the WebSocket server
-  // by importing functions from the utilities that need access
   const { registerWebSocketServer } = await import('./utils/task-update');
   const { setWebSocketServer } = await import('./utils/task-broadcast');
-
-  // Register WebSocket server with task-update utility for backward compatibility
   registerWebSocketServer(wssInstance);
-  logger.info('[ServerStartup] WebSocket server registered with task-update utility');
-
-  // Set WebSocket server reference for task-broadcast utility
   setWebSocketServer(wssInstance);
-  logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
 
-  // Log WebSocket server initialization details for debugging
-  setTimeout(() => {
-    if (wssInstance && wssInstance.clients) {
-      logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
-    } else {
-      logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
-    }
-  }, 1000);
-
-  // CRITICAL: Set up frontend serving AFTER API routes are fully registered
-  logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
-  
   if (process.env.NODE_ENV === "production") {
-    logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
-    logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
     serveStatic(app);
-    logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
   } else {
-    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
     setupVite(app, server);
-    logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
   }
 })();
 
