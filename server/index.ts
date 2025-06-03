@@ -359,7 +359,7 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
-// Configure server for proper deployment
+// Configure server for development environment
 
 // Replit's recommended dynamic port configuration
 // Use port 5000 for Replit workflow compatibility, fallback to 8080 for Cloud Run
