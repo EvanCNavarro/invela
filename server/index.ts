@@ -359,19 +359,12 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
-// Early production optimizations - must run before other configurations
-// Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
-import { initializeProductionOptimizations } from './deployment/production-config';
-initializeProductionOptimizations();
-
-// Configure server for proper deployment
-// Replit's deployment fix #2: Use dynamic port configuration from environment
-// Best practice: Environment-aware configuration that adapts to deployment context
-// Homogeneous solution: Maintains same forced production approach while enabling flexibility
-const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
-
-// Set NODE_ENV based on deployment context - prioritize explicit production setting
-process.env.NODE_ENV = 'production';
+// Initialize production optimizations only when actually in production
+if (process.env.NODE_ENV === 'production') {
+  import('./deployment/production-config').then(({ initializeProductionOptimizations }) => {
+    initializeProductionOptimizations();
+  });
+}
 
 // Replit's recommended dynamic port configuration
 // Use port 5000 for Replit workflow compatibility, fallback to 8080 for Cloud Run
