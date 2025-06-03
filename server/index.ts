@@ -304,8 +304,8 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // Smart environment detection - industry standard approach
-  const isProduction = process.env.DEPLOYMENT_MODE === 'production';
+  // Use standard Node.js environment detection
+  const isProduction = process.env.NODE_ENV === 'production';
   
   if (isProduction) {
     logger.info('[PROD-DEBUG] Production deployment: Setting up static file serving');
