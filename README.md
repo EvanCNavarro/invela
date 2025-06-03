@@ -55,10 +55,6 @@ npm run storybook
 - 📱 **Dashboard Analytics** - 10+ specialized widgets with network visualization
 - 🔐 **Session-based Authentication** - Passport.js with company context
 - 📁 **File Management** - Document processing, CSV/PDF generation, vault storage
-- 🛡️ **Production-Ready Deployment** - Industry-standard environment management with automatic dev/prod switching
-- 📈 **Risk Trend Analysis** - Real-time risk indicators with visual trend tracking
-- 🎛️ **Adaptive Widget System** - Company-type specific dashboard configurations
-- 🧪 **Data Integrity Validation** - Comprehensive test suites ensuring assessment accuracy
 
 ## 📚 Design System
 
@@ -150,32 +146,8 @@ DATABASE_URL=postgresql://...
 NODE_ENV=development
 PORT=3000
 
-# Deployment Mode (Production)
-DEPLOYMENT_MODE=production  # Enables production static file serving
-
 # Storybook
 STORYBOOK_PORT=6006
-```
-
-### Deployment Configuration
-
-The platform features industry-standard environment management:
-
-**Development Mode** (Default)
-- Automatic Vite development server with hot reloading
-- Full debugging capabilities and detailed logging
-- No manual configuration required
-
-**Production Mode**
-- Set `DEPLOYMENT_MODE=production` environment variable
-- Automatic static file serving with API route priority
-- Optimized middleware order preventing route conflicts
-- Zero manual code changes required
-
-```bash
-# Production Deployment
-DEPLOYMENT_MODE=production npm run build
-DEPLOYMENT_MODE=production npm start
 ```
 
 ### Database Setup

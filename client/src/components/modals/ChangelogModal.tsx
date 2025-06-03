@@ -105,70 +105,6 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
-    id: 'risk-trend-analysis-system-2025-06-03',
-    date: '2025-06-03',
-    type: 'feature',
-    title: 'Risk Trend Analysis System',
-    description: 'New risk monitoring features with visual trend indicators and drill-down navigation for enhanced risk assessment capabilities',
-    details: [
-      'Added RiskTrendIndicator component with up/down/stable trend tracking',
-      'Built risk monitoring widget with drill-down navigation to insights page',
-      'Implemented timeframe selection for 7-day/30-day risk change analysis',
-      'Created risk trend API endpoints with percentage change calculations',
-      'Enhanced company profiles with real-time risk status displays'
-    ],
-    version: '1.9.5',
-    audience: 'product'
-  },
-  {
-    id: 'dashboard-widget-enhancements-2025-06-03',
-    date: '2025-06-03',
-    type: 'enhancement',
-    title: 'Dashboard Widget System Improvements',
-    description: 'Enhanced dashboard with company-type specific widget configurations and improved navigation',
-    details: [
-      'Implemented differentiated widget sets based on company type',
-      'Enhanced dashboard performance through selective widget loading',
-      'Added tab navigation with URL parameter synchronization',
-      'Created dynamic widget visibility based on company category',
-      'Improved user experience with "View Details" action buttons'
-    ],
-    version: '1.9.5',
-    audience: 'product'
-  },
-  {
-    id: 'production-deployment-fixes-2025-06-03',
-    date: '2025-06-03',
-    type: 'fix',
-    title: 'Production Deployment Architecture Fixes',
-    description: 'Critical production issues resolved including middleware order and environment detection for reliable deployments',
-    details: [
-      'Fixed critical production middleware order preventing API route interception',
-      'Implemented automatic environment detection using DEPLOYMENT_MODE variable',
-      'Resolved blank company profile pages in production deployments',
-      'Added comprehensive production debugging logs for troubleshooting',
-      'Eliminated need for manual server modifications during deployment'
-    ],
-    version: '1.9.5',
-    audience: 'developer'
-  },
-  {
-    id: 'data-validation-framework-2025-06-03',
-    date: '2025-06-03',
-    type: 'enhancement',
-    title: 'Risk Assessment Data Validation Framework',
-    description: 'Comprehensive testing and validation suite ensuring data integrity across all persona types and risk assessments',
-    details: [
-      'Built comprehensive test suite for risk assessment data validation',
-      'Implemented validation rules for new-data-recipient personas',
-      'Added automated testing for risk score consistency',
-      'Created validation scripts preventing invalid risk data assignments',
-      'Enhanced data integrity with cross-persona validation checks'
-    ],
-    version: '1.9.5',
-    audience: 'developer'
-  },
-  {
     id: 'company-profile-complete-overhaul-2025-06-02',
     date: '2025-06-02',
     type: 'feature',
@@ -186,7 +122,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Complete data flow restoration: backend → API → frontend → UI now fully functional',
       'Professional fact sheet design displaying S&P DARS scores, accreditation status, and business information'
     ],
-    version: '1.9.4',
+    version: '1.9.5',
     audience: 'product'
   },
   {
