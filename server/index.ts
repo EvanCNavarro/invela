@@ -263,20 +263,56 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes and setup environment
+// Register API routes and setup environment in proper order
 (async () => {
+  logger.info('[PROD-DEBUG] Starting server initialization sequence');
+  
+  // First, register all API routes
+  logger.info('[PROD-DEBUG] Beginning API routes registration...');
   await registerRoutes(app);
+  logger.info('[ServerStartup] API routes registration completed');
+  logger.info('[PROD-DEBUG] ✓ All API routes now registered and have priority');
 
+  // Setup WebSocket server with error handling - using unified implementation
+  // Initialize once and store the instance for all modules to access
+  // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
   const wssInstance = setupWebSocketServer(server);
+  logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+
+  // Ensure old-style handlers can still access the WebSocket server
+  // by importing functions from the utilities that need access
   const { registerWebSocketServer } = await import('./utils/task-update');
   const { setWebSocketServer } = await import('./utils/task-broadcast');
-  registerWebSocketServer(wssInstance);
-  setWebSocketServer(wssInstance);
 
+  // Register WebSocket server with task-update utility for backward compatibility
+  registerWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+
+  // Set WebSocket server reference for task-broadcast utility
+  setWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+
+  // Log WebSocket server initialization details for debugging
+  setTimeout(() => {
+    if (wssInstance && wssInstance.clients) {
+      logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+    } else {
+      logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+    }
+  }, 1000);
+
+  // CRITICAL: Set up frontend serving AFTER API routes are fully registered
+  logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
+  
   if (process.env.NODE_ENV === "production") {
+    logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
+    logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
     serveStatic(app);
+    logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
   } else {
+    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
     setupVite(app, server);
+    logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
   }
 })();
 
@@ -323,19 +359,7 @@ import { getDeploymentPort, getDeploymentHost, logDeploymentInfo } from './deplo
 // Import task reconciliation system
 import { startPeriodicTaskReconciliation } from './utils/periodic-task-reconciliation';
 
-// Early production optimizations - must run before other configurations
-// Root cause fix: Apply infrastructure optimizations that address actual deployment constraints
-import { initializeProductionOptimizations } from './deployment/production-config';
-initializeProductionOptimizations();
-
 // Configure server for proper deployment
-// Replit's deployment fix #2: Use dynamic port configuration from environment
-// Best practice: Environment-aware configuration that adapts to deployment context
-// Homogeneous solution: Maintains same forced production approach while enabling flexibility
-const isProductionDeployment = true;  // Force production mode for Cloud Run deployment
-
-// Set NODE_ENV based on deployment context - prioritize explicit production setting
-process.env.NODE_ENV = 'production';
 
 // Replit's recommended dynamic port configuration
 // Use port 5000 for Replit workflow compatibility, fallback to 8080 for Cloud Run
@@ -347,11 +371,10 @@ const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 process.env.PORT = PORT.toString();
 process.env.HOST = HOST;
 
-// Simplified deployment logging for Replit's forced configuration approach
-// Best practice: Clear visibility into forced production settings
-logger.info(`[ENV] Server will listen on PORT=${PORT} (forced production mode)`);
-logger.info(`[ENV] Environment=${process.env.NODE_ENV} (forced production)`);
-logger.info(`[ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment`);
+// Server configuration logging
+logger.info(`[ENV] Server will listen on PORT=${PORT}`);
+logger.info(`[ENV] Environment=${process.env.NODE_ENV || 'development'}`);
+logger.info(`[ENV] Host binding: ${HOST}`);
 
 // Import database health checks
 import { runStartupChecks } from './startup-checks';
