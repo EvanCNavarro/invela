@@ -304,8 +304,7 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // Temporarily force development mode for debugging
-  if (false) {  // Changed from process.env.NODE_ENV === "production"
+  if (process.env.NODE_ENV === "production") {
     logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
     logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
     serveStatic(app);
