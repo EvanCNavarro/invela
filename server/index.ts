@@ -16,16 +16,17 @@ app.use(express.urlencoded({ extended: false }));
   
   const server = createServer(app);
   
-  // For development, setup Vite dev server
-  if (process.env.NODE_ENV !== 'production') {
-    await setupVite(app, server);
-  } else {
-    // For production, serve static files from dist/public
-    serveStatic(app);
-  }
-
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    
+    // Setup Vite after server is listening
+    if (process.env.NODE_ENV !== 'production') {
+      setupVite(app, server).catch(err => {
+        console.error('Vite setup failed:', err);
+      });
+    } else {
+      serveStatic(app);
+    }
   });
 })();
 
