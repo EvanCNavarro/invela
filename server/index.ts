@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupAuth } from "./auth";
-import { setupVite, serveStatic } from "./vite";
+import { serveStatic } from "./vite";
 import { createServer } from "http";
 import fs from "fs";
 import path from "path";
@@ -9,7 +9,6 @@ import path from "path";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Simple console logger
 const logger = {
   info: (msg: string) => console.log(`[${new Date().toISOString()}] [INFO] ${msg}`),
   error: (msg: string) => console.error(`[${new Date().toISOString()}] [ERROR] ${msg}`)
@@ -27,36 +26,37 @@ app.use(express.urlencoded({ extended: false }));
   const isProduction = process.env.NODE_ENV === 'production';
   
   // Deployment diagnostic logging
-  logger.info(`[DEPLOYMENT-CHECK] Environment Variables:
-    NODE_ENV: ${process.env.NODE_ENV}
-    PORT: ${process.env.PORT}
-    IS_PRODUCTION: ${isProduction}`);
-  
-  logger.info(`[DEPLOYMENT-CHECK] File System Check:
-    Current Directory: ${process.cwd()}
-    Dist Directory Exists: ${fs.existsSync(path.resolve(process.cwd(), 'dist/public'))}`);
+  logger.info(`[DEPLOYMENT-CHECK] Environment: ${isProduction ? 'production' : 'development'}`);
+  logger.info(`[DEPLOYMENT-CHECK] Build files exist: ${fs.existsSync(path.resolve(process.cwd(), 'dist/public'))}`);
   
   if (isProduction) {
-    logger.info('[PROD-DEBUG] Production deployment: Setting up static file serving');
+    logger.info('[DEPLOYMENT] Production mode: serving static files');
     
     if (!fs.existsSync(path.resolve(process.cwd(), 'dist/public'))) {
-      logger.error('[DEPLOYMENT-ERROR] ❌ CRITICAL: No build files found at ' + path.resolve(process.cwd(), 'dist/public'));
-      logger.error('[DEPLOYMENT-ERROR] ❌ Build process failed - User will see blank page');
+      logger.error('[DEPLOYMENT-ERROR] ❌ No build files found - deployment will fail');
     } else {
-      logger.info('[DEPLOYMENT-SUCCESS] ✅ Build files found - Production deployment ready');
+      logger.info('[DEPLOYMENT-SUCCESS] ✅ Build files found - production ready');
     }
     
     serveStatic(app);
-    logger.info('[PROD-DEBUG] ✓ Static file serving configured');
   } else {
-    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
-    setupVite(app, server);
-    logger.info('[PROD-DEBUG] ✓ Development server configured');
+    logger.info('[DEVELOPMENT] Serving client files directly');
+    
+    // Serve the client directory for development
+    app.use(express.static(path.resolve(process.cwd(), 'client')));
+    
+    // Fallback to index.html for SPA routes
+    app.get('*', (req, res, next) => {
+      if (req.url.startsWith('/api/')) {
+        return next();
+      }
+      res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
+    });
   }
 
   server.listen(PORT, "0.0.0.0", () => {
     logger.info(`[ServerStartup] Server running on http://0.0.0.0:${PORT}`);
-    logger.info(`[ServerStartup] Environment: ${isProduction ? 'production' : 'development'}`);
+    logger.info(`[ServerStartup] Mode: ${isProduction ? 'production' : 'development'}`);
   });
 })();
 
