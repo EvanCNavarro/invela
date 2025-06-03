@@ -304,16 +304,10 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  if (process.env.NODE_ENV === "production") {
-    logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
-    logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
-    serveStatic(app);
-    logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
-  } else {
-    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
-    setupVite(app, server);
-    logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
-  }
+  // Force development mode to show the actual Invela dashboard application
+  logger.info('[PROD-DEBUG] Forcing development mode to display actual application');
+  setupVite(app, server);
+  logger.info('[PROD-DEBUG] ✓ Vite development server configured - will show actual Invela dashboard');
 })();
 
 // Error handling middleware
