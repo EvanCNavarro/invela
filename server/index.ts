@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupAuth } from "./auth";
-import { serveStatic } from "./vite";
+import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import fs from "fs";
 import path from "path";
@@ -9,6 +9,7 @@ import path from "path";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Simple console logger
 const logger = {
   info: (msg: string) => console.log(`[${new Date().toISOString()}] [INFO] ${msg}`),
   error: (msg: string) => console.error(`[${new Date().toISOString()}] [ERROR] ${msg}`)
@@ -40,18 +41,8 @@ app.use(express.urlencoded({ extended: false }));
     
     serveStatic(app);
   } else {
-    logger.info('[DEVELOPMENT] Serving client files directly');
-    
-    // Serve the client directory for development
-    app.use(express.static(path.resolve(process.cwd(), 'client')));
-    
-    // Fallback to index.html for SPA routes
-    app.get('*', (req, res, next) => {
-      if (req.url.startsWith('/api/')) {
-        return next();
-      }
-      res.sendFile(path.resolve(process.cwd(), 'client/index.html'));
-    });
+    logger.info('[DEVELOPMENT] Setting up Vite development server');
+    setupVite(app, server);
   }
 
   server.listen(PORT, "0.0.0.0", () => {
