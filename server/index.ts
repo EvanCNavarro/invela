@@ -5,7 +5,7 @@ import { setupAuth } from "./auth";
 import { setupVite, serveStatic } from "./vite";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -14,20 +14,17 @@ app.use(express.urlencoded({ extended: false }));
   setupAuth(app);
   await registerRoutes(app);
   
-  const httpServer = createServer(app);
+  const server = createServer(app);
   
-  // Environment detection
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  if (isProduction) {
-    // Production: serve static files
-    serveStatic(app);
+  // For development, setup Vite dev server
+  if (process.env.NODE_ENV !== 'production') {
+    await setupVite(app, server);
   } else {
-    // Development: use Vite dev server
-    await setupVite(app, httpServer);
+    // For production, serve static files from dist/public
+    serveStatic(app);
   }
 
-  httpServer.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 })();
