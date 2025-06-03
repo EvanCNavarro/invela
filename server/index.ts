@@ -310,6 +310,26 @@ app.use((req, res, next) => {
   if (isProduction) {
     logger.info('[PROD-DEBUG] Production deployment: Setting up static file serving');
     logger.info('[PROD-DEBUG] API routes have priority over catch-all HTML serving');
+    
+    // Create symlink from dist/public to server/public if needed
+    const fs = await import('fs');
+    const path = await import('path');
+    const distPublic = path.resolve(process.cwd(), 'dist/public');
+    const serverPublic = path.resolve(process.cwd(), 'server/public');
+    
+    if (fs.existsSync(distPublic) && !fs.existsSync(serverPublic)) {
+      logger.info('[PROD-DEBUG] Creating symlink from dist/public to server/public');
+      try {
+        fs.symlinkSync(distPublic, serverPublic, 'dir');
+        logger.info('[PROD-DEBUG] ✓ Symlink created successfully');
+      } catch (error) {
+        logger.warn('[PROD-DEBUG] Symlink failed, copying files instead');
+        const { execSync } = await import('child_process');
+        execSync(`cp -r "${distPublic}" "${path.dirname(serverPublic)}"`);
+        logger.info('[PROD-DEBUG] ✓ Files copied successfully');
+      }
+    }
+    
     serveStatic(app);
     logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
   } else {
