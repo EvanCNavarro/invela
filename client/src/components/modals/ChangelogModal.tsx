@@ -105,6 +105,27 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'production-deployment-risk-analysis-2025-06-03',
+    date: '2025-06-03',
+    type: 'feature',
+    title: 'Production Deployment Architecture & Risk Analysis Framework',
+    description: 'Industry-standard deployment system with comprehensive risk assessment tools and automated environment management',
+    details: [
+      'Fixed critical production middleware order preventing API route interception',
+      'Implemented automatic environment detection using DEPLOYMENT_MODE variable',
+      'Built comprehensive risk trend analysis system with visual indicators',
+      'Created risk validation framework ensuring data integrity across persona types',
+      'Enhanced dashboard widget system with company-type specific configurations',
+      'Implemented tab navigation with URL synchronization for company profiles',
+      'Added RiskTrendIndicator component with up/down/stable trend tracking',
+      'Built risk monitoring widget with drill-down navigation to insights page',
+      'Created automated testing suite for risk assessment data validation',
+      'Enhanced production debugging with comprehensive middleware logging'
+    ],
+    version: '1.9.5',
+    audience: 'product'
+  },
+  {
     id: 'company-profile-complete-overhaul-2025-06-02',
     date: '2025-06-02',
     type: 'feature',
@@ -122,7 +143,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Complete data flow restoration: backend → API → frontend → UI now fully functional',
       'Professional fact sheet design displaying S&P DARS scores, accreditation status, and business information'
     ],
-    version: '1.9.5',
+    version: '1.9.4',
     audience: 'product'
   },
   {
