@@ -304,7 +304,8 @@ app.use((req, res, next) => {
   // CRITICAL: Set up frontend serving AFTER API routes are fully registered
   logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
   
-  // Force development mode to serve React app properly
+  // Force development mode in Replit development environment
+  // In actual deployment, Replit will handle the build process and set production correctly
   const isProduction = false;
   
   // Deployment diagnostic logging
