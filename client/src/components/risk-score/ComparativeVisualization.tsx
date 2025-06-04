@@ -435,7 +435,7 @@ function ComparativeVisualizationInternal({
                   variant={selectedCompanies.some(c => c.id === -1) ? "default" : "outline"}
                   size="sm"
                   onClick={handleToggleIndustryAverage}
-                  disabled={!industryAverage || (selectedCompanies.length >= MAX_COMPARISONS && !selectedCompanies.some(c => c.id === -1))}
+                  disabled={!industryAverage || (!selectedCompanies.some(c => c.id === -1) && selectedCompanies.length >= MAX_COMPARISONS)}
                   className="whitespace-nowrap"
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
