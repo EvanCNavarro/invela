@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, TrendingUp, Search as SearchIcon, X } from "lucide-react";
+import { Building2, ArrowLeft, Globe, Users, Calendar, Shield, User, Target, Search as SearchIcon, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
@@ -601,26 +601,29 @@ export default function SimpleCompanyProfile() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">30-Day Trend</label>
-                            <div className="space-y-1">
-                              <p className="text-sm text-gray-900">
-                                {(() => {
-                                  if (!company) return 'Stable';
-                                  const sessionData = getSessionCompanyData(company);
-                                  const scoreChange = sessionData.currentScore - sessionData.previousScore;
-                                  if (scoreChange > 3) return 'Improving';
-                                  if (scoreChange < -3) return 'Deteriorating';
-                                  return 'Stable';
-                                })()}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {(() => {
-                                  if (!company) return '0 points';
-                                  const sessionData = getSessionCompanyData(company);
-                                  const scoreChange = sessionData.currentScore - sessionData.previousScore;
-                                  const sign = scoreChange > 0 ? '+' : '';
-                                  return `${sign}${scoreChange} points`;
-                                })()}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                if (!company) return <Minus className="w-3 h-3 text-gray-400" />;
+                                const sessionData = getSessionCompanyData(company);
+                                const scoreChange = sessionData.currentScore - sessionData.previousScore;
+                                const sign = scoreChange > 0 ? '+' : '';
+                                
+                                const TrendIcon = scoreChange > 3 ? TrendingUp : 
+                                                 scoreChange < -3 ? TrendingDown : Minus;
+                                
+                                const colorClass = scoreChange > 3 ? 'text-red-500' : 
+                                                  scoreChange < -3 ? 'text-green-500' : 
+                                                  'text-gray-400';
+                                
+                                return (
+                                  <>
+                                    <TrendIcon className={`w-3 h-3 ${colorClass}`} />
+                                    <span className={`text-sm ${colorClass}`}>
+                                      {scoreChange === 0 ? '0' : `${sign}${scoreChange}`}
+                                    </span>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                           <div>
