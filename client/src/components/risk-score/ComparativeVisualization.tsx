@@ -41,13 +41,13 @@ let ReactApexChart: any;
 
 // Constants
 const MAX_COMPARISONS = 3; // Maximum number of companies that can be added for comparison
-// Using a diverse color palette with better contrast for comparison
+// Subtle color palette that matches the application theme
 const COMPANY_COLORS = [
-  '#ef4444', // red-500 - Strong, distinctive comparison color
-  '#22c55e', // green-500 - Good contrast for second company
-  '#a855f7', // purple-500 - Third company color option
-  '#f59e0b', // amber-500 - Additional option if needed
-  '#06b6d4'  // cyan-500 - Fifth option
+  '#64748b', // slate-500 - Professional neutral
+  '#6366f1', // indigo-500 - Matches primary theme
+  '#059669', // emerald-600 - Subtle green
+  '#dc2626', // red-600 - Muted red for contrast
+  '#7c3aed'  // violet-600 - Professional purple
 ];
 
 // Component Props Interface
@@ -321,8 +321,8 @@ function ComparativeVisualizationInternal({
       <div className="space-y-4">
         {/* Search and buttons row */}
         <div className="flex flex-wrap items-center gap-3 mb-2">
-          {/* Company Search - Made wider */}
-          <div className="flex-1 min-w-[300px]">
+          {/* Company Search - Fixed width */}
+          <div className="w-80">
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -420,9 +420,9 @@ function ComparativeVisualizationInternal({
                       Loading...
                     </>
                   ) : isIndustryAverageAdded ? (
-                    'Remove Industry Avg'
+                    'Remove Industry Average'
                   ) : (
-                    'Add Industry Avg'
+                    'Add Industry Average'
                   )}
                 </Button>
               </TooltipTrigger>
@@ -437,37 +437,52 @@ function ComparativeVisualizationInternal({
           </TooltipProvider>
         </div>
 
-        {/* Selected companies list */}
-        {selectedCompanies.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedCompanies.map((company, index) => (
-              <Badge
-                key={company.id}
-                variant="secondary"
-                className="flex items-center gap-2 py-1 px-3"
-                style={{
-                  borderColor: COMPANY_COLORS[index % COMPANY_COLORS.length],
-                  backgroundColor: `${COMPANY_COLORS[index % COMPANY_COLORS.length]}20`
+        {/* Company comparison slots */}
+        <div className="flex flex-wrap gap-2">
+          {/* Filled company slots */}
+          {selectedCompanies.map((company, index) => (
+            <Badge
+              key={company.id}
+              variant="secondary"
+              className="flex items-center gap-2 py-2 px-3 border-2 transition-all duration-200 hover:shadow-sm"
+              style={{
+                borderColor: COMPANY_COLORS[index % COMPANY_COLORS.length],
+                backgroundColor: `${COMPANY_COLORS[index % COMPANY_COLORS.length]}15`
+              }}
+            >
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
+              />
+              <span className="text-sm font-medium">{company.name}</span>
+              <button
+                onClick={() => {
+                  handleRemoveCompany(company.id);
+                  if (company.id === -1) {
+                    setIsIndustryAverageAdded(false);
+                  }
                 }}
+                className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
               >
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: COMPANY_COLORS[index % COMPANY_COLORS.length] }}
-                />
-                <span className="text-sm font-medium">{company.name}</span>
-                <button
-                  onClick={() => {
-                    handleRemoveCompany(company.id);
-                    if (company.id === -1) setIsIndustryAverageAdded(false);
-                  }}
-                  className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          
+          {/* Empty company slots */}
+          {Array.from({ length: MAX_COMPARISONS - selectedCompanies.length }).map((_, index) => (
+            <Button
+              key={`empty-${index}`}
+              variant="outline"
+              className="flex items-center gap-2 py-2 px-3 h-auto border-2 border-dashed border-muted-foreground/30 bg-muted/20 hover:bg-muted/40 hover:border-muted-foreground/50 transition-all duration-200"
+              onClick={() => setSearchPopoverOpen(true)}
+            >
+              <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+              <span className="text-sm text-muted-foreground">Add Company</span>
+              <Plus className="h-3 w-3 text-muted-foreground/60" />
+            </Button>
+          ))}
+        </div>
       </div>
 
       {/* Radar chart card */}
