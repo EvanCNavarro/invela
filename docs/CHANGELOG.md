@@ -4,6 +4,36 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.7 - 2025-06-04
+
+#### 📊 Risk Score Comparative Visualization Enhancements
+- **Industry Average Integration System**
+  - Fixed critical ID mismatch bug preventing industry average removal (was checking id === -1 but data has id: 0)
+  - Implemented proper toggle functionality for add/remove industry average operations
+  - Added comprehensive logging system for debugging comparative visualization issues
+  - Prevented duplicate industry average entries in comparison slots
+  - Enhanced button state management with correct disabled/enabled logic
+
+- **Data Authenticity & Visual Design**
+  - Replaced mock rainbow colors with authentic application palette for risk dimensions
+  - Integrated real company risk scores from database instead of synthetic placeholder data
+  - Removed duplicate legends and optimized chart space utilization
+  - Enhanced radar chart sizing to prevent dimension label truncation
+  - Improved priority badge display by removing percentage weights
+
+- **User Experience Improvements**
+  - Redesigned company comparison slots with professional styling (dashed borders for empty slots)
+  - Added "Add Company" buttons for intuitive slot management
+  - Optimized search interface with fixed 320px width for better layout control
+  - Enhanced button text clarity (changed "AVG" to "Average" for better readability)
+  - Implemented compact red alert background for streamlined visual hierarchy
+
+- **Layout & Space Optimization**
+  - Removed card headers and helper text to maximize vertical chart space
+  - Reduced radar chart dimensions to prevent UI overflow issues
+  - Created consistent visual styling between filled and empty company comparison slots
+  - Enhanced responsive design for better cross-device compatibility
+
 ### Version 1.9.6 - 2025-06-04
 
 #### 🔧 Visual Tutorial System Deployment Restoration
