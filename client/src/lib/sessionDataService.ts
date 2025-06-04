@@ -49,7 +49,7 @@ interface SessionConfig {
  */
 const DEFAULT_CONFIG: SessionConfig = {
   storageKey: 'invela-risk-session-data',
-  version: '1.0.0',
+  version: '1.1.0', // Bump version to force cache reset for 7-day data
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 };
 
@@ -277,23 +277,36 @@ export class SessionDataService {
   public getCompanyData(company: any): SessionCompanyData {
     const companyId = company.id;
     
-    // Check cache first
-    if (this.cache.has(companyId)) {
-      const cached = this.cache.get(companyId)!;
-      logSession('Returning cached data for company', { companyId, companyName: company.name });
-      return cached;
-    }
-    
-    // Check session storage
+    // Check session storage first for version compatibility
     const sessionData = this.getSessionData();
+    
+    // If we have stored data, check if it has the new 7-day field
     if (sessionData && sessionData.data[companyId]) {
       const stored = sessionData.data[companyId];
-      this.cache.set(companyId, stored);
-      logSession('Returning stored data for company', { companyId, companyName: company.name });
-      return stored;
+      
+      // Check if the stored data has the new previousScore7Day field
+      if ('previousScore7Day' in stored) {
+        this.cache.set(companyId, stored);
+        logSession('Returning stored data for company (with 7-day field)', { companyId, companyName: company.name });
+        return stored;
+      } else {
+        logSession('Stored data missing 7-day field, regenerating', { companyId, companyName: company.name });
+      }
     }
     
-    // Generate new data
+    // Check cache for valid data
+    if (this.cache.has(companyId)) {
+      const cached = this.cache.get(companyId)!;
+      if ('previousScore7Day' in cached) {
+        logSession('Returning cached data for company (with 7-day field)', { companyId, companyName: company.name });
+        return cached;
+      } else {
+        logSession('Cached data missing 7-day field, regenerating', { companyId, companyName: company.name });
+        this.cache.delete(companyId);
+      }
+    }
+    
+    // Generate new data with 7-day field
     const generated = generateConsistentRiskData(company, companyId);
     this.cache.set(companyId, generated);
     
@@ -302,7 +315,7 @@ export class SessionDataService {
     allData[companyId] = generated;
     this.saveSessionData(allData);
     
-    logSession('Generated new data for company', { companyId, companyName: company.name });
+    logSession('Generated new data for company (with 7-day field)', { companyId, companyName: company.name });
     return generated;
   }
   
@@ -344,6 +357,14 @@ export class SessionDataService {
  * Default service instance
  */
 export const sessionDataService = new SessionDataService();
+
+/**
+ * Debug function to force cache reset (for testing)
+ */
+export function forceSessionReset() {
+  sessionDataService.reset();
+  console.log('[SessionData] Cache cleared - new data will be generated on next access');
+}
 
 /**
  * Convenience function to get company data
