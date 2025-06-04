@@ -601,16 +601,27 @@ export default function SimpleCompanyProfile() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">30-Day Trend</label>
-                            <p className="text-sm text-gray-900">
-                              {(() => {
-                                if (!company) return 'Stable';
-                                const sessionData = getSessionCompanyData(company);
-                                const scoreChange = sessionData.currentScore - sessionData.previousScore;
-                                if (scoreChange > 3) return 'Improving';
-                                if (scoreChange < -3) return 'Deteriorating';
-                                return 'Stable';
-                              })()}
-                            </p>
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-900">
+                                {(() => {
+                                  if (!company) return 'Stable';
+                                  const sessionData = getSessionCompanyData(company);
+                                  const scoreChange = sessionData.currentScore - sessionData.previousScore;
+                                  if (scoreChange > 3) return 'Improving';
+                                  if (scoreChange < -3) return 'Deteriorating';
+                                  return 'Stable';
+                                })()}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {(() => {
+                                  if (!company) return '0 points';
+                                  const sessionData = getSessionCompanyData(company);
+                                  const scoreChange = sessionData.currentScore - sessionData.previousScore;
+                                  const sign = scoreChange > 0 ? '+' : '';
+                                  return `${sign}${scoreChange} points`;
+                                })()}
+                              </p>
+                            </div>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Category</label>
