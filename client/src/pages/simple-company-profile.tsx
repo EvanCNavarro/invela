@@ -170,62 +170,31 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
-  // Fetch companies with risk data to calculate risk monitoring status
-  const { data: companiesWithRisk = [] } = useQuery<any[]>({
-    queryKey: ['/api/companies-with-risk'],
-    enabled: !!user && !!companyId,
+  // Fetch authentic risk status data from the same API endpoint used in Risk tab
+  const { data: riskStatusData } = useQuery<{status: string, daysInStatus: number, trend: string}>({
+    queryKey: [`/api/companies/${companyId}/risk-status`],
+    enabled: !!companyId && !authLoading,
   });
 
-  // Calculate risk monitoring status for the current company using the same logic as Risk Monitoring widget
+  // Use authentic risk status data
   const riskStatus = useMemo(() => {
-    if (!companiesWithRisk || companiesWithRisk.length === 0 || !companyId) {
-      return { status: 'Stable', color: 'gray', description: 'No risk data available' };
+    if (!riskStatusData) {
+      return { status: 'Loading...', color: 'gray', description: 'Loading risk data' };
     }
 
-    const companyIdNum = parseInt(companyId);
-    
-    // Find the current company in the risk data
-    const currentCompanyRisk = companiesWithRisk.find(comp => comp.id === companyIdNum);
+    const colorMap = {
+      'Stable': 'green',
+      'Monitoring': 'yellow', 
+      'Approaching Block': 'orange',
+      'Blocked': 'red'
+    };
 
-    if (!currentCompanyRisk) {
-      return { status: 'Stable', color: 'gray', description: 'No risk data for this company' };
-    }
-
-    // Use actual risk score from the company data
-    const currentScore = currentCompanyRisk.risk_score || currentCompanyRisk.riskScore || 75;
-    
-    // Generate a realistic previous score for comparison (this mimics the Risk Monitoring widget logic)
-    const variation = Math.random() * 10 - 5; // Random variation between -5 and +5
-    const previousScore = Math.max(20, Math.min(95, currentScore + variation));
-    
-    try {
-      // Use the same risk calculation as the Risk Monitoring widget
-      const threshold = 40; // Same threshold used in the dashboard
-      
-      // Calculate status using the same logic
-      if (currentScore < threshold) {
-        return { status: 'Blocked', color: 'red', description: 'Risk threshold exceeded' };
-      }
-      
-      const percentToThreshold = ((currentScore - threshold) / (100 - threshold)) * 100;
-      const scoreChange = previousScore - currentScore;
-      const hasDeteriorated = scoreChange > 5; // Same threshold as DEFAULT_CONFIG.deteriorationThreshold
-      
-      if (percentToThreshold < 30 && hasDeteriorated) { // Same as DEFAULT_CONFIG.approachingBlockPercentage
-        return { status: 'Approaching Block', color: 'orange', description: 'Approaching risk threshold' };
-      }
-      
-      if (hasDeteriorated) {
-        return { status: 'Monitoring', color: 'yellow', description: 'Under risk monitoring' };
-      }
-      
-      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
-      
-    } catch (error) {
-      console.error('Error calculating risk status:', error);
-      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
-    }
-  }, [companiesWithRisk, companyId]);
+    return { 
+      status: riskStatusData.status, 
+      color: colorMap[riskStatusData.status as keyof typeof colorMap] || 'gray',
+      description: `Risk status: ${riskStatusData.status}`
+    };
+  }, [riskStatusData]);
 
   // Fetch users associated with this company
   const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({
@@ -601,14 +570,9 @@ export default function SimpleCompanyProfile() {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           <div>
                             <label className="text-xs font-medium text-gray-500">S&P DARS</label>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm text-gray-900">
-                                {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
-                              </p>
-                              {company?.id && (
-                                <RiskTrendIndicator companyId={company.id} />
-                              )}
-                            </div>
+                            <p className="text-sm text-gray-900">
+                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
+                            </p>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Risk Level</label>
