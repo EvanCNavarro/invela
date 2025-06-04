@@ -472,12 +472,6 @@ function ComparativeVisualizationInternal({
 
       {/* Radar chart card */}
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
-        <CardHeader className="bg-background/70 border-b">
-          <CardTitle className="text-lg font-medium flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2 text-muted-foreground" />
-            Comparative Risk Dimension Analysis
-          </CardTitle>
-        </CardHeader>
         <CardContent className="pt-6">
           {chartComponentLoaded ? (
             <div className="flex flex-col items-center">
