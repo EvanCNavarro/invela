@@ -1,0 +1,353 @@
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-06-04T12:21:09.004Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-06-04T12:21:09.004Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-06-04T12:21:09.005Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-06-04T12:21:09.005Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-06-04T12:21:09.005Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-06-04T12:21:09.005Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Phase services completed successfully 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Executing startup phase: communication 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-06-04T12:21:09.005Z] [App] Communication phase initializing 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Executing startup phase: ready 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-06-04T12:21:09.005Z] [App] Application ready for user interaction 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-06-04T12:21:09.005Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /network/company/512
+[WebSocket] Connection attempt initiated
+[2025-06-04T12:21:09.213Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Router] Rendering company profile page for ID: 512
+[Router Debug] Full location when rendering company profile: /network/company/512
+[Router Debug] Query parameters present: none
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "overview", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/network/company/512", …}
+[Sidebar] Tab state check: company=undefined, path=/network/company/512, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+[Tab Debug] getTabFromURL - window.location.search: ?tab=risk tabParam: risk result: risk
+[Tab Debug] getTabFromURL - wouter location for comparison: /network/company/512
+[Tab Debug] Mount - parsing URL for initial tab: risk from window.location.search: ?tab=risk
+[Tab Debug] Mount - wouter location for comparison: /network/company/512
+[Tab Debug] getTabFromURL - window.location.search: ?tab=risk tabParam: risk result: risk
+[Tab Debug] getTabFromURL - wouter location for comparison: /network/company/512
+[Tab Debug] Location change - updating tab from: overview to: risk wouter location: /network/company/512
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 8, email: "evan.navarro@invela.com", timestamp: "2025-06-04T12:21:09.228Z"}
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "risk", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/network/company/512", …}
+[Sidebar] Tab state check: company=undefined, path=/network/company/512, file-vault-unlocked=false
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "risk", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/network/company/512", …}
+[Sidebar] Tab state check: company=undefined, path=/network/company/512, file-vault-unlocked=false
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/network/company/512", …}
+[Sidebar] Tab state check: company=1, path=/network/company/512, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Company Profile Debug] Received company data: 
+Object {id: 512, name: "Advanced Infrastructure Technologies", description: "Advanced Infrastructure Technologies delivers sophisticated portfolio management tools and…", category: "FinTech", risk_score: 81, …}
+[Company Profile Debug] Risk fields analysis: 
+Object {risk_score: 81, riskScore: undefined, chosen_score: null, risk_clusters: {…}, finalRiskValue: 81}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Crypto mixing, transaction privacy, anonymization services", market_position: "startup", founders_and_leadership: "Privacy Maximalist (CEO), Anonymous Developer (CTO)", key_clients_partners: "Privacy seekers, anonymous users", investors: "Anonymous funding", …}
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "risk", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[RiskStatusSummary] Debug: 
+Object {companyId: 512, statusData: undefined, isLoading: true, error: null}
+Debug - Fetching logo for company 512 (Advanced Infrastructure Technologies)
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749039669659-61d26k7", timestamp: "2025-06-04T12:21:09.659Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 1
+[RiskRadarChart] Setting selected company ID from companyId prop 512
+[RiskRadarChart] Company category check: 
+Object {category: "Invela", isBankOrInvela: true, isFintech: false, showDropdownProp: false}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: true, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Setting selected company ID from companyId prop 512
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: true, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.685Z", id: 858, status: "completed", progress: 100, …}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: true, hasPrevData: false, isTransitioning: false, chartComponentLoaded: true}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.716Z", id: 168, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.746Z", id: 123, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.777Z", id: 338, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-04T12:21:09.786Z", message: "Authentication successful"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.808Z", id: 124, status: "completed", progress: 100, …}
+[Company Profile Debug] Received company data: 
+Object {id: 512, name: "Advanced Infrastructure Technologies", description: "Advanced Infrastructure Technologies delivers sophisticated portfolio management tools and…", category: "FinTech", risk_score: 81, …}
+[Company Profile Debug] Risk fields analysis: 
+Object {risk_score: 81, riskScore: undefined, chosen_score: null, risk_clusters: {…}, finalRiskValue: 81}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Crypto mixing, transaction privacy, anonymization services", market_position: "startup", founders_and_leadership: "Privacy Maximalist (CEO), Anonymous Developer (CTO)", key_clients_partners: "Privacy seekers, anonymous users", investors: "Anonymous funding", …}
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "risk", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[RiskStatusSummary] Debug: 
+Object {companyId: 512, statusData: undefined, isLoading: true, error: null}
+[RiskRadarChart] Using fresh companies data: 88
+[RiskRadarChart] Filtering company: 
+Object {name: "Advanced Gaming Technologies", riskScore: 56, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Advanced Infrastructure Technologies", riskScore: 81, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "AgriFinance Connect", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Allied Evaluation Specialists", riskScore: 37, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BankingAPI Gateway", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BlockTrade Exchange", riskScore: 34, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Bridge Quality Consultants", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CarbonCredit Markets", riskScore: 38, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Catalyst Consulting Council", riskScore: 53, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Certified Market Champions", riskScore: 79, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "ClimateFinance Labs", riskScore: 50, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Coin Tracker", riskScore: 43, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CommodityTrade Hub", riskScore: 54, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Continental Infrastructure Union", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CorporateCard Plus", riskScore: 7, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CrowdFund Crypto", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Crown Strategy Consortium", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoFlow Payments", riskScore: 8, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoSwap Exchange", riskScore: 52, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoVenture Labs", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Cyber Studio Works", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DAO Treasury Management", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DeFi Bridge Protocol", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DecentralizedID Finance", riskScore: 69, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Digital Protocol Solutions", riskScore: 62, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalAsset Custody", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalBonds Exchange", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalVault Security", riskScore: 67, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "ESG Impact Tracker", riskScore: 28, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Edge Lab Center", riskScore: 33, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Edge Lab Global", riskScore: 49, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FastPay Innovations", riskScore: 67, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Foundation Asset United", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FraudShield AI", riskScore: 62, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "GigWorker Finance", riskScore: 46, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "GlobalRemit Network", riskScore: 10, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "InsurTech Dynamics", riskScore: 16, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Intelligence Authorities", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Trading Center", riskScore: 63, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Invela", riskScore: undefined, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "InvestorPortal Pro", riskScore: 40, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "MicroInvest Network", riskScore: 43, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "MicroLend Network", riskScore: 63, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "MortgageTech Solutions", riskScore: 52, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NFT Marketplace Finance", riskScore: 34, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "National Guard Edge", riskScore: 32, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NeoBank Analytics", riskScore: 32, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NeoLend Platform", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Network Studio Advisors", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NextGen Payments", riskScore: 84, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "OpenBanking Hub", riskScore: 5, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PayLater Solutions", riskScore: 36, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PayStream Global", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PayrollTech Innovations", riskScore: 58, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PensionTech Advisors", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Pinnacle Reserve Consolidated", riskScore: 80, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "QuantTrading Systems", riskScore: 54, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Quantum Studio Worldwide", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "QuantumPay Solutions", riskScore: 9, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "QuickCash Advances", riskScore: 54, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "RealEstate TokenFi", riskScore: 38, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "RegTech Innovations", riskScore: 14, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "RetailCredit Solutions", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SmallBiz Banking", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SmartContract Verify", riskScore: 20, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SocialPay Network", riskScore: 59, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Sovereign Audit Federation", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "StableCoin Protocol", riskScore: 63, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Standard Governance Worldwide", riskScore: 82, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Sterling Consulting United", riskScore: 69, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Stream Portfolio Base", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "StudentLoan Refinance", riskScore: 32, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SupplyChain Finance", riskScore: 26, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SwiftLedger Technologies", riskScore: 66, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Synergy Infrastructure Solutions", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TaxOptimization AI", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TaxTech Solutions", riskScore: 67, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TechFlow Financial", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradeFi Connect", riskScore: 33, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradingBot Analytics", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradingBot Retail", riskScore: 36, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TreasuryTech Pro", riskScore: 67, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "United Exchange Platforms", riskScore: 48, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "VelocityCredit Platform", riskScore: 38, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Wave Consulting Alliance", riskScore: 61, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Wave Insights Leaders", riskScore: 66, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "WealthTech Pro", riskScore: 61, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Wealthfront", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 88, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 88, approvedCompaniesCount: 87, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: true, hasPrevData: false, isTransitioning: false, chartComponentLoaded: true}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.844Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.896Z", id: 720, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:09.946Z", id: 251, status: "completed", progress: 100, …}
+Logo fetch failed for Advanced Infrastructure Technologies: 
+Object {status: 404, code: "LOGO_NOT_ASSIGNED", message: "No logo assigned to company"}
+[2025-06-04T12:21:10.002Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:10.035Z", id: 1033, status: "completed", progress: 100, …}
+[RiskStatusSummary] Debug: 
+Object {companyId: 512, statusData: {…}, isLoading: false, error: null}
+[RiskRadarChart] Fetched relationship companies: 87
+[RiskRadarChart] Using fresh companies data: 88
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 88, relationshipCompaniesCount: 87, visualizationNodesCount: 0, uniqueCompaniesCount: 88, approvedCompaniesCount: 87, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: true, hasPrevData: false, isTransitioning: false, chartComponentLoaded: true}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:10.079Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-04T12:21:10.108Z", id: 172, status: "completed", progress: 100, …}
+[RiskRadarChart] Fetched company profile with risk data: 
+Object {companyId: 512, hasRiskClusters: true}
+[RiskRadarChart] Fetched relationship companies: 87

@@ -19,8 +19,6 @@ export function RiskStatusSummary({ companyId, className }: RiskStatusSummaryPro
     enabled: !!companyId
   });
 
-  console.log('[RiskStatusSummary] Debug:', { companyId, statusData, isLoading, error });
-
   if (isLoading) {
     return <div className="w-20 h-4 bg-gray-200 rounded animate-pulse" />;
   }

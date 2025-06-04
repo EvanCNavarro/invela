@@ -15,7 +15,7 @@ interface RiskTrendData {
 
 export function RiskTrendIndicator({ companyId, className }: RiskTrendIndicatorProps) {
   const { data: trendData, isLoading } = useQuery<RiskTrendData>({
-    queryKey: ['/api/companies', companyId, 'risk-trend'],
+    queryKey: [`/api/companies/${companyId}/risk-trend`],
     enabled: !!companyId
   });
 
