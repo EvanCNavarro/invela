@@ -105,6 +105,29 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'risk-score-comparative-visualization-2025-06-04',
+    date: '2025-06-04',
+    type: 'enhancement',
+    title: 'Risk Score Comparative Visualization Enhancements',
+    description: 'Comprehensive improvements to the risk comparison system with authentic data integration, bug fixes, and enhanced user experience',
+    details: [
+      'Fixed critical ID mismatch bug preventing industry average removal (was checking id === -1 but data has id: 0)',
+      'Implemented proper toggle functionality for add/remove industry average operations with comprehensive logging',
+      'Replaced mock rainbow colors with authentic application palette for risk dimensions',
+      'Integrated real company risk scores from database instead of synthetic placeholder data',
+      'Redesigned company comparison slots with professional styling (dashed borders for empty slots)',
+      'Added intuitive "Add Company" buttons for slot management',
+      'Optimized search interface with fixed 320px width for better layout control',
+      'Enhanced button text clarity (changed "AVG" to "Average" for better readability)',
+      'Removed duplicate legends and card headers to maximize chart space utilization',
+      'Improved radar chart sizing to prevent dimension label truncation',
+      'Enhanced priority badge display by removing percentage weights',
+      'Implemented compact red alert background for streamlined visual hierarchy'
+    ],
+    version: '1.9.7',
+    audience: 'product'
+  },
+  {
     id: 'visual-assets-deployment-fix-2025-06-04',
     date: '2025-06-04',
     type: 'fix',
