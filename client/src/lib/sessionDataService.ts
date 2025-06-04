@@ -27,6 +27,7 @@ export interface SessionCompanyData {
   name: string;
   currentScore: number;
   previousScore: number;
+  previousScore7Day: number; // Score from 7 days ago
   status: 'Stable' | 'Monitoring' | 'Approaching Block' | 'Blocked';
   trend: 'improving' | 'stable' | 'deteriorating';
   daysInStatus: number;
@@ -103,9 +104,14 @@ function generateConsistentRiskData(company: any, seed: number): SessionCompanyD
   const currentScore = company.risk_score || company.riskScore || 
     Math.floor(random() * 75 + 20); // Range: 20-95
   
-  // Generate previous score with realistic variation
-  const variation = (random() - 0.5) * 20; // Range: -10 to +10
-  const previousScore = Math.max(20, Math.min(95, currentScore + variation));
+  // Generate previous scores with realistic variation
+  // 30-day change (larger variation)
+  const variation30Day = (random() - 0.5) * 20; // Range: -10 to +10
+  const previousScore = Math.max(20, Math.min(95, currentScore + variation30Day));
+  
+  // 7-day change (smaller variation, closer to current)
+  const variation7Day = (random() - 0.5) * 8; // Range: -4 to +4
+  const previousScore7Day = Math.max(20, Math.min(95, currentScore + variation7Day));
   
   // Calculate status based on current score
   let status: SessionCompanyData['status'];
@@ -138,6 +144,7 @@ function generateConsistentRiskData(company: any, seed: number): SessionCompanyD
     companyName: company.name,
     currentScore,
     previousScore,
+    previousScore7Day,
     status,
     trend,
     daysInStatus
@@ -148,6 +155,7 @@ function generateConsistentRiskData(company: any, seed: number): SessionCompanyD
     name: company.name,
     currentScore,
     previousScore,
+    previousScore7Day,
     status,
     trend,
     daysInStatus,
@@ -340,6 +348,27 @@ export const sessionDataService = new SessionDataService();
  */
 export function getSessionCompanyData(company: any): SessionCompanyData {
   return sessionDataService.getCompanyData(company);
+}
+
+/**
+ * Calculate score change for different timeframes
+ */
+export function getScoreChange(sessionData: SessionCompanyData, timeframe: '7day' | '30day'): number {
+  if (timeframe === '7day') {
+    return sessionData.currentScore - sessionData.previousScore7Day;
+  } else {
+    return sessionData.currentScore - sessionData.previousScore;
+  }
+}
+
+/**
+ * Get score change with proper formatting
+ */
+export function getFormattedScoreChange(sessionData: SessionCompanyData, timeframe: '7day' | '30day'): string {
+  const change = getScoreChange(sessionData, timeframe);
+  if (change === 0) return '0';
+  const sign = change > 0 ? '+' : '';
+  return `${sign}${Math.round(change)}`;
 }
 
 /**

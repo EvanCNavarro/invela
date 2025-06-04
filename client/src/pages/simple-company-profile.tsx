@@ -16,7 +16,7 @@ import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
 import { RiskTrendIndicator } from "@/components/risk/RiskTrendIndicator";
 import { RiskStatusSummary } from "@/components/risk/RiskStatusSummary";
-import { getSessionCompanyData } from '@/lib/sessionDataService';
+import { getSessionCompanyData, getScoreChange, getFormattedScoreChange } from '@/lib/sessionDataService';
 import Fuse from 'fuse.js';
 
 interface CompanyData {
