@@ -509,15 +509,7 @@ function ComparativeVisualizationInternal({
                   </div>
                 ))}
               </div>
-              
-              {/* Helper text */}
-              {selectedCompanies.length === 0 && (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground text-sm">
-                    Add companies above to see comparative analysis
-                  </p>
-                </div>
-              )}
+
             </div>
           ) : (
             <div className="flex items-center justify-center" style={{ height }}>
