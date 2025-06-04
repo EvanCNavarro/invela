@@ -16,6 +16,7 @@ import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
 import { RiskTrendIndicator } from "@/components/risk/RiskTrendIndicator";
 import { RiskStatusSummary } from "@/components/risk/RiskStatusSummary";
+import { getSessionCompanyData } from '@/lib/sessionDataService';
 import Fuse from 'fuse.js';
 
 interface CompanyData {
@@ -170,31 +171,43 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
-  // Fetch authentic risk status data from the same API endpoint used in Risk tab
-  const { data: riskStatusData } = useQuery<{status: string, daysInStatus: number, trend: string}>({
-    queryKey: [`/api/companies/${companyId}/risk-status`],
-    enabled: !!companyId && !authLoading,
-  });
+  // Import session service
+  const { getSessionCompanyData } = await import('@/lib/sessionDataService');
 
-  // Use authentic risk status data
+  // Get session-consistent risk status data
   const riskStatus = useMemo(() => {
-    if (!riskStatusData) {
+    if (!company || !companyId) {
       return { status: 'Loading...', color: 'gray', description: 'Loading risk data' };
     }
 
-    const colorMap = {
-      'Stable': 'green',
-      'Monitoring': 'yellow', 
-      'Approaching Block': 'orange',
-      'Blocked': 'red'
-    };
+    try {
+      const sessionData = getSessionCompanyData(company);
+      
+      const colorMap = {
+        'Stable': 'green',
+        'Monitoring': 'yellow', 
+        'Approaching Block': 'orange',
+        'Blocked': 'red'
+      };
 
-    return { 
-      status: riskStatusData.status, 
-      color: colorMap[riskStatusData.status as keyof typeof colorMap] || 'gray',
-      description: `Risk status: ${riskStatusData.status}`
-    };
-  }, [riskStatusData]);
+      console.log('[Company Profile] Using session data for risk status', {
+        companyId: company.id,
+        companyName: company.name,
+        status: sessionData.status,
+        currentScore: sessionData.currentScore
+      });
+
+      return { 
+        status: sessionData.status, 
+        color: colorMap[sessionData.status as keyof typeof colorMap] || 'gray',
+        description: `Risk status: ${sessionData.status}`
+      };
+    } catch (error) {
+      console.error('[Company Profile] Error getting session data:', error);
+      // Fallback to stable status
+      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
+    }
+  }, [company, companyId]);
 
   // Fetch users associated with this company
   const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({

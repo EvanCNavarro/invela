@@ -19,6 +19,7 @@ import {
   calculateRiskMetrics,
   type RiskMonitoringStatus 
 } from '@/lib/riskCalculations';
+import { getSessionCompaniesData, type SessionCompanyData } from '@/lib/sessionDataService';
 
 // Default risk threshold if company configuration is not available
 const DEFAULT_RISK_THRESHOLD = 40;
@@ -85,26 +86,25 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     enabled: !!currentCompany,
   });
 
-  // Convert authentic company data to required format
+  // Convert authentic company data with session-based consistency
   const companyRiskData = useMemo(() => {
     if (!companiesWithRisk.length) return [];
     
-    logInsight('Using authentic risk data only', {
+    logInsight('Using authentic risk data with session consistency', {
       companiesCount: companiesWithRisk.length,
       threshold: riskThreshold
     });
     
-    return companiesWithRisk.map(company => {
-      const currentScore = company.risk_score || company.riskScore || 0;
-      
-      return {
-        id: company.id,
-        name: company.name,
-        currentScore,
-        previousScore: currentScore, // No historical data available
-        category: company.category || 'FinTech'
-      };
-    });
+    // Get session-consistent data that preserves authentic scores but adds consistent trends
+    const sessionData = getSessionCompaniesData(companiesWithRisk);
+    
+    return sessionData.map(sessionCompany => ({
+      id: sessionCompany.id,
+      name: sessionCompany.name,
+      currentScore: sessionCompany.currentScore,
+      previousScore: sessionCompany.previousScore,
+      category: sessionCompany.category
+    }));
   }, [companiesWithRisk, riskThreshold]);
 
   // Calculate risk metrics using shared service
