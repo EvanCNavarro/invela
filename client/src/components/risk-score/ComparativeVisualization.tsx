@@ -291,23 +291,13 @@ function ComparativeVisualizationInternal({
       lineCap: 'round'
     },
     legend: {
-      show: true,
-      position: 'top',
-      fontWeight: 600,
-      fontSize: '13px',
-      offsetY: 0,
-      itemMargin: {
-        horizontal: 15,
-      },
-      labels: {
-        colors: '#334155'
-      },
-      markers: {
-        width: 12,
-        height: 12,
-        radius: 3,
-        offsetX: -2
-      }
+      show: false
+    },
+    markers: {
+      width: 12,
+      height: 12,
+      radius: 3,
+      offsetX: -2
     },
     tooltip: {
       theme: 'light',
