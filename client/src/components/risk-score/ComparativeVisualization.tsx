@@ -300,7 +300,7 @@ function ComparativeVisualizationInternal({
     },
     plotOptions: {
       radar: {
-        size: Math.min(width * 0.35, height * 0.5), // Responsive radar size based on container dimensions
+        size: Math.min(width * 0.3, height * 0.4), // Reduced size to prevent label cutoff
         offsetY: 0,
         offsetX: 0,
         polygons: {
