@@ -617,18 +617,18 @@ export default function SimpleCompanyProfile() {
                                 const TrendIcon = scoreChange > 3 ? TrendingUp : 
                                                  scoreChange < -3 ? TrendingDown : Minus;
                                 
+                                const statusColor = sessionData.status === 'Blocked' ? 'text-red-600' :
+                                                    sessionData.status === 'Approaching Block' ? 'text-orange-600' :
+                                                    sessionData.status === 'Monitoring' ? 'text-yellow-600' :
+                                                    'text-gray-900';
+                                
                                 return (
                                   <>
-                                    <TrendIcon className="w-3 h-3 text-gray-900" />
-                                    <span className="text-sm text-gray-900">
+                                    <TrendIcon className={`w-3 h-3 ${statusColor}`} />
+                                    <span className={`text-sm ${statusColor}`}>
                                       {scoreChange === 0 ? '0' : `${sign}${Math.round(scoreChange)}`}
                                     </span>
-                                    <span className={`text-sm ${
-                                      sessionData.status === 'Blocked' ? 'text-red-600' :
-                                      sessionData.status === 'Approaching Block' ? 'text-yellow-600' :
-                                      sessionData.status === 'Monitoring' ? 'text-orange-600' :
-                                      'text-gray-600'
-                                    }`}>
+                                    <span className={`text-sm ${statusColor}`}>
                                       {sessionData.status}
                                     </span>
                                   </>

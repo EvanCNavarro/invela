@@ -106,10 +106,10 @@ const RiskTable: React.FC<{
   companies: (CompanyRiskData & { scoreChange: number; status: string })[];
   onCompanyClick?: (companyId: number) => void;
 }> = ({ companies, onCompanyClick }) => {
-  // Add sorting state
+  // Add sorting state - default to status with blocked first
   const [sortConfig, setSortConfig] = useState<{field: SortField, direction: SortDirection}>({
-    field: 'scoreChange',
-    direction: 'desc'
+    field: 'status',
+    direction: 'asc'
   });
 
   // Handle column sort
@@ -158,8 +158,8 @@ const RiskTable: React.FC<{
       
       if (sortConfig.field === 'status') {
         const statusOrder = { 'Blocked': 0, 'Approaching Block': 1, 'Monitoring': 2, 'Stable': 3 };
-        const aOrder = statusOrder[a.status as keyof typeof statusOrder];
-        const bOrder = statusOrder[b.status as keyof typeof statusOrder];
+        const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 4;
+        const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 4;
         
         return sortConfig.direction === 'asc'
           ? aOrder - bOrder
@@ -243,26 +243,46 @@ const RiskTable: React.FC<{
               >
                 <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell className="text-right">{company.currentScore}</TableCell>
-                <TableCell className="text-right font-medium text-gray-900">
+                <TableCell className={`text-right font-medium ${
+                  company.status === 'Blocked' ? 'text-red-600' :
+                  company.status === 'Approaching Block' ? 'text-orange-600' :
+                  company.status === 'Monitoring' ? 'text-yellow-600' :
+                  'text-gray-900'
+                }`}>
                   {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
                    company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
                    '0'}
                 </TableCell>
                 <TableCell className="text-center">
                   {company.scoreChange > 3 ? (
-                    <TrendingUp className="h-4 w-4 mx-auto text-gray-900" />
+                    <TrendingUp className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
                   ) : company.scoreChange < -3 ? (
-                    <TrendingDown className="h-4 w-4 mx-auto text-gray-900" />
+                    <TrendingDown className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
                   ) : (
-                    <Minus className="h-4 w-4 mx-auto text-gray-900" />
+                    <Minus className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
                   )}
                 </TableCell>
                 <TableCell>
                   <span className={cn(
                     "text-sm font-medium",
                     company.status === 'Blocked' ? 'text-red-600' :
-                    company.status === 'Approaching Block' ? 'text-yellow-600' :
-                    company.status === 'Monitoring' ? 'text-orange-600' :
+                    company.status === 'Approaching Block' ? 'text-orange-600' :
+                    company.status === 'Monitoring' ? 'text-yellow-600' :
                     'text-gray-900'
                   )}>
                     {company.status}
