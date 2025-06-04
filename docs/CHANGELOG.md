@@ -4,6 +4,25 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.6 - 2025-06-04
+
+#### 🔧 Visual Tutorial System Deployment Restoration
+- **Deployment Issue Resolution**
+  - Fixed deployment bloat issue preventing successful builds of working codebase
+  - Optimized project size from 5.2GB to 4.4GB while maintaining full functionality
+  - Successfully deployed application with complete visual system intact
+
+- **Asset Recovery and Restoration**
+  - Recovered 130MB of missing visual assets from git history
+  - Restored welcome_1.png through welcome_7.png for complete onboarding experience
+  - Recovered modal_claims and modal_dash tutorial images for interactive guidance system
+  - Fixed tutorial image path resolution from /attached_assets/ to /assets/tutorials/
+
+- **Visual System Functionality**
+  - Complete tutorial and demo visual system now fully operational
+  - All onboarding modals displaying images correctly
+  - Interactive tutorial guidance system restored to full functionality
+
 ### Version 1.9.4 - 2025-06-01
 
 #### 🚀 Accreditation Validity System Implementation

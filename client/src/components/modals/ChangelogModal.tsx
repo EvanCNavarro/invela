@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'visual-assets-deployment-fix-2025-06-04',
+    date: '2025-06-04',
+    type: 'fix',
+    title: 'Visual Tutorial System Deployment Restoration',
+    description: 'Resolved deployment failures and restored complete visual tutorial and onboarding system with 130MB of recovered assets',
+    details: [
+      'Fixed deployment bloat issue preventing successful builds of working codebase',
+      'Recovered 130MB of missing visual assets from git history including tutorial modals and onboarding images',
+      'Restored welcome_1.png through welcome_7.png for complete onboarding experience',
+      'Fixed tutorial image path resolution from /attached_assets/ to /assets/tutorials/',
+      'Resolved modal_claims and modal_dash tutorial images for interactive guidance system',
+      'Optimized project size from 5.2GB to 4.4GB while maintaining full visual functionality',
+      'Successfully deployed application with complete tutorial and demo visual system intact'
+    ],
+    version: '1.9.6',
+    audience: 'product'
+  },
+  {
     id: 'company-profile-complete-overhaul-2025-06-02',
     date: '2025-06-02',
     type: 'feature',
