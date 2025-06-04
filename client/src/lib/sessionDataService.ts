@@ -145,6 +145,8 @@ function generateConsistentRiskData(company: any, seed: number): SessionCompanyD
     currentScore,
     previousScore,
     previousScore7Day,
+    change30Day: currentScore - previousScore,
+    change7Day: currentScore - previousScore7Day,
     status,
     trend,
     daysInStatus
@@ -354,11 +356,21 @@ export function getSessionCompanyData(company: any): SessionCompanyData {
  * Calculate score change for different timeframes
  */
 export function getScoreChange(sessionData: SessionCompanyData, timeframe: '7day' | '30day'): number {
-  if (timeframe === '7day') {
-    return sessionData.currentScore - sessionData.previousScore7Day;
-  } else {
-    return sessionData.currentScore - sessionData.previousScore;
-  }
+  const change = timeframe === '7day' 
+    ? sessionData.currentScore - sessionData.previousScore7Day
+    : sessionData.currentScore - sessionData.previousScore;
+    
+  console.log(`[SessionData] ${sessionData.name} ${timeframe} change calculation:`, {
+    timeframe,
+    currentScore: sessionData.currentScore,
+    previousScore7Day: sessionData.previousScore7Day,
+    previousScore30Day: sessionData.previousScore,
+    change7Day: sessionData.currentScore - sessionData.previousScore7Day,
+    change30Day: sessionData.currentScore - sessionData.previousScore,
+    requestedChange: change
+  });
+  
+  return change;
 }
 
 /**
