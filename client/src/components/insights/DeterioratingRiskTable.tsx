@@ -21,6 +21,7 @@ import {
   getRiskStatusColor,
   type RiskMonitoringStatus 
 } from '@/lib/riskCalculations';
+import { getSessionCompaniesData } from '@/lib/sessionDataService';
 
 
 // Import shared type from risk calculations service
@@ -54,25 +55,27 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
-  // Process companies with authentic data only
+  // Process companies with session-consistent data
   const processedCompanies = useMemo(() => {
-    logTable('Processing companies with authentic data only', { 
+    logTable('Processing companies with session-consistent data', { 
       timeframe, 
       companyCount: companies.length 
     });
     
-    // Process each company with authentic risk status
-    const processed = companies.map(company => {
-      // Use authentic risk status based on current score vs threshold
-      const status = company.currentScore < blockThreshold ? 'Blocked' : 'Stable';
-      
-      // Since we don't have historical data, score change is always 0
-      const scoreChange = 0;
+    // Use the same session data service as company profiles to ensure consistency
+    const sessionData = getSessionCompaniesData(companies);
+    
+    const processed = sessionData.map(sessionCompany => {
+      const scoreChange = sessionCompany.currentScore - sessionCompany.previousScore;
       
       return {
-        ...company,
+        id: sessionCompany.id,
+        name: sessionCompany.name,
+        currentScore: sessionCompany.currentScore,
+        previousScore: sessionCompany.previousScore,
+        category: sessionCompany.category,
         scoreChange,
-        status
+        status: sessionCompany.status
       };
     });
     
@@ -240,29 +243,22 @@ const RiskTable: React.FC<{
               >
                 <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell className="text-right">{company.currentScore}</TableCell>
-                <TableCell className={cn(
-                  "text-right font-medium",
-                  company.scoreChange > 0 ? "text-red-600" : 
-                  company.scoreChange < 0 ? "text-green-600" : ""
-                )}>
-                  {company.scoreChange > 0 ? `-${company.scoreChange.toFixed(1)}` : 
-                   company.scoreChange < 0 ? `+${Math.abs(company.scoreChange).toFixed(1)}` : 
-                   '0.0'}
+                <TableCell className="text-right font-medium text-gray-900">
+                  {company.scoreChange > 0 ? `+${company.scoreChange}` : 
+                   company.scoreChange < 0 ? `${company.scoreChange}` : 
+                   '0'}
                 </TableCell>
                 <TableCell className="text-center">
-                  {company.scoreChange > 0 ? (
-                    <TrendingDown className="h-5 w-5 mx-auto text-red-500" />
-                  ) : company.scoreChange < 0 ? (
-                    <TrendingUp className="h-5 w-5 mx-auto text-green-500" />
+                  {company.scoreChange > 3 ? (
+                    <TrendingUp className="h-4 w-4 mx-auto text-gray-900" />
+                  ) : company.scoreChange < -3 ? (
+                    <TrendingDown className="h-4 w-4 mx-auto text-gray-900" />
                   ) : (
-                    <Minus className="h-5 w-5 mx-auto text-muted-foreground" />
+                    <Minus className="h-4 w-4 mx-auto text-gray-900" />
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className={cn(
-                    "px-2.5 py-1 rounded-full text-xs font-medium",
-                    getRiskStatusColor(company.status as RiskMonitoringStatus)
-                  )}>
+                  <span className="text-sm font-medium text-gray-900">
                     {company.status}
                   </span>
                 </TableCell>
