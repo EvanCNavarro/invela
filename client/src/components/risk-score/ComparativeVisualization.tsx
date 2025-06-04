@@ -346,8 +346,8 @@ function ComparativeVisualizationInternal({
       <div className="space-y-4">
         {/* Search and buttons row */}
         <div className="flex flex-wrap items-center gap-3 mb-2">
-          {/* Company Search - Fixed width */}
-          <div className="w-80">
+          {/* Company Search - Increased width */}
+          <div className="w-96">
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -368,7 +368,7 @@ function ComparativeVisualizationInternal({
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0" align="start">
+              <PopoverContent className="w-[480px] p-0" align="start">
                 <Command>
                   <CommandInput 
                     placeholder="Search companies by name..." 
@@ -466,10 +466,10 @@ function ComparativeVisualizationInternal({
         <div className="flex flex-wrap gap-2">
           {/* Filled company slots */}
           {selectedCompanies.map((company, index) => (
-            <Badge
+            <Button
               key={company.id}
-              variant="secondary"
-              className="flex items-center gap-2 py-2 px-3 border-2 transition-all duration-200 hover:shadow-sm"
+              variant="outline"
+              className="flex items-center gap-2 py-2 px-3 h-auto border-2 transition-all duration-200 hover:shadow-sm"
               style={{
                 borderColor: COMPANY_COLORS[index % COMPANY_COLORS.length],
                 backgroundColor: `${COMPANY_COLORS[index % COMPANY_COLORS.length]}15`
@@ -488,7 +488,7 @@ function ComparativeVisualizationInternal({
               >
                 <X className="h-3 w-3" />
               </button>
-            </Badge>
+            </Button>
           ))}
           
           {/* Empty company slots */}
