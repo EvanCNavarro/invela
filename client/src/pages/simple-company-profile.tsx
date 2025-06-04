@@ -599,86 +599,51 @@ export default function SimpleCompanyProfile() {
                               })()}
                             </p>
                           </div>
-                          <div className="col-span-2">
-                            <label className="text-xs font-medium text-gray-500 mb-2 block">Risk Trend Analysis</label>
-                            <Tabs defaultValue="30day" className="w-full">
-                              <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="7day">7-Day Change</TabsTrigger>
-                                <TabsTrigger value="30day">30-Day Change</TabsTrigger>
-                              </TabsList>
-                              
-                              <TabsContent value="7day" className="mt-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    if (!company) return (
-                                      <>
-                                        <Minus className="w-3 h-3 text-gray-900" />
-                                        <span className="text-sm text-gray-900">0</span>
-                                        <span className="text-sm text-gray-600">Stable</span>
-                                      </>
-                                    );
-                                    const sessionData = getSessionCompanyData(company);
-                                    const scoreChange = getScoreChange(sessionData, '7day');
-                                    
-                                    const TrendIcon = scoreChange > 3 ? TrendingUp : 
-                                                     scoreChange < -3 ? TrendingDown : Minus;
-                                    
-                                    const statusColor = sessionData.status === 'Blocked' ? 'text-red-600' :
-                                                        sessionData.status === 'Approaching Block' ? 'text-orange-600' :
-                                                        sessionData.status === 'Monitoring' ? 'text-yellow-600' :
-                                                        'text-gray-900';
-                                    
-                                    return (
-                                      <>
-                                        <TrendIcon className={`w-3 h-3 ${statusColor}`} />
-                                        <span className={`text-sm ${statusColor}`}>
-                                          {getFormattedScoreChange(sessionData, '7day')}
-                                        </span>
-                                        <span className={`text-sm ${statusColor}`}>
-                                          {sessionData.status}
-                                        </span>
-                                      </>
-                                    );
-                                  })()}
-                                </div>
-                              </TabsContent>
-                              
-                              <TabsContent value="30day" className="mt-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    if (!company) return (
-                                      <>
-                                        <Minus className="w-3 h-3 text-gray-900" />
-                                        <span className="text-sm text-gray-900">0</span>
-                                        <span className="text-sm text-gray-600">Stable</span>
-                                      </>
-                                    );
-                                    const sessionData = getSessionCompanyData(company);
-                                    const scoreChange = getScoreChange(sessionData, '30day');
-                                    
-                                    const TrendIcon = scoreChange > 3 ? TrendingUp : 
-                                                     scoreChange < -3 ? TrendingDown : Minus;
-                                    
-                                    const statusColor = sessionData.status === 'Blocked' ? 'text-red-600' :
-                                                        sessionData.status === 'Approaching Block' ? 'text-orange-600' :
-                                                        sessionData.status === 'Monitoring' ? 'text-yellow-600' :
-                                                        'text-gray-900';
-                                    
-                                    return (
-                                      <>
-                                        <TrendIcon className={`w-3 h-3 ${statusColor}`} />
-                                        <span className={`text-sm ${statusColor}`}>
-                                          {getFormattedScoreChange(sessionData, '30day')}
-                                        </span>
-                                        <span className={`text-sm ${statusColor}`}>
-                                          {sessionData.status}
-                                        </span>
-                                      </>
-                                    );
-                                  })()}
-                                </div>
-                              </TabsContent>
-                            </Tabs>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Status</label>
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                if (!company) return (
+                                  <>
+                                    <Minus className="w-3 h-3 text-gray-900" />
+                                    <span className="text-sm text-gray-900">0</span>
+                                    <span className="text-sm text-gray-600">Stable</span>
+                                  </>
+                                );
+                                const sessionData = getSessionCompanyData(company);
+                                const scoreChange = getScoreChange(sessionData, '30day');
+                                
+                                const TrendIcon = scoreChange > 3 ? TrendingUp : 
+                                                 scoreChange < -3 ? TrendingDown : Minus;
+                                
+                                const statusColor = sessionData.status === 'Blocked' ? 'text-red-600' :
+                                                    sessionData.status === 'Approaching Block' ? 'text-orange-600' :
+                                                    sessionData.status === 'Monitoring' ? 'text-yellow-600' :
+                                                    'text-gray-900';
+                                
+                                return (
+                                  <>
+                                    <TrendIcon className={`w-3 h-3 ${statusColor}`} />
+                                    <span className={`text-sm ${statusColor}`}>
+                                      {getFormattedScoreChange(sessionData, '30day')}
+                                    </span>
+                                    <span className={`text-sm ${statusColor}`}>
+                                      {sessionData.status}
+                                    </span>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Days in Status</label>
+                            <p className="text-sm text-gray-900">
+                              {(() => {
+                                if (!company) return '0 days';
+                                const sessionData = getSessionCompanyData(company);
+                                return `${sessionData.daysInStatus} days`;
+                              })()}
+                            </p>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Category</label>
