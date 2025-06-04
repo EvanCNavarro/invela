@@ -483,9 +483,6 @@ function ComparativeVisualizationInternal({
               <button
                 onClick={() => {
                   handleRemoveCompany(company.id);
-                  if (company.id === -1) {
-                    setIsIndustryAverageAdded(false);
-                  }
                 }}
                 className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
               >
