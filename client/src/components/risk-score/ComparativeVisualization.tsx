@@ -76,7 +76,7 @@ function ComparativeVisualizationInternal({
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isIndustryAverageAdded, setIsIndustryAverageAdded] = useState(false);
+
   const { toast } = useToast();
 
   // Track when dimensions change to update visualization
@@ -151,10 +151,6 @@ function ComparativeVisualizationInternal({
   // Handle removing a company from the comparison list
   const handleRemoveCompany = (companyId: number) => {
     setSelectedCompanies(prev => prev.filter(c => c.id !== companyId));
-    // If removing industry average, update the tracking state
-    if (companyId === -1) {
-      setIsIndustryAverageAdded(false);
-    }
   };
   
   // Handle adding/removing industry average
@@ -164,7 +160,6 @@ function ComparativeVisualizationInternal({
     if (hasIndustryAverage) {
       // Remove industry average from the list
       setSelectedCompanies(prev => prev.filter(c => c.id !== -1));
-      setIsIndustryAverageAdded(false);
       
       toast({
         title: "Industry Average Removed",
@@ -182,26 +177,18 @@ function ComparativeVisualizationInternal({
           return;
         }
         
-        // Double-check to prevent duplicates
-        if (!selectedCompanies.some(c => c.id === -1)) {
-          setSelectedCompanies(prev => [...prev, industryAverage]);
-          setIsIndustryAverageAdded(true);
-          
-          toast({
-            title: "Industry Average Added",
-            description: "Industry average has been added to comparison.",
-            variant: "default"
-          });
-        }
+        setSelectedCompanies(prev => [...prev, industryAverage]);
+        
+        toast({
+          title: "Industry Average Added",
+          description: "Industry average has been added to comparison.",
+          variant: "default"
+        });
       }
     }
   };
 
-  // Keep industry average tracking state synchronized with the actual list
-  useEffect(() => {
-    const hasIndustryAverage = selectedCompanies.some(c => c.id === -1);
-    setIsIndustryAverageAdded(hasIndustryAverage);
-  }, [selectedCompanies]);
+
 
   // Update current company data when dimensions or score changes
   useEffect(() => {
@@ -445,10 +432,10 @@ function ComparativeVisualizationInternal({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={isIndustryAverageAdded ? "default" : "outline"}
+                  variant={selectedCompanies.some(c => c.id === -1) ? "default" : "outline"}
                   size="sm"
                   onClick={handleToggleIndustryAverage}
-                  disabled={!industryAverage || (selectedCompanies.length >= MAX_COMPARISONS && !isIndustryAverageAdded)}
+                  disabled={!industryAverage || (selectedCompanies.length >= MAX_COMPARISONS && !selectedCompanies.some(c => c.id === -1))}
                   className="whitespace-nowrap"
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
@@ -457,7 +444,7 @@ function ComparativeVisualizationInternal({
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                       Loading...
                     </>
-                  ) : isIndustryAverageAdded ? (
+                  ) : selectedCompanies.some(c => c.id === -1) ? (
                     'Remove Industry Average'
                   ) : (
                     'Add Industry Average'
@@ -466,7 +453,7 @@ function ComparativeVisualizationInternal({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm">
-                  {isIndustryAverageAdded 
+                  {selectedCompanies.some(c => c.id === -1)
                     ? 'Remove industry average from comparison' 
                     : 'Add industry average for benchmark comparison'}
                 </p>
