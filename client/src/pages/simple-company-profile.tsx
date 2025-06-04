@@ -581,15 +581,22 @@ export default function SimpleCompanyProfile() {
                           <div>
                             <label className="text-xs font-medium text-gray-500">S&P DARS</label>
                             <p className="text-sm text-gray-900">
-                              {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
+                              {(() => {
+                                if (!company) return '0/100';
+                                const sessionData = getSessionCompanyData(company);
+                                return `${sessionData.currentScore}/100`;
+                              })()}
                             </p>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Risk Level</label>
                             <p className="text-sm text-gray-900">
-                              {(company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 30 ? "Low Risk" : 
-                               (company?.risk_score || company?.riskScore || company?.chosen_score || 0) < 70 ? "Medium Risk" : 
-                               "High Risk"}
+                              {(() => {
+                                if (!company) return 'Low Risk';
+                                const sessionData = getSessionCompanyData(company);
+                                const score = sessionData.currentScore;
+                                return score < 30 ? "Low Risk" : score < 70 ? "Medium Risk" : "High Risk";
+                              })()}
                             </p>
                           </div>
                           <div>
