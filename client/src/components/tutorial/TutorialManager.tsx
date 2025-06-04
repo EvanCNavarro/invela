@@ -366,6 +366,7 @@ const TUTORIAL_CONTENT: Record<string, {
 
 interface TutorialManagerProps {
   tabName: string;
+  children: React.ReactNode;
 }
 
 /**
@@ -377,7 +378,7 @@ interface TutorialManagerProps {
  * 
  * @returns A React element containing the TabTutorialModal or null if no tutorial is available
  */
-export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactNode {
+export function TutorialManager({ tabName, children }: TutorialManagerProps): React.ReactNode {
   // Initialize with detailed logging
   logger.init(`Initializing for tab: ${tabName}`);
   
@@ -582,13 +583,13 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
     return null;
   }
   
-  // Do not render if tutorial is completed
+  // If tutorial is completed, just render children without tutorial modal
   if (isCompleted) {
     // Only log if we have data
     if (initializationComplete) {
       logger.debug(`Tutorial already completed for tab: ${normalizedTabName}`);
     }
-    return null;
+    return <>{children}</>;
   }
   
   // Find the content for this tab
@@ -654,7 +655,7 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   // Generate the image URL based on the tab name and step
   const getImageUrl = () => {
     // Map tab names to their correct image prefix pattern based on available files
-    const tabToPrefix = {
+    const tabToPrefix: Record<string, string> = {
       'dashboard': 'modal_dash',
       'file-vault': 'modal_file',
       'risk-score': 'modal_risk',
@@ -677,19 +678,22 @@ export function TutorialManager({ tabName }: TutorialManagerProps): React.ReactN
   
   // Use the TabTutorialModal with the appropriate content
   return (
-    <TabTutorialModal
-      title={modalTitle}
-      description={tutorialContent.steps[stepToUse].description}
-      imageUrl={imageUrl}
-      isLoading={isLoading || imageLoading}
-      currentStep={stepToUse}
-      totalSteps={tutorialContent.steps.length}
-      onNext={handleNext}
-      onBack={handleBack}
-      onComplete={handleComplete}
-      onClose={() => markTutorialSeen()}
-      stepTitle={tutorialContent.steps[stepToUse].title}
-      bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
-    />
+    <>
+      {children}
+      <TabTutorialModal
+        title={modalTitle}
+        description={tutorialContent.steps[stepToUse].description}
+        imageUrl={imageUrl}
+        isLoading={isLoading || imageLoading}
+        currentStep={stepToUse}
+        totalSteps={tutorialContent.steps.length}
+        onNext={handleNext}
+        onBack={handleBack}
+        onComplete={handleComplete}
+        onClose={() => markTutorialSeen()}
+        stepTitle={tutorialContent.steps[stepToUse].title}
+        bulletPoints={tutorialContent.steps[stepToUse].bulletPoints}
+      />
+    </>
   );
 }

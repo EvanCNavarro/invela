@@ -9,12 +9,23 @@ import {
   riskBucketColors 
 } from '@/components/network/types';
 import { Loader2, CheckCircle } from 'lucide-react';
+import { ContainerAwareChartWrapper } from '@/components/ui/container-aware-chart-wrapper';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
 
 interface NetworkInsightVisualizationProps {
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-export function NetworkInsightVisualization({ className }: NetworkInsightVisualizationProps) {
+/**
+ * Internal component that renders the network visualization with responsive dimensions
+ */
+function NetworkInsightVisualizationInternal({ 
+  className, 
+  width = 800, 
+  height = 500 
+}: NetworkInsightVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [selectedNodePosition, setSelectedNodePosition] = useState<{x: number, y: number} | null>(null);
@@ -42,16 +53,16 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
     }
   }, [data]);
   
-  // D3 visualization - simplified from main component
+  // D3 visualization - responsive version using provided dimensions
   useEffect(() => {
-    if (!svgRef.current || !data) return;
+    if (!svgRef.current || !data || !width || !height) return;
+
+    console.debug('[NetworkInsightVisualization] Rendering with dimensions:', { width, height });
 
     // Clear previous visualization
     d3.select(svgRef.current).selectAll('*').remove();
 
     const svg = d3.select(svgRef.current);
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
     const centerX = width / 2;
     const centerY = height / 2;
 
@@ -198,8 +209,7 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
             .attr('stroke-width', 2);
           
           // Store the node's position for connection details panel positioning
-          const rect = svgRef.current?.getBoundingClientRect();
-          const nodeX = rect ? centerX + x : 0;
+          const nodeX = centerX + x;
           
           // Update state after visual changes to ensure UI is consistent
           setSelectedNodePosition({ x: nodeX, y: 0 });
@@ -235,7 +245,7 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
       setSelectedNodePosition(null);
     });
 
-  }, [data, selectedNode]);
+  }, [data, selectedNode, width, height]);
 
   // Handle window clicks to close details
   useEffect(() => {
@@ -282,11 +292,11 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
   return (
     <div className={`relative ${className}`}>
       {isLoading ? (
-        <div className="flex items-center justify-center h-[550px]">
+        <div className="flex items-center justify-center" style={{ height }}>
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center h-[550px] space-y-2">
+        <div className="flex flex-col items-center justify-center space-y-2" style={{ height }}>
           <div className="text-destructive font-medium">Failed to load network data</div>
           <div className="text-xs text-muted-foreground max-w-md">
             {error instanceof Error ? error.message : 'Check console for details'}
@@ -294,12 +304,12 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
         </div>
       ) : (
         <>
-          {/* Network visualization with proper spacing */}
+          {/* Network visualization with responsive dimensions */}
           <div className="relative">
             <svg 
               ref={svgRef} 
-              width="100%" 
-              height="500" 
+              width={width} 
+              height={height} 
               className="bg-muted/20 rounded-lg"
             ></svg>
             {selectedNode && data && (
@@ -393,5 +403,31 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Responsive NetworkInsightVisualization component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function NetworkInsightVisualization({ className }: { className?: string }) {
+  return (
+    <ChartErrorBoundary chartName="NetworkInsightVisualization">
+      <ContainerAwareChartWrapper
+        className={className}
+        minWidth={400}
+        minHeight={350}
+        aspectRatio={16/10}
+        fallbackHeight={500}
+      >
+        {({ width, height }: { width: number; height: number }) => (
+          <NetworkInsightVisualizationInternal 
+            className={className}
+            width={width}
+            height={height}
+          />
+        )}
+      </ContainerAwareChartWrapper>
+    </ChartErrorBoundary>
   );
 }

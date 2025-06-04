@@ -1,58 +1,119 @@
+/**
+ * ========================================
+ * Main Application Entry Point
+ * ========================================
+ * 
+ * The primary React application component that orchestrates all core functionality
+ * including routing, authentication, WebSocket connections, and service initialization.
+ * This component serves as the foundation for the entire enterprise risk assessment platform.
+ * 
+ * Key Features:
+ * - Centralized routing configuration with protected routes
+ * - Service initialization and dependency injection
+ * - WebSocket connection management for real-time updates
+ * - Authentication state management and context provision
+ * - Toast notification system integration
+ * - Responsive layout management with dashboard wrapper
+ * 
+ * Dependencies:
+ * - React Router (wouter): Client-side routing and navigation
+ * - TanStack Query: Data fetching and state management
+ * - WebSocket Provider: Real-time communication infrastructure
+ * - Authentication System: User session and permission management
+ * 
+ * @module App
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// React core functionality
 import React, { useEffect, Suspense, useState } from "react";
+
+// Routing and navigation
 import { Switch, Route, Redirect } from "wouter";
+import { useLocation } from "wouter";
+
+// Data management and state
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { AuthProvider } from "@/hooks/use-auth";
-import { Toaster } from "@/components/ui/toaster";
-import { OnboardingWrapper } from "@/components/OnboardingWrapper";
-import { ToastProvider } from "@/components/ui/toast";
-import { WebSocketProvider } from "@/providers/websocket-provider";
-import ScrollToTop from "@/components/ScrollToTop";
-import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
 
-// Import new unified services and phased startup components
+// Authentication and security
+import { AuthProvider } from "@/hooks/use-auth";
+
+// UI components and notifications
+import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
+import ScrollToTop from "@/components/ScrollToTop";
+
+// Layout and structure
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { OnboardingWrapper } from "@/components/OnboardingWrapper";
+
+// Real-time communication
+import { WebSocketProvider } from "@/providers/websocket-provider";
+
+// Service initialization and management
 import { initializeServices } from "./services/unified-service-registration";
 import { phaseStartup, StartupPhase } from "./utils/phased-startup";
 import getLogger from "./utils/standardized-logger";
 
-// Legacy imports - will be eventually removed
+// Legacy service registration (scheduled for removal in future versions)
 import { registerServices } from "./services/registerServices";
 import { registerStandardizedServices, useStandardizedServices } from "./services/register-standardized-services";
-import FormSubmissionWorkflowPage from "@/pages/form-submission-workflow";
 
-import DashboardPage from "@/pages/dashboard-page";
-import NotFound from "@/pages/not-found";
+// ========================================
+// PAGE COMPONENTS
+// ========================================
+
+// Authentication and user management pages
 import LoginPage from "@/pages/login-page";
 import RegisterPage from "@/pages/register-page";
+import DemoPage from "@/pages/demo-page";
+
+// Core dashboard and navigation pages
+import DashboardPage from "@/pages/dashboard-page";
 import NetworkPage from "@/pages/network-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
+
+// Company and profile management pages
+import SimpleCompanyProfile from "@/pages/simple-company-profile";
 import FileVault from "@/pages/FileVault";
-import CompanyProfilePage from "@/pages/company-profile-page";
-// Removed playground page import
+
+// Task and form workflow pages
 import TaskPage from "@/pages/task-page";
 import KY3PTaskPage from "@/pages/ky3p-task-page";
 import OpenBankingTaskPage from "@/pages/open-banking-task-page";
-import DiagnosticPage from "@/pages/diagnostic-page";
+import FormSubmissionWorkflowPage from "@/pages/form-submission-workflow";
+
+// Risk assessment and claims pages
 import RiskScorePage from "@/pages/risk-score-page";
 import ClaimsRiskPage from "@/pages/claims-risk-page";
+
+// Diagnostic and utility pages
+import DiagnosticPage from "@/pages/diagnostic-page";
+import NotFound from "@/pages/not-found";
+// Development and testing utility pages
 import TaskFix from "@/pages/TaskFix";
 import WebSocketDemoPage from "@/pages/websocket-demo-page";
-// Builder pages have been removed
-// Empty component definitions for type checking - these components are no longer used
-const BuilderPage = () => null;
-const OnboardingBuilderPage = () => null;
-const RiskRulesBuilderPage = () => null;
-const ReportingBuilderPage = () => null;
-const GroupsBuilderPage = () => null;
+import { ComponentLibrary } from "@/pages/component-library";
+
+// Route protection utilities
 import { ProtectedRoute } from "./lib/protected-route";
 
-// Landing pages
+// Landing page components (public-facing marketing pages)
 import LandingPage from "@/pages/landing";
+
+// Company information pages
 import AboutPage from "@/pages/landing/company/about";
 import ContactUsPage from "@/pages/landing/company/contact-us";
+
+// Product showcase pages
 import AccreditationPage from "@/pages/landing/products/accreditation";
 import RiskScoreLandingPage from "@/pages/landing/products/risk-score";
 import InvelaRegistryPage from "@/pages/landing/products/invela-registry";
@@ -60,16 +121,53 @@ import DataAccessGrantsServicePage from "@/pages/landing/products/data-access-gr
 import LiabilityInsurancePage from "@/pages/landing/products/liability-insurance";
 import DisputeResolutionPage from "@/pages/landing/products/dispute-resolution";
 import InsightsConsultingPage from "@/pages/landing/products/insights-consulting";
+
+// Legal and compliance pages
 import PrivacyPolicyPage from "@/pages/landing/legal/privacy-policy";
 import TermsOfUsePage from "@/pages/landing/legal/terms-of-use";
 import CompliancePage from "@/pages/landing/legal/compliance";
 import LegalPage from "@/pages/landing/legal";
+
+// Site navigation and miscellaneous pages
 import SiteMapPage from "@/pages/landing/site-map";
 import RiskScoreConfigurationPage from "@/pages/risk-score-configuration-page";
+
+// Developer tools and documentation
+// Removed Storybook - using custom component library
+
+// Claims management pages
 import ClaimsPage from "@/pages/claims";
 import ClaimDetailsPage from "@/pages/claims/[id]";
 
-function ProtectedLayout({ children }: { children: React.ReactNode }) {
+
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Props interface for the ProtectedLayout component
+ * Ensures proper typing for protected route wrapper
+ */
+interface ProtectedLayoutProps {
+  children: React.ReactNode;
+}
+
+// ========================================
+// COMPONENT IMPLEMENTATIONS
+// ========================================
+
+/**
+ * Protected Layout Component
+ * 
+ * Provides a secure wrapper for authenticated routes with consistent
+ * styling and minimum height constraints. This component ensures that
+ * protected content is displayed within a standardized layout structure.
+ * 
+ * @param props - Component props containing children elements
+ * @returns JSX element with protected layout structure
+ */
+function ProtectedLayout({ children }: ProtectedLayoutProps): JSX.Element {
   return (
     <div className="min-h-screen">
       {children}
@@ -77,8 +175,28 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Router() {
+/**
+ * Router Component
+ * 
+ * Central routing configuration for the entire application. This component
+ * manages all navigation paths including public landing pages, authenticated
+ * dashboard routes, and specialized workflow pages. The router implements
+ * both public and protected route patterns with appropriate access controls.
+ * 
+ * Route Categories:
+ * - Landing Pages: Public marketing and informational content
+ * - Authentication: Login, registration, and user management
+ * - Dashboard: Protected application functionality
+ * - Task Management: Form workflows and data collection
+ * - Risk Assessment: Analysis and scoring features
+ * - Claims Management: Insurance and dispute handling
+ * 
+ * @returns JSX element containing the complete routing configuration
+ */
+function Router(): JSX.Element {
   const [location] = useLocation();
+  
+  // Development logging for route debugging (can be removed in production)
   console.log('[Router] Current location:', location);
 
   return (
@@ -102,9 +220,16 @@ function Router() {
         <Route path="/landing/legal/compliance" component={CompliancePage} />
         <Route path="/landing/site-map" component={SiteMapPage} />
 
+        {/* Developer Tools */}
+        {/* Component Library - Custom React-based documentation */}
+        <Route path="/component-library">
+          <ComponentLibrary />
+        </Route>
+
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
+        <Route path="/demo" component={DemoPage} />
         <Route path="/auth">
           {(params) => {
             const searchParams = new URLSearchParams(window.location.search);
@@ -161,13 +286,21 @@ function Router() {
           )} 
         />
 
-        <Route path="/network/company/:companySlug" component={({ params }: { params: { companySlug: string } }) => (
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <CompanyProfilePage />
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        )} />
+        <ProtectedRoute 
+          path="/network/company/:companyId" 
+          component={({ params }: { params: { companyId: string } }) => {
+            console.log('[Router] Rendering company profile page for ID:', params.companyId);
+            console.log('[Router Debug] Full location when rendering company profile:', location);
+            console.log('[Router Debug] Query parameters present:', location.includes('?') ? location.split('?')[1] : 'none');
+            return (
+              <ProtectedLayout>
+                <OnboardingWrapper>
+                  <SimpleCompanyProfile />
+                </OnboardingWrapper>
+              </ProtectedLayout>
+            );
+          }} 
+        />
 
         {/* Main nested task route - will handle both task types and IDs */}
         <ProtectedRoute 
@@ -342,10 +475,32 @@ function Router() {
   );
 }
 
-// App logger created with the standardized logger
+// ========================================
+// MAIN APPLICATION COMPONENT
+// ========================================
+
+// Initialize standardized logger for application-level events
 const logger = getLogger('App');
 
-export default function App() {
+/**
+ * Main Application Component
+ * 
+ * The root component that orchestrates the entire enterprise risk assessment platform.
+ * This component implements a phased startup approach using OODA loop principles
+ * to ensure reliable initialization of all system components and dependencies.
+ * 
+ * Initialization Phases:
+ * 1. Framework: React core and fundamental providers
+ * 2. Context: User authentication and company context
+ * 3. Services: Business logic and form services
+ * 4. Features: Advanced features and integrations
+ * 
+ * The component provides comprehensive error handling, logging, and real-time
+ * communication capabilities through WebSocket integration.
+ * 
+ * @returns JSX element containing the complete application structure
+ */
+export default function App(): JSX.Element {
   // Track application startup phase
   const [startupPhase, setStartupPhase] = useState<StartupPhase>('framework');
 

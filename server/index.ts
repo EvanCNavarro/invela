@@ -1,28 +1,102 @@
+/**
+ * ========================================
+ * Express Server Entry Point
+ * ========================================
+ * 
+ * The main server entry point for the enterprise risk assessment platform backend.
+ * This file orchestrates the complete server infrastructure including Express setup,
+ * WebSocket server initialization, authentication middleware, and API route registration.
+ * 
+ * Key Responsibilities:
+ * - Express application configuration and middleware setup
+ * - HTTP and WebSocket server initialization for real-time communication
+ * - Authentication and authorization middleware configuration
+ * - API route registration and request handling
+ * - File system setup for document uploads and storage
+ * - Error handling and logging infrastructure
+ * 
+ * Dependencies:
+ * - Express.js for HTTP server and middleware
+ * - HTTP server for WebSocket upgrade handling
+ * - Authentication system for secure API access
+ * - Database connection for data persistence
+ * - WebSocket infrastructure for real-time updates
+ * 
+ * @module server/index
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Express server framework and core types
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
+import cors from "cors";
+
+// File system operations for upload handling
+import fs from 'fs';
+import path from 'path';
+
+// Application infrastructure components
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic } from "./vite";
 import { logger } from "./utils/logger";
 import { setupAuth } from "./auth";
 import { setupWebSocketServer } from "./websocket-setup";
-import cors from "cors";
-import fs from 'fs';
-import path from 'path';
+// Removed Storybook proxy - using custom component library
 
-// Create required directories
-const uploadsDir = path.join(process.cwd(), 'uploads');
-const documentsDir = path.join(uploadsDir, 'documents');
+// ========================================
+// DIRECTORY INITIALIZATION
+// ========================================
 
-// Ensure upload directories exist
-[uploadsDir, documentsDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
-  }
-});
+/**
+ * Initialize Required File System Directories
+ * 
+ * Creates necessary directories for file uploads and document storage
+ * if they don't already exist. This ensures the server can handle
+ * file operations without filesystem errors.
+ */
+function initializeFileSystemDirectories(): void {
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  const documentsDir = path.join(uploadsDir, 'documents');
+  
+  // Ensure upload directories exist
+  [uploadsDir, documentsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.info(`Created directory: ${dir}`);
+    }
+  });
+}
 
-// Custom error class for API errors
+// Initialize directories on server startup
+initializeFileSystemDirectories();
+
+// ========================================
+// ERROR HANDLING CLASSES
+// ========================================
+
+/**
+ * Custom API Error Class
+ * 
+ * Provides structured error handling for API endpoints with
+ * support for HTTP status codes, error codes, and additional details.
+ * This enables consistent error responses across the application.
+ * 
+ * @extends Error
+ */
 export class APIError extends Error {
+  /**
+   * Create a new API error
+   * 
+   * @param message - Human-readable error message
+   * @param status - HTTP status code (default: 500)
+   * @param code - Application-specific error code
+   * @param details - Additional error context or debugging information
+   */
   constructor(
     public message: string,
     public status: number = 500,
@@ -31,13 +105,35 @@ export class APIError extends Error {
   ) {
     super(message);
     this.name = 'APIError';
+    
+    // Maintain proper stack trace for debugging
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, APIError);
+    }
   }
 }
 
+// ========================================
+// SERVER INITIALIZATION
+// ========================================
+
+// Create Express application instance
 const app = express();
+
+// Create HTTP server for WebSocket upgrade capability
 const server = createServer(app);
 
-// Configure CORS for all environments
+// ========================================
+// MIDDLEWARE CONFIGURATION
+// ========================================
+
+/**
+ * Configure Cross-Origin Resource Sharing (CORS)
+ * 
+ * Enables secure communication between frontend and backend across
+ * different domains and ports. Configuration supports both development
+ * and production environments with appropriate security settings.
+ */
 app.use(cors({
   origin: true,
   credentials: true,
@@ -54,6 +150,9 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Set up authentication before routes
 setupAuth(app);
+
+// Set up Storybook subdomain proxy
+// Removed Storybook proxy setup - using custom component library
 
 /**
  * Enterprise-Grade Smart API Request Logging Middleware
@@ -164,45 +263,58 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes
-registerRoutes(app);
+// Register API routes and setup environment in proper order
+(async () => {
+  logger.info('[PROD-DEBUG] Starting server initialization sequence');
+  
+  // First, register all API routes
+  logger.info('[PROD-DEBUG] Beginning API routes registration...');
+  await registerRoutes(app);
+  logger.info('[ServerStartup] API routes registration completed');
+  logger.info('[PROD-DEBUG] ✓ All API routes now registered and have priority');
 
-// Setup WebSocket server with error handling - using unified implementation
-// Initialize once and store the instance for all modules to access
-// This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
-const wssInstance = setupWebSocketServer(server);
-logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
+  // Setup WebSocket server with error handling - using unified implementation
+  // Initialize once and store the instance for all modules to access
+  // This uses a dedicated path (/ws) to avoid conflicts with Vite's HMR WebSocket
+  const wssInstance = setupWebSocketServer(server);
+  logger.info('[ServerStartup] WebSocket server initialized with unified implementation');
 
-// Ensure old-style handlers can still access the WebSocket server
-// by importing functions from the utilities that need access
-import { registerWebSocketServer } from './utils/task-update';
-import { setWebSocketServer } from './utils/task-broadcast';
+  // Ensure old-style handlers can still access the WebSocket server
+  // by importing functions from the utilities that need access
+  const { registerWebSocketServer } = await import('./utils/task-update');
+  const { setWebSocketServer } = await import('./utils/task-broadcast');
 
-// Register WebSocket server with task-update utility for backward compatibility
-registerWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-update utility');
+  // Register WebSocket server with task-update utility for backward compatibility
+  registerWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-update utility');
 
-// Set WebSocket server reference for task-broadcast utility
-setWebSocketServer(wssInstance);
-logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
+  // Set WebSocket server reference for task-broadcast utility
+  setWebSocketServer(wssInstance);
+  logger.info('[ServerStartup] WebSocket server registered with task-broadcast utility');
 
-// Log WebSocket server initialization details for debugging
-setTimeout(() => {
-  if (wssInstance && wssInstance.clients) {
-    logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+  // Log WebSocket server initialization details for debugging
+  setTimeout(() => {
+    if (wssInstance && wssInstance.clients) {
+      logger.info(`[ServerStartup] WebSocket server active with ${wssInstance.clients.size} connected clients`);
+    } else {
+      logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+    }
+  }, 1000);
+
+  // CRITICAL: Set up frontend serving AFTER API routes are fully registered
+  logger.info('[PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes)');
+  
+  if (false) {  // Temporarily force development mode for proper frontend serving
+    logger.info('[PROD-DEBUG] Production mode: Setting up static file serving');
+    logger.info('[PROD-DEBUG] API routes should now have priority over catch-all HTML serving');
+    serveStatic(app);
+    logger.info('[PROD-DEBUG] ✓ Static file serving configured with API route priority');
   } else {
-    logger.warn('[ServerStartup] Warning: WebSocket server not properly initialized');
+    logger.info('[PROD-DEBUG] Development mode: Setting up Vite development server');
+    setupVite(app, server);
+    logger.info('[PROD-DEBUG] ✓ Development server configured with API route priority verified');
   }
-}, 1000);
-
-// Set up development environment
-if (process.env.NODE_ENV !== "production") {
-  logger.info("Setting up Vite development server");
-  setupVite(app, server);
-} else {
-  // Serve static files only in production, after API routes
-  serveStatic(app);
-}
+})();
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -262,8 +374,8 @@ const isProductionDeployment = true;  // Force production mode for Cloud Run dep
 process.env.NODE_ENV = 'production';
 
 // Replit's recommended dynamic port configuration
-// Cloud Run uses port 8080, but environment variable takes precedence for deployment flexibility  
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+// Use port 5000 for Replit workflow compatibility, fallback to 8080 for Cloud Run
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 // Fallback ensures Cloud Run compatibility while respecting Replit's deployment environment
 const HOST = '0.0.0.0'; // Required for proper binding in Replit environment
 

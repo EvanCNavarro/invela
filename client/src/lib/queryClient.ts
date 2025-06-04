@@ -1,5 +1,38 @@
+/**
+ * ========================================
+ * Query Client - API Communication Layer
+ * ========================================
+ * 
+ * Centralized API communication system for the enterprise risk assessment platform.
+ * Implements TanStack Query integration with custom error handling, request
+ * configuration, and response processing for all HTTP operations.
+ * 
+ * Key Features:
+ * - Type-safe API request functions
+ * - Automatic error handling and reporting
+ * - Multiple request method support (GET, POST, PUT, DELETE)
+ * - Response validation and error extraction
+ * - Debug logging for development
+ * 
+ * Request Methods:
+ * - GET: Data retrieval operations
+ * - POST: Data creation and submissions
+ * - PUT/PATCH: Data updates
+ * - DELETE: Resource removal
+ * 
+ * @module lib/queryClient
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+/**
+ * HTTP Response Validator
+ * 
+ * Validates HTTP responses and extracts error messages for user display.
+ * Provides clean error messages without exposing internal status codes.
+ */
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     // Get response text and use it directly for the error message without status code
@@ -210,7 +243,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   
   // Default configuration (moderate caching)
   const defaultOptions = {
-    refetchInterval: false,
+    refetchInterval: false as const,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60, // 1 minute
     retry: false,
@@ -221,10 +254,10 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // Risk score data - critical to always fetch fresh from server
   if (urlStr.includes('/api/risk-score/')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: true,   // Always fetch when window gets focus
       staleTime: 0,                 // Always consider data stale - critical fix
-      cacheTime: 1000 * 60,         // 1 minute cache time
+      gcTime: 1000 * 60,           // 1 minute garbage collection time (React Query v5)
       retry: true,                  // Retry failed requests
       retryDelay: 1000,             // Retry after 1 second
       refetchOnReconnect: true,     // Always refetch on reconnect
@@ -239,7 +272,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: true,   // Fetch when tab becomes active to check for updated permissions
       staleTime: 60000,             // 1 minute - keep data fresh for less time to reflect permission changes
       retry: false,
-      cacheTime: 5 * 60 * 1000,     // 5 minutes - shorter cache time
+      gcTime: 5 * 60 * 1000,        // 5 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: true,     // Refetch on reconnect to ensure permissions are current
       refetchOnMount: true,         // Refetch on mount to ensure permissions are current
     };
@@ -252,7 +285,7 @@ export function getOptimizedQueryOptions(url: string | string[]) {
       refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
       staleTime: 300000,            // 5 minutes - consider data fresh for much longer
       retry: false,
-      cacheTime: 30 * 60 * 1000,    // 30 minutes - keep in cache much longer
+      gcTime: 30 * 60 * 1000,       // 30 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: false,    // Don't refetch on reconnect
       refetchOnMount: false,        // Don't refetch on mount
     };
@@ -261,11 +294,11 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // KYB fields - aggressive caching since form fields rarely change
   if (urlStr.includes('/api/kyb/fields') || urlStr.includes('/api/form-fields/')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 3600000,           // 1 hour - form fields basically never change
       retry: false,
-      cacheTime: 3600000,           // 1 hour
+      gcTime: 3600000,              // 1 hour garbage collection time (React Query v5)
       refetchOnReconnect: false,    // Don't refetch on reconnect
       refetchOnMount: false,        // Don't refetch on mount
     };
@@ -274,11 +307,11 @@ export function getOptimizedQueryOptions(url: string | string[]) {
   // Task form data - cache longer since it changes less frequently
   if (urlStr.includes('/api/task-templates')) {
     return {
-      refetchInterval: false,       // Don't poll automatically
+      refetchInterval: false as const,  // Don't poll automatically
       refetchOnWindowFocus: false,  // Don't fetch on window focus
       staleTime: 5 * 60 * 1000,     // 5 minutes - form templates rarely change
       retry: false,
-      cacheTime: 10 * 60 * 1000,    // 10 minutes - keep in cache longer
+      gcTime: 10 * 60 * 1000,       // 10 minutes - garbage collection time (React Query v5)
       refetchOnReconnect: true,
       refetchOnMount: true,
     };

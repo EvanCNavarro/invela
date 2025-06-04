@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * WebSocket Context Provider
+ * ========================================
+ * 
+ * React context providing WebSocket connectivity and real-time communication
+ * capabilities throughout the enterprise risk assessment platform. Manages
+ * connection state, message handling, and automatic reconnection functionality.
+ * 
+ * @module contexts/WebSocketContext
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 
 // Define message types that can be received from the server

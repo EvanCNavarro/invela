@@ -16,7 +16,7 @@ const { Client } = pg;
 const config = {
   baseUrl: 'http://localhost:5000',
   sessionCookiePath: './.session-cookie',
-  demoCompanyName: 'DemoTest7',
+  // Company name will be generated dynamically using secure API
   recipient: {
     name: 'John Doe7',
     email: '7@e.com'
@@ -78,12 +78,18 @@ async function main() {
       throw new Error('Failed to read session cookie');
     }
     
-    // Create the demo company
-    console.log(`Creating demo company: ${config.demoCompanyName}`);
+    // Generate secure company name using API
+    const nameResponse = await axios.get(`${config.baseUrl}/api/demo/generate-company-name`, {
+      headers: { 'Cookie': sessionCookie }
+    });
+    
+    const secureCompanyName = nameResponse.data.companyName;
+    console.log(`Creating demo company: ${secureCompanyName}`);
+    
     const response = await axios.post(
       `${config.baseUrl}/api/fintech/invite`,
       {
-        name: config.demoCompanyName,
+        name: secureCompanyName,
         category: 'FinTech',
         revenue_tier: 'xlarge',
         recipient_name: config.recipient.name,

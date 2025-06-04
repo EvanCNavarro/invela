@@ -9,9 +9,11 @@ interface SearchBarProps extends React.InputHTMLAttributes<HTMLInputElement> {
   keys?: string[]
   onResults?: (results: any[]) => void
   onSearch?: (query: string) => void
+  isLoading?: boolean
   isGlobalSearch?: boolean
   containerClassName?: string
   contextualType?: string
+  debounceMs?: number
 }
 
 export function SearchBar({
@@ -19,15 +21,25 @@ export function SearchBar({
   keys,
   onResults,
   onSearch,
+  isLoading = false,
   isGlobalSearch,
   containerClassName,
   contextualType,
+  debounceMs = 300,
   className,
+  value: controlledValue,
+  onChange: controlledOnChange,
+  placeholder,
   ...props
 }: SearchBarProps) {
   const [query, setQuery] = React.useState("")
   const [debouncedQuery, setDebouncedQuery] = React.useState("")
+  const debounceTimeout = React.useRef<NodeJS.Timeout>()
   const fuseRef = React.useRef<Fuse<any> | null>(null)
+  
+  // Handle controlled vs uncontrolled input
+  const inputValue = controlledValue !== undefined ? controlledValue : query
+  const hasValue = inputValue !== ''
   
   // Initialize Fuse instance when data or keys change
   React.useEffect(() => {
@@ -48,15 +60,42 @@ export function SearchBar({
     }
   }, [data, keys])
   
-  // Debounce search query to reduce unnecessary searches during typing
+  // Enhanced debounced search with proper cleanup
+  const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value
+
+    // Handle controlled input
+    if (controlledOnChange) {
+      controlledOnChange(event)
+    } else {
+      setQuery(newValue)
+    }
+
+    // Handle debounced search with proper timeout management
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current)
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedQuery(newValue)
+      if (fuseRef.current && newValue) {
+        const results = fuseRef.current.search(newValue)
+        onResults?.(results)
+      } else if (!newValue) {
+        onResults?.([])
+      }
+      onSearch?.(newValue)
+    }, debounceMs)
+  }, [controlledOnChange, debounceMs, onSearch, onResults])
+
+  // Cleanup timeout on unmount
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-      onSearch && onSearch(query);
-    }, 250); // Slightly faster response
-    
-    return () => clearTimeout(timer);
-  }, [query, onSearch]);
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current)
+      }
+    }
+  }, [])
 
   // Perform search when debounced query changes
   React.useEffect(() => {
@@ -99,41 +138,54 @@ export function SearchBar({
     }
   }, [debouncedQuery, onResults]);
 
-  const handleClear = () => {
-    setQuery("");
-    onSearch && onSearch("");
-    onResults && onResults([]);
-  };
+  const handleClear = React.useCallback(() => {
+    if (controlledOnChange) {
+      const event = {
+        target: { value: '' }
+      } as React.ChangeEvent<HTMLInputElement>
+      controlledOnChange(event)
+    } else {
+      setQuery('')
+    }
+    setDebouncedQuery('')
+    onResults?.([])
+    onSearch?.('')
+  }, [controlledOnChange, onSearch, onResults])
+
+  // Determine placeholder text
+  const getPlaceholder = () => {
+    if (isLoading) return "Loading..."
+    if (isGlobalSearch) return "Search Invela Trust Network..."
+    if (contextualType) return `Search for ${contextualType}`
+    return placeholder || "Search..."
+  }
 
   return (
-    <div className={cn("relative", containerClassName)}>
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-        
-        <Input
-          type="search"
-          placeholder={isGlobalSearch 
-            ? "Search files, companies, and more..." 
-            : props.placeholder || `Search ${contextualType || "items"}...`}
-          className={cn(
-            "h-9 w-full md:w-[300px] lg:w-[400px] pl-8",
-            className
-          )}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          {...props}
-        />
-        
-        {query.length > 0 && (
-          <button
-            onClick={handleClear}
-            className="absolute right-2.5 top-2.5 h-4 w-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" />
-          </button>
+    <div className={cn("relative flex w-full items-center min-w-0 bg-white dark:bg-zinc-950 rounded-full border shadow-sm", containerClassName)}>
+      <Search className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none" />
+      
+      <Input
+        type="text"
+        placeholder={getPlaceholder()}
+        value={inputValue}
+        onChange={handleChange}
+        className={cn(
+          "h-11 w-full bg-transparent border-0 pl-12 pr-12 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 rounded-full",
+          className
         )}
-      </div>
+        disabled={isLoading}
+        {...props}
+      />
+      
+      {hasValue && (
+        <button
+          onClick={handleClear}
+          className="absolute right-4 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+          type="button"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }

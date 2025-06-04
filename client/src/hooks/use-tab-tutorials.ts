@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Tab Tutorials Hook - Multi-Tab Learning Coordination
+ * ========================================
+ * 
+ * Comprehensive tab tutorial management hook providing coordinated learning
+ * experiences across multiple browser tabs and platform sections. Manages
+ * tutorial progress, completion tracking, and cross-tab synchronization.
+ * 
+ * Key Features:
+ * - Multi-tab tutorial state synchronization
+ * - Tab name normalization for consistent identification
+ * - Tutorial progress tracking with persistence
+ * - Completion status management across sessions
+ * - Advanced logging for tutorial analytics
+ * 
+ * Tutorial Coordination:
+ * - Cross-tab progress synchronization
+ * - Tab-specific tutorial customization
+ * - Completion ceremony coordination
+ * - Tutorial state caching for performance
+ * - Analytics integration for learning insights
+ * 
+ * @module hooks/use-tab-tutorials
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';

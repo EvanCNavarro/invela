@@ -14,10 +14,11 @@ import {
   ChevronDown,
   ChevronUp,
   GlobeIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { SearchBar } from "@/components/playground/SearchBar";
+import { SearchBar } from "@/components/ui/search-bar";
 // WebSocket functionality is still maintained but the icon has been removed
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import {
@@ -27,6 +28,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import React, { useState, useMemo } from "react";
 // Playground functionality has been removed during cleanup
 import { cn } from "@/lib/utils";
@@ -38,6 +44,12 @@ export function TopNav() {
   const { company } = useCurrentCompany();
   const [location, setLocation] = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isWebsitePopoverOpen, setIsWebsitePopoverOpen] = useState(false);
+  
+  // Handle click-based popover toggle
+  const handleWebsiteIconClick = () => {
+    setIsWebsitePopoverOpen(!isWebsitePopoverOpen);
+  };
   
   // Prevent any automatic focus when the component mounts or refreshes
   usePreventFocus();
@@ -114,15 +126,44 @@ export function TopNav() {
               <BellIcon className="h-4 w-4" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <GlobeIcon className="h-4 w-4" />
-            </Button>
+            <Popover open={isWebsitePopoverOpen} onOpenChange={setIsWebsitePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 shrink-0"
+                  onClick={handleWebsiteIconClick}
+                  aria-label="Access Invela website"
+                  aria-describedby="invela-popover"
+                >
+                  <GlobeIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                id="invela-popover"
+                className="w-48 p-0 shadow-lg border border-gray-200" 
+                align="center"
+                sideOffset={8}
+                onOpenAutoFocus={(event) => event.preventDefault()}
+              >
+                <div className="p-3">
+                  <button
+                    onClick={() => window.open('https://invela.com', '_blank')}
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group"
+                    aria-label="Visit Invela website in a new tab"
+                  >
+                    <span className="group-hover:underline">Visit Invela.com</span>
+                    <ExternalLinkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
           {/* PAIR Support Button - Only shown for FinTech companies */}
           {companyProfile.companyType === "FinTech" && (
             <Button 
-              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-gray-100 border-2 border-transparent relative hover:bg-gray-200 transition-colors"
+              className="h-8 flex items-center gap-1.5 px-3 text-xs font-semibold text-gray-800 shadow-sm bg-gray-100 border-2 border-transparent relative hover:bg-gray-50 transition-colors"
               style={{
                 backgroundClip: 'padding-box',
                 position: 'relative',

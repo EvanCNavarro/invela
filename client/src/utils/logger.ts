@@ -1,5 +1,29 @@
 /**
- * A configurable logger utility for consistent logging throughout the application
+ * ========================================
+ * Logger Utility - Centralized Logging System
+ * ========================================
+ * 
+ * Enterprise-grade logging utility providing configurable, structured logging
+ * capabilities throughout the application. Supports multiple log levels,
+ * color-coded output, and flexible configuration for development and production.
+ * 
+ * Key Features:
+ * - Configurable log levels (debug, info, warn, error)
+ * - Color-coded console output for enhanced readability
+ * - Structured logging with consistent formatting
+ * - Module-specific prefixes for log organization
+ * - Environment-aware logging behavior
+ * 
+ * Use Cases:
+ * - Development debugging and troubleshooting
+ * - Production error tracking and monitoring
+ * - Performance monitoring and analysis
+ * - Security event logging and audit trails
+ * - API request/response logging
+ * 
+ * @module utils/logger
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 // Logger levels that can be enabled or disabled

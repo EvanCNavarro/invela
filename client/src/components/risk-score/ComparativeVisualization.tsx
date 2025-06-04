@@ -33,6 +33,8 @@ import { defaultRiskDimensions } from '@/lib/risk-score-configuration-data';
 import { useCurrentCompany } from "@/hooks/use-current-company";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 // Dynamic import for ApexCharts to avoid SSR issues
 let ReactApexChart: any;
@@ -52,12 +54,16 @@ interface ComparativeVisualizationProps {
   dimensions: RiskDimension[];
   globalScore?: number; // Optional prop to override calculated score
   riskLevel?: string; // Optional risk level prop
+  width?: number;
+  height?: number;
 }
 
-export function ComparativeVisualization({ 
+function ComparativeVisualizationInternal({ 
   dimensions, 
   globalScore, 
-  riskLevel 
+  riskLevel,
+  width = 800,
+  height = 500 
 }: ComparativeVisualizationProps) {
   const { company } = useCurrentCompany();
   const [selectedCompanies, setSelectedCompanies] = useState<CompanyComparison[]>([]);
@@ -320,7 +326,7 @@ export function ComparativeVisualization({
     },
     plotOptions: {
       radar: {
-        size: 180, // Increased from 140 to 180
+        size: Math.min(width * 0.35, height * 0.5), // Responsive radar size based on container dimensions
         offsetY: 0,
         offsetX: 0,
         polygons: {
@@ -332,20 +338,7 @@ export function ComparativeVisualization({
           }
         }
       }
-    },
-    responsive: [
-      {
-        breakpoint: 992,
-        options: {
-          plotOptions: {
-            radar: {
-              size: 120,
-              offsetY: 0
-            }
-          }
-        }
-      }
-    ]
+    }
   };
 
   return (
@@ -521,8 +514,8 @@ export function ComparativeVisualization({
                   options={chartOptions}
                   series={series}
                   type="radar"
-                  height="450"
-                  width="100%"
+                  height={height}
+                  width={width}
                 />
               </div>
               
@@ -770,5 +763,29 @@ export function ComparativeVisualization({
         </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * Responsive ComparativeVisualization component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function ComparativeVisualization({ className, ...props }: { className?: string } & Omit<ComparativeVisualizationProps, 'width' | 'height'>) {
+  return (
+    <ChartErrorBoundary>
+      <ResponsiveChartWrapper 
+        className={className}
+        aspectRatio={16/10}
+        minWidth={400}
+      >
+        {({ width, height }) => (
+          <ComparativeVisualizationInternal 
+            width={width} 
+            height={height} 
+            {...props}
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 }

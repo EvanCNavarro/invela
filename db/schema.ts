@@ -109,16 +109,16 @@ export const companies = pgTable("companies", {
   funding_stage: text("funding_stage"),
   exit_strategy_history: text("exit_strategy_history"),
   certifications_compliance: text("certifications_compliance"),
-  risk_score: integer("risk_score"),
+  risk_score: integer("risk_score"), // Only populated for APPROVED/accredited companies
   chosen_score: integer("chosen_score"),
   risk_clusters: jsonb("risk_clusters").$type<{
-    "PII Data": number,
-    "Account Data": number,
-    "Data Transfers": number,
-    "Certifications Risk": number,
-    "Security Risk": number,
-    "Financial Risk": number
-  }>(),
+    "Dark Web Data": number,
+    "Cyber Security": number,
+    "Public Sentiment": number,
+    "Data Access Scope": number,
+    "Financial Stability": number,
+    "Potential Liability": number
+  }>(), // Only populated for APPROVED/accredited companies
   risk_configuration: jsonb("risk_configuration").$type<{
     dimensions: {
       id: string;
@@ -154,6 +154,16 @@ export const companies = pgTable("companies", {
   files_private: jsonb("files_private").$type<string[]>().default([]),
   available_tabs: text("available_tabs").array().notNull().default(['task-center']),
   is_demo: boolean("is_demo").default(false),
+  // Demo-specific fields (exist in database but missing from schema)
+  demo_created_at: timestamp("demo_created_at"),
+  demo_expires_at: timestamp("demo_expires_at"),
+  demo_cleanup_eligible: boolean("demo_cleanup_eligible").default(true),
+  demo_session_id: text("demo_session_id"),
+  demo_persona_type: text("demo_persona_type"),
+  // Accreditation tracking fields
+  current_accreditation_id: integer("current_accreditation_id").references(() => accreditationHistory.id),
+  first_accredited_date: timestamp("first_accredited_date"),
+  accreditation_count: integer("accreditation_count").default(0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -167,8 +177,31 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
   onboarding_user_completed: boolean("onboarding_user_completed").notNull().default(false),
+  
+  // ========================================
+  // DEMO USER TRACKING FIELDS
+  // ========================================
+  // Added to support comprehensive demo user identification and management
+  is_demo_user: boolean("is_demo_user").default(false),
+  demo_session_id: text("demo_session_id"),
+  demo_created_at: timestamp("demo_created_at"),
+  demo_persona_type: text("demo_persona_type"),
+  demo_expires_at: timestamp("demo_expires_at"),
+  demo_cleanup_eligible: boolean("demo_cleanup_eligible").default(true),
+  demo_last_login: timestamp("demo_last_login"),
+  
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Password reset tokens table
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull().unique(),
+  expires_at: timestamp("expires_at").notNull(),
+  used_at: timestamp("used_at"),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const relationships = pgTable("relationships", {
@@ -385,6 +418,31 @@ export const selectUserTabTutorialSchema = createSelectSchema(userTabTutorials);
 export type UserTabTutorial = z.infer<typeof selectUserTabTutorialSchema>;
 export type NewUserTabTutorial = z.infer<typeof insertUserTabTutorialSchema>;
 
+export const accreditationHistory = pgTable("accreditation_history", {
+  id: serial("id").primaryKey(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  accreditation_number: integer("accreditation_number").notNull(), // 1st, 2nd, 3rd accreditation
+  risk_score: integer("risk_score"), // Score at time of accreditation
+  issued_date: timestamp("issued_date").notNull().defaultNow(),
+  expires_date: timestamp("expires_date"), // NULL for permanent (Banks/Invela)
+  status: text("status").notNull().default('ACTIVE'), // 'ACTIVE', 'EXPIRED', 'REVOKED'
+  risk_clusters: jsonb("risk_clusters").$type<{
+    "Dark Web Data": number,
+    "Cyber Security": number,
+    "Public Sentiment": number,
+    "Data Access Scope": number,
+    "Financial Stability": number,
+    "Potential Liability": number
+  }>(), // Snapshot at time of accreditation
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAccreditationHistorySchema = createInsertSchema(accreditationHistory);
+export const selectAccreditationHistorySchema = createSelectSchema(accreditationHistory);
+export type AccreditationHistory = z.infer<typeof selectAccreditationHistorySchema>;
+export type NewAccreditationHistory = z.infer<typeof insertAccreditationHistorySchema>;
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -396,12 +454,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   completedTabTutorials: many(userTabTutorials),
 }));
 
-export const companiesRelations = relations(companies, ({ many }) => ({
+export const companiesRelations = relations(companies, ({ many, one }) => ({
   users: many(users),
   tasks: many(tasks),
-  networkMembers: many(relationships, { relationName: "networkMembers" }),
-  memberOfNetworks: many(relationships, { relationName: "memberOfNetworks" }),
-  logos: many(companyLogos)
+  logos: many(companyLogos),
+  accreditationHistory: many(accreditationHistory),
+  currentAccreditation: one(accreditationHistory, {
+    fields: [companies.current_accreditation_id],
+    references: [accreditationHistory.id]
+  })
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
@@ -469,6 +530,17 @@ export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
 
 export const securityFieldsRelations = relations(securityFields, ({ many }) => ({
   responses: many(securityResponses)
+}));
+
+export const relationshipsRelations = relations(relationships, ({ one }) => ({
+  company: one(companies, {
+    fields: [relationships.company_id],
+    references: [companies.id],
+  }),
+  relatedCompany: one(companies, {
+    fields: [relationships.related_company_id],
+    references: [companies.id],
+  }),
 }));
 
 // Claims Management Enums
@@ -613,6 +685,8 @@ export const securityResponsesRelations = relations(securityResponses, ({ one })
   })
 }));
 
+
+
 // Define the S&P KY3P Security Assessment tables
 export const ky3pFields = pgTable("ky3p_fields", {
   id: serial("id").primaryKey(),
@@ -732,6 +806,13 @@ export const documentAnswersRelations = relations(documentAnswers, ({ one }) => 
     fields: [documentAnswers.response_id],
     references: [cardResponses.id],
   }),
+}));
+
+export const accreditationHistoryRelations = relations(accreditationHistory, ({ one }) => ({
+  company: one(companies, {
+    fields: [accreditationHistory.company_id],
+    references: [companies.id]
+  })
 }));
 
 

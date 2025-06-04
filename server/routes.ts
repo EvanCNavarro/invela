@@ -1,43 +1,88 @@
-import { Express, Router } from 'express';
-import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
+/**
+ * ========================================
+ * Central API Routes Configuration
+ * ========================================
+ * 
+ * Main routing configuration for the enterprise risk assessment platform API.
+ * This file orchestrates all API endpoints, middleware, and route handlers for
+ * comprehensive business logic across authentication, data management, and real-time features.
+ * 
+ * Key Responsibilities:
+ * - API route registration and organization
+ * - Authentication and authorization middleware integration
+ * - Database operations and data validation
+ * - WebSocket integration for real-time updates
+ * - File upload and company logo management
+ * - Risk assessment form routing (KYB, KY3P, Open Banking)
+ * 
+ * Route Categories:
+ * - Authentication: Login, registration, session management
+ * - Company Management: Profile, logo, relationships
+ * - Risk Assessment: KYB, KY3P, Security, Card processing
+ * - File Management: Upload, download, document handling
+ * - Real-time Features: WebSocket connections, live updates
+ * - Analytics: Tutorial tracking, progress monitoring
+ * 
+ * @module server/routes
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// Express framework and routing
+import express, { Express, Router, Request, Response } from 'express';
+
+// Database ORM and query builders
+import { eq, and, gt, sql, or, isNull, inArray, desc, asc } from 'drizzle-orm';
+import { db } from '@db';
+import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus, accreditationHistory } from '@db/schema';
+
+// Authentication and security
 import * as bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { requireAuth, optionalAuth } from './middleware/auth';
+
+// File system and upload handling
 import path from 'path';
 import fs from 'fs';
-import { db } from '@db';
-import timestampRouter from './routes/kyb-timestamp-routes';
-import claimsRouter from './routes/claims';
-import tutorialRouter from './routes/tutorial';
-// Open Banking field update router is imported below
-import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
-import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
-import { emailService } from './services/email';
-import { requireAuth, optionalAuth } from './middleware/auth';
+
+// Demo API routes
+import demoApiRoutes from './demo-api';
+import companyNameValidationRouter from './routes/company-name-validation';
 import { logoUpload } from './middleware/upload';
+
+// Business logic and services
+import { emailService } from './services/email';
+import { createCompany } from "./services/company";
+import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
+
+// WebSocket services for real-time communication
 import * as LegacyWebSocketService from './services/websocket';
 import * as WebSocketService from './services/websocket-service';
 import { broadcast, broadcastTaskUpdate, getWebSocketServer } from './utils/unified-websocket';
-import crypto from 'crypto';
+
+// Specialized route modules
+import timestampRouter from './routes/kyb-timestamp-routes';
+import claimsRouter from './routes/claims';
+import tutorialRouter from './routes/tutorial';
 import companySearchRouter from "./routes/company-search";
-import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import { checkAndUnlockSecurityTasks } from './routes/kyb';
 import { getKybProgress } from './routes/kyb-update';
 import kybTimestampRouter from './routes/kyb-timestamp-routes';
 import cardRouter from './routes/card';
 import securityRouter from './routes/security';
+
+// KY3P assessment routing modules
 import ky3pRouter from './routes/ky3p';
-// Import KY3P fields route for getting field definitions
 import ky3pFieldsRouter from './routes/ky3p-fields';
-// Import enhanced KY3P submission handler for better progress handling
 import enhancedKy3pSubmissionRouter from './routes/enhanced-ky3p-submission';
-// Import the KY3P progress router for form data loading
 import ky3pProgressRouter from './routes/ky3p-progress';
-// Test route removed during cleanup
-// Import the all-in-one fixed KY3P routes (batch update, demo autofill, clear fields)
 import ky3pFixedRouter from './routes/ky3p-enhanced.routes';
-// Import KY3P submission fix to properly handle form submissions
 import { ky3pSubmissionFixRouter } from './routes/ky3p-submission-fix';
-// Import standardized KY3P batch update routes
 // Use the fixed KY3P batch update routes
 import { registerKY3PBatchUpdateRoutes } from './routes/ky3p-batch-update.routes';
 // Import the new unified KY3P update routes
@@ -108,6 +153,9 @@ import { PDFExtract } from 'pdf.js-extract';
 // Create PDFExtract instance
 const pdfExtract = new PDFExtract();
 
+// Import admin demo cleanup routes
+import adminDemoCleanupRoutes from './routes/admin-demo-cleanup';
+
 // Company cache for current company endpoint - exported for other modules to use
 export const companyCache = new Map<number, { company: any, timestamp: number }>();
 export const COMPANY_CACHE_TTL = 1 * 60 * 1000; // Reduced to 1 minute to improve UI responsiveness
@@ -145,7 +193,59 @@ const routeRegistrationTracker = {
   }
 };
 
-export function registerRoutes(app: Express): Express {
+export async function registerRoutes(app: Express): Promise<Express> {
+  // ========================================
+  // PRIORITY API ROUTES - REGISTER FIRST
+  // ========================================
+  
+  /**
+   * Demo API Route Registration - Critical Priority
+   * 
+   * Registers demo API endpoints before any other routes to ensure proper
+   * middleware precedence. This prevents frontend catch-all routes from
+   * intercepting API calls and returning HTML instead of JSON responses.
+   * 
+   * Following best practice: API routes must be registered before frontend
+   * routes in the Express middleware stack to ensure proper request routing.
+   */
+  console.log('[Routes] Registering demo API routes with priority...');
+  app.use('/api', demoApiRoutes);
+  routeRegistrationTracker.register('DemoAPI');
+  console.log('[Routes] Demo API routes registered successfully with priority');
+  
+  // Add production debugging middleware for critical API endpoints
+  app.use('/api/user', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/user request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
+  app.use('/api/companies/current', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/companies/current request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
+  app.use('/api/tasks', (req, res, next) => {
+    console.log(`[PROD-DEBUG] /api/tasks request received: ${req.method} - Route handler active`);
+    next();
+  });
+  
+  // Register company name validation API for real-time form feedback
+  console.log('[Routes] Registering company name validation API...');
+  app.use('/api/company-name', companyNameValidationRouter);
+  routeRegistrationTracker.register('CompanyNameValidation');
+  console.log('[Routes] Company name validation API registered successfully');
+
+  // Register demo cleanup routes
+  const demoCleanupRoutes = await import('./routes/demo-cleanup-simple');
+  console.log('[Routes] Registering demo cleanup API...');
+  app.use('/api/admin', demoCleanupRoutes.default);
+  routeRegistrationTracker.register('DemoCleanup');
+  console.log('[Routes] Demo cleanup API registered successfully');
+  
+  // ========================================
+  // CORE APPLICATION ROUTES
+  // ========================================
+  
   // Track core routes
   app.use(companySearchRouter);
   routeRegistrationTracker.register('CompanySearch');
@@ -477,6 +577,98 @@ export function registerRoutes(app: Express): Express {
   // Register fix-missing-file API router for regenerating files
   app.use(fixMissingFileRouter);
   
+  // ========================================
+  // COMPANY USERS ENDPOINT
+  // ========================================
+  
+  /**
+   * Company Users API Endpoint
+   * 
+   * Provides access to users associated with a specific company.
+   * Uses direct PostgreSQL pool access for optimal performance and
+   * to bypass known Drizzle ORM issues with complex queries.
+   * 
+   * Security: Requires authentication via optionalAuth middleware
+   * Performance: Direct database pool access with connection monitoring
+   * Error Handling: Comprehensive logging and structured error responses
+   */
+  app.get('/api/companies/:id/users', optionalAuth, async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    const requestId = `company-users-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    try {
+      // Request validation and logging
+      const companyId = parseInt(req.params.id);
+      
+      console.log(`[CompanyUsers] ${requestId} - Request initiated`, {
+        companyId,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (!companyId || isNaN(companyId)) {
+        console.log(`[CompanyUsers] ${requestId} - Invalid company ID provided:`, req.params.id);
+        return res.status(400).json({ 
+          error: 'Invalid company ID',
+          code: 'INVALID_COMPANY_ID',
+          requestId 
+        });
+      }
+
+      // Database query with direct PostgreSQL pool for reliability
+      console.log(`[CompanyUsers] ${requestId} - Executing database query for company ${companyId}`);
+      
+      const { pool } = await import('@db');
+      const result = await pool.query(
+        'SELECT id, email, full_name, first_name, last_name, company_id, onboarding_user_completed, created_at, updated_at FROM users WHERE company_id = $1 ORDER BY full_name ASC',
+        [companyId]
+      );
+      
+      const companyUsers = result.rows;
+      const queryTime = Date.now() - startTime;
+
+      console.log(`[CompanyUsers] ${requestId} - Query successful`, {
+        companyId,
+        userCount: companyUsers.length,
+        queryTime: `${queryTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+
+      // Return structured response
+      res.json({
+        users: companyUsers,
+        meta: {
+          count: companyUsers.length,
+          companyId,
+          requestId,
+          queryTime: `${queryTime}ms`
+        }
+      });
+      
+    } catch (error) {
+      const queryTime = Date.now() - startTime;
+      
+      console.error(`[CompanyUsers] ${requestId} - Database error:`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        companyId: req.params.id,
+        queryTime: `${queryTime}ms`,
+        timestamp: new Date().toISOString()
+      });
+      
+      res.status(500).json({ 
+        message: 'Error fetching company users',
+        code: 'FETCH_ERROR',
+        requestId,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
+  // Register the company users endpoint in the tracking system
+  routeRegistrationTracker.register('CompanyUsers');
+  
   // Register task broadcast router for WebSocket notifications
   app.use('/api/tasks', taskBroadcastRouter);
   routeRegistrationTracker.register('TaskBroadcast');
@@ -660,8 +852,22 @@ export function registerRoutes(app: Express): Express {
           id: c.id,
           name: c.name,
           hasLogo: !!c.logo_id,
-          hasRelationship: c.has_relationship
+          hasRelationship: c.has_relationship,
+          hasRiskScore: !!c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          riskScore: c.risk_score,
+          accreditationStatus: c.accreditation_status
         }))
+      });
+      
+      console.log('[Companies] Sample risk data check:', {
+        firstCompanyRiskData: networkCompanies[0] ? {
+          id: networkCompanies[0].id,
+          name: networkCompanies[0].name,
+          risk_score: networkCompanies[0].risk_score,
+          risk_clusters: networkCompanies[0].risk_clusters ? 'PRESENT' : 'MISSING',
+          accreditation_status: networkCompanies[0].accreditation_status
+        } : 'NO_COMPANIES'
       });
 
       // Transform the data to match frontend expectations
@@ -962,93 +1168,9 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Get company by ID
-  app.get("/api/companies/:id", requireAuth, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-
-      if (isNaN(companyId)) {
-        return res.status(400).json({
-          message: "Invalid company ID",
-          code: "INVALID_ID"
-        });
-      }
-
-      // Get company details along with relationship check
-      // Explicitly select fields to avoid issues with non-existent columns
-      const [company] = await db.select({
-        id: companies.id,
-        name: companies.name,
-        description: companies.description,
-        category: companies.category,
-        is_demo: companies.is_demo,
-        revenue_tier: companies.revenue_tier,
-        onboarding_company_completed: companies.onboarding_company_completed,
-        risk_score: companies.risk_score,
-        chosen_score: companies.chosen_score,
-        accreditation_status: companies.accreditation_status,
-        website_url: companies.website_url,
-        num_employees: companies.num_employees,
-        incorporation_year: companies.incorporation_year,
-        available_tabs: companies.available_tabs,
-        logo_id: companies.logo_id,
-        created_at: companies.created_at,
-        updated_at: companies.updated_at,
-        risk_clusters: companies.risk_clusters
-      })
-        .from(companies)
-        .where(
-          and(
-            eq(companies.id, companyId),
-            or(
-              eq(companies.id, req.user.company_id),
-              sql`EXISTS (
-                SELECT 1 FROM ${relationships} r 
-                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
-                OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
-              )`
-            )
-          )
-        );
-
-      if (!company) {
-        return res.status(404).json({
-          message: "Company not found",
-          code: "COMPANY_NOT_FOUND"
-        });
-      }
-
-      // Transform response to match frontend expectations
-      // Ensure we transform the response to include both risk_score and riskScore consistently
-      // Also include isDemo field for frontend usage
-      const transformedCompany = {
-        ...company,
-        websiteUrl: company.website_url,
-        numEmployees: company.num_employees,
-        incorporationYear: company.incorporation_year,
-        risk_score: company.risk_score,       // Keep the original property
-        riskScore: company.risk_score,        // Add the frontend expected property name
-        chosen_score: company.chosen_score,   // Keep the original property
-        chosenScore: company.chosen_score,    // Add camelCase version for frontend
-        risk_clusters: company.risk_clusters, // Keep the original property
-        riskClusters: company.risk_clusters,  // Add frontend-friendly version
-        is_demo: company.is_demo,             // Keep the original property
-        isDemo: company.is_demo               // Add camelCase version for frontend
-      };
-
-      res.json(transformedCompany);
-    } catch (error) {
-      console.error("[Companies] Error fetching company:", error);
-      res.status(500).json({
-        message: "Error fetching company details",
-        code: "INTERNAL_ERROR"
-      });
-    }
-  });
-  
   // Force unlock file vault endpoint - direct API call to ensure immediate visibility
   // CRITICAL FIX: Direct route to unlock file vault - highest priority implementation
-app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) => {
+  app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) => {
     try {
       console.log('[API] Force unlock file vault request received:', {
         userId: req.user?.id,
@@ -1183,6 +1305,107 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       });
     }
   });
+
+  // NEW: Companies with risk data endpoint (cache-bypassing)
+  app.get("/api/companies-with-risk", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Companies-Risk] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Companies-Risk] Fetching companies with risk data for user:', {
+        userId: req.user.id,
+        company_id: req.user.company_id
+      });
+
+      // Get all companies that either:
+      // 1. The user's own company
+      // 2. Companies that have a relationship with the user's company
+      const networkCompanies = await db.select({
+        id: companies.id,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
+        accreditation_status: companies.accreditation_status,
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+        is_demo: companies.is_demo,
+        has_relationship: sql<boolean>`
+          CASE 
+            WHEN ${companies.id} = ${req.user.company_id} THEN true
+            WHEN EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+            ) THEN true
+            ELSE false
+          END
+        `
+      })
+        .from(companies)
+        .where(
+          or(
+            eq(companies.id, req.user.company_id),
+            sql`EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+          )`
+          )
+        )
+        .orderBy(companies.name);
+
+      console.log('[Companies-Risk] Query successful, found companies with risk data:', {
+        count: networkCompanies.length,
+        companiesWithRiskData: networkCompanies.filter(c => c.risk_score && c.risk_clusters).length,
+        sampleRiskData: networkCompanies.slice(0, 3).map(c => ({
+          id: c.id,
+          name: c.name,
+          risk_score: c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          accreditation_status: c.accreditation_status
+        }))
+      });
+
+      // Transform to match frontend expectations with explicit field names
+      const transformedCompanies = networkCompanies.map(company => ({
+        id: company.id,
+        name: company.name,
+        category: company.category,
+        description: company.description,
+        accreditation_status: company.accreditation_status,
+        accreditationStatus: company.accreditation_status, // Both formats
+        risk_score: company.risk_score,
+        riskScore: company.risk_score, // Both formats
+        chosen_score: company.chosen_score,
+        chosenScore: company.chosen_score, // Both formats
+        risk_clusters: company.risk_clusters,
+        riskClusters: company.risk_clusters, // Both formats
+        is_demo: company.is_demo,
+        isDemo: company.is_demo, // Both formats
+        has_relationship: company.has_relationship,
+        hasRelationship: company.has_relationship // Both formats
+      }));
+
+      // Add cache headers to prevent caching
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
+      res.json(transformedCompanies);
+    } catch (error) {
+      console.error("[Companies-Risk] Error details:", error);
+      res.status(500).json({
+        message: "Error fetching companies with risk data",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
   
   // Get a specific company with risk clusters data
   app.get("/api/companies/:id", requireAuth, async (req, res) => {
@@ -1196,35 +1419,153 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         });
       }
       
-      // Fetch the company data
+      console.log(`[Companies] Fetching complete company data for ID: ${companyId}`);
+      
+      // Fetch comprehensive company data matching CompanyProfileData interface
       const companyData = await db.select({
         id: companies.id,
         name: companies.name,
         description: companies.description,
         category: companies.category,
+        // Risk scoring fields
         riskScore: companies.risk_score,
         chosenScore: companies.chosen_score,
         riskClusters: companies.risk_clusters,
+        // Business information fields
+        websiteUrl: companies.website_url,
+        numEmployees: companies.num_employees,
+        incorporationYear: companies.incorporation_year,
+        productsServices: companies.products_services,
+        keyClientsPartners: companies.key_clients_partners,
+        investors: companies.investors,
+        fundingStage: companies.funding_stage,
+        legalStructure: companies.legal_structure,
+        hqAddress: companies.hq_address,
+        // Status and compliance fields
+        accreditationStatus: companies.accreditation_status,
+        revenueTier: companies.revenue_tier,
+        // System fields
         onboardingCompleted: companies.onboarding_company_completed,
         isDemo: companies.is_demo,
+        logoId: companies.logo_id,
+        availableTabs: companies.available_tabs,
+        createdAt: companies.created_at,
+        updatedAt: companies.updated_at,
+        // Additional fields for comprehensive profile
+        certificationsCompliance: companies.certifications_compliance,
+        foundersAndLeadership: companies.founders_and_leadership
       })
       .from(companies)
       .where(eq(companies.id, companyId))
       .limit(1);
       
       if (!companyData || companyData.length === 0) {
+        console.log(`[Companies] Company not found for ID: ${companyId}`);
         return res.status(404).json({
           message: "Company not found",
           code: "NOT_FOUND"
         });
       }
       
-      // Return the company data
-      return res.json(companyData[0]);
+      const company = companyData[0];
+      console.log(`[Companies] Successfully fetched company: ${company.name} (${company.id})`);
+      
+      // Return the complete company data
+      return res.json(company);
     } catch (error) {
       console.error("[Companies] Error fetching company data:", error);
       return res.status(500).json({
         message: "Error fetching company data",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+
+  // Get company profile data for network company pages
+  app.get("/api/companies/:id/profile", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Fetch comprehensive company profile data
+      const companyProfile = await db.select({
+        id: companies.id,
+        name: companies.name,
+        description: companies.description,
+        category: companies.category,
+        risk_score: companies.risk_score,
+        chosen_score: companies.chosen_score,
+        risk_clusters: companies.risk_clusters,
+        onboarding_company_completed: companies.onboarding_company_completed,
+        is_demo: companies.is_demo,
+        revenue_tier: companies.revenue_tier,
+        accreditation_status: companies.accreditation_status,
+        website_url: companies.website_url,
+        num_employees: companies.num_employees,
+        incorporation_year: companies.incorporation_year,
+        available_tabs: companies.available_tabs,
+        logo_id: companies.logo_id,
+        created_at: companies.created_at,
+        updated_at: companies.updated_at,
+        // Business information fields
+        products_services: companies.products_services,
+        market_position: companies.market_position,
+        founders_and_leadership: companies.founders_and_leadership,
+        key_clients_partners: companies.key_clients_partners,
+        investors: companies.investors,
+        funding_stage: companies.funding_stage,
+        legal_structure: companies.legal_structure,
+        hq_address: companies.hq_address,
+        certifications_compliance: companies.certifications_compliance
+      })
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .limit(1);
+      
+      if (!companyProfile || companyProfile.length === 0) {
+        return res.status(404).json({
+          message: "Company profile not found",
+          code: "NOT_FOUND"
+        });
+      }
+      
+      const company = companyProfile[0];
+      console.log(`[Company Profile] Retrieved profile for company ${companyId}: ${company.name}`);
+      console.log(`[Company Profile Debug] API returning data:`, {
+        id: company.id,
+        name: company.name,
+        hasBusinessFields: {
+          products_services: !!company.products_services,
+          market_position: !!company.market_position,
+          founders_and_leadership: !!company.founders_and_leadership,
+          key_clients_partners: !!company.key_clients_partners,
+          investors: !!company.investors,
+          funding_stage: !!company.funding_stage,
+          certifications_compliance: !!company.certifications_compliance
+        },
+        businessFieldValues: {
+          products_services: company.products_services,
+          market_position: company.market_position,
+          founders_and_leadership: company.founders_and_leadership,
+          key_clients_partners: company.key_clients_partners,
+          investors: company.investors,
+          funding_stage: company.funding_stage,
+          certifications_compliance: company.certifications_compliance
+        }
+      });
+      
+      // Return the complete company profile data
+      return res.json(company);
+    } catch (error) {
+      console.error("[Company Profile] Error fetching company profile:", error);
+      return res.status(500).json({
+        message: "Error fetching company profile",
         code: "SERVER_ERROR"
       });
     }
@@ -2025,6 +2366,60 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         })
         .where(eq(invitations.id, invitation.id));
 
+      // ========================================
+      // TASK ASSIGNMENT POLICY ENFORCEMENT
+      // ========================================
+      
+      /**
+       * REMOVED: Duplicate Task Creation Logic
+       * 
+       * Previously, this section attempted to create company tasks during user login,
+       * which resulted in duplicate tasks for New Data Recipients. This violated the
+       * DRY principle and created data inconsistencies.
+       * 
+       * CURRENT APPROACH:
+       * - Company tasks are created ONLY during company creation (demo-api.ts)
+       * - Uses the same proven service pattern as FinTech invitations
+       * - Ensures single source of truth for task assignment
+       * - Eliminates duplicate task creation across different user flows
+       * 
+       * @see server/demo-api.ts - Primary task creation during company setup
+       * @see server/services/company.ts - Unified task creation service
+       * @see server/routes.ts (FinTech invite) - Reference implementation pattern
+       * 
+       * @removed 2025-05-27 - Duplicate task creation logic
+       * @rationale DRY principle compliance and data integrity
+       */
+      
+      // Verify company exists and log account setup completion
+      try {
+        const [companyDetails] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, existingUser.company_id))
+          .limit(1);
+
+        if (companyDetails) {
+          console.log('[Account Setup] ✅ Account setup completed successfully:', {
+            userId: updatedUser.id,
+            userEmail: updatedUser.email,
+            companyId: companyDetails.id,
+            companyName: companyDetails.name,
+            companyType: companyDetails.is_demo ? 'Demo' : 'Production',
+            accreditationStatus: companyDetails.accreditation_status,
+            setupTimestamp: new Date().toISOString(),
+            taskCreationApproach: 'Handled during company creation (no duplicates)'
+          });
+        }
+      } catch (companyVerificationError) {
+        // Log verification error but don't fail the account setup
+        console.warn('[Account Setup] ⚠️ Company verification failed (non-critical):', {
+          error: companyVerificationError.message,
+          userId: updatedUser.id,
+          companyId: existingUser.company_id,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       // Log the user in - wrap req.login in a Promise for proper async/await handling
       await new Promise<void>((resolve, reject) => {
         req.login(updatedUser, (err) => {
@@ -2487,6 +2882,75 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
+  // Get accreditation information for a company
+  app.get("/api/companies/:id/accreditation", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      console.log('[Accreditation] Fetching accreditation for company:', companyId);
+
+      // Query accreditation history directly to avoid import issues
+      const accreditationResult = await db
+        .select({
+          id: accreditationHistory.id,
+          accreditation_number: accreditationHistory.accreditation_number,
+          issued_date: accreditationHistory.issued_date,
+          expires_date: accreditationHistory.expires_date,
+          status: accreditationHistory.status
+        })
+        .from(accreditationHistory)
+        .where(
+          and(
+            eq(accreditationHistory.company_id, companyId),
+            eq(accreditationHistory.status, 'ACTIVE')
+          )
+        )
+        .orderBy(desc(accreditationHistory.created_at))
+        .limit(1);
+      
+      if (!accreditationResult || accreditationResult.length === 0) {
+        return res.json(null);
+      }
+      
+      const accreditation = accreditationResult[0];
+      const isPermanent = accreditation.expires_date === null;
+      
+      // Calculate days until expiration
+      let daysUntilExpiration = null;
+      if (!isPermanent && accreditation.expires_date) {
+        const now = new Date();
+        const diffTime = accreditation.expires_date.getTime() - now.getTime();
+        daysUntilExpiration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+      
+      const result = {
+        id: accreditation.id,
+        accreditationNumber: accreditation.accreditation_number,
+        issuedDate: accreditation.issued_date,
+        expiresDate: accreditation.expires_date,
+        status: accreditation.status,
+        daysUntilExpiration,
+        isPermanent
+      };
+      
+      console.log('[Accreditation] Found accreditation:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('[Accreditation] Error fetching accreditation:', error);
+      res.status(500).json({ 
+        message: "Error fetching accreditation details",
+        code: "SERVER_ERROR"
+      });
+    }
+  });
+
   // Add this endpoint to handle fintech company check
   app.post("/api/fintech/check-company", requireAuth, async (req, res) => {
     try {
@@ -2520,6 +2984,127 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
       console.error("Error checking company existence:", error);
       res.status(500).json({
         message: "Error checking company existence"
+      });
+    }
+  });
+
+  // Get risk trend data for a company
+  app.get("/api/companies/:id/risk-trend", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      // Get current company data
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          previous_risk_score: true,
+          updated_at: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      const currentRisk = company.risk_score || 0;
+      const previousRisk = company.previous_risk_score || currentRisk;
+      const change = currentRisk - previousRisk;
+      
+      let direction: 'up' | 'down' | 'stable' = 'stable';
+      if (change > 0) direction = 'up';
+      else if (change < 0) direction = 'down';
+
+      const percentage = previousRisk > 0 ? Math.abs((change / previousRisk) * 100) : 0;
+
+      res.json({
+        change,
+        direction,
+        percentage: Math.round(percentage * 100) / 100
+      });
+
+    } catch (error) {
+      console.error(`[Risk Trend] Error fetching risk trend for company ${req.params.id}:`, error);
+      res.status(500).json({
+        message: "Error fetching risk trend data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
+  // Get risk status summary for a company
+  app.get("/api/companies/:id/risk-status", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      // Get current company data
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          updated_at: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      const riskScore = company.risk_score || 0;
+      
+      // Calculate risk status based on score
+      let status = 'Stable';
+      if (riskScore >= 70) {
+        status = 'Blocked';
+      } else if (riskScore >= 50) {
+        status = 'Approaching Block';
+      }
+
+      // Calculate days in current status (simplified for now)
+      const updatedAt = new Date(company.updated_at);
+      const now = new Date();
+      const daysInStatus = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Determine trend based on risk score
+      let trend: 'improving' | 'stable' | 'deteriorating' = 'stable';
+      if (riskScore < 30) trend = 'improving';
+      else if (riskScore > 60) trend = 'deteriorating';
+
+      res.json({
+        status,
+        daysInStatus: Math.max(1, daysInStatus),
+        trend
+      });
+
+    } catch (error) {
+      console.error(`[Risk Status] Error fetching risk status for company ${req.params.id}:`, error);
+      res.status(500).json({
+        message: "Error fetching risk status data",
+        code: "FETCH_ERROR"
       });
     }
   });
@@ -2852,10 +3437,53 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
         timestamp: new Date().toISOString()
       });
       
+      // ========================================
+      // CHECK FOR NEW DATA RECIPIENT DEMO USERS
+      // ========================================
+      
+      // Get current user data to check demo persona type
+      const [currentUser] = await db.select()
+        .from(users)
+        .where(eq(users.id, userId));
+        
+      if (!currentUser) {
+        return res.status(404).json({ 
+          message: "User not found",
+          error: `User ${userId} does not exist` 
+        });
+      }
+      
+      // Check if this is a New Data Recipient demo user who should NOT complete onboarding
+      const isNewDataRecipientDemo = currentUser.is_demo_user && 
+                                    currentUser.demo_persona_type === 'new-data-recipient';
+      
+      if (isNewDataRecipientDemo) {
+        console.log('[Complete Onboarding] BLOCKED: New Data Recipient demo users should not complete onboarding:', {
+          userId: userId,
+          demoPersonaType: currentUser.demo_persona_type,
+          isDemoUser: currentUser.is_demo_user,
+          reason: 'New Data Recipients must show onboarding modal for authentic persona experience'
+        });
+        
+        // Return success but don't actually update the onboarding status
+        return res.json({
+          message: "Onboarding completion blocked for New Data Recipient persona",
+          success: true,
+          blocked: true,
+          reason: "New Data Recipients maintain pending onboarding status for authentic demo experience",
+          user: {
+            id: currentUser.id,
+            email: currentUser.email,
+            onboarding_user_completed: currentUser.onboarding_user_completed // Keep original status
+          },
+          elapsedMs: Date.now() - startTime
+        });
+      }
+      
       // Variable to store updated user data
       let updatedUserData = null;
       
-      // Use transaction to update the user record
+      // Use transaction to update the user record (only for non-New Data Recipient personas)
       await db.transaction(async (tx) => {
         // Update the user record to mark onboarding as completed
         const [updatedUser] = await tx.update(users)
@@ -3365,6 +3993,43 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     } catch (error) {
       console.error("Error adding company to network:", error);
       res.status(500).json({ message: "Error adding company to network" });
+    }
+  });
+
+  // Get users for a specific company - for company profile page
+  app.get("/api/companies/:id/users", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({ 
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+      
+      // Fetch users associated with this company
+      const companyUsers = await db.select({
+        id: users.id,
+        email: users.email,
+        full_name: users.full_name,
+        role: users.role,
+        onboarding_user_completed: users.onboarding_user_completed,
+        created_at: users.created_at
+      })
+      .from(users)
+      .where(eq(users.company_id, companyId))
+      .orderBy(users.created_at);
+      
+      console.log(`[Companies] Found ${companyUsers.length} users for company ${companyId}`);
+      
+      res.json(companyUsers);
+    } catch (error) {
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ 
+        message: "Error fetching company users",
+        code: "FETCH_ERROR"
+      });
     }
   });
 
@@ -4047,8 +4712,147 @@ app.post("/api/companies/:id/unlock-file-vault", requireAuth, async (req, res) =
     }
   });
 
+  // Removed Storybook static files - using custom component library
+
+  // ========================================
+  // FINTECH COMPANY GENERATION ENDPOINT
+  // ========================================
+  
+  /**
+   * POST /api/generate-fintech-companies
+   * Generates 100 diverse FinTech companies for network selection
+   */
+  app.post('/api/generate-fintech-companies', async (req: Request, res: Response) => {
+    try {
+      console.log('[FinTechGeneration] Starting generation of 100 FinTech companies...');
+      
+      // Import the generator function
+      const { generateFinTechCompanies, validateGeneration } = await import('./utils/fintech-company-generator');
+      
+      // Execute the generation
+      await generateFinTechCompanies();
+      
+      // Validate the results
+      await validateGeneration();
+      
+      console.log('[FinTechGeneration] ✅ Successfully completed generation and validation');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Successfully generated 100 FinTech companies',
+        details: {
+          approved_companies: 50,
+          pending_companies: 50,
+          total_companies: 100,
+          network_relationships_created: true,
+          generation_timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error) {
+      console.error('[FinTechGeneration] ❌ Generation failed:', error);
+      
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate FinTech companies',
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Company users endpoint moved to proper registration location within registerRoutes() function
+
+  // Demo API routes are now registered early in the process via synchronous import
+  // This ensures API endpoints have proper priority over frontend catch-all routes
+
   // Output consolidated route registration summary
   console.log(`[Routes] ${routeRegistrationTracker.getSummary()}`);
+  // ========================================
+  // FINTECH COMPANY GENERATION ENDPOINTS
+  // ========================================
+
+  // Generate custom number of FinTech companies
+  app.post("/api/generate-fintech-companies", requireAuth, async (req, res) => {
+    try {
+      const { count = 100 } = req.body;
+      
+      // Validate count parameter
+      if (!Number.isInteger(count) || count < 1 || count > 1000) {
+        return res.status(400).json({
+          message: "Count must be an integer between 1 and 1000",
+          error: "INVALID_COUNT"
+        });
+      }
+
+      console.log(`[FinTechGenerator] Starting generation of ${count} companies via API`);
+      
+      // Import and run the generator
+      const { generateFinTechCompanies } = await import('./utils/fintech-company-generator');
+      await generateFinTechCompanies(count);
+      
+      res.json({
+        message: `Successfully generated ${count} FinTech companies`,
+        count,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] API generation failed:', error);
+      res.status(500).json({
+        message: "Failed to generate FinTech companies",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Test with a single company first
+  app.post("/api/test-fintech-generation", requireAuth, async (req, res) => {
+    try {
+      console.log('[FinTechGenerator] Testing with single company generation');
+      
+      // Import and run the test
+      const { testSingleCompanyGeneration } = await import('./utils/test-single-company');
+      await testSingleCompanyGeneration();
+      
+      res.json({
+        message: "Successfully generated and validated 1 test FinTech company",
+        count: 1,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] Test generation failed:', error);
+      res.status(500).json({
+        message: "Failed to generate test company",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Validate generation results
+  app.get("/api/validate-fintech-generation", requireAuth, async (req, res) => {
+    try {
+      console.log('[FinTechGenerator] Validating generation results');
+      
+      // Import and run validation
+      const { validateGeneration } = await import('./utils/fintech-company-generator');
+      await validateGeneration();
+      
+      res.json({
+        message: "Generation validation completed successfully",
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('[FinTechGenerator] Validation failed:', error);
+      res.status(500).json({
+        message: "Failed to validate generation",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   return app;
 }
 

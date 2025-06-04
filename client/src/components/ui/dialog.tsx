@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Dialog Component - Modal Dialog System
+ * ========================================
+ * 
+ * Professional modal dialog component system built with Radix UI primitives
+ * providing accessible, overlay-based interactions. Supports complex dialog
+ * compositions with proper focus management and escape handling.
+ * 
+ * Key Features:
+ * - Accessible modal dialogs with focus trapping
+ * - Overlay background with backdrop blur
+ * - Customizable content areas and headers
+ * - Close button integration with escape key support
+ * - Animation support for smooth transitions
+ * 
+ * Accessibility Features:
+ * - Focus management and restoration
+ * - Escape key handling for dismissal
+ * - Screen reader compatibility
+ * - Proper ARIA attributes and roles
+ * 
+ * @module components/ui/dialog
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"

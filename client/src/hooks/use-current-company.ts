@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Current Company Hook - Company Context Management
+ * ========================================
+ * 
+ * Centralized company context hook providing current company information,
+ * onboarding status, and risk assessment data throughout the enterprise
+ * platform. Integrates with user context and caching for optimal performance.
+ * 
+ * Key Features:
+ * - Current company data retrieval and caching
+ * - Onboarding status tracking and validation
+ * - Risk score monitoring and updates
+ * - Company metadata and configuration access
+ * - Real-time company state synchronization
+ * 
+ * Company Data:
+ * - Company profile and business information
+ * - Onboarding completion status
+ * - Risk assessment scores and metrics
+ * - Category and classification data
+ * - Demo mode and testing capabilities
+ * 
+ * @module hooks/use-current-company
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useQuery } from '@tanstack/react-query';
 import { userContext } from '@/lib/user-context';
 import { useEffect } from 'react';

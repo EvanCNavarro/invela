@@ -49,16 +49,16 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "bg-red-100 border-l-4 border-red-500 px-4 rounded-md mb-0 h-10 flex items-center",
+        "bg-red-50 border-l-2 border-red-200 px-4 rounded-md mb-0 h-10 flex items-center",
         className
       )}
     >
       <div className="flex items-center space-x-3">
-        <div className="flex-shrink-0 text-red-500">
+        <div className="flex-shrink-0 text-black">
           <ShieldAlert className="h-5 w-5" />
         </div>
         <div>
-          <p className="font-medium text-red-700 leading-none">
+          <p className="font-medium text-black leading-none">
             {count} {count === 1 ? 'Data Recipient is' : 'Data Recipients are'} blocked
           </p>
         </div>

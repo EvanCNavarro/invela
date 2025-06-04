@@ -1,8 +1,15 @@
 /**
+ * ========================================
  * Tutorial System Utilities
+ * ========================================
  * 
- * This file contains utility functions for the tutorial system that can be
- * shared across components to ensure consistent behavior and normalization.
+ * Utility functions for the tutorial system providing consistent behavior
+ * and normalization across components in the enterprise risk assessment platform.
+ * Handles tab name mapping, tutorial state management, and user interaction flows.
+ * 
+ * @module utils/tutorial-utils
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 /**

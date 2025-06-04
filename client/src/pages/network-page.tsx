@@ -1,3 +1,33 @@
+/**
+ * ========================================
+ * Network Page - Relationship Management
+ * ========================================
+ * 
+ * Comprehensive network relationship management page providing advanced
+ * search, filtering, and visualization capabilities for business partnerships
+ * and third-party relationships. Features enterprise-grade data management
+ * with real-time updates and collaborative invitation workflows.
+ * 
+ * Key Features:
+ * - Advanced relationship search with fuzzy matching
+ * - Multi-dimensional filtering and sorting capabilities
+ * - Real-time invitation management and status tracking
+ * - Accreditation status monitoring and compliance
+ * - Interactive table with responsive design
+ * - Tutorial integration for user guidance
+ * 
+ * Data Management:
+ * - Real-time network relationship data
+ * - Company accreditation status tracking
+ * - Invitation workflow management
+ * - Search optimization with Fuse.js
+ * - Responsive data visualization
+ * 
+ * @module pages/NetworkPage
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -47,7 +77,7 @@ interface NetworkRelationship {
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-const itemsPerPage = 5;
+const itemsPerPage = 5; // Manageable pagination for network companies
 
 // Highlight matching text helper function
 const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string }) => {
@@ -267,7 +297,9 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       {/* Add tutorial manager for network page */}
-      <TutorialManager tabName="network" />
+      <TutorialManager tabName="network">
+        <div />
+      </TutorialManager>
       
       <PageTemplate
         showBreadcrumbs

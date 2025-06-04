@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Label } from '@/components/ui/label';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ContainerAwareChartWrapper, ChartLibraryAdapters } from '@/components/ui/container-aware-chart-wrapper';
 
 // Import these dynamically to prevent SSR issues
 let ReactApexChart: any = null;
@@ -42,11 +44,24 @@ interface CompanyWithRiskClusters {
   name: string;
   category: string;
   risk_score: number;
+  riskScore?: number;
   chosen_score?: number;
   risk_clusters?: RiskClusters;
   isDemo?: boolean;
   status?: string;
+  accreditationStatus?: string;
+  accreditation_status?: string;
   description?: string;
+  // For relationships API response format
+  relatedCompany?: {
+    id: number;
+    name: string;
+    category: string;
+    logoId: number | null;
+    accreditationStatus: string;
+    riskScore: number | null;
+    isDemo: boolean;
+  };
 }
 
 // Define relationship type for network companies
@@ -66,9 +81,11 @@ interface RiskRadarChartProps {
   className?: string;
   companyId?: number;
   showDropdown?: boolean;
+  width?: number;
+  height?: number;
 }
 
-export function RiskRadarChart({ className, companyId, showDropdown = true }: RiskRadarChartProps) {
+function RiskRadarChartInternal({ className, companyId, showDropdown = true, width = 800, height = 500 }: RiskRadarChartProps) {
   const { company, isLoading: isCompanyLoading } = useCurrentCompany();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [chartComponentLoaded, setChartComponentLoaded] = useState(false);
@@ -137,11 +154,32 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     companies: CompanyWithRiskClusters[];
   }
   
-  // 1. Get direct companies data from API - similar to ConsentActivityInsight approach
+  // 1. Get direct companies data from new cache-bypassing API endpoint
   const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
-    queryKey: ['/api/companies'],
-    // Only fetch for Bank and Invela users who should see the dropdown
-    enabled: isBankOrInvela && !!company?.id && showDropdown
+    queryKey: ['/api/companies-with-risk'],
+    queryFn: async () => {
+      const response = await fetch('/api/companies-with-risk');
+      if (!response.ok) {
+        throw new Error('Failed to fetch companies with risk data');
+      }
+      const data = await response.json();
+      console.log('[RiskRadarChart] Fresh companies data received:', {
+        count: data.length,
+        sampleWithRisk: data.slice(0, 3).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          hasRiskScore: !!c.risk_score,
+          hasRiskClusters: !!c.risk_clusters,
+          accreditationStatus: c.accreditation_status
+        }))
+      });
+      return data;
+    },
+    // Enable for all Bank and Invela users (both with and without dropdown)
+    enabled: isBankOrInvela && !!company?.id,
+    // Force fresh data
+    staleTime: 0,
+    gcTime: 0
   });
   
   // Define the network visualization data type for better type safety
@@ -179,10 +217,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     enabled: isBankOrInvela && !!company?.id,
   });
   
-  // 4. Combine all company sources and create a comprehensive list
+  // 4. Use fresh companies data as primary source
   const combinedCompanies = React.useMemo(() => {
-    // Start with the direct companies
-    let companies: CompanyWithRiskClusters[] = [...(allCompaniesData || [])];
+    // Prioritize fresh companies data from cache-bypassing endpoint
+    if (allCompaniesData && allCompaniesData.length > 0) {
+      console.log('[RiskRadarChart] Using fresh companies data:', allCompaniesData.length);
+      // Fresh data is already properly formatted with risk_score and accreditation_status
+      return allCompaniesData;
+    }
+    
+    // Fallback to other sources only if fresh data is unavailable
+    let companies: CompanyWithRiskClusters[] = [];
     
     // Add relationship companies
     if (networkCompaniesData?.companies) {
@@ -197,34 +242,73 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
           id: node.id,
           name: node.name,
           category: node.category,
-          risk_score: node.riskScore || 0
+          risk_score: node.riskScore || 0,
+          accreditationStatus: node.accreditationStatus
         } as CompanyWithRiskClusters));
       
       companies = [...companies, ...visualizationCompanies];
     }
     
-    // Remove duplicates based on company ID
-    const uniqueCompanies = Array.from(
-      new Map(companies.map(company => [company.id, company])).values()
-    );
-    
-    // Sort alphabetically by name
-    const sortedCompanies = uniqueCompanies.sort((a, b) => 
+    return companies;
+  }, [allCompaniesData, networkCompaniesData?.companies, networkVisualizationData]);
+
+  // 5. Filter for approved companies with valid risk scores
+  const approvedCompanies = React.useMemo(() => {
+    return combinedCompanies.filter(company => {
+      // Handle different data source formats - backend sends snake_case
+      const riskScore = company.risk_score || company.riskScore || company.relatedCompany?.riskScore;
+      const riskClusters = company.risk_clusters || company.riskClusters || company.relatedCompany?.riskClusters;
+      const accreditationStatus = company.accreditation_status || 
+                                 company.accreditationStatus || 
+                                 company.relatedCompany?.accreditationStatus;
+      
+      const hasValidRiskScore = riskScore && riskScore > 0;
+      const hasRiskClusters = !!riskClusters;
+      const isApproved = accreditationStatus === 'APPROVED';
+      
+      console.log('[RiskRadarChart] Filtering company:', {
+        name: company.name || company.relatedCompany?.name,
+        riskScore,
+        hasRiskClusters,
+        accreditationStatus,
+        isApproved,
+        willBeIncluded: hasValidRiskScore && isApproved
+      });
+      
+      return hasValidRiskScore && isApproved;
+    });
+  }, [combinedCompanies]);
+
+  // Sort alphabetically by name
+  const sortedCompanies = React.useMemo(() => {
+    return approvedCompanies.sort((a, b) => 
       (a.name || '').localeCompare(b.name || '')
     );
-    
-    // Enhanced debugging to help track data sources and company availability
-    console.log('[RiskRadarChart] Combined companies list:', {
-      allCompaniesCount: allCompaniesData?.length || 0,
-      relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
-      visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
-      uniqueCompaniesCount: sortedCompanies.length,
-      firstFewCompanies: sortedCompanies.slice(0, 5).map(c => c.name),
-      userType: company?.category
-    });
-    
-    return sortedCompanies;
-  }, [allCompaniesData, networkCompaniesData, networkVisualizationData]);
+  }, [approvedCompanies]);
+
+  // Enhanced debugging to help track data sources and company availability
+  console.log('[RiskRadarChart] Data source analysis:', {
+    allCompaniesCount: allCompaniesData?.length || 0,
+    relationshipCompaniesCount: networkCompaniesData?.companies?.length || 0,
+    visualizationNodesCount: networkVisualizationData?.nodes?.length || 0,
+    uniqueCompaniesCount: combinedCompanies.length,
+    approvedCompaniesCount: sortedCompanies.length,
+    firstFewApproved: sortedCompanies.slice(0, 5).map(c => `${c.name} (${c.accreditationStatus || c.accreditation_status})`),
+    sampleCompanyFields: combinedCompanies.slice(0, 3).map(c => ({
+        id: c.id,
+        name: c.name || c.relatedCompany?.name,
+        hasAccreditationStatus: !!c.accreditationStatus,
+        hasAccreditation_status: !!c.accreditation_status,
+        hasRelatedCompanyAccreditation: !!c.relatedCompany?.accreditationStatus,
+        hasRisk_score: !!c.risk_score,
+        hasRiskScore: !!c.riskScore,
+        hasRelatedCompanyRiskScore: !!c.relatedCompany?.riskScore,
+        actualAccreditationValue: c.accreditationStatus || c.accreditation_status || c.relatedCompany?.accreditationStatus,
+        actualRiskValue: c.risk_score || c.riskScore || c.relatedCompany?.riskScore,
+        dataStructure: c.relatedCompany ? 'nested' : 'flat'
+      })),
+    userType: company?.category
+  });
   
   // Use the combined list for the dropdown
   const networkCompanies = combinedCompanies;
@@ -323,7 +407,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     }
   }, [riskClusters, displayCompany, isTransitioning]);
   
-  // Handle missing risk cluster data
+  // Handle missing risk cluster data and reset transition state
   useEffect(() => {
     if (displayCompany && !riskClusters) {
       console.warn('[RiskRadarChart] Risk clusters data missing for company:', {
@@ -333,16 +417,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         usingCachedData: !!prevRiskClusters
       });
       
-      // If the company was selected from the dropdown and is missing risk clusters,
-      // we should invalidate the query to trigger a refetch with our enhanced query function
-      if (selectedCompanyId && selectedCompanyId === displayCompany.id && selectedCompanyId !== company?.id) {
-        logChartUpdate('Invalidating query to refetch with risk data', {
-          selectedCompanyId,
-          currentCompanyId: company?.id
-        });
+      // Reset transition state if we don't have data after a reasonable time
+      if (isTransitioning) {
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 2000);
       }
     }
-  }, [displayCompany, riskClusters, selectedCompanyId, company?.id, prevRiskClusters]);
+  }, [displayCompany, riskClusters, selectedCompanyId, company?.id, prevRiskClusters, isTransitioning]);
   
   // The actual risk clusters to display - use cached data during transitions
   const displayRiskClusters = riskClusters || (isTransitioning ? prevRiskClusters : null);
@@ -403,14 +485,14 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 500,
+        speed: 600,
         animateGradually: {
           enabled: true,
-          delay: 150
+          delay: 100
         },
         dynamicAnimation: {
           enabled: true,
-          speed: 350
+          speed: 400
         }
       }
     },
@@ -445,10 +527,10 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: 50,
-        bottom: 50,
-        left: 50, 
-        right: 50
+        top: className?.includes("border-none") ? 40 : 60,
+        bottom: className?.includes("border-none") ? 40 : 60,
+        left: className?.includes("border-none") ? 40 : 70, 
+        right: className?.includes("border-none") ? 40 : 70
       }
     },
     yaxis: {
@@ -469,7 +551,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
       }
     },
     xaxis: {
-      categories: riskClusters ? formatCategoryNames(Object.keys(riskClusters)) : [],
+      categories: displayRiskClusters ? formatCategoryNames(Object.keys(displayRiskClusters)) : [],
       labels: {
         style: {
           fontSize: className?.includes("border-none") ? '11px' : '12px',
@@ -524,8 +606,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
     },
     plotOptions: {
       radar: {
-        size: 190,
-        offsetY: 0,
+        size: className?.includes("border-none") ? 140 : 170,
+        offsetY: className?.includes("border-none") ? -5 : -10,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -570,8 +652,17 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         dimensions: Object.keys(displayRiskClusters).length
       });
       
-      // Update just the series data without re-rendering the entire chart
-      // This is the key to smooth animations between data sets
+      // Update both categories and series data to ensure proper chart display
+      const categories = formatCategoryNames(Object.keys(displayRiskClusters));
+      
+      chartInstance.updateOptions({
+        xaxis: {
+          ...chartOptions.xaxis,
+          categories: categories
+        }
+      }, false, true);
+      
+      // Update the series data
       chartInstance.updateSeries([{
         name: 'Risk Score',
         data: Object.values(displayRiskClusters)
@@ -642,8 +733,8 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               ) : (
                 <p className="text-xs text-blue-600">
                   {networkCompanies?.length > 0 
-                    ? `Found ${networkCompanies.length} companies in your network` 
-                    : "No companies found in your network"}
+                    ? `Found ${networkCompanies.length} accredited companies in your network` 
+                    : "No accredited companies found in your network"}
                 </p>
               )}
             </div>
@@ -697,7 +788,7 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         {/* Title and description hidden as requested */}
       </CardHeader>
       <CardContent className="p-6">
-        <div className="w-full" style={{ height: '500px' }}>
+        <div className="w-full" style={{ height: `${height}px` }}>
           {!displayCompany ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="flex flex-col items-center">
@@ -761,10 +852,18 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
               
               {/* The chart itself with event handlers to capture the chart instance */}
               <ReactApexChart 
-                options={chartOptions} 
+                options={{
+                  ...chartOptions,
+                  chart: {
+                    ...chartOptions.chart,
+                    width: "100%",
+                    height: height,
+                    responsive: []
+                  }
+                }} 
                 series={series} 
                 type="radar" 
-                height="500"
+                height={height}
                 width="100%"
                 className={`apex-charts-wrapper ${!chartInstance ? 'chart-initializing' : ''}`}
                 key={`chart-${displayCompany?.id || 'default'}`}
@@ -783,5 +882,34 @@ export function RiskRadarChart({ className, companyId, showDropdown = true }: Ri
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Responsive RiskRadarChart component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function RiskRadarChart({ className, companyId, showDropdown }: { className?: string; companyId?: number; showDropdown?: boolean }) {
+  return (
+    <ChartErrorBoundary>
+      <ContainerAwareChartWrapper
+        minWidth={280}
+        minHeight={250}
+        maxHeight={400}
+        aspectRatio={1.2}
+        fallbackHeight={320}
+        className={className}
+      >
+        {({ width, height }: { width: number; height: number }) => (
+          <RiskRadarChartInternal
+            className={className}
+            companyId={companyId}
+            showDropdown={showDropdown}
+            width={width}
+            height={height}
+          />
+        )}
+      </ContainerAwareChartWrapper>
+    </ChartErrorBoundary>
   );
 }

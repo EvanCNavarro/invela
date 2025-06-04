@@ -5,6 +5,7 @@ import * as WebSocketService from "./websocket";
 import { eq } from "drizzle-orm";
 // Import demo company hooks for automatic file vault population
 import { processNewCompany } from "../hooks/demo-company-hooks";
+import { generateBusinessDetails, type PersonaType } from "../utils/business-details-generator";
 
 /**
  * Creates a new company and handles all associated rules/tasks
@@ -85,6 +86,9 @@ async function createCompanyInternal(
   // Get the creator's user ID with proper validation
   const metadata = (data as any).metadata as Record<string, any> | undefined;
   const createdById = metadata?.created_by_id ?? metadata?.invited_by;
+
+  console.log('[Company Service] Metadata received:', metadata);
+  console.log('[Company Service] Creator ID from metadata:', createdById);
 
   if (!createdById || typeof createdById !== 'number') {
     console.error('[Company Service] Invalid creator ID:', {

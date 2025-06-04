@@ -1,8 +1,28 @@
 /**
- * Form component types
+ * ========================================
+ * Form Component Types - Type System Foundation
+ * ========================================
  * 
- * This file defines the shared types used across form components in the application,
- * providing a consistent type system for form field definitions, values, and state.
+ * Comprehensive type definitions for the form system in the enterprise risk assessment platform.
+ * Provides a unified type system for form fields, validation, and component state management
+ * across KYB, KY3P, and Open Banking form implementations.
+ * 
+ * Key Features:
+ * - Unified form field definition interface
+ * - Flexible validation rule configuration
+ * - Conditional field display logic
+ * - UI customization and styling options
+ * - Metadata and ordering support
+ * 
+ * Type Categories:
+ * - FormField: Core field definition with validation
+ * - FormFieldOption: Selection options for dropdowns/radio
+ * - Validation types: Min/max, length, pattern matching
+ * - UI types: Width, visibility, disabled states
+ * 
+ * @module components/forms/types
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 export interface FormFieldOption {

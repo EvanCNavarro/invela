@@ -1,3 +1,37 @@
+/**
+ * ========================================
+ * Universal Form Component - Enterprise Form Engine
+ * ========================================
+ * 
+ * Comprehensive form rendering engine supporting multiple form types
+ * including KYB, KY3P, and Open Banking assessments. Implements dynamic
+ * field rendering, real-time validation, and enterprise-grade form management.
+ * 
+ * Key Features:
+ * - Universal form field rendering with type-safe interfaces
+ * - Dynamic section-based form organization and navigation
+ * - Real-time validation and error handling
+ * - Auto-save functionality with optimistic updates
+ * - Task template integration and configuration
+ * - Responsive design with accordion-based sections
+ * 
+ * Form Types Supported:
+ * - KYB (Know Your Business) assessments
+ * - KY3P (Know Your Third Party) evaluations
+ * - Open Banking compliance forms
+ * - Custom enterprise assessment templates
+ * 
+ * Data Flow:
+ * - Service layer integration via FormServiceInterface
+ * - Real-time WebSocket updates for form state
+ * - Optimistic UI updates for improved UX
+ * - Comprehensive error handling and recovery
+ * 
+ * @module components/forms/UniversalForm
+ * @version 2.0.0
+ * @since 2025-05-23
+ */
+
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';

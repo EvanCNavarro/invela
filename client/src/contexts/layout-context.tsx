@@ -1,7 +1,21 @@
+/**
+ * ========================================
+ * Layout Context Provider
+ * ========================================
+ * 
+ * Application layout state management providing layout information
+ * to deeply nested components without prop drilling. Tracks layout
+ * measurements and positioning data for the enterprise platform.
+ * 
+ * @module contexts/layout-context
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 
 /**
- * Layout Context
+ * Layout Context Interface
  * 
  * Provides application layout information to deeply nested components
  * without prop drilling.

@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 // Interface for each company in our visualization
 interface CompanyDot {
@@ -40,22 +42,35 @@ interface AccreditationStatusData {
   statusMap: StatusInfo[];
 }
 
-export function AccreditationDotMatrix() {
+// Props interface for the AccreditationDotMatrix component
+interface AccreditationDotMatrixProps {
+  className?: string;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Internal component that renders the AccreditationDotMatrix with responsive dimensions
+ */
+function AccreditationDotMatrixInternal({ 
+  className = '',
+  width = 800,
+  height = 600
+}: AccreditationDotMatrixProps) {
   const { data, isLoading, error } = useQuery<AccreditationStatusData>({
     queryKey: ["/api/accreditation-status-distribution"],
   });
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [dotSize, setDotSize] = useState(30); // Default dot size
 
-  // Recalculate dot size based on container width and number of dots
+  // Recalculate dot size based on provided dimensions and number of dots
   useEffect(() => {
-    if (!containerRef.current || !data?.companies.length) return;
+    if (!data?.companies.length) return;
 
     const calculateDotSize = () => {
-      const containerWidth = containerRef.current?.clientWidth || 800;
-      const containerHeight = containerRef.current?.clientHeight || 500;
+      const containerWidth = width;
+      const containerHeight = height;
       
       // Approximate grid: try to fit all dots while maintaining a reasonably square grid
       const totalCompanies = data.companies.length;
@@ -76,16 +91,11 @@ export function AccreditationDotMatrix() {
     };
 
     calculateDotSize();
-    
-    // Recalculate on window resize
-    const handleResize = () => calculateDotSize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [data?.companies.length, containerRef]);
+  }, [data?.companies.length, width, height]);
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="flex items-center justify-center" style={{ height }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading accreditation data...</p>
@@ -96,7 +106,7 @@ export function AccreditationDotMatrix() {
 
   if (error || !data) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="flex items-center justify-center" style={{ height }}>
         <div className="text-center">
           <p className="text-red-500">Error loading accreditation data</p>
           <p className="text-sm text-muted-foreground mt-2">
@@ -147,8 +157,8 @@ export function AccreditationDotMatrix() {
 
       {/* Dot Matrix Visualization */}
       <div 
-        ref={containerRef} 
         className="flex-1 border rounded-lg p-6 bg-background overflow-hidden"
+        style={{ width, height: height - 120 }} // Account for header space
       >
         <div className="grid grid-cols-1 gap-4 h-full">
           <div className="flex flex-wrap gap-2 content-center justify-center">
@@ -242,5 +252,25 @@ export function AccreditationDotMatrix() {
         </Card>
       </div>
     </div>
+  );
+}
+
+/**
+ * Responsive AccreditationDotMatrix component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function AccreditationDotMatrix({ className }: { className?: string }) {
+  return (
+    <ChartErrorBoundary>
+      <ResponsiveChartWrapper className={className}>
+        {({ width, height }) => (
+          <AccreditationDotMatrixInternal
+            width={width}
+            height={height}
+            className={className}
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 }

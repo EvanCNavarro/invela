@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Input Component - Core Form Input Element
+ * ========================================
+ * 
+ * Professional input component providing consistent styling, accessibility,
+ * and form integration throughout the enterprise platform. Built with
+ * shadcn/ui patterns and Tailwind CSS utility classes.
+ * 
+ * Key Features:
+ * - Accessible form input with proper focus management
+ * - Consistent styling with design system tokens
+ * - Type-safe React forwardRef implementation
+ * - Flexible className override support
+ * - Built-in disabled and error states
+ * 
+ * Accessibility Features:
+ * - Proper focus indicators with ring styling
+ * - Screen reader compatible attributes
+ * - Keyboard navigation support
+ * - High contrast mode compatibility
+ * 
+ * @module components/ui/input
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

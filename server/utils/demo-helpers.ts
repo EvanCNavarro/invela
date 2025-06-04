@@ -3,6 +3,38 @@ import { companies } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from './logger';
 
+/**
+ * Enhanced logging utility for demo operations
+ * Provides consistent, trackable log messages with structured data
+ */
+export function logDemoOperation(
+  level: 'info' | 'warn' | 'error',
+  operation: string,
+  data?: Record<string, unknown>
+): void {
+  const timestamp = new Date().toISOString();
+  const logData = {
+    timestamp,
+    module: 'DemoAPI',
+    operation,
+    ...data,
+  };
+
+  const logMessage = `[DemoAPI] ${operation}`;
+  
+  switch (level) {
+    case 'info':
+      console.log(logMessage, logData);
+      break;
+    case 'warn':
+      console.warn(logMessage, logData);
+      break;
+    case 'error':
+      console.error(logMessage, logData);
+      break;
+  }
+}
+
 // Logger is already initialized in the imported module
 
 /**

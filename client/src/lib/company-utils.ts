@@ -1,4 +1,18 @@
 /**
+ * ========================================
+ * Company Utilities - Business Logic Support
+ * ========================================
+ * 
+ * Utility functions for company data processing and standardization in the
+ * enterprise risk assessment platform. Handles cross-API compatibility,
+ * data normalization, and business logic abstraction.
+ * 
+ * @module lib/company-utils
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+/**
  * Helper function to get the accreditation status from a company object
  * regardless of which property naming convention is used
  * 
@@ -6,6 +20,11 @@
  * @returns The accreditation status string or undefined if not found
  */
 export function getCompanyAccreditationStatus(company: any): string | undefined {
+  // Guard against null/undefined company object
+  if (!company || typeof company !== 'object') {
+    return undefined;
+  }
+  
   // First check for camelCase version (standardized)
   if (company.accreditationStatus) {
     return company.accreditationStatus;

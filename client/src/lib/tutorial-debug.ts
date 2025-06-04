@@ -1,9 +1,15 @@
 /**
- * Tutorial Debug Utility
+ * ========================================
+ * Tutorial Debug Utility - Development Support
+ * ========================================
  * 
- * This utility provides comprehensive debugging tools for the tutorial system.
- * It captures and logs detailed information about the tutorial state, API calls,
- * component renders, and more to help diagnose tutorial-related issues.
+ * Comprehensive debugging tools for the tutorial system in the enterprise
+ * risk assessment platform. Provides detailed logging, state tracking,
+ * and diagnostic capabilities for tutorial development and troubleshooting.
+ * 
+ * @module lib/tutorial-debug
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 import { createTutorialLogger } from './tutorial-logger';

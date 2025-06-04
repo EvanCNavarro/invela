@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Company Snapshot Widget - Executive Overview
+ * ========================================
+ * 
+ * Comprehensive company overview widget providing key business metrics,
+ * risk indicators, and network relationships for executive decision-making.
+ * Features real-time data integration and interactive navigation capabilities.
+ * 
+ * Key Features:
+ * - Real-time company performance metrics
+ * - Risk score and trending indicators
+ * - Network relationship visualization
+ * - Interactive navigation to detailed views
+ * - Responsive design with loading states
+ * 
+ * Data Sources:
+ * - Company profile and business information
+ * - Real-time risk assessment data
+ * - Network relationship analysis
+ * - Performance trend calculations
+ * 
+ * @module components/dashboard/CompanySnapshot
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useQuery } from "@tanstack/react-query";
 import { 
   Building2, 
@@ -26,6 +53,14 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
     queryKey: ["/api/relationships"],
     enabled: !!companyData?.id,
   });
+
+  // Fetch accreditation information
+  const { data: accreditationData, isLoading: isLoadingAccreditation, error: accreditationError } = useQuery({
+    queryKey: [`/api/companies/${companyData?.id}/accreditation`],
+    enabled: !!companyData?.id
+  });
+
+
 
   // For risk score changes, we'll use a static value of 11 as suggested
   const riskScoreChanges = 11;
@@ -155,6 +190,21 @@ export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySna
             <div className="text-lg sm:text-xl font-semibold text-black">
               {displayStatus}
             </div>
+            {accreditationData && (
+              <div className="text-xs mt-1 text-center">
+                {accreditationData.isPermanent ? (
+                  <span className="text-gray-600">(No expiration)</span>
+                ) : accreditationData.daysUntilExpiration !== null ? (
+                  accreditationData.daysUntilExpiration < 0 ? (
+                    <span className="text-gray-600">(Expired {Math.abs(accreditationData.daysUntilExpiration)} days ago)</span>
+                  ) : accreditationData.daysUntilExpiration === 0 ? (
+                    <span className="text-gray-600">(Expires today)</span>
+                  ) : (
+                    <span className="text-gray-600">(Expires in {accreditationData.daysUntilExpiration} days)</span>
+                  )
+                ) : null}
+              </div>
+            )}
           </Card>
         </div>
       </div>

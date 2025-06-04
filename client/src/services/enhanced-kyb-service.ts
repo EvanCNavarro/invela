@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Enhanced KYB Service - Know Your Business Enterprise Solution
+ * ========================================
+ * 
+ * Advanced Know Your Business (KYB) service providing comprehensive customer
+ * business verification and due diligence capabilities. Manages complex form
+ * workflows, field-level timestamping, and real-time data synchronization.
+ * 
+ * Key Features:
+ * - Enhanced form field management with timestamped data integrity
+ * - Progressive optimization and performance monitoring
+ * - Advanced conflict resolution for multi-user editing
+ * - Real-time form synchronization and validation
+ * - Comprehensive field mapping and type conversion
+ * 
+ * Business Verification Capabilities:
+ * - Corporate structure and ownership verification
+ * - Financial standing and compliance assessment
+ * - Risk scoring and regulatory compliance checking
+ * - Document validation and authentication
+ * - Real-time field-level timestamp synchronization
+ * 
+ * @module services/enhanced-kyb-service
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { FormServiceInterface, FormSubmitOptions, FormSubmitResponse } from './form-service.interface';
 import { FormData, TimestampedFormData, createTimestampedFormData, updateField, mergeTimestampedFormData, extractValues, getNewerClientFields } from '../types/form-data';
 import { FormField, FormSection } from '../components/forms/types';
@@ -1485,17 +1513,42 @@ class EnhancedKybServiceFactory {
   }
 
   /**
+   * Helper method to safely get company ID from context without using require()
+   * This avoids ES module compatibility issues in production
+   */
+  private getCompanyIdFromContext(): number | undefined {
+    try {
+      // Direct access to sessionStorage to avoid ES module issues
+      const contextData = typeof window !== 'undefined' && window.sessionStorage 
+        ? window.sessionStorage.getItem('user-context')
+        : null;
+      
+      if (contextData) {
+        const parsed = JSON.parse(contextData);
+        const companyId = parsed.companyId;
+        
+        if (companyId) {
+          return typeof companyId === 'string' ? parseInt(companyId, 10) : companyId as number;
+        }
+      }
+    } catch (error) {
+      this.logger.warn('Error reading company ID from context:', error);
+    }
+    
+    return undefined;
+  }
+
+  /**
    * Get the current active instance or create a default one
    * This is provided for backward compatibility with existing code
    * Data isolation fix: Now properly uses company-specific instances when possible.
    */
   getDefaultInstance(): EnhancedKybFormService {
     // CRITICAL DATA ISOLATION FIX: Import user context manager
-    // Using dynamic import to avoid circular dependencies
+    // Using synchronous access to avoid async issues in this context
     try {
-      // Import from userContext directly here to avoid circular dependencies
-      const { userContext } = require('@/lib/user-context');
-      const companyId = userContext.getCompanyId();
+      // Access user context directly without dynamic imports to avoid ES module issues
+      const companyId = this.getCompanyIdFromContext();
       
       if (companyId) {
         this.logger.info(`Data isolation: Using company-specific instance for: ${companyId}`);
@@ -1520,9 +1573,8 @@ class EnhancedKybServiceFactory {
   getAppInstance(): EnhancedKybFormService {
     // CRITICAL DATA ISOLATION FIX: Use proper user context manager
     try {
-      // Import userContext directly here to avoid circular dependencies
-      const { userContext } = require('@/lib/user-context');
-      const companyId = userContext.getCompanyId();
+      // Access user context directly without dynamic imports to avoid ES module issues
+      const companyId = this.getCompanyIdFromContext();
       
       if (companyId) {
         this.logger.info(`Data isolation: Using company-specific instance for app-level request: ${companyId}`);

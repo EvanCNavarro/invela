@@ -681,7 +681,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
+    <AuthLayout mode={validatedInvitation ? "register-validated" : "register"}>
       {/* Enhanced Loading Transition Overlay */}
       {isLoadingTransition && (
         <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-all duration-500 ease-in-out">

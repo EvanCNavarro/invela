@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { AnimatedOnboardingModal } from "@/components/modals/AnimatedOnboardingModal";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -26,35 +27,51 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
     enabled: !!user && showModal, // Only fetch if we need to show the modal
   });
   
-  // Simplified approach with consistent localStorage key and better logging
+  // Enhanced onboarding check with demo persona session refresh
   React.useEffect(() => {
     if (!user) return;
     
-    try {
-      // Use a single consistent localStorage key format for all onboarding status checks
-      const localStorageKey = `onboarding_completed_${user.id}`;
-      const hasCompletedOnboardingLocal = localStorage.getItem(localStorageKey) === 'true';
-      
-      // Log detailed information about the onboarding status check
-      console.log('[OnboardingWrapper] Checking onboarding status', {
-        userId: user.id,
-        databaseStatus: user.onboarding_user_completed ? 'completed' : 'not completed',
-        localStorageStatus: hasCompletedOnboardingLocal ? 'completed' : 'not stored or not completed',
-        showModal: !user.onboarding_user_completed && !hasCompletedOnboardingLocal
-      });
-      
-      // Clear decision logic: 
-      // 1. If user is marked as onboarded in database, never show modal
-      // 2. If user has completed onboarding according to localStorage, never show modal
-      // 3. Otherwise, show the modal
-      const shouldShowModal = !user.onboarding_user_completed && !hasCompletedOnboardingLocal;
-      setShowModal(shouldShowModal);
-    } catch (err) {
-      console.error('[OnboardingWrapper] Error checking localStorage:', err);
-      // Fallback to just the database flag if localStorage access fails
-      setShowModal(!user.onboarding_user_completed);
-    }
-  }, [user]);
+    const handleOnboardingCheck = async () => {
+      try {
+        // Use a single consistent localStorage key format for all onboarding status checks
+        const localStorageKey = `onboarding_completed_${user.id}`;
+        const hasCompletedOnboardingLocal = localStorage.getItem(localStorageKey) === 'true';
+        
+        // Log detailed information about the onboarding status check
+        console.log('[OnboardingWrapper] Checking onboarding status', {
+          userId: user.id,
+          databaseStatus: user.onboarding_user_completed ? 'completed' : 'not completed',
+          localStorageStatus: hasCompletedOnboardingLocal ? 'completed' : 'not stored or not completed',
+          showModal: !user.onboarding_user_completed && !hasCompletedOnboardingLocal
+        });
+        
+        // For demo users: Check if there's a database/session data mismatch and refresh if needed
+        if (!user.onboarding_user_completed && user.is_demo_user && user.demo_persona_type !== 'new-data-recipient') {
+          console.log('[OnboardingWrapper] Detected potential session cache issue for demo persona - refreshing user data');
+          
+          // Invalidate and refetch user data to get fresh onboarding status from database
+          queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+          
+          // Brief delay to allow the refetch to complete
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return; // Exit early to let the refreshed data trigger this effect again
+        }
+        
+        // Clear decision logic: 
+        // 1. If user is marked as onboarded in database, never show modal
+        // 2. If user has completed onboarding according to localStorage, never show modal
+        // 3. Otherwise, show the modal
+        const shouldShowModal = !user.onboarding_user_completed && !hasCompletedOnboardingLocal;
+        setShowModal(shouldShowModal);
+      } catch (err) {
+        console.error('[OnboardingWrapper] Error checking localStorage:', err);
+        // Fallback to just the database flag if localStorage access fails
+        setShowModal(!user.onboarding_user_completed);
+      }
+    };
+    
+    handleOnboardingCheck();
+  }, [user, currentCompany]);
   
   // Function to manually mark onboarding as completed via form submission
   // This function can be called from other components, forms, or exposed to window

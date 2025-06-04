@@ -5,11 +5,63 @@ import {
   CheckCircle, 
   ArrowRight, 
   ArrowDown, 
-  Loader2
+  Loader2,
+  Shield,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUnifiedToast } from '@/hooks/use-unified-toast.tsx';
+
+// Global image cache for preloading and instant access
+const globalImageCache = new Map<string, HTMLImageElement>();
+
+// Preload images into cache
+const preloadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    if (globalImageCache.has(src)) {
+      resolve(globalImageCache.get(src)!);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      globalImageCache.set(src, img);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
+// Type definitions for better type safety
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  onboarding_user_completed: boolean;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  category?: string;
+  onboarding_company_completed: boolean;
+}
+
+interface CompanyInfo {
+  size: string;
+  revenue: string;
+}
+
+interface TeamMember {
+  fullName: string;
+  email: string;
+  role: string;
+  roleDescription?: string;
+  formType?: string;
+}
 
 import {
   Card,
@@ -27,7 +79,24 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/no-close-dialog';
-import { useToast } from '@/hooks/use-toast';
+
+
+// Revenue formatting utilities - updated to match demo system format
+const formatRevenue = (amount: number): string => {
+  if (amount >= 1_000_000_000) {
+    const billions = amount / 1_000_000_000;
+    return `$${parseFloat(billions.toFixed(1))}B`;
+  } else if (amount >= 1_000_000) {
+    const millions = amount / 1_000_000;
+    return `$${parseFloat(millions.toFixed(1))}M`;
+  } else if (amount >= 1_000) {
+    const thousands = amount / 1_000;
+    return `$${parseFloat(thousands.toFixed(1))}K`;
+  } else {
+    return `$${amount}`;
+  }
+};
+
 // Map company size values to employee count
 const employeeCountMap = {
   'small': 25, // middle of 1-49
@@ -97,14 +166,15 @@ const updateUserOnboardingStatus = async (userId: number, status: boolean) => {
  * @returns Response data from the API
  */
 // Revenue mapping from text descriptions to numeric values (in dollars)
+// Updated to match demo system format for consistency
 const revenueValueMap: Record<string, number> = {
-  small: 1000000,     // $1 million
-  medium: 10000000,   // $10 million
-  large: 50000000,    // $50 million
-  xlarge: 100000000   // $100 million
+  small: 1750000,     // $1.75M - matches demo system format
+  medium: 17500000,   // $17.5M - matches demo system format  
+  large: 87500000,    // $87.5M - matches demo system format
+  xlarge: 175000000   // $175M - matches demo system format
 };
 
-const updateCompanyDetails = async (companyId: number, details: any) => {
+const updateCompanyDetails = async (companyId: number, details: CompanyInfo) => {
   // Map size to employee count if available
   const numEmployees = details.size ? 
     employeeCountMap[details.size as keyof typeof employeeCountMap] : 
@@ -220,8 +290,8 @@ const logDebug = (message: string, data?: any) => {
   console.log(`[AnimatedOnboardingModal] ${message}`, data);
 };
 
-// Define the interface for team members
-interface TeamMember {
+// Define the interface for team members (consolidated definition)
+interface TeamMemberDefinition {
   role: 'CFO' | 'CISO';
   fullName: string;
   email: string;
@@ -235,79 +305,25 @@ interface CompanyInfo {
   revenue: string;
 }
 
-/**
- * Step Transition Component
- * 
- * Wraps step content with animation using framer-motion
- * Provides smooth transitions between steps
- */
-interface StepTransitionProps {
-  children: React.ReactNode;
-  direction: 'next' | 'prev';
-  isActive: boolean;
-}
 
-const StepTransition: React.FC<StepTransitionProps> = ({ 
-  children, 
-  direction, 
-  isActive 
-}) => {
-  // Different animations based on direction
-  const variants = {
-    enter: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? 100 : -100,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: 'next' | 'prev') => ({
-      x: direction === 'next' ? -100 : 100,
-      opacity: 0,
-    }),
-  };
-  
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      {isActive && (
-        <motion.div
-          key={`step-transition-${isActive ? 'active' : 'inactive'}`}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 }
-          }}
-          className="w-full"
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // Component for the header chip with consistent pill shape
 const HeaderChip: React.FC = () => (
-  <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4 w-fit">
+  <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 w-fit">
     Onboarding Modal
   </div>
 );
 
 // Component for consistent right side image container
 const RightImageContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="hidden md:block bg-blue-50/30 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
+  <div className="hidden md:block bg-primary/5 relative md:w-[50%] flex-shrink-0 border-l border-slate-100">
     <div className="absolute inset-0 flex items-center justify-center">
       {children}
     </div>
   </div>
 );
 
-// Component for consistent step image with loading indicator
+// Component for consistent step image with loading indicator and professional styling
 const StepImage: React.FC<{ 
   src: string | undefined; 
   alt: string | undefined;
@@ -317,16 +333,16 @@ const StepImage: React.FC<{
   alt = 'Onboarding step image',
   isLoaded
 }) => (
-  <div className="w-[400px] h-[350px] relative flex items-center justify-center">
+  <div className="w-[360px] h-[360px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
     {isLoaded ? (
       <img 
         src={src || ''} 
         alt={alt || 'Onboarding step image'}
-        className="w-full h-full object-contain rounded-lg"
+        className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="w-[300px] h-[300px] rounded-lg" />
+        <Skeleton className="w-full h-full rounded-xl animate-pulse bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200" />
       </div>
     )}
   </div>
@@ -356,19 +372,27 @@ const StepLayout: React.FC<{
   // Determine which image source to use
   const imgSrc = rightImageSrc || imageSrc;
   
-  // Preload image
+  // Use cached image or preload with optimized loading strategy
   useEffect(() => {
     if (!imgSrc) {
+      setImageLoaded(true); // No image to load
       return;
     }
     
-    const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.src = imgSrc;
+    setImageLoaded(false); // Reset loading state
     
-    // Log when image is loaded for debugging
-    console.log(`[AnimatedOnboardingModal] Image loaded for step: ${title}`, { src: imgSrc });
-  }, [imgSrc, title]);
+    // Use cached image or preload
+    if (globalImageCache.has(imgSrc)) {
+      setImageLoaded(true);
+    } else {
+      preloadImage(imgSrc)
+        .then(() => setImageLoaded(true))
+        .catch(() => {
+          console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
+          setImageLoaded(true); // Show content even if image fails
+        });
+    }
+  }, [imgSrc]);
   
   return (
     <div className="flex flex-col md:flex-row flex-1 h-[450px] overflow-visible">
@@ -379,9 +403,16 @@ const StepLayout: React.FC<{
           <HeaderChip />
           
           {/* Page title with proper spacing */}
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">
+          <h2 className="text-2xl font-bold text-primary mb-4">
             {title}
           </h2>
+          
+          {/* Description text for consistency across steps */}
+          {description && (
+            <p className="text-lg text-gray-700 mb-4">
+              {description}
+            </p>
+          )}
           
           {/* Content area with fixed height and no scrolling */}
           <div className="flex-grow content-area pr-2">
@@ -407,7 +438,7 @@ const StepLayout: React.FC<{
 // Component for rendering checklist items with consistent styling
 const CheckListItem: React.FC<{children: React.ReactNode}> = ({ children }) => (
   <div className="flex items-start space-x-3 mb-5">
-    <div className="h-5 w-5 text-blue-600 flex-shrink-0 rounded-full bg-blue-50 flex items-center justify-center mt-0.5">
+    <div className="h-5 w-5 text-primary flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
@@ -450,21 +481,34 @@ export function AnimatedOnboardingModal({
 }: {
   isOpen: boolean,
   setShowModal: (show: boolean) => void,
-  user: any | null,
-  currentCompany: any | null,
+  user: User | null,
+  currentCompany: Company | null,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   
   // Track transition animation direction (next or previous)
   const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev'>('next');
   
-  // Track if transition is in progress
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
     size: '',
     revenue: '',
   });
+
+  // Preload all onboarding step images when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const imagesToPreload = [
+        "/images/onboarding/step1-welcome.jpg",
+        "/images/onboarding/step2-company.jpg", 
+        "/images/onboarding/step3-team.jpg",
+        "/images/onboarding/step4-tasks.jpg"
+      ];
+    
+      imagesToPreload.forEach(src => {
+        preloadImage(src).catch(console.warn);
+      });
+    }
+  }, [isOpen]);
   
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
@@ -483,8 +527,8 @@ export function AnimatedOnboardingModal({
     },
   ]);
   
-  // Get toast function
-  const { toast: toastFn } = useToast();
+  // Get unified toast function
+  const { success: successToast, error: errorToast } = useUnifiedToast();
   
   // Get query client for invalidating queries after completing onboarding
   const queryClient = useQueryClient();
@@ -496,6 +540,23 @@ export function AnimatedOnboardingModal({
     companyDetails?: string;
     teamInvites?: string[];
   }>({});
+
+  // Track invitation success for validation styling
+  const [invitationStatus, setInvitationStatus] = useState<{[key: string]: 'pending' | 'success' | 'error'}>({});
+  
+  // Track field validation states for color scheme
+  const [fieldStates, setFieldStates] = useState<{
+    [role: string]: {
+      focused: boolean;
+      touched: boolean;
+      nameComplete: boolean;
+      emailComplete: boolean;
+      hasBeenFocused: boolean;
+    }
+  }>({
+    CFO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false },
+    CISO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false }
+  });
   
   // Reset state when modal is opened
   useEffect(() => {
@@ -521,8 +582,111 @@ export function AnimatedOnboardingModal({
           formType: 'KY3P Assessment',
         },
       ]);
+      // Reset field states
+      setFieldStates({
+        CFO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false },
+        CISO: { focused: false, touched: false, nameComplete: false, emailComplete: false, hasBeenFocused: false }
+      });
+      logDebug('Modal opened - reset all states');
     }
   }, [isOpen]);
+
+  // Field state update functions
+  const updateFieldState = (role: string, updates: Partial<typeof fieldStates.CFO>) => {
+    setFieldStates(prev => ({
+      ...prev,
+      [role]: { ...prev[role], ...updates }
+    }));
+    logDebug(`Updated field state for ${role}`, { role, updates });
+  };
+
+  const handleFieldFocus = (role: string) => {
+    updateFieldState(role, { focused: true, hasBeenFocused: true });
+    logDebug(`Field focused for ${role}`, { role });
+  };
+
+  const handleFieldBlur = (role: string) => {
+    updateFieldState(role, { focused: false, touched: true });
+    logDebug(`Field blurred for ${role}`, { role });
+  };
+
+  const updateFieldCompletion = (role: string, fieldType: 'name' | 'email', value: string) => {
+    const isComplete = value.trim() !== '';
+    const updates = fieldType === 'name' 
+      ? { nameComplete: isComplete }
+      : { emailComplete: isComplete };
+    
+    updateFieldState(role, updates);
+    logDebug(`Field completion updated for ${role}.${fieldType}`, { role, fieldType, isComplete, value: value ? '[REDACTED]' : 'empty' });
+  };
+
+  // Determine block color state based on validation rules
+  const getBlockColorState = (role: string): 'gray' | 'blue' | 'green' | 'yellow' => {
+    const state = fieldStates[role];
+    const inviteSuccess = invitationStatus[role] === 'success';
+    
+    // Green: invitation sent successfully OR both fields complete
+    if (inviteSuccess || (state.nameComplete && state.emailComplete)) {
+      logDebug(`Block state: GREEN for ${role}`, { inviteSuccess, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
+      return 'green';
+    }
+    
+    // Blue: currently focused on any field in this block
+    if (state.focused) {
+      logDebug(`Block state: BLUE for ${role}`, { focused: state.focused });
+      return 'blue';
+    }
+    
+    // Yellow: has been focused before, touched, but incomplete (only if at least one field has content)
+    if (state.hasBeenFocused && state.touched && (!state.nameComplete || !state.emailComplete)) {
+      // Only show yellow if user has started filling (at least one field has content)
+      const hasAnyContent = state.nameComplete || state.emailComplete;
+      if (hasAnyContent) {
+        logDebug(`Block state: YELLOW for ${role}`, { hasBeenFocused: state.hasBeenFocused, touched: state.touched, nameComplete: state.nameComplete, emailComplete: state.emailComplete });
+        return 'yellow';
+      }
+    }
+    
+    // Gray: default state (not touched or not focused yet)
+    logDebug(`Block state: GRAY for ${role}`, { state });
+    return 'gray';
+  };
+
+  // Get CSS classes for block based on color state
+  const getBlockClasses = (role: string): string => {
+    const colorState = getBlockColorState(role);
+    const baseClasses = "p-5 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border transition-all duration-200";
+    
+    switch (colorState) {
+      case 'green':
+        return `${baseClasses} bg-green-50 border-green-200`;
+      case 'blue':
+        return `${baseClasses} bg-blue-50 border-blue-200`;
+      case 'yellow':
+        return `${baseClasses} bg-yellow-50 border-yellow-200`;
+      case 'gray':
+      default:
+        return `${baseClasses} bg-gray-50 border-gray-200`;
+    }
+  };
+
+  // Get CSS classes for role chip based on validation state
+  const getChipClasses = (role: string): string => {
+    const colorState = getBlockColorState(role);
+    const baseClasses = "py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border transition-all duration-200";
+    
+    switch (colorState) {
+      case 'green':
+        return `${baseClasses} bg-green-100 text-green-700 border-green-200`;
+      case 'blue':
+        return `${baseClasses} bg-blue-100 text-blue-700 border-blue-200`;
+      case 'yellow':
+        return `${baseClasses} bg-yellow-100 text-yellow-700 border-yellow-200`;
+      case 'gray':
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-700 border-gray-200`;
+    }
+  };
   
   // Check if current step is valid to proceed
   const canProceed = useMemo(() => {
@@ -535,7 +699,18 @@ export function AnimatedOnboardingModal({
         
       case 2: // Tasks - always can proceed
       case 3: // Documents - always can proceed
-      case 4: // Team Members - always can proceed (can skip inviting team)
+        return true;
+        
+      case 4: // Team Members - validate partial entries
+        // Can proceed if no team members entered, OR if all entries are complete
+        const hasPartialEntries = teamMembers.some(member => {
+          const hasName = member.fullName && member.fullName.trim() !== '';
+          const hasEmail = member.email && member.email.trim() !== '';
+          // Partial entry = has one field but not both
+          return (hasName && !hasEmail) || (!hasName && hasEmail);
+        });
+        return !hasPartialEntries;
+        
       case 5: // Review - always can proceed
       case 6: // Complete - always can proceed
         return true;
@@ -545,60 +720,32 @@ export function AnimatedOnboardingModal({
     }
   }, [currentStep, companyInfo, teamMembers]);
   
-  // Handle next step button click with animation
+  // Handle next step button click with framer-motion
   const handleNextStep = () => {
-    // Prevent interaction during transition
-    if (isTransitioning) return;
-    
     // If we're on the last step, complete onboarding
     if (currentStep === 6) {
       handleCompleteOnboarding();
       return;
     }
     
-    // Set transition direction to 'next'
+    // Set transition direction for framer-motion
     setTransitionDirection('next');
-    
-    // Start transition animation
-    setIsTransitioning(true);
     logDebug('Starting next step animation', { currentStep });
     
-    // Short delay to allow animation to complete
-    setTimeout(() => {
-      // Go to the next step
-      setCurrentStep(prev => prev + 1);
-      
-      // End transition after a short delay to ensure animation completes
-      setTimeout(() => {
-        setIsTransitioning(false);
-        logDebug('Next step animation completed', { newStep: currentStep + 1 });
-      }, 300);
-    }, 200);
+    // Let framer-motion handle the transition naturally
+    setCurrentStep(prev => prev + 1);
+    logDebug('Next step animation completed', { newStep: currentStep + 1 });
   };
   
-  // Handle back button click with animation
+  // Handle back button click with framer-motion
   const handleBackStep = () => {
-    // Prevent interaction during transition
-    if (isTransitioning) return;
-    
-    // Set transition direction to 'prev'
+    // Set transition direction for framer-motion
     setTransitionDirection('prev');
-    
-    // Start transition animation
-    setIsTransitioning(true);
     logDebug('Starting back step animation', { currentStep });
     
-    // Short delay to allow animation to complete
-    setTimeout(() => {
-      // Go to the previous step
-      setCurrentStep(prev => Math.max(0, prev - 1));
-      
-      // End transition after a short delay to ensure animation completes
-      setTimeout(() => {
-        setIsTransitioning(false);
-        logDebug('Back step animation completed', { newStep: currentStep - 1 });
-      }, 300);
-    }, 200);
+    // Let framer-motion handle the transition naturally
+    setCurrentStep(prev => Math.max(0, prev - 1));
+    logDebug('Back step animation completed', { newStep: currentStep - 1 });
   };
   
   // Handle complete onboarding action
@@ -673,6 +820,8 @@ export function AnimatedOnboardingModal({
         
         const inviteErrors: string[] = [];
         
+        let successfulInvites = 0;
+        
         for (const member of validMembers) {
           try {
             await inviteTeamMember(currentCompany.id, {
@@ -684,6 +833,7 @@ export function AnimatedOnboardingModal({
               email: member.email, 
               role: member.role 
             });
+            successfulInvites++;
           } catch (error) {
             logDebug('Failed to invite team member', { 
               member: member.email,
@@ -692,6 +842,14 @@ export function AnimatedOnboardingModal({
             inviteErrors.push(`Failed to invite ${member.email}. Please try again.`);
             hasErrors = true;
           }
+        }
+        
+        // Show success toast for successful invitations
+        if (successfulInvites > 0) {
+          successToast(
+            "Team invitations sent",
+            `Successfully sent ${successfulInvites} team member invitation${successfulInvites > 1 ? 's' : ''}.`
+          );
         }
         
         if (inviteErrors.length > 0) {
@@ -707,11 +865,10 @@ export function AnimatedOnboardingModal({
       if (hasErrors) {
         // Still show success message even with errors
         // This prevents the user from getting stuck in the onboarding flow
-        toastFn({
-          title: "Onboarding completed",
-          description: "Your onboarding is complete, but some optional details could not be saved. You can update them later.",
-          variant: "default"
-        });
+        successToast(
+          "Onboarding completed",
+          "Your onboarding is complete, but some optional details could not be saved. You can update them later."
+        );
         
         // Log detailed information about errors for debugging
         logDebug('Onboarding completed with some errors', { 
@@ -720,11 +877,10 @@ export function AnimatedOnboardingModal({
         });
       } else {
         // Show success message for complete success
-        toastFn({
-          title: "Welcome aboard!",
-          description: "Your onboarding has been completed successfully.",
-          variant: "default"
-        });
+        successToast(
+          "Welcome aboard!",
+          "Your onboarding has been completed successfully."
+        );
       }
       
       // Close the modal regardless of company/team errors
@@ -736,11 +892,10 @@ export function AnimatedOnboardingModal({
       
       // Still show success to prevent user from getting stuck
       // The localStorage is already updated, so the modal won't show again
-      toastFn({
-        title: "Welcome aboard!",
-        description: "Your onboarding has been completed, but some details could not be saved.",
-        variant: "default"
-      });
+      successToast(
+        "Welcome aboard!",
+        "Your onboarding has been completed, but some details could not be saved."
+      );
       
       // Close the modal even with unexpected errors
       // User can update details later if needed
@@ -792,7 +947,7 @@ export function AnimatedOnboardingModal({
               className={cn(
                 "h-2.5 w-2.5 rounded-full transition-colors", 
                 currentStep === idx 
-                  ? "bg-blue-600 ring-2 ring-blue-200" 
+                  ? "bg-primary ring-2 ring-primary/20" 
                   : idx < currentStep 
                     ? "bg-green-400" 
                     : "bg-gray-200"
@@ -918,7 +1073,7 @@ export function AnimatedOnboardingModal({
               
               <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">1</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">1</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">Know Your Business (KYB) Form</h3>
                     <p className="text-xs text-gray-500">Verify your company's business information</p>
@@ -926,7 +1081,7 @@ export function AnimatedOnboardingModal({
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">2</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">2</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">S&P KY3P Security Assessment</h3>
                     <p className="text-xs text-gray-500">Third-party risk assessment for security practices</p>
@@ -934,7 +1089,7 @@ export function AnimatedOnboardingModal({
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white text-base font-medium flex-shrink-0">3</div>
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-white text-sm font-semibold flex-shrink-0 shadow-md transition-all duration-200 hover:scale-105">3</div>
                   <div>
                     <h3 className="font-medium text-base text-gray-900">Open Banking Survey</h3>
                     <p className="text-xs text-gray-500">API access and data sharing assessment</p>
@@ -954,19 +1109,42 @@ export function AnimatedOnboardingModal({
           >
             <div className="mt-0 space-y-4">
               <p className="text-lg text-gray-700 mb-4">
-                You'll be asked to submit documents during the assessment process:
+                Upload compliance documents to auto-fill forms and accelerate your assessment.
               </p>
               
               <div className="space-y-4">
-                <CheckListItem>
-                  All documents are securely stored in the File Vault
-                </CheckListItem>
-                <CheckListItem>
-                  Industry-standard security practices protect all uploads
-                </CheckListItem>
-                <CheckListItem>
-                  Granular permissions control who can access each document
-                </CheckListItem>
+                <div className="bg-slate-50 p-4 rounded-lg border">
+                  <h4 className="font-medium text-sm text-gray-900 mb-4">Suggested Files to Upload:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      SOC 2 Audit
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      ISO/IEC 27001 Certification
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      Penetration Test Report
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      Business Continuity Plan (BCP)
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      GDPR/CCPA Compliance Assessment
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      API Security Review
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      Data Protection Controls Assessment
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      OAuth Security Certification
+                    </div>
+                    <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium border border-gray-200 whitespace-nowrap">
+                      FDX (Financial Data Exchange) Certification
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </StepLayout>
@@ -980,9 +1158,9 @@ export function AnimatedOnboardingModal({
             imageAlt="Invite Team"
           >
             <div className="mt-0 space-y-4">
-              <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
-                <div className="flex items-center mb-3">
-                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+              <div className={getBlockClasses('CFO')}>
+                <div className="flex items-center mb-2">
+                  <div className={getChipClasses('CFO')}>
                     CFO
                   </div>
                   <span className="text-sm">Financial Data for</span>
@@ -997,13 +1175,15 @@ export function AnimatedOnboardingModal({
                     <Input
                       id="cfo-name"
                       value={teamMembers[0].fullName}
+                      onFocus={() => handleFieldFocus('CFO')}
+                      onBlur={() => handleFieldBlur('CFO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[0].fullName = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CFO', 'name', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="John Doe"
                     />
                   </div>
                   <div>
@@ -1014,21 +1194,23 @@ export function AnimatedOnboardingModal({
                       id="cfo-email"
                       type="email"
                       value={teamMembers[0].email}
+                      onFocus={() => handleFieldFocus('CFO')}
+                      onBlur={() => handleFieldBlur('CFO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[0].email = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CFO', 'email', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="jd@company.com"
                     />
                   </div>
                 </div>
               </div>
               
-              <div className="bg-blue-50/70 p-6 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
-                <div className="flex items-center mb-3">
-                  <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium mr-2 shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+              <div className={getBlockClasses('CISO')}>
+                <div className="flex items-center mb-2">
+                  <div className={getChipClasses('CISO')}>
                     CISO
                   </div>
                   <div>
@@ -1045,13 +1227,15 @@ export function AnimatedOnboardingModal({
                     <Input
                       id="ciso-name"
                       value={teamMembers[1].fullName}
+                      onFocus={() => handleFieldFocus('CISO')}
+                      onBlur={() => handleFieldBlur('CISO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[1].fullName = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CISO', 'name', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="Jane Smith"
                     />
                   </div>
                   <div>
@@ -1062,13 +1246,15 @@ export function AnimatedOnboardingModal({
                       id="ciso-email"
                       type="email"
                       value={teamMembers[1].email}
+                      onFocus={() => handleFieldFocus('CISO')}
+                      onBlur={() => handleFieldBlur('CISO')}
                       onChange={(e) => {
                         const newMembers = [...teamMembers];
                         newMembers[1].email = e.target.value;
                         setTeamMembers(newMembers);
+                        updateFieldCompletion('CISO', 'email', e.target.value);
                       }}
                       className="h-10 rounded-md bg-white/80 border-blue-100/50 focus:border-blue-300 focus:ring-1 focus:ring-blue-300 shadow-[inset_2px_2px_5px_rgba(163,180,235,0.2),_inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"
-                      placeholder="ciso@company.com"
                     />
                   </div>
                 </div>
@@ -1086,11 +1272,11 @@ export function AnimatedOnboardingModal({
           >
             <div className="mt-0 space-y-3">
               {/* Company Information Section */}
-              <div className="bg-blue-50/70 p-4 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50 mb-3">
-                <h3 className="text-blue-600 font-medium mb-2.5 text-base">Company Details</h3>
+              <div className="bg-primary/5 p-4 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10 mb-3">
+                <h3 className="text-primary font-medium mb-2.5 text-base">Company Details</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1100,7 +1286,7 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1110,7 +1296,7 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
@@ -1120,27 +1306,32 @@ export function AnimatedOnboardingModal({
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-green-500 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-green-500 flex items-center justify-center">
                       <Check className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-500">Revenue</span>
-                      <span className="text-sm font-medium">{companyInfo.revenue ? getRevenueLabel(companyInfo.revenue) : 'Not specified'}</span>
+                      <span className="text-sm font-medium">
+                        {companyInfo.revenue ? 
+                          formatRevenue(revenueValueMap[companyInfo.revenue as keyof typeof revenueValueMap]) : 
+                          'Not specified'
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
               
               {/* Team Members Section */}
-              <div className="bg-blue-50/70 p-4 rounded-xl shadow-[5px_5px_10px_rgba(163,180,235,0.2),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-blue-100/50">
-                <h3 className="text-blue-600 font-medium mb-2.5 text-base">Team Members to Invite</h3>
+              <div className="bg-primary/5 p-4 rounded-xl shadow-[5px_5px_10px_rgba(0,0,0,0.05),_-5px_-5px_10px_rgba(255,255,255,0.9)] border border-primary/10">
+                <h3 className="text-primary font-medium mb-2.5 text-base">Team Members to Invite</h3>
                 <div className="space-y-3">
                   {teamMembers.filter(member => member.fullName && isValidEmail(member.email)).length > 0 ? (
                     // Show team members that have both name and valid email
                     teamMembers.map((member, index) => (
                       member.fullName && isValidEmail(member.email) ? (
                         <div key={index} className="flex gap-3 items-center">
-                          <div className="bg-blue-100 text-blue-700 py-1 px-4 rounded-lg text-sm font-medium shadow-[2px_2px_4px_rgba(163,180,235,0.25),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-blue-50">
+                          <div className="bg-primary/15 text-primary py-1 px-4 rounded-lg text-sm font-medium shadow-[2px_2px_4px_rgba(0,0,0,0.05),_-2px_-2px_4px_rgba(255,255,255,0.7)] border border-primary/10">
                             {member.role}
                           </div>
                           <div className="flex-1">
@@ -1163,57 +1354,23 @@ export function AnimatedOnboardingModal({
       case 6: // Complete
         return (
           <StepLayout
-            headerChip="Step 7"
-            title="You're Ready to Begin!"
-            description="Your company has been set up successfully. Click 'Start' to begin using Invela Risk."
-            rightImageSrc="/assets/welcome_7.png"
+            title="Join the Invela Trust Network"
+            description="Click the Start button to begin your Accreditation process."
+            imageSrc="/assets/welcome_7.png"
+            imageAlt="Join the Invela Trust Network"
           >
-            <div className="space-y-6 mt-6">
-              <p className="text-gray-600">
-                We've prepared the following tasks for you to get started:
-              </p>
-              
-              <div className="space-y-4">
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">Know Your Business (KYB) Form</div>
-                  <div className="text-xs text-gray-500 mt-1">Basic information about your business operations and structure</div>
-                </div>
-                
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">S&P KY3P Security Assessment</div>
-                  <div className="text-xs text-gray-500 mt-1">Industry-standard security questionnaire</div>
-                </div>
-                
-                <div className="bg-blue-50/70 p-3 rounded-lg shadow-[3px_3px_6px_rgba(163,180,235,0.2),_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <div className="font-medium text-blue-800">Open Banking Survey</div>
-                  <div className="text-xs text-gray-500 mt-1">Data access and sharing practices assessment</div>
-                </div>
+            <div className="mt-0 space-y-4">
+              <div className="space-y-3">
+                <CheckListItem>
+                  Complete your assigned company tasks
+                </CheckListItem>
+                <CheckListItem>
+                  Provide documentation
+                </CheckListItem>
+                <CheckListItem>
+                  Manage your S&P Data Access Risk Score and Accreditation Status
+                </CheckListItem>
               </div>
-              
-              {/* Error messages section */}
-              {(operationErrors.userStatus || operationErrors.companyDetails || (operationErrors.teamInvites && operationErrors.teamInvites.length > 0)) && (
-                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">There were errors completing your onboarding</h3>
-                      <div className="mt-2 text-sm text-red-700">
-                        <ul className="list-disc pl-5 space-y-1">
-                          {operationErrors.userStatus && (
-                            <li>{operationErrors.userStatus}</li>
-                          )}
-                          {operationErrors.companyDetails && (
-                            <li>{operationErrors.companyDetails}</li>
-                          )}
-                          {operationErrors.teamInvites && operationErrors.teamInvites.map((error, index) => (
-                            <li key={index}>{error}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </StepLayout>
         );
@@ -1225,18 +1382,19 @@ export function AnimatedOnboardingModal({
   
   // Render step content with animation wrapper
   const renderStepContent = () => {
-    // Get current step content
-    const content = getCurrentStepContent();
-    
-    // Return with animation wrapper
     return (
-      <StepTransition
-        direction={transitionDirection}
-        isActive={true}
-        key={`step-${currentStep}`}
-      >
-        {content}
-      </StepTransition>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, x: transitionDirection === 'next' ? 50 : -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: transitionDirection === 'next' ? -50 : 50 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="w-full h-full"
+        >
+          {getCurrentStepContent()}
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
@@ -1262,7 +1420,7 @@ export function AnimatedOnboardingModal({
                 type="button"
                 variant="outline"
                 onClick={handleBackStep}
-                disabled={isTransitioning}
+                disabled={false}
               >
                 Back
               </Button>
@@ -1280,7 +1438,7 @@ export function AnimatedOnboardingModal({
             <Button 
               type="button"
               onClick={handleNextStep}
-              disabled={!canProceed || isTransitioning || (currentStep === 6 && isSubmitting)}
+              disabled={!canProceed || (currentStep === 6 && isSubmitting)}
               className={currentStep === 6 ? "bg-green-600 hover:bg-green-700 text-white px-6" : ""}
             >
               {currentStep === 6 ? (

@@ -8,12 +8,12 @@
 import { db } from '@db';
 import { kybResponses, ky3pResponses, openBankingResponses } from '@db/schema';
 import { eq, sql, and, or, like } from 'drizzle-orm';
-// Use string literals directly instead of importing FieldStatus enum
-// This prevents TypeScript type errors with drizzle-orm
-const STATUS_COMPLETE = 'complete';
-const STATUS_EMPTY = 'empty';
-const STATUS_INCOMPLETE = 'incomplete';
-const STATUS_INVALID = 'invalid';
+// Use uppercase string literals to match database schema enum values
+// Following enterprise database standards for status values
+const STATUS_COMPLETE = 'COMPLETE';
+const STATUS_EMPTY = 'EMPTY';
+const STATUS_INCOMPLETE = 'INCOMPLETE';
+const STATUS_INVALID = 'INVALID';
 
 async function checkForUppercaseStatusValues() {
   console.log('Checking for uppercase status values in the database...');

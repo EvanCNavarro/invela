@@ -35,6 +35,12 @@ export function configureDeploymentEnvironment(): void {
     logger.info('[ProductionConfig] Enabled package layer optimization for deployment size reduction');
   }
 
+  // Force minimal deployment package
+  process.env.NODE_ENV = 'production';
+  process.env.DEPLOYMENT_OPTIMIZATION = 'aggressive';
+  process.env.DISABLE_SOURCE_MAPS = 'true';
+  process.env.BUNDLE_ANALYZE = 'false';
+
   // Production environment confirmation
   if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'production') {
     process.env.NODE_ENV = 'production';

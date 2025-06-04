@@ -1,7 +1,28 @@
+/**
+ * ========================================
+ * Protected Route Component
+ * ========================================
+ * 
+ * A higher-order component that wraps routes requiring authentication.
+ * Displays loading spinner while checking auth status, redirects to login
+ * if user is not authenticated, or renders the protected component.
+ * 
+ * @module ProtectedRoute
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useAuth } from "@/hooks/use-auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Redirect, Route } from "wouter";
 
+/**
+ * ProtectedRoute component that requires authentication
+ * 
+ * @param path - The route path to protect
+ * @param component - The component to render when authenticated
+ * @returns JSX element with authentication protection
+ */
 export function ProtectedRoute({
   path,
   component: Component,

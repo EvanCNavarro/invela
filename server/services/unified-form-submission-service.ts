@@ -16,6 +16,7 @@ import * as UnifiedTabService from '../services/unified-tab-service';
 import * as TransactionManager from '../services/transaction-manager';
 import { synchronizeTasks } from '../services/synchronous-task-dependencies';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
+import { accreditationHistory } from '@db/schema';
 
 // Create a context object for logging
 const baseLogContext = { service: 'UnifiedFormSubmissionService' };
@@ -900,61 +901,126 @@ async function handleOpenBankingPostSubmission(
       // Set default values to continue execution
       riskScore = 50; // Default risk score if generation fails
       riskClusters = {
-        "PII Data": 18, 
-        "Account Data": 15, 
-        "Data Transfers": 5, 
-        "Certifications Risk": 5, 
-        "Security Risk": 5, 
-        "Financial Risk": 2
+        "Cyber Security": 15,
+        "Financial Stability": 13,
+        "Potential Liability": 10,
+        "Dark Web Data": 8,
+        "Public Sentiment": 3,
+        "Data Access Scope": 1
       };
     }
     
-    // STEP 5: Update accreditation status to APPROVED, save risk score and clusters
+    // STEP 5: Create accreditation history entry and update status
     try {
-      console.log(`[OpenBankingPostSubmission] Step 5/5: Setting accreditation status to APPROVED and saving risk scores`);
-      const riskUpdateResult = await trx.update(companies)
+      console.log(`[OpenBankingPostSubmission] Step 5/6: Creating accreditation history entry`);
+      
+      // Get company category to determine accreditation type
+      const companyData = await trx.select({ category: companies.category })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      const category = companyData[0]?.category || 'FinTech';
+      
+      // Create accreditation history entry within transaction
+      // Get current accreditation count for this company
+      const currentCompany = await trx
+        .select({ accreditation_count: companies.accreditation_count })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+      
+      const currentCount = currentCompany[0]?.accreditation_count || 0;
+      const newAccreditationNumber = currentCount + 1;
+      
+      // Determine expiration date based on company category
+      const issuedDate = new Date();
+      let expiresDate: Date | null = null;
+      
+      // Data Recipients (FinTech) get 365-day expiration
+      // Data Providers (Banks) and Invela get permanent accreditation
+      if (category === 'FinTech') {
+        expiresDate = new Date(issuedDate);
+        expiresDate.setDate(expiresDate.getDate() + 365);
+      }
+      
+      // Create accreditation history entry
+      const [newAccreditation] = await trx
+        .insert(accreditationHistory)
+        .values({
+          company_id: companyId,
+          accreditation_number: newAccreditationNumber,
+          risk_score: riskScore,
+          issued_date: issuedDate,
+          expires_date: expiresDate,
+          status: 'ACTIVE',
+          risk_clusters: riskClusters
+        })
+        .returning();
+      
+      // Update company record with new accreditation info
+      await trx
+        .update(companies)
         .set({
-          accreditation_status: 'APPROVED', // Must be APPROVED per requirements
+          current_accreditation_id: newAccreditation.id,
+          accreditation_count: newAccreditationNumber,
+          first_accredited_date: currentCount === 0 ? issuedDate : undefined,
+          accreditation_status: 'APPROVED',
           risk_score: riskScore,
           risk_clusters: riskClusters,
           updated_at: new Date()
         })
-        .where(eq(companies.id, companyId))
-        .returning({ 
-          id: companies.id,
-          risk_score: companies.risk_score,
-          accreditation_status: companies.accreditation_status 
-        });
+        .where(eq(companies.id, companyId));
       
-      if (riskUpdateResult && riskUpdateResult.length > 0) {
-        console.log(`[OpenBankingPostSubmission] ✅ Step 5/5 Complete: Updated accreditation status to APPROVED and risk score to ${riskScore} for company ${companyId}`);
-        stepResults.accreditationUpdated = true;
-        
-        logger.info('Updated accreditation status and risk scores', { 
-          ...obPostLogContext,
-          step: 'update_accreditation_and_risk',
-          accreditation_status: 'APPROVED',
-          riskScore,
-          riskUpdateResult: riskUpdateResult || 'No result returned',
-          status: 'success',
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.warn(`[OpenBankingPostSubmission] ⚠️ Step 5/5: No rows updated for accreditation status and risk scores`);
-        logger.warn('No rows updated for accreditation and risk', {
-          ...obPostLogContext,
-          step: 'update_accreditation_and_risk'
-        });
-      }
-    } catch (accreditationError) {
-      console.error(`[OpenBankingPostSubmission] ❌ Failed to update accreditation status:`, accreditationError);
-      logger.error('Failed to update accreditation status', {
+      const accreditationInfo = {
+        id: newAccreditation.id,
+        accreditationNumber: newAccreditationNumber,
+        issuedDate,
+        expiresDate,
+        status: 'ACTIVE',
+        daysUntilExpiration: expiresDate ? Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null,
+        isPermanent: expiresDate === null
+      };
+      
+      console.log(`[OpenBankingPostSubmission] ✅ Step 5/6 Complete: Created accreditation history entry ${accreditationInfo.accreditationNumber}`);
+      stepResults.accreditationUpdated = true;
+      
+      logger.info('Created accreditation history entry', { 
         ...obPostLogContext,
-        step: 'update_accreditation_and_risk',
+        step: 'create_accreditation_history',
+        accreditationId: accreditationInfo.id,
+        accreditationNumber: accreditationInfo.accreditationNumber,
+        expiresDate: accreditationInfo.expiresDate?.toISOString() || 'permanent',
+        isPermanent: accreditationInfo.isPermanent,
+        status: 'success',
+        timestamp: new Date().toISOString()
+      });
+    } catch (accreditationError) {
+      console.error(`[OpenBankingPostSubmission] ❌ Failed to create accreditation history:`, accreditationError);
+      logger.error('Failed to create accreditation history', {
+        ...obPostLogContext,
+        step: 'create_accreditation_history',
         error: accreditationError instanceof Error ? accreditationError.message : String(accreditationError),
         status: 'failed'
       });
-      // At this point, we've tried all the main operations
+      
+      // Fallback: Update company record directly if accreditation service fails
+      try {
+        console.log(`[OpenBankingPostSubmission] Step 5/6 Fallback: Setting accreditation status to APPROVED`);
+        await trx.update(companies)
+          .set({
+            accreditation_status: 'APPROVED',
+            risk_score: riskScore,
+            risk_clusters: riskClusters,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, companyId));
+        
+        console.log(`[OpenBankingPostSubmission] ✅ Fallback completed: Updated accreditation status to APPROVED`);
+        stepResults.accreditationUpdated = true;
+      } catch (fallbackError) {
+        console.error(`[OpenBankingPostSubmission] ❌ Fallback also failed:`, fallbackError);
+      }
     }
     
     // Final verification step - verify all updates were applied
@@ -1036,10 +1102,12 @@ async function handleOpenBankingPostSubmission(
  * This function distributes the total risk score across different risk categories
  * using predetermined weight percentages. The distribution follows these rules:
  * 
- * 1. PII Data receives the highest weight (35%) as it's the most critical category
- * 2. Account Data receives the second highest weight (30%)
- * 3. Data Transfers, Certifications Risk, and Security Risk each get 10%
- * 4. Financial Risk receives 5% of the total risk score
+ * 1. Cyber Security receives the highest weight (30%) as it's the most critical category
+ * 2. Financial Stability receives the second highest weight (25%)
+ * 3. Potential Liability receives 20% of the total risk score
+ * 4. Dark Web Data receives 15% of the total risk score
+ * 5. Public Sentiment receives 7% of the total risk score
+ * 6. Data Access Scope receives 3% of the total risk score
  * 
  * The function ensures that the sum of all category scores exactly equals the
  * total risk score, making adjustments to the main categories if needed.
@@ -1048,31 +1116,31 @@ async function handleOpenBankingPostSubmission(
  * @returns An object containing risk scores distributed across all six categories
  */
 function calculateRiskClusters(riskScore: number): {
-  "PII Data": number,
-  "Account Data": number,
-  "Data Transfers": number,
-  "Certifications Risk": number,
-  "Security Risk": number,
-  "Financial Risk": number
+  "Cyber Security": number,
+  "Financial Stability": number,
+  "Potential Liability": number,
+  "Dark Web Data": number,
+  "Public Sentiment": number,
+  "Data Access Scope": number
 } {
   // Base distribution weights for each category - THESE MUST SUM TO 1.0 (100%)
   const weights = {
-    "PII Data": 0.35,           // 35% of total score - Highest priority
-    "Account Data": 0.30,        // 30% of total score - Second highest priority
-    "Data Transfers": 0.10,      // 10% of total score
-    "Certifications Risk": 0.10, // 10% of total score
-    "Security Risk": 0.10,       // 10% of total score
-    "Financial Risk": 0.05       // 5% of total score
+    "Cyber Security": 0.30,        // 30% - Highest priority
+    "Financial Stability": 0.25,   // 25% - Second highest priority
+    "Potential Liability": 0.20,   // 20% - Third priority
+    "Dark Web Data": 0.15,         // 15% - Fourth priority
+    "Public Sentiment": 0.07,      // 7% - Fifth priority
+    "Data Access Scope": 0.03      // 3% - Lowest priority
   };
   
   // Calculate base values for each category
   let clusters = {
-    "PII Data": Math.round(riskScore * weights["PII Data"]),
-    "Account Data": Math.round(riskScore * weights["Account Data"]),
-    "Data Transfers": Math.round(riskScore * weights["Data Transfers"]),
-    "Certifications Risk": Math.round(riskScore * weights["Certifications Risk"]),
-    "Security Risk": Math.round(riskScore * weights["Security Risk"]),
-    "Financial Risk": Math.round(riskScore * weights["Financial Risk"])
+    "Cyber Security": Math.round(riskScore * weights["Cyber Security"]),
+    "Financial Stability": Math.round(riskScore * weights["Financial Stability"]),
+    "Potential Liability": Math.round(riskScore * weights["Potential Liability"]),
+    "Dark Web Data": Math.round(riskScore * weights["Dark Web Data"]),
+    "Public Sentiment": Math.round(riskScore * weights["Public Sentiment"]),
+    "Data Access Scope": Math.round(riskScore * weights["Data Access Scope"])
   };
   
   // Ensure the sum equals the total risk score by adjusting the main categories
@@ -1084,12 +1152,12 @@ function calculateRiskClusters(riskScore: number): {
     // If positive, add to the highest weighted categories
     // If negative, subtract from them
     if (diff > 0) {
-      clusters["PII Data"] += Math.ceil(diff * 0.6);
-      clusters["Account Data"] += Math.floor(diff * 0.4);
+      clusters["Cyber Security"] += Math.ceil(diff * 0.6);
+      clusters["Financial Stability"] += Math.floor(diff * 0.4);
     } else {
       const absDiff = Math.abs(diff);
-      clusters["PII Data"] -= Math.ceil(absDiff * 0.6);
-      clusters["Account Data"] -= Math.floor(absDiff * 0.4);
+      clusters["Cyber Security"] -= Math.ceil(absDiff * 0.6);
+      clusters["Financial Stability"] -= Math.floor(absDiff * 0.4);
     }
   }
   

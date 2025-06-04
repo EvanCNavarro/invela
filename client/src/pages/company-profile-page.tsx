@@ -1,3 +1,4 @@
+import React from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -9,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UiBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download, CheckCircle, AlertCircle, BadgeCheck, ExternalLink, ChevronRight, Star, DollarSign, Award as BadgeIcon, Tag, Layers, LucideShieldAlert, AlertTriangle, RefreshCw } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -229,7 +230,7 @@ const getAccreditationStatusLabel = (status: string | null | undefined): React.R
 
 export default function CompanyProfilePage() {
   const params = useParams();
-  const companyId = params.companySlug;
+  const companyId = params.companyId;
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [openUserModal, setOpenUserModal] = useState(false);
@@ -242,28 +243,40 @@ export default function CompanyProfilePage() {
   const { 
     data: company, 
     isLoading: companyLoading, 
-    error 
+    error,
+    refetch: refetchCompany 
   } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies", companyId],
     queryFn: async () => {
       if (!companyId) throw new Error("No company ID provided");
+      
+      console.log(`[CompanyProfile] Fetching data for company ID: ${companyId}`);
+      
       try {
         const response = await fetch(`/api/companies/${companyId}`);
         if (!response.ok) {
           if (response.status === 401) {
             throw new Error("Authentication required");
           }
-          throw new Error("Error fetching company details");
+          if (response.status === 404) {
+            throw new Error("Company not found");
+          }
+          throw new Error(`Server error: ${response.status}`);
         }
-        return response.json();
+        
+        const data = await response.json();
+        console.log(`[CompanyProfile] Successfully fetched data for: ${data.name || 'Unknown'}`);
+        return data;
       } catch (error) {
-        console.error("Error fetching company:", error);
+        console.error("[CompanyProfile] Error fetching company:", error);
         throw error;
       }
     },
-    retry: 1,
-    enabled: !authLoading,
-    refetchOnWindowFocus: false
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: !authLoading && !!companyId,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 
   const { 
@@ -293,12 +306,15 @@ export default function CompanyProfilePage() {
     refetchOnWindowFocus: false
   });
 
-  // Add variables to track different states
-  const isAuthError = error?.message === "Authentication required" || 
-                      usersError?.message === "Authentication required";
-  
+  // More specific error handling - only treat company data errors as fatal
+  const isAuthError = error?.message === "Authentication required";
   const isLoadingData = authLoading || companyLoading;
-  const hasError = error || usersError;
+  const hasCriticalError = error; // Only company errors are critical
+
+  // Debug logging
+  if (company) {
+    console.log("Company data loaded:", company.name);
+  }
   
   if (isLoadingData) {
     return (
@@ -336,7 +352,7 @@ export default function CompanyProfilePage() {
                           error?.message?.includes("connection") ||
                           error?.message?.includes("terminating");
 
-  if (hasError || !company) {
+  if (hasCriticalError && !company) {
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -363,8 +379,8 @@ export default function CompanyProfilePage() {
               }
             </p>
             <div className="flex space-x-4">
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+              <Button variant="outline" onClick={() => refetchCompany()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
               </Button>
               <Button variant="outline" onClick={handleBackClick}>
@@ -378,8 +394,60 @@ export default function CompanyProfilePage() {
     );
   }
 
-  const companyAge = company.incorporationYear
-    ? new Date().getFullYear() - company.incorporationYear
+  // Critical guard: Ensure company exists before proceeding
+  if (!company) {
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+              <Building2 className="w-10 h-10 text-gray-500" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-800">Company Not Found</h2>
+            <p className="text-gray-600 max-w-md">
+              The requested company could not be loaded. This may be due to a temporary issue or the company may not exist.
+            </p>
+            <div className="flex space-x-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={handleBackClick}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Enhanced data validation with safe access patterns
+  const safeCompanyData = {
+    id: company.id || 0,
+    name: company.name || "Unknown Company",
+    description: company.description || "No description available",
+    websiteUrl: company.websiteUrl || company.website_url || null,
+    numEmployees: company.numEmployees || company.num_employees || null,
+    incorporationYear: company.incorporationYear || company.incorporation_year || null,
+    productsServices: company.productsServices || company.products_services || "Not specified",
+    keyClientsPartners: company.keyClientsPartners || company.key_clients_partners || "Not specified",
+    investors: company.investors || "Not specified",
+    fundingStage: company.fundingStage || company.funding_stage || "Not specified",
+    legalStructure: company.legalStructure || company.legal_structure || "Not specified",
+    hqAddress: company.hqAddress || company.hq_address || "Not specified",
+    riskScore: company.riskScore || company.risk_score || 0,
+    chosenScore: company.chosenScore || company.chosen_score || null,
+    accreditationStatus: company.accreditationStatus || company.accreditation_status || "PENDING",
+    revenueTier: company.revenueTier || company.revenue_tier || "Not specified",
+    category: company.category || "Unknown",
+    riskClusters: company.riskClusters || company.risk_clusters || null,
+    certificationsCompliance: company.certificationsCompliance || company.certifications_compliance || "Not specified",
+    foundersAndLeadership: company.foundersAndLeadership || company.founders_and_leadership || "Not specified"
+  };
+
+  const companyAge = safeCompanyData.incorporationYear
+    ? new Date().getFullYear() - safeCompanyData.incorporationYear
     : null;
 
   // Helper function to format data with proper handling of empty values
@@ -462,17 +530,35 @@ export default function CompanyProfilePage() {
   // Use company's risk clusters or fallback to defaults
   const riskClusters = company.risk_clusters || defaultRiskClusters;
 
-  const renderOverviewTab = () => (
-    <BentoOverview 
-      company={company}
-      users={users}
-      usersLoading={usersLoading}
-      productServices={productServices}
-      clientsPartners={clientsPartners}
-      companyAge={companyAge}
-      setActiveTab={setActiveTab}
-    />
-  );
+  const renderOverviewTab = () => {
+    console.log("[CompanyProfile] renderOverviewTab called - company:", company?.name, "activeTab:", activeTab);
+    
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4">Company Overview - {company?.name}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Description:</label>
+              <p className="text-sm">{company?.description || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Category:</label>
+              <p className="text-sm">{company?.category || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Website:</label>
+              <p className="text-sm">{company?.websiteUrl || 'Not available'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Risk Score:</label>
+              <p className="text-sm">{company?.riskScore || company?.risk_score || 'Not available'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   // Original overview tab design, now replaced by BentoOverview
   const _renderOriginalOverviewTab = () => (
@@ -847,13 +933,21 @@ export default function CompanyProfilePage() {
     </div>
   );
 
+  console.log("[CompanyProfile] Rendering main content with activeTab:", activeTab);
+  console.log("[CompanyProfile] About to render with company data:", {
+    hasCompany: !!company,
+    companyName: company?.name,
+    companyId: company?.id,
+    activeTab,
+    timestamp: new Date().toISOString()
+  });
+  
   return (
-    <DashboardLayout>
-      <PageTemplate>
-        <TutorialManager tabName="company-profile" />
-        
-        <div className="space-y-6">
-          {/* Breadcrumb navigation - using same pattern as claims tab */}
+      <DashboardLayout>
+        <PageTemplate>
+          <TutorialManager tabName="company-profile">
+            <div className="space-y-6">
+            {/* Breadcrumb navigation - using same pattern as claims tab */}
           <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
             <Link href="/" className="hover:text-foreground">
               <div className="relative w-4 h-4">
@@ -866,7 +960,7 @@ export default function CompanyProfilePage() {
             <span>&gt;</span>
             <Link href="/network" className="hover:text-foreground hover:underline">Network</Link>
             <span>&gt;</span>
-            <span className="font-semibold text-foreground">{company.name}</span>
+            <span className="font-semibold text-foreground">{company?.name || 'Loading...'}</span>
           </div>
 
           {/* Back to Network button removed as requested */}
@@ -876,14 +970,14 @@ export default function CompanyProfilePage() {
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="flex items-center gap-3">
                 <CompanyLogo
-                  companyId={company.id}
-                  companyName={company.name}
+                  companyId={company?.id}
+                  companyName={company?.name}
                   size="lg"
                 />
                 <div>
-                  <h1 className="text-xl font-semibold text-gray-900">{company.name}</h1>
+                  <h1 className="text-xl font-semibold text-gray-900">{company?.name || 'Loading...'}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {company.category}
+                    {company?.category || 'Loading...'}
                   </p>
                 </div>
               </div>
@@ -916,7 +1010,7 @@ export default function CompanyProfilePage() {
           </div>
           
           <div className="bg-white rounded-md overflow-hidden shadow-sm">
-            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue="overview" className="w-full">
               <TabsList className="flex h-12 border-b border-gray-200 w-full justify-start rounded-none bg-transparent p-0">
                 <TabsTrigger
                   value="overview"
@@ -952,7 +1046,8 @@ export default function CompanyProfilePage() {
             </Tabs>
           </div>
         </div>
+        </TutorialManager>
       </PageTemplate>
     </DashboardLayout>
-  );
+    );
 }

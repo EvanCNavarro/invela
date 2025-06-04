@@ -114,7 +114,7 @@ export function ClaimDetailSkeleton() {
             </div>
             
             <div className="space-y-6">
-              {/* Bank information card */}
+              {/* Data Provider information card */}
               <Card>
                 <CardHeader className="pb-2">
                   <EnhancedSkeleton animation="wave" className="h-5 w-[130px]" />
@@ -139,7 +139,7 @@ export function ClaimDetailSkeleton() {
                 </CardContent>
               </Card>
               
-              {/* Fintech information card */}
+              {/* Data Recipient information card */}
               <Card>
                 <CardHeader className="pb-2">
                   <EnhancedSkeleton animation="wave" className="h-5 w-[150px]" />

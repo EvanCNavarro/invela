@@ -1,8 +1,15 @@
 /**
- * User Context Manager
+ * ========================================
+ * User Context Manager - Session State Management
+ * ========================================
  * 
- * This utility provides a consistent way to store and retrieve user context
- * information, particularly company ID, which is essential for data isolation.
+ * Centralized user context management for the enterprise risk assessment platform.
+ * Provides consistent storage and retrieval of user session data, ensuring
+ * proper data isolation and security across multi-tenant operations.
+ * 
+ * @module lib/user-context
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 import getLogger from '@/utils/logger';

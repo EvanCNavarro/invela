@@ -1,8 +1,29 @@
 /**
- * WebSocket Service
+ * ========================================
+ * WebSocket Service - Real-Time Communication Hub
+ * ========================================
  * 
- * This service provides real-time communication capabilities for the application,
- * particularly for tutorial progress updates and notifications.
+ * Enterprise-grade WebSocket service providing comprehensive real-time communication
+ * capabilities across the risk assessment platform. Manages bidirectional messaging,
+ * connection lifecycle, authentication, and specialized hooks for different use cases.
+ * 
+ * Key Features:
+ * - Authenticated WebSocket connections with automatic reconnection
+ * - Real-time tutorial progress synchronization across browser tabs
+ * - Task update notifications and workflow coordination
+ * - Comprehensive error handling and connection state management
+ * - Type-safe message routing and event handling
+ * 
+ * Communication Patterns:
+ * - Tutorial Progress: Cross-tab tutorial state synchronization
+ * - Task Updates: Real-time workflow status updates
+ * - Notifications: System-wide alert and message broadcasting
+ * - Authentication: Secure connection establishment and maintenance
+ * - Health Monitoring: Connection heartbeat and status tracking
+ * 
+ * @module services/websocket-service
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';

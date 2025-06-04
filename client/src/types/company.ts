@@ -1,5 +1,22 @@
+/**
+ * ========================================
+ * Company Management Type Definitions
+ * ========================================
+ * 
+ * Core TypeScript type definitions for company management and categorization
+ * in the enterprise risk assessment platform. Includes company categories,
+ * accreditation statuses, and validation schemas.
+ * 
+ * @module types/company
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { z } from "zod";
 
+/**
+ * Company category enumeration for classification
+ */
 export const CompanyCategory = {
   INVELA: 'Invela',
   BANK: 'Bank',
