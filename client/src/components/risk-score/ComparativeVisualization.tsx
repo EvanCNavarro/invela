@@ -159,7 +159,9 @@ function ComparativeVisualizationInternal({
   
   // Handle adding/removing industry average
   const handleToggleIndustryAverage = () => {
-    if (isIndustryAverageAdded) {
+    const hasIndustryAverage = selectedCompanies.some(c => c.id === -1);
+    
+    if (hasIndustryAverage) {
       // Remove industry average from the list
       setSelectedCompanies(prev => prev.filter(c => c.id !== -1));
       setIsIndustryAverageAdded(false);
@@ -180,17 +182,26 @@ function ComparativeVisualizationInternal({
           return;
         }
         
-        setSelectedCompanies(prev => [...prev, industryAverage]);
-        setIsIndustryAverageAdded(true);
-        
-        toast({
-          title: "Industry Average Added",
-          description: "Industry average has been added to comparison.",
-          variant: "default"
-        });
+        // Double-check to prevent duplicates
+        if (!selectedCompanies.some(c => c.id === -1)) {
+          setSelectedCompanies(prev => [...prev, industryAverage]);
+          setIsIndustryAverageAdded(true);
+          
+          toast({
+            title: "Industry Average Added",
+            description: "Industry average has been added to comparison.",
+            variant: "default"
+          });
+        }
       }
     }
   };
+
+  // Keep industry average tracking state synchronized with the actual list
+  useEffect(() => {
+    const hasIndustryAverage = selectedCompanies.some(c => c.id === -1);
+    setIsIndustryAverageAdded(hasIndustryAverage);
+  }, [selectedCompanies]);
 
   // Update current company data when dimensions or score changes
   useEffect(() => {
