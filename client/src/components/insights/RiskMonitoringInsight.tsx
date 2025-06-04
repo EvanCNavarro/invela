@@ -79,17 +79,29 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     return ['Bank', 'Invela'].includes(currentCompany.category);
   }, [currentCompany]);
 
-  // Generate company risk data using shared service
+  // Get authentic companies with risk data from the same endpoint used by visualization
+  const { data: companiesWithRisk = [] } = useQuery<any[]>({
+    queryKey: ['/api/companies-with-risk'],
+    enabled: !!currentCompany,
+  });
+
+  // Convert authentic company data to required format
   const companyRiskData = useMemo(() => {
-    if (!companies.length) return [];
+    if (!companiesWithRisk.length) return [];
     
-    logInsight('Generating risk data with shared service', {
-      companiesCount: companies.length,
+    logInsight('Using authentic risk data', {
+      companiesCount: companiesWithRisk.length,
       threshold: riskThreshold
     });
     
-    return generateRealisticRiskData(companies, riskThreshold);
-  }, [companies, riskThreshold]);
+    return companiesWithRisk.map(company => ({
+      id: company.id,
+      name: company.name,
+      currentScore: company.risk_score || company.riskScore || 0,
+      previousScore: company.risk_score || company.riskScore || 0, // Use same score since we don't have historical data
+      category: company.category || 'FinTech'
+    }));
+  }, [companiesWithRisk, riskThreshold]);
 
   // Calculate risk metrics using shared service
   const riskMetrics = useMemo(() => {
