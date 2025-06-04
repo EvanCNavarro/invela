@@ -159,14 +159,14 @@ function ComparativeVisualizationInternal({
     console.log('[IndustryAverage] Current selectedCompanies:', selectedCompanies);
     console.log('[IndustryAverage] Industry average data:', industryAverage);
     
-    const hasIndustryAverage = selectedCompanies.some(c => c.id === -1);
+    const hasIndustryAverage = selectedCompanies.some(c => c.id === 0 && c.name === 'Industry Average');
     console.log('[IndustryAverage] Has industry average:', hasIndustryAverage);
     
     if (hasIndustryAverage) {
       console.log('[IndustryAverage] Removing industry average');
       const beforeRemoval = selectedCompanies.length;
       setSelectedCompanies(prev => {
-        const filtered = prev.filter(c => c.id !== -1);
+        const filtered = prev.filter(c => !(c.id === 0 && c.name === 'Industry Average'));
         console.log('[IndustryAverage] After removal:', filtered);
         return filtered;
       });
@@ -460,12 +460,12 @@ function ComparativeVisualizationInternal({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={selectedCompanies.some(c => c.id === -1) ? "default" : "outline"}
+                  variant={selectedCompanies.some(c => c.id === 0 && c.name === 'Industry Average') ? "default" : "outline"}
                   size="sm"
                   onClick={() => {
                     console.log('[IndustryAverage] Button clicked - Before handler');
                     console.log('[IndustryAverage] Button state:', {
-                      hasIndustryAverage: selectedCompanies.some(c => c.id === -1),
+                      hasIndustryAverage: selectedCompanies.some(c => c.id === 0 && c.name === 'Industry Average'),
                       industryAverageExists: !!industryAverage,
                       selectedCompaniesCount: selectedCompanies.length,
                       isDisabled: !industryAverage,
@@ -482,7 +482,7 @@ function ComparativeVisualizationInternal({
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                       Loading...
                     </>
-                  ) : selectedCompanies.some(c => c.id === -1) ? (
+                  ) : selectedCompanies.some(c => c.id === 0 && c.name === 'Industry Average') ? (
                     'Remove Industry Average'
                   ) : (
                     'Add Industry Average'
@@ -491,7 +491,7 @@ function ComparativeVisualizationInternal({
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm">
-                  {selectedCompanies.some(c => c.id === -1)
+                  {selectedCompanies.some(c => c.id === 0 && c.name === 'Industry Average')
                     ? 'Remove industry average from comparison' 
                     : 'Add industry average for benchmark comparison'}
                 </p>
