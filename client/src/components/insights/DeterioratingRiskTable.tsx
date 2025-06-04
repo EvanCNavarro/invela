@@ -21,7 +21,7 @@ import {
   getRiskStatusColor,
   type RiskMonitoringStatus 
 } from '@/lib/riskCalculations';
-import { getSessionCompaniesData } from '@/lib/sessionDataService';
+import { getSessionCompaniesData, getScoreChange, getFormattedScoreChange } from '@/lib/sessionDataService';
 
 
 // Import shared type from risk calculations service
@@ -66,7 +66,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
     const sessionData = getSessionCompaniesData(companies);
     
     const processed = sessionData.map(sessionCompany => {
-      const scoreChange = sessionCompany.currentScore - sessionCompany.previousScore;
+      // Use the timeframe parameter to get the correct score change
+      const scoreChange = getScoreChange(sessionCompany, timeframe);
       
       return {
         id: sessionCompany.id,
@@ -75,7 +76,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
         previousScore: sessionCompany.previousScore,
         category: sessionCompany.category,
         scoreChange,
-        status: sessionCompany.status
+        status: sessionCompany.status,
+        timeframe // Include timeframe for the session company data
       };
     });
     
