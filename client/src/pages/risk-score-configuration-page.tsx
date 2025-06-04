@@ -120,8 +120,8 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
         {/* Weight percentage skeleton */}
         <div className="h-7 w-10 bg-gray-300 rounded-sm"></div>
         
-        {/* Priority weight text skeleton */}
-        <div className="h-3 w-20 bg-gray-200 rounded-sm mt-1"></div>
+        {/* Priority number text skeleton */}
+        <div className="h-3 w-16 bg-gray-200 rounded-sm mt-1"></div>
       </div>
     </div>
   );
@@ -251,7 +251,7 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
           {dimension.weight.toFixed(0)}%
         </div>
         <div className="text-xs text-gray-500">
-          Priority Weight
+          Priority {index + 1}
         </div>
       </div>
     </div>
