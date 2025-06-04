@@ -28,14 +28,9 @@ export function RiskStatusSummary({ companyId, className }: RiskStatusSummaryPro
   // Use session-consistent data
   const sessionData = getSessionCompanyData(company);
 
-  const statusColorClass = sessionData.status === 'Stable' ? 'text-green-600' :
-                          sessionData.status === 'Approaching Block' ? 'text-yellow-600' :
-                          sessionData.status === 'Blocked' ? 'text-red-600' :
-                          'text-gray-600';
-
   return (
     <div className={cn("space-y-1", className)}>
-      <p className={cn("text-sm font-medium", statusColorClass)}>
+      <p className="text-sm font-medium text-gray-900">
         {sessionData.status}
       </p>
       <p className="text-xs text-gray-500">
