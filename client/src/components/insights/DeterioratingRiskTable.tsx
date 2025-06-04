@@ -54,19 +54,19 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
-  // Process companies with authentic risk status data
+  // Process companies with authentic data only
   const processedCompanies = useMemo(() => {
-    logTable('Processing companies with authentic data', { 
+    logTable('Processing companies with authentic data only', { 
       timeframe, 
       companyCount: companies.length 
     });
     
-    // Process each company to get authentic risk status
+    // Process each company with authentic risk status
     const processed = companies.map(company => {
       // Use authentic risk status based on current score vs threshold
       const status = company.currentScore < blockThreshold ? 'Blocked' : 'Stable';
       
-      // Show minimal score change since we don't have historical data
+      // Since we don't have historical data, score change is always 0
       const scoreChange = 0;
       
       return {
@@ -76,7 +76,7 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       };
     });
     
-    // Sort by current score (lowest first to show most at-risk companies)
+    // Sort by current score (lowest first to show highest risk companies)
     return processed.sort((a, b) => a.currentScore - b.currentScore);
   }, [companies, timeframe, blockThreshold]);
   

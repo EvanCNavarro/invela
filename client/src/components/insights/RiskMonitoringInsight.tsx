@@ -89,18 +89,22 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   const companyRiskData = useMemo(() => {
     if (!companiesWithRisk.length) return [];
     
-    logInsight('Using authentic risk data', {
+    logInsight('Using authentic risk data only', {
       companiesCount: companiesWithRisk.length,
       threshold: riskThreshold
     });
     
-    return companiesWithRisk.map(company => ({
-      id: company.id,
-      name: company.name,
-      currentScore: company.risk_score || company.riskScore || 0,
-      previousScore: company.risk_score || company.riskScore || 0, // Use same score since we don't have historical data
-      category: company.category || 'FinTech'
-    }));
+    return companiesWithRisk.map(company => {
+      const currentScore = company.risk_score || company.riskScore || 0;
+      
+      return {
+        id: company.id,
+        name: company.name,
+        currentScore,
+        previousScore: currentScore, // No historical data available
+        category: company.category || 'FinTech'
+      };
+    });
   }, [companiesWithRisk, riskThreshold]);
 
   // Calculate risk metrics using shared service
