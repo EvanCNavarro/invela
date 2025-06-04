@@ -69,6 +69,19 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       // Use the timeframe parameter to get the correct score change
       const scoreChange = getScoreChange(sessionCompany, timeframe);
       
+      // Debug logging for the first few companies
+      if (sessionCompany.id <= 5 || sessionCompany.name.includes('OpenBanking')) {
+        console.log(`[Table Debug] ${sessionCompany.name} (${timeframe}):`, {
+          timeframe,
+          currentScore: sessionCompany.currentScore,
+          previousScore7Day: sessionCompany.previousScore7Day,
+          previousScore30Day: sessionCompany.previousScore,
+          scoreChange,
+          calculatedChange7Day: sessionCompany.currentScore - (sessionCompany.previousScore7Day || 0),
+          calculatedChange30Day: sessionCompany.currentScore - sessionCompany.previousScore
+        });
+      }
+      
       return {
         id: sessionCompany.id,
         name: sessionCompany.name,
