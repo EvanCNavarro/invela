@@ -106,22 +106,16 @@ const DimensionRowSkeleton = ({ index = 0 }: { index?: number }) => {
       <div className="flex-1">
         <div className="flex items-center mb-2">
           {/* Name skeleton */}
-          <div className="h-4 bg-gray-300 rounded mr-2" style={{ width: nameWidth }}></div>
-          
-          {/* Priority badge skeleton */}
-          <div className="h-4 w-16 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-300 rounded" style={{ width: nameWidth }}></div>
         </div>
         
         {/* Description skeleton */}
         <div className="h-3 bg-gray-200 rounded" style={{ width: descWidth }}></div>
       </div>
       
-      <div className="flex flex-col items-end">
-        {/* Weight percentage skeleton */}
-        <div className="h-7 w-10 bg-gray-300 rounded-sm"></div>
-        
-        {/* Priority number text skeleton */}
-        <div className="h-3 w-16 bg-gray-200 rounded-sm mt-1"></div>
+      <div className="flex flex-col items-end justify-center">
+        {/* Priority badge skeleton */}
+        <div className="h-4 w-16 bg-gray-200 rounded"></div>
       </div>
     </div>
   );
@@ -236,21 +230,15 @@ const DimensionRow: React.FC<DimensionRowProps> = ({ dimension, index, onReorder
       
       <div className="flex-1">
         <div className="flex items-center mb-1">
-          <h4 className="font-medium text-gray-900 mr-2">
+          <h4 className="font-medium text-gray-900">
             {dimension.name}
           </h4>
-          <div className="px-2 py-0.5 bg-gray-100 text-xs rounded text-gray-700 font-medium">
-            Priority {index + 1}
-          </div>
         </div>
         <p className="text-sm text-gray-600">{dimension.description}</p>
       </div>
       
-      <div className="flex flex-col items-end">
-        <div className="text-right font-semibold text-gray-800 text-2xl leading-tight">
-          {dimension.weight.toFixed(0)}%
-        </div>
-        <div className="text-xs text-gray-500">
+      <div className="flex flex-col items-end justify-center">
+        <div className="px-2 py-0.5 bg-gray-100 text-xs rounded text-gray-700 font-medium">
           Priority {index + 1}
         </div>
       </div>
