@@ -1,0 +1,79 @@
+[IndustryAverage] Addition complete, companies before: 0 after: 1
+[Tutorial:TutorialManager] 🚀 Initializing for tab: risk-score-configuration
+[Tutorial:TutorialManager] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: risk-score-configuration (original: risk-score-configuration)
+[Tutorial:TabTutorials] Current state for risk-score-configuration: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab risk-score-configuration (path: /risk-score-configuration, expected: /risk-score-configuration)
+[Tutorial:TutorialManager] Tutorial already completed for tab: risk-score-configuration
+[RiskScore:gauge] Rendering with score: 86, level: critical
+[Tutorial:TutorialManager] 🚀 Initializing for tab: risk-score-configuration
+[Tutorial:TutorialManager] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: risk-score-configuration (original: risk-score-configuration)
+[Tutorial:TabTutorials] Current state for risk-score-configuration: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab risk-score-configuration (path: /risk-score-configuration, expected: /risk-score-configuration)
+[Tutorial:TutorialManager] Tutorial already completed for tab: risk-score-configuration
+[RiskScore:gauge] Rendering with score: 86, level: critical
+[IndustryAverage] Button clicked - Before handler
+[IndustryAverage] Button state: 
+Object {hasIndustryAverage: false, industryAverageExists: true, selectedCompaniesCount: 1, isDisabled: false, isLoading: false}
+[IndustryAverage] Toggle button clicked
+[IndustryAverage] Current selectedCompanies: 
+Array [{…}]
+[IndustryAverage] Industry average data: 
+Object {id: 0, name: "Industry Average", companyType: "Benchmark", description: "Average risk profile across all companies in the network", score: 50, …}
+[IndustryAverage] Has industry average: false
+[IndustryAverage] Adding industry average
+[IndustryAverage] After addition: 
+(2) [{…}, {…}]
+[IndustryAverage] Addition complete, companies before: 1 after: 2
+[Tutorial:TutorialManager] 🚀 Initializing for tab: risk-score-configuration
+[Tutorial:TutorialManager] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: risk-score-configuration (original: risk-score-configuration)
+[Tutorial:TabTutorials] Current state for risk-score-configuration: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab risk-score-configuration (path: /risk-score-configuration, expected: /risk-score-configuration)
+[Tutorial:TutorialManager] Tutorial already completed for tab: risk-score-configuration
+[RiskScore:gauge] Rendering with score: 86, level: critical
+[IndustryAverage] Button clicked - Before handler
+[IndustryAverage] Button state: 
+Object {hasIndustryAverage: false, industryAverageExists: true, selectedCompaniesCount: 2, isDisabled: false, isLoading: false}
+[IndustryAverage] Toggle button clicked
+[IndustryAverage] Current selectedCompanies: 
+(2) [{…}, {…}]
+[IndustryAverage] Industry average data: 
+Object {id: 0, name: "Industry Average", companyType: "Benchmark", description: "Average risk profile across all companies in the network", score: 50, …}
+[IndustryAverage] Has industry average: false
+[IndustryAverage] Adding industry average
+[IndustryAverage] After addition: 
+(3) [{…}, {…}, {…}]
+[ToastSystem] Deduplicating toast with signature: default-Industry Average Added-Industry average has been added to comparison.
+[IndustryAverage] Addition complete, companies before: 2 after: 3
+[Tutorial:TutorialManager] 🚀 Initializing for tab: risk-score-configuration
+[Tutorial:TutorialManager] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] Normalizing tab name from 'risk-score-configuration' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'risk-score-configuration'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: risk-score-configuration (original: risk-score-configuration)
+[Tutorial:TabTutorials] Current state for risk-score-configuration: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab risk-score-configuration (path: /risk-score-configuration, expected: /risk-score-configuration)
+[Tutorial:TutorialManager] Tutorial already completed for tab: risk-score-configuration
