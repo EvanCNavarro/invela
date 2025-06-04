@@ -30,14 +30,10 @@ export function RiskTrendIndicator({ companyId, className }: RiskTrendIndicatorP
   const TrendIcon = trendData.direction === 'up' ? TrendingUp : 
                    trendData.direction === 'down' ? TrendingDown : Minus;
 
-  const colorClass = trendData.direction === 'up' ? 'text-red-500' : 
-                     trendData.direction === 'down' ? 'text-green-500' : 
-                     'text-gray-400';
-
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <TrendIcon className={cn("w-3 h-3", colorClass)} />
-      <span className={cn("text-xs font-medium", colorClass)}>
+      <TrendIcon className="w-3 h-3 text-gray-900" />
+      <span className="text-xs font-medium text-gray-900">
         {trendData.direction === 'stable' ? '0' : 
          `${trendData.direction === 'up' ? '+' : ''}${trendData.change}`}
       </span>

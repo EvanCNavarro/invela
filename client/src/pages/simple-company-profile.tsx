@@ -603,7 +603,13 @@ export default function SimpleCompanyProfile() {
                             <label className="text-xs font-medium text-gray-500">30-Day Trend</label>
                             <div className="flex items-center gap-2">
                               {(() => {
-                                if (!company) return <Minus className="w-3 h-3 text-gray-400" />;
+                                if (!company) return (
+                                  <>
+                                    <Minus className="w-3 h-3 text-gray-900" />
+                                    <span className="text-sm text-gray-900">0</span>
+                                    <span className="text-sm text-gray-600">Stable</span>
+                                  </>
+                                );
                                 const sessionData = getSessionCompanyData(company);
                                 const scoreChange = sessionData.currentScore - sessionData.previousScore;
                                 const sign = scoreChange > 0 ? '+' : '';
@@ -611,16 +617,13 @@ export default function SimpleCompanyProfile() {
                                 const TrendIcon = scoreChange > 3 ? TrendingUp : 
                                                  scoreChange < -3 ? TrendingDown : Minus;
                                 
-                                const colorClass = scoreChange > 3 ? 'text-red-500' : 
-                                                  scoreChange < -3 ? 'text-green-500' : 
-                                                  'text-gray-400';
-                                
                                 return (
                                   <>
-                                    <TrendIcon className={`w-3 h-3 ${colorClass}`} />
-                                    <span className={`text-sm ${colorClass}`}>
+                                    <TrendIcon className="w-3 h-3 text-gray-900" />
+                                    <span className="text-sm text-gray-900">
                                       {scoreChange === 0 ? '0' : `${sign}${scoreChange}`}
                                     </span>
+                                    <span className="text-sm text-gray-600">{sessionData.status}</span>
                                   </>
                                 );
                               })()}
