@@ -142,6 +142,13 @@ export default function SimpleCompanyProfile() {
   // Debug logging after data is received
   if (company) {
     console.log('[Company Profile Debug] Received company data:', company);
+    console.log('[Company Profile Debug] Risk fields analysis:', {
+      risk_score: company?.risk_score,
+      riskScore: company?.riskScore,
+      chosen_score: company?.chosen_score,
+      risk_clusters: company?.risk_clusters,
+      finalRiskValue: company?.risk_score || company?.riskScore || company?.chosen_score || 0
+    });
     console.log('[Company Profile Debug] Business fields check:', {
       products_services: company?.products_services,
       market_position: company?.market_position,
