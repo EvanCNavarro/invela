@@ -171,9 +171,6 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
-  // Import session service
-  const { getSessionCompanyData } = await import('@/lib/sessionDataService');
-
   // Get session-consistent risk status data
   const riskStatus = useMemo(() => {
     if (!company || !companyId) {
