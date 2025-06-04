@@ -155,36 +155,64 @@ function ComparativeVisualizationInternal({
   
   // Handle adding/removing industry average
   const handleToggleIndustryAverage = () => {
+    console.log('[IndustryAverage] Toggle button clicked');
+    console.log('[IndustryAverage] Current selectedCompanies:', selectedCompanies);
+    console.log('[IndustryAverage] Industry average data:', industryAverage);
+    
     const hasIndustryAverage = selectedCompanies.some(c => c.id === -1);
+    console.log('[IndustryAverage] Has industry average:', hasIndustryAverage);
     
     if (hasIndustryAverage) {
-      // Remove industry average from the list
-      setSelectedCompanies(prev => prev.filter(c => c.id !== -1));
+      console.log('[IndustryAverage] Removing industry average');
+      const beforeRemoval = selectedCompanies.length;
+      setSelectedCompanies(prev => {
+        const filtered = prev.filter(c => c.id !== -1);
+        console.log('[IndustryAverage] After removal:', filtered);
+        return filtered;
+      });
       
       toast({
         title: "Industry Average Removed",
         description: "Industry average has been removed from comparison.",
         variant: "default"
       });
+      console.log('[IndustryAverage] Removal complete, companies before:', beforeRemoval, 'after:', selectedCompanies.length - 1);
     } else {
-      if (industryAverage) {
-        if (selectedCompanies.length >= MAX_COMPARISONS) {
-          toast({
-            title: "Maximum Comparisons Reached",
-            description: `You can only compare up to ${MAX_COMPARISONS} companies at once.`,
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        setSelectedCompanies(prev => [...prev, industryAverage]);
-        
+      console.log('[IndustryAverage] Adding industry average');
+      
+      if (!industryAverage) {
+        console.error('[IndustryAverage] ERROR: No industry average data available');
         toast({
-          title: "Industry Average Added",
-          description: "Industry average has been added to comparison.",
-          variant: "default"
+          title: "Industry Average Unavailable",
+          description: "Industry average data is not available.",
+          variant: "destructive"
         });
+        return;
       }
+      
+      if (selectedCompanies.length >= MAX_COMPARISONS) {
+        console.log('[IndustryAverage] Maximum comparisons reached:', selectedCompanies.length, 'max:', MAX_COMPARISONS);
+        toast({
+          title: "Maximum Comparisons Reached",
+          description: `You can only compare up to ${MAX_COMPARISONS} companies at once.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const beforeAddition = selectedCompanies.length;
+      setSelectedCompanies(prev => {
+        const updated = [...prev, industryAverage];
+        console.log('[IndustryAverage] After addition:', updated);
+        return updated;
+      });
+      
+      toast({
+        title: "Industry Average Added",
+        description: "Industry average has been added to comparison.",
+        variant: "default"
+      });
+      console.log('[IndustryAverage] Addition complete, companies before:', beforeAddition, 'after:', selectedCompanies.length + 1);
     }
   };
 
@@ -434,8 +462,18 @@ function ComparativeVisualizationInternal({
                 <Button
                   variant={selectedCompanies.some(c => c.id === -1) ? "default" : "outline"}
                   size="sm"
-                  onClick={handleToggleIndustryAverage}
-                  disabled={!industryAverage || selectedCompanies.some(c => c.id === -1)}
+                  onClick={() => {
+                    console.log('[IndustryAverage] Button clicked - Before handler');
+                    console.log('[IndustryAverage] Button state:', {
+                      hasIndustryAverage: selectedCompanies.some(c => c.id === -1),
+                      industryAverageExists: !!industryAverage,
+                      selectedCompaniesCount: selectedCompanies.length,
+                      isDisabled: !industryAverage,
+                      isLoading: isLoadingIndustryAvg
+                    });
+                    handleToggleIndustryAverage();
+                  }}
+                  disabled={!industryAverage}
                   className="whitespace-nowrap"
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
