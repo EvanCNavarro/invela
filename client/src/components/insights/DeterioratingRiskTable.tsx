@@ -54,31 +54,20 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
-  // Filtered and sorted companies based on the time frame and score change
+  // Process companies with authentic risk status data
   const processedCompanies = useMemo(() => {
-    // Log the calculation process
-    logTable('Processing companies data', { 
+    logTable('Processing companies with authentic data', { 
       timeframe, 
       companyCount: companies.length 
     });
     
-    // Apply a multiplier to simulate different deterioration amounts
-    // for 7-day vs 30-day views
-    const deteriorationMultiplier = timeframe === '7day' ? 1 : 3;
-    
-    // Process each company to calculate score changes and status
+    // Process each company to get authentic risk status
     const processed = companies.map(company => {
-      // Calculate score change - adjust based on timeframe
-      // In a real implementation, we would use actual historical data
-      const scoreChange = (company.previousScore - company.currentScore) * 
-                          deteriorationMultiplier;
+      // Use authentic risk status based on current score vs threshold
+      const status = company.currentScore < blockThreshold ? 'Blocked' : 'Stable';
       
-      // Calculate status using shared service
-      const status = calculateRiskStatus(
-        company.currentScore, 
-        company.previousScore, 
-        blockThreshold
-      );
+      // Show minimal score change since we don't have historical data
+      const scoreChange = 0;
       
       return {
         ...company,
@@ -87,8 +76,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       };
     });
     
-    // Sort by the greatest negative change (most deteriorated first)
-    return processed.sort((a, b) => b.scoreChange - a.scoreChange);
+    // Sort by current score (lowest first to show most at-risk companies)
+    return processed.sort((a, b) => a.currentScore - b.currentScore);
   }, [companies, timeframe, blockThreshold]);
   
   return (
