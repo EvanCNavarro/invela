@@ -244,8 +244,8 @@ const RiskTable: React.FC<{
                 <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell className="text-right">{company.currentScore}</TableCell>
                 <TableCell className="text-right font-medium text-gray-900">
-                  {company.scoreChange > 0 ? `+${company.scoreChange}` : 
-                   company.scoreChange < 0 ? `${company.scoreChange}` : 
+                  {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
+                   company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
                    '0'}
                 </TableCell>
                 <TableCell className="text-center">
@@ -258,7 +258,13 @@ const RiskTable: React.FC<{
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className={cn(
+                    "text-sm font-medium",
+                    company.status === 'Blocked' ? 'text-red-600' :
+                    company.status === 'Approaching Block' ? 'text-yellow-600' :
+                    company.status === 'Monitoring' ? 'text-orange-600' :
+                    'text-gray-900'
+                  )}>
                     {company.status}
                   </span>
                 </TableCell>
