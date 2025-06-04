@@ -601,9 +601,16 @@ export default function SimpleCompanyProfile() {
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">30-Day Trend</label>
-                            {company?.id && (
-                              <RiskStatusSummary companyId={company.id} />
-                            )}
+                            <p className="text-sm text-gray-900">
+                              {(() => {
+                                if (!company) return 'Stable';
+                                const sessionData = getSessionCompanyData(company);
+                                const scoreChange = sessionData.currentScore - sessionData.previousScore;
+                                if (scoreChange > 3) return 'Improving';
+                                if (scoreChange < -3) return 'Deteriorating';
+                                return 'Stable';
+                              })()}
+                            </p>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Category</label>
