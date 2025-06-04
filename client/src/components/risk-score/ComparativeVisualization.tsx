@@ -151,17 +151,43 @@ function ComparativeVisualizationInternal({
   // Handle removing a company from the comparison list
   const handleRemoveCompany = (companyId: number) => {
     setSelectedCompanies(prev => prev.filter(c => c.id !== companyId));
+    // If removing industry average, update the tracking state
+    if (companyId === -1) {
+      setIsIndustryAverageAdded(false);
+    }
   };
   
   // Handle adding/removing industry average
   const handleToggleIndustryAverage = () => {
     if (isIndustryAverageAdded) {
+      // Remove industry average from the list
       setSelectedCompanies(prev => prev.filter(c => c.id !== -1));
       setIsIndustryAverageAdded(false);
+      
+      toast({
+        title: "Industry Average Removed",
+        description: "Industry average has been removed from comparison.",
+        variant: "default"
+      });
     } else {
       if (industryAverage) {
-        handleAddCompany(industryAverage);
+        if (selectedCompanies.length >= MAX_COMPARISONS) {
+          toast({
+            title: "Maximum Comparisons Reached",
+            description: `You can only compare up to ${MAX_COMPARISONS} companies at once.`,
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        setSelectedCompanies(prev => [...prev, industryAverage]);
         setIsIndustryAverageAdded(true);
+        
+        toast({
+          title: "Industry Average Added",
+          description: "Industry average has been added to comparison.",
+          variant: "default"
+        });
       }
     }
   };
