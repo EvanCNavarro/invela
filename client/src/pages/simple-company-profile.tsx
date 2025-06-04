@@ -600,7 +600,7 @@ export default function SimpleCompanyProfile() {
                       <CardContent className="pt-0">
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           <div>
-                            <label className="text-xs font-medium text-gray-500">S&P DARS Risk Score</label>
+                            <label className="text-xs font-medium text-gray-500">S&P DARS</label>
                             <div className="flex items-center gap-2">
                               <p className="text-sm text-gray-900">
                                 {company?.risk_score || company?.riskScore || company?.chosen_score || 0}/100
