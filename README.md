@@ -136,6 +136,60 @@ npm run build-storybook # Build Storybook for deployment
 
 ## 🔧 Configuration
 
+### Development vs Production Mode
+
+The application automatically switches between development and production modes based on the `NODE_ENV` environment variable:
+
+#### Development Mode (Default)
+- **When**: `NODE_ENV` is not set or not equal to "production"
+- **Behavior**: Uses Vite development server with hot module replacement
+- **Features**: Real-time file watching, faster builds, debugging tools
+- **Frontend**: Served via Vite dev server with live reload
+
+#### Production Mode
+- **When**: `NODE_ENV=production` (automatically set by Replit deployments)
+- **Behavior**: Serves pre-built static files for optimal performance
+- **Features**: Optimized bundles, static file serving, deployment-ready
+- **Frontend**: Served as compiled static assets
+
+#### Mode Switching Configuration
+
+The mode switching logic is handled in `server/index.ts`:
+
+```typescript
+if (process.env.NODE_ENV === "production") {
+  // Production: Static file serving
+  serveStatic(app);
+} else {
+  // Development: Vite dev server
+  setupVite(app, server);
+}
+```
+
+#### Manual Mode Override (Debugging Only)
+
+For troubleshooting deployment issues, you can temporarily force development mode:
+
+```typescript
+// Temporary override for debugging
+if (false) {  // Force development mode
+  serveStatic(app);
+} else {
+  setupVite(app, server);
+}
+```
+
+**Important**: Always revert to the original environment check before deployment:
+
+```typescript
+// Correct production configuration
+if (process.env.NODE_ENV === "production") {
+  serveStatic(app);
+} else {
+  setupVite(app, server);
+}
+```
+
 ### Environment Variables
 
 ```bash
@@ -143,7 +197,7 @@ npm run build-storybook # Build Storybook for deployment
 DATABASE_URL=postgresql://...
 
 # Application
-NODE_ENV=development
+NODE_ENV=development  # or "production" for deployment
 PORT=3000
 
 # Storybook
