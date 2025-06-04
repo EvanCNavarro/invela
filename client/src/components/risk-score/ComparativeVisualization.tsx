@@ -10,7 +10,8 @@ import {
   BarChart3,
   Search,
   RefreshCw,
-  Info
+  Info,
+  Plus
 } from "lucide-react";
 import {
   Command,
