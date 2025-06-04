@@ -286,6 +286,21 @@ function Router(): JSX.Element {
           )} 
         />
 
+        {/* Redirect legacy /network/:companyId to proper /network/company/:companyId route */}
+        <ProtectedRoute 
+          path="/network/:companyId" 
+          component={({ params }: { params: { companyId: string } }) => {
+            // Check if this is a numeric company ID (not a page like /network/settings)
+            if (/^\d+$/.test(params.companyId)) {
+              console.log('[Router] Redirecting legacy network route to company profile:', params.companyId);
+              const searchParams = window.location.search;
+              return <Redirect to={`/network/company/${params.companyId}${searchParams}`} />;
+            }
+            // For non-numeric paths, return 404
+            return <NotFound />;
+          }} 
+        />
+
         <ProtectedRoute 
           path="/network/company/:companyId" 
           component={({ params }: { params: { companyId: string } }) => {
