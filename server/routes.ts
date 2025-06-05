@@ -4753,29 +4753,67 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
 
-      // Determine target category
-      let targetCategory = 'FinTech';
+      // Determine target categories and expansion logic
+      let allTargetCompanies = [];
       let expansionMessage = 'companies available to expand your network';
+      let targetCategory = 'All';
       
       if (userCompany.category === 'FinTech') {
         targetCategory = 'Bank';
         expansionMessage = 'banks available to expand your network';
+        allTargetCompanies = await db.query.companies.findMany({
+          where: eq(companies.category, 'Bank'),
+          columns: { 
+            id: true, 
+            name: true, 
+            category: true, 
+            risk_score: true, 
+            revenue_tier: true,
+            accreditation_status: true
+          }
+        });
       } else if (userCompany.category === 'Bank') {
         targetCategory = 'FinTech';
         expansionMessage = 'FinTech companies available to expand your network';
+        allTargetCompanies = await db.query.companies.findMany({
+          where: eq(companies.category, 'FinTech'),
+          columns: { 
+            id: true, 
+            name: true, 
+            category: true, 
+            risk_score: true, 
+            revenue_tier: true,
+            accreditation_status: true
+          }
+        });
+      } else {
+        // For Invela and other categories, show both Bank and FinTech companies
+        targetCategory = 'All';
+        expansionMessage = 'companies available to expand your network';
+        const bankCompanies = await db.query.companies.findMany({
+          where: eq(companies.category, 'Bank'),
+          columns: { 
+            id: true, 
+            name: true, 
+            category: true, 
+            risk_score: true, 
+            revenue_tier: true,
+            accreditation_status: true
+          }
+        });
+        const fintechCompanies = await db.query.companies.findMany({
+          where: eq(companies.category, 'FinTech'),
+          columns: { 
+            id: true, 
+            name: true, 
+            category: true, 
+            risk_score: true, 
+            revenue_tier: true,
+            accreditation_status: true
+          }
+        });
+        allTargetCompanies = [...bankCompanies, ...fintechCompanies];
       }
-
-      // Get expansion candidates
-      const allTargetCompanies = await db.query.companies.findMany({
-        where: eq(companies.category, targetCategory),
-        columns: { 
-          id: true, 
-          name: true, 
-          category: true, 
-          risk_score: true, 
-          revenue_tier: true 
-        }
-      });
 
       // Filter out current user's company and related companies
       const candidates = allTargetCompanies.filter(company => 
