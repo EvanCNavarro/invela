@@ -4614,6 +4614,118 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Network connection endpoint - creates relationship between companies
+  app.post("/api/network/connect", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.company_id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const { companyId } = req.body;
+      
+      if (!companyId || typeof companyId !== 'number') {
+        return res.status(400).json({ 
+          message: 'Invalid company ID provided',
+          code: 'INVALID_COMPANY_ID'
+        });
+      }
+
+      const userCompanyId = req.user.company_id;
+
+      // Validate target company exists and get its details
+      const targetCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: { 
+          id: true, 
+          name: true, 
+          risk_score: true, 
+          accreditation_status: true 
+        }
+      });
+
+      if (!targetCompany) {
+        return res.status(404).json({ 
+          message: 'Target company not found',
+          code: 'COMPANY_NOT_FOUND'
+        });
+      }
+
+      // Validate connection eligibility (low risk + accredited)
+      const riskScore = targetCompany.risk_score || 0;
+      const isLowRisk = riskScore <= 33;
+      const isAccredited = targetCompany.accreditation_status === "APPROVED";
+
+      if (!isLowRisk || !isAccredited) {
+        return res.status(400).json({
+          message: 'Connection not allowed: Only low risk accredited companies can be connected',
+          code: 'CONNECTION_NOT_ALLOWED',
+          details: {
+            riskScore,
+            isLowRisk,
+            isAccredited: targetCompany.accreditation_status
+          }
+        });
+      }
+
+      // Check if relationship already exists
+      const existingRelationship = await db.query.relationships.findFirst({
+        where: or(
+          and(
+            eq(relationships.company_id, userCompanyId),
+            eq(relationships.related_company_id, companyId)
+          ),
+          and(
+            eq(relationships.company_id, companyId),
+            eq(relationships.related_company_id, userCompanyId)
+          )
+        )
+      });
+
+      if (existingRelationship) {
+        return res.status(400).json({
+          message: 'Connection already exists between these companies',
+          code: 'RELATIONSHIP_EXISTS'
+        });
+      }
+
+      // Create the relationship
+      const newRelationship = await db.insert(relationships).values({
+        company_id: userCompanyId,
+        related_company_id: companyId,
+        relationship_type: 'partner',
+        status: 'active',
+        metadata: {
+          created_via: 'network_expansion',
+          connection_date: new Date().toISOString()
+        }
+      }).returning();
+
+      console.log('[NetworkConnect] Created relationship:', {
+        from: userCompanyId,
+        to: companyId,
+        relationshipId: newRelationship[0]?.id
+      });
+
+      res.json({
+        success: true,
+        message: 'Connection established successfully',
+        relationship: {
+          id: newRelationship[0]?.id,
+          companyId: targetCompany.id,
+          companyName: targetCompany.name,
+          status: 'active'
+        }
+      });
+
+    } catch (error) {
+      console.error('[NetworkConnect] Error creating connection:', error);
+      res.status(500).json({ 
+        message: "Error creating connection",
+        code: "CONNECTION_ERROR"
+      });
+    }
+  });
+
   // Network expansion candidates endpoint
   app.get("/api/network/expansion-candidates", requireAuth, async (req, res) => {
     try {
