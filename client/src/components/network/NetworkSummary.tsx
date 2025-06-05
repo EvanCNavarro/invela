@@ -161,7 +161,7 @@ export function NetworkSummary() {
 
       {/* Network Expansion Call-to-Action - Improved */}
       {availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 flex-1 h-36 group cursor-pointer flex flex-col justify-between"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-slate-900">
@@ -174,11 +174,11 @@ export function NetworkSummary() {
           </div>
           
           <div className="text-center flex-1 flex flex-col justify-center">
-            <div className="text-2xl font-bold text-blue-600 mb-1">
-              {formatNetworkSize(availableCount)} Available {availableEntityType}
+            <div className="text-lg font-bold text-blue-600 mb-1">
+              {formatNetworkSize(availableCount)} Available {availableEntityType.replace(/data providers/i, 'Data Providers').replace(/data recipients/i, 'Data Recipients')}
             </div>
             <div className="text-xs text-slate-600 leading-tight">
-              Navigate to see a listing of all the partners you can invite to expand your network
+              View complete directory and send invitations.
             </div>
           </div>
         </div>
