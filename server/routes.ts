@@ -4554,8 +4554,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Unified risk data endpoint - single source of truth (general route after specific)
-  app.get("/api/companies/network-risk-unified", requireAuth, async (req, res) => {
+  // Unified risk data endpoint - single source of truth (separate path to avoid conflicts)
+  app.get("/api/network/risk-unified", requireAuth, async (req, res) => {
     try {
       if (!req.user?.company_id) {
         return res.status(401).json({ message: 'Unauthorized' });
