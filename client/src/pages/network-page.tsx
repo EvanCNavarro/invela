@@ -98,21 +98,25 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
-// Risk Monitoring Status Badge Component
+// Risk Monitoring Status Badge Component using authentic session data
 const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
-  // Generate consistent risk monitoring status based on company ID and risk score
-  const getRiskMonitoringStatus = (id: number, score: number | null): 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' => {
-    if (!score) return 'Stable';
-    
-    // Use deterministic pattern to ensure 15% blocked cap (roughly 1 in 7)
-    const seed = id % 7;
-    if (score > 80 && seed === 0) return 'Blocked';
-    if (score > 70 && seed < 2) return 'Approaching Block';
-    if (score > 50 && seed < 3) return 'Monitoring';
-    return 'Stable';
-  };
+  const [status, setStatus] = useState<'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable'>('Stable');
   
-  const status = getRiskMonitoringStatus(companyId, riskScore);
+  useEffect(() => {
+    const fetchAuthenticStatus = () => {
+      try {
+        // Use authentic company data to get consistent status
+        const companyData = { id: companyId, risk_score: riskScore, name: `Company ${companyId}` };
+        const authenticData = sessionDataService.getCompanyData(companyData);
+        setStatus(authenticData.status);
+      } catch (error) {
+        console.log('[RiskStatus] Error fetching status for company:', companyId);
+        setStatus('Stable');
+      }
+    };
+    
+    fetchAuthenticStatus();
+  }, [companyId, riskScore]);
   
   if (status === 'Blocked') {
     return (
@@ -130,31 +134,35 @@ const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number
   );
 };
 
-// Risk Trend Component showing realistic risk patterns
+// Risk Trend Component using authentic session data
 const RiskTrendIndicator = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
-  // Generate realistic trend based on risk score and company ID for consistency
-  const getTrendPattern = (id: number, score: number | null): 'up' | 'down' | 'stable' => {
-    if (!score) return 'stable';
+  const [trend, setTrend] = useState<'improving' | 'stable' | 'deteriorating'>('stable');
+  
+  useEffect(() => {
+    const fetchAuthenticTrend = () => {
+      try {
+        // Use authentic company data to get consistent trend
+        const companyData = { id: companyId, risk_score: riskScore, name: `Company ${companyId}` };
+        const authenticData = sessionDataService.getCompanyData(companyData);
+        setTrend(authenticData.trend);
+      } catch (error) {
+        console.log('[RiskTrend] Error fetching trend for company:', companyId);
+        setTrend('stable');
+      }
+    };
     
-    // Use deterministic pattern based on company ID and risk score for consistency
-    const seed = id % 7;
-    if (score > 70) return seed < 3 ? 'up' : 'stable';
-    if (score > 50) return seed < 2 ? 'down' : seed > 5 ? 'up' : 'stable';
-    if (score > 30) return seed < 1 ? 'up' : seed > 4 ? 'down' : 'stable';
-    return seed < 2 ? 'down' : 'stable';
-  };
+    fetchAuthenticTrend();
+  }, [companyId, riskScore]);
   
-  const trend = getTrendPattern(companyId, riskScore);
-  
-  if (trend === 'up') {
+  if (trend === 'deteriorating') {
     return (
-      <div className="flex items-center justify-center" title="Risk trending upward">
+      <div className="flex items-center justify-center" title="Risk deteriorating">
         <TrendingUp className="h-4 w-4 text-red-500" />
       </div>
     );
-  } else if (trend === 'down') {
+  } else if (trend === 'improving') {
     return (
-      <div className="flex items-center justify-center" title="Risk trending downward">
+      <div className="flex items-center justify-center" title="Risk improving">
         <TrendingDown className="h-4 w-4 text-green-500" />
       </div>
     );
