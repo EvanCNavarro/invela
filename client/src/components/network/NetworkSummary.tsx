@@ -250,13 +250,13 @@ export function NetworkSummary() {
 
       {/* Network Expansion Call-to-Action - Only show for Banks and FinTech */}
       {!isInvelaUser && availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ease-in-out flex-1 h-36 group cursor-pointer flex flex-col justify-between"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-25 hover:to-indigo-25 border border-blue-200 hover:border-blue-300 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ease-in-out flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-slate-900">
               Expand Your Network
             </div>
-            <div className="flex items-center gap-1 text-sm text-blue-600 font-bold group-hover:text-blue-700 transition-colors duration-300">
+            <div className="flex items-center gap-1 text-sm text-blue-600 font-bold group-hover:text-blue-500 transition-colors duration-300">
               View More
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-300 ease-in-out" />
             </div>
