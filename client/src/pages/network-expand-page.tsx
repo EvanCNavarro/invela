@@ -207,7 +207,7 @@ export default function NetworkExpandPage() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               {/* Filter Row - Single Row Layout */}
-              <div className="flex items-center gap-4 flex-wrap lg:flex-nowrap">
+              <div className="flex items-center gap-4 flex-wrap">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -271,18 +271,6 @@ export default function NetworkExpandPage() {
                 </div>
 
               </div>
-              
-              {/* Search Bar - mobile fallback */}
-              <div className="relative lg:hidden">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search Network"
-                  value={filters.search}
-                  onChange={(e) => updateFilter('search', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
 
             </div>
           </CardContent>
