@@ -169,10 +169,9 @@ export default function NetworkExpandPage() {
 
   // Helper functions for risk assessment
   const isConnectEnabled = (candidate: ExpansionCandidate) => {
-    const riskScore = candidate.risk_score || 0;
-    const isLowRisk = riskScore <= 33;
+    // Allow connections for any company with approved accreditation, regardless of risk level
     const isAccredited = candidate.accreditation_status === "APPROVED";
-    return isLowRisk && isAccredited;
+    return isAccredited;
   };
 
   const handleConnect = (companyId: number) => {
@@ -342,7 +341,7 @@ export default function NetworkExpandPage() {
                               {getRiskLevel(candidate.risk_score)}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center">
                             <span className="text-sm">
                               {getAccreditationStatusLabel(candidate.accreditation_status)}
                             </span>
@@ -383,7 +382,7 @@ export default function NetworkExpandPage() {
                                   </TooltipTrigger>
                                   {!connectEnabled && (
                                     <TooltipContent>
-                                      <p>Only low risk accredited companies can be connected</p>
+                                      <p>Only approved companies can be connected</p>
                                     </TooltipContent>
                                   )}
                                 </Tooltip>
