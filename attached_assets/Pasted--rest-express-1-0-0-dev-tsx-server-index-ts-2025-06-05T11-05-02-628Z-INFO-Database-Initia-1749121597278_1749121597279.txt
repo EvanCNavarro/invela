@@ -1,0 +1,435 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-05T11:05:02.628Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-05T11:05:02.632Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":108,"timestamp":"2025-06-05T11:05:02.632Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-05T11:05:02.770Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-06-05T11:05:02.876Z] [INFO] [App] [PROD-DEBUG] Starting server initialization sequence 
+[2025-06-05T11:05:02.876Z] [INFO] [App] [PROD-DEBUG] Beginning API routes registration... 
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (forced production mode) 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-05T11:05:02.879Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-05T11:05:02.882Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-06-05T11:05:02.882Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[2025-06-05T11:05:02.882Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-05T11:05:02.882Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-05T11:05:02.882Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-05T11:05:02.882Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-05T11:05:02.889Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-05T11:05:02.889Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-05T11:05:02.890Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-05T11:05:02.890Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-05T11:05:02.892Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-05T11:05:02.894Z] [INFO] [App] [ServerStartup] API routes registration completed 
+[2025-06-05T11:05:02.894Z] [INFO] [App] [PROD-DEBUG] ✓ All API routes now registered and have priority 
+[2025-06-05T11:05:02.894Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-05T11:05:02.895Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"g9kqqc","timestamp":"2025-06-05T11:05:02.895Z"}
+[2025-06-05T11:05:02.895Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-05T11:05:02.895Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-05T11:05:02.895Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-05T11:05:02.895Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-05T11:05:02.896Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-05T11:05:02.896Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-05T11:05:02.896Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-05T11:05:02.896Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-05T11:05:02.896Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-05T11:05:02.896Z] [INFO] [App] [PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes) 
+[2025-06-05T11:05:02.896Z] [INFO] [App] [PROD-DEBUG] Development mode: Setting up Vite development server 
+[2025-06-05T11:05:02.897Z] [INFO] [App] [PROD-DEBUG] ✓ Development server configured with API route priority verified 
+[2025-06-05T11:05:03.907Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-05T11:05:06.462Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-05T11:05:07.783Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121507783-xcfbbec","clients":1}
+[2025-06-05T11:05:07.794Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121507794-13p1gvf","clients":2}
+[2025-06-05T11:05:07.804Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: 'T0dFKjCax5DxYoVXppacsKqOHUwEb-km',
+  cookies: undefined
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[2025-06-05T11:05:07.835Z] [INFO] [WebSocket] Received message from client client-1749121507783-xcfbbec {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-05T11:05:07.833Z"}}
+[2025-06-05T11:05:07.835Z] [INFO] [WebSocket] Authentication from client client-1749121507783-xcfbbec {"module":"WebSocket","hasToken":true}
+[2025-06-05T11:05:07.928Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121507927-tj8sm9x","clients":3}
+[2025-06-05T11:05:08.303Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121507927-tj8sm9x","code":1001,"reason":"","remainingClients":2}
+[2025-06-05T11:05:08.304Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121507794-13p1gvf","code":1001,"reason":"","remainingClients":1}
+[2025-06-05T11:05:08.304Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121507783-xcfbbec","code":1001,"reason":"","remainingClients":0}
+[2025-06-05T11:05:12.883Z] [INFO] [App] Running background health checks... 
+[2025-06-05T11:05:12.883Z] [StartupChecks] Running application startup health checks... 
+[2025-06-05T11:05:12.883Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-05T11:05:12.883Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-05T11:05:13.107Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-05T11:05:13.171Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-05T11:05:13.199Z] [DBConnectionService] Database connection check successful 
+[2025-06-05T11:05:13.199Z] [StartupChecks] Database health check passed 
+[2025-06-05T11:05:13.199Z] [StartupChecks] All startup health checks passed! 
+[2025-06-05T11:05:13.200Z] [INFO] [App] All background health checks passed successfully. 
+[2025-06-05T11:05:33.063Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-05T11:05:33.093Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":7,"taskIds":[1127,1131,1120,1132,1122,1121,1130]}
+[Task Progress] Calculated progress for task 1127 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1131 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1120 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1132 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1122 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1121 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1130 (company_kyb): 0/30 = 0%
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'DQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN',
+  cookies: 'connect.sid=s%3ADQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN.HY3xoj3HFHvSe5v0BSPU6u3a6tae8DNDw402C6tMNeo'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 8
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 8, companyId: 1 }
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 8, company_id: 1, email: 'evan.navarro@invela.com' }
+[2025-06-05T11:05:34.646Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1,"userId":8}
+[2025-06-05T11:05:34.657Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 8 
+[2025-06-05T11:05:34.657Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-06-05T11:05:34.657Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-06-05T11:05:34.657Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 8 
+[Current Company] Found company: {
+  id: 1,
+  name: 'Invela',
+  onboardingCompleted: true,
+  riskScore: 0,
+  chosenScore: 0,
+  isDemo: false
+}
+[Current Company] Onboarding status check: {
+  userId: 8,
+  companyId: 1,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-05T11:05:34.667Z'
+}
+[2025-06-05T11:05:34.674Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1}
+[Tasks] Automatically unlocking all tasks for company { userId: 8, companyId: 1, requestedBy: 'automatic_task_unlock' }
+[2025-06-05T11:05:34.675Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1}
+[2025-06-05T11:05:34.700Z] [INFO] [App] GET /api/companies/current 304 in 62ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":false,"revenue_tier":"m... 
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":168,"userEmail":"preston.mcfarland@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":123,"userEmail":"dev.kurbur@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":338,"userEmail":"nathanael.coffing@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":858,"userEmail":"marcin.figiel@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":124,"userEmail":"amar.karvir@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":720,"userEmail":"jim.wadsworth@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.704Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.705Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":1033,"userEmail":"agray@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.705Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":991,"userEmail":"e@e.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.705Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:05:34.705Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":1,"count":12,"taskIds":[121,168,123,338,858,124,122,720,251,1033,991,172],"taskTypes":["user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-06-05T11:05:34.705Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","timestamp":"2025-06-05T11:05:34.705Z"}
+[2025-06-05T11:05:34.727Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 8: completed=true, step=2 
+[2025-06-05T11:05:34.735Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.735Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 0 clients {"module":"WebSocket","messageType":"task_updated","recipients":0,"totalClients":0,"filtered":false}
+[2025-06-05T11:05:34.735Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":121,"status":"completed"}
+[2025-06-05T11:05:34.735Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":168,"userEmail":"preston.mcfarland@invela.com","timestamp":"2025-06-05T11:05:34.735Z"}
+[2025-06-05T11:05:34.758Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 101ms :: {"exists":true,"completed":true,"currentStep":2,"lastSeenAt":"2025-06-05T10:5... 
+[2025-06-05T11:05:34.765Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.765Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 0 clients {"module":"WebSocket","messageType":"task_updated","recipients":0,"totalClients":0,"filtered":false}
+[2025-06-05T11:05:34.765Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":168,"status":"completed"}
+[2025-06-05T11:05:34.765Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":123,"userEmail":"dev.kurbur@invela.com","timestamp":"2025-06-05T11:05:34.765Z"}
+[2025-06-05T11:05:34.767Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121534767-z9n9wy3","clients":1}
+[2025-06-05T11:05:34.795Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.796Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.796Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":123,"status":"completed"}
+[2025-06-05T11:05:34.796Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":338,"userEmail":"nathanael.coffing@invela.com","timestamp":"2025-06-05T11:05:34.796Z"}
+[2025-06-05T11:05:34.826Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.827Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.827Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":338,"status":"completed"}
+[2025-06-05T11:05:34.827Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":858,"userEmail":"marcin.figiel@invela.com","timestamp":"2025-06-05T11:05:34.827Z"}
+[2025-06-05T11:05:34.857Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.857Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.857Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":858,"status":"completed"}
+[2025-06-05T11:05:34.857Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":124,"userEmail":"amar.karvir@invela.com","timestamp":"2025-06-05T11:05:34.857Z"}
+[2025-06-05T11:05:34.885Z] [INFO] [WebSocket] Received message from client client-1749121534767-z9n9wy3 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-05T11:05:34.646Z"}}
+[2025-06-05T11:05:34.885Z] [INFO] [WebSocket] Authentication from client client-1749121534767-z9n9wy3 {"module":"WebSocket","hasToken":true}
+[2025-06-05T11:05:34.887Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.887Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.887Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":124,"status":"completed"}
+[2025-06-05T11:05:34.888Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","timestamp":"2025-06-05T11:05:34.888Z"}
+[Relationships] Fetching network for company: 1
+[2025-06-05T11:05:34.918Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.918Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.918Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":122,"status":"completed"}
+[2025-06-05T11:05:34.918Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":720,"userEmail":"jim.wadsworth@invela.com","timestamp":"2025-06-05T11:05:34.918Z"}
+[2025-06-05T11:05:34.948Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.948Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.948Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":720,"status":"completed"}
+[2025-06-05T11:05:34.948Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","timestamp":"2025-06-05T11:05:34.948Z"}
+[Relationships] Found network members: { count: 87 }
+[2025-06-05T11:05:34.978Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:34.978Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:34.979Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":251,"status":"completed"}
+[2025-06-05T11:05:34.979Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":1033,"userEmail":"agray@invela.com","timestamp":"2025-06-05T11:05:34.979Z"}
+[2025-06-05T11:05:34.996Z] [INFO] [App] GET /api/relationships 304 in 108ms :: [{"id":505,"companyId":1,"relatedCompanyId":488,"relationshipType":"network_m... 
+[2025-06-05T11:05:35.010Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:35.010Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:35.010Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":1033,"status":"completed"}
+[2025-06-05T11:05:35.010Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":991,"userEmail":"e@e.com","timestamp":"2025-06-05T11:05:35.010Z"}
+[2025-06-05T11:05:35.043Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:35.044Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:35.044Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":991,"status":"completed"}
+[2025-06-05T11:05:35.044Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","timestamp":"2025-06-05T11:05:35.044Z"}
+[2025-06-05T11:05:35.073Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:05:35.074Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:05:35.074Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":172,"status":"completed"}
+[2025-06-05T11:05:35.074Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":1,"count":12}
+[Tasks] Successfully unlocked all tasks for company: 1
+[Network Stats] Error fetching network statistics: TypeError: riskBreakdown.reduce is not a function
+    at <anonymous> (/home/runner/workspace/server/routes.ts:4604:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 8',
+    condition2: 'tasks.created_by = 8',
+    condition3: "tasks.company_id = 1 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('evan.navarro@invela.com')"
+  }
+}
+[Tasks] Tasks found: { count: 11 }
+[2025-06-05T11:05:35.146Z] [ERROR] [App] GET /api/network/stats 500 in 209ms :: {"message":"Error fetching network statistics","code":"FETCH_ERROR"} 
+[2025-06-05T11:05:35.176Z] [INFO] [App] GET /api/tasks 200 in 531ms :: [{"id":991,"title":"New User Invitation: e@e.com","description":"Invitation s... 
+[Company Logo] Fetching logo for company ID: 488
+[Company Logo] No logo assigned for company: Advanced Gaming Technologies (488)
+[2025-06-05T11:05:35.263Z] [WARN] [App] GET /api/companies/488/logo 404 in 61ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[Company Logo] Fetching logo for company ID: 469
+[Company Logo] Fetching logo for company ID: 512
+[2025-06-05T11:05:35.283Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121535283-s8qqkrj","clients":2}
+[Company Logo] No logo assigned for company: AgriFinance Connect (469)
+[Company Logo] No logo assigned for company: Advanced Infrastructure Technologies (512)
+[Company Logo] Fetching logo for company ID: 505
+[Company Logo] Fetching logo for company ID: 459
+[2025-06-05T11:05:35.348Z] [WARN] [App] GET /api/companies/469/logo 404 in 67ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:05:35.369Z] [WARN] [App] GET /api/companies/512/logo 404 in 87ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[Company Logo] No logo assigned for company: Allied Evaluation Specialists (505)
+[Company Logo] No logo assigned for company: BankingAPI Gateway (459)
+[2025-06-05T11:05:35.399Z] [WARN] [App] GET /api/companies/505/logo 404 in 62ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:05:35.406Z] [WARN] [App] GET /api/companies/459/logo 404 in 65ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:05:35.805Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121535805-49rcsfi","clients":3}
+[2025-06-05T11:05:35.931Z] [INFO] [WebSocket] Received message from client client-1749121535805-49rcsfi {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749121533747_gwsrx01vn","timestamp":"2025-06-05T11:05:35.689Z"}
+[2025-06-05T11:05:35.931Z] [INFO] [WebSocket] Authentication from client client-1749121535805-49rcsfi {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-05T11:05:36.305Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121536305-ekxdu87","clients":4}
+[2025-06-05T11:05:36.833Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121536833-7neg82k","clients":5}
+[2025-06-05T11:05:37.362Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121537362-bfvxo11","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'DQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN',
+  cookies: 'connect.sid=s%3ADQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN.HY3xoj3HFHvSe5v0BSPU6u3a6tae8DNDw402C6tMNeo'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 8
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:05:37.962Z] [INFO] [WebSocket] Received message from client client-1749121537362-bfvxo11 {"module":"WebSocket","type":"authenticate","userId":8,"companyId":1,"clientId":"ws_1749121536013_6unrhw5yt","timestamp":"2025-06-05T11:05:37.714Z"}
+[2025-06-05T11:05:37.963Z] [INFO] [WebSocket] Authentication from client client-1749121537362-bfvxo11 {"module":"WebSocket","userId":8,"companyId":1,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:05:57.481Z] [INFO] [WebSocket] Received message from client client-1749121537362-bfvxo11 {"module":"WebSocket","type":"ping","timestamp":"2025-06-05T11:05:57.242Z","connectionId":"ws_1749121536013_6unrhw5yt"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:05:58.921Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":false,"revenue_tier":"m... [sampled: request 11] 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 1
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] Using cached task data for user: 8
+[2025-06-05T11:06:00.266Z] [INFO] [App] GET /api/tasks 304 in 31ms :: [{"id":991,"title":"New User Invitation: e@e.com","description":"Invitation s... 
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[2025-06-05T11:06:00.479Z] [INFO] [App] GET /api/tasks 304 in 30ms :: [{"id":991,"title":"New User Invitation: e@e.com","description":"Invitation s... 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Network Stats] Error fetching network statistics: TypeError: riskBreakdown.reduce is not a function
+    at <anonymous> (/home/runner/workspace/server/routes.ts:4604:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[2025-06-05T11:06:01.126Z] [ERROR] [App] GET /api/network/stats 500 in 155ms :: {"message":"Error fetching network statistics","code":"FETCH_ERROR"} 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:06:04.273Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121536305-ekxdu87","code":1001,"reason":"","remainingClients":5}
+[2025-06-05T11:06:04.273Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121536833-7neg82k","code":1001,"reason":"","remainingClients":4}
+[2025-06-05T11:06:04.273Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121535283-s8qqkrj","code":1001,"reason":"","remainingClients":3}
+[2025-06-05T11:06:04.273Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121535805-49rcsfi","code":1001,"reason":"","remainingClients":2}
+[2025-06-05T11:06:04.273Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121537362-bfvxo11","code":1001,"reason":"","remainingClients":1}
+[2025-06-05T11:06:04.274Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749121534767-z9n9wy3","code":1001,"reason":"","remainingClients":0}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'DQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN',
+  cookies: 'connect.sid=s%3ADQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN.HY3xoj3HFHvSe5v0BSPU6u3a6tae8DNDw402C6tMNeo'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 8
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 8, company_id: 1, email: 'evan.navarro@invela.com' }
+[2025-06-05T11:06:14.815Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1,"userId":8}
+[2025-06-05T11:06:14.825Z] [INFO] [App] [TabTutorials] Status request for tab "network" from authenticated user ID: 8 
+[2025-06-05T11:06:14.825Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'network' to canonical form 
+[2025-06-05T11:06:14.825Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'network' 
+[2025-06-05T11:06:14.825Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: network (raw: network), user: 8 
+[Relationships] Fetching network for company: 1
+[2025-06-05T11:06:14.849Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121574849-rqucyzi","clients":1}
+[2025-06-05T11:06:14.859Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1}
+[Tasks] Automatically unlocking all tasks for company { userId: 8, companyId: 1, requestedBy: 'automatic_task_unlock' }
+[2025-06-05T11:06:14.860Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":858,"userEmail":"marcin.figiel@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":168,"userEmail":"preston.mcfarland@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":123,"userEmail":"dev.kurbur@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":338,"userEmail":"nathanael.coffing@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":124,"userEmail":"amar.karvir@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":720,"userEmail":"jim.wadsworth@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":1033,"userEmail":"agray@invela.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":991,"userEmail":"e@e.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found user onboarding task that needs completion {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","currentStatus":"completed","currentProgress":100}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Found tasks to unlock {"companyId":1,"count":12,"taskIds":[121,858,168,123,338,124,122,720,251,1033,991,172],"taskTypes":["user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding","user_onboarding"],"ky3pTaskCount":0,"ky3pTaskIds":[]}
+[2025-06-05T11:06:14.903Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":121,"userEmail":"darek.nehrebecki@invela.com","timestamp":"2025-06-05T11:06:14.903Z"}
+[2025-06-05T11:06:14.904Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for network for user 8: completed=true, step=2 
+[Relationships] Found network members: { count: 87 }
+[2025-06-05T11:06:14.934Z] [INFO] [App] GET /api/user-tab-tutorials/network/status 200 in 109ms :: {"exists":true,"completed":true,"currentStep":2,"lastSeenAt":"2025-06-05T11:0... 
+[2025-06-05T11:06:14.938Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:14.938Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:14.938Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":121,"status":"completed"}
+[2025-06-05T11:06:14.938Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":858,"userEmail":"marcin.figiel@invela.com","timestamp":"2025-06-05T11:06:14.938Z"}
+[2025-06-05T11:06:14.946Z] [INFO] [App] GET /api/relationships 304 in 103ms :: [{"id":505,"companyId":1,"relatedCompanyId":488,"relationshipType":"network_m... 
+[2025-06-05T11:06:14.969Z] [INFO] [WebSocket] Received message from client client-1749121574849-rqucyzi {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-05T11:06:14.818Z"}}
+[2025-06-05T11:06:14.969Z] [INFO] [WebSocket] Authentication from client client-1749121574849-rqucyzi {"module":"WebSocket","hasToken":true}
+[2025-06-05T11:06:14.972Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:14.972Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:14.972Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":858,"status":"completed"}
+[2025-06-05T11:06:14.972Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":168,"userEmail":"preston.mcfarland@invela.com","timestamp":"2025-06-05T11:06:14.972Z"}
+[2025-06-05T11:06:15.007Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.007Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.007Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":168,"status":"completed"}
+[2025-06-05T11:06:15.007Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":123,"userEmail":"dev.kurbur@invela.com","timestamp":"2025-06-05T11:06:15.007Z"}
+[2025-06-05T11:06:15.042Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.042Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.042Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":123,"status":"completed"}
+[2025-06-05T11:06:15.042Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":338,"userEmail":"nathanael.coffing@invela.com","timestamp":"2025-06-05T11:06:15.042Z"}
+[2025-06-05T11:06:15.096Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.096Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.096Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":338,"status":"completed"}
+[2025-06-05T11:06:15.097Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":124,"userEmail":"amar.karvir@invela.com","timestamp":"2025-06-05T11:06:15.097Z"}
+[Company Logo] Fetching logo for company ID: 505
+[2025-06-05T11:06:15.162Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.163Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.163Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":124,"status":"completed"}
+[2025-06-05T11:06:15.163Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":122,"userEmail":"gaby.sulbaran@invela.com","timestamp":"2025-06-05T11:06:15.163Z"}
+[Company Logo] Fetching logo for company ID: 469
+[Company Logo] Fetching logo for company ID: 488
+[Network Stats] Error fetching network statistics: TypeError: riskBreakdown.reduce is not a function
+    at <anonymous> (/home/runner/workspace/server/routes.ts:4604:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[Company Logo] Fetching logo for company ID: 512
+[Company Logo] No logo assigned for company: Allied Evaluation Specialists (505)
+[Company Logo] No logo assigned for company: AgriFinance Connect (469)
+[2025-06-05T11:06:15.230Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.230Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.230Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":122,"status":"completed"}
+[2025-06-05T11:06:15.230Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":720,"userEmail":"jim.wadsworth@invela.com","timestamp":"2025-06-05T11:06:15.230Z"}
+[Company Logo] No logo assigned for company: Advanced Gaming Technologies (488)
+[Company Logo] No logo assigned for company: Advanced Infrastructure Technologies (512)
+[2025-06-05T11:06:15.271Z] [WARN] [App] GET /api/companies/505/logo 404 in 111ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:06:15.271Z] [ERROR] [App] GET /api/network/stats 500 in 243ms :: {"message":"Error fetching network statistics","code":"FETCH_ERROR"} 
+[2025-06-05T11:06:15.288Z] [WARN] [App] GET /api/companies/469/logo 404 in 117ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:06:15.299Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.299Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.299Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":720,"status":"completed"}
+[2025-06-05T11:06:15.299Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":251,"userEmail":"krzysztof.pniak@invela.com","timestamp":"2025-06-05T11:06:15.299Z"}
+[2025-06-05T11:06:15.302Z] [WARN] [App] GET /api/companies/488/logo 404 in 115ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:06:15.317Z] [WARN] [App] GET /api/companies/512/logo 404 in 116ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:06:15.331Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.332Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 1 clients {"module":"WebSocket","messageType":"task_updated","recipients":1,"totalClients":1,"filtered":false}
+[2025-06-05T11:06:15.332Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":251,"status":"completed"}
+[2025-06-05T11:06:15.332Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":1033,"userEmail":"agray@invela.com","timestamp":"2025-06-05T11:06:15.332Z"}
+[2025-06-05T11:06:15.361Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121575361-h31zk9b","clients":2}
+[2025-06-05T11:06:15.369Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.369Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 2 clients {"module":"WebSocket","messageType":"task_updated","recipients":2,"totalClients":2,"filtered":false}
+[2025-06-05T11:06:15.369Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":1033,"status":"completed"}
+[2025-06-05T11:06:15.369Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":991,"userEmail":"e@e.com","timestamp":"2025-06-05T11:06:15.369Z"}
+[2025-06-05T11:06:15.398Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.399Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 2 clients {"module":"WebSocket","messageType":"task_updated","recipients":2,"totalClients":2,"filtered":false}
+[2025-06-05T11:06:15.399Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":991,"status":"completed"}
+[2025-06-05T11:06:15.400Z] [INFO] [App] [TaskDependencies] Setting User Onboarding task as completed {"taskId":172,"userEmail":"krzysztof.pniak@proopro.com","timestamp":"2025-06-05T11:06:15.400Z"}
+[2025-06-05T11:06:15.430Z] [INFO] [App] Our WebSocket server not initialized, falling back to unified implementation 
+[2025-06-05T11:06:15.430Z] [INFO] [WebSocket] Broadcast message of type 'task_updated' sent to 2 clients {"module":"WebSocket","messageType":"task_updated","recipients":2,"totalClients":2,"filtered":false}
+[2025-06-05T11:06:15.430Z] [INFO] [App] Successfully broadcast task update using unified implementation {"taskId":172,"status":"completed"}
+[2025-06-05T11:06:15.430Z] [INFO] [App] [TaskDependencies] Successfully unlocked all tasks {"companyId":1,"count":12}
+[Tasks] Successfully unlocked all tasks for company: 1
+[Company Logo] Fetching logo for company ID: 459
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 8',
+    condition2: 'tasks.created_by = 8',
+    condition3: "tasks.company_id = 1 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('evan.navarro@invela.com')"
+  }
+}
+[Company Logo] No logo assigned for company: BankingAPI Gateway (459)
+[Tasks] Tasks found: { count: 11 }
+[2025-06-05T11:06:15.517Z] [WARN] [App] GET /api/companies/459/logo 404 in 66ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-05T11:06:15.523Z] [INFO] [App] GET /api/tasks 200 in 709ms :: [{"id":991,"title":"New User Invitation: e@e.com","description":"Invitation s... 
+[2025-06-05T11:06:15.867Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121575867-xyumxq3","clients":3}
+[2025-06-05T11:06:16.359Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121576359-1odvdap","clients":4}
+[2025-06-05T11:06:16.878Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121576878-o7a3ucz","clients":5}
+[2025-06-05T11:06:17.009Z] [INFO] [WebSocket] Received message from client client-1749121576878-o7a3ucz {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749121573979_aadthy7gq","timestamp":"2025-06-05T11:06:16.843Z"}
+[2025-06-05T11:06:17.009Z] [INFO] [WebSocket] Authentication from client client-1749121576878-o7a3ucz {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-05T11:06:17.390Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749121577390-st6ld3e","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'DQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN',
+  cookies: 'connect.sid=s%3ADQzhkE8vgiYrLKSQqHn-e3ptVdZvCoCN.HY3xoj3HFHvSe5v0BSPU6u3a6tae8DNDw402C6tMNeo'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 8
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:06:17.949Z] [INFO] [WebSocket] Received message from client client-1749121577390-st6ld3e {"module":"WebSocket","type":"authenticate","userId":8,"companyId":1,"clientId":"ws_1749121575329_5zg4zeyzu","timestamp":"2025-06-05T11:06:17.798Z"}
+[2025-06-05T11:06:17.950Z] [INFO] [WebSocket] Authentication from client client-1749121577390-st6ld3e {"module":"WebSocket","userId":8,"companyId":1,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-05T11:06:30.062Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":1,"name":"Invela","category":"Invela","is_demo":false,"revenue_tier":"m... [sampled: request 21] 
