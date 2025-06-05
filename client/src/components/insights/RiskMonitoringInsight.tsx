@@ -221,7 +221,6 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       
       {/* Show table with appropriate size based on isWidget */}
       <DeterioratingRiskTable
-        key={timeframe}
         companies={displayCompanies}
         blockThreshold={riskThreshold}
         onCompanyClick={handleCompanyClick}
