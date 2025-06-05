@@ -57,6 +57,8 @@ import { InviteModal } from "@/components/playground/InviteModal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Building2, Network } from "lucide-react";
 
 interface NetworkRelationship {
   id: number;
@@ -298,6 +300,17 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
+  // Fetch network expansion statistics
+  const { data: networkStats } = useQuery({
+    queryKey: ["/api/network/stats", currentCompany?.category],
+    queryFn: async () => {
+      const response = await fetch(`/api/network/stats?category=${currentCompany?.category}`);
+      if (!response.ok) throw new Error('Failed to fetch network stats');
+      return response.json();
+    },
+    enabled: !!currentCompany?.category
+  });
+
   // Initialize Fuse instance for fuzzy search
   const fuse = useMemo(() => new Fuse(networkRelationships, {
     keys: ['relatedCompany.name'],
@@ -422,6 +435,70 @@ export default function NetworkPage() {
   };
 
   const hasActiveFilters = searchQuery || statusFilter !== "ALL" || riskStatusFilter !== "ALL";
+
+  // Network Summary Component with dynamic call-to-action
+  const NetworkSummary = () => {
+    if (!networkStats || !currentCompany) return null;
+
+    const { currentNetworkSize, availableCount, expansionMessage, riskStats, userCompanyCategory } = networkStats;
+
+    return (
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Network className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Your Network</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {currentNetworkSize} {currentNetworkSize === 1 ? 'company' : 'companies'} connected
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{riskStats.low || 0}</div>
+                  <div className="text-xs text-muted-foreground">Low Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-amber-600">{riskStats.medium || 0}</div>
+                  <div className="text-xs text-muted-foreground">Medium Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">{riskStats.high || 0}</div>
+                  <div className="text-xs text-muted-foreground">High Risk</div>
+                </div>
+              </div>
+            </div>
+
+            {availableCount > 0 && (
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="text-sm font-medium text-foreground">
+                    {availableCount} {expansionMessage}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Expand your network reach
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setLocation('/network/expand')}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  <span className="mr-2">Expand Network</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <DashboardLayout>

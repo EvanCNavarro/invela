@@ -4520,6 +4520,110 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Network expansion statistics endpoint
+  app.get("/api/network/stats", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.company_id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const userCompanyId = req.user.company_id;
+      const category = req.query.category as string;
+
+      // Get current user's company data
+      const userCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, userCompanyId),
+        columns: { id: true, name: true, category: true }
+      });
+
+      if (!userCompany) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      // Get current network size (companies connected to user's company)
+      const networkCompanies = await db.execute(
+        sql`
+          SELECT COUNT(DISTINCT r.related_company_id) as count
+          FROM relationships r 
+          WHERE r.company_id = ${userCompanyId}
+        `
+      );
+
+      const currentNetworkSize = Number(networkCompanies[0]?.count || 0);
+
+      // Determine expansion target category based on user's company type
+      let targetCategory: string;
+      let expansionMessage: string;
+      
+      if (userCompany.category === 'FinTech') {
+        targetCategory = 'Bank';
+        expansionMessage = 'banks available to expand your network';
+      } else if (userCompany.category === 'Bank') {
+        targetCategory = 'FinTech';
+        expansionMessage = 'FinTech companies available to expand your network';
+      } else {
+        // For Invela or other categories, show FinTech companies
+        targetCategory = 'FinTech';
+        expansionMessage = 'companies available to expand your network';
+      }
+
+      // Get available companies to connect with (not currently in network)
+      const availableCompanies = await db.execute(
+        sql`
+          SELECT COUNT(*) as count
+          FROM companies c
+          WHERE c.category = ${targetCategory}
+            AND c.id != ${userCompanyId}
+            AND c.id NOT IN (
+              SELECT r.related_company_id 
+              FROM relationships r 
+              WHERE r.company_id = ${userCompanyId}
+            )
+        `
+      );
+
+      const availableCount = Number(availableCompanies[0]?.count || 0);
+
+      // Get risk status breakdown of current network
+      const riskBreakdown = await db.execute(
+        sql`
+          SELECT 
+            CASE 
+              WHEN c.risk_score >= 70 THEN 'high'
+              WHEN c.risk_score >= 40 THEN 'medium'
+              ELSE 'low'
+            END as risk_level,
+            COUNT(*) as count
+          FROM companies c
+          INNER JOIN relationships r ON c.id = r.related_company_id
+          WHERE r.company_id = ${userCompanyId}
+          GROUP BY risk_level
+        `
+      );
+
+      const riskStats = riskBreakdown.reduce((acc: any, row: any) => {
+        acc[row.risk_level] = Number(row.count);
+        return acc;
+      }, { high: 0, medium: 0, low: 0 });
+
+      res.json({
+        currentNetworkSize,
+        availableCount,
+        targetCategory,
+        expansionMessage,
+        riskStats,
+        userCompanyCategory: userCompany.category
+      });
+
+    } catch (error) {
+      console.error('[Network Stats] Error fetching network statistics:', error);
+      res.status(500).json({ 
+        message: "Error fetching network statistics",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
   // Risk Flow Visualization (Sankey Diagram) endpoint
   app.get("/api/risk-flow-visualization", requireAuth, async (req, res) => {
     try {
