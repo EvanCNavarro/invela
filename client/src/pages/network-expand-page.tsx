@@ -183,25 +183,14 @@ export default function NetworkExpandPage() {
         
         {/* Page Header */}
         <PageHeader
-          title="Invela Trust Network"
-          description="Browse available Data Providers and expand your network via invitation"
+          title="Invela Trust Network Search"
+          description="Browse available Data Providers and expand your network via invitation."
         />
 
         {/* Filter Controls */}
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search companies..."
-                  value={filters.search}
-                  onChange={(e) => updateFilter('search', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
               {/* Filter Row */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
@@ -277,6 +266,17 @@ export default function NetworkExpandPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search companies..."
+                  value={filters.search}
+                  onChange={(e) => updateFilter('search', e.target.value)}
+                  className="pl-10"
+                />
               </div>
               
               {/* Results Count */}
