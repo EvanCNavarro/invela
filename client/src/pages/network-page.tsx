@@ -673,47 +673,44 @@ export default function NetworkPage() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-          )}
 
-            <div className="flex items-center justify-between px-4 py-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                {isLoading ? (
-                  "Loading results..."
-                ) : filteredRelationships.length > 0 ? (
-                  <>
-                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredRelationships.length)} of {filteredRelationships.length} results
-                  </>
-                ) : (
-                  "No results found"
+              <div className="flex items-center justify-between px-4 py-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  {filteredRelationships.length > 0 ? (
+                    <>
+                      Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredRelationships.length)} of {filteredRelationships.length} results
+                    </>
+                  ) : (
+                    "No results found"
+                  )}
+                </div>
+
+                {filteredRelationships.length > itemsPerPage && (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 )}
               </div>
-
-              {!isLoading && filteredRelationships.length > itemsPerPage && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
             </div>
-          </div>
+          )}
           <InviteModal
             variant="fintech"
             open={openFinTechModal}
