@@ -266,7 +266,7 @@ export function NetworkSummary() {
             <div className="text-lg font-bold text-blue-600 mb-1">
               {formatNetworkSize(availableCount)} Available {availableEntityType.replace(/data providers/i, 'Data Providers').replace(/data recipients/i, 'Data Recipients')}
             </div>
-            <div className="text-xs text-slate-600 leading-tight font-medium">
+            <div className="text-xs text-slate-600 leading-tight font-medium hidden lg:block">
               Browse the Invela Trust Network's available Data Providers and expand your network via invitation.
             </div>
           </div>
