@@ -329,3 +329,44 @@ export async function getNetworkRiskStatistics(userCompanyId: number): Promise<R
     };
   }
 }
+
+/**
+ * Get network companies with detailed risk data
+ * 
+ * @param userCompanyId - User's company ID
+ * @returns Array of company risk data for their network
+ */
+export async function getNetworkCompaniesWithRiskData(userCompanyId: number): Promise<CompanyRiskData[]> {
+  try {
+    logRisk('Fetching network companies with risk data', { userCompanyId });
+    
+    // Get network relationship company IDs
+    const networkRelationships = await db.query.relationships.findMany({
+      where: eq(relationships.company_id, userCompanyId),
+      columns: { related_company_id: true }
+    });
+    
+    const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
+    
+    if (relatedCompanyIds.length === 0) {
+      logRisk('No network relationships found for detailed data', { userCompanyId });
+      return [];
+    }
+
+    const networkRiskData = await getMultipleCompaniesRiskData(relatedCompanyIds);
+    
+    logRisk('Network companies risk data fetched', { 
+      userCompanyId, 
+      companiesCount: networkRiskData.length 
+    });
+    
+    return networkRiskData;
+
+  } catch (error) {
+    logRisk('Error fetching network companies risk data', { 
+      userCompanyId, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+    return [];
+  }
+}
