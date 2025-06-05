@@ -74,8 +74,9 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
           previousScore7Day: sessionCompany.previousScore7Day,
           previousScore30Day: sessionCompany.previousScore,
           scoreChange,
-          calculatedChange7Day: sessionCompany.currentScore - (sessionCompany.previousScore7Day || 0),
-          calculatedChange30Day: sessionCompany.currentScore - sessionCompany.previousScore
+          activeTimeframe: timeframe,
+          isUsing7Day: timeframe === '7day',
+          isUsing30Day: timeframe === '30day'
         });
       }
       
