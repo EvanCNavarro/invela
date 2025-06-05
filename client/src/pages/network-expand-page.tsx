@@ -73,7 +73,21 @@ export default function NetworkExpandPage() {
 
   // Fetch expansion candidates
   const { data: expansionData, isLoading } = useQuery<ExpansionData>({
-    queryKey: ["/api/network/expansion-candidates"],
+    queryKey: ["/api/network/expansion-candidates", filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.riskLevel !== "all") params.append("riskLevel", filters.riskLevel);
+      if (filters.accreditation !== "all") params.append("accreditation", filters.accreditation);
+      if (filters.size !== "all") params.append("size", filters.size);
+      if (filters.industry !== "all") params.append("industry", filters.industry);
+      if (filters.recipientType !== "all") params.append("recipientType", filters.recipientType);
+      if (filters.search) params.append("search", filters.search);
+      
+      const url = `/api/network/expansion-candidates${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch expansion candidates');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -118,40 +132,12 @@ export default function NetworkExpandPage() {
     }
   });
 
-  // Filter candidates based on current filter state
+  // Filter out already connected companies (server handles other filters)
   const filteredCandidates = expansionData?.candidates.filter(company => {
     // Remove already connected companies from view
     if (connectedCompanies.has(company.id) && connectedCompanies.get(company.id)?.status === 'connected') {
       return false;
     }
-    
-    // Search filter
-    if (filters.search && !company.name.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    
-    // Risk level filter
-    const riskScore = company.risk_score || 0;
-    if (filters.riskLevel !== "all") {
-      if (filters.riskLevel === "low" && riskScore > 33) return false;
-      if (filters.riskLevel === "medium" && (riskScore <= 33 || riskScore > 66)) return false;
-      if (filters.riskLevel === "high" && riskScore <= 66) return false;
-    }
-    
-    // Accreditation filter
-    if (filters.accreditation !== "all") {
-      if (filters.accreditation === "approved" && company.accreditation_status !== "APPROVED") return false;
-      if (filters.accreditation === "under-review" && company.accreditation_status !== "UNDER_REVIEW") return false;
-      if (filters.accreditation === "in-process" && company.accreditation_status !== "IN_PROCESS") return false;
-      if (filters.accreditation === "revoked" && company.accreditation_status !== "REVOKED") return false;
-      if (filters.accreditation === "expired" && company.accreditation_status !== "EXPIRED") return false;
-    }
-    
-    // Company size filter
-    if (filters.size !== "all" && company.revenue_tier !== filters.size) {
-      return false;
-    }
-    
     return true;
   }) || [];
 
