@@ -112,11 +112,11 @@ export function NetworkSummary() {
           </div>
           
           <div className="flex-1 flex flex-col justify-center space-y-2">
-            {/* Risk Distribution Bar - Muted Colors */}
-            <div className="flex bg-slate-100 rounded-lg h-5 overflow-hidden">
+            {/* Risk Distribution Bar - More Squared and Muted */}
+            <div className="flex bg-slate-100 rounded-md h-6 overflow-hidden">
               {riskStats.low > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-700"
+                  className="bg-gradient-to-r from-blue-300 to-blue-400 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -124,7 +124,7 @@ export function NetworkSummary() {
               )}
               {riskStats.medium > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-700"
+                  className="bg-gradient-to-r from-amber-300 to-orange-300 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -132,7 +132,7 @@ export function NetworkSummary() {
               )}
               {riskStats.high > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-red-400 to-red-500 transition-all duration-700"
+                  className="bg-gradient-to-r from-red-300 to-red-400 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -143,15 +143,15 @@ export function NetworkSummary() {
             {/* Centered Legend */}
             <div className="flex items-center justify-center gap-4 text-xs">
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-sm" />
+                <div className="w-1.5 h-1.5 bg-blue-300 rounded-sm" />
                 <span className="text-slate-700">{riskStats.low} Stable</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-amber-400 rounded-sm" />
+                <div className="w-1.5 h-1.5 bg-amber-300 rounded-sm" />
                 <span className="text-slate-700">{riskStats.medium} Monitoring</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-red-400 rounded-sm" />
+                <div className="w-1.5 h-1.5 bg-red-300 rounded-sm" />
                 <span className="text-slate-700">{riskStats.high} Blocked</span>
               </div>
             </div>
@@ -161,7 +161,7 @@ export function NetworkSummary() {
 
       {/* Network Expansion Call-to-Action - Improved */}
       {availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 flex-1 h-36 group cursor-pointer flex flex-col justify-between"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-slate-900">
@@ -178,7 +178,7 @@ export function NetworkSummary() {
               {formatNetworkSize(availableCount)} Available {availableEntityType.replace(/data providers/i, 'Data Providers').replace(/data recipients/i, 'Data Recipients')}
             </div>
             <div className="text-xs text-slate-600 leading-tight">
-              View complete directory and send invitations.
+              Browse potential network partners and send connection invitations.
             </div>
           </div>
         </div>
