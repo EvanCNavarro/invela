@@ -12,9 +12,10 @@ interface NetworkStats {
   targetCategory: string;
   expansionMessage: string;
   riskStats: {
-    high: number;
-    medium: number;
-    low: number;
+    stable: number;
+    monitoring: number;
+    approaching: number;
+    blocked: number;
   };
   userCompanyCategory: string;
   dataProviderCount: number;
@@ -63,7 +64,7 @@ export function NetworkSummary() {
   }
 
   const { currentNetworkSize, availableCount, expansionMessage, riskStats, userCompanyCategory, dataProviderCount, dataRecipientCount } = networkStats;
-  const totalRiskCompanies = riskStats.high + riskStats.medium + riskStats.low;
+  const totalRiskCompanies = riskStats.stable + riskStats.monitoring + riskStats.approaching + riskStats.blocked;
 
   // For Invela users, show both provider and recipient counts
   const isInvelaUser = userCompanyCategory === 'Invela';
@@ -146,27 +147,35 @@ export function NetworkSummary() {
           <div className="flex-1 flex flex-col justify-center space-y-2">
             {/* Risk Distribution Bar - Modern Fintech Style */}
             <div className="flex bg-slate-50 rounded h-4 overflow-hidden border border-slate-200">
-              {riskStats.low > 0 && (
+              {riskStats.stable > 0 && (
                 <div 
                   className="bg-emerald-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (riskStats.stable / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
-              {riskStats.medium > 0 && (
+              {riskStats.monitoring > 0 && (
                 <div 
                   className="bg-amber-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (riskStats.monitoring / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
-              {riskStats.high > 0 && (
+              {riskStats.approaching > 0 && (
+                <div 
+                  className="bg-orange-500 transition-all duration-700"
+                  style={{ 
+                    width: `${totalRiskCompanies > 0 ? (riskStats.approaching / totalRiskCompanies) * 100 : 0}%`
+                  }}
+                />
+              )}
+              {riskStats.blocked > 0 && (
                 <div 
                   className="bg-red-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (riskStats.blocked / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
@@ -176,15 +185,19 @@ export function NetworkSummary() {
             <div className="flex items-center justify-center gap-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.low} Stable</span>
+                <span className="text-slate-600 font-medium">{riskStats.stable} Stable</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.medium} Monitoring</span>
+                <span className="text-slate-600 font-medium">{riskStats.monitoring} Monitoring</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                <span className="text-slate-600 font-medium">{riskStats.approaching} Approaching Block</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.high} Blocked</span>
+                <span className="text-slate-600 font-medium">{riskStats.blocked} Blocked</span>
               </div>
             </div>
           </div>
