@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { Search, Building2, TrendingUp, Users, Shield, CheckCircle } from "lucide-react";
+import { Search, Building2, TrendingUp, Users, Shield, CheckCircle, X } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -52,11 +52,11 @@ export default function NetworkExpandPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Filter state with safe defaults (low risk + accredited)
+  // Filter state with safe defaults (low risk + approved)
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     riskLevel: "low",
-    accreditation: "accredited",
+    accreditation: "approved",
     size: "all",
     industry: "all", 
     recipientType: "all"
@@ -142,6 +142,11 @@ export default function NetworkExpandPage() {
       if (filters.accreditation === "pending" && company.accreditation_status !== "PENDING") return false;
     }
     
+    // Company size filter
+    if (filters.size !== "all" && company.revenue_tier !== filters.size) {
+      return false;
+    }
+    
     return true;
   }) || [];
 
@@ -220,7 +225,7 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="all">All Accreditation</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                     </SelectContent>
@@ -238,7 +243,7 @@ export default function NetworkExpandPage() {
                       <SelectItem value="small">Small</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="large">Large</SelectItem>
-                      <SelectItem value="x-large">X-Large</SelectItem>
+                      <SelectItem value="extra-large">X-Large</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -247,6 +252,7 @@ export default function NetworkExpandPage() {
                 {(filters.riskLevel !== "low" || filters.accreditation !== "approved" || filters.size !== "all") && (
                   <Button 
                     variant="outline" 
+                    size="icon"
                     onClick={() => {
                       setFilters({
                         search: "",
@@ -258,9 +264,9 @@ export default function NetworkExpandPage() {
                       });
                       setCurrentPage(1);
                     }}
-                    className="h-10"
+                    className="h-10 w-10 bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
                   >
-                    Clear Filters
+                    <X className="h-4 w-4" />
                   </Button>
                 )}
               </div>
