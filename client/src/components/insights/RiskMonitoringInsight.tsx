@@ -185,7 +185,10 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         <div className="flex-shrink-0">
           <div className="flex bg-muted rounded-md p-1">
             <button
-              onClick={() => setTimeframe('7day')}
+              onClick={() => {
+                console.log('[RiskMonitoring] Clicking 7-day button');
+                setTimeframe('7day');
+              }}
               className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
                 timeframe === '7day' 
                   ? 'bg-background text-foreground shadow-sm' 
@@ -195,7 +198,10 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
               7-Day Change
             </button>
             <button
-              onClick={() => setTimeframe('30day')}
+              onClick={() => {
+                console.log('[RiskMonitoring] Clicking 30-day button');
+                setTimeframe('30day');
+              }}
               className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
                 timeframe === '30day' 
                   ? 'bg-background text-foreground shadow-sm' 
