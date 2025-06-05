@@ -126,9 +126,9 @@ const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number
     );
   }
   
-  // All other statuses get muted styling
+  // All other statuses get very muted styling - no border, faint colors
   return (
-    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 whitespace-nowrap">
+    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50/50 text-gray-500 whitespace-nowrap">
       {status}
     </div>
   );
@@ -307,10 +307,21 @@ export default function NetworkPage() {
         ? a.relatedCompany.name.localeCompare(b.relatedCompany.name)
         : b.relatedCompany.name.localeCompare(a.relatedCompany.name);
     }
-    if (sortField === "relationshipStatus") {
-      return sortDirection === "asc"
-        ? a.status.localeCompare(b.status)
-        : b.status.localeCompare(a.status);
+    if (sortField === "riskStatus") {
+      // Sort by risk status priority: Blocked > Approaching Block > Monitoring > Stable
+      const statusOrder = { 'Blocked': 0, 'Approaching Block': 1, 'Monitoring': 2, 'Stable': 3 };
+      const getStatusFromCompany = (relationship: NetworkRelationship) => {
+        const companyData = { id: relationship.relatedCompany.id, risk_score: relationship.relatedCompany.riskScore, name: relationship.relatedCompany.name };
+        const authenticData = sessionDataService.getCompanyData(companyData);
+        return authenticData.status;
+      };
+      
+      const aStatus = getStatusFromCompany(a);
+      const bStatus = getStatusFromCompany(b);
+      const aOrder = statusOrder[aStatus as keyof typeof statusOrder] ?? 4;
+      const bOrder = statusOrder[bStatus as keyof typeof statusOrder] ?? 4;
+      
+      return sortDirection === "asc" ? aOrder - bOrder : bOrder - aOrder;
     }
     if (sortField === "riskScore") {
       const scoreA = a.relatedCompany.riskScore || 0;
@@ -501,10 +512,10 @@ export default function NetworkPage() {
                     <Button
                       variant="ghost"
                       className="p-0 hover:bg-transparent text-center w-full justify-center"
-                      onClick={() => handleSort("relationshipStatus")}
+                      onClick={() => handleSort("riskStatus")}
                     >
-                      <span>Relationship Status</span>
-                      {getSortIcon("relationshipStatus")}
+                      <span>Risk Status</span>
+                      {getSortIcon("riskStatus")}
                     </Button>
                   </TableHead>
                   <TableHead className="text-center w-[120px]">
