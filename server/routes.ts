@@ -4539,12 +4539,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      // Get network relationships count
-      const networkCount = await db.execute(sql`
-        SELECT COUNT(*) as count FROM relationships WHERE company_id = ${userCompanyId}
-      `);
+      // Get network relationships count using Drizzle ORM
+      const networkRelationships = await db.query.relationships.findMany({
+        where: eq(relationships.company_id, userCompanyId),
+        columns: { related_company_id: true }
+      });
       
-      const currentNetworkSize = parseInt((networkCount as any)[0]?.count || '0');
+      const currentNetworkSize = networkRelationships.length;
 
       // Determine expansion target category based on user's company type
       let targetCategory = 'FinTech';
@@ -4558,41 +4559,39 @@ export async function registerRoutes(app: Express): Promise<Express> {
         expansionMessage = 'FinTech companies available to expand your network';
       }
 
-      // Get count of available companies to connect with
-      const availableCount = await db.execute(sql`
-        SELECT COUNT(*) as count 
-        FROM companies c 
-        WHERE c.category = ${targetCategory} 
-          AND c.id != ${userCompanyId}
-          AND c.id NOT IN (
-            SELECT related_company_id 
-            FROM relationships 
-            WHERE company_id = ${userCompanyId}
-          )
-      `);
+      // Get related company IDs to exclude from available count
+      const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
 
-      const expansionCount = parseInt((availableCount as any)[0]?.count || '0');
+      // Get available companies to connect with using Drizzle ORM
+      const allTargetCompanies = await db.query.companies.findMany({
+        where: eq(companies.category, targetCategory),
+        columns: { id: true }
+      });
 
-      // Get risk breakdown for network companies
-      const riskBreakdown = await db.execute(sql`
-        SELECT 
-          CASE 
-            WHEN c.risk_score >= 70 THEN 'high'
-            WHEN c.risk_score >= 40 THEN 'medium'
-            ELSE 'low'
-          END as risk_level,
-          COUNT(*) as count
-        FROM companies c
-        INNER JOIN relationships r ON c.id = r.related_company_id
-        WHERE r.company_id = ${userCompanyId}
-        GROUP BY risk_level
-      `);
+      // Filter out current user's company and related companies
+      const availableCompanies = allTargetCompanies.filter(company => 
+        company.id !== userCompanyId && 
+        !relatedCompanyIds.includes(company.id)
+      );
+      const expansionCount = availableCompanies.length;
 
+      // Get risk breakdown for network companies using Drizzle ORM
       const riskStats = { high: 0, medium: 0, low: 0 };
-      if (Array.isArray(riskBreakdown)) {
-        riskBreakdown.forEach((row: any) => {
-          if (row.risk_level && row.count) {
-            riskStats[row.risk_level as keyof typeof riskStats] = parseInt(row.count);
+      
+      if (relatedCompanyIds.length > 0) {
+        const networkCompanies = await db.query.companies.findMany({
+          where: inArray(companies.id, relatedCompanyIds),
+          columns: { id: true, risk_score: true }
+        });
+
+        networkCompanies.forEach(company => {
+          const score = company.risk_score || 0;
+          if (score >= 70) {
+            riskStats.high++;
+          } else if (score >= 40) {
+            riskStats.medium++;
+          } else {
+            riskStats.low++;
           }
         });
       }
@@ -4610,6 +4609,79 @@ export async function registerRoutes(app: Express): Promise<Express> {
       console.error('[Network Stats] Error fetching network statistics:', error);
       res.status(500).json({ 
         message: "Error fetching network statistics",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
+  // Network expansion candidates endpoint
+  app.get("/api/network/expansion-candidates", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.company_id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const userCompanyId = req.user.company_id;
+
+      // Get current user's company data
+      const userCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, userCompanyId),
+        columns: { id: true, name: true, category: true }
+      });
+
+      if (!userCompany) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      // Get existing relationships to exclude
+      const networkRelationships = await db.query.relationships.findMany({
+        where: eq(relationships.company_id, userCompanyId),
+        columns: { related_company_id: true }
+      });
+
+      const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
+
+      // Determine target category
+      let targetCategory = 'FinTech';
+      let expansionMessage = 'companies available to expand your network';
+      
+      if (userCompany.category === 'FinTech') {
+        targetCategory = 'Bank';
+        expansionMessage = 'banks available to expand your network';
+      } else if (userCompany.category === 'Bank') {
+        targetCategory = 'FinTech';
+        expansionMessage = 'FinTech companies available to expand your network';
+      }
+
+      // Get expansion candidates
+      const allTargetCompanies = await db.query.companies.findMany({
+        where: eq(companies.category, targetCategory),
+        columns: { 
+          id: true, 
+          name: true, 
+          category: true, 
+          risk_score: true, 
+          revenue_tier: true 
+        }
+      });
+
+      // Filter out current user's company and related companies
+      const candidates = allTargetCompanies.filter(company => 
+        company.id !== userCompanyId && 
+        !relatedCompanyIds.includes(company.id)
+      );
+
+      res.json({
+        candidates,
+        totalAvailable: candidates.length,
+        targetCategory,
+        expansionMessage
+      });
+
+    } catch (error) {
+      console.error('[Network Expansion] Error fetching expansion candidates:', error);
+      res.status(500).json({ 
+        message: "Error fetching expansion candidates",
         code: "FETCH_ERROR"
       });
     }
