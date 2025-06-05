@@ -448,6 +448,61 @@ export default function NetworkPage() {
 
   const hasActiveFilters = searchQuery || statusFilter !== "ALL" || riskStatusFilter !== "ALL";
 
+  // Skeleton loading state for table
+  const TableSkeleton = () => (
+    <div className="bg-background rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="w-[200px]">Company</TableHead>
+            <TableHead className="text-center w-[140px]">Risk Status</TableHead>
+            <TableHead className="text-center w-[120px]">S&P DARS</TableHead>
+            <TableHead className="text-center w-[80px]">Trend</TableHead>
+            <TableHead className="text-center w-[140px]">Accreditation</TableHead>
+            <TableHead className="w-[60px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index} className="h-16">
+              <TableCell className="py-3">
+                <div className="flex items-center gap-3 min-h-[40px]">
+                  <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center py-3">
+                <div className="flex justify-center min-h-[40px] items-center">
+                  <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center py-3">
+                <div className="min-h-[40px] flex items-center justify-center">
+                  <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center py-3">
+                <div className="min-h-[40px] flex items-center justify-center">
+                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center py-3">
+                <div className="flex justify-center min-h-[40px] items-center">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+                </div>
+              </TableCell>
+              <TableCell className="text-center py-3">
+                <div className="min-h-[40px] flex items-center justify-center">
+                  <div className="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   return (
     <DashboardLayout>
       {/* Add tutorial manager for network page */}
@@ -544,85 +599,82 @@ export default function NetworkPage() {
             </div>
           </div>
 
-          <div className="bg-background rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[200px]">
-                    <Button
-                      variant="ghost"
-                      className="p-0 hover:bg-transparent text-left w-full justify-start"
-                      onClick={() => handleSort("name")}
-                    >
-                      <span>Company</span>
-                      {getSortIcon("name")}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="text-center w-[140px]">
-                    <Button
-                      variant="ghost"
-                      className="p-0 hover:bg-transparent text-center w-full justify-center"
-                      onClick={() => handleSort("riskStatus")}
-                    >
-                      <span>Risk Status</span>
-                      {getSortIcon("riskStatus")}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="text-center w-[120px]">
-                    <Button
-                      variant="ghost"
-                      className="p-0 hover:bg-transparent text-center w-full justify-center"
-                      onClick={() => handleSort("riskScore")}
-                    >
-                      <span>S&P DARS</span>
-                      {getSortIcon("riskScore")}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="text-center w-[100px]">Trend</TableHead>
-                  <TableHead className="text-center w-[130px]">
-                    <Button
-                      variant="ghost"
-                      className="p-0 hover:bg-transparent text-center w-full justify-center"
-                      onClick={() => handleSort("accreditationStatus")}
-                    >
-                      <span>Accreditation</span>
-                      {getSortIcon("accreditationStatus")}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[80px] text-center"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-[400px]">
-                      <div className="flex items-center justify-center w-full h-full">
-                        <LoadingSpinner size="lg" />
-                      </div>
-                    </TableCell>
+          {isLoading ? (
+            <TableSkeleton />
+          ) : (
+            <div className="bg-background rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[200px]">
+                      <Button
+                        variant="ghost"
+                        className="p-0 hover:bg-transparent text-left w-full justify-start"
+                        onClick={() => handleSort("name")}
+                      >
+                        <span>Company</span>
+                        {getSortIcon("name")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center w-[140px]">
+                      <Button
+                        variant="ghost"
+                        className="p-0 hover:bg-transparent text-center w-full justify-center"
+                        onClick={() => handleSort("riskStatus")}
+                      >
+                        <span>Risk Status</span>
+                        {getSortIcon("riskStatus")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center w-[120px]">
+                      <Button
+                        variant="ghost"
+                        className="p-0 hover:bg-transparent text-center w-full justify-center"
+                        onClick={() => handleSort("riskScore")}
+                      >
+                        <span>S&P DARS</span>
+                        {getSortIcon("riskScore")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-center w-[100px]">Trend</TableHead>
+                    <TableHead className="text-center w-[130px]">
+                      <Button
+                        variant="ghost"
+                        className="p-0 hover:bg-transparent text-center w-full justify-center"
+                        onClick={() => handleSort("accreditationStatus")}
+                      >
+                        <span>Accreditation</span>
+                        {getSortIcon("accreditationStatus")}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-[80px] text-center"></TableHead>
                   </TableRow>
-                ) : filteredRelationships.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      No companies found in your network
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedRelationships.map((relationship) => (
-                    <CompanyRow
-                      key={relationship.id}
-                      relationship={relationship}
-                      isHovered={hoveredRow === relationship.relatedCompany.id}
-                      onRowClick={() => {
-                        setLocation(`/network/company/${relationship.relatedCompany.id}`);
-                      }}
-                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
-                      searchTerm={searchQuery}
-                    />
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredRelationships.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        No companies found in your network
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedRelationships.map((relationship) => (
+                      <CompanyRow
+                        key={relationship.id}
+                        relationship={relationship}
+                        isHovered={hoveredRow === relationship.relatedCompany.id}
+                        onRowClick={() => {
+                          setLocation(`/network/company/${relationship.relatedCompany.id}`);
+                        }}
+                        onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
+                        searchTerm={searchQuery}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
             <div className="flex items-center justify-between px-4 py-4 border-t">
               <div className="text-sm text-muted-foreground">
