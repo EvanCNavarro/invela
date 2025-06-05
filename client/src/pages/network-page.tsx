@@ -98,23 +98,34 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
-// Relationship Status Badge Component
-const RelationshipStatusBadge = ({ status }: { status: string }) => {
-  const isBlocked = status.toLowerCase() === 'blocked';
+// Risk Monitoring Status Badge Component
+const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
+  // Generate consistent risk monitoring status based on company ID and risk score
+  const getRiskMonitoringStatus = (id: number, score: number | null): 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' => {
+    if (!score) return 'Stable';
+    
+    // Use deterministic pattern to ensure 15% blocked cap (roughly 1 in 7)
+    const seed = id % 7;
+    if (score > 80 && seed === 0) return 'Blocked';
+    if (score > 70 && seed < 2) return 'Approaching Block';
+    if (score > 50 && seed < 3) return 'Monitoring';
+    return 'Stable';
+  };
   
-  if (isBlocked) {
+  const status = getRiskMonitoringStatus(companyId, riskScore);
+  
+  if (status === 'Blocked') {
     return (
-      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 whitespace-nowrap">
         Blocked
       </div>
     );
   }
   
   // All other statuses get muted styling
-  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   return (
-    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
-      {displayStatus}
+    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 whitespace-nowrap">
+      {status}
     </div>
   );
 };
@@ -167,39 +178,45 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
 
   return (
     <TableRow
-      className="group cursor-pointer hover:bg-muted/50 bg-white"
+      className="group cursor-pointer hover:bg-muted/50 bg-white h-16"
       onClick={onRowClick}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}
     >
-      <TableCell>
-        <div className="flex items-center gap-3">
+      <TableCell className="py-3">
+        <div className="flex items-center gap-3 min-h-[40px]">
           <CompanyLogo
             companyId={company.id}
             companyName={company.name}
             size="sm"
           />
-          <span className={cn(
-            "font-normal text-foreground",
-            isHovered && "underline"
-          )}>
-            <HighlightText text={company.name} searchTerm={searchTerm} />
-          </span>
+          <div className="flex-1 min-w-0">
+            <div className={cn(
+              "font-normal text-foreground text-sm leading-tight truncate max-w-[160px]",
+              isHovered && "underline"
+            )}>
+              <HighlightText text={company.name} searchTerm={searchTerm} />
+            </div>
+          </div>
         </div>
       </TableCell>
-      <TableCell className="text-center">
-        <div className="flex justify-center">
-          <RelationshipStatusBadge status={relationship.status} />
+      <TableCell className="text-center py-3">
+        <div className="flex justify-center min-h-[40px] items-center">
+          <RiskMonitoringStatusBadge companyId={company.id} riskScore={company.riskScore} />
         </div>
       </TableCell>
-      <TableCell className="text-center font-medium">
-        {company.riskScore || "N/A"}
+      <TableCell className="text-center font-medium py-3">
+        <div className="min-h-[40px] flex items-center justify-center">
+          {company.riskScore || "N/A"}
+        </div>
       </TableCell>
-      <TableCell className="text-center">
-        <RiskTrendIndicator companyId={company.id} riskScore={company.riskScore} />
+      <TableCell className="text-center py-3">
+        <div className="min-h-[40px] flex items-center justify-center">
+          <RiskTrendIndicator companyId={company.id} riskScore={company.riskScore} />
+        </div>
       </TableCell>
-      <TableCell className="text-center">
-        <div className="flex justify-center">
+      <TableCell className="text-center py-3">
+        <div className="flex justify-center min-h-[40px] items-center">
           <AccreditationStatusDisplay
             status={company.accreditationStatus}
             variant="pill"
@@ -207,9 +224,9 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           />
         </div>
       </TableCell>
-      <TableCell className="text-center">
-        <div className="invisible group-hover:visible flex items-center justify-center text-primary">
-          <span className="font-medium mr-2">View</span>
+      <TableCell className="text-center py-3">
+        <div className="invisible group-hover:visible flex items-center justify-center text-primary min-h-[40px]">
+          <span className="font-medium mr-2 text-sm whitespace-nowrap">View</span>
           <ArrowRight className="h-4 w-4" />
         </div>
       </TableCell>
