@@ -93,7 +93,7 @@ export function NetworkSummary() {
           <div className="text-2xl font-bold text-slate-900 mb-1">
             {formatNetworkSize(currentNetworkSize)}
           </div>
-          <div className="text-xs text-slate-600">
+          <div className="text-xs text-slate-600 font-medium">
             {entityType}
           </div>
         </div>
@@ -165,7 +165,7 @@ export function NetworkSummary() {
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-slate-900">
-              Expand Your Network
+              Browse Trust Network
             </div>
             <div className="flex items-center gap-1 text-sm text-blue-600 font-bold group-hover:text-blue-700 transition-colors">
               View More
@@ -175,10 +175,10 @@ export function NetworkSummary() {
           
           <div className="text-center flex-1 flex flex-col justify-center">
             <div className="text-lg font-bold text-blue-600 mb-1">
-              {formatNetworkSize(availableCount)} Available {availableEntityType.replace(/data providers/i, 'Data Providers').replace(/data recipients/i, 'Data Recipients')}
+              {formatNetworkSize(availableCount)} Potential {availableEntityType.replace(/data providers/i, 'Data Providers').replace(/data recipients/i, 'Data Recipients')}
             </div>
-            <div className="text-xs text-slate-600 leading-tight">
-              Browse potential network partners and send connection invitations.
+            <div className="text-xs text-slate-600 leading-tight font-medium">
+              Browse the trust network for new {availableEntityType} to expand your network.
             </div>
           </div>
         </div>
