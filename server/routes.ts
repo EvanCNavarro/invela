@@ -4544,7 +4544,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         SELECT COUNT(*) as count FROM relationships WHERE company_id = ${userCompanyId}
       `);
       
-      const currentNetworkSize = parseInt(networkCount[0]?.count || '0');
+      const currentNetworkSize = parseInt((networkCount as any)[0]?.count || '0');
 
       // Determine expansion target category based on user's company type
       let targetCategory = 'FinTech';
@@ -4571,7 +4571,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
           )
       `);
 
-      const expansionCount = parseInt(availableCount[0]?.count || '0');
+      const expansionCount = parseInt((availableCount as any)[0]?.count || '0');
 
       // Get risk breakdown for network companies
       const riskBreakdown = await db.execute(sql`
