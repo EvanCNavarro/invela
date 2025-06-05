@@ -125,10 +125,10 @@ export function NetworkSummary() {
   };
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex flex-col lg:flex-row items-start gap-4">
       
       {/* Network Size Bento Box - Conditional width based on user type */}
-      <div className={`bg-white border border-slate-200 rounded-xl p-4 shadow-sm h-36 flex flex-col justify-between ${isInvelaUser ? "flex-1" : "w-40"}`}>
+      <div className={`bg-white border border-slate-200 rounded-xl p-4 shadow-sm h-36 flex flex-col justify-between ${isInvelaUser ? "flex-1" : "w-full lg:w-40"}`}>
         <div className="flex items-center gap-2 mb-2">
           <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
             <Building2 className="h-2.5 w-2.5 text-slate-600" />
@@ -250,7 +250,7 @@ export function NetworkSummary() {
 
       {/* Network Expansion Call-to-Action - Only show for Banks and FinTech */}
       {!isInvelaUser && availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ease-in-out flex-1 h-36 group cursor-pointer flex flex-col justify-between"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full lg:flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-slate-900">
