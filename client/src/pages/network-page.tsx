@@ -484,10 +484,10 @@ export default function NetworkPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Risk Status</SelectItem>
-                <SelectItem value="Blocked">Blocked</SelectItem>
-                <SelectItem value="Approaching Block">Approaching Block</SelectItem>
-                <SelectItem value="Monitoring">Monitoring</SelectItem>
                 <SelectItem value="Stable">Stable</SelectItem>
+                <SelectItem value="Monitoring">Monitoring</SelectItem>
+                <SelectItem value="Approaching Block">Approaching Block</SelectItem>
+                <SelectItem value="Blocked">Blocked</SelectItem>
               </SelectContent>
             </Select>
 
