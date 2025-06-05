@@ -138,13 +138,8 @@ export default function NetworkExpandPage() {
     
     // Accreditation filter
     if (filters.accreditation !== "all") {
-      if (filters.accreditation === "accredited" && company.accreditation_status !== "APPROVED") return false;
+      if (filters.accreditation === "approved" && company.accreditation_status !== "APPROVED") return false;
       if (filters.accreditation === "pending" && company.accreditation_status !== "PENDING") return false;
-    }
-    
-    // Industry filter (category)
-    if (filters.industry !== "all" && company.category !== filters.industry) {
-      return false;
     }
     
     return true;
@@ -202,11 +197,11 @@ export default function NetworkExpandPage() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               {/* Filter Row */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="flex items-end gap-4 flex-wrap">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Risk Level</label>
                   <Select value={filters.riskLevel} onValueChange={(value) => updateFilter('riskLevel', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[160px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -221,12 +216,12 @@ export default function NetworkExpandPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Accreditation</label>
                   <Select value={filters.accreditation} onValueChange={(value) => updateFilter('accreditation', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="accredited">Accredited</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                     </SelectContent>
                   </Select>
@@ -235,7 +230,7 @@ export default function NetworkExpandPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Company Size</label>
                   <Select value={filters.size} onValueChange={(value) => updateFilter('size', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -243,40 +238,31 @@ export default function NetworkExpandPage() {
                       <SelectItem value="small">Small</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="large">Large</SelectItem>
-                      <SelectItem value="extra-large">Extra Large</SelectItem>
+                      <SelectItem value="x-large">X-Large</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Industry</label>
-                  <Select value={filters.industry} onValueChange={(value) => updateFilter('industry', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Industries</SelectItem>
-                      <SelectItem value="FinTech">FinTech</SelectItem>
-                      <SelectItem value="Bank">Banking</SelectItem>
-                      <SelectItem value="Insurance">Insurance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Data Recipient</label>
-                  <Select value={filters.recipientType} onValueChange={(value) => updateFilter('recipientType', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="payment">Payment Processors</SelectItem>
-                      <SelectItem value="lending">Lenders</SelectItem>
-                      <SelectItem value="analytics">Analytics</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Clear Filters Button - only show when filters differ from defaults */}
+                {(filters.riskLevel !== "low" || filters.accreditation !== "approved" || filters.size !== "all") && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setFilters({
+                        search: "",
+                        riskLevel: "low",
+                        accreditation: "approved", 
+                        size: "all",
+                        industry: "all",
+                        recipientType: "all"
+                      });
+                      setCurrentPage(1);
+                    }}
+                    className="h-10"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
               
               {/* Search Bar */}
@@ -303,11 +289,10 @@ export default function NetworkExpandPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[300px]">Company</TableHead>
-                    <TableHead>Industry</TableHead>
                     <TableHead>Risk Level</TableHead>
                     <TableHead>Accreditation</TableHead>
                     <TableHead>Size</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="text-center">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -324,11 +309,10 @@ export default function NetworkExpandPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell><div className="h-4 w-16 bg-muted rounded animate-pulse" /></TableCell>
                         <TableCell><div className="h-6 w-20 bg-muted rounded animate-pulse" /></TableCell>
                         <TableCell><div className="h-6 w-24 bg-muted rounded animate-pulse" /></TableCell>
                         <TableCell><div className="h-4 w-16 bg-muted rounded animate-pulse" /></TableCell>
-                        <TableCell><div className="h-8 w-20 bg-muted rounded animate-pulse ml-auto" /></TableCell>
+                        <TableCell className="text-center"><div className="h-8 w-20 bg-muted rounded animate-pulse mx-auto" /></TableCell>
                       </TableRow>
                     ))
                   ) : paginatedCandidates.length > 0 ? (
@@ -356,11 +340,6 @@ export default function NetworkExpandPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="text-xs">
-                              {candidate.category}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
                             <Badge 
                               variant="outline" 
                               className={`text-xs ${getRiskColor(candidate.risk_score)}`}
@@ -369,17 +348,20 @@ export default function NetworkExpandPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              variant={candidate.accreditation_status === "APPROVED" ? "default" : "secondary"}
-                              className="text-xs"
-                            >
-                              {candidate.accreditation_status === "APPROVED" ? "Accredited" : "Pending"}
-                            </Badge>
+                            <span className="text-sm">
+                              {candidate.accreditation_status === "APPROVED" ? "Approved" : "Pending"}
+                            </span>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm">{candidate.revenue_tier}</span>
+                            <span className="text-sm">
+                              {candidate.revenue_tier === "extra-large" ? "X-Large" : 
+                               candidate.revenue_tier === "small" ? "Small" :
+                               candidate.revenue_tier === "medium" ? "Medium" :
+                               candidate.revenue_tier === "large" ? "Large" :
+                               candidate.revenue_tier}
+                            </span>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-center">
                             {connectionState?.status === 'connecting' ? (
                               <Button size="sm" disabled className="w-20">
                                 Connecting...
