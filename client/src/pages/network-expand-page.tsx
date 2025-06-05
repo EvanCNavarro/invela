@@ -15,6 +15,7 @@ import { Search, Building2, TrendingUp, Users, Shield, CheckCircle, X } from "lu
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getAccreditationStatusLabel } from "@/lib/company-utils";
 
 interface ExpansionCandidate {
   id: number;
@@ -139,7 +140,10 @@ export default function NetworkExpandPage() {
     // Accreditation filter
     if (filters.accreditation !== "all") {
       if (filters.accreditation === "approved" && company.accreditation_status !== "APPROVED") return false;
-      if (filters.accreditation === "pending" && company.accreditation_status !== "PENDING") return false;
+      if (filters.accreditation === "under-review" && company.accreditation_status !== "UNDER_REVIEW") return false;
+      if (filters.accreditation === "in-process" && company.accreditation_status !== "IN_PROCESS") return false;
+      if (filters.accreditation === "revoked" && company.accreditation_status !== "REVOKED") return false;
+      if (filters.accreditation === "expired" && company.accreditation_status !== "EXPIRED") return false;
     }
     
     // Company size filter
@@ -201,51 +205,54 @@ export default function NetworkExpandPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {/* Filter Row */}
-              <div className="flex items-end gap-4 flex-wrap">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Risk Level</label>
-                  <Select value={filters.riskLevel} onValueChange={(value) => updateFilter('riskLevel', value)}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Risk Levels</SelectItem>
-                      <SelectItem value="low">Low Risk</SelectItem>
-                      <SelectItem value="medium">Medium Risk</SelectItem>
-                      <SelectItem value="high">High Risk</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Filter Row - Single Row Layout */}
+              <div className="flex items-center gap-4 flex-wrap lg:flex-nowrap">
+                {/* Blue Filter Icon Button */}
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-10 w-10 bg-blue-500 text-white border-blue-500 hover:bg-blue-600 shrink-0"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                </Button>
+
+                <Select value={filters.riskLevel} onValueChange={(value) => updateFilter('riskLevel', value)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Risk Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Risk Status</SelectItem>
+                    <SelectItem value="low">Low Risk</SelectItem>
+                    <SelectItem value="medium">Medium Risk</SelectItem>
+                    <SelectItem value="high">High Risk</SelectItem>
+                  </SelectContent>
+                </Select>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Accreditation</label>
-                  <Select value={filters.accreditation} onValueChange={(value) => updateFilter('accreditation', value)}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Accreditation</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select value={filters.accreditation} onValueChange={(value) => updateFilter('accreditation', value)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="All Accreditation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Accreditation</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="under-review">Under Review</SelectItem>
+                    <SelectItem value="in-process">In Process</SelectItem>
+                    <SelectItem value="revoked">Revoked</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Company Size</label>
-                  <Select value={filters.size} onValueChange={(value) => updateFilter('size', value)}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Sizes</SelectItem>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                      <SelectItem value="extra-large">X-Large</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Search Bar - inline on desktop, responsive on mobile */}
+                <div className="relative flex-1 max-w-sm ml-auto">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search Network"
+                    value={filters.search}
+                    onChange={(e) => updateFilter('search', e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
                 
                 {/* Clear Filters Button - only show when filters differ from defaults */}
@@ -264,18 +271,18 @@ export default function NetworkExpandPage() {
                       });
                       setCurrentPage(1);
                     }}
-                    className="h-10 w-10 bg-blue-500 text-white border-blue-500 hover:bg-blue-600"
+                    className="h-10 w-10 bg-blue-500 text-white border-blue-500 hover:bg-blue-600 shrink-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 )}
               </div>
               
-              {/* Search Bar */}
-              <div className="relative">
+              {/* Search Bar - mobile fallback */}
+              <div className="relative lg:hidden">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search companies..."
+                  placeholder="Search Network"
                   value={filters.search}
                   onChange={(e) => updateFilter('search', e.target.value)}
                   className="pl-10"
@@ -355,7 +362,7 @@ export default function NetworkExpandPage() {
                           </TableCell>
                           <TableCell>
                             <span className="text-sm">
-                              {candidate.accreditation_status === "APPROVED" ? "Approved" : "Pending"}
+                              {getAccreditationStatusLabel(candidate.accreditation_status)}
                             </span>
                           </TableCell>
                           <TableCell>
