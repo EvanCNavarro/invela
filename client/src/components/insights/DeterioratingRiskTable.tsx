@@ -57,6 +57,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   
   // Process companies with session-consistent data
   const processedCompanies = useMemo(() => {
+    console.log(`[DeterioratingRiskTable] Processing with timeframe: ${timeframe}`);
+    
     // Use the same session data service as company profiles to ensure consistency
     const sessionData = getSessionCompaniesData(companies);
     
