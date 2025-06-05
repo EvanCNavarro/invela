@@ -21,8 +21,8 @@ import {
 } from '@/lib/riskCalculations';
 import { getSessionCompaniesData, type SessionCompanyData } from '@/lib/sessionDataService';
 
-// Default risk threshold if company configuration is not available
-const DEFAULT_RISK_THRESHOLD = 40;
+// Use unified risk threshold to match system-wide standards
+const UNIFIED_BLOCKED_THRESHOLD = 70;
 
 interface RiskMonitoringInsightProps {
   className?: string;
@@ -66,18 +66,11 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     queryKey: ['/api/companies'],
   });
 
-  // Get risk threshold from current company's configuration
+  // Use unified risk threshold for consistency across all components
   const riskThreshold = useMemo(() => {
-    if (!currentCompany) return DEFAULT_RISK_THRESHOLD;
-    
-    // Try to get threshold from risk configuration
-    if (currentCompany.risk_configuration?.thresholds?.high) {
-      return currentCompany.risk_configuration.thresholds.high;
-    }
-    
-    // Fallback to default
-    return DEFAULT_RISK_THRESHOLD;
-  }, [currentCompany]);
+    // Always use the unified blocked threshold for consistency
+    return UNIFIED_BLOCKED_THRESHOLD;
+  }, []);
 
   // Check if current company is allowed to see this insight (Bank or Invela)
   const canViewInsight = useMemo(() => {
@@ -115,9 +108,9 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     return calculateRiskMetrics(companyRiskData, riskThreshold);
   }, [companyRiskData, riskThreshold]);
 
-  // Filter for blocked companies (below threshold)
+  // Filter for blocked companies (using unified threshold logic: >= 70 is blocked)
   const blockedCompanies = useMemo(() => {
-    return companyRiskData.filter(company => company.currentScore < riskThreshold);
+    return companyRiskData.filter((company: any) => company.currentScore >= riskThreshold);
   }, [companyRiskData, riskThreshold]);
 
   // Companies to display in the table (filtered or all)
