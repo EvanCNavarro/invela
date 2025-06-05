@@ -25,6 +25,12 @@ interface NetworkStats {
 export function NetworkSummary() {
   const [, navigate] = useLocation();
 
+  // Fetch unified risk statistics
+  const { data: unifiedRiskData, isLoading: riskLoading } = useQuery({
+    queryKey: ["/api/companies/risk-unified"],
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
   // Fetch network statistics with authentic data
   const { data: networkStats, isLoading } = useQuery<NetworkStats>({
     queryKey: ["/api/network/stats"],
@@ -63,8 +69,11 @@ export function NetworkSummary() {
     return null;
   }
 
-  const { currentNetworkSize, availableCount, expansionMessage, riskStats, userCompanyCategory, dataProviderCount, dataRecipientCount } = networkStats;
-  const totalRiskCompanies = riskStats.stable + riskStats.monitoring + riskStats.approaching + riskStats.blocked;
+  const { currentNetworkSize, availableCount, expansionMessage, userCompanyCategory, dataProviderCount, dataRecipientCount } = networkStats;
+  
+  // Use unified risk statistics instead of legacy risk data
+  const unifiedRiskStats = riskStats || networkStats.riskStats || { stable: 0, monitoring: 0, approaching: 0, blocked: 0 };
+  const totalRiskCompanies = unifiedRiskStats.stable + unifiedRiskStats.monitoring + unifiedRiskStats.approaching + unifiedRiskStats.blocked;
 
   // For Invela users, show both provider and recipient counts
   const isInvelaUser = userCompanyCategory === 'Invela';

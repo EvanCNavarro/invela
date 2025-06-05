@@ -49,17 +49,18 @@ interface SessionConfig {
  */
 const DEFAULT_CONFIG: SessionConfig = {
   storageKey: 'invela-risk-session-data',
-  version: '1.1.0', // Bump version to force cache reset for 7-day data
+  version: '2.0.0', // Bump version to force cache reset for unified thresholds
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 };
 
 /**
- * Risk calculation thresholds
+ * Risk calculation thresholds - aligned with unified backend service
  */
 const RISK_THRESHOLDS = {
-  blocked: 40,
-  approaching: 50,
-  monitoring: 60
+  BLOCKED: 70,
+  APPROACHING_BLOCK: 50,
+  MONITORING: 30,
+  STABLE: 0
 };
 
 /**
@@ -113,25 +114,25 @@ function generateConsistentRiskData(company: any, seed: number): SessionCompanyD
   const variation7Day = (random() - 0.5) * 8; // Range: -4 to +4
   const previousScore7Day = Math.max(20, Math.min(95, currentScore + variation7Day));
   
-  // Calculate status based on current score
+  // Calculate status based on current score using standard logic (higher score = higher risk)
   let status: SessionCompanyData['status'];
-  if (currentScore < RISK_THRESHOLDS.blocked) {
+  if (currentScore >= RISK_THRESHOLDS.BLOCKED) {
     status = 'Blocked';
-  } else if (currentScore < RISK_THRESHOLDS.approaching) {
+  } else if (currentScore >= RISK_THRESHOLDS.APPROACHING_BLOCK) {
     status = 'Approaching Block';
-  } else if (currentScore < RISK_THRESHOLDS.monitoring) {
+  } else if (currentScore >= RISK_THRESHOLDS.MONITORING) {
     status = 'Monitoring';
   } else {
     status = 'Stable';
   }
   
-  // Calculate trend based on score change
+  // Calculate trend based on score change (higher score = higher risk)
   const scoreChange = currentScore - previousScore;
   let trend: SessionCompanyData['trend'];
   if (scoreChange > 3) {
-    trend = 'improving';
+    trend = 'deteriorating'; // Higher score = worse risk
   } else if (scoreChange < -3) {
-    trend = 'deteriorating';
+    trend = 'improving'; // Lower score = better risk
   } else {
     trend = 'stable';
   }
