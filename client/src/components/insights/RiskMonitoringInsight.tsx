@@ -185,7 +185,10 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         <div className="flex-shrink-0">
           <Tabs 
             value={timeframe} 
-            onValueChange={(val: string) => setTimeframe(val as '7day' | '30day')}
+            onValueChange={(val: string) => {
+              console.log(`[RiskMonitoring] Timeframe changed from ${timeframe} to ${val}`);
+              setTimeframe(val as '7day' | '30day');
+            }}
           >
             <TabsList>
               <TabsTrigger value="7day">7-Day Change</TabsTrigger>
