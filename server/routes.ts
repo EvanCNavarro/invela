@@ -4829,6 +4829,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       // Extract filter parameters from query string
       const { riskLevel, accreditation, size, industry, recipientType, search } = req.query;
+      
+      console.log('[Network Expansion] Filter parameters:', {
+        riskLevel, accreditation, size, industry, recipientType, search
+      });
 
       // Get current user's company data
       const userCompany = await db.query.companies.findFirst({
@@ -4925,13 +4929,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       if (riskLevel && riskLevel !== 'all') {
+        const beforeCount = candidates.length;
         candidates = candidates.filter(company => {
           const riskScore = company.risk_score || 0;
-          if (riskLevel === 'low') return riskScore <= 33;
-          if (riskLevel === 'medium') return riskScore > 33 && riskScore <= 66;
-          if (riskLevel === 'high') return riskScore > 66;
+          if (riskLevel === 'low') return riskScore < 40;
+          if (riskLevel === 'medium') return riskScore >= 40 && riskScore < 70;
+          if (riskLevel === 'high') return riskScore >= 70;
           return true;
         });
+        console.log(`[Network Expansion] Risk level filter '${riskLevel}': ${beforeCount} -> ${candidates.length} companies`);
       }
 
       if (accreditation && accreditation !== 'all') {
