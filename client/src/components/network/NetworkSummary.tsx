@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Building2, AlertTriangle, TrendingUp, Shield, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 interface NetworkStats {
   currentNetworkSize: number;
@@ -81,8 +82,8 @@ export function NetworkSummary() {
   return (
     <div className="flex items-start gap-4">
       
-      {/* Network Size Bento Box - Unified for all users */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 h-36 flex flex-col justify-between">
+      {/* Network Size Bento Box - Conditional width based on user type */}
+      <div className={`bg-white border border-slate-200 rounded-xl p-4 shadow-sm h-36 flex flex-col justify-between ${isInvelaUser ? "flex-1" : "w-40"}`}>
         <div className="flex items-center gap-2 mb-2">
           <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
             <Building2 className="h-2.5 w-2.5 text-slate-600" />
@@ -130,9 +131,9 @@ export function NetworkSummary() {
         )}
       </div>
 
-      {/* Risk Overview Bento Box - Even Slimmer */}
+      {/* Risk Overview Bento Box - Always flex-1 for remaining space */}
       {totalRiskCompanies > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 h-36 flex flex-col">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm h-36 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
               <AlertTriangle className="h-2.5 w-2.5 text-slate-600" />
