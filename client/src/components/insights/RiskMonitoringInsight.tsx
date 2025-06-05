@@ -50,6 +50,11 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   
   // State for the selected time frame (7 days or 30 days)
   const [timeframe, setTimeframe] = useState<'7day' | '30day'>('7day');
+  
+  // Debug logging for timeframe changes
+  useEffect(() => {
+    console.log('[RiskMonitoring] Timeframe state changed to:', timeframe);
+  }, [timeframe]);
 
   // Get the current company data (to check if it's a Bank or Invela)
   const { data: currentCompany, isLoading: isLoadingCurrentCompany } = useQuery<any>({
