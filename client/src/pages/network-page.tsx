@@ -34,7 +34,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { PageTemplate } from "@/components/ui/page-template";
@@ -48,6 +48,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { sessionDataService } from "@/lib/sessionDataService";
+import { calculateRiskChange } from "@/lib/riskCalculations";
 import { Company, AccreditationStatus } from "@/types/company";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -97,6 +99,37 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
+// Relationship Status Badge Component
+const RelationshipStatusBadge = ({ status }: { status: string }) => {
+  const isBlocked = status.toLowerCase() === 'blocked';
+  
+  if (isBlocked) {
+    return (
+      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+        Blocked
+      </div>
+    );
+  }
+  
+  // All other statuses get muted styling
+  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  return (
+    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+      {displayStatus}
+    </div>
+  );
+};
+
+// Risk Trend Component
+const RiskTrendIndicator = ({ companyId }: { companyId: number }) => {
+  // For now, show a placeholder trend icon - this could be enhanced with actual trend data
+  return (
+    <div className="flex items-center justify-center">
+      <TrendingDown className="h-4 w-4 text-orange-500" />
+    </div>
+  );
+};
+
 const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, searchTerm }: {
   relationship: NetworkRelationship;
   isHovered: boolean;
@@ -128,8 +161,16 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           </span>
         </div>
       </TableCell>
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <RelationshipStatusBadge status={relationship.status} />
+        </div>
+      </TableCell>
       <TableCell className="text-center font-medium">
         {company.riskScore || "N/A"}
+      </TableCell>
+      <TableCell className="text-center">
+        <RiskTrendIndicator companyId={company.id} />
       </TableCell>
       <TableCell className="text-center">
         <div className="flex justify-center">
@@ -215,10 +256,20 @@ export default function NetworkPage() {
         ? a.relatedCompany.name.localeCompare(b.relatedCompany.name)
         : b.relatedCompany.name.localeCompare(a.relatedCompany.name);
     }
+    if (sortField === "relationshipStatus") {
+      return sortDirection === "asc"
+        ? a.status.localeCompare(b.status)
+        : b.status.localeCompare(a.status);
+    }
     if (sortField === "riskScore") {
       const scoreA = a.relatedCompany.riskScore || 0;
       const scoreB = b.relatedCompany.riskScore || 0;
       return sortDirection === "asc" ? scoreA - scoreB : scoreB - scoreA;
+    }
+    if (sortField === "accreditationStatus") {
+      return sortDirection === "asc"
+        ? a.relatedCompany.accreditationStatus.localeCompare(b.relatedCompany.accreditationStatus)
+        : b.relatedCompany.accreditationStatus.localeCompare(a.relatedCompany.accreditationStatus);
     }
     return 0;
   };
@@ -385,7 +436,7 @@ export default function NetworkPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[240px]">
+                  <TableHead className="w-[200px]">
                     <Button
                       variant="ghost"
                       className="p-0 hover:bg-transparent text-left w-full justify-start"
@@ -395,24 +446,44 @@ export default function NetworkPage() {
                       {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-center w-[180px]">
+                  <TableHead className="text-center w-[140px]">
+                    <Button
+                      variant="ghost"
+                      className="p-0 hover:bg-transparent text-center w-full justify-center"
+                      onClick={() => handleSort("relationshipStatus")}
+                    >
+                      <span>Relationship Status</span>
+                      {getSortIcon("relationshipStatus")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-center w-[120px]">
                     <Button
                       variant="ghost"
                       className="p-0 hover:bg-transparent text-center w-full justify-center"
                       onClick={() => handleSort("riskScore")}
                     >
-                      <span>S&P Data Access Risk<br/>Score</span>
+                      <span>S&P DARS</span>
                       {getSortIcon("riskScore")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-center w-[150px]">Status</TableHead>
+                  <TableHead className="text-center w-[100px]">Trend</TableHead>
+                  <TableHead className="text-center w-[130px]">
+                    <Button
+                      variant="ghost"
+                      className="p-0 hover:bg-transparent text-center w-full justify-center"
+                      onClick={() => handleSort("accreditationStatus")}
+                    >
+                      <span>Accreditation</span>
+                      {getSortIcon("accreditationStatus")}
+                    </Button>
+                  </TableHead>
                   <TableHead className="w-[80px] text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-[400px]">
+                    <TableCell colSpan={6} className="h-[400px]">
                       <div className="flex items-center justify-center w-full h-full">
                         <LoadingSpinner size="lg" />
                       </div>
@@ -420,7 +491,7 @@ export default function NetworkPage() {
                   </TableRow>
                 ) : filteredRelationships.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4">
+                    <TableCell colSpan={6} className="text-center py-4">
                       No companies found in your network
                     </TableCell>
                   </TableRow>
