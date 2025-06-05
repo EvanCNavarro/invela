@@ -41,15 +41,16 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
     logAlert('Rendered alert', { blockedCount: count });
   }, [count]);
 
-  // Don't show the alert if there are no blocked recipients
-  if (count === 0) {
-    return null;
-  }
-
+  // Show positive state when no blocked recipients, warning state when blocked
+  const isBlocked = count > 0;
+  
   return (
     <div 
       className={cn(
-        "bg-red-50 border-l-2 border-red-200 px-4 rounded-md mb-0 h-10 flex items-center w-fit",
+        "border-l-2 px-4 rounded-md mb-0 h-10 flex items-center w-fit",
+        isBlocked 
+          ? "bg-red-50 border-red-200" 
+          : "bg-green-50 border-green-200",
         className
       )}
     >
@@ -59,7 +60,10 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
         </div>
         <div>
           <p className="font-medium text-black leading-none whitespace-nowrap">
-            {count} {count === 1 ? 'Data Recipient is' : 'Data Recipients are'} blocked
+            {isBlocked 
+              ? `${count} ${count === 1 ? 'Data Recipient is' : 'Data Recipients are'} blocked`
+              : 'All Data Recipients are operating normally'
+            }
           </p>
         </div>
       </div>
