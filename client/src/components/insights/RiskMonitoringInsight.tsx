@@ -182,45 +182,31 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         </div>
 
         {/* Timeframe toggle on the right */}
-        <div className="flex-shrink-0" style={{ zIndex: 10, position: 'relative' }}>
-          <div className="flex bg-muted rounded-md p-1" style={{ pointerEvents: 'auto' }}>
+        <div className="flex-shrink-0">
+          <div className="flex bg-muted rounded-md p-1">
             <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('[RiskMonitoring] 7-day button clicked', { currentTimeframe: timeframe });
+              onClick={() => {
+                console.log('[RiskMonitoring] 7-day button clicked');
                 setTimeframe('7day');
               }}
-              onMouseDown={(e) => {
-                console.log('[RiskMonitoring] 7-day button mousedown');
-              }}
-              className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-sm font-medium rounded-sm ${
                 timeframe === '7day' 
                   ? 'bg-background text-foreground shadow-sm' 
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              style={{ pointerEvents: 'auto', zIndex: 11 }}
             >
               7-Day Change
             </button>
             <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('[RiskMonitoring] 30-day button clicked', { currentTimeframe: timeframe });
+              onClick={() => {
+                console.log('[RiskMonitoring] 30-day button clicked');
                 setTimeframe('30day');
               }}
-              onMouseDown={(e) => {
-                console.log('[RiskMonitoring] 30-day button mousedown');
-              }}
-              className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-sm font-medium rounded-sm ${
                 timeframe === '30day' 
                   ? 'bg-background text-foreground shadow-sm' 
                   : 'text-muted-foreground hover:text-foreground'
               }`}
-              style={{ pointerEvents: 'auto', zIndex: 11 }}
             >
               30-Day Change
             </button>
