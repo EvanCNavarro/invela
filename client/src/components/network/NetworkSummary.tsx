@@ -88,62 +88,104 @@ export function NetworkSummary() {
           </div>
         </div>
 
-        {/* Risk Distribution */}
+        {/* Risk Distribution with Visual Graph */}
         {totalRiskCompanies > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-slate-600" />
               <span className="text-sm font-medium text-slate-600">Risk Distribution</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-100">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <div>
-                  <div className="text-lg font-semibold text-red-700">{riskStats.high}</div>
-                  <div className="text-xs text-red-600">High Risk</div>
+            
+            {/* Mini Bar Chart */}
+            <div className="relative h-12 bg-slate-100 rounded-lg overflow-hidden">
+              <div className="absolute inset-0 flex">
+                {/* Low Risk Bar */}
+                <div 
+                  className="bg-emerald-500 flex items-center justify-center transition-all duration-500"
+                  style={{ 
+                    width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`,
+                    minWidth: riskStats.low > 0 ? '8px' : '0px'
+                  }}
+                >
+                  {riskStats.low > 0 && (
+                    <span className="text-xs font-semibold text-white">{riskStats.low}</span>
+                  )}
+                </div>
+                
+                {/* Medium Risk Bar */}
+                <div 
+                  className="bg-amber-500 flex items-center justify-center transition-all duration-500"
+                  style={{ 
+                    width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`,
+                    minWidth: riskStats.medium > 0 ? '8px' : '0px'
+                  }}
+                >
+                  {riskStats.medium > 0 && (
+                    <span className="text-xs font-semibold text-white">{riskStats.medium}</span>
+                  )}
+                </div>
+                
+                {/* High Risk Bar */}
+                <div 
+                  className="bg-red-500 flex items-center justify-center transition-all duration-500"
+                  style={{ 
+                    width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`,
+                    minWidth: riskStats.high > 0 ? '8px' : '0px'
+                  }}
+                >
+                  {riskStats.high > 0 && (
+                    <span className="text-xs font-semibold text-white">{riskStats.high}</span>
+                  )}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                <Shield className="h-4 w-4 text-amber-600" />
-                <div>
-                  <div className="text-lg font-semibold text-amber-700">{riskStats.medium}</div>
-                  <div className="text-xs text-amber-600">Medium Risk</div>
-                </div>
+            </div>
+
+            {/* Risk Legend */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-emerald-500 rounded"></div>
+                <span className="text-emerald-700 font-medium">{riskStats.low} Low</span>
               </div>
-              
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                <div>
-                  <div className="text-lg font-semibold text-emerald-700">{riskStats.low}</div>
-                  <div className="text-xs text-emerald-600">Low Risk</div>
-                </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                <span className="text-amber-700 font-medium">{riskStats.medium} Medium</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-red-500 rounded"></div>
+                <span className="text-red-700 font-medium">{riskStats.high} High</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Expansion Action */}
+        {/* Unified Expansion Call-to-Action */}
         {availableCount > 0 && (
-          <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-semibold text-blue-800">Ready to Expand</span>
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-1">
+            <div className="bg-white rounded-lg p-5">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
+                      <TrendingUp className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-800">Expand Network Reach</div>
+                      <div className="text-xs text-slate-500">{availableCount} companies ready to connect</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    {availableCount} {expansionMessage}
+                  </p>
                 </div>
-                <p className="text-sm text-blue-700">
-                  {availableCount} {expansionMessage}
-                </p>
+                <Button 
+                  onClick={() => navigate("/network/expand")}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3 rounded-lg font-semibold"
+                  size="lg"
+                >
+                  Expand Network
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
               </div>
-              <Button 
-                onClick={() => navigate("/network/expand")}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                size="sm"
-              >
-                Explore
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
             </div>
           </div>
         )}
