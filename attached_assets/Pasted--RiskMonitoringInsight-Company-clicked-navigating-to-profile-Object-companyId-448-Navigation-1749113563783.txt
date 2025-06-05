@@ -1,0 +1,138 @@
+[RiskMonitoringInsight] Company clicked - navigating to profile 
+Object {companyId: 448}
+[Navigation Debug] About to navigate to: /network/company/448?tab=risk
+[Navigation Debug] Current location before navigation: 
+Location {ancestorOrigins: DOMStringList, href: "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/network/company/448…", origin: "https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev", protocol: "https:", host: "9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev", …}
+[Router] Current location: /network/company/448
+[Router] Rendering company profile page for ID: 448
+[Router Debug] Full location when rendering company profile: /network/company/448
+[Router Debug] Query parameters present: none
+[Company Profile Debug] Received company data: 
+Object {id: 448, name: "OpenBanking Hub", description: "API infrastructure enabling secure open banking integrations across financial institutions.", category: "FinTech", risk_score: 5, …}
+[Company Profile Debug] Risk fields analysis: 
+Object {risk_score: 5, riskScore: undefined, chosen_score: 50, risk_clusters: {…}, finalRiskValue: 5}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Open banking APIs, financial data aggregation, PSD2 compliance", market_position: "growth", founders_and_leadership: "Sophie Clark (CEO), Raj Kumar (CTO), Oliver Martinez (Chief Product Officer)", key_clients_partners: "Lloyds Bank, RBS, Santander UK", investors: "Series A: Accel Partners, Balderton Capital, Index Ventures", …}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352703}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[Company Profile] Using session data for risk status 
+Object {companyId: 448, companyName: "OpenBanking Hub", status: "Blocked", currentScore: 5}
+[Users Debug] Users extracted: 
+Object {usersResponse: {…}, usersCount: 0, firstUser: undefined, activeTab: "overview", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352704}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352704}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352704}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionData] OpenBanking Hub 30day change calculation: 
+Object {timeframe: "30day", currentScore: 5, previousScore7Day: 20, previousScore30Day: 20, change7Day: -15, …}
+[SessionData] OpenBanking Hub 30day change calculation: 
+Object {timeframe: "30day", currentScore: 5, previousScore7Day: 20, previousScore30Day: 20, change7Day: -15, …}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352704}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for dashboard
+[WebSocketEventBridge] Cleaning up event bridge
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/network/company/448", …}
+[Sidebar] Tab state check: company=1, path=/network/company/448, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[WebSocketEventBridge] Initializing event bridge
+[Tab Debug] getTabFromURL - window.location.search: ?tab=risk tabParam: risk result: risk
+[Tab Debug] getTabFromURL - wouter location for comparison: /network/company/448
+[Tab Debug] Mount - parsing URL for initial tab: risk from window.location.search: ?tab=risk
+[Tab Debug] Mount - wouter location for comparison: /network/company/448
+[Tab Debug] getTabFromURL - window.location.search: ?tab=risk tabParam: risk result: risk
+[Tab Debug] getTabFromURL - wouter location for comparison: /network/company/448
+[Tab Debug] Location change - updating tab from: overview to: risk wouter location: /network/company/448
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[Company Profile Debug] Received company data: 
+Object {id: 448, name: "OpenBanking Hub", description: "API infrastructure enabling secure open banking integrations across financial institutions.", category: "FinTech", risk_score: 5, …}
+[Company Profile Debug] Risk fields analysis: 
+Object {risk_score: 5, riskScore: undefined, chosen_score: 50, risk_clusters: {…}, finalRiskValue: 5}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Open banking APIs, financial data aggregation, PSD2 compliance", market_position: "growth", founders_and_leadership: "Sophie Clark (CEO), Raj Kumar (CTO), Oliver Martinez (Chief Product Officer)", key_clients_partners: "Lloyds Bank, RBS, Santander UK", investors: "Series A: Accel Partners, Balderton Capital, Index Ventures", …}
+[Users Debug] Users extracted: 
+Object {usersResponse: {…}, usersCount: 0, firstUser: undefined, activeTab: "risk", searchTerm: ""}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352732}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352732}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352733}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[SessionData] OpenBanking Hub 30day change calculation: 
+Object {timeframe: "30day", currentScore: 5, previousScore7Day: 20, previousScore30Day: 20, change7Day: -15, …}
+[SessionData] OpenBanking Hub 30day change calculation: 
+Object {timeframe: "30day", currentScore: 5, previousScore7Day: 20, previousScore30Day: 20, change7Day: -15, …}
+[SessionDataService] Retrieved valid session data 
+Object {companiesCount: 88, age: 57352733}
+[SessionDataService] Returning stored data for company (with 7-day field) 
+Object {companyId: 448, companyName: "OpenBanking Hub"}
+[RiskRadarChart] Fetched relationship companies: 87
+[RiskRadarChart] Using fresh companies data: 88
+[RiskRadarChart] Filtering company: 
+Object {name: "Advanced Gaming Technologies", riskScore: 56, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Advanced Infrastructure Technologies", riskScore: 81, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "AgriFinance Connect", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Allied Evaluation Specialists", riskScore: 37, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BankingAPI Gateway", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BlockTrade Exchange", riskScore: 34, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Bridge Quality Consultants", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CarbonCredit Markets", riskScore: 38, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Catalyst Consulting Council", riskScore: 53, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Certified Market Champions", riskScore: 79, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "ClimateFinance Labs", riskScore: 50, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Coin Tracker", riskScore: 43, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CommodityTrade Hub", riskScore: 54, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Continental Infrastructure Union", riskScore: 45, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CorporateCard Plus", riskScore: 7, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CrowdFund Crypto", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Crown Strategy Consortium", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoFlow Payments", riskScore: 8, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoSwap Exchange", riskScore: 52, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoVenture Labs", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Cyber Studio Works", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DAO Treasury Management", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DeFi Bridge Protocol", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
