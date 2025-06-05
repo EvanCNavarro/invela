@@ -16,6 +16,8 @@ interface NetworkStats {
     low: number;
   };
   userCompanyCategory: string;
+  dataProviderCount: number;
+  dataRecipientCount: number;
 }
 
 export function NetworkSummary() {
@@ -59,10 +61,11 @@ export function NetworkSummary() {
     return null;
   }
 
-  const { currentNetworkSize, availableCount, expansionMessage, riskStats, userCompanyCategory } = networkStats;
+  const { currentNetworkSize, availableCount, expansionMessage, riskStats, userCompanyCategory, dataProviderCount, dataRecipientCount } = networkStats;
   const totalRiskCompanies = riskStats.high + riskStats.medium + riskStats.low;
 
-  // Determine what type of entities to show based on company category
+  // For Invela users, show both provider and recipient counts
+  const isInvelaUser = userCompanyCategory === 'Invela';
   const isDataProvider = userCompanyCategory === 'Bank' || userCompanyCategory === 'FinTech';
   const entityType = isDataProvider ? 'Data Recipients' : 'Data Providers';
   const availableEntityType = isDataProvider ? 'data recipients' : 'data providers';
@@ -78,26 +81,73 @@ export function NetworkSummary() {
   return (
     <div className="flex items-start gap-4">
       
-      {/* Network Size Bento Box - Square - Even Slimmer */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Building2 className="h-2.5 w-2.5 text-slate-600" />
+      {/* Network Size Display - Different for Invela vs Banks/FinTech */}
+      {isInvelaUser ? (
+        <>
+          {/* Data Providers Box for Invela */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Building2 className="h-2.5 w-2.5 text-blue-600" />
+              </div>
+              <div className="text-xs font-semibold text-slate-900">
+                Data Providers
+              </div>
+            </div>
+            
+            <div className="text-center flex-1 flex flex-col justify-center">
+              <div className="text-2xl font-bold text-slate-900 mb-1">
+                {formatNetworkSize(dataProviderCount)}
+              </div>
+              <div className="text-xs text-slate-600 font-medium">
+                Banks Connected
+              </div>
+            </div>
           </div>
-          <div className="text-xs font-semibold text-slate-900">
-            Network Size
+          
+          {/* Data Recipients Box for Invela */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 bg-green-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-2.5 w-2.5 text-green-600" />
+              </div>
+              <div className="text-xs font-semibold text-slate-900">
+                Data Recipients
+              </div>
+            </div>
+            
+            <div className="text-center flex-1 flex flex-col justify-center">
+              <div className="text-2xl font-bold text-slate-900 mb-1">
+                {formatNetworkSize(dataRecipientCount)}
+              </div>
+              <div className="text-xs text-slate-600 font-medium">
+                FinTech Connected
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Network Size Box for Banks/FinTech */
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
+              <Building2 className="h-2.5 w-2.5 text-slate-600" />
+            </div>
+            <div className="text-xs font-semibold text-slate-900">
+              Network Size
+            </div>
+          </div>
+          
+          <div className="text-center flex-1 flex flex-col justify-center">
+            <div className="text-2xl font-bold text-slate-900 mb-1">
+              {formatNetworkSize(currentNetworkSize)}
+            </div>
+            <div className="text-xs text-slate-600 font-medium">
+              {entityType}
+            </div>
           </div>
         </div>
-        
-        <div className="text-center flex-1 flex flex-col justify-center">
-          <div className="text-2xl font-bold text-slate-900 mb-1">
-            {formatNetworkSize(currentNetworkSize)}
-          </div>
-          <div className="text-xs text-slate-600 font-medium">
-            {entityType}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Risk Overview Bento Box - Even Slimmer */}
       {totalRiskCompanies > 0 && (
@@ -159,8 +209,8 @@ export function NetworkSummary() {
         </div>
       )}
 
-      {/* Network Expansion Call-to-Action - Improved */}
-      {availableCount > 0 && (
+      {/* Network Expansion Call-to-Action - Only show for Banks and FinTech */}
+      {!isInvelaUser && availableCount > 0 && (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-300 hover:border-blue-500 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ease-in-out flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-2">

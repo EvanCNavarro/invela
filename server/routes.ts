@@ -4547,33 +4547,57 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       const currentNetworkSize = networkRelationships.length;
 
-      // Determine expansion target category based on user's company type
-      let targetCategory = 'FinTech';
-      let expansionMessage = 'companies available to expand your network';
-      
-      if (userCompany.category === 'FinTech') {
-        targetCategory = 'Bank';
-        expansionMessage = 'banks available to expand your network';
-      } else if (userCompany.category === 'Bank') {
-        targetCategory = 'FinTech';
-        expansionMessage = 'FinTech companies available to expand your network';
-      }
-
       // Get related company IDs to exclude from available count
       const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
 
-      // Get available companies to connect with using Drizzle ORM
-      const allTargetCompanies = await db.query.companies.findMany({
-        where: eq(companies.category, targetCategory),
-        columns: { id: true }
-      });
+      // For Invela users, get separate counts for data providers and recipients
+      let dataProviderCount = 0;
+      let dataRecipientCount = 0;
+      let expansionCount = 0;
+      let targetCategory = 'FinTech';
+      let expansionMessage = 'companies available to expand your network';
 
-      // Filter out current user's company and related companies
-      const availableCompanies = allTargetCompanies.filter(company => 
-        company.id !== userCompanyId && 
-        !relatedCompanyIds.includes(company.id)
-      );
-      const expansionCount = availableCompanies.length;
+      if (userCompany.category === 'Invela') {
+        // Invela can see all Banks (data providers) and FinTech (data recipients)
+        const allBanks = await db.query.companies.findMany({
+          where: eq(companies.category, 'Bank'),
+          columns: { id: true }
+        });
+        const allFinTech = await db.query.companies.findMany({
+          where: eq(companies.category, 'FinTech'),
+          columns: { id: true }
+        });
+
+        // Count connected data providers (Banks) and recipients (FinTech)
+        const connectedBanks = allBanks.filter(company => relatedCompanyIds.includes(company.id));
+        const connectedFinTech = allFinTech.filter(company => relatedCompanyIds.includes(company.id));
+        
+        dataProviderCount = connectedBanks.length;
+        dataRecipientCount = connectedFinTech.length;
+        expansionCount = 0; // Invela doesn't need expansion as they see all companies
+      } else {
+        // For Bank and FinTech users, determine target category
+        if (userCompany.category === 'FinTech') {
+          targetCategory = 'Bank';
+          expansionMessage = 'banks available to expand your network';
+        } else if (userCompany.category === 'Bank') {
+          targetCategory = 'FinTech';
+          expansionMessage = 'FinTech companies available to expand your network';
+        }
+
+        // Get available companies to connect with
+        const allTargetCompanies = await db.query.companies.findMany({
+          where: eq(companies.category, targetCategory),
+          columns: { id: true }
+        });
+
+        // Filter out current user's company and related companies
+        const availableCompanies = allTargetCompanies.filter(company => 
+          company.id !== userCompanyId && 
+          !relatedCompanyIds.includes(company.id)
+        );
+        expansionCount = availableCompanies.length;
+      }
 
       // Get risk breakdown for network companies using Drizzle ORM
       const riskStats = { high: 0, medium: 0, low: 0 };
@@ -4602,7 +4626,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
         targetCategory,
         expansionMessage,
         riskStats,
-        userCompanyCategory: userCompany.category
+        userCompanyCategory: userCompany.category,
+        dataProviderCount,
+        dataRecipientCount
       });
 
     } catch (error) {
