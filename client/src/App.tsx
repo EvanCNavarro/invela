@@ -78,6 +78,7 @@ import DemoPage from "@/pages/demo-page";
 // Core dashboard and navigation pages
 import DashboardPage from "@/pages/dashboard-page";
 import NetworkPage from "@/pages/network-page";
+import NetworkExpandPage from "@/pages/network-expand-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 
@@ -270,6 +271,17 @@ function Router(): JSX.Element {
             <ProtectedLayout>
               <OnboardingWrapper>
                 <NetworkPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
+
+        <ProtectedRoute 
+          path="/network/expand" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <NetworkExpandPage />
               </OnboardingWrapper>
             </ProtectedLayout>
           )} 
