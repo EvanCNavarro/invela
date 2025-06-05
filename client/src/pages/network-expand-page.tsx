@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { ArrowLeft, Search, Building2, TrendingUp, Users, Shield, Info, CheckCircle } from "lucide-react";
+import { Search, Building2, TrendingUp, Users, Shield, CheckCircle } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -181,40 +181,11 @@ export default function NetworkExpandPage() {
         {/* Breadcrumb Navigation */}
         <BreadcrumbNav />
         
-        {/* Page Header with Tooltip */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/network")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Network
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2">
-                    <PageHeader
-                      title="Invela Trust Network"
-                      description="Browse available Data Providers and expand your network via invitation"
-                    />
-                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    This shows a curated subset of the full trust network. 
-                    Not all available partners are displayed for security and performance reasons.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
+        {/* Page Header */}
+        <PageHeader
+          title="Invela Trust Network"
+          description="Browse available Data Providers and expand your network via invitation"
+        />
 
         {/* Filter Controls */}
         <Card>
