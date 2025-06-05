@@ -69,51 +69,45 @@ export function NetworkSummary() {
       {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-indigo-50/20 pointer-events-none" />
       
-      <div className="relative px-8 py-6">
-        <div className="flex items-center gap-4">
+      <div className="relative px-6 py-6">
+        <div className="flex items-start gap-4">
           
-          {/* Network Size Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow duration-200 min-w-[200px]">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Users className="h-6 w-6 text-blue-600" />
+          {/* Network Size Bento Box - Square */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 w-48 h-48 flex flex-col justify-between">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
-              <div className="flex-1">
-                <div className="text-lg font-semibold text-slate-900 mb-1">
-                  Network Size
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <div className="text-2xl font-bold text-slate-900">
-                    {formatNetworkSize(currentNetworkSize)}
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    data recipients
-                  </div>
-                </div>
+              <div className="text-base font-semibold text-slate-900">
+                Network Size
+              </div>
+            </div>
+            
+            <div className="text-center flex-1 flex flex-col justify-center">
+              <div className="text-4xl font-bold text-slate-900 mb-2">
+                {formatNetworkSize(currentNetworkSize)}
+              </div>
+              <div className="text-sm text-slate-600">
+                data recipients
               </div>
             </div>
           </div>
 
-          {/* Risk Overview Card */}
+          {/* Risk Overview Bento Box */}
           {totalRiskCompanies > 0 && (
-            <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 max-w-[320px]">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-orange-600" />
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-48 flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-orange-600" />
                 </div>
-                <div className="flex-1">
-                  <div className="text-lg font-semibold text-slate-900">
-                    Risk Overview
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    Company risk distribution
-                  </div>
+                <div className="text-base font-semibold text-slate-900">
+                  Risk Overview
                 </div>
               </div>
               
-              {/* Progress Bar Style Risk Distribution */}
-              <div className="space-y-3">
-                <div className="flex bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div className="flex-1 flex flex-col justify-center space-y-4">
+                {/* Risk Distribution Bar */}
+                <div className="flex bg-slate-100 rounded-lg h-3 overflow-hidden">
                   {riskStats.low > 0 && (
                     <div 
                       className="bg-emerald-500 transition-all duration-700"
@@ -140,18 +134,18 @@ export function NetworkSummary() {
                   )}
                 </div>
                 
-                {/* Clean Legend */}
+                {/* Compact Legend */}
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm" />
                     <span className="text-slate-700">{riskStats.low} Stable</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-amber-500 rounded-full" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 bg-amber-500 rounded-sm" />
                     <span className="text-slate-700">{riskStats.medium} Monitoring</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full" />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 bg-red-500 rounded-sm" />
                     <span className="text-slate-700">{riskStats.high} Blocked</span>
                   </div>
                 </div>
@@ -159,26 +153,25 @@ export function NetworkSummary() {
             </div>
           )}
 
-          {/* Network Expansion Card */}
+          {/* Network Expansion Bento Box */}
           {availableCount > 0 && (
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-6 py-5 shadow-sm hover:shadow-md transition-all duration-200 min-w-[220px] group cursor-pointer"
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex-1 h-48 group cursor-pointer flex flex-col justify-between"
                  onClick={() => navigate("/network/expand")}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
-                  <ArrowRight className="h-6 w-6 text-blue-600 group-hover:translate-x-0.5 transition-transform duration-200" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
+                  <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-0.5 transition-transform duration-200" />
                 </div>
-                <div className="flex-1">
-                  <div className="text-lg font-semibold text-slate-900 mb-1">
-                    Expand Network
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {formatNetworkSize(availableCount)}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      available
-                    </div>
-                  </div>
+                <div className="text-base font-semibold text-slate-900">
+                  Expand Network
+                </div>
+              </div>
+              
+              <div className="text-center flex-1 flex flex-col justify-center">
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {formatNetworkSize(availableCount)}
+                </div>
+                <div className="text-sm text-slate-600">
+                  companies available
                 </div>
               </div>
             </div>
