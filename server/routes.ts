@@ -4527,12 +4527,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const { getNetworkRiskStatistics } = await import('./services/riskCalculationService');
+      const { getNetworkRiskStatistics, getNetworkCompaniesWithRiskData } = await import('./services/riskCalculationService');
       
       const userCompanyId = req.user.company_id;
-      const riskStatistics = await getNetworkRiskStatistics(userCompanyId);
+      const [riskStatistics, companiesData] = await Promise.all([
+        getNetworkRiskStatistics(userCompanyId),
+        getNetworkCompaniesWithRiskData(userCompanyId)
+      ]);
       
-      res.json(riskStatistics);
+      res.json({
+        ...riskStatistics,
+        companies: companiesData
+      });
       
     } catch (error) {
       console.error('[UnifiedRisk] Error fetching unified risk data:', error);

@@ -85,32 +85,30 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     return ['Bank', 'Invela'].includes(currentCompany.category);
   }, [currentCompany]);
 
-  // Get authentic companies with risk data from the same endpoint used by visualization
-  const { data: companiesWithRisk = [] } = useQuery<any[]>({
-    queryKey: ['/api/companies-with-risk'],
+  // Get unified risk data from the same endpoint as other components
+  const { data: unifiedRiskData } = useQuery<any>({
+    queryKey: ['/api/companies/risk-unified'],
     enabled: !!currentCompany,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  // Convert authentic company data with session-based consistency
+  // Convert unified risk data to component format
   const companyRiskData = useMemo(() => {
-    if (!companiesWithRisk.length) return [];
+    if (!unifiedRiskData?.companies?.length) return [];
     
-    logInsight('Using authentic risk data with session consistency', {
-      companiesCount: companiesWithRisk.length,
+    logInsight('Using unified risk data for consistency', {
+      companiesCount: unifiedRiskData.companies.length,
       threshold: riskThreshold
     });
     
-    // Get session-consistent data that preserves authentic scores but adds consistent trends
-    const sessionData = getSessionCompaniesData(companiesWithRisk);
-    
-    return sessionData.map(sessionCompany => ({
-      id: sessionCompany.id,
-      name: sessionCompany.name,
-      currentScore: sessionCompany.currentScore,
-      previousScore: sessionCompany.previousScore,
-      category: sessionCompany.category
+    return unifiedRiskData.companies.map((company: { id: number; name: string; currentScore: number; previousScore?: number; category?: string }) => ({
+      id: company.id,
+      name: company.name,
+      currentScore: company.currentScore,
+      previousScore: company.previousScore,
+      category: company.category || 'FinTech'
     }));
-  }, [companiesWithRisk, riskThreshold]);
+  }, [unifiedRiskData, riskThreshold]);
 
   // Calculate risk metrics using shared service
   const riskMetrics = useMemo(() => {

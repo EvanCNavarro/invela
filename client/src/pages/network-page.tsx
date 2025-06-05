@@ -101,24 +101,26 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
-// Risk Monitoring Status Badge Component using authentic session data
+// Risk Monitoring Status Badge Component using unified risk calculation
 const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
   const [status, setStatus] = useState<'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable'>('Stable');
   
   useEffect(() => {
-    const fetchAuthenticStatus = () => {
-      try {
-        // Use authentic company data to get consistent status
-        const companyData = { id: companyId, risk_score: riskScore, name: `Company ${companyId}` };
-        const authenticData = sessionDataService.getCompanyData(companyData);
-        setStatus(authenticData.status);
-      } catch (error) {
-        console.log('[RiskStatus] Error fetching status for company:', companyId);
-        setStatus('Stable');
-      }
-    };
+    // Use unified risk thresholds (consistent with riskCalculationService)
+    const currentScore = riskScore || 0;
+    let calculatedStatus: 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' = 'Stable';
     
-    fetchAuthenticStatus();
+    if (currentScore >= 70) {
+      calculatedStatus = 'Blocked';
+    } else if (currentScore >= 50) {
+      calculatedStatus = 'Approaching Block';
+    } else if (currentScore >= 30) {
+      calculatedStatus = 'Monitoring';
+    } else {
+      calculatedStatus = 'Stable';
+    }
+    
+    setStatus(calculatedStatus);
   }, [companyId, riskScore]);
   
   if (status === 'Blocked') {
@@ -137,25 +139,34 @@ const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number
   );
 };
 
-// Risk Trend Component using authentic session data
+// Risk Trend Component using unified risk data
 const RiskTrendIndicator = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
   const [trend, setTrend] = useState<'improving' | 'stable' | 'deteriorating'>('stable');
   
+  // Get unified risk data to access trend information
+  const { data: unifiedRiskData } = useQuery({
+    queryKey: ['/api/companies/risk-unified'],
+    staleTime: 2 * 60 * 1000,
+  });
+  
   useEffect(() => {
-    const fetchAuthenticTrend = () => {
-      try {
-        // Use authentic company data to get consistent trend
-        const companyData = { id: companyId, risk_score: riskScore, name: `Company ${companyId}` };
-        const authenticData = sessionDataService.getCompanyData(companyData);
-        setTrend(authenticData.trend);
-      } catch (error) {
-        console.log('[RiskTrend] Error fetching trend for company:', companyId);
-        setTrend('stable');
+    if (unifiedRiskData?.companies) {
+      const company = unifiedRiskData.companies.find((c: any) => c.id === companyId);
+      if (company && company.trend) {
+        setTrend(company.trend);
+      } else {
+        // Fallback calculation using standard logic
+        const currentScore = riskScore || 0;
+        if (currentScore < 30) {
+          setTrend('improving');
+        } else if (currentScore > 60) {
+          setTrend('deteriorating');
+        } else {
+          setTrend('stable');
+        }
       }
-    };
-    
-    fetchAuthenticTrend();
-  }, [companyId, riskScore]);
+    }
+  }, [companyId, riskScore, unifiedRiskData]);
   
   if (trend === 'deteriorating') {
     return (
