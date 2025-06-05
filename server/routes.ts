@@ -4520,36 +4520,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Unified risk data endpoint - single source of truth
-  app.get("/api/companies/risk-unified", requireAuth, async (req, res) => {
-    try {
-      if (!req.user?.company_id) {
-        return res.status(401).json({ message: 'Unauthorized' });
-      }
-
-      const { getNetworkRiskStatistics, getNetworkCompaniesWithRiskData } = await import('./services/riskCalculationService');
-      
-      const userCompanyId = req.user.company_id;
-      const [riskStatistics, companiesData] = await Promise.all([
-        getNetworkRiskStatistics(userCompanyId),
-        getNetworkCompaniesWithRiskData(userCompanyId)
-      ]);
-      
-      res.json({
-        ...riskStatistics,
-        companies: companiesData
-      });
-      
-    } catch (error) {
-      console.error('[UnifiedRisk] Error fetching unified risk data:', error);
-      res.status(500).json({ 
-        message: "Error fetching unified risk data",
-        code: "FETCH_ERROR"
-      });
-    }
-  });
-
-  // Individual company risk data endpoint
+  // Individual company risk data endpoint (specific route first)
   app.get("/api/companies/:id/risk-unified", requireAuth, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
@@ -4578,6 +4549,35 @@ export async function registerRoutes(app: Express): Promise<Express> {
       console.error(`[UnifiedRisk] Error fetching risk data for company ${req.params.id}:`, error);
       res.status(500).json({
         message: "Error fetching company risk data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
+  // Unified risk data endpoint - single source of truth (general route after specific)
+  app.get("/api/companies/network-risk-unified", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.company_id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const { getNetworkRiskStatistics, getNetworkCompaniesWithRiskData } = await import('./services/riskCalculationService');
+      
+      const userCompanyId = req.user.company_id;
+      const [riskStatistics, companiesData] = await Promise.all([
+        getNetworkRiskStatistics(userCompanyId),
+        getNetworkCompaniesWithRiskData(userCompanyId)
+      ]);
+      
+      res.json({
+        ...riskStatistics,
+        companies: companiesData
+      });
+      
+    } catch (error) {
+      console.error('[UnifiedRisk] Error fetching unified risk data:', error);
+      res.status(500).json({ 
+        message: "Error fetching unified risk data",
         code: "FETCH_ERROR"
       });
     }
