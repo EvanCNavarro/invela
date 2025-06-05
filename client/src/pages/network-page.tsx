@@ -252,6 +252,7 @@ export default function NetworkPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
+  const [riskStatusFilter, setRiskStatusFilter] = useState<'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' | "ALL">("ALL");
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const { user } = useAuth();
 
@@ -261,12 +262,14 @@ export default function NetworkPage() {
     const page = params.get('page');
     const search = params.get('search');
     const status = params.get('status');
+    const riskStatus = params.get('riskStatus');
     const sort = params.get('sort');
     const direction = params.get('direction');
 
     if (page) setCurrentPage(parseInt(page));
     if (search) setSearchQuery(search);
     if (status) setStatusFilter(status as AccreditationStatus | "ALL");
+    if (riskStatus) setRiskStatusFilter(riskStatus as 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' | "ALL");
     if (sort) setSortField(sort);
     if (direction) setSortDirection(direction as "asc" | "desc");
   }, []);
@@ -277,12 +280,13 @@ export default function NetworkPage() {
     if (currentPage !== 1) params.set('page', currentPage.toString());
     if (searchQuery) params.set('search', searchQuery);
     if (statusFilter !== "ALL") params.set('status', statusFilter);
+    if (riskStatusFilter !== "ALL") params.set('riskStatus', riskStatusFilter);
     if (sortField !== "name") params.set('sort', sortField);
     if (sortDirection !== "asc") params.set('direction', sortDirection);
 
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.history.replaceState({}, '', newUrl);
-  }, [currentPage, searchQuery, statusFilter, sortField, sortDirection]);
+  }, [currentPage, searchQuery, statusFilter, riskStatusFilter, sortField, sortDirection]);
 
   const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -346,11 +350,22 @@ export default function NetworkPage() {
     }
 
     return results
-      .filter((relationship) =>
-        statusFilter === "ALL" || relationship.relatedCompany.accreditationStatus === statusFilter
-      )
+      .filter((relationship) => {
+        // Filter by accreditation status
+        const accreditationMatch = statusFilter === "ALL" || relationship.relatedCompany.accreditationStatus === statusFilter;
+        
+        // Filter by risk status
+        let riskStatusMatch = true;
+        if (riskStatusFilter !== "ALL") {
+          const companyData = { id: relationship.relatedCompany.id, risk_score: relationship.relatedCompany.riskScore, name: relationship.relatedCompany.name };
+          const authenticData = sessionDataService.getCompanyData(companyData);
+          riskStatusMatch = authenticData.status === riskStatusFilter;
+        }
+        
+        return accreditationMatch && riskStatusMatch;
+      })
       .sort(sortCompanies);
-  }, [networkRelationships, searchQuery, statusFilter, sortField, sortDirection, fuse]);
+  }, [networkRelationships, searchQuery, statusFilter, riskStatusFilter, sortField, sortDirection, fuse]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -402,10 +417,11 @@ export default function NetworkPage() {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("ALL");
+    setRiskStatusFilter("ALL");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== "ALL";
+  const hasActiveFilters = searchQuery || statusFilter !== "ALL" || riskStatusFilter !== "ALL";
 
   return (
     <DashboardLayout>
@@ -446,12 +462,25 @@ export default function NetworkPage() {
               <span className="sr-only">Clear filters</span>
             </Button>
 
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
-              <SelectTrigger className="w-[200px] justify-between bg-white">
-                <SelectValue className="text-left" placeholder="Filter by status" />
+            <Select value={riskStatusFilter} onValueChange={(value) => setRiskStatusFilter(value as 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' | "ALL")}>
+              <SelectTrigger className="w-[180px] justify-between bg-white">
+                <SelectValue className="text-left" placeholder="Risk Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="ALL">All Risk Status</SelectItem>
+                <SelectItem value="Blocked">Blocked</SelectItem>
+                <SelectItem value="Approaching Block">Approaching Block</SelectItem>
+                <SelectItem value="Monitoring">Monitoring</SelectItem>
+                <SelectItem value="Stable">Stable</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
+              <SelectTrigger className="w-[200px] justify-between bg-white">
+                <SelectValue className="text-left" placeholder="Accreditation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Accreditation</SelectItem>
                 {/* Primary status values */}
                 <SelectItem value={AccreditationStatus.APPROVED}>Approved</SelectItem>
                 <SelectItem value={AccreditationStatus.UNDER_REVIEW}>Under Review</SelectItem>
