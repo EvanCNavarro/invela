@@ -62,6 +62,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       companyCount: companies.length 
     });
     
+    console.log(`[Table] useMemo triggered with timeframe: ${timeframe}`);
+    
     // Use the same session data service as company profiles to ensure consistency
     const sessionData = getSessionCompaniesData(companies);
     
