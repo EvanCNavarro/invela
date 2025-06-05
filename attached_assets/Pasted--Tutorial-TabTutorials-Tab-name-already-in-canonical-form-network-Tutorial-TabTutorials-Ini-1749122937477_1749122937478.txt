@@ -1,0 +1,34 @@
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T11:28:54.065Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T11:28:56.160Z", echo: {…}}
