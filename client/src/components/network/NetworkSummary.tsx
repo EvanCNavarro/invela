@@ -72,8 +72,8 @@ export function NetworkSummary() {
   const { currentNetworkSize, availableCount, expansionMessage, userCompanyCategory, dataProviderCount, dataRecipientCount } = networkStats;
   
   // Use unified risk statistics instead of legacy risk data
-  const unifiedRiskStats = riskStats || networkStats.riskStats || { stable: 0, monitoring: 0, approaching: 0, blocked: 0 };
-  const totalRiskCompanies = unifiedRiskStats.stable + unifiedRiskStats.monitoring + unifiedRiskStats.approaching + unifiedRiskStats.blocked;
+  const unifiedRiskStats = unifiedRiskData || networkStats.riskStats || { stable: 0, monitoring: 0, approaching: 0, blocked: 0 };
+  const totalRiskCompanies = (unifiedRiskStats?.stable || 0) + (unifiedRiskStats?.monitoring || 0) + (unifiedRiskStats?.approaching || 0) + (unifiedRiskStats?.blocked || 0);
 
   // For Invela users, show both provider and recipient counts
   const isInvelaUser = userCompanyCategory === 'Invela';
@@ -156,35 +156,35 @@ export function NetworkSummary() {
           <div className="flex-1 flex flex-col justify-center space-y-2">
             {/* Risk Distribution Bar - Modern Fintech Style */}
             <div className="flex bg-slate-50 rounded h-4 overflow-hidden border border-slate-200">
-              {riskStats.stable > 0 && (
+              {unifiedRiskStats.stable > 0 && (
                 <div 
                   className="bg-emerald-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.stable / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (unifiedRiskStats.stable / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
-              {riskStats.monitoring > 0 && (
+              {unifiedRiskStats.monitoring > 0 && (
                 <div 
                   className="bg-amber-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.monitoring / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (unifiedRiskStats.monitoring / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
-              {riskStats.approaching > 0 && (
+              {unifiedRiskStats.approaching > 0 && (
                 <div 
                   className="bg-orange-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.approaching / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (unifiedRiskStats.approaching / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
-              {riskStats.blocked > 0 && (
+              {unifiedRiskStats.blocked > 0 && (
                 <div 
                   className="bg-red-500 transition-all duration-700"
                   style={{ 
-                    width: `${totalRiskCompanies > 0 ? (riskStats.blocked / totalRiskCompanies) * 100 : 0}%`
+                    width: `${totalRiskCompanies > 0 ? (unifiedRiskStats.blocked / totalRiskCompanies) * 100 : 0}%`
                   }}
                 />
               )}
@@ -194,19 +194,19 @@ export function NetworkSummary() {
             <div className="flex items-center justify-center gap-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.stable} Stable</span>
+                <span className="text-slate-600 font-medium">{unifiedRiskStats.stable} Stable</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.monitoring} Monitoring</span>
+                <span className="text-slate-600 font-medium">{unifiedRiskStats.monitoring} Monitoring</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-orange-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.approaching} Approaching Block</span>
+                <span className="text-slate-600 font-medium">{unifiedRiskStats.approaching} Approaching Block</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-slate-600 font-medium">{riskStats.blocked} Blocked</span>
+                <span className="text-slate-600 font-medium">{unifiedRiskStats.blocked} Blocked</span>
               </div>
             </div>
           </div>
