@@ -183,18 +183,28 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
         {/* Timeframe toggle on the right */}
         <div className="flex-shrink-0">
-          <Tabs 
-            value={timeframe} 
-            onValueChange={(val: string) => {
-              console.log(`[RiskMonitoring] Timeframe changed from ${timeframe} to ${val}`);
-              setTimeframe(val as '7day' | '30day');
-            }}
-          >
-            <TabsList>
-              <TabsTrigger value="7day">7-Day Change</TabsTrigger>
-              <TabsTrigger value="30day">30-Day Change</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex bg-muted rounded-md p-1">
+            <button
+              onClick={() => setTimeframe('7day')}
+              className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
+                timeframe === '7day' 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              7-Day Change
+            </button>
+            <button
+              onClick={() => setTimeframe('30day')}
+              className={`px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
+                timeframe === '30day' 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              30-Day Change
+            </button>
+          </div>
         </div>
       </div>
       
