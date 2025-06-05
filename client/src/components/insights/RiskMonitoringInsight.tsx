@@ -170,11 +170,9 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       {/* Header row with warning and timeframe toggle */}
       {/* Row with warning message and timeframe toggle */}
       <div className="flex justify-between items-center mb-4">
-        {/* Warning message on the left */}
+        {/* Status message on the left - always show */}
         <div className="flex-grow mr-4">
-          {blockedCompanies.length > 0 && (
-            <BlockedDataRecipientsAlert count={blockedCompanies.length} />
-          )}
+          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
         </div>
 
         {/* Timeframe toggle on the right */}
