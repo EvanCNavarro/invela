@@ -79,7 +79,7 @@ export function NetworkSummary() {
     <div className="flex items-start gap-4">
       
       {/* Network Size Bento Box - Square - Even Slimmer */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 w-40 h-36 flex flex-col justify-between">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
             <Building2 className="h-2.5 w-2.5 text-slate-600" />
@@ -101,7 +101,7 @@ export function NetworkSummary() {
 
       {/* Risk Overview Bento Box - Even Slimmer */}
       {totalRiskCompanies > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-36 flex flex-col">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 h-36 flex flex-col">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
               <AlertTriangle className="h-2.5 w-2.5 text-slate-600" />
@@ -175,10 +175,10 @@ export function NetworkSummary() {
           
           <div className="text-center flex-1 flex flex-col justify-center">
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {formatNetworkSize(availableCount)}
+              {formatNetworkSize(availableCount)} Available {availableEntityType}
             </div>
             <div className="text-xs text-slate-600 leading-tight">
-              Available {availableEntityType}
+              Navigate to see a listing of all the partners you can invite to expand your network
             </div>
           </div>
         </div>
