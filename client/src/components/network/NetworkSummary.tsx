@@ -39,7 +39,7 @@ export function NetworkSummary() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Network className="h-4 w-4 text-blue-600" />
+              <Building2 className="h-4 w-4 text-blue-600" />
             </div>
             Network Overview
           </CardTitle>
