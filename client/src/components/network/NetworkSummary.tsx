@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Building2, AlertTriangle, TrendingUp, Shield, CheckCircle } from "lucide-react";
+import { ArrowRight, Building2, AlertTriangle, TrendingUp, Shield, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface NetworkStats {
@@ -78,19 +78,19 @@ export function NetworkSummary() {
   return (
     <div className="flex items-start gap-4">
       
-      {/* Network Size Bento Box - Square - Slimmer */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 w-44 h-44 flex flex-col justify-between">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Building2 className="h-3 w-3 text-slate-600" />
+      {/* Network Size Bento Box - Square - Even Slimmer */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 w-40 h-36 flex flex-col justify-between">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
+            <Building2 className="h-2.5 w-2.5 text-slate-600" />
           </div>
-          <div className="text-sm font-semibold text-slate-900">
+          <div className="text-xs font-semibold text-slate-900">
             Network Size
           </div>
         </div>
         
         <div className="text-center flex-1 flex flex-col justify-center">
-          <div className="text-3xl font-bold text-slate-900 mb-2">
+          <div className="text-2xl font-bold text-slate-900 mb-1">
             {formatNetworkSize(currentNetworkSize)}
           </div>
           <div className="text-xs text-slate-600">
@@ -99,21 +99,21 @@ export function NetworkSummary() {
         </div>
       </div>
 
-      {/* Risk Overview Bento Box - Slimmer */}
+      {/* Risk Overview Bento Box - Even Slimmer */}
       {totalRiskCompanies > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-44 flex flex-col">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="h-3 w-3 text-slate-600" />
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-36 flex flex-col">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="h-2.5 w-2.5 text-slate-600" />
             </div>
-            <div className="text-sm font-semibold text-slate-900">
+            <div className="text-xs font-semibold text-slate-900">
               Risk Overview
             </div>
           </div>
           
-          <div className="flex-1 flex flex-col justify-center space-y-3">
+          <div className="flex-1 flex flex-col justify-center space-y-2">
             {/* Risk Distribution Bar - Muted Colors */}
-            <div className="flex bg-slate-100 rounded-lg h-6 overflow-hidden">
+            <div className="flex bg-slate-100 rounded-lg h-5 overflow-hidden">
               {riskStats.low > 0 && (
                 <div 
                   className="bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-700"
@@ -140,18 +140,18 @@ export function NetworkSummary() {
               )}
             </div>
             
-            {/* Compact Legend */}
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-blue-400 rounded-sm" />
+            {/* Centered Legend */}
+            <div className="flex items-center justify-center gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-blue-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.low} Stable</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-amber-400 rounded-sm" />
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-amber-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.medium} Monitoring</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-red-400 rounded-sm" />
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-red-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.high} Blocked</span>
               </div>
             </div>
@@ -159,25 +159,25 @@ export function NetworkSummary() {
         </div>
       )}
 
-      {/* Network Expansion Call-to-Action - Simplified */}
+      {/* Network Expansion Call-to-Action - Improved */}
       {availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200 flex-1 h-44 group cursor-pointer flex flex-col justify-between"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 flex-1 h-36 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold text-slate-900">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-slate-900">
               Expand Your Network
             </div>
-            <div className="flex items-center gap-1 text-xs text-blue-600 font-medium group-hover:text-blue-700 transition-colors">
+            <div className="flex items-center gap-1 text-sm text-blue-600 font-bold group-hover:text-blue-700 transition-colors">
               View More
-              <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
             </div>
           </div>
           
           <div className="text-center flex-1 flex flex-col justify-center">
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="text-2xl font-bold text-blue-600 mb-1">
               {formatNetworkSize(availableCount)}
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-slate-600 leading-tight">
               Available {availableEntityType}
             </div>
           </div>
