@@ -4540,16 +4540,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      // Get current network size (companies connected to user's company)
-      const networkCompanies = await db.execute(
-        sql`
-          SELECT COUNT(DISTINCT r.related_company_id) as count
-          FROM relationships r 
-          WHERE r.company_id = ${userCompanyId}
-        `
-      );
+      // Get current network size using Drizzle ORM
+      const networkRelationships = await db.query.relationships.findMany({
+        where: eq(relationships.company_id, userCompanyId),
+        columns: { related_company_id: true }
+      });
 
-      const currentNetworkSize = Number(networkCompanies[0]?.count || 0);
+      const currentNetworkSize = networkRelationships.length;
 
       // Determine expansion target category based on user's company type
       let targetCategory: string;
@@ -4567,42 +4564,36 @@ export async function registerRoutes(app: Express): Promise<Express> {
         expansionMessage = 'companies available to expand your network';
       }
 
+      // Get related company IDs to exclude from available count
+      const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
+
       // Get available companies to connect with (not currently in network)
-      const availableCompanies = await db.execute(
-        sql`
-          SELECT COUNT(*) as count
-          FROM companies c
-          WHERE c.category = ${targetCategory}
-            AND c.id != ${userCompanyId}
-            AND c.id NOT IN (
-              SELECT r.related_company_id 
-              FROM relationships r 
-              WHERE r.company_id = ${userCompanyId}
-            )
-        `
-      );
+      const availableCompanies = await db.query.companies.findMany({
+        where: and(
+          eq(companies.category, targetCategory),
+          ne(companies.id, userCompanyId),
+          relatedCompanyIds.length > 0 ? notInArray(companies.id, relatedCompanyIds) : undefined
+        ),
+        columns: { id: true }
+      });
 
-      const availableCount = Number(availableCompanies[0]?.count || 0);
+      const availableCount = availableCompanies.length;
 
-      // Get risk status breakdown of current network
-      const riskBreakdown = await db.execute(
-        sql`
-          SELECT 
-            CASE 
-              WHEN c.risk_score >= 70 THEN 'high'
-              WHEN c.risk_score >= 40 THEN 'medium'
-              ELSE 'low'
-            END as risk_level,
-            COUNT(*) as count
-          FROM companies c
-          INNER JOIN relationships r ON c.id = r.related_company_id
-          WHERE r.company_id = ${userCompanyId}
-          GROUP BY risk_level
-        `
-      );
+      // Get risk status breakdown of current network using Drizzle ORM
+      const networkCompaniesData = await db.query.companies.findMany({
+        where: relatedCompanyIds.length > 0 ? inArray(companies.id, relatedCompanyIds) : sql`1=0`,
+        columns: { id: true, risk_score: true }
+      });
 
-      const riskStats = riskBreakdown.reduce((acc: any, row: any) => {
-        acc[row.risk_level] = Number(row.count);
+      const riskStats = networkCompaniesData.reduce((acc: any, company: any) => {
+        const score = company.risk_score || 0;
+        if (score >= 70) {
+          acc.high++;
+        } else if (score >= 40) {
+          acc.medium++;
+        } else {
+          acc.low++;
+        }
         return acc;
       }, { high: 0, medium: 0, low: 0 });
 

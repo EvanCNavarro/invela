@@ -1,0 +1,75 @@
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-05T11:06:14.969Z", message: "Authentication successful"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:14.972Z", id: 858, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.007Z", id: 168, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.042Z", id: 123, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.096Z", id: 338, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.163Z", id: 124, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.230Z", id: 122, status: "completed", progress: 100, …}
+Logo fetch failed for Allied Evaluation Specialists: 
+Object {status: 404, code: "LOGO_NOT_ASSIGNED", message: "No logo assigned to company"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+Logo fetch failed for AgriFinance Connect: 
+Object {status: 404, code: "LOGO_NOT_ASSIGNED", message: "No logo assigned to company"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-05T11:06:15.299Z", id: 720, status: "completed", progress: 100, …}
+Logo fetch failed for Advanced Gaming Technologies: 
+Object {status: 404, code: "LOGO_NOT_ASSIGNED", message: "No logo assigned to company"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 5, …}
+[Tutorial:TutorialManager] Base route check: true for tab network (path: /network, expected: /network)
+[Tutorial:TutorialManager] Tutorial already completed for tab: network
+Logo fetch failed for Advanced Infrastructure Technologies: 
+Object {status: 404, code: "LOGO_NOT_ASSIGNED", message: "No logo assigned to company"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
