@@ -64,6 +64,10 @@ export default function NetworkExpandPage() {
 
   // Track companies being connected/connected in this session
   const [connectedCompanies, setConnectedCompanies] = useState<Map<number, ConnectedCompany>>(new Map());
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Fetch expansion candidates
   const { data: expansionData, isLoading } = useQuery<ExpansionData>({
@@ -173,7 +177,13 @@ export default function NetworkExpandPage() {
 
   const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCandidates = filteredCandidates.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -327,8 +337,8 @@ export default function NetworkExpandPage() {
                         <TableCell><div className="h-8 w-20 bg-muted rounded animate-pulse ml-auto" /></TableCell>
                       </TableRow>
                     ))
-                  ) : filteredCandidates.length > 0 ? (
-                    filteredCandidates.map((candidate) => {
+                  ) : paginatedCandidates.length > 0 ? (
+                    paginatedCandidates.map((candidate) => {
                       const connectionState = connectedCompanies.get(candidate.id);
                       const connectEnabled = isConnectEnabled(candidate);
                       
@@ -438,6 +448,45 @@ export default function NetworkExpandPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                {isLoading ? (
+                  "Loading results..."
+                ) : filteredCandidates.length > 0 ? (
+                  <>
+                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCandidates.length)} of {filteredCandidates.length} results
+                  </>
+                ) : (
+                  "No results found"
+                )}
+              </div>
+
+              {!isLoading && filteredCandidates.length > itemsPerPage && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
