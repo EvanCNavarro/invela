@@ -1,8 +1,29 @@
 /**
- * Modal Service for Form Submission
+ * ========================================
+ * Modal Service - Enterprise Dialog Management
+ * ========================================
  * 
- * This service manages the state of success and error modals that appear after form submissions.
- * It provides a centralized way to show/hide modals and manage their content across the application.
+ * Comprehensive modal management service providing centralized dialog state
+ * management for success confirmations, error handling, and user feedback
+ * throughout the enterprise platform with advanced Zustand state management.
+ * 
+ * Key Features:
+ * - Centralized modal state management with Zustand
+ * - Success and error modal coordination
+ * - Dynamic content and action button management
+ * - Navigation integration with return path handling
+ * - Customizable close behaviors and callback handling
+ * 
+ * Modal Management:
+ * - Success modals for form completion celebrations
+ * - Error modals with detailed feedback and recovery options
+ * - Dynamic action button configuration
+ * - Return path navigation for seamless user flow
+ * - Global modal state synchronization across components
+ * 
+ * @module services/modalService
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 import { create } from 'zustand';
 

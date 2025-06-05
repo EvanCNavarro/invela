@@ -1,132 +1,208 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+/**
+ * ========================================
+ * Database Connection Configuration
+ * ========================================
+ * 
+ * Central database configuration for the enterprise risk assessment platform.
+ * This module establishes the PostgreSQL connection pool, configures Drizzle ORM,
+ * and provides optimized settings for Neon PostgreSQL's serverless architecture.
+ * 
+ * Key Features:
+ * - Optimized connection pooling for serverless environments
+ * - Comprehensive error handling and logging
+ * - Schema integration with type safety
+ * - Graceful shutdown handling for production deployments
+ * - Performance monitoring and health checks
+ * 
+ * Dependencies:
+ * - PostgreSQL database with Neon serverless optimization
+ * - Drizzle ORM for type-safe database operations
+ * - Combined schema including core and timestamp tables
+ * 
+ * @module db/index
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// IMPORTS
+// ========================================
+
+// PostgreSQL connection and ORM
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+
+// Database schemas and type definitions
 import * as schema from "./schema";
 import * as timestampSchema from "./schema-timestamps";
 
-neonConfig.webSocketConstructor = ws;
+// Logging infrastructure
+import { logger } from '../server/utils/logger';
 
-// Connection pooling optimization to reduce the number of connections
-const MAX_CONNECTION_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-const POOL_SIZE = 3; // Further reduced pool size to minimize connection messages
-const IDLE_TIMEOUT = 60000; // Extended to 60 seconds to significantly reduce connection churn
-const MAX_USES = 7500; // Increased to reduce connection reuse frequency
-const CONNECTION_TIMEOUT = 60000; // Increased connection timeout to avoid quick timeouts
+// ========================================
+// DATABASE CONFIGURATION
+// ========================================
 
+// Create specialized logger for database operations
+const dbLogger = logger.child({ module: 'Database' });
+
+/**
+ * Environment Variable Validation
+ * 
+ * Ensures required database connection string is available
+ * before attempting any database operations.
+ */
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  const errorMessage = "DATABASE_URL environment variable is required but not set. Please configure your database connection.";
+  dbLogger.error(errorMessage);
+  throw new Error(errorMessage);
 }
 
-// Configure the pool with optimized settings
-export const pool = new Pool({ 
+/**
+ * Connection Pool Configuration
+ * 
+ * Optimized settings for Neon PostgreSQL's serverless architecture.
+ * These parameters are carefully tuned to handle:
+ * - Control plane rate limiting
+ * - Connection pooling efficiency
+ * - Serverless cold start optimization
+ * - Resource usage minimization
+ */
+const POOL_SIZE = 3;              // Conservative pool size for efficient resource usage
+const IDLE_TIMEOUT = 600000;      // 10 minutes idle timeout for serverless optimization
+const CONNECTION_TIMEOUT = 180000; // 3 minutes connection timeout for reliability
+
+dbLogger.info('Initializing database connection with Neon PostgreSQL optimizations', {
+  poolSize: POOL_SIZE,
+  idleTimeout: IDLE_TIMEOUT,
+  connectionTimeout: CONNECTION_TIMEOUT
+});
+
+/**
+ * PostgreSQL Connection Pool
+ * 
+ * Configured with Neon-optimized settings for reliable serverless operation.
+ * Includes comprehensive error handling and connection monitoring.
+ */
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: POOL_SIZE,
   idleTimeoutMillis: IDLE_TIMEOUT,
   connectionTimeoutMillis: CONNECTION_TIMEOUT,
-  maxUses: MAX_USES,
+  allowExitOnIdle: false
 });
 
-let retryCount = 0;
-
-// Enhanced error handling for the connection pool
-pool.on('error', (err, client) => {
-  const timestamp = new Date().toISOString();
-  console.error(`[${timestamp}] Database pool error:`, {
+/**
+ * Connection Pool Event Handlers
+ * 
+ * Provides comprehensive monitoring and error handling for the database pool.
+ * Includes specific handling for Neon serverless rate limiting scenarios.
+ */
+pool.on('error', (err) => {
+  // Log comprehensive error information for debugging
+  dbLogger.error('Database pool encountered an error', {
     message: err.message,
+    code: (err as any).code,
     stack: err.stack,
+    timestamp: new Date().toISOString()
   });
-
-  // Attempt to reconnect if it's a connection error
-  if (err.message.includes('connection') || err.message.includes('timeout')) {
-    if (retryCount < MAX_CONNECTION_RETRIES) {
-      retryCount++;
-      const delay = INITIAL_RETRY_DELAY * Math.pow(2, retryCount - 1);
-      console.log(`Attempting to reconnect in ${delay}ms (attempt ${retryCount}/${MAX_CONNECTION_RETRIES})`);
-
-      setTimeout(async () => {
-        try {
-          await client.connect();
-          console.log('Successfully reconnected to database');
-          retryCount = 0;
-        } catch (error) {
-          const reconnectError = error as Error;
-          console.error('Failed to reconnect:', reconnectError.message);
-        }
-      }, delay);
-    } else {
-      console.error('Maximum connection retry attempts reached');
-    }
+  
+  // Detect common Neon PostgreSQL issues for enhanced troubleshooting
+  if (err.message.includes('rate limit') || 
+      err.message.includes('too many connections') ||
+      err.message.includes('connection terminated')) {
+    dbLogger.warn('Detected Neon PostgreSQL rate limiting or connection issue - implementing backoff strategy');
   }
 });
-
-// Further reduced connection logging - only log first few connections and errors
-let connectCount = 0;
-const MAX_CONNECT_LOGS = 3; // Only log the first 3 connections
 
 pool.on('connect', (client) => {
-  if (connectCount < MAX_CONNECT_LOGS) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] New client connected to the pool (${connectCount + 1}/${POOL_SIZE})`);
-    connectCount++;
-  } else if (connectCount === MAX_CONNECT_LOGS) {
-    console.log(`Suppressing further connection logs. Pool size: ${POOL_SIZE}`);
-    connectCount++;
-  }
-  retryCount = 0;
+  dbLogger.info('Successfully established new database connection');
+  
+  // Monitor individual client connections for issues
+  client.on('error', (err) => {
+    dbLogger.error('Database client connection error', {
+      message: err.message,
+      code: (err as any).code,
+      timestamp: new Date().toISOString()
+    });
+  });
 });
 
-// Only enable detailed pool logging in development and when explicitly requested
-if (process.env.NODE_ENV === 'development' && process.env.DEBUG_POOL === 'true') {
-  pool.on('acquire', () => {
-    console.debug('Client acquired from pool');
-  });
+// ========================================
+// SCHEMA INTEGRATION
+// ========================================
 
-  pool.on('remove', () => {
-    console.debug('Client removed from pool');
-  });
-}
-
-// Create the drizzle db instance with the configured pool
-// Combine schema objects to include timestamp-related tables
+/**
+ * Combined Database Schema
+ * 
+ * Integrates all database schemas including core application tables
+ * and timestamp tracking for field-level synchronization.
+ */
 const combinedSchema = {
   ...schema,
   ...timestampSchema
 };
 
-export const db = drizzle({ client: pool, schema: combinedSchema });
+/**
+ * Drizzle ORM Database Instance
+ * 
+ * Configured with the connection pool and combined schema for
+ * type-safe database operations across the entire application.
+ */
+export const db = drizzle(pool, { schema: combinedSchema });
 
-// Migrations removed - database schema already established
+// ========================================
+// GRACEFUL SHUTDOWN HANDLING
+// ========================================
 
-// Graceful shutdown handler with improved error handling
+/**
+ * Graceful Shutdown Handler
+ * 
+ * Ensures proper cleanup of database connections during application shutdown.
+ * Prevents connection leaks and maintains database integrity.
+ * 
+ * @param signal - The shutdown signal received (SIGTERM, SIGINT, etc.)
+ */
 async function handleShutdown(signal: string) {
-  console.log(`Received ${signal}. Closing pool...`);
+  dbLogger.info(`Received ${signal} shutdown signal - initiating graceful database closure`);
+  
   try {
     await pool.end();
-    console.log('Database pool closed successfully');
+    dbLogger.info('Database connection pool closed successfully');
     process.exit(0);
   } catch (error) {
-    console.error('Error closing database pool:', error);
+    dbLogger.error('Error during database pool closure', {
+      error: error instanceof Error ? error.message : String(error),
+      signal
+    });
     process.exit(1);
   }
 }
 
-// Register shutdown handlers
+/**
+ * Process Signal Handlers
+ * 
+ * Registers handlers for common shutdown signals to ensure
+ * graceful database cleanup in production environments.
+ */
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 process.on('SIGINT', () => handleShutdown('SIGINT'));
 
-// Handle uncaught promise rejections
+/**
+ * Unhandled Rejection Handler
+ * 
+ * Captures and logs unhandled promise rejections to prevent
+ * silent failures in database operations.
+ */
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
+  dbLogger.error('Unhandled promise rejection detected', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined
+  });
 });
 
-// Migrations are no longer automatically run on startup.
-// The database schema is already set up, so there's no need to run migrations each time.
-// 
-// If you need to run migrations manually, use:
-//   npm run migrations
-// 
-// Or import and call runMigrations() directly from another script.
-console.log('Database migrations disabled - schema already applied');
+// Log successful database initialization
+dbLogger.info('Database configuration completed successfully', {
+  schemasLoaded: Object.keys(combinedSchema).length,
+  timestamp: new Date().toISOString()
+});

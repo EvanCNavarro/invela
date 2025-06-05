@@ -16,7 +16,7 @@ import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcast, broadcastTaskUpdate } from '../utils/unified-websocket';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
-import * as fileCreationService from './fileCreation.fixed';
+import * as fileCreationService from './fileCreation';
 
 interface SubmitFormOptions {
   taskId: number;
@@ -115,16 +115,22 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
       id: tasks.id,
       status: tasks.status,
       progress: tasks.progress,
-      metadata: tasks.metadata
+      metadata: tasks.metadata,
+      task_type: tasks.task_type
     })
     .from(tasks)
     .where(eq(tasks.id, taskId));
     
-    // Check if task was properly updated
+    // Check if task was properly updated - extra vigilant for KY3P forms
+    const isKy3pForm = formType === 'ky3p' || 
+                      verifiedTask.task_type === 'ky3p' || 
+                      verifiedTask.task_type === 'sp_ky3p_assessment';
+                      
     if (verifiedTask.status !== 'submitted' || verifiedTask.progress !== 100) {
       logger.warn('Task not properly updated after submission, applying direct fix', {
         taskId,
         formType,
+        isKy3pForm,
         currentStatus: verifiedTask.status,
         currentProgress: verifiedTask.progress,
         expected: {
@@ -138,11 +144,32 @@ export async function submitFormWithImmediateUnlock(options: SubmitFormOptions):
         .set({
           status: 'submitted',
           progress: 100,
+          completion_date: now, // Ensure completion date is set
           updated_at: now
         })
         .where(eq(tasks.id, taskId));
         
       logger.info('Applied direct fix for task status/progress', { taskId, formType });
+    } else if (isKy3pForm) {
+      // For KY3P forms, double-check completion_date is set
+      if (!verifiedTask.metadata?.submission_date && !verifiedTask.metadata?.submissionDate) {
+        logger.info('KY3P form missing submission date, updating metadata', { taskId });
+        
+        // Update metadata with submission date
+        await db.update(tasks)
+          .set({
+            metadata: {
+              ...verifiedTask.metadata,
+              submission_date: now.toISOString(),
+              submissionDate: now.toISOString(),
+              submitted: true,
+              completed: true
+            }
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info('Updated KY3P metadata with submission date', { taskId });
+      }
     }
     
     // 3. Broadcast the task update via WebSocket with enhanced submission metadata

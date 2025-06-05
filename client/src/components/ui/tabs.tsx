@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Tabs Component System - Tabbed Navigation Interface
+ * ========================================
+ * 
+ * Professional tabs component system built with Radix UI primitives providing
+ * accessible tabbed navigation with enterprise features including locked tabs,
+ * icons, and professional styling consistent with the design system.
+ * 
+ * Key Features:
+ * - Accessible tab navigation with keyboard support
+ * - Locked tab states for restricted content
+ * - Icon integration for enhanced visual hierarchy
+ * - Professional styling with enterprise design tokens
+ * - Type-safe component composition
+ * 
+ * Tab Components:
+ * - Tabs: Root tabs container with state management
+ * - TabsList: Tab navigation list with professional styling
+ * - TabsTrigger: Individual tab triggers with lock support
+ * - TabsContent: Tab content panels with transitions
+ * 
+ * @module components/ui/tabs
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 import { Lock } from "lucide-react"

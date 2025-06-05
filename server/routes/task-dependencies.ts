@@ -363,21 +363,47 @@ export async function unlockAllTasks(companyId: number) {
         return true;
       }
       
-      // If task has any submission indicators, don't process it
+      // ENHANCED FIX: Comprehensively check for ANY submission indicators and don't process submitted tasks
+      const isReadyForSubmission = task.status === 'ready_for_submission' && task.progress === 100;
+      const isExplicitlySubmitted = task.status === 'submitted';
+      
+      // Detect ALL possible submission indicators across different metadata fields and naming conventions
       if (hasSubmissionDate || 
           hasSubmittedFlag || 
           hasFileId || 
-          task.status === 'submitted' || 
-          (task.status === 'ready_for_submission' && task.progress === 100)) {
+          isExplicitlySubmitted || 
+          isReadyForSubmission) {
         
+        // Log detailed submission indicators for debugging
         console.log(`[TaskDependencies] Skipping task ${task.id} with submission indicators`, {
           hasSubmissionDate: !!hasSubmissionDate,
           hasSubmittedFlag: !!hasSubmittedFlag,
           hasFileId: !!hasFileId,
           status: task.status,
           progress: task.progress,
-          isReadyForSubmission: task.status === 'ready_for_submission' && task.progress === 100
+          isReadyForSubmission: isReadyForSubmission
         });
+        
+        // IMPORTANT: Fix submitted tasks that have incorrect progress
+        if (isExplicitlySubmitted && task.progress !== 100) {
+          logger.info('[TaskDependencies] Found submitted task with incorrect progress', {
+            taskId: task.id,
+            taskType: task.task_type,
+            currentProgress: task.progress,
+            correctProgress: 100
+          });
+          
+          // Trigger manual reconciliation for this task through the periodic system
+          // This will be handled asynchronously
+          import('../utils/periodic-task-reconciliation').then(module => {
+            module.triggerManualReconciliation([task.id])
+              .catch(err => {
+                logger.error('[TaskDependencies] Error triggering reconciliation:', err);
+              });
+          }).catch(err => {
+            logger.error('[TaskDependencies] Error importing reconciliation module:', err);
+          });
+        }
         return false;
       }
       

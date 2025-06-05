@@ -3,6 +3,9 @@ import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
 import * as WebSocketService from "./websocket";
 import { eq } from "drizzle-orm";
+// Import demo company hooks for automatic file vault population
+import { processNewCompany } from "../hooks/demo-company-hooks";
+import { generateBusinessDetails, type PersonaType } from "../utils/business-details-generator";
 
 /**
  * Creates a new company and handles all associated rules/tasks
@@ -83,6 +86,9 @@ async function createCompanyInternal(
   // Get the creator's user ID with proper validation
   const metadata = (data as any).metadata as Record<string, any> | undefined;
   const createdById = metadata?.created_by_id ?? metadata?.invited_by;
+
+  console.log('[Company Service] Metadata received:', metadata);
+  console.log('[Company Service] Creator ID from metadata:', createdById);
 
   if (!createdById || typeof createdById !== 'number') {
     console.error('[Company Service] Invalid creator ID:', {
@@ -307,6 +313,35 @@ async function createCompanyInternal(
       metadata: cardTask.metadata
     });
 
+    // Process demo company hooks (file vault population for demo companies)
+    try {
+      console.log('[Company Service] Checking if this is a demo company for file vault population');
+      
+      // Call our demo company hook non-blocking
+      setTimeout(async () => {
+        try {
+          const demoResult = await processNewCompany(newCompany);
+          console.log('[Company Service] Demo company processing result:', {
+            companyId: newCompany.id,
+            success: demoResult.success,
+            fileCount: demoResult.fileCount || 0
+          });
+        } catch (demoError) {
+          console.error('[Company Service] Error in demo company processing:', {
+            error: demoError,
+            companyId: newCompany.id
+          });
+          // Non-blocking - we don't want to fail company creation if demo processing fails
+        }
+      }, 0);
+    } catch (demoError) {
+      console.error('[Company Service] Error initiating demo company processing:', {
+        error: demoError,
+        companyId: newCompany.id
+      });
+      // Non-blocking - we don't want to fail company creation if demo processing fails
+    }
+    
     // Return with additional task IDs for reference in calling code
     return {
       ...newCompany,

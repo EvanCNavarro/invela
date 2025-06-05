@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Document Processing Service - Intelligent Content Analysis
+ * ========================================
+ * 
+ * Advanced document processing service providing comprehensive content analysis,
+ * field extraction, and intelligent document parsing for the enterprise platform.
+ * Manages processing queues, progress tracking, and error handling for optimal performance.
+ * 
+ * Key Features:
+ * - Intelligent document content extraction and field mapping
+ * - Asynchronous processing queue management with progress tracking
+ * - Multi-format document support (PDF, DOC, images, etc.)
+ * - Field-specific answer extraction and validation
+ * - Comprehensive error handling and retry mechanisms
+ * 
+ * Processing Capabilities:
+ * - Smart field detection and data extraction
+ * - Progress monitoring with detailed chunk processing metrics
+ * - Queue-based processing for optimal resource utilization
+ * - Real-time status updates and completion notifications
+ * - Error recovery and processing retry logic
+ * 
+ * @module services/documentProcessingService
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { apiRequest } from '@/lib/queryClient';
 import type { CardField } from './cardService';
 

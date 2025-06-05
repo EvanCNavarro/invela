@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Select Component - Professional Dropdown Selection
+ * ========================================
+ * 
+ * Enterprise-grade select dropdown component built with Radix UI primitives
+ * providing accessible, keyboard-navigable selection interfaces. Implements
+ * consistent styling and behavior patterns across the platform.
+ * 
+ * Key Features:
+ * - Accessible dropdown with keyboard navigation
+ * - Professional styling with design system tokens
+ * - Icon indicators for expand/collapse states
+ * - Support for grouping and categorization
+ * - Type-safe component composition
+ * 
+ * Accessibility Features:
+ * - Full keyboard navigation support
+ * - Screen reader announcements
+ * - ARIA attributes for proper semantics
+ * - Focus management and trapping
+ * 
+ * @module components/ui/select
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"

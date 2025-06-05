@@ -15,6 +15,19 @@ import { TaskStatus } from '@db/schema';
 import { logger } from '../utils/logger';
 import * as WebSocketService from './websocket-service';
 import { broadcastFormSubmission } from '../utils/unified-websocket';
+import { normalizeTaskStatus, getSubmittedStatus } from '../utils/task-status';
+// Define this to make TypeScript happy with the validation_rules.options access
+type KybField = {
+  id: number;
+  field_key: string;
+  field_type?: string;
+  group?: string;
+  display_name?: string;
+  label?: string;
+  question?: string;
+  validation_rules?: Record<string, any>;
+  order?: number;
+};
 
 export interface KybSubmissionInput {
   taskId: number;
@@ -155,15 +168,18 @@ export async function processKybSubmission(
       // 4.2 Update task status and metadata
       await tx.update(tasks)
         .set({
-          status: TaskStatus.SUBMITTED, // Explicitly 'submitted', not 'ready_for_submission'
+          status: getSubmittedStatus(), // Use standardized 'submitted' string literal
           progress: 100,
           updated_at: new Date(),
           metadata: {
             ...task.metadata,
             kybFormFile: fileCreationResult.fileId,
             submissionDate: new Date().toISOString(),
+            submission_date: new Date().toISOString(), // Add both formats for compatibility
+            submitted: true, // Explicit flag for progress calculator
+            completed: true, // Consistent with other task types
             formVersion: '1.0',
-            statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+            statusFlow: [...(task.metadata?.statusFlow || []), getSubmittedStatus()]
               .filter((v, i, a) => a.indexOf(v) === i),
             explicitlySubmitted: true // Flag to indicate this was a real submission
           }
@@ -173,7 +189,7 @@ export async function processKybSubmission(
       logger.info(`[KYB Transaction] Task status updated in transaction`, {
         transactionId,
         taskId,
-        status: TaskStatus.SUBMITTED,
+        status: getSubmittedStatus(),
         elapsedMs: performance.now() - startTime
       });
 
@@ -237,36 +253,74 @@ export async function processKybSubmission(
       elapsedMs: performance.now() - startTime
     });
     
-    // 5. Unlock security tasks
+    // 5. Unlock security tasks and update company onboarding status
     const unlockResult = await unlockSecurityTasks(task.company_id, taskId, userId);
+    
+    // Update company onboarding status to mark onboarding as complete
+    try {
+      await db.update(companies)
+        .set({
+          onboardingCompleted: true,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, task.company_id));
+        
+      logger.info(`[KYB Transaction] Updated company onboarding status to complete`, {
+        transactionId,
+        companyId: task.company_id,
+        taskId,
+        elapsedMs: performance.now() - startTime
+      });
+    } catch (companyUpdateError) {
+      logger.warn(`[KYB Transaction] Failed to update company onboarding status`, {
+        transactionId,
+        companyId: task.company_id,
+        taskId,
+        error: companyUpdateError instanceof Error ? companyUpdateError.message : 'Unknown error',
+        elapsedMs: performance.now() - startTime
+      });
+      // Continue despite company update error (non-critical)
+    }
     
     // 6. Verify task status was properly updated and fix if necessary
     const [verifiedTask] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
+    
+    const expectedStatus = getSubmittedStatus();
       
-    if (verifiedTask?.status !== TaskStatus.SUBMITTED) {
+    if (verifiedTask?.status !== expectedStatus) {
       logger.warn(`[KYB Transaction] Task status verification failed - expected 'submitted' but found '${verifiedTask?.status}'`, {
         transactionId,
         taskId,
-        expectedStatus: TaskStatus.SUBMITTED,
+        expectedStatus: expectedStatus,
         actualStatus: verifiedTask?.status,
         metadata: verifiedTask?.metadata
       });
       
       // Perform a direct fix if the status is not set correctly
       try {
+        // Ensure all necessary metadata is set consistently for proper status
         await db.update(tasks)
           .set({
-            status: TaskStatus.SUBMITTED,
-            updated_at: new Date()
+            status: expectedStatus, // Use consistent string literal status
+            progress: 100, // Ensure progress matches the completed status
+            updated_at: new Date(),
+            metadata: {
+              ...verifiedTask?.metadata,
+              submission_date: verifiedTask?.metadata?.submissionDate || new Date().toISOString(),
+              submissionDate: verifiedTask?.metadata?.submissionDate || new Date().toISOString(),
+              submitted: true,
+              completed: true,
+              explicitlySubmitted: true
+            }
           })
           .where(eq(tasks.id, taskId));
           
         logger.info(`[KYB Transaction] Applied direct status fix to ensure task is properly marked as submitted`, {
           transactionId,
           taskId,
-          fixedStatus: TaskStatus.SUBMITTED,
+          fixedStatus: expectedStatus,
           elapsedMs: performance.now() - startTime
         });
       } catch (fixError) {
@@ -297,14 +351,17 @@ export async function processKybSubmission(
         companyId: task.company_id,
         fileId: fileCreationResult.fileId,
         progress: 100,
-        submissionDate: new Date().toISOString(),
+        submission_date: new Date().toISOString(), // Use proper field name
         source: 'transactional-kyb-handler',
         metadata: {
           transactionId,
           warnings: warnings.length,
           securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0,
           explicitlySubmitted: true,
-          verifiedStatus: true // Flag to indicate status was verified
+          submitted: true,
+          completed: true,
+          verifiedStatus: true, // Flag to indicate status was verified
+          submissionDate: new Date().toISOString(), // Include legacy field for compatibility
         }
       });
       

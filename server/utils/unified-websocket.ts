@@ -33,8 +33,11 @@ interface ConnectedClient {
 // Track connected clients
 const clients: Map<string, ConnectedClient> = new Map();
 
+// Import the MessageType from our types file
+import { MessageType as AppMessageType } from '../types';
+
 // Message types
-type MessageType = 
+type InternalMessageType = 
   | 'authenticate'
   | 'ping'
   | 'pong'
@@ -44,6 +47,9 @@ type MessageType =
   | 'tabs_updated'
   | 'notification'
   | 'tutorial_updated';
+
+// Union type that includes all possible message types
+type MessageType = InternalMessageType | AppMessageType;
 
 // Base message interface
 interface WebSocketMessage {
@@ -366,6 +372,17 @@ export function getWebSocketServer(): WebSocketServer | null {
  */
 export function broadcastTaskUpdate(payload: Omit<TaskUpdateMessage, 'type' | 'timestamp'>): void {
   broadcast<TaskUpdateMessage>('task_updated', payload);
+  
+  // Also broadcast with the legacy type for backward compatibility
+  if (payload.taskId) {
+    broadcast('task_update', {
+      id: payload.taskId,
+      status: payload.status || 'submitted',
+      progress: payload.progress || 100,
+      metadata: payload.metadata || {},
+      timestamp: new Date().toISOString()
+    });
+  }
 }
 
 /**
@@ -384,6 +401,22 @@ export function broadcastTaskReconciled(payload: Omit<TaskReconciledMessage, 'ty
  */
 export function broadcastFormSubmission(payload: Omit<FormSubmissionCompletedMessage, 'type' | 'timestamp'>): void {
   broadcast<FormSubmissionCompletedMessage>('form_submission_completed', payload);
+  
+  // Also broadcast a task update for form submission to ensure clients receive the updates
+  if (payload.taskId) {
+    broadcastTaskUpdate({
+      taskId: payload.taskId,
+      status: payload.status,
+      progress: payload.progress || 100,
+      metadata: {
+        ...payload.metadata,
+        formType: payload.formType,
+        submitted: true,
+        submission_date: new Date().toISOString()
+      },
+      message: payload.message || `${payload.formType} form submitted successfully`
+    });
+  }
 }
 
 /**

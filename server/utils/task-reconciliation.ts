@@ -177,59 +177,92 @@ export async function reconcileTaskProgress(
     // 2. Skip reconciliation for terminal states, NEVER allow recalculation for submitted forms
     const terminalStates = [TaskStatus.SUBMITTED, TaskStatus.COMPLETED, TaskStatus.APPROVED];
     
-    // Check metadata for submission date - if it exists, this form has been submitted
-    const hasBeenSubmitted = task.metadata?.submissionDate !== undefined;
+    // ENHANCED FIX: Comprehensive check for submission indicators in various metadata fields
+    // This ensures we detect ALL submitted tasks regardless of which field was used to mark submission
+    const hasSubmissionDate = task.metadata?.submissionDate !== undefined || task.metadata?.submission_date !== undefined;
+    const hasSubmittedFlag = task.metadata?.submitted === true || task.metadata?.explicitlySubmitted === true || 
+      (task.metadata?.status === 'submitted') || (task.metadata?.submission_info?.submitted === true);
+    const hasFileId = task.metadata?.submissionFileId !== undefined || task.metadata?.fileId !== undefined;
+    
+    // Consider ANY submission indicator as evidence of submission
+    const hasBeenSubmitted = hasSubmissionDate || hasSubmittedFlag || hasFileId || task.status === TaskStatus.SUBMITTED;
+    
+    // Detailed logging of submission indicators for debugging
+    if (debug) {
+      console.log(`${logPrefix} Task submission indicators:`, {
+        taskId,
+        status: task.status,
+        progress: task.progress,
+        hasSubmissionDate,
+        hasSubmittedFlag,
+        hasFileId,
+        submissionDate: task.metadata?.submissionDate || task.metadata?.submission_date,
+        isTerminalState: terminalStates.includes(task.status as TaskStatus),
+        hasBeenSubmitted
+      });
+    }
     
     if (terminalStates.includes(task.status as TaskStatus) || hasBeenSubmitted) {
       if (debug) {
         console.log(`${logPrefix} Skipping task in terminal/submitted state:`, {
           taskId,
           status: task.status,
-          hasSubmissionDate: hasBeenSubmitted,
-          submissionDate: task.metadata?.submissionDate,
+          hasSubmissionDate,
+          hasSubmittedFlag,
+          hasFileId,
+          submissionDate: task.metadata?.submissionDate || task.metadata?.submission_date,
           terminalState: terminalStates.includes(task.status as TaskStatus)
         });
       }
       
-      // If task is submitted but status doesn't reflect that, fix it
-      if (hasBeenSubmitted && !terminalStates.includes(task.status as TaskStatus)) {
-        console.log(`${logPrefix} Task has been submitted but status is incorrect. Fixing:`, {
+      // If task is submitted but progress is not 100% or status doesn't reflect submission, fix it
+      const needsFixing = hasBeenSubmitted && (
+        !terminalStates.includes(task.status as TaskStatus) || 
+        task.progress !== 100
+      );
+      
+      if (needsFixing) {
+        console.log(`${logPrefix} Task has been submitted but status/progress is incorrect. Fixing:`, {
           taskId,
           currentStatus: task.status,
-          correctStatus: TaskStatus.SUBMITTED
+          currentProgress: task.progress,
+          correctStatus: TaskStatus.SUBMITTED,
+          correctProgress: 100
         });
         
         // Use our dedicated function to fix task submission status
         const fixed = await fixTaskSubmittedStatus(taskId);
         
         if (fixed) {
-          console.log(`${logPrefix} Task ${taskId} fixed to SUBMITTED status`);
+          console.log(`${logPrefix} Task ${taskId} fixed to SUBMITTED status with 100% progress`);
         } else {
           console.log(`${logPrefix} Unable to fix task ${taskId} status, using fallback method`);
           
-          // Fallback method - directly set the status
+          // Fallback method - directly set the status and ensure 100% progress
           await db.update(tasks)
             .set({
               status: TaskStatus.SUBMITTED,
-              progress: 100,
+              progress: 100, // Always set to 100% for submitted tasks
               updated_at: new Date(),
               metadata: {
                 ...task.metadata,
                 status: 'submitted', // Add explicit status flag
+                submitted: true,     // Add explicit submitted flag
                 lastStatusUpdate: new Date().toISOString()
               }
             })
             .where(eq(tasks.id, taskId));
             
-          // Broadcast the corrected status
+          // Broadcast the corrected status with 100% progress
           broadcastProgressUpdate(
             taskId,
             100,
             TaskStatus.SUBMITTED,
             {
               ...task.metadata,
-              submissionDate: task.metadata?.submissionDate,
-              status: 'submitted'
+              submissionDate: task.metadata?.submissionDate || task.metadata?.submission_date,
+              status: 'submitted',
+              submitted: true
             }
           );
         }
@@ -356,7 +389,7 @@ export async function reconcileTaskProgress(
         
         // Import the fixed version of the progress calculator
         // Note: We're importing here to avoid circular dependencies
-        const { calculateAndUpdateTaskProgress } = await import('./unified-progress-fixed');
+        const { calculateAndUpdateTaskProgress } = await import('./ky3p-progress.utils');
         
         // Use the fixed implementation with proper transaction boundaries
         const result = await calculateAndUpdateTaskProgress(taskId, {

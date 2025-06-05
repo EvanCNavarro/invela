@@ -281,6 +281,23 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   description: "Your KYB form has been saved and the task has been updated. The File Vault tab is now enabled.",
                 });
                 
+                // Mark onboarding as completed using the global function we exposed
+                if (window && typeof (window as any).markOnboardingCompleted === 'function') {
+                  console.log('[KYB Form] Marking onboarding as completed');
+                  (window as any).markOnboardingCompleted();
+                } else {
+                  console.log('[KYB Form] markOnboardingCompleted function not found, using fallback');
+                  // Fallback: directly set in localStorage
+                  try {
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (user && user.id) {
+                      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+                    }
+                  } catch (e) {
+                    console.error('[KYB Form] Failed to set fallback onboarding status:', e);
+                  }
+                }
+                
                 // Add a small delay before navigation to ensure UI updates and toast is visible
                 setTimeout(() => {
                   navigate('/task-center');

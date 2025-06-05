@@ -361,7 +361,7 @@ class UnifiedDemoAutoFillService {
       
       if (formType === 'ky3p') {
         // Import the fixed version for KY3P tasks
-        const { updateKy3pProgressFixed } = await import('../utils/unified-progress-fixed');
+        const { updateKy3pProgressFixed } = await import('../utils/ky3p-progress.utils');
         
         logger.info('Using KY3P fixed progress update for demo auto-fill', {
           ...logContext,

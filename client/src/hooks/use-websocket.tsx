@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * WebSocket Hook - Real-time Communication Management
+ * ========================================
+ * 
+ * Advanced WebSocket hook providing real-time communication capabilities
+ * throughout the enterprise platform. Manages connection state, message
+ * handling, and automatic reconnection with enterprise-grade reliability.
+ * 
+ * Key Features:
+ * - Automatic connection management with reconnection logic
+ * - Type-safe message handling and status tracking
+ * - Connection state management (connecting, connected, disconnected, error)
+ * - Event-driven architecture for real-time updates
+ * - Comprehensive error handling and recovery
+ * 
+ * WebSocket Management:
+ * - Auto-connect functionality for seamless user experience
+ * - Message subscription and broadcasting capabilities
+ * - Connection health monitoring and status reporting
+ * - Graceful connection cleanup and resource management
+ * - Real-time data synchronization across platform components
+ * 
+ * @module hooks/use-websocket
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import webSocketService from '@/services/websocket';
 

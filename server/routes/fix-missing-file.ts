@@ -26,7 +26,7 @@ import {
 } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 import * as WebSocketService from '../services/websocket';
-import * as fileCreationService from '../services/fileCreation.fixed';
+import * as fileCreationService from '../services/fileCreation';
 import { logger } from '../utils/logger';
 
 // Add namespace context to logs

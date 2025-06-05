@@ -2724,6 +2724,31 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
         elapsedMs: submissionResult.elapsedMs
       });
       
+      // CRITICAL FIX: Ensure task status is explicitly set to 'submitted'
+      // Direct database update to prevent any status inconsistencies
+      try {
+        await db.update(tasks)
+          .set({
+            status: 'submitted', // Use string literal to ensure exact value
+            progress: 100,
+            completion_date: new Date(),
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, taskId));
+          
+        logger.info('[KYB Submission] Applied direct status fix to ensure proper submission', {
+          taskId,
+          status: 'submitted',
+          progress: 100
+        });
+      } catch (statusFixError) {
+        logger.error('[KYB Submission] Failed to apply status fix', {
+          error: statusFixError instanceof Error ? statusFixError.message : 'Unknown error',
+          taskId
+        });
+        // Continue with the response even if the fix fails
+      }
+      
       // Broadcast the submission to all clients
       try {
         const broadcastResult = await broadcastFormSubmission({
@@ -2738,7 +2763,8 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
           metadata: {
             transactionId,
             warnings: submissionResult.warnings?.length || 0,
-            securityTasksUnlocked: submissionResult.securityTasksUnlocked || 0
+            securityTasksUnlocked: submissionResult.securityTasksUnlocked || 0,
+            statusFixApplied: true // Mark that we applied the status fix
           }
         });
         

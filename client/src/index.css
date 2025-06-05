@@ -9,6 +9,81 @@
   transition: opacity 400ms ease-out, transform 400ms ease-out;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+/* Skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.animate-skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Wave animation like the welcome modal */
+@keyframes wave {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-wave {
+  position: relative;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.animate-wave::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: wave 1.5s ease-in-out infinite;
+}
+
 .auth-layout-container {
   transition: max-width 350ms ease-out;
 }
@@ -158,4 +233,14 @@
   }
   
   /* Remove any special CSS rules that might cause flashing */
+  
+  /* Hide the close button for onboarding modal */
+  .onboarding-modal button[aria-label="Close"],
+  .onboarding-modal [data-radix-dialog-close],
+  .onboarding-modal [data-state="open"] > button:first-child {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
 }

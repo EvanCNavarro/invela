@@ -1,7 +1,29 @@
 /**
- * WebSocket Service
+ * ========================================
+ * WebSocket Service - Real-Time Communication
+ * ========================================
  * 
- * Handles WebSocket connections and message processing.
+ * Comprehensive WebSocket management system for real-time communication
+ * in the enterprise risk assessment platform. Handles connection lifecycle,
+ * message routing, and automatic reconnection with enterprise-grade reliability.
+ * 
+ * Key Features:
+ * - Automatic connection management with retry logic
+ * - Message subscription and broadcasting system
+ * - Connection health monitoring and recovery
+ * - Secure WebSocket over TLS support
+ * - Event-driven architecture with typed messages
+ * 
+ * Use Cases:
+ * - Real-time form updates and synchronization
+ * - Live task status notifications
+ * - Multi-user collaboration features
+ * - System status and health monitoring
+ * - Push notifications for critical events
+ * 
+ * @module services/websocket
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 class WebSocketService {

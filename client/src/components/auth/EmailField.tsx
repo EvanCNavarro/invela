@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * Email Field Component
+ * ========================================
+ * 
+ * Interactive email input component with validation feedback, loading states,
+ * and seamless integration with authentication forms. Provides real-time
+ * validation and user experience enhancements for the enterprise platform.
+ * 
+ * @module components/auth/EmailField
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect } from "react";
 import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

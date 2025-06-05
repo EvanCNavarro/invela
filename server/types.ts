@@ -32,6 +32,21 @@ export interface TaskUpdate {
   metadata?: Record<string, any>;
 }
 
+// WebSocket message types for improved type safety
+export type MessageType = 
+  | 'task_update'       // Task updates (status, progress)
+  | 'task_updated'      // New-style task updates (status, progress)
+  | 'company_updated'   // Company data updated
+  | 'user_updated'      // User data updated
+  | 'notification'      // General notification
+  | 'tutorial_update'   // Tutorial progress updates
+  | 'tutorial_updated'  // New-style tutorial updates
+  | 'company_tabs_updated' // Company tabs updated
+  | 'tabs_updated'      // New-style tabs updated
+  | 'file_uploaded'     // File upload notification
+  | 'form_updated'      // Form data updated
+  | 'form_submission_completed'; // Form submission completed
+
 // Network Visualization types
 export type RiskBucket = 'low' | 'medium' | 'high' | 'critical';
 

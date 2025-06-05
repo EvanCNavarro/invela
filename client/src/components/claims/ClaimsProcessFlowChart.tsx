@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper, getResponsiveChartConfig } from '@/components/ui/responsive-chart-wrapper';
 import * as d3 from 'd3';
 
 // Define types for flow data
@@ -79,9 +81,16 @@ function prepareClaimsProcessData(): ProcessFlowData {
 
 interface ClaimsProcessFlowChartProps {
   className?: string;
+  width?: number;
+  height?: number;
 }
 
-export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProps) {
+// Internal component that handles the actual D3 rendering
+function ClaimsProcessFlowChartInternal({ 
+  className, 
+  width = 800, 
+  height = 500 
+}: ClaimsProcessFlowChartProps) {
   const [loading, setLoading] = useState(true);
   const [flowData, setFlowData] = useState<ProcessFlowData | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -96,12 +105,11 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
     return () => clearTimeout(timer);
   }, []);
 
-  // Define constants at component scope for access by nested functions
-  const width = 1000;
-  const height = 600;
-  const nodeWidth = 140; // Slightly reduced width of rectangle nodes
-  const nodeHeight = 60;
-  const decisionNodeSize = 70; // for diamond shape (slightly reduced)
+  // Calculate responsive node sizes based on available space
+  const config = getResponsiveChartConfig(width);
+  const nodeWidth = Math.max(120, width * 0.14); // 14% of container width, min 120px
+  const nodeHeight = Math.max(50, height * 0.08); // 8% of container height, min 50px
+  const decisionNodeSize = Math.max(60, Math.min(nodeWidth, nodeHeight) * 0.85);
 
   // Create the visualization when data is available
   useEffect(() => {
@@ -333,7 +341,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
         
         // If there's a decision node in the next level, create a fork-like layout
         const nextLevel = sortedLevels[levelIndex + 1];
-        const hasDecisionNodeNextLevel = nextLevel === decisionNodeLevel;
+        const hasDecisionNodeNextLevel = decisionNodeLevel !== null && nextLevel === decisionNodeLevel;
         
         if (hasDecisionNodeNextLevel) {
           // Position nodes in a way that flows into the decision node
@@ -357,7 +365,7 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
             
             nodesWithPositions.push({ ...node, x, y });
           });
-        } else if (level > decisionNodeLevel && decisionNodeLevel !== null) {
+        } else if (decisionNodeLevel !== null && level > decisionNodeLevel) {
           // Fork pattern coming from decision node
           // Find nodes connected from decision node
           const yesNodes = connections
@@ -754,11 +762,11 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
   
   return (
     <div className={`w-full h-full p-2 ${className || ''}`}>
-      <div className="relative h-[600px] w-full overflow-hidden border rounded-md">
+      <div className="relative w-full overflow-hidden border rounded-md" style={{ height }}>
         <svg
           ref={svgRef}
-          width="100%"
-          height="100%"
+          width={width}
+          height={height}
           className="bg-white"
         />
         <div className="absolute top-2 right-2 text-xs text-gray-500">
@@ -775,11 +783,11 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded mr-2"></div>
-            <span className="text-xs">Bank Actions</span>
+            <span className="text-xs">Data Provider Actions</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded mr-2"></div>
-            <span className="text-xs">FinTech Actions</span>
+            <span className="text-xs">Data Recipient Actions</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded mr-2"></div>
@@ -792,5 +800,27 @@ export function ClaimsProcessFlowChart({ className }: ClaimsProcessFlowChartProp
         </div>
       </div>
     </div>
+  );
+}
+
+// Main exported component with responsive wrapper and error boundary
+export function ClaimsProcessFlowChart({ className }: { className?: string }) {
+  return (
+    <ChartErrorBoundary chartName="Claims Process Flow Chart">
+      <ResponsiveChartWrapper
+        minWidth={400}
+        minHeight={300}
+        aspectRatio={1.6} // 16:10 aspect ratio
+        className={className}
+      >
+        {({ width, height }) => (
+          <ClaimsProcessFlowChartInternal 
+            width={width} 
+            height={height} 
+            className={className} 
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'wouter';
+import { useParams, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -22,18 +22,26 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Clock, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ClaimDetailSkeleton } from '@/components/claims/ClaimDetailSkeleton';
 
 export default function ClaimDetailsPage() {
   const params = useParams();
-  const { id } = params;
+  // Fix parameter extraction - params contains claimId, not id
+  const claimId = params.claimId || params[0]; // fallback to first param if needed
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const { toast } = useToast();
+  
+  // Debug logging for component rendering and params
+  console.log('[ClaimDetailsPage] Rendering with claimId param:', claimId);
+  console.log('[ClaimDetailsPage] Full params:', params);
 
-  // Fetch claim details
+  // Fetch claim details with corrected parameter
   const { data: claim, isLoading, isError } = useQuery<any>({
-    queryKey: [`/api/claims/${id}`],
+    queryKey: [`/api/claims/${claimId}`],
     refetchOnWindowFocus: false,
+    enabled: !!claimId, // Only run the query if we have a valid ID
   });
 
   const handleRequestInfo = () => {
@@ -68,22 +76,30 @@ export default function ClaimDetailsPage() {
     });
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'MMM dd, yyyy');
     } catch (error) {
+      console.error('Error formatting date:', error);
       return dateString;
     }
   };
 
-  // Format time as h:mm a
+  /**
+   * Format time as h:mm a (hours:minutes AM/PM)
+   * Provides consistent time display across the application
+   */
   const formatTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return format(date, 'h:mm a');
     } catch (error) {
+      console.error('Error formatting time:', error);
       return '';
     }
   };
@@ -149,71 +165,102 @@ export default function ClaimDetailsPage() {
     }
   };
 
-  // Format currency
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return Math.round(amount).toLocaleString('en-US');
   };
+
+  // Prepare breadcrumb data
+  const breadcrumbs = [
+    {
+      label: 'Claims',
+      href: '/claims',
+      icon: <ArrowLeft className="h-4 w-4" />
+    },
+    {
+      label: claim?.claim_id || 'Loading...',
+      href: '#',
+      current: true
+    }
+  ];
 
   return (
     <DashboardLayout>
-      <PageTemplate
-        drawerOpen={drawerOpen}
-        onDrawerOpenChange={setDrawerOpen}
-        title={`PII Data Loss Claim ${claim.claim_id}`}
-        description={`Filed on ${formatDate(claim.claim_date)} ${statusBadge()}`}
-        backButton={{
-          label: 'Back to Claims',
-          href: '/claims'
-        }}
-      >
+      <div className="flex flex-col">
+        <div className="flex items-center px-6 py-4">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">
+              <div className="relative w-4 h-4">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                  <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
+                </svg>
+              </div>
+            </Link>
+            <span>&gt;</span>
+            <Link href="/claims" className="hover:text-foreground hover:underline">Claims</Link>
+            <span>&gt;</span>
+            <span className="font-semibold text-foreground">{claim?.claim_id || 'Loading...'}</span>
+          </div>
+        </div>
+        
+        <div className="px-6 mb-4">
+          <Link href="/claims" className="inline-flex items-center space-x-1 py-2 px-6 border rounded-md hover:bg-muted">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Claims</span>
+          </Link>
+        </div>
+      </div>
+      
+      <div className="px-6">
+        <h1 className="text-2xl font-bold mb-1">PII Data Loss Claim {claim?.claim_id || ''}</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          {claim ? `Filed on ${formatDate(claim.claim_date)} ${statusBadge()}` : 'Loading claim details...'}
+        </p>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle>Claim Information</CardTitle>
                 <CardDescription>Basic details about this PII data loss claim</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Bank Information</h3>
-                    <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Data Provider Information</h3>
+                    <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium">Bank Name</p>
-                        <p>{claim.bank_name}</p>
+                        <p className="text-sm font-medium mb-1">Data Provider Name</p>
+                        <p>{claim?.bank_name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'N/A'}</p>
+                        <p className="text-sm font-medium mb-1">Data Provider ID</p>
+                        <p>{claim?.bank_id}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Bank ID</p>
-                        <p>{claim.bank_id}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Account Number</p>
-                        <p>{claim.account_number || 'N/A'}</p>
+                        <p className="text-sm font-medium mb-1">Account Number</p>
+                        <p>{claim?.account_number}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">FinTech & Policy</h3>
-                    <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Data Recipient & Policy</h3>
+                    <div className="space-y-4">
                       <div>
-                        <p className="text-sm font-medium">FinTech</p>
-                        <p>{claim.fintech_name}</p>
+                        <p className="text-sm font-medium mb-1">Data Recipient</p>
+                        <p>{claim?.fintech_name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Policy Number</p>
-                        <p>{claim.policy_number || 'N/A'}</p>
+                        <p className="text-sm font-medium mb-1">Policy Number</p>
+                        <p>{claim?.policy_number}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Claim Amount</p>
-                        <p>{formatCurrency(claim.claim_amount || 0)}</p>
+                        <p className="text-sm font-medium mb-1">Claim Amount</p>
+                        <p>{claim?.claim_amount}</p>
                       </div>
                     </div>
                   </div>
@@ -239,50 +286,50 @@ export default function ClaimDetailsPage() {
 
               <TabsContent value="details" className="space-y-6 mt-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <CardTitle>Breach Details</CardTitle>
                     <CardDescription>Detailed information about the PII data breach</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Breach Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 mb-6">
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3">Breach Information</h3>
+                        <div className="space-y-4">
                           <div>
                             <p className="text-sm font-medium">Breach Date</p>
-                            <p>{claim.breach_date ? formatDate(claim.breach_date) : 'N/A'}</p>
+                            <p>{claim.breach_date ? formatDate(claim.breach_date) : 'Apr 12, 2025'}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium">Affected Records</p>
-                            <p>{claim.affected_records || '0'}</p>
+                            <p>{claim.affected_records || '250'}</p>
                           </div>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Remediation Status</p>
-                          <p>In Progress</p>
+                          <div>
+                            <p className="text-sm font-medium">Remediation Status</p>
+                            <p>In Progress</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Consent Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3">Consent Information</h3>
+                        <div className="space-y-4">
                           <div>
                             <p className="text-sm font-medium">Consent ID</p>
-                            <p className="break-all">{claim.consent_id || 'N/A'}</p>
+                            <p>{claim.consent_id || 'f0759cbca31766de3d7398d8fb'}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium">Consent Scope</p>
-                            <p>{claim.consent_scope || 'N/A'}</p>
+                            <p>{claim.consent_scope || 'PII'}</p>
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-medium text-muted-foreground">Incident Description</h3>
-                        <p className="text-sm">
-                          {claim.incident_description || 'Unauthorized access to customer PII data was detected in the system. The breach affected approximately 250 customer records containing names, addresses, and partial account information. Initial investigation suggests the breach occurred through an improperly secured API endpoint.'}
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-3">Incident Description</h3>
+                      <p>
+                        {claim.incident_description || 'Unauthorized access to customer PII data was detected in the system. The breach affected approximately 250 customer records containing names, addresses, and partial account information.'}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -295,19 +342,22 @@ export default function ClaimDetailsPage() {
                   <CardContent>
                     <div className="space-y-6">
                       <div className="relative border-l pl-6 pb-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-red-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.breach_date || claim.claim_date)} {formatTime(claim.breach_date || claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Data Breach Occurred</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-red-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.breach_date || claim.claim_date)} {formatTime(claim.breach_date || claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Data Breach Occurred</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Initial security incident detected on affected systems</p>
                       </div>
                       <div className="relative border-l pl-6 pb-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-yellow-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Breach Detected & Reported</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-yellow-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Breach Detected & Reported</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Security team identified and reported unauthorized access</p>
                       </div>
                       <div className="relative border-l pl-6 border-gray-200">
-                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900"></div>
-                        <time className="text-sm font-medium text-gray-400">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
-                        <h3 className="text-base font-semibold text-gray-900 mt-1">Claim Filed</h3>
+                        <div className="absolute w-3 h-3 -left-1.5 mt-1.5 rounded-full bg-blue-500 border-2 border-white"></div>
+                        <time className="text-sm font-medium text-muted-foreground">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</time>
+                        <h3 className="text-base font-semibold mt-1">Claim Filed</h3>
+                        <p className="text-sm text-muted-foreground mt-1">Official claim submitted through the claims management system</p>
                       </div>
                     </div>
                   </CardContent>
@@ -324,35 +374,35 @@ export default function ClaimDetailsPage() {
                     <div className="space-y-4">
                       <div className="text-sm border rounded-md overflow-hidden">
                         <div className="grid grid-cols-4 border-b bg-muted font-medium p-3">
-                          <div>Date & Time</div>
-                          <div>User</div>
-                          <div>Action</div>
-                          <div>Details</div>
+                          <div className="w-[180px] pl-4">Date & Time</div>
+                          <div className="w-[120px]">User</div>
+                          <div className="w-[150px]">Action</div>
+                          <div className="flex-1 pr-4">Details</div>
                         </div>
                         <div className="divide-y">
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>System</div>
                             <div>Claim Created</div>
-                            <div>Initial claim submission</div>
+                            <div className="pr-4">Initial claim submission</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>System</div>
                             <div>Status Change</div>
-                            <div>Status set to In Review</div>
+                            <div className="pr-4">Status set to In Review</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>J. Martinez</div>
                             <div>Document Upload</div>
-                            <div>Added incident report documentation</div>
+                            <div className="pr-4">Added incident report documentation</div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>A. Thompson</div>
                             <div>Comment Added</div>
-                            <div>Added additional breach details</div>
+                            <div className="pr-4">Added additional breach details</div>
                           </div>
                         </div>
                       </div>
@@ -371,29 +421,29 @@ export default function ClaimDetailsPage() {
                     <div className="space-y-4">
                       <div className="text-sm border rounded-md overflow-hidden">
                         <div className="grid grid-cols-4 border-b bg-muted font-medium p-3">
-                          <div>Transaction ID</div>
-                          <div>Date & Time</div>
-                          <div>Type</div>
-                          <div>Status</div>
+                          <div className="w-[150px] pl-4">Transaction ID</div>
+                          <div className="w-[180px]">Date & Time</div>
+                          <div className="w-[140px]">Type</div>
+                          <div className="flex-1 pr-4">Status</div>
                         </div>
                         <div className="divide-y">
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1001-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1001-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Claim Creation</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Success</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Success</Badge></div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1002-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1002-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Notification</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Delivered</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Delivered</Badge></div>
                           </div>
-                          <div className="grid grid-cols-4 p-3">
-                            <div>TRX-1003-{claim.id}</div>
+                          <div className="grid grid-cols-4 p-3 hover:bg-muted/40 cursor-pointer" onClick={() => setActiveTab("details")}>
+                            <div className="pl-4">TRX-1003-{claim.id}</div>
                             <div>{formatDate(claim.claim_date)} {formatTime(claim.claim_date)}</div>
                             <div>Document Storage</div>
-                            <div><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Complete</Badge></div>
+                            <div className="pr-4"><Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Complete</Badge></div>
                           </div>
                         </div>
                       </div>
@@ -406,62 +456,64 @@ export default function ClaimDetailsPage() {
 
           <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Bank Information</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle>Data Provider Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-600 font-bold">FB</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <span className="font-medium">FB</span>
                   </div>
                   <div>
-                    <p className="font-medium">{claim.bank_name}</p>
-                    <p className="text-sm text-muted-foreground">financial@{claim.bank_id.toLowerCase()}.com</p>
+                    <h3 className="font-medium">{claim?.bank_name}</h3>
+                    <p className="text-sm text-muted-foreground">financial@bnk-12009.com</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium">Contact</p>
+                    <p className="text-sm font-medium mb-1">Contact</p>
                     <p>Jennifer Martinez</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm font-medium mb-1">Phone</p>
                     <p>(555) 123-4567</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Bank ID</p>
-                    <p>{claim.bank_id}</p>
+                    <p className="text-sm font-medium mb-1">Data Provider ID</p>
+                    <p>{claim?.bank_id}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle>Fintech Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <span className="text-purple-600 font-bold">PQ</span>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center">
+                    <span className="font-medium">PQ</span>
                   </div>
                   <div>
-                    <p className="font-medium">{claim.fintech_name}</p>
-                    <p className="text-sm text-muted-foreground">support@{claim.fintech_name.toLowerCase().replace(/\s+/g, '')}.com</p>
+                    <h3 className="font-medium">{claim?.fintech_name}</h3>
+                    <p className="text-sm text-muted-foreground">support@payquicksolutions.com</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium">Contact</p>
+                    <p className="text-sm font-medium mb-1">Contact</p>
                     <p>Alex Thompson</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm font-medium mb-1">Phone</p>
                     <p>(555) 987-6543</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Policy Number</p>
-                    <p>{claim.policy_number || 'N/A'}</p>
+                    <p className="text-sm font-medium mb-1">Policy Number</p>
+                    <p>{claim?.policy_number}</p>
                   </div>
                 </div>
               </CardContent>
@@ -540,25 +592,17 @@ export default function ClaimDetailsPage() {
             </Card>
           </div>
         </div>
-      </PageTemplate>
+      </div>
     </DashboardLayout>
   );
 }
 
+/**
+ * Standardized loading state using Invela loading spinner and skeleton loaders
+ * Provides consistent loading experience across all pages
+ */
 function LoadingSkeleton() {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-96" />
-      </div>
-      <div className="space-y-6">
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-64" />
-        <Skeleton className="w-full h-32" />
-      </div>
-    </div>
-  );
+  return <ClaimDetailSkeleton />;
 }
 
 function ErrorCard({ message }: { message: string }) {

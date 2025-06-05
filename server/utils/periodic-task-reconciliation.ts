@@ -6,6 +6,8 @@
  * 
  * It implements a system that runs periodic checks and reconciles any
  * inconsistencies between task progress values and the actual form data.
+ * 
+ * Enterprise logging standardization applied following OODA methodology.
  */
 
 import { eq, and, lt, or, sql, inArray } from 'drizzle-orm';
@@ -13,6 +15,7 @@ import { db } from '@db';
 import { tasks, TaskStatus } from '@db/schema';
 import { reconcileTaskProgress, calculateTaskProgressFromDB } from './task-reconciliation';
 import { broadcastProgressUpdate } from './progress';
+import { logger } from './logger';
 
 // Map of tasks that were recently reconciled to prevent redundant operations
 const recentlyReconciledTasks = new Map<number, number>();
@@ -34,11 +37,11 @@ async function findTasksNeedingReconciliation(): Promise<number[]> {
     const minReconciliationTime = new Date(Date.now() - MIN_RECONCILIATION_INTERVAL);
     
     // Find active tasks not recently reconciled
-    const tasksToCheck = await db.select({ id: tasks.id, type: tasks.task_type })
+    const tasksToCheck = await db.select({ id: tasks.id, type: tasks.task_type, status: tasks.status, metadata: tasks.metadata })
       .from(tasks)
       .where(
         and(
-          // Only check active tasks
+          // Only check active tasks - NEVER include submitted/completed tasks
           or(
             eq(tasks.status, TaskStatus.IN_PROGRESS),
             eq(tasks.status, TaskStatus.NOT_STARTED),
@@ -54,6 +57,14 @@ async function findTasksNeedingReconciliation(): Promise<number[]> {
           or(
             sql`${tasks.metadata}->>'lastProgressReconciliation' IS NULL`,
             sql`(${tasks.metadata}->>'lastProgressReconciliation')::timestamp < ${minReconciliationTime}`
+          ),
+          // CRITICAL FIX: Explicitly exclude tasks with any submission indicators in metadata
+          // This ensures we never try to recalculate progress for submitted tasks
+          and(
+            sql`${tasks.metadata}->>'submissionDate' IS NULL`,
+            sql`${tasks.metadata}->>'submission_date' IS NULL`,
+            sql`${tasks.metadata}->>'submitted' IS NULL OR ${tasks.metadata}->>'submitted' = 'false'`,
+            sql`${tasks.metadata}->>'explicitlySubmitted' IS NULL OR ${tasks.metadata}->>'explicitlySubmitted' = 'false'`
           )
         )
       )
@@ -88,7 +99,10 @@ async function reconcileBatch(): Promise<void> {
       return; // No tasks need reconciliation
     }
     
-    console.log(`[PeriodicTaskReconciliation] Reconciling batch of ${taskIds.length} tasks:`, taskIds);
+    logger.child({ module: 'PeriodicTaskReconciliation' }).info('Reconciling batch of tasks', { 
+      batchSize: taskIds.length, 
+      taskIds 
+    });
     
     // Process each task
     for (const taskId of taskIds) {
@@ -102,7 +116,7 @@ async function reconcileBatch(): Promise<void> {
         });
         
         if (!task) {
-          console.warn(`[PeriodicTaskReconciliation] Task ${taskId} not found`);
+          logger.child({ module: 'PeriodicTaskReconciliation' }).warn('Task not found during reconciliation', { taskId });
           continue;
         }
         
@@ -180,7 +194,11 @@ export function startPeriodicTaskReconciliation(): void {
   // Stop any existing intervals
   stopPeriodicTaskReconciliation();
   
-  console.log(`[PeriodicTaskReconciliation] Starting periodic reconciliation system (interval: ${RECONCILIATION_INTERVAL}ms)`);
+  logger.child({ module: 'PeriodicTaskReconciliation' }).info('Periodic reconciliation system started', { 
+    intervalMs: RECONCILIATION_INTERVAL,
+    cacheCleanupIntervalMs: CACHE_CLEANUP_INTERVAL,
+    status: 'active'
+  });
   
   // Start reconciliation interval
   reconciliationInterval = setInterval(reconcileBatch, RECONCILIATION_INTERVAL);
@@ -206,7 +224,9 @@ export function stopPeriodicTaskReconciliation(): void {
     cacheCleanupInterval = null;
   }
   
-  console.log('[PeriodicTaskReconciliation] Stopped periodic reconciliation system');
+  logger.child({ module: 'PeriodicTaskReconciliation' }).info('Periodic reconciliation system stopped', { 
+    status: 'inactive'
+  });
 }
 
 /**

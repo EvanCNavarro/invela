@@ -1,5 +1,22 @@
+/**
+ * ========================================
+ * Company Management Type Definitions
+ * ========================================
+ * 
+ * Core TypeScript type definitions for company management and categorization
+ * in the enterprise risk assessment platform. Includes company categories,
+ * accreditation statuses, and validation schemas.
+ * 
+ * @module types/company
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { z } from "zod";
 
+/**
+ * Company category enumeration for classification
+ */
 export const CompanyCategory = {
   INVELA: 'Invela',
   BANK: 'Bank',
@@ -8,14 +25,34 @@ export const CompanyCategory = {
 
 export type CompanyCategory = typeof CompanyCategory[keyof typeof CompanyCategory];
 
+/**
+ * Accreditation status values for companies
+ * 
+ * Primary status values (current standard):
+ * APPROVED - Companies with full accreditation
+ * UNDER_REVIEW - Companies currently being evaluated (replacing IN_REVIEW)
+ * IN_PROCESS - Companies with submissions in progress (replacing PENDING)
+ * REVOKED - Companies whose accreditation has been taken away
+ * 
+ * Legacy status values (supported for backward compatibility):
+ * PROVISIONALLY_APPROVED - Old approval status
+ * IN_REVIEW - Old review status
+ * PENDING - Old in-process status
+ * SUSPENDED - Company with temporarily revoked access
+ * EXPIRED - Company with lapsed accreditation
+ */
 export const AccreditationStatus = {
-  AWAITING_INVITATION: 'AWAITING_INVITATION',
-  PENDING: 'PENDING',
-  IN_REVIEW: 'IN_REVIEW',
+  // Primary status values
   APPROVED: 'APPROVED',
-  PROVISIONALLY_APPROVED: 'PROVISIONALLY_APPROVED',
-  SUSPENDED: 'SUSPENDED',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  IN_PROCESS: 'IN_PROCESS',
   REVOKED: 'REVOKED',
+  
+  // Legacy status values (for backward compatibility)
+  PROVISIONALLY_APPROVED: 'PROVISIONALLY_APPROVED',
+  IN_REVIEW: 'IN_REVIEW',
+  PENDING: 'PENDING',
+  SUSPENDED: 'SUSPENDED',
   EXPIRED: 'EXPIRED'
 } as const;
 
@@ -63,15 +100,19 @@ export const companySchema = z.object({
   chosen_score: z.number().nullable().optional(), // Database column name
   chosenScore: z.number().nullable().optional(), // Frontend property name
   accreditationStatus: z.enum([
-    'AWAITING_INVITATION',
-    'PENDING',
-    'IN_REVIEW',
+    // Primary status values 
     'APPROVED',
-    'PROVISIONALLY_APPROVED',
-    'SUSPENDED',
+    'UNDER_REVIEW',
+    'IN_PROCESS',
     'REVOKED',
-    'EXPIRED'
-  ]).default('AWAITING_INVITATION'),
+    // Legacy status values for backward compatibility
+    'PROVISIONALLY_APPROVED',
+    'IN_REVIEW',
+    'PENDING',
+    'SUSPENDED',
+    'EXPIRED',
+    'AWAITING_INVITATION'
+  ]).default('IN_PROCESS'),
   available_tabs: z.array(z.string()).default(['task-center']),
   documents: z.array(documentSchema).optional(),
   logoId: z.string().optional(),

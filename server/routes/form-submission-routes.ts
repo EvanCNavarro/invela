@@ -10,7 +10,7 @@ import { db } from '@db';
 import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
-import * as fileCreation from '../services/fileCreation.fixed';
+import * as fileCreation from '../services/fileCreation';
 import UnifiedTabService from '../services/unified-tab-service';
 import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';

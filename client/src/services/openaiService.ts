@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * OpenAI Service - Intelligent Document Processing
+ * ========================================
+ * 
+ * Advanced AI-powered document processing service leveraging OpenAI's latest
+ * language models for intelligent content extraction, field analysis, and
+ * automated form completion capabilities throughout the enterprise platform.
+ * 
+ * Key Features:
+ * - GPT-4o powered document content extraction
+ * - Intelligent field-specific question answering
+ * - Confidence scoring for extracted answers
+ * - Multi-document source tracking and attribution
+ * - Advanced AI search instruction processing
+ * 
+ * Processing Capabilities:
+ * - Smart document chunk analysis with context preservation
+ * - Field-specific extraction with custom search instructions
+ * - Confidence scoring for answer reliability assessment
+ * - Source document attribution for audit trails
+ * - Error handling and fallback mechanisms for robust operation
+ * 
+ * @module services/openaiService
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

@@ -68,9 +68,23 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     );
   });
 
+  /**
+   * Navigate to the claim detail page
+   * This function logs navigation attempts and details for debugging purposes
+   */
   const handleViewClaim = (claim: Claim) => {
+    console.log('[ClaimsTable] Attempting to navigate to claim details:', claim);
+    
+    if (!claim || !claim.id) {
+      console.error('[ClaimsTable] Cannot navigate - invalid claim or missing ID');
+      return;
+    }
+    
+    const detailPath = `/claims/${claim.id}`;
+    console.log('[ClaimsTable] Navigating to path:', detailPath);
+    
     // Use the numeric ID for navigation as it's expected by the route parameter
-    navigate(`/claims/${claim.id}`);
+    navigate(detailPath);
   };
 
   const handleDisputeClaim = (claim: Claim) => {
@@ -83,18 +97,26 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
     navigate(`/claims/${claim.id}/resolve`);
   };
 
-  // Format currency with 2 decimal places and dollar sign
+  /**
+   * Format amount as a flat number without currency symbol
+   * Follows the standardized formatting across the application
+   */
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return Math.round(amount).toLocaleString('en-US');
   };
 
-  // Format date as MMM DD, YYYY
+  /**
+   * Format date as MMM DD, YYYY
+   * Standardized date formatting for consistent display
+   */
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'MMM dd, yyyy');
+    try {
+      const date = new Date(dateString);
+      return format(date, 'MMM dd, yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
 
   const getStatusBadge = (status: ClaimStatus) => {
@@ -167,25 +189,33 @@ export default function ClaimsTable({ claims, type, onRefresh }: ClaimsTableProp
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Claim ID</TableHead>
-                <TableHead>Bank</TableHead>
-                <TableHead>FinTech</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[120px] pl-4">Claim ID</TableHead>
+                <TableHead className="w-[150px]">Data Provider</TableHead>
+                <TableHead className="w-[150px]">Data Recipient</TableHead>
+                <TableHead className="w-[120px]">Date</TableHead>
+                <TableHead className="w-[120px] text-right">Amount</TableHead>
+                <TableHead className="w-[150px]">Status</TableHead>
+                <TableHead className="w-[80px] text-right pr-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClaims.map((claim) => (
-                <TableRow key={claim.id}>
-                  <TableCell className="font-medium">{claim.claim_id}</TableCell>
+                <TableRow 
+                  key={claim.id} 
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={(e) => {
+                    // Prevent clicking on action buttons from triggering row click
+                    if ((e.target as HTMLElement).closest('.action-cell')) return;
+                    handleViewClaim(claim);
+                  }}
+                >
+                  <TableCell className="font-medium pl-4">{claim.claim_id}</TableCell>
                   <TableCell>{claim.bank_name}</TableCell>
                   <TableCell>{claim.fintech_name}</TableCell>
                   <TableCell>{formatDate(claim.claim_date)}</TableCell>
-                  <TableCell>{formatCurrency(claim.claim_amount)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(claim.claim_amount)}</TableCell>
                   <TableCell>{getStatusBadge(claim.status)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right pr-4 action-cell">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">

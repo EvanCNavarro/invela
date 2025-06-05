@@ -47,7 +47,7 @@ export function NavigationMenu() {
                 <NavigationLink 
                   href="/landing/products/liability-insurance"
                   title="Liability Insurance"
-                  description="Specialized coverage for FinTech partnerships and data sharing"
+                  description="Specialized coverage for Data Recipient partnerships and data sharing"
                 />
                 <NavigationLink 
                   href="/landing/products/dispute-resolution"

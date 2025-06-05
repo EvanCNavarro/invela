@@ -37,17 +37,14 @@ export function setupWebSocketServer(httpServer: Server): WebSocketServer {
     logger.info('[WebSocket] Unified WebSocket server initialized successfully');
     
     // Also initialize the improved form submission WebSocket server with the same HTTP server
-    // This provides enhanced real-time updates for form submissions
+    // Use the unified WebSocket server for enhanced real-time updates
+    // This maintains consistency with the application's homogeneous WebSocket architecture
     try {
-      // Our new WebSocketService might not be fully TypeScript compatible yet
-      // Using JavaScript-style access pattern as a workaround
-      const initFn = WebSocketService['initializeWebSocketServer'];
-      if (typeof initFn === 'function') {
-        initFn(httpServer);
-        logger.info('[WebSocket] Form submission WebSocket server initialized successfully');
-      } else {
-        logger.warn('[WebSocket] Form submission WebSocket initialization function not found');
-      }
+      // The unified WebSocket server is already initialized above and handles all form submissions
+      // This comment serves as documentation that form submission broadcasting is handled
+      // through the unified system via broadcast() and broadcastTaskUpdate() functions
+      logger.info('[WebSocket] Unified WebSocket server handles form submission broadcasting');
+      logger.info('[WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility');
     } catch (wsError) {
       logger.warn('[WebSocket] Failed to initialize form submission WebSocket server, but unified server is working', {
         error: wsError instanceof Error ? wsError.message : String(wsError)

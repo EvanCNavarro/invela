@@ -5,7 +5,7 @@ import { componentFactory } from './componentFactory';
 import { kybService } from './kybService';
 import { enhancedKybService, enhancedKybServiceFactory } from './enhanced-kyb-service';
 import { standardizedKybFormService } from './standardized-kyb-form-service';
-import { ky3pFormService, ky3pFormServiceFactory } from './ky3p-form-service-final';
+import { ky3pFormService, ky3pFormServiceFactory } from './ky3p-form.service';
 import { openBankingFormService, openBankingFormServiceFactory } from './open-banking-form-service';
 
 /**

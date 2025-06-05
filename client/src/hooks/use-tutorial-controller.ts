@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Tutorial Controller Hook - Interactive Learning Management
+ * ========================================
+ * 
+ * Advanced tutorial controller providing comprehensive interactive learning
+ * management throughout the enterprise platform. Manages tutorial state,
+ * real-time synchronization, and multi-tab coordination for seamless user education.
+ * 
+ * Key Features:
+ * - Real-time tutorial synchronization across browser tabs
+ * - Advanced step progression with validation
+ * - WebSocket integration for multi-window coordination
+ * - Tutorial completion tracking and persistence
+ * - Loading states and error handling for robust UX
+ * 
+ * Tutorial Management:
+ * - Step-by-step progression with completion validation
+ * - Cross-tab tutorial state synchronization
+ * - Tutorial visibility and timing control
+ * - Completion ceremony and next step recommendations
+ * - Real-time updates for collaborative learning environments
+ * 
+ * @module hooks/use-tutorial-controller
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useTabTutorials } from './use-tab-tutorials';
 import { useTutorialWebSocket } from '@/services/websocket-service';

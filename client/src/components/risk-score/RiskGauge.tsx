@@ -6,11 +6,15 @@
 import React, { useEffect, useRef } from 'react';
 // @ts-ignore
 import Plotly from 'plotly.js-dist-min';
+import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
+import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
 
 interface RiskGaugeProps {
   score: number;
   riskLevel: string;
   size?: number;
+  width?: number;
+  height?: number;
 }
 
 /**
@@ -37,13 +41,15 @@ const getRiskLevelColor = (level: string): string => {
 };
 
 /**
- * Gauge component using Plotly.js for reliable rendering
+ * Internal component that renders the RiskGauge with responsive dimensions
  */
-export const RiskGauge: React.FC<RiskGaugeProps> = ({ 
+function RiskGaugeInternal({ 
   score, 
   riskLevel, 
-  size = 320
-}) => {
+  size = 320,
+  width = 320,
+  height = 240
+}: RiskGaugeProps) {
   // Reference to the div that will contain the Plotly chart
   const chartRef = useRef<HTMLDivElement>(null);
   
@@ -100,7 +106,7 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         number: {
           font: {
             family: 'Inter, sans-serif',
-            size: size * 0.22,
+            size: Math.max(width * 0.15, 24), // Responsive number size with minimum
             color: '#000000', // Black color for better visibility
             weight: 'bold'
           },
@@ -122,11 +128,11 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
       const layout = {
         // Configure layout for a half-circle gauge
         margin: { t: 40, b: 10, l: 30, r: 30 },
-        width: size,
-        height: size / 1.5,
+        width: width,
+        height: height,
         font: {
           family: 'Arial, sans-serif',
-          size: size / 18,
+          size: Math.max(width / 25, 12), // Responsive font size with minimum
           color: '#666'
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
@@ -150,12 +156,41 @@ export const RiskGauge: React.FC<RiskGaugeProps> = ({
         Plotly.purge(chartRef.current);
       }
     };
-  }, [score, riskLevel, color, size]);
+  }, [score, riskLevel, color, width, height]);
   
   return (
-    <div style={{ position: 'relative', width: size, height: size / 1.5 + 30, margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: width, height: height, margin: '0 auto' }}>
       {/* The div that will contain the Plotly chart */}
-      <div ref={chartRef} style={{ width: '100%', height: 'calc(100% - 30px)' }} />
+      <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
     </div>
+  );
+}
+
+/**
+ * Responsive RiskGauge component with error boundary
+ * Automatically adapts to container dimensions and provides graceful error handling
+ */
+export function RiskGauge({ 
+  score, 
+  riskLevel, 
+  className 
+}: { 
+  score: number; 
+  riskLevel: string; 
+  className?: string; 
+}) {
+  return (
+    <ChartErrorBoundary>
+      <ResponsiveChartWrapper className={className}>
+        {({ width, height }) => (
+          <RiskGaugeInternal
+            score={score}
+            riskLevel={riskLevel}
+            width={width}
+            height={height}
+          />
+        )}
+      </ResponsiveChartWrapper>
+    </ChartErrorBoundary>
   );
 };

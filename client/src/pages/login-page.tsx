@@ -1,3 +1,17 @@
+/**
+ * ========================================
+ * Login Page Component
+ * ========================================
+ * 
+ * Enterprise-grade user authentication interface providing secure login
+ * functionality with form validation, visual feedback, and seamless
+ * navigation integration for the risk assessment platform.
+ * 
+ * @module pages/login-page
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
@@ -16,12 +30,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { LoginDemoHeader } from "@/components/auth/LoginDemoHeader";
 import { motion } from "framer-motion";
+import getLogger from '@/utils/logger';
+
+// ========================================
+// LOGGER INITIALIZATION
+// ========================================
+
+const logger = getLogger('LoginPage');
+
+// ========================================
+// VALIDATION SCHEMA
+// ========================================
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
+
+// ========================================
+// MAIN COMPONENT
+// ========================================
 
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
@@ -100,17 +130,21 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     if (!form.formState.isValid) {
-      console.log('[Login] Form validation failed:', form.formState.errors);
+      logger.warn('Form validation failed', { errors: form.formState.errors });
       return;
     }
 
-    console.log('[Login] Submitting form with email:', values.email);
-    console.log('[Login] Password length:', values.password.length);
+    logger.info('Login form submission initiated', {
+      email: values.email,
+      passwordLength: values.password.length,
+      timestamp: new Date().toISOString()
+    });
+    
     loginMutation.mutate(values);
   };
 
   return (
-    <AuthLayout isLogin={true} isRegistrationValidated={false}>
+    <AuthLayout mode="login">
       <motion.div 
         className="mb-12"
         initial={{ opacity: 0, y: -5 }}

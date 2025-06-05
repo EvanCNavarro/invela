@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 import type { EmailTemplate, TemplateNames } from './templates';
 import { getEmailTemplate } from './templates';
+import { logger } from '../../utils/logger';
 
 const resolveMx = promisify(dns.resolveMx);
 
@@ -44,7 +45,7 @@ export const emailSchema = z.string().email("Invalid email address");
 export const sendEmailSchema = z.object({
   to: emailSchema,
   from: emailSchema,
-  template: z.enum(['user_invite', 'fintech_invite']),
+  template: z.enum(['user_invite', 'fintech_invite', 'demo_invite']),
   templateData: templateDataSchema,
 });
 

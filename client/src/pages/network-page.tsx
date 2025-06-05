@@ -1,3 +1,33 @@
+/**
+ * ========================================
+ * Network Page - Relationship Management
+ * ========================================
+ * 
+ * Comprehensive network relationship management page providing advanced
+ * search, filtering, and visualization capabilities for business partnerships
+ * and third-party relationships. Features enterprise-grade data management
+ * with real-time updates and collaborative invitation workflows.
+ * 
+ * Key Features:
+ * - Advanced relationship search with fuzzy matching
+ * - Multi-dimensional filtering and sorting capabilities
+ * - Real-time invitation management and status tracking
+ * - Accreditation status monitoring and compliance
+ * - Interactive table with responsive design
+ * - Tutorial integration for user guidance
+ * 
+ * Data Management:
+ * - Real-time network relationship data
+ * - Company accreditation status tracking
+ * - Invitation workflow management
+ * - Search optimization with Fuse.js
+ * - Responsive data visualization
+ * 
+ * @module pages/NetworkPage
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -18,13 +48,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { Company, AccreditationStatus } from "@/types/company";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AccreditationStatus } from "@/types/company";
+import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 
 interface NetworkRelationship {
   id: number;
@@ -46,7 +77,7 @@ interface NetworkRelationship {
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-const itemsPerPage = 5;
+const itemsPerPage = 5; // Manageable pagination for network companies
 
 // Highlight matching text helper function
 const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string }) => {
@@ -97,24 +128,17 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+      <TableCell className="text-center font-medium">
+        {company.riskScore || "N/A"}
+      </TableCell>
       <TableCell className="text-center">
-        <Badge
-          variant="outline"
-          className={cn(
-            "capitalize",
-            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
-          )}
-        >
-          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
-        </Badge>
+        <div className="flex justify-center">
+          <AccreditationStatusDisplay
+            status={company.accreditationStatus}
+            variant="pill"
+            size="sm"
+          />
+        </div>
       </TableCell>
       <TableCell className="text-center">
         <div className="invisible group-hover:visible flex items-center justify-center text-primary">
@@ -273,7 +297,9 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       {/* Add tutorial manager for network page */}
-      <TutorialManager tabName="network" />
+      <TutorialManager tabName="network">
+        <div />
+      </TutorialManager>
       
       <PageTemplate
         showBreadcrumbs
@@ -313,14 +339,18 @@ export default function NetworkPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="AWAITING_INVITATION">Awaiting Invitation</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="IN_REVIEW">In Review</SelectItem>
-                <SelectItem value="PROVISIONALLY_APPROVED">Provisionally Approved</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                <SelectItem value="REVOKED">Revoked</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
+                {/* Primary status values */}
+                <SelectItem value={AccreditationStatus.APPROVED}>Approved</SelectItem>
+                <SelectItem value={AccreditationStatus.UNDER_REVIEW}>Under Review</SelectItem>
+                <SelectItem value={AccreditationStatus.IN_PROCESS}>In Process</SelectItem>
+                <SelectItem value={AccreditationStatus.REVOKED}>Revoked</SelectItem>
+                
+                {/* Legacy status values for backward compatibility */}
+                <SelectItem value={AccreditationStatus.PROVISIONALLY_APPROVED}>Provisionally Approved</SelectItem>
+                <SelectItem value={AccreditationStatus.IN_REVIEW}>In Review (Legacy)</SelectItem>
+                <SelectItem value={AccreditationStatus.PENDING}>Pending (Legacy)</SelectItem>
+                <SelectItem value={AccreditationStatus.SUSPENDED}>Suspended</SelectItem>
+                <SelectItem value={AccreditationStatus.EXPIRED}>Expired</SelectItem>
               </SelectContent>
             </Select>
 
@@ -355,7 +385,7 @@ export default function NetworkPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[300px]">
+                  <TableHead className="w-[240px]">
                     <Button
                       variant="ghost"
                       className="p-0 hover:bg-transparent text-left w-full justify-start"
@@ -365,18 +395,18 @@ export default function NetworkPage() {
                       {getSortIcon("name")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-center w-[180px]">
                     <Button
                       variant="ghost"
-                      className="p-0 hover:bg-transparent text-right w-full justify-end"
+                      className="p-0 hover:bg-transparent text-center w-full justify-center"
                       onClick={() => handleSort("riskScore")}
                     >
-                      <span>S&P Data Access Risk Score</span>
+                      <span>S&P Data Access Risk<br/>Score</span>
                       {getSortIcon("riskScore")}
                     </Button>
                   </TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="w-[100px] text-center"></TableHead>
+                  <TableHead className="text-center w-[150px]">Status</TableHead>
+                  <TableHead className="w-[80px] text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

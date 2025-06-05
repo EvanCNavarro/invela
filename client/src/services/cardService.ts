@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Card Service - Interactive Risk Assessment Cards
+ * ========================================
+ * 
+ * Advanced card-based form service providing interactive risk assessment
+ * capabilities through dynamic card interfaces. Manages wizard-style workflows,
+ * field validation, and comprehensive progress tracking for user-friendly assessments.
+ * 
+ * Key Features:
+ * - Interactive card-based risk assessment workflows
+ * - Wizard-style step-by-step form progression
+ * - Dynamic field validation and AI-powered search instructions
+ * - Comprehensive progress tracking and status management
+ * - Risk scoring calculation and validation
+ * 
+ * Assessment Capabilities:
+ * - Dynamic question rendering with contextual help
+ * - AI-enhanced field search and completion
+ * - Real-time progress calculation and status updates
+ * - Partial risk scoring for incremental assessments
+ * - Form data persistence and recovery mechanisms
+ * 
+ * @module services/cardService
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { apiRequest } from "@/lib/queryClient";
 import { FormServiceInterface, FormField, FormSection } from './formService';
 import getLogger from '@/utils/logger';

@@ -12,9 +12,9 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
-  ChevronsRightIcon,
-  Loader2
+  ChevronsRightIcon
 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -609,7 +609,7 @@ export const FileVault: React.FC = () => {
       
       {!user ? (
         <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <LoadingSpinner size="sm" className="text-primary" />
         </div>
       ) : (
         <div className="space-y-6">

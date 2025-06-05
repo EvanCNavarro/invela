@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Component Factory - Dynamic Form Generation Engine
+ * ========================================
+ * 
+ * Advanced component factory service providing dynamic form generation and
+ * service orchestration based on task templates and configurations. Manages
+ * intelligent component creation, service registration, and template-driven UI rendering.
+ * 
+ * Key Features:
+ * - Dynamic form component generation from templates
+ * - Intelligent service factory pattern with singleton management
+ * - Multi-service orchestration (KYB, KY3P, Open Banking)
+ * - Template-driven configuration management
+ * - Advanced logging and performance monitoring
+ * 
+ * Factory Capabilities:
+ * - Automated service instantiation based on template types
+ * - Component configuration management with type safety
+ * - Service lifecycle management and caching
+ * - Template configuration inheritance and merging
+ * - Cross-service coordination and data flow management
+ * 
+ * @module services/componentFactory
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { FormField, FormSection } from '@/services/formService';
 import { FormServiceInterface } from './formService';
 import { getFieldComponentType } from '@/utils/formUtils';

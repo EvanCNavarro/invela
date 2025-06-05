@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { InvitationCodeInput } from "@/components/ui/invitation-code-input";
 import { motion } from "framer-motion";
+import { queryClient } from "@/lib/queryClient";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -53,12 +54,14 @@ const registrationSchema = z.object({
 export default function RegisterPage() {
   const { toast } = useToast();
   const { user, registerMutation } = useAuth();
+  const [, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
     company: string;
     fullName: string;
   } | null>(null);
+  const [isLoadingTransition, setIsLoadingTransition] = useState(false);
 
   const invitationForm = useForm<z.infer<typeof invitationCodeSchema>>({
     resolver: zodResolver(invitationCodeSchema),
@@ -222,43 +225,443 @@ export default function RegisterPage() {
     }
   };
 
+  // State to track if registration is currently in progress
+  const [isRegistering, setIsRegistering] = useState(false);
+  // Track loading state separately for better UX feedback
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Create a unified logging utility for consistent logging patterns
+  const logRegistration = (message: string, data?: any) => {
+    if (data) {
+      // Ensure we're not logging sensitive information like passwords
+      const sanitizedData = data.password ? { ...data, password: '********' } : data;
+      console.log(`[Registration] ${message}:`, sanitizedData);
+    } else {
+      console.log(`[Registration] ${message}`);
+    }
+  };
+
+  // Function to handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
-    console.log("[Registration] Starting registration with values:", values);
-
-    const fullName = `${values.firstName} ${values.lastName}`.trim();
-    console.log("[Registration] Submitting registration with fullName:", fullName);
-
+    // Prevent duplicate submissions
+    if (isRegistering) {
+      logRegistration('Submission already in progress, ignoring duplicate request');
+      return;
+    }
+    
     try {
-      registerMutation.mutate({
-        email: values.email,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        fullName,
-        company: values.company,
-        invitationCode: values.invitationCode,
-      }, {
-        onSuccess: () => {
-          console.log("[Registration] Registration successful");
-          // Toast notification removed to improve user experience
-          // The welcome modal will be shown instead
-        },
-        onError: (error: Error) => {
-          console.error("[Registration] Registration error:", error);
+      // Update both states to indicate registration is starting
+      setIsRegistering(true);
+      setIsLoading(true);
+      
+      logRegistration('Starting registration with values', {
+        ...values,
+        password: values.password ? '********' : undefined // Mask password in logs
+      });
+
+      const fullName = `${values.firstName} ${values.lastName}`.trim();
+      logRegistration('Submitting registration with fullName', fullName);
+
+      // Determine if we should use the account setup flow
+      // This is for users who are accepting an invitation with a code
+      const shouldUseAccountSetup = 
+        // We have a validated invitation code
+        !!validatedInvitation && 
+        // The code is present in the form
+        !!values.invitationCode && 
+        (
+          // Either the invitation data is valid and the emails match
+          (invitationData?.valid && invitationData?.invitation?.email === values.email) ||
+          // Or we have no invitation data yet but we know the code is validated (fallback for cases where the data structure differs)
+          (validatedInvitation && !invitationData)
+        );
+      
+      // Log validation check details
+      console.log("[Registration] Invitation validation check:", {
+        hasValidatedInvitation: !!validatedInvitation,
+        hasCode: !!values.invitationCode,
+        isValid: invitationData?.valid,
+        invitationEmail: invitationData?.invitation?.email,
+        userEmail: values.email,
+        emailsMatch: invitationData?.invitation?.email === values.email,
+        shouldUseAccountSetup
+      });
+      
+      if (shouldUseAccountSetup) {
+        logRegistration(`Using account-setup flow for invitation code: ${values.invitationCode}`);
+        
+        try {
+          // Call the account-setup endpoint directly
+          logRegistration('Submitting to account/setup endpoint');
+          const response = await fetch("/api/account/setup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+              firstName: values.firstName,
+              lastName: values.lastName,
+              fullName,
+              invitationCode: values.invitationCode,
+            }),
+            credentials: "include", // Important for session cookies
+            redirect: "follow" // Allow redirects to be followed
+          });
+          
+          logRegistration(`Account setup response status: ${response.status} ${response.statusText}`);
+          
+          // For non-success status codes, handle errors simply
+          if (!response.ok) {
+            logRegistration(`Account setup failed with status: ${response.status}`);
+            
+            // Extract error message if available
+            let errorMessage = "Account setup failed";
+            try {
+              // Try to get error message, but don't depend on it
+              const contentType = response.headers.get("content-type") || "";
+              if (contentType.includes("application/json")) {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+              } else {
+                errorMessage = await response.text() || errorMessage;
+              }
+            } catch (parseError) {
+              console.error("[Registration] Error parsing error response:", parseError);
+              // Keep default error message
+            }
+            
+            // Show error message
+            toast({
+              title: "Account setup failed",
+              description: errorMessage,
+              variant: "destructive",
+            });
+            
+            // Reset loading states
+            setIsLoading(false);
+            setIsRegistering(false);
+            return;
+          }
+          
+          // For success status codes (200-299), the account setup was successful
+          // First, check if we're already logged in by the server-side login
+          logRegistration('Account setup successful, verifying login status');
+          
+          // Show a single, clear success message
           toast({
-            title: "Registration failed",
-            description: "There was an error creating your account. Please try again.",
+            title: "Your account is being created",
+            description: "Please wait while we set everything up for you...",
+          });
+          
+          // Start loading transition immediately
+          setIsLoadingTransition(true);
+          
+          try {
+            // First check if we're already logged in from the server-side req.login()
+            logRegistration('Checking current authentication status');
+            const authCheckResponse = await fetch("/api/user", {
+              method: "GET",
+              credentials: "include"
+            });
+            
+            // If we're already logged in, we can skip the manual login process
+            if (authCheckResponse.ok) {
+              const userData = await authCheckResponse.json();
+              logRegistration(`Already authenticated as user: ${userData.email}`);
+              
+              // Don't show another toast here - we already have the loading overlay
+              
+              // Refresh auth data to ensure latest state
+              await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              
+              // Set loading transition state
+              setIsLoadingTransition(true);
+              
+              // Navigate to home page after a small delay to show the toast
+              setTimeout(() => {
+                navigate("/");
+              }, 1500);
+              return;
+            }
+            
+            // If we're not logged in yet, perform explicit login
+            logRegistration('Not authenticated yet, performing explicit login');
+            
+            // Show login attempt message
+            toast({
+              title: "Your account was successfully created",
+              description: "Logging you in...",
+            });
+            
+            // Normalize email to lowercase before login to ensure case consistency
+            const normalizedEmail = values.email.toLowerCase();
+            logRegistration(`Attempting login with normalized email: ${normalizedEmail}`);
+            
+            // Perform login with the same credentials
+            const loginResponse = await fetch("/api/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: normalizedEmail, // The login endpoint expects email, not username
+                password: values.password
+              }),
+              credentials: "include"
+            });
+            
+            if (!loginResponse.ok) {
+              // If login fails, show error but don't block - account was still set up
+              logRegistration(`Login after account setup failed: ${loginResponse.status} ${loginResponse.statusText}`);
+              
+              // Verify invitation status was updated
+              logRegistration('Verifying invitation status update');
+              
+              // Make a separate API call to verify invitation status
+              try {
+                logRegistration(`Checking invitation code ${values.invitationCode} status`);
+                
+                // Re-validate the invitation code - if status changed to "used", registration was successful
+                const verifyResponse = await fetch(`/api/invitations/${values.invitationCode}/validate`, {
+                  method: "GET",
+                  credentials: "include"
+                });
+                
+                const verifyData = await verifyResponse.json();
+                
+                logRegistration(`Invitation verification response: ${JSON.stringify(verifyData)}`);
+                
+                // If invitation is marked as used or no longer valid
+                if (verifyData.used) {
+                  logRegistration(`Invitation confirmed as used at: ${verifyData.used_at}`);
+                } else if (!verifyData.valid && verifyData.message?.toLowerCase().includes("invalid")) {
+                  logRegistration('Invitation appears to be properly marked as invalid');
+                } else {
+                  // If it's still showing as valid, there might be an issue with status update
+                  logRegistration('Warning: Invitation may not be properly marked as used', true);
+                  
+                  // Log a more detailed warning for debugging purposes
+                  console.warn("[Registration] Invitation status verification result:", verifyData);
+                }
+              } catch (verifyError) {
+                console.error("[Registration] Error verifying invitation status:", verifyError);
+                logRegistration(`Error checking invitation status: ${verifyError}`, true);
+              }
+              
+              toast({
+                title: "Registration partially complete",
+                description: "Your account was set up, but we couldn't log you in automatically. Please log in manually.",
+                variant: "destructive",
+              });
+              
+              // Reset loading states
+              setIsLoading(false);
+              setIsRegistering(false);
+              
+              // Set loading transition state for redirect
+              setIsLoadingTransition(true);
+              
+              // Redirect to login page using React Router
+              setTimeout(() => {
+                navigate("/login");
+              }, 2000);
+              return;
+            }
+            
+            // Login successful
+            logRegistration('Login after account setup successful');
+            
+            // Show final success message
+            toast({
+              title: "Welcome to Invela",
+              description: "Setting up your dashboard...",
+            });
+            
+            // Refresh auth data to pick up the new user session
+            await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            // Set loading transition state
+            setIsLoadingTransition(true);
+            
+            // Navigate to home page after a small delay to show the toast
+            setTimeout(() => {
+              navigate("/");
+            }, 1500);
+          } catch (authError) {
+            // Authentication attempt failed with an exception
+            console.error("[Registration] Error during authentication verification:", authError);
+            
+            // Try one last time with a direct login attempt
+            try {
+              logRegistration('Final login attempt after error');
+              const finalLoginResponse = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  username: values.email,
+                  password: values.password
+                }),
+                credentials: "include"
+              });
+              
+              if (finalLoginResponse.ok) {
+                logRegistration('Final login attempt succeeded');
+                
+                toast({
+                  title: "Account setup complete",
+                  description: "Your account has been set up. Redirecting to dashboard...",
+                });
+                
+                await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 1500);
+                return;
+              }
+              
+              // If we're here, both login attempts failed
+              logRegistration('Final login attempt also failed');
+            } catch (finalError) {
+              console.error("[Registration] Error during final login attempt:", finalError);
+            }
+            
+            // Show fallback error if everything failed
+            toast({
+              title: "Automatic login failed",
+              description: "Your account was set up, but you'll need to log in manually.",
+              variant: "destructive",
+            });
+            
+            // Reset loading states
+            setIsLoading(false);
+            setIsRegistering(false);
+            
+            // Redirect to login page
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 2000);
+          }
+        } catch (fetchError) {
+          // Handle network errors or other exceptions during fetch
+          console.error("[Registration] Account setup fetch error:", fetchError);
+          
+          toast({
+            title: "Connection error",
+            description: "Unable to connect to the server. Please try again.",
             variant: "destructive",
           });
-        },
-      });
+          
+          // Reset loading states on error
+          setIsLoading(false);
+          setIsRegistering(false);
+        }
+      } else {
+        // Standard registration flow (without invitation code)
+        logRegistration('Using standard registration flow');
+        
+        try {
+          // Call the standard registration endpoint through our mutation
+          registerMutation.mutate({
+            email: values.email,
+            password: values.password,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            fullName,
+            company: values.company,
+            invitationCode: values.invitationCode,
+          }, {
+            onSuccess: () => {
+              logRegistration('Registration successful');
+              
+              // Reset loading state
+              setIsLoading(false);
+              
+              // Show success message
+              toast({
+                title: "Account created",
+                description: "Your account has been created successfully.",
+              });
+              
+              // The welcome modal will be shown on the dashboard
+              
+              // Refresh the user data in the auth context
+              queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+              
+              // Set loading transition state for a smoother navigation experience
+              setIsLoadingTransition(true);
+              
+              // Navigate to home page after a short delay using React Router
+              setTimeout(() => {
+                navigate("/");
+              }, 1500); // Consistent with account setup flow
+            },
+            onError: (error: Error) => {
+              console.error("[Registration] Registration error:", error);
+              
+              // Reset loading states
+              setIsLoading(false);
+              setIsRegistering(false);
+              
+              // Check if the error indicates the account already exists
+              if (error.message.includes("already exists")) {
+                toast({
+                  title: "Account Already Exists",
+                  description: "This email is already registered. Please try signing in instead.",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Registration failed",
+                  description: error.message || "There was an error creating your account. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            },
+          });
+        } catch (registerError) {
+          console.error("[Registration] Unexpected error initiating registration:", registerError);
+          
+          // Reset loading states
+          setIsLoading(false);
+          setIsRegistering(false);
+          
+          toast({
+            title: "Registration failed",
+            description: "An unexpected error occurred. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
     } catch (error) {
       console.error("[Registration] Unexpected error during submission:", error);
+      
+      // Reset loading states
+      setIsLoading(false);
+      setIsRegistering(false);
+      
       toast({
         title: "Registration failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Ensure loading state is reset if we somehow missed a case
+      if (isLoading) {
+        // Use a safety timeout to make sure the loading state is eventually reset
+        const safetyTimer = setTimeout(() => {
+          // Add a delay to avoid UI flicker if there was a fast success case
+          setIsLoading(false);
+          setIsRegistering(false);
+        }, 5000); // Longer timeout for slow connections
+        
+        // Clean up the timer if component unmounts
+        return () => clearTimeout(safetyTimer);
+      }
     }
   };
 
@@ -278,7 +681,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
+    <AuthLayout mode={validatedInvitation ? "register-validated" : "register"}>
+      {/* Enhanced Loading Transition Overlay */}
+      {isLoadingTransition && (
+        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-all duration-500 ease-in-out">
+          <div className="flex flex-col items-center gap-6 max-w-md text-center p-8 rounded-xl">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold text-foreground">Setting up your account</h3>
+              <p className="text-muted-foreground">Your account is being created and configured. This may take a moment...</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {!validatedInvitation ? (
         <div className="invitation-container">
           <motion.div 
@@ -632,9 +1048,19 @@ export default function RegisterPage() {
                 <Button
                   type="submit"
                   className="w-full font-bold hover:opacity-90 h-14 text-base"
-                  disabled={registerMutation.isPending || !areRequiredFieldsValid()}
+                  disabled={registerMutation.isPending || !areRequiredFieldsValid() || isLoading}
                 >
-                  Create Account
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Setting up account...
+                    </span>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </motion.div>
 

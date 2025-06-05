@@ -144,16 +144,16 @@ export default function NewClaimModal({ open, onClose, onClaimCreated }: NewClai
                 </div>
               </div>
 
-              {/* FinTech Information */}
+              {/* Data Recipient Information */}
               <div className="space-y-4 md:col-span-2">
-                <h3 className="text-lg font-medium">FinTech Details</h3>
+                <h3 className="text-lg font-medium">Data Recipient Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="fintechName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>FinTech Name</FormLabel>
+                        <FormLabel>Data Recipient Name</FormLabel>
                         <FormControl>
                           <Input placeholder="PayQuick Solutions" {...field} />
                         </FormControl>

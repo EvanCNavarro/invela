@@ -1,3 +1,31 @@
+/**
+ * ========================================
+ * Form Submission Hook - Advanced Form Processing
+ * ========================================
+ * 
+ * Comprehensive form submission hook providing robust form processing
+ * capabilities throughout the enterprise platform. Manages submission state,
+ * error handling, retry logic, and user feedback with enterprise reliability.
+ * 
+ * Key Features:
+ * - Advanced submission state management with loading indicators
+ * - Intelligent retry mechanism with exponential backoff
+ * - Toast notification integration for user feedback
+ * - Query cache invalidation for data consistency
+ * - Connection issue detection and recovery
+ * 
+ * Form Processing:
+ * - Multi-step submission workflow with state tracking
+ * - Error boundary integration for graceful failure handling
+ * - Success modal management for completion feedback
+ * - Retry counter and delay management for resilience
+ * - Type-safe submission data handling
+ * 
+ * @module hooks/use-form-submission
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";

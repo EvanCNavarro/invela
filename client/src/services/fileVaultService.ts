@@ -1,8 +1,29 @@
 /**
- * FileVaultService - File vault tab enablement
+ * ========================================
+ * File Vault Service - Secure Document Management
+ * ========================================
  * 
- * This service provides methods to enable the file vault tab for companies
- * after a KYB form submission using proper API calls and caching strategies.
+ * Enterprise file vault service providing secure document management and access
+ * control for sensitive business documents. Manages vault enablement, access
+ * permissions, and seamless integration with KYB workflow completion.
+ * 
+ * Key Features:
+ * - Secure file vault access control and enablement
+ * - Integration with KYB workflow completion triggers
+ * - Smart caching strategies for optimal performance
+ * - Company-specific vault configuration management
+ * - Real-time UI synchronization and tab enablement
+ * 
+ * Security Capabilities:
+ * - Company-based access control and permissions
+ * - Secure vault enablement after KYB completion
+ * - Cache invalidation and real-time UI updates
+ * - Error handling and recovery mechanisms
+ * - Audit trail for vault access and modifications
+ * 
+ * @module services/fileVaultService
+ * @version 1.0.0
+ * @since 2025-05-23
  */
 
 import { queryClient } from "@/lib/queryClient";

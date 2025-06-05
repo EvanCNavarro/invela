@@ -1,3 +1,33 @@
+/**
+ * ========================================
+ * Button Component - Design System Foundation
+ * ========================================
+ * 
+ * Core button component for the enterprise risk assessment platform UI.
+ * Built on Radix UI primitives with comprehensive variant support and
+ * accessibility features. Serves as the foundation for all interactive
+ * elements throughout the application.
+ * 
+ * Key Features:
+ * - Multiple visual variants (default, destructive, outline, secondary, ghost, link)
+ * - Size variants for different contexts (default, small, large, icon)
+ * - Full accessibility support with ARIA attributes
+ * - Keyboard navigation and focus management
+ * - Consistent styling with design system tokens
+ * - Support for both button and anchor link rendering
+ * 
+ * Usage Examples:
+ * ```tsx
+ * <Button variant="default">Primary Action</Button>
+ * <Button variant="outline" size="sm">Secondary</Button>
+ * <Button variant="destructive">Delete Item</Button>
+ * ```
+ * 
+ * @module components/ui/button
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

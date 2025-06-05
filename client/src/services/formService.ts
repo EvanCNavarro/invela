@@ -1,5 +1,40 @@
 /**
- * Interface for form field validation rules
+ * ========================================
+ * Form Service - Core Business Logic
+ * ========================================
+ * 
+ * Central form management system for the enterprise risk assessment platform.
+ * Provides comprehensive form field definitions, validation rules, and data
+ * processing capabilities for KYB, KY3P, and Open Banking forms.
+ * 
+ * Key Features:
+ * - Type-safe form field definitions with validation
+ * - Flexible field types and validation rules
+ * - Section-based form organization
+ * - Enhanced guidance and demo capabilities
+ * - Batch processing and optimization
+ * - Multi-format compatibility support
+ * 
+ * Supported Form Types:
+ * - Know Your Business (KYB) forms
+ * - Know Your Third Party (KY3P) forms
+ * - Open Banking integration forms
+ * - Custom assessment questionnaires
+ * 
+ * @module services/formService
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+/**
+ * Form Field Validation Rules
+ * 
+ * Comprehensive validation configuration for form fields
+ * supporting various validation types and custom rules.
  */
 export interface FormFieldValidation {
   required?: boolean;

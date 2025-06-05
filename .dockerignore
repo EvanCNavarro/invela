@@ -1,0 +1,228 @@
+# Docker Deployment Size Optimization
+# This file excludes unnecessary files and directories from the Docker build context
+# to reduce deployment image size below the 8GB limit.
+
+# Development Dependencies and Build Artifacts
+node_modules/
+client/node_modules/
+dist/
+.cache/
+.parcel-cache/
+*.tar.gz
+*.tgz
+
+# Development and Testing Files
+.git/
+.gitignore
+README.md
+*.md
+docs/
+tests/
+test/
+spec/
+coverage/
+.nyc_output/
+
+# Development Environment Files
+.env.local
+.env.development.local
+.env.test.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large Asset Directories (Major Size Reduction - 648MB + 322MB = 970MB saved)
+attached_assets/
+uploads/
+# Keep only essential uploads for production
+!uploads/.gitkeep
+
+# Large media and binary files
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+*.mov
+*.mp4
+*.avi
+*.wmv
+*.flv
+*.webm
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.bz2
+*.xz
+
+# Generated and static assets
+public/assets/
+dist/public/assets/
+generated-*.png
+ui_*.svg
+
+# Development and Maintenance Scripts (226 files identified)
+# These are not needed in production deployment - significant size reduction
+*.js.map
+*.ts.map
+
+# Fix and maintenance scripts
+fix-*.js
+fix-*.ts
+fix-*.cjs
+fix_*.js
+*_fix.js
+apply_fix.js
+fixed-*.js
+fixed-*.ts
+fixed-*.tsx
+
+# Direct operation scripts
+direct-*.js
+direct-*.ts
+direct-*.cjs
+direct-*.mjs
+
+# Creation and test scripts
+create-*.js
+create-*.ts
+create-*.cjs
+create-*-sample.ts
+test-*.js
+debug-*.js
+demo-*.js
+broadcast-*.js
+extract-*.js
+
+# Database and maintenance utilities
+check-*.js
+check-*.ts
+check-*.cjs
+verify-*.js
+unlock-*.js
+cleanup-*.js
+cleanup-*.ts
+cleanup-*.cjs
+database-cleanup.ts
+add-*-migration.sql
+*.sql
+
+# Browser and WebSocket test files
+browser-*.js
+websocket-test*.js
+
+# Tutorial and onboarding scripts
+*-tutorial-*.js
+*-tutorial-*.ts
+tutorial-*.js
+
+# Documentation and Planning Files
+*.md
+COLUMN_PRIORITIES.md
+FORM_*.md
+KY3P-*.md
+LOGGING-*.md
+ONBOARDING-*.md
+PROGRESS_*.md
+TAB-*.md
+TASK-*.md
+UNIFIED-*.md
+
+# Log Files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS Generated Files
+.DS_Store*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package Manager Files (Keep package.json but exclude locks for size)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build Configuration (Keep essential, exclude development)
+.eslintrc*
+.prettierrc*
+jest.config.*
+webpack.config.*
+rollup.config.*
+
+# All development/maintenance script files (largest space savings)
+# These scripts total hundreds of megabytes and aren't needed in production
+*.cjs
+*.mjs
+*-fix-*.js
+*-test-*.js
+*-helper-*.js
+*-update-*.js
+*-check-*.js
+*-create-*.js
+*-broadcast-*.js
+*-verify-*.js
+populate-*.js
+unlock-*.js
+extract-*.js
+
+# Cookie and session files
+cookie.txt
+cookies.txt
+.session-cookie
+
+# All markdown documentation
+*.md
+GETTING_STARTED*
+COLUMN_PRIORITIES.md
+FORM_FILE_FIXES.md
+FORM_OPTIMIZATION_PLAN.md
+KY3P-*.md
+LOGGING-*.md
+ONBOARDING-*.md
+PROGRESS_*.md
+TAB-*.md
+TASK-*.md
+UNIFIED-*.md
+
+# Package locks (will be regenerated)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes

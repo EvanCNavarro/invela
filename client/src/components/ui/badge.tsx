@@ -1,3 +1,30 @@
+/**
+ * ========================================
+ * Badge Component - Status & Label Indicators
+ * ========================================
+ * 
+ * Professional badge component system providing consistent status indicators,
+ * labels, and categorical tags throughout the enterprise platform. Built with
+ * class-variance-authority for type-safe variant management.
+ * 
+ * Key Features:
+ * - Multiple badge variants (default, secondary, destructive, outline)
+ * - Type-safe variant system with consistent styling
+ * - Accessible focus management with ring indicators
+ * - Hover states for interactive badges
+ * - Consistent typography and spacing
+ * 
+ * Badge Variants:
+ * - Default: Primary brand color for standard indicators
+ * - Secondary: Neutral color for secondary information
+ * - Destructive: Error/warning states for critical indicators
+ * - Outline: Minimal style for subtle labeling
+ * 
+ * @module components/ui/badge
+ * @version 1.0.0
+ * @since 2025-05-23
+ */
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
