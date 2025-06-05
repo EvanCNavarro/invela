@@ -78,11 +78,11 @@ export function NetworkSummary() {
   return (
     <div className="flex items-start gap-4">
       
-      {/* Network Size Bento Box - Square - More Compact */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 w-48 h-48 flex flex-col justify-between">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Building2 className="h-3.5 w-3.5 text-slate-600" />
+      {/* Network Size Bento Box - Square - Slimmer */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 w-44 h-44 flex flex-col justify-between">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
+            <Building2 className="h-3 w-3 text-slate-600" />
           </div>
           <div className="text-sm font-semibold text-slate-900">
             Network Size
@@ -90,7 +90,7 @@ export function NetworkSummary() {
         </div>
         
         <div className="text-center flex-1 flex flex-col justify-center">
-          <div className="text-4xl font-bold text-slate-900 mb-2">
+          <div className="text-3xl font-bold text-slate-900 mb-2">
             {formatNetworkSize(currentNetworkSize)}
           </div>
           <div className="text-xs text-slate-600">
@@ -99,24 +99,24 @@ export function NetworkSummary() {
         </div>
       </div>
 
-      {/* Risk Overview Bento Box - More Compact */}
+      {/* Risk Overview Bento Box - Slimmer */}
       {totalRiskCompanies > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-48 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="h-3.5 w-3.5 text-slate-600" />
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex-1 h-44 flex flex-col">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="h-3 w-3 text-slate-600" />
             </div>
             <div className="text-sm font-semibold text-slate-900">
               Risk Overview
             </div>
           </div>
           
-          <div className="flex-1 flex flex-col justify-center space-y-4">
-            {/* Risk Distribution Bar - Taller with Gradient Colors */}
-            <div className="flex bg-slate-100 rounded-lg h-8 overflow-hidden">
+          <div className="flex-1 flex flex-col justify-center space-y-3">
+            {/* Risk Distribution Bar - Muted Colors */}
+            <div className="flex bg-slate-100 rounded-lg h-6 overflow-hidden">
               {riskStats.low > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700"
+                  className="bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -124,7 +124,7 @@ export function NetworkSummary() {
               )}
               {riskStats.medium > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-700"
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -132,7 +132,7 @@ export function NetworkSummary() {
               )}
               {riskStats.high > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-red-500 to-red-600 transition-all duration-700"
+                  className="bg-gradient-to-r from-red-400 to-red-500 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -143,15 +143,15 @@ export function NetworkSummary() {
             {/* Compact Legend */}
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-blue-500 rounded-sm" />
+                <div className="w-2 h-2 bg-blue-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.low} Stable</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-amber-500 rounded-sm" />
+                <div className="w-2 h-2 bg-amber-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.medium} Monitoring</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-red-500 rounded-sm" />
+                <div className="w-2 h-2 bg-red-400 rounded-sm" />
                 <span className="text-slate-700">{riskStats.high} Blocked</span>
               </div>
             </div>
@@ -159,9 +159,9 @@ export function NetworkSummary() {
         </div>
       )}
 
-      {/* Network Expansion Call-to-Action - Marketing Style */}
+      {/* Network Expansion Call-to-Action - Simplified */}
       {availableCount > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex-1 h-48 group cursor-pointer flex flex-col"
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200 flex-1 h-44 group cursor-pointer flex flex-col justify-between"
              onClick={() => navigate("/network/expand")}>
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold text-slate-900">
@@ -173,18 +173,12 @@ export function NetworkSummary() {
             </div>
           </div>
           
-          <div className="flex-1 flex flex-col justify-center space-y-2">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="text-center flex-1 flex flex-col justify-center">
+            <div className="text-3xl font-bold text-blue-600 mb-2">
               {formatNetworkSize(availableCount)}
             </div>
-            <div className="text-xs text-slate-600 leading-relaxed">
-              {availableEntityType} available to expand your network reach and enhance data sharing capabilities.
-            </div>
-          </div>
-          
-          <div className="mt-3 pt-3 border-t border-blue-200/50">
-            <div className="text-xs text-blue-700 font-medium">
-              Connect with verified partners
+            <div className="text-xs text-slate-600">
+              Available {availableEntityType}
             </div>
           </div>
         </div>
