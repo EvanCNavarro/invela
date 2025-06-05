@@ -145,7 +145,7 @@ const RiskTrendIndicator = ({ companyId, riskScore }: { companyId: number; riskS
   
   // Get unified risk data to access trend information
   const { data: unifiedRiskData } = useQuery({
-    queryKey: ['/api/companies/network-risk-unified'],
+    queryKey: ['/api/network/risk-unified'],
     staleTime: 2 * 60 * 1000,
   });
   

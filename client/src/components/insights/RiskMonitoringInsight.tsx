@@ -87,7 +87,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   // Get unified risk data from the same endpoint as other components
   const { data: unifiedRiskData } = useQuery<any>({
-    queryKey: ['/api/companies/network-risk-unified'],
+    queryKey: ['/api/network/risk-unified'],
     enabled: !!currentCompany,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });

@@ -27,7 +27,7 @@ export function NetworkSummary() {
 
   // Fetch unified risk statistics
   const { data: unifiedRiskData, isLoading: riskLoading } = useQuery({
-    queryKey: ["/api/companies/network-risk-unified"],
+    queryKey: ["/api/network/risk-unified"],
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
