@@ -112,11 +112,11 @@ export function NetworkSummary() {
           </div>
           
           <div className="flex-1 flex flex-col justify-center space-y-2">
-            {/* Risk Distribution Bar - More Squared and Muted */}
-            <div className="flex bg-slate-100 rounded-md h-6 overflow-hidden">
+            {/* Risk Distribution Bar - Modern Fintech Style */}
+            <div className="flex bg-slate-50 rounded h-4 overflow-hidden border border-slate-200">
               {riskStats.low > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-blue-300 to-blue-400 transition-all duration-700"
+                  className="bg-emerald-500 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -124,7 +124,7 @@ export function NetworkSummary() {
               )}
               {riskStats.medium > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-amber-300 to-orange-300 transition-all duration-700"
+                  className="bg-amber-500 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -132,7 +132,7 @@ export function NetworkSummary() {
               )}
               {riskStats.high > 0 && (
                 <div 
-                  className="bg-gradient-to-r from-red-300 to-red-400 transition-all duration-700"
+                  className="bg-red-500 transition-all duration-700"
                   style={{ 
                     width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`
                   }}
@@ -143,16 +143,16 @@ export function NetworkSummary() {
             {/* Centered Legend */}
             <div className="flex items-center justify-center gap-4 text-xs">
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-blue-300 rounded-sm" />
-                <span className="text-slate-700">{riskStats.low} Stable</span>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                <span className="text-slate-600 font-medium">{riskStats.low} Stable</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-amber-300 rounded-sm" />
-                <span className="text-slate-700">{riskStats.medium} Monitoring</span>
+                <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                <span className="text-slate-600 font-medium">{riskStats.medium} Monitoring</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-red-300 rounded-sm" />
-                <span className="text-slate-700">{riskStats.high} Blocked</span>
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="text-slate-600 font-medium">{riskStats.high} Blocked</span>
               </div>
             </div>
           </div>
