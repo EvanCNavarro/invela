@@ -5,7 +5,7 @@
  * Provides toggle between 7-day and 30-day views and sorts by greatest negative change.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -55,17 +55,27 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
+  // Add force update mechanism
+  const [forceUpdateKey, setForceUpdateKey] = useState(0);
+  
+  // Force re-render when timeframe changes
+  useEffect(() => {
+    console.log(`[Table] useEffect triggered: timeframe changed to ${timeframe}`);
+    setForceUpdateKey(prev => prev + 1);
+  }, [timeframe]);
+  
   // Add a key to force re-render when timeframe changes
-  const tableKey = `${timeframe}-${companies.length}`;
+  const tableKey = `${timeframe}-${companies.length}-${forceUpdateKey}`;
   
   // Process companies with session-consistent data
   const processedCompanies = useMemo(() => {
     logTable('Processing companies with session-consistent data', { 
       timeframe, 
-      companyCount: companies.length 
+      companyCount: companies.length,
+      forceUpdateKey
     });
     
-    console.log(`[Table] useMemo triggered with timeframe: ${timeframe}`);
+    console.log(`[Table] useMemo triggered with timeframe: ${timeframe}, forceUpdateKey: ${forceUpdateKey}`);
     
     // Use the same session data service as company profiles to ensure consistency
     const sessionData = getSessionCompaniesData(companies);
@@ -101,7 +111,7 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
     
     // Sort by current score (lowest first to show highest risk companies)
     return processed.sort((a, b) => a.currentScore - b.currentScore);
-  }, [companies, timeframe, blockThreshold]);
+  }, [companies, timeframe, blockThreshold, forceUpdateKey]);
   
   return (
     <div className={cn("space-y-4", className)} key={tableKey}>
