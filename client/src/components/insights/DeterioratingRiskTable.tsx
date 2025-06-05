@@ -55,6 +55,9 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
+  // Add a key to force re-render when timeframe changes
+  const tableKey = `${timeframe}-${companies.length}`;
+  
   // Process companies with session-consistent data
   const processedCompanies = useMemo(() => {
     logTable('Processing companies with session-consistent data', { 
@@ -101,7 +104,7 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   }, [companies, timeframe, blockThreshold]);
   
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4", className)} key={tableKey}>
       <RiskTable 
         companies={processedCompanies} 
         onCompanyClick={onCompanyClick} 
