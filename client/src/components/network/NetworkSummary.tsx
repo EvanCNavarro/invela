@@ -82,7 +82,7 @@ export function NetworkSummary() {
     <div className="flex items-start gap-4">
       
       {/* Network Size Bento Box - Unified for all users */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm w-40 h-36 flex flex-col justify-between">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex-1 h-36 flex flex-col justify-between">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-5 h-5 bg-slate-100 rounded-lg flex items-center justify-center">
             <Building2 className="h-2.5 w-2.5 text-slate-600" />
@@ -93,32 +93,28 @@ export function NetworkSummary() {
         </div>
         
         {isInvelaUser ? (
-          /* For Invela: Show both providers and recipients in sections */
-          <div className="flex-1 flex flex-col justify-center space-y-2">
-            {/* Data Providers Section */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-gray-100 rounded flex items-center justify-center">
-                  <Building2 className="h-1.5 w-1.5 text-gray-500" />
+          /* For Invela: Show both providers and recipients side by side */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center justify-around w-full">
+              {/* Data Providers Section */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-slate-900 mb-1">
+                  {formatNetworkSize(dataProviderCount)}
                 </div>
-                <span className="text-xs text-slate-600">Providers</span>
-              </div>
-              <span className="text-sm font-bold text-slate-900">
-                {formatNetworkSize(dataProviderCount)}
-              </span>
-            </div>
-            
-            {/* Data Recipients Section */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-gray-100 rounded flex items-center justify-center">
-                  <TrendingUp className="h-1.5 w-1.5 text-gray-500" />
+                <div className="text-xs text-slate-600 font-medium">
+                  Data Providers
                 </div>
-                <span className="text-xs text-slate-600">Recipients</span>
               </div>
-              <span className="text-sm font-bold text-slate-900">
-                {formatNetworkSize(dataRecipientCount)}
-              </span>
+              
+              {/* Data Recipients Section */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-slate-900 mb-1">
+                  {formatNetworkSize(dataRecipientCount)}
+                </div>
+                <div className="text-xs text-slate-600 font-medium">
+                  Data Recipients
+                </div>
+              </div>
             </div>
           </div>
         ) : (
