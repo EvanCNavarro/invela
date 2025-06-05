@@ -1,0 +1,43 @@
+[Tutorial:TutorialManager] 🚀 Initializing for tab: network
+[Tutorial:TutorialManager] Normalizing tab name from 'network' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] Normalizing tab name from 'network' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'network'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: network (original: network)
+[Tutorial:TabTutorials] Current state for network: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 5, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+Network is not defined
+Network is not defined
+[WebSocket] Connection attempt initiated
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-05T12:20:06.158Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749126006578-w459bdc", timestamp: "2025-06-05T12:20:06.578Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749126007089-yjr0bqh", timestamp: "2025-06-05T12:20:07.089Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749126007653-pwlhqi3", timestamp: "2025-06-05T12:20:07.653Z", message: "Connection established"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:20:36.263Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:20:37.269Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:20:38.268Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:06.261Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:07.269Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:08.263Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:36.283Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:37.271Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-05T12:21:38.267Z", echo: {…}}
