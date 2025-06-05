@@ -210,10 +210,10 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Risk Levels</SelectItem>
                       <SelectItem value="low">Low Risk</SelectItem>
                       <SelectItem value="medium">Medium Risk</SelectItem>
                       <SelectItem value="high">High Risk</SelectItem>
-                      <SelectItem value="all">All Risk Levels</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -225,9 +225,9 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="accredited">Accredited</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="all">All Status</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -239,10 +239,11 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="startup">Startup</SelectItem>
-                      <SelectItem value="sme">SME</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
                       <SelectItem value="all">All Sizes</SelectItem>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                      <SelectItem value="extra-large">Extra Large</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -254,10 +255,10 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Industries</SelectItem>
                       <SelectItem value="FinTech">FinTech</SelectItem>
                       <SelectItem value="Bank">Banking</SelectItem>
                       <SelectItem value="Insurance">Insurance</SelectItem>
-                      <SelectItem value="all">All Industries</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -269,10 +270,10 @@ export default function NetworkExpandPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="payment">Payment Processors</SelectItem>
                       <SelectItem value="lending">Lenders</SelectItem>
                       <SelectItem value="analytics">Analytics</SelectItem>
-                      <SelectItem value="all">All Types</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -289,14 +290,7 @@ export default function NetworkExpandPage() {
                 />
               </div>
               
-              {/* Results Count */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {filteredCandidates.length} companies available
-                </div>
-                <span>Showing low risk accredited companies by default</span>
-              </div>
+
             </div>
           </CardContent>
         </Card>
