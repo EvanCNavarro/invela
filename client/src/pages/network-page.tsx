@@ -450,56 +450,43 @@ export default function NetworkPage() {
 
   // Skeleton loading state for table
   const TableSkeleton = () => (
-    <div className="bg-background rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead className="w-[200px]">Company</TableHead>
-            <TableHead className="text-center w-[140px]">Risk Status</TableHead>
-            <TableHead className="text-center w-[120px]">S&P DARS</TableHead>
-            <TableHead className="text-center w-[80px]">Trend</TableHead>
-            <TableHead className="text-center w-[140px]">Accreditation</TableHead>
-            <TableHead className="w-[60px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <TableRow key={index} className="h-16">
-              <TableCell className="py-3">
-                <div className="flex items-center gap-3 min-h-[40px]">
-                  <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <div className="flex justify-center min-h-[40px] items-center">
-                  <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div>
-                </div>
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <div className="min-h-[40px] flex items-center justify-center">
-                  <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <div className="min-h-[40px] flex items-center justify-center">
-                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <div className="flex justify-center min-h-[40px] items-center">
-                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
-                </div>
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <div className="min-h-[40px] flex items-center justify-center">
-                  <div className="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="animate-pulse space-y-4">
+      {/* Table header skeleton */}
+      <div className="grid grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+      </div>
+      
+      {/* Table rows skeleton */}
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="grid grid-cols-6 gap-4 p-4 border rounded-lg">
+            <div className="flex items-center space-x-3">
+              <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+              <div className="h-4 w-24 bg-gray-200 rounded"></div>
+            </div>
+            <div className="flex justify-center">
+              <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="flex justify-center">
+              <div className="h-4 w-8 bg-gray-200 rounded"></div>
+            </div>
+            <div className="flex justify-center">
+              <div className="h-4 w-4 bg-gray-200 rounded"></div>
+            </div>
+            <div className="flex justify-center">
+              <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="flex justify-center">
+              <div className="h-4 w-4 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
