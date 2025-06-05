@@ -92,8 +92,8 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
       };
     });
     
-    // Sort by current score (lowest first to show highest risk companies)
-    return processed.sort((a, b) => a.currentScore - b.currentScore);
+    // Return processed data without hard-coded sorting - let RiskTable handle all sorting
+    return processed;
   }, [companies, timeframe, blockThreshold]);
   
   return (
@@ -119,9 +119,9 @@ const RiskTable: React.FC<{
   companies: (CompanyRiskData & { scoreChange: number; status: string })[];
   onCompanyClick?: (companyId: number) => void;
 }> = ({ companies, onCompanyClick }) => {
-  // Add sorting state - default to status with blocked first
+  // Add sorting state - default to scoreChange with worst deterioration first
   const [sortConfig, setSortConfig] = useState<{field: SortField, direction: SortDirection}>({
-    field: 'status',
+    field: 'scoreChange',
     direction: 'asc'
   });
 
