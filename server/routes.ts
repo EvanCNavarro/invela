@@ -4599,8 +4599,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
         expansionCount = availableCompanies.length;
       }
 
-      // Get risk breakdown for network companies using Drizzle ORM
-      const riskStats = { high: 0, medium: 0, low: 0 };
+      // Get risk breakdown for network companies using consistent risk status logic
+      const riskStats = { stable: 0, monitoring: 0, approaching: 0, blocked: 0 };
       
       if (relatedCompanyIds.length > 0) {
         const networkCompanies = await db.query.companies.findMany({
@@ -4610,12 +4610,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
         networkCompanies.forEach(company => {
           const score = company.risk_score || 0;
+          // Use same logic as session data service and individual risk status endpoint
           if (score >= 70) {
-            riskStats.high++;
-          } else if (score >= 40) {
-            riskStats.medium++;
+            riskStats.blocked++;
+          } else if (score >= 50) {
+            riskStats.approaching++;
+          } else if (score >= 30) {
+            riskStats.monitoring++;
           } else {
-            riskStats.low++;
+            riskStats.stable++;
           }
         });
       }
