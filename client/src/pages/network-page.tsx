@@ -59,6 +59,7 @@ import { Badge } from "@/components/ui/badge";
 import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, Network } from "lucide-react";
+import { NetworkSummary } from "@/components/network/NetworkSummary";
 
 interface NetworkRelationship {
   id: number;

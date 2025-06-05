@@ -4528,7 +4528,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       const userCompanyId = req.user.company_id;
-      const category = req.query.category as string;
 
       // Get current user's company data
       const userCompany = await db.query.companies.findFirst({
@@ -4540,17 +4539,16 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      // Get current network size using Drizzle ORM
-      const networkRelationships = await db.query.relationships.findMany({
-        where: eq(relationships.company_id, userCompanyId),
-        columns: { related_company_id: true }
-      });
-
-      const currentNetworkSize = networkRelationships.length;
+      // Get network relationships count
+      const networkCount = await db.execute(sql`
+        SELECT COUNT(*) as count FROM relationships WHERE company_id = ${userCompanyId}
+      `);
+      
+      const currentNetworkSize = parseInt(networkCount[0]?.count || '0');
 
       // Determine expansion target category based on user's company type
-      let targetCategory: string;
-      let expansionMessage: string;
+      let targetCategory = 'FinTech';
+      let expansionMessage = 'companies available to expand your network';
       
       if (userCompany.category === 'FinTech') {
         targetCategory = 'Bank';
@@ -4558,52 +4556,50 @@ export async function registerRoutes(app: Express): Promise<Express> {
       } else if (userCompany.category === 'Bank') {
         targetCategory = 'FinTech';
         expansionMessage = 'FinTech companies available to expand your network';
-      } else {
-        // For Invela or other categories, show FinTech companies
-        targetCategory = 'FinTech';
-        expansionMessage = 'companies available to expand your network';
       }
 
-      // Get related company IDs to exclude from available count
-      const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
+      // Get count of available companies to connect with
+      const availableCount = await db.execute(sql`
+        SELECT COUNT(*) as count 
+        FROM companies c 
+        WHERE c.category = ${targetCategory} 
+          AND c.id != ${userCompanyId}
+          AND c.id NOT IN (
+            SELECT related_company_id 
+            FROM relationships 
+            WHERE company_id = ${userCompanyId}
+          )
+      `);
 
-      // Get all companies in target category for available count calculation
-      const allTargetCompanies = await db.query.companies.findMany({
-        where: eq(companies.category, targetCategory),
-        columns: { id: true }
-      });
+      const expansionCount = parseInt(availableCount[0]?.count || '0');
 
-      // Filter out current user's company and related companies
-      const availableCount = allTargetCompanies.filter(company => 
-        company.id !== userCompanyId && 
-        !relatedCompanyIds.includes(company.id)
-      ).length;
+      // Get risk breakdown for network companies
+      const riskBreakdown = await db.execute(sql`
+        SELECT 
+          CASE 
+            WHEN c.risk_score >= 70 THEN 'high'
+            WHEN c.risk_score >= 40 THEN 'medium'
+            ELSE 'low'
+          END as risk_level,
+          COUNT(*) as count
+        FROM companies c
+        INNER JOIN relationships r ON c.id = r.related_company_id
+        WHERE r.company_id = ${userCompanyId}
+        GROUP BY risk_level
+      `);
 
-      // Get risk status breakdown of current network
-      let riskStats = { high: 0, medium: 0, low: 0 };
-      
-      if (relatedCompanyIds.length > 0) {
-        const networkCompaniesData = await db.query.companies.findMany({
-          where: inArray(companies.id, relatedCompanyIds),
-          columns: { id: true, risk_score: true }
-        });
-
-        riskStats = networkCompaniesData.reduce((acc: any, company: any) => {
-          const score = company.risk_score || 0;
-          if (score >= 70) {
-            acc.high++;
-          } else if (score >= 40) {
-            acc.medium++;
-          } else {
-            acc.low++;
+      const riskStats = { high: 0, medium: 0, low: 0 };
+      if (Array.isArray(riskBreakdown)) {
+        riskBreakdown.forEach((row: any) => {
+          if (row.risk_level && row.count) {
+            riskStats[row.risk_level as keyof typeof riskStats] = parseInt(row.count);
           }
-          return acc;
-        }, { high: 0, medium: 0, low: 0 });
+        });
       }
 
       res.json({
         currentNetworkSize,
-        availableCount,
+        availableCount: expansionCount,
         targetCategory,
         expansionMessage,
         riskStats,
