@@ -105,6 +105,82 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'network-management-company-discovery-2025-06-05',
+    date: '2025-06-05',
+    type: 'feature',
+    title: 'Network Management & Company Discovery System',
+    description: 'Complete network expansion system with advanced filtering, connection management, and intelligent company discovery',
+    details: [
+      'Created comprehensive network expansion interface with server-side filtering capabilities',
+      'Implemented intelligent default filtering showing only low-risk, approved companies (24 vs 102 total)',
+      'Built responsive pagination system with 5 companies per page for optimal viewing',
+      'Added real-time connection request functionality with visual status tracking',
+      'Enhanced network summary component with improved data presentation and member metrics',
+      'Developed connection management system with proper accreditation validation',
+      'Integrated toast notifications for connection success/failure feedback',
+      'Added comprehensive company card layouts with risk score indicators and accreditation badges'
+    ],
+    version: '1.9.9',
+    audience: 'product'
+  },
+  {
+    id: 'risk-monitoring-insights-platform-2025-06-05',
+    date: '2025-06-05',
+    type: 'enhancement',
+    title: 'Risk Monitoring & Insights Platform Overhaul',
+    description: 'Enhanced risk monitoring dashboard with unified thresholds, authentic data integration, and advanced analytics',
+    details: [
+      'Enhanced RiskMonitoringInsight component with unified risk thresholds (≥70 for blocked status)',
+      'Integrated authentic company risk data replacing placeholder information throughout system',
+      'Added advanced filtering options for blocked/deteriorating companies with real-time updates',
+      'Implemented comprehensive risk calculation engine with 7-day and 30-day trend analysis',
+      'Created dynamic alert system for high-risk company identification with automated detection',
+      'Added deteriorating risk detection algorithms with configurable sensitivity settings',
+      'Enhanced visual design with proper alert styling and priority indicators',
+      'Implemented session-based data caching for improved performance and user experience'
+    ],
+    version: '1.9.9',
+    audience: 'product'
+  },
+  {
+    id: 'server-side-filtering-architecture-2025-06-05',
+    date: '2025-06-05',
+    type: 'enhancement',
+    title: 'Server-Side Filtering Architecture & Performance',
+    description: 'Migrated filtering logic from client to server with standardized risk classification and enhanced performance',
+    details: [
+      'Migrated all filtering logic from client to server for improved performance and data accuracy',
+      'Implemented comprehensive query parameter support for riskLevel, accreditation, size, industry, and search',
+      'Unified risk level thresholds across entire platform (Low: <40, Medium: 40-70, High: ≥70)',
+      'Added debug logging systems for filter application tracking and troubleshooting',
+      'Removed redundant client-side filtering to reduce processing overhead and improve response times',
+      'Streamlined data transfer by sending only filtered results from server to client',
+      'Enhanced React Query integration for automatic cache invalidation on filter changes',
+      'Created centralized risk calculation utilities for consistent application across components'
+    ],
+    version: '1.9.9',
+    audience: 'developer'
+  },
+  {
+    id: 'responsive-design-ux-improvements-2025-06-05',
+    date: '2025-06-05',
+    type: 'enhancement',
+    title: 'Responsive Design & User Experience Improvements',
+    description: 'Enhanced mobile compatibility, search functionality, and visual design across network components',
+    details: [
+      'Enhanced mobile and tablet compatibility across all network pages with responsive design',
+      'Improved filter layout with single-row responsive design and natural wrapping behavior',
+      'Added advanced search functionality with real-time filtering and instant visual feedback',
+      'Created clear filter buttons with proper reset functionality and improved accessibility',
+      'Standardized color schemes and styling across network components for visual consistency',
+      'Enhanced company card designs with consistent risk indicators and professional styling',
+      'Improved accreditation status display with centered alignment and proper badge styling',
+      'Added loading states and skeleton screens for better perceived performance during data loading'
+    ],
+    version: '1.9.9',
+    audience: 'product'
+  },
+  {
     id: 'risk-score-comparative-visualization-2025-06-04',
     date: '2025-06-04',
     type: 'enhancement',
