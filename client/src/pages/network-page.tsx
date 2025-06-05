@@ -523,6 +523,8 @@ export default function NetworkPage() {
             }
           />
 
+          <NetworkSummary />
+
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <Button
               variant="ghost"
