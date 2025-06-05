@@ -4826,6 +4826,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       const userCompanyId = req.user.company_id;
+      
+      // Extract filter parameters from query string
+      const { riskLevel, accreditation, size, industry, recipientType, search } = req.query;
 
       // Get current user's company data
       const userCompany = await db.query.companies.findFirst({
@@ -4908,10 +4911,50 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       // Filter out current user's company and related companies
-      const candidates = allTargetCompanies.filter(company => 
+      let candidates = allTargetCompanies.filter(company => 
         company.id !== userCompanyId && 
         !relatedCompanyIds.includes(company.id)
       );
+
+      // Apply server-side filters
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        candidates = candidates.filter(company => 
+          company.name.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (riskLevel && riskLevel !== 'all') {
+        candidates = candidates.filter(company => {
+          const riskScore = company.risk_score || 0;
+          if (riskLevel === 'low') return riskScore <= 33;
+          if (riskLevel === 'medium') return riskScore > 33 && riskScore <= 66;
+          if (riskLevel === 'high') return riskScore > 66;
+          return true;
+        });
+      }
+
+      if (accreditation && accreditation !== 'all') {
+        candidates = candidates.filter(company => {
+          const status = company.accreditation_status;
+          if (accreditation === 'approved') return status === 'APPROVED';
+          if (accreditation === 'under-review') return status === 'UNDER_REVIEW';
+          if (accreditation === 'in-process') return status === 'IN_PROCESS';
+          if (accreditation === 'revoked') return status === 'REVOKED';
+          if (accreditation === 'expired') return status === 'EXPIRED';
+          return true;
+        });
+      }
+
+      if (size && size !== 'all') {
+        candidates = candidates.filter(company => {
+          if (size === 'small') return company.revenue_tier === 'small';
+          if (size === 'medium') return company.revenue_tier === 'medium';
+          if (size === 'large') return company.revenue_tier === 'large';
+          if (size === 'extra-large') return company.revenue_tier === 'extra-large';
+          return true;
+        });
+      }
 
       res.json({
         candidates,
