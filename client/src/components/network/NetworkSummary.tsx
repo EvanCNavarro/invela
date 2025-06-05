@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Network, Users, TrendingUp } from "lucide-react";
+import { ArrowRight, Network, Users, TrendingUp, Shield, AlertTriangle, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface NetworkStats {
@@ -21,7 +21,7 @@ interface NetworkStats {
 export function NetworkSummary() {
   const [, navigate] = useLocation();
 
-  // Fetch network statistics
+  // Fetch network statistics with authentic data
   const { data: networkStats, isLoading } = useQuery<NetworkStats>({
     queryKey: ["/api/network/stats"],
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -29,17 +29,20 @@ export function NetworkSummary() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Network className="h-5 w-5" />
-            Network Summary
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-slate-800">
+            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Network className="h-4 w-4 text-blue-600" />
+            </div>
+            Network Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse">
-            <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+          <div className="animate-pulse space-y-3">
+            <div className="h-6 bg-slate-200 rounded-lg w-3/4"></div>
+            <div className="h-4 bg-slate-200 rounded-lg w-1/2"></div>
+            <div className="h-4 bg-slate-200 rounded-lg w-2/3"></div>
           </div>
         </CardContent>
       </Card>
@@ -54,74 +57,103 @@ export function NetworkSummary() {
   const totalRiskCompanies = riskStats.high + riskStats.medium + riskStats.low;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Network className="h-5 w-5" />
-          Network Summary
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <CardTitle className="flex items-center gap-3 text-white">
+          <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <Network className="h-4 w-4 text-white" />
+          </div>
+          Network Overview
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Current Network Size */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Current Network</span>
+      <CardContent className="p-6 space-y-6">
+        {/* Main Network Metrics */}
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-slate-600" />
+              <span className="text-sm font-medium text-slate-600">Connected Partners</span>
+            </div>
+            <div className="text-3xl font-bold text-slate-800">{currentNetworkSize}</div>
+            <div className="text-xs text-slate-500">Active relationships</div>
           </div>
-          <span className="font-semibold text-lg">{currentNetworkSize}</span>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-600" />
+              <span className="text-sm font-medium text-slate-600">Expansion Ready</span>
+            </div>
+            <div className="text-3xl font-bold text-emerald-600">{availableCount}</div>
+            <div className="text-xs text-slate-500">Available opportunities</div>
+          </div>
         </div>
 
         {/* Risk Distribution */}
         {totalRiskCompanies > 0 && (
-          <div className="space-y-2">
-            <span className="text-sm text-muted-foreground">Risk Distribution</span>
-            <div className="flex gap-2 flex-wrap">
-              {riskStats.high > 0 && (
-                <Badge variant="destructive" className="text-xs">
-                  {riskStats.high} High Risk
-                </Badge>
-              )}
-              {riskStats.medium > 0 && (
-                <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
-                  {riskStats.medium} Medium Risk
-                </Badge>
-              )}
-              {riskStats.low > 0 && (
-                <Badge variant="outline" className="text-xs border-green-300 text-green-700">
-                  {riskStats.low} Low Risk
-                </Badge>
-              )}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-slate-600" />
+              <span className="text-sm font-medium text-slate-600">Risk Distribution</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-100">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <div>
+                  <div className="text-lg font-semibold text-red-700">{riskStats.high}</div>
+                  <div className="text-xs text-red-600">High Risk</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <Shield className="h-4 w-4 text-amber-600" />
+                <div>
+                  <div className="text-lg font-semibold text-amber-700">{riskStats.medium}</div>
+                  <div className="text-xs text-amber-600">Medium Risk</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <div>
+                  <div className="text-lg font-semibold text-emerald-700">{riskStats.low}</div>
+                  <div className="text-xs text-emerald-600">Low Risk</div>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Expansion Opportunity */}
+        {/* Expansion Action */}
         {availableCount > 0 && (
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-600">Expansion Opportunity</span>
+          <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-800">Ready to Expand</span>
+                </div>
+                <p className="text-sm text-blue-700">
+                  {availableCount} {expansionMessage}
+                </p>
+              </div>
+              <Button 
+                onClick={() => navigate("/network/expand")}
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+                size="sm"
+              >
+                Explore
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              {availableCount} {expansionMessage}
-            </p>
-            <Button 
-              onClick={() => navigate("/network/expand")}
-              size="sm" 
-              className="w-full"
-            >
-              Explore Expansion
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
           </div>
         )}
 
-        {/* No Expansion Available */}
-        {availableCount === 0 && (
-          <div className="border-t pt-4">
-            <div className="text-center text-sm text-muted-foreground">
-              No additional expansion opportunities available
-            </div>
+        {/* No Expansion State */}
+        {availableCount === 0 && currentNetworkSize === 0 && (
+          <div className="text-center p-6 rounded-lg bg-slate-50 border border-slate-200">
+            <Network className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+            <div className="text-sm font-medium text-slate-600 mb-1">Network Setup Required</div>
+            <div className="text-xs text-slate-500">Connect with partners to build your network</div>
           </div>
         )}
       </CardContent>
