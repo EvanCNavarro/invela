@@ -72,15 +72,10 @@ export function NetworkSummary() {
       <div className="relative px-8 py-6">
         <div className="flex items-center justify-between gap-8">
           
-          {/* Left Section - Network Overview */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200/60 flex items-center justify-center shadow-sm">
-                  <Network className="h-5 w-5 text-slate-600" />
-                </div>
-                <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-xl blur opacity-30" />
-              </div>
+          {/* Left Section - Network Overview (Connected with Risk Section) */}
+          <div className="flex items-center">
+            <div className="flex items-center bg-slate-50/80 border border-slate-200/60 rounded-2xl px-6 py-4 gap-6">
+              {/* Data Recipients */}
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-slate-900 tracking-tight">
                   {formatNetworkSize(currentNetworkSize)}
@@ -89,87 +84,104 @@ export function NetworkSummary() {
                   Data Recipients
                 </div>
               </div>
+
+              {/* Divider */}
+              <div className="w-px h-12 bg-slate-200" />
+
+              {/* Risk Distribution */}
+              {totalRiskCompanies > 0 && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-700">Risk Overview</div>
+                  
+                  {/* Enhanced Horizontal Bar Chart */}
+                  <div className="space-y-2">
+                    <div className="flex rounded-xl overflow-hidden bg-slate-100 h-6 w-40 shadow-inner">
+                      {riskStats.low > 0 && (
+                        <div 
+                          className="bg-emerald-500 transition-all duration-700 flex items-center justify-center"
+                          style={{ 
+                            width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`,
+                            minWidth: riskStats.low > 0 ? '16px' : '0px'
+                          }}
+                        >
+                          {riskStats.low > 0 && (
+                            <span className="text-xs font-bold text-white">{riskStats.low}</span>
+                          )}
+                        </div>
+                      )}
+                      {riskStats.medium > 0 && (
+                        <div 
+                          className="bg-amber-500 transition-all duration-700 flex items-center justify-center"
+                          style={{ 
+                            width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`,
+                            minWidth: riskStats.medium > 0 ? '16px' : '0px'
+                          }}
+                        >
+                          {riskStats.medium > 0 && (
+                            <span className="text-xs font-bold text-white">{riskStats.medium}</span>
+                          )}
+                        </div>
+                      )}
+                      {riskStats.high > 0 && (
+                        <div 
+                          className="bg-red-500 transition-all duration-700 flex items-center justify-center"
+                          style={{ 
+                            width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`,
+                            minWidth: riskStats.high > 0 ? '16px' : '0px'
+                          }}
+                        >
+                          {riskStats.high > 0 && (
+                            <span className="text-xs font-bold text-white">{riskStats.high}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Risk Legend */}
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm" />
+                        <span className="text-slate-700 font-medium">Stable</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full shadow-sm" />
+                        <span className="text-slate-700 font-medium">Monitoring</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm" />
+                        <span className="text-slate-700 font-medium">Blocked</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Middle Section - Risk Distribution */}
-          {totalRiskCompanies > 0 && (
-            <div className="flex items-center gap-6">
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-slate-700 mb-2">Risk Overview</div>
-                
-                {/* Horizontal Bar Chart */}
-                <div className="flex items-center gap-3">
-                  <div className="flex rounded-lg overflow-hidden bg-slate-100 h-3 w-32">
-                    {riskStats.low > 0 && (
-                      <div 
-                        className="bg-emerald-500 transition-all duration-700"
-                        style={{ 
-                          width: `${totalRiskCompanies > 0 ? (riskStats.low / totalRiskCompanies) * 100 : 0}%`
-                        }}
-                      />
-                    )}
-                    {riskStats.medium > 0 && (
-                      <div 
-                        className="bg-amber-500 transition-all duration-700"
-                        style={{ 
-                          width: `${totalRiskCompanies > 0 ? (riskStats.medium / totalRiskCompanies) * 100 : 0}%`
-                        }}
-                      />
-                    )}
-                    {riskStats.high > 0 && (
-                      <div 
-                        className="bg-red-500 transition-all duration-700"
-                        style={{ 
-                          width: `${totalRiskCompanies > 0 ? (riskStats.high / totalRiskCompanies) * 100 : 0}%`
-                        }}
-                      />
-                    )}
-                  </div>
-                  
-                  {/* Risk Legend */}
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                      <span className="text-slate-600 font-medium">{riskStats.low}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                      <span className="text-slate-600 font-medium">{riskStats.medium}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-red-500 rounded-full" />
-                      <span className="text-slate-600 font-medium">{riskStats.high}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Right Section - Expansion Call-to-Action */}
+          {/* Right Section - AI-Inspired Call-to-Action */}
           {availableCount > 0 && (
-            <div className="flex items-center gap-4">
-              <div className="text-right space-y-1">
-                <div className="text-lg font-semibold text-slate-900">
-                  {formatNetworkSize(availableCount)}
-                </div>
-                <div className="text-sm text-slate-600">
-                  Available to connect
-                </div>
-              </div>
+            <div className="relative group">
+              {/* AI-inspired outer glow */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/30 via-blue-500/30 to-purple-500/30 rounded-2xl blur-md opacity-60 group-hover:opacity-80 transition-all duration-500" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/40 via-blue-600/40 to-purple-600/40 rounded-2xl blur-sm opacity-40 group-hover:opacity-60 transition-all duration-300" />
               
-              {/* Enhanced CTA Button with landing page styling */}
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 rounded-xl blur-sm opacity-25 group-hover:opacity-40 transition-all duration-300" />
+              {/* Button container with soft interior */}
+              <div className="relative bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-lg">
                 <Button 
                   onClick={() => navigate("/network/expand")}
-                  className="relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl border-0 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 group-hover:scale-105"
+                  className="relative w-full bg-transparent hover:bg-white/20 text-slate-800 hover:text-slate-900 border-0 px-8 py-6 rounded-2xl font-semibold text-base transition-all duration-300 group-hover:scale-[1.02] shadow-none"
                 >
-                  <span className="flex items-center gap-2">
-                    Expand Network
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </span>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatNetworkSize(availableCount)}
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-blue-600 transition-transform group-hover:translate-x-1" />
+                    </div>
+                    <div className="text-sm font-medium text-slate-600">
+                      Expand Network
+                    </div>
+                  </div>
                 </Button>
               </div>
             </div>
