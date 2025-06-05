@@ -36,7 +36,7 @@
 import express, { Express, Router, Request, Response } from 'express';
 
 // Database ORM and query builders
-import { eq, and, gt, sql, or, isNull, inArray, desc, asc } from 'drizzle-orm';
+import { eq, and, gt, sql, or, isNull, inArray, desc, asc, ne } from 'drizzle-orm';
 import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus, accreditationHistory } from '@db/schema';
 
@@ -4567,35 +4567,39 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // Get related company IDs to exclude from available count
       const relatedCompanyIds = networkRelationships.map(r => r.related_company_id);
 
-      // Get available companies to connect with (not currently in network)
-      const availableCompanies = await db.query.companies.findMany({
-        where: and(
-          eq(companies.category, targetCategory),
-          ne(companies.id, userCompanyId),
-          relatedCompanyIds.length > 0 ? notInArray(companies.id, relatedCompanyIds) : undefined
-        ),
+      // Get all companies in target category for available count calculation
+      const allTargetCompanies = await db.query.companies.findMany({
+        where: eq(companies.category, targetCategory),
         columns: { id: true }
       });
 
-      const availableCount = availableCompanies.length;
+      // Filter out current user's company and related companies
+      const availableCount = allTargetCompanies.filter(company => 
+        company.id !== userCompanyId && 
+        !relatedCompanyIds.includes(company.id)
+      ).length;
 
-      // Get risk status breakdown of current network using Drizzle ORM
-      const networkCompaniesData = await db.query.companies.findMany({
-        where: relatedCompanyIds.length > 0 ? inArray(companies.id, relatedCompanyIds) : sql`1=0`,
-        columns: { id: true, risk_score: true }
-      });
+      // Get risk status breakdown of current network
+      let riskStats = { high: 0, medium: 0, low: 0 };
+      
+      if (relatedCompanyIds.length > 0) {
+        const networkCompaniesData = await db.query.companies.findMany({
+          where: inArray(companies.id, relatedCompanyIds),
+          columns: { id: true, risk_score: true }
+        });
 
-      const riskStats = networkCompaniesData.reduce((acc: any, company: any) => {
-        const score = company.risk_score || 0;
-        if (score >= 70) {
-          acc.high++;
-        } else if (score >= 40) {
-          acc.medium++;
-        } else {
-          acc.low++;
-        }
-        return acc;
-      }, { high: 0, medium: 0, low: 0 });
+        riskStats = networkCompaniesData.reduce((acc: any, company: any) => {
+          const score = company.risk_score || 0;
+          if (score >= 70) {
+            acc.high++;
+          } else if (score >= 40) {
+            acc.medium++;
+          } else {
+            acc.low++;
+          }
+          return acc;
+        }, { high: 0, medium: 0, low: 0 });
+      }
 
       res.json({
         currentNetworkSize,
