@@ -4520,6 +4520,63 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Unified risk data endpoint - single source of truth
+  app.get("/api/companies/risk-unified", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.company_id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const { getNetworkRiskStatistics } = await import('./services/riskCalculationService');
+      
+      const userCompanyId = req.user.company_id;
+      const riskStatistics = await getNetworkRiskStatistics(userCompanyId);
+      
+      res.json(riskStatistics);
+      
+    } catch (error) {
+      console.error('[UnifiedRisk] Error fetching unified risk data:', error);
+      res.status(500).json({ 
+        message: "Error fetching unified risk data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
+  // Individual company risk data endpoint
+  app.get("/api/companies/:id/risk-unified", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      const { getCompanyRiskData } = await import('./services/riskCalculationService');
+      
+      const riskData = await getCompanyRiskData(companyId);
+      
+      if (!riskData) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+      
+      res.json(riskData);
+      
+    } catch (error) {
+      console.error(`[UnifiedRisk] Error fetching risk data for company ${req.params.id}:`, error);
+      res.status(500).json({
+        message: "Error fetching company risk data",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
   // Network expansion statistics endpoint
   app.get("/api/network/stats", requireAuth, async (req, res) => {
     try {
