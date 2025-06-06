@@ -737,8 +737,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     }
     
     if (fields.includes('networkSize')) {
-      // Generate random network size between 5-100 recipients
-      updates.networkSize = Math.floor(Math.random() * (100 - 5 + 1)) + 5;
+      // Generate random network size between 5-1000 recipients
+      updates.networkSize = Math.floor(Math.random() * (1000 - 5 + 1)) + 5;
       console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} recipients`);
     }
     
@@ -1494,12 +1494,12 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                       <input
                         type="range"
                         min="5"
-                        max="100"
+                        max="1000"
                         value={formData.networkSize}
                         onChange={(e) => handleFieldChange('networkSize', parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (100 - 5)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((formData.networkSize - 5) / (1000 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (1000 - 5)) * 100}%, #e5e7eb 100%)`
                         }}
                       />
                     </div>
