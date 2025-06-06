@@ -47,6 +47,7 @@ import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
+import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 
 // UI components for interactive elements and page structure
@@ -129,6 +130,7 @@ const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: false,
   taskSummary: false, // FinTech companies use simplified task management
+  systemOverview: false, // Not available for FinTech companies
 };
 
 /**
@@ -142,6 +144,7 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: true,
   taskSummary: true, // Enhanced task tracking for complex operations
+  systemOverview: true, // Available for Bank and Invela companies
 };
 
 // ========================================
@@ -545,6 +548,16 @@ export default function DashboardPage(): JSX.Element {
                   companyId={companyData?.id || 0}
                   onToggle={() => toggleWidget('riskRadar')}
                   isVisible={visibleWidgets.riskRadar}
+                />
+              </div>
+            )}
+            
+            {/* System Overview Widget for Invela - Full width */}
+            {visibleWidgets.systemOverview && companyData?.category === 'Invela' && (
+              <div className="col-span-3 mt-4">
+                <SystemOverviewWidget
+                  onToggle={() => toggleWidget('systemOverview')}
+                  isVisible={visibleWidgets.systemOverview}
                 />
               </div>
             )}
