@@ -1,0 +1,233 @@
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registering all services with options: 
+Object {useUnified: true, clearExisting: true}
+[ComponentFactory] Getting all registered form services (0 total)
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] No existing service registrations found 
+[ComponentFactory] Getting all registered form services (0 total)
+[ComponentFactory] Registering form service for task type: kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KybService for task type: kyb 
+[ComponentFactory] Registering form service for task type: company_kyb 
+Object {serviceType: "EnhancedKybFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KybService for task type: company_kyb 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Registering form service for task type: ky3p 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KY3PService for task type: ky3p 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Registering form service for task type: sp_ky3p_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KY3PService for task type: sp_ky3p_assessment 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Registering form service for task type: security 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security 
+[UnifiedKY3PFormService] [Unified KY3P] Initializing service 
+Object {companyId: undefined, taskId: undefined, timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Registering form service for task type: security_assessment 
+Object {serviceType: "UnifiedKY3PFormService", timestamp: "2025-06-06T09:18:15.658Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService]
+[2025-06-06T09:18:15.658Z] [UnifiedServiceRegistration] Registered KY3PService for task type: security_assessment 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-06-06T09:18:15.659Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService]
+[2025-06-06T09:18:15.659Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking 
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[ComponentFactory] Registering form service for task type: open_banking_survey 
+Object {serviceType: "OpenBankingFormService", timestamp: "2025-06-06T09:18:15.659Z"}
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-06-06T09:18:15.659Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-06-06T09:18:15.659Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Phase services completed successfully 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Executing startup phase: communication 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-06-06T09:18:15.659Z] [App] Communication phase initializing 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Executing startup phase: ready 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-06-06T09:18:15.659Z] [App] Application ready for user interaction 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-06-06T09:18:15.659Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /file-vault
+[WebSocket] Connection attempt initiated
+[useUser] Current user state: 
+Object {user: undefined, isLoading: true, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(0), fetchedFiles: Array(0), combinedFiles: Array(0)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(0), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 0, result: Array(0)}
+[FileVault Debug] Using server pagination with client-side slicing: 
+Object {page: 1, totalItems: 0, itemsPerPage: 5, startIdx: 0, endIdx: 0, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/file-vault", …}
+[Sidebar] ⚠️ Potential mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] Tab state check: company=undefined, path=/file-vault, file-vault-unlocked=false
+[Sidebar] 🚨 Access control mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] ⚠️ Company transition detected (780 → undefined)
+[Tutorial:TabTutorials] Fetching tutorial status for: file-vault
+[API Request] GET /api/user-tab-tutorials/file-vault/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for file-vault
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for file-vault with 2 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: false, …}
+[WebSocketEventBridge] Initializing event bridge
+[FileVault Debug] Component state updated: 
+Object {hasFiles: false, isLoading: false, serverPagination: undefined, userContext: {…}, timestamp: "2025-06-06T09:18:15.896Z"}
+[FileVault Debug] Setting up WebSocket listener for file vault updates
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 568, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 568, email: "hcarter@intelligencebank.com", timestamp: "2025-06-06T09:18:15.896Z"}
+[useUser] Current user state: 
+Object {user: undefined, isLoading: true, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(0), fetchedFiles: Array(0), combinedFiles: Array(0)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(0), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 0, result: Array(0)}
+[FileVault Debug] Using server pagination with client-side slicing: 
+Object {page: 1, totalItems: 0, itemsPerPage: 5, startIdx: 0, endIdx: 0, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/file-vault", …}
+[Sidebar] ⚠️ Potential mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] Tab state check: company=undefined, path=/file-vault, file-vault-unlocked=false
+[Sidebar] 🚨 Access control mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] ⚠️ Company transition detected (780 → undefined)
+[FileVault Debug] Component state updated: 
+Object {hasFiles: false, isLoading: false, serverPagination: undefined, userContext: {…}, timestamp: "2025-06-06T09:18:15.900Z"}
+[2025-06-06T09:18:15.906Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749201496128-da73zvp", timestamp: "2025-06-06T09:18:16.128Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[TanStack Query] HTML response received from /api/auth/user, likely needs authentication
+[useUser] Current user state: 
+Object {user: {…}, isLoading: false, error: null}
+[FileVault Debug] Combined files: 
+Object {uploadingFiles: Array(0), fetchedFiles: Array(0), combinedFiles: Array(0)}
+[FileVault Debug] Starting file filtering: 
+Object {allFiles: Array(0), searchQuery: "", statusFilter: "all"}
+[FileVault Debug] After filtering: 
+Object {resultCount: 0, result: Array(0)}
+[FileVault Debug] Using server pagination with client-side slicing: 
+Object {page: 1, totalItems: 0, itemsPerPage: 5, startIdx: 0, endIdx: 0, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/file-vault", …}
+[Sidebar] ⚠️ Potential mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] Tab state check: company=undefined, path=/file-vault, file-vault-unlocked=false
+[Sidebar] 🚨 Access control mismatch: On file-vault route but tab not in availableTabs
+[Sidebar] ⚠️ Company transition detected (780 → undefined)
+[FileTable Debug] Component mounted/updated: 
+Object {dataLength: 0, firstItem: undefined, selectedItemsCount: 0, isLoading: false}
+[useUser] Successfully fetched user data: 
+Object {}
+[FileVault Debug] Component state updated: 
+Object {hasFiles: false, isLoading: false, serverPagination: undefined, userContext: {…}, timestamp: "2025-06-06T09:18:16.209Z"}
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(7), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/file-vault", …}
+[Sidebar] Tab state check: company=780, path=/file-vault, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 780
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 568, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[API Response] GET /api/user-tab-tutorials/file-vault/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for file-vault: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-06T09:16:53.336Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Tutorial not enabled for tab: file-vault
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Tutorial:TabTutorials] Updating local state for file-vault: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-06T09:16:53.336Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: file-vault
+[Tutorial:TutorialManager] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] Normalizing tab name from 'file-vault' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'file-vault'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: file-vault (original: file-vault)
+[Tutorial:TabTutorials] Current state for file-vault: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab file-vault (path: /file-vault, expected: /file-vault)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 2 for file-vault
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "file-vault", normalizedTabName: "file-vault", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for file-vault, step 1: /assets/tutorials/modal_file_1.png
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-06T09:18:16.249Z", message: "Authentication successful"}
+[2025-06-06T09:18:16.655Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
