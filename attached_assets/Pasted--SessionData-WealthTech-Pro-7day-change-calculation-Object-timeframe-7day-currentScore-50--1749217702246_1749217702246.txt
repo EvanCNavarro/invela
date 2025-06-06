@@ -1,0 +1,190 @@
+[SessionData] WealthTech Pro 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 46.729388715699315, previousScore30Day: 43.76447160728276, change7Day: 3.270611284300685, …}
+[SessionData] CryptoSwap Exchange 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 52.207054894417524, previousScore30Day: 45.57854691054672, change7Day: -2.2070548944175243, …}
+[SessionData] PayStream Global 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 49.684721073135734, previousScore30Day: 47.39262221381068, change7Day: 0.3152789268642664, …}
+[SessionData] SmartContract Verify 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 47.16238725185394, previousScore30Day: 49.206697517074645, change7Day: 2.837612748146057, …}
+[SessionData] TaxTech Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 52.64005343057215, previousScore30Day: 51.02077282033861, change7Day: -2.640053430572152, …}
+[SessionData] MicroLend Network 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 50.11771960929036, previousScore30Day: 52.83484812360257, change7Day: -0.1177196092903614, …}
+[SessionData] FraudShield AI 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 47.59538578800857, previousScore30Day: 54.64892342686653, change7Day: 2.4046142119914293, …}
+[SessionData] InvestorPortal Pro 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 53.07305196672678, previousScore30Day: 56.462998730130494, change7Day: -3.07305196672678, …}
+[SessionData] RealEstate TokenFi 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 48.0283843241632, previousScore30Day: 40.09114933665842, change7Day: 1.9716156758368015, …}
+[SessionData] TradingBot Analytics 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 50.98371668159962, previousScore30Day: 43.71929994318634, change7Day: -0.983716681599617, …}
+[SessionData] DeFi Bridge Protocol 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 48.461382860317826, previousScore30Day: 45.533375246450305, change7Day: 1.5386171396821737, …}
+[SessionData] PayrollTech Innovations 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 51.39024046249688, previousScore30Day: 49.24808654375374, change7Day: -0.3902404624968767, …}
+[SessionData] QuantTrading Systems 7day change calculation: 
+Object {timeframe: "7day", currentScore: 50, previousScore7Day: 51.84971375390887, previousScore30Day: 54.603751762770116, change7Day: -1.8497137539088726, …}
+[SessionData] ClimateFinance Labs 7day change calculation: 
+Object {timeframe: "7day", currentScore: 55, previousScore7Day: 57.56713082641363, previousScore30Day: 53.27133968938142, change7Day: -2.5671308264136314, …}
+[SessionData] BankingAPI Gateway 7day change calculation: 
+Object {timeframe: "7day", currentScore: 58, previousScore7Day: 61.292760947719216, previousScore30Day: 56.27909073792398, change7Day: -3.2927609477192163, …}
+[SessionData] CommodityTrade Hub 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 50.76037846878171, previousScore30Day: 42.860052975825965, change7Day: 0.23962153121829033, …}
+[SessionData] RetailCredit Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 63, previousScore7Day: 60.46965131163597, previousScore30Day: 61.30234388355166, change7Day: 2.530348688364029, …}
+[SessionData] TreasuryTech Pro 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 50.195281432941556, previousScore30Day: 50.310094932094216, change7Day: 1.804718567058444, …}
+[SessionData] DigitalBonds Exchange 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 51.19337700493634, previousScore30Day: 48.30227888561785, change7Day: -0.19337700493633747, …}
+[SessionData] SmallBiz Banking 7day change calculation: 
+Object {timeframe: "7day", currentScore: 43, previousScore7Day: 42.646541675552726, previousScore30Day: 41.325597029179335, change7Day: 0.3534583244472742, …}
+[SessionData] MortgageTech Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 49.104041719809175, previousScore30Day: 55.5585800986737, change7Day: 1.8959582801908255, …}
+[SessionData] TaxOptimization AI 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 49.5370402559638, previousScore30Day: 41.00080600846559, change7Day: 1.4629597440361977, …}
+[SessionData] CryptoVenture Labs 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 47.01470643468201, previousScore30Day: 42.81488131172955, change7Day: 3.9852935653179884, …}
+[SessionData] NeoLend Platform 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 52.49237261340022, previousScore30Day: 44.62895661499351, change7Day: -1.4923726134002209, …}
+[SessionData] FastPay Innovations 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 49.97003879211843, previousScore30Day: 46.443031918257475, change7Day: 1.0299612078815699, …}
+[SessionData] BlockTrade Exchange 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 47.44770497083664, previousScore30Day: 48.25710722152144, change7Day: 3.5522950291633606, …}
+[SessionData] MicroInvest Network 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 52.92537114955485, previousScore30Day: 50.0711825247854, change7Day: -1.9253711495548487, …}
+[SessionData] CrowdFund Crypto 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 50.40303732827306, previousScore30Day: 51.88525782804936, change7Day: 0.5969626717269421, …}
+[SessionData] PayLater Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 47.88070350699127, previousScore30Day: 53.699333131313324, change7Day: 3.119296493008733, …}
+[SessionData] DAO Treasury Management 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 53.35836968570948, previousScore30Day: 55.513408434577286, change7Day: -2.3583696857094765, …}
+[SessionData] GigWorker Finance 7day change calculation: 
+Object {timeframe: "7day", currentScore: 38, previousScore7Day: 40.5309934951365, previousScore30Day: 36.44186275731772, change7Day: -2.5309934951364994, …}
+[SessionData] NFT Marketplace Finance 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 48.313702043145895, previousScore30Day: 59.14155904110521, change7Day: 2.686297956854105, …}
+[SessionData] StableCoin Protocol 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 51.26903440058231, previousScore30Day: 42.769709647633135, change7Day: -0.26903440058231354, …}
+[SessionData] TradingBot Retail 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 48.74670057930052, previousScore30Day: 44.5837849508971, change7Day: 2.253299420699477, …}
+[SessionData] DecentralizedID Finance 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 54.22436675801873, previousScore30Day: 46.39786025416106, change7Day: -3.224366758018732, …}
+[SessionData] Wave Insights Leaders 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 51.70203293673694, previousScore30Day: 48.21193555742502, change7Day: -0.7020329367369413, …}
+[SessionData] Advanced Gaming Technologies 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 54.65736529417336, previousScore30Day: 51.84008616395295, change7Day: -3.65736529417336, …}
+[SessionData] Cyber Studio Works 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 52.13503147289157, previousScore30Day: 53.65416146721691, change7Day: -1.1350314728915691, …}
+[SessionData] Stream Portfolio Base 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 47.09036383032799, previousScore30Day: 57.28231207374483, change7Day: 3.9096361696720123, …}
+[SessionData] Quantum Studio Worldwide 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 53.5680300090462, previousScore30Day: 60.096387377008796, change7Day: -1.568030009046197, …}
+[SessionData] Foundation Asset United 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.045696187764406, previousScore30Day: 61.91046268027276, change7Day: 0.9543038122355938, …}
+[SessionData] Bridge Quality Consultants 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 48.523362366482615, previousScore30Day: 43.72453798353672, change7Day: 3.4766376335173845, …}
+[SessionData] Sovereign Audit Federation 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.001028545200825, previousScore30Day: 45.53861328680068, change7Day: -2.0010285452008247, …}
+[SessionData] Catalyst Consulting Council 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.478694723919034, previousScore30Day: 47.352688590064645, change7Day: 0.521305276080966, …}
+[SessionData] Sterling Consulting United 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 48.95636090263724, previousScore30Day: 49.16676389332861, change7Day: 3.0436390973627567, …}
+[SessionData] Coin Tracker 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.43402708135545, previousScore30Day: 50.98083919659257, change7Day: -2.4340270813554525, …}
+[SessionData] Synergy Infrastructure Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.91169326007366, previousScore30Day: 52.79491449985653, change7Day: 0.0883067399263382, …}
+[SessionData] Continental Infrastructure Union 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 49.38935943879187, previousScore30Day: 54.608989803120494, change7Day: 2.610640561208129, …}
+[SessionData] International Intelligence Authorities 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.86702561751008, previousScore30Day: 56.423065106384456, change7Day: -2.8670256175100803, …}
+[SessionData] Network Studio Advisors 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 52.34469179622829, previousScore30Day: 58.23714040964842, change7Day: -0.3446917962282896, …}
+[SessionData] National Guard Edge 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 49.8223579749465, previousScore30Day: 60.05121571291238, change7Day: 2.177642025053501, …}
+[SessionData] Crown Strategy Consortium 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 55.30002415366471, previousScore30Day: 61.86529101617634, change7Day: -3.300024153664708, …}
+[SessionData] Allied Evaluation Specialists 7day change calculation: 
+Object {timeframe: "7day", currentScore: 62, previousScore7Day: 58.67174652777612, previousScore30Day: 60.6356389708817, change7Day: 3.328253472223878, …}
+[SessionData] Edge Lab Center 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 50.25535651110113, previousScore30Day: 45.49344162270427, change7Day: 1.7446434888988733, …}
+[SessionData] Wave Consulting Alliance 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 55.733022689819336, previousScore30Day: 47.30751692596823, change7Day: -3.733022689819336, …}
+[SessionData] United Exchange Platforms 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 53.210688868537545, previousScore30Day: 49.12159222923219, change7Day: -1.2106888685375452, …}
+[SessionData] International Trading Center 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 50.688355047255754, previousScore30Day: 50.935667532496154, change7Day: 1.3116449527442455, …}
+[SessionData] Edge Lab Global 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.0766859408468, previousScore30Day: 60.006044048815966, change7Day: -2.076685940846801, …}
+[SessionData] Zenith Financial Technologies 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 56.08395388908684, previousScore30Day: 47.09213468618691, change7Day: -0.08395388908684254, …}
+[SessionData] Stellar Payment Networks 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 59.47228478267789, previousScore30Day: 56.16251120250672, change7Day: -3.472284782677889, …}
+[SessionData] Nexus Trading Systems 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 56.9499509613961, previousScore30Day: 57.97658650577068, change7Day: -0.9499509613960981, …}
+[SessionData] Meridian Financial Systems 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 54.42761714011431, previousScore30Day: 59.790661809034646, change7Day: 1.5723828598856926, …}
+[SessionData] Prism Analytics Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 59.90528331883252, previousScore30Day: 61.60473711229861, change7Day: -3.9052833188325167, …}
+[SessionData] Catalyst Investment Tools 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 57.382949497550726, previousScore30Day: 63.41881241556257, change7Day: -1.382949497550726, …}
+[SessionData] Beacon Lending Platform 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 54.860615676268935, previousScore30Day: 65.23288771882653, change7Day: 1.1393843237310648, …}
+[SessionData] Horizon Regulatory Tech 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 52.338281854987144, previousScore30Day: 47.046963022090495, change7Day: 3.6617181450128555, …}
+[SessionData] TestFinTech Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 59, previousScore7Day: 61.62723354808986, previousScore30Day: 49.64041804522276, change7Day: -2.627233548089862, …}
+[SessionData] SparkInc 7day change calculation: 
+Object {timeframe: "7day", currentScore: 62, previousScore7Day: 65.43851906247437, previousScore30Day: 70.41979776509106, change7Day: -3.43851906247437, …}
+[SessionData] LendingEdge Analytics 7day change calculation: 
+Object {timeframe: "7day", currentScore: 65, previousScore7Day: 68.89246343635023, previousScore30Day: 60.22438233718276, change7Day: -3.8924634363502264, …}
+[SessionData] RegCompliance Pro 7day change calculation: 
+Object {timeframe: "7day", currentScore: 65, previousScore7Day: 63.847795793786645, previousScore30Day: 63.852532943710685, change7Day: 1.152204206213355, …}
+[SessionData] FinTech37 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 69.38744147866964, previousScore30Day: 63.85777098406106, change7Day: -2.3874414786696434, …}
+[SessionData] FinTech38 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 66.86510765738785, previousScore30Day: 65.67184628732502, change7Day: 0.13489234261214733, …}
+[SessionData] FinTech39 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 64.34277383610606, previousScore30Day: 67.48592159058899, change7Day: 2.657226163893938, …}
+[SessionData] FinTech47 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 68.16410326585174, previousScore30Day: 61.998524016700685, change7Day: -1.164103265851736, …}
+[SessionData] FinTech48 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 65.64176944456995, previousScore30Day: 63.81259931996465, change7Day: 1.3582305554300547, …}
+[SessionData] FinTech49 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 63.119435623288155, previousScore30Day: 65.62667462322861, change7Day: 3.8805643767118454, …}
+[SessionData] FinTech57 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 66.94076505303383, previousScore30Day: 60.13927704934031, change7Day: 0.059234946966171265, …}
+[SessionData] FinTech58 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 64.41843123175204, previousScore30Day: 61.95335235260427, change7Day: 2.581568768247962, …}
+[SessionData] FinTech207 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 74.20236096717417, previousScore30Day: 68.18019602261484, change7Day: -2.2023609671741724, …}
+[SessionData] FinTech208 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 71.68002714589238, previousScore30Day: 69.9942713258788, change7Day: 0.31997285410761833, …}
+[SessionData] FinTech209 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 69.15769332461059, previousScore30Day: 71.80834662914276, change7Day: 2.842306675389409, …}
+[SessionData] FinTech217 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 72.97902275435627, previousScore30Day: 66.32094905525446, change7Day: -0.9790227543562651, …}
+[SessionData] FinTech218 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 70.45668893307447, previousScore30Day: 68.13502435851842, change7Day: 1.5433110669255257, …}
+[SessionData] FinTech219 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 75.93435511179268, previousScore30Day: 69.94909966178238, change7Day: -3.9343551117926836, …}
+[SessionData] FinTech227 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 71.75568454153836, previousScore30Day: 64.46170208789408, change7Day: 0.24431545846164227, …}
+[SessionData] FinTech228 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 69.23335072025657, previousScore30Day: 66.27577739115804, change7Day: 2.766649279743433, …}
+[SessionData] FinTech229 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 74.71101689897478, previousScore30Day: 68.089852694422, change7Day: -2.7110168989747763, …}
+[SessionData] FinTech237 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 70.53234632872045, previousScore30Day: 62.602455120533705, change7Day: 1.4676536712795496, …}
+change7Day: 1.4676536712795496
+change30Day: 9.397544879466295
+currentScore: 72
+previousScore7Day: 70.53234632872045
+previousScore30Day: 62.602455120533705
+requestedChange: 1.4676536712795496
+timeframe: "7day"
+[[Prototype]]: Object
+[SessionData] FinTech238 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 68.01001250743866, previousScore30Day: 64.41653042379767, change7Day: 3.9899874925613403, …}
+[SessionData] FinTech239 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 73.48767868615687, previousScore30Day: 66.23060572706163, change7Day: -1.487678686156869, …}
+[SessionData] FinTech249 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 73, previousScore7Day: 73.26434047333896, previousScore30Day: 65.37135875970125, change7Day: -0.2643404733389616, …}
