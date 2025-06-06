@@ -546,7 +546,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
       riskProfile: randomRiskProfile,
       riskProfileControl: 'random' as 'random' | 'custom',
       companySize: 'medium' as const, // Default company size for accredited recipients
-      networkSize: Math.floor(Math.random() * (100 - 5 + 1)) + 5, // Random between 5-100 FinTechs
+      networkSize: Math.floor(Math.random() * (100 - 5 + 1)) + 5, // Random between 5-100 recipients
       networkSizeControl: 'random' as 'random' | 'custom'
     };
     
@@ -737,9 +737,9 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     }
     
     if (fields.includes('networkSize')) {
-      // Generate random network size between 5-100 FinTechs
+      // Generate random network size between 5-100 recipients
       updates.networkSize = Math.floor(Math.random() * (100 - 5 + 1)) + 5;
-      console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} FinTechs`);
+      console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} recipients`);
     }
     
     setFormData(prev => {
@@ -1506,8 +1506,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                     
                     {/* Value Display */}
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-700 min-w-[60px] text-center">
-                        {formData.networkSize} FinTechs
+                      <span className="text-sm font-medium text-gray-700 min-w-[80px] text-center">
+                        {formData.networkSize} recipients
                       </span>
                       
                       {/* Shuffle Button */}
@@ -1642,7 +1642,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
         const networkSize = formData?.networkSize || 9;
         actions.push({
           id: 'setup-network',
-          label: `Configuring network with ${networkSize} FinTech partners`,
+          label: `Configuring network with ${networkSize} recipient partners`,
           category: 'network',
           targetField: 'networkSize',
           apiEndpoint: '/api/demo/network/create',
@@ -1652,7 +1652,7 @@ const DemoStep3 = ({ onBack, selectedPersona, formData, onWizardStepChange, onCo
             persona: selectedPersona?.id
           },
           estimatedDuration: 1500,
-          description: 'Displaying existing FinTech partner relationships and risk data'
+          description: 'Displaying existing recipient partner relationships and risk data'
         });
       }
     }
