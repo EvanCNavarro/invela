@@ -325,7 +325,24 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   layout="horizontal"
                   align="center"
                   verticalAlign="bottom"
-                  itemStyle={{ marginRight: '32px' }}
+                  content={(props) => {
+                    const { payload } = props;
+                    return (
+                      <div className="flex justify-center items-center gap-12 pt-6">
+                        {payload?.map((entry, index) => (
+                          <div key={index} className="flex items-center">
+                            <div 
+                              className="w-3 h-3 mr-2" 
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm font-bold text-gray-700">
+                              {entry.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
                 />
                 <Bar 
                   dataKey="dataProviders" 
