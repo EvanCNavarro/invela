@@ -99,7 +99,6 @@ import {
   DashboardSkeleton, 
   FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
-import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 
 // ========================================
 // WIDGET CONFIGURATION INTERFACES
@@ -116,7 +115,6 @@ interface DashboardWidgets {
   riskRadar: boolean;
   riskMonitoring: boolean;
   taskSummary: boolean;
-  systemOverview: boolean;
 }
 
 /**
@@ -130,7 +128,6 @@ const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: false,
   taskSummary: false, // FinTech companies use simplified task management
-  systemOverview: false, // System overview only for Invela
 };
 
 /**
@@ -144,7 +141,6 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: true,
   taskSummary: true, // Enhanced task tracking for complex operations
-  systemOverview: true, // Available for Banks and Invela
 };
 
 // ========================================
