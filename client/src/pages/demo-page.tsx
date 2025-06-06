@@ -705,7 +705,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
           fallbackToTimestamp: true,
           maxRetries: 2,
           timeoutMs: 3000,
-          logLevel: 'info'
+          logLevel: 'info',
+          persona: selectedPersona?.id || 'default'
         });
         
         updates.companyName = professionalName;

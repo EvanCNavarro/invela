@@ -74,7 +74,8 @@ const DEFAULT_OPTIONS: Required<CompanyNameGenerationOptions> = {
   fallbackToTimestamp: true,
   maxRetries: 3,
   timeoutMs: 5000,
-  logLevel: 'info'
+  logLevel: 'info',
+  persona: 'default'
 };
 
 /**
