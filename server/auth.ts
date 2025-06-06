@@ -536,7 +536,10 @@ export function setupAuth(app: Express) {
       return res.sendStatus(401);
     }
     
-    console.log('[AUTH-DEBUG] Authentication successful for /api/user, user:', req.user?.id);
+    console.log('[AUTH-DEBUG] Authentication successful for /api/user, full user object:', req.user);
+    console.log('[AUTH-DEBUG] User keys:', req.user ? Object.keys(req.user) : 'no user');
+    console.log('[AUTH-DEBUG] User company_id:', req.user?.company_id);
+    
     res.json(req.user);
   });
 
