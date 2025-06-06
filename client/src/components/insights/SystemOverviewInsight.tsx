@@ -188,10 +188,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
     <div className={cn("space-y-6", className)}>
       {/* Header with Time Filter */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Platform Enrollment & Accreditation Timeline</h3>
-          <p className="text-sm text-gray-600 mt-1">Company enrollments and accreditations over time by persona type</p>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900">Invela Trust Network Overview</h3>
         
         <ToggleGroup
           type="single"
@@ -223,18 +220,6 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-
-      {/* Network Summary Card */}
-      {summaryStats && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Building className="h-4 w-4 text-blue-600" />
-            <span className="text-sm text-gray-700">
-              <strong className="text-gray-900">Invela Trust Network Overview</strong>: {summaryStats.dataProviders + summaryStats.dataRecipients + 1} Total Companies — {summaryStats.accreditedDataRecipients} Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Summary Stats Cards */}
       {summaryStats && (
