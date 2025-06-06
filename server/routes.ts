@@ -3044,6 +3044,39 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Get accreditation history for system overview
+  app.get("/api/accreditation-history", requireAuth, async (req, res) => {
+    try {
+      console.log('[Accreditation History] Fetching all accreditation history');
+
+      // Get all accreditation history records with company information
+      const accreditationData = await db.select({
+        id: accreditationHistory.id,
+        company_id: accreditationHistory.company_id,
+        accreditation_status: accreditationHistory.accreditation_status,
+        accreditation_type: accreditationHistory.accreditation_type,
+        created_at: accreditationHistory.created_at,
+        updated_at: accreditationHistory.updated_at,
+        company_name: companies.name,
+        company_category: companies.category,
+        persona_type: companies.persona_type
+      })
+      .from(accreditationHistory)
+      .leftJoin(companies, eq(accreditationHistory.company_id, companies.id))
+      .orderBy(desc(accreditationHistory.created_at));
+
+      console.log(`[Accreditation History] Retrieved ${accreditationData.length} accreditation records`);
+      
+      res.json(accreditationData);
+    } catch (error) {
+      console.error('[Accreditation History] Error fetching accreditation history:', error);
+      res.status(500).json({
+        message: "Error fetching accreditation history",
+        code: "FETCH_ERROR"
+      });
+    }
+  });
+
   // Get risk status summary for a company
   app.get("/api/companies/:id/risk-status", requireAuth, async (req, res) => {
     try {
