@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'demo-network-size-scaling-2025-06-06',
+    date: '2025-06-06',
+    type: 'enhancement',
+    title: 'Demo Network Size Scaling & Validation',
+    description: 'Expanded demo network capacity from 100 to 1000 relationships with comprehensive validation and cleanup improvements',
+    details: [
+      'Increased maximum network size from 100 to 1000 relationships for realistic enterprise demos',
+      'Fixed hardcoded network size limit in demo data transformer that was capping user selections',
+      'Validated large-scale demo creation with 919 relationship network successfully',
+      'Enhanced demo cleanup system with proper cascade deletion of relationships and associated data',
+      'Improved network visualization performance for handling larger datasets',
+      'Added comprehensive logging for demo creation and relationship management',
+      'Preserved 1,108 FinTech company pool for consistent demo network generation'
+    ],
+    version: '2.1.0',
+    audience: 'product'
+  },
+  {
     id: 'file-vault-authentication-fix-2025-06-06',
     date: '2025-06-06',
     type: 'fix',
