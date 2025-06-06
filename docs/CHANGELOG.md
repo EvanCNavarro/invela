@@ -4,6 +4,22 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 1.9.10 - 2025-06-06
+
+#### 🏦 Banking-Specific Company Name Generation
+- **Data Provider Persona Enhancement**
+  - Implemented banking suffix rule for Data Provider persona ensuring all generated names end with "Bank" or "Credit Union"
+  - Enhanced company name generation API with persona parameter support for specialized naming rules
+  - Added banking-specific name generation function with 50/50 distribution between short and long formats
+  - Integrated persona-aware routing in advanced name generation system maintaining 118,000+ combination diversity
+  - Updated frontend to automatically pass selected persona information to backend APIs
+
+- **API & Infrastructure Improvements**
+  - Extended CompanyNameGenerationOptions interface with persona parameter for specialized generation
+  - Enhanced demo API endpoint to accept and process persona query parameters
+  - Added persona metadata to API responses for improved debugging and strategy identification
+  - Maintained backwards compatibility with existing generation logic for non-Data Provider personas
+
 ### Version 1.9.9 - 2025-06-05
 
 #### 🌐 Network Management & Company Discovery System

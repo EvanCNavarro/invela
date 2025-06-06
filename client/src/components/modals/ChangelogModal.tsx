@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'banking-specific-company-name-generation-2025-06-06',
+    date: '2025-06-06',
+    type: 'feature',
+    title: 'Banking-Specific Company Name Generation',
+    description: 'Enhanced Data Provider persona with banking suffix rules and specialized name generation',
+    details: [
+      'Implemented banking suffix rule ensuring Data Provider names end with "Bank" or "Credit Union"',
+      'Enhanced company name generation API with persona parameter support for specialized naming',
+      'Added banking-specific generation function with 50/50 distribution between short and long formats',
+      'Integrated persona-aware routing maintaining 118,000+ combination diversity in name generation',
+      'Extended API interfaces with persona metadata for improved debugging and strategy identification',
+      'Updated frontend to automatically pass selected persona information to backend APIs',
+      'Maintained backwards compatibility with existing generation logic for all other personas'
+    ],
+    version: '1.9.10',
+    audience: 'product'
+  },
+  {
     id: 'network-management-company-discovery-2025-06-05',
     date: '2025-06-05',
     type: 'feature',
