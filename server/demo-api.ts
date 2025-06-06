@@ -87,10 +87,14 @@ router.get('/demo/generate-company-name', async (req, res) => {
   const startTime = Date.now();
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
+  // Extract persona parameter from query string
+  const persona = req.query.persona as string;
+  
   try {
     console.log('[DemoAPI] [CompanyName] Starting unique company name generation:', {
       timestamp: new Date().toISOString(),
-      requestId
+      requestId,
+      persona: persona || 'default'
     });
 
     // Import the advanced company name utilities
@@ -100,8 +104,10 @@ router.get('/demo/generate-company-name', async (req, res) => {
     
     // Generate a base name using the combinatorial system with length variance
     // Use mixed preference for 50% short/long distribution
+    // Pass persona parameter for specialized generation (e.g., banking suffixes for data-provider)
     const generatedName = await generateAdvancedCompanyName('Demo Company', 1, { 
-      lengthPreference: 'mixed' 
+      lengthPreference: 'mixed',
+      persona: persona || 'default'
     });
     
     console.log('[DemoAPI] [CompanyName] Advanced generation produced:', {
@@ -187,9 +193,10 @@ router.get('/demo/generate-company-name', async (req, res) => {
       companyName: generatedName,
       wasModified: false,
       originalName: generatedName,
-      strategy: 'full_combinatorial',
+      strategy: persona === 'data-provider' ? 'banking_specialized' : 'full_combinatorial',
       processingTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      persona: persona || 'default'
     });
 
   } catch (error) {
