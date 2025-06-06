@@ -151,14 +151,14 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
 export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>('30days');
 
-  // Fetch companies data
+  // Fetch ALL companies in the system for system-wide overview
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
-    queryKey: ['/api/companies'],
+    queryKey: ['/api/companies/all'],
   });
 
-  // Fetch accreditation history
+  // Fetch ALL accreditations in the system for system-wide overview
   const { data: accreditations = [], isLoading: accreditationsLoading } = useQuery({
-    queryKey: ['/api/accreditation-history'],
+    queryKey: ['/api/accreditations/all'],
   });
 
   const isLoading = companiesLoading || accreditationsLoading;
