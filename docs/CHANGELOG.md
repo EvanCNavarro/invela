@@ -4,7 +4,7 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
-### Version 1.9.10 - 2025-06-06
+### Version 2.0.0 - 2025-06-06
 
 #### 🏦 Banking-Specific Company Name Generation
 - **Data Provider Persona Enhancement**
