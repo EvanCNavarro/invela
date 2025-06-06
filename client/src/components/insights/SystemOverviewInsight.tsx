@@ -81,7 +81,7 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
         const endDate = new Date(startDate);
         endDate.setHours(startDate.getHours() + 1);
         return {
-          period: startDate.toLocaleTimeString('en-US', { hour: 'numeric' }),
+          period: startDate.toISOString(),
           startDate,
           endDate
         };
@@ -96,7 +96,7 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
         const endDate = new Date(startDate);
         endDate.setDate(startDate.getDate() + 1);
         return {
-          period: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          period: startDate.toISOString(),
           startDate,
           endDate
         };
@@ -112,7 +112,7 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
         const endDate = new Date(startDate);
         endDate.setMonth(startDate.getMonth() + 1);
         return {
-          period: startDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          period: startDate.toISOString(),
           startDate,
           endDate
         };
@@ -257,7 +257,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-green-600" />
+              <Shield className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-gray-700">Accredited Recipients</span>
             </div>
             <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.accreditedDataRecipients}</p>
@@ -285,17 +285,16 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   stroke="#6b7280"
                   tickFormatter={(value) => {
                     try {
+                      const date = new Date(value);
+                      if (isNaN(date.getTime())) {
+                        return value; // Return original value if date is invalid
+                      }
+                      
                       if (selectedTimeframe === '1year') {
-                        // For yearly view, handle YYYY-MM format
-                        const date = new Date(value + '-01');
                         return date.toLocaleDateString('en-US', { month: 'short' });
                       } else if (selectedTimeframe === '30days') {
-                        // For 30 days, handle full date
-                        const date = new Date(value);
                         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                       } else {
-                        // For 1 day, handle hour format
-                        const date = new Date(value);
                         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
                       }
                     } catch (error) {
@@ -319,7 +318,8 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   wrapperStyle={{ 
                     fontSize: '13px', 
                     paddingTop: '25px',
-                    lineHeight: '24px'
+                    lineHeight: '28px',
+                    fontWeight: 'bold'
                   }}
                   iconSize={12}
                 />
