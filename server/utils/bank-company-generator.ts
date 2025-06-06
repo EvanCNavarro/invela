@@ -140,7 +140,7 @@ async function generateBankData(index: number): Promise<BankCompany> {
     risk_clusters: riskClusters,
     description: businessDetails.market_position,
     websiteUrl: businessDetails.website_url,
-    revenue_tier: businessDetails.revenue,
+    revenue_tier: businessDetails.revenue_tier, // Use the enum value, not formatted revenue
     legal_structure: businessDetails.legal_structure,
     incorporation_year: businessDetails.incorporation_year,
     headquarters_location: businessDetails.hq_address,
