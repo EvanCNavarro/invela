@@ -211,13 +211,15 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
         </ToggleGroup>
       </div>
 
-      {/* Network Summary Line */}
+      {/* Network Summary Card */}
       {summaryStats && (
-        <div className="flex items-center justify-center py-2 text-sm text-gray-600 border-b border-gray-100">
-          <Building className="h-4 w-4 text-blue-500 mr-2" />
-          <span>
-            {summaryStats.dataProviders + summaryStats.dataRecipients + 1} total companies in the Invela Trust Network — {summaryStats.accreditedDataRecipients} active accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
-          </span>
+        <div className="bg-white rounded-lg border p-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Building className="h-4 w-4 text-blue-600" />
+            <span className="text-sm text-gray-700">
+              {summaryStats.dataProviders + summaryStats.dataRecipients + 1} total companies in the Invela Trust Network — {summaryStats.accreditedDataRecipients} active accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
+            </span>
+          </div>
         </div>
       )}
 
@@ -226,7 +228,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-center gap-2">
-              <Building className="h-4 w-4 text-blue-600" />
+              <Building className="h-4 w-4 text-purple-600" />
               <span className="text-sm font-medium text-gray-700">Data Providers</span>
             </div>
             <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.dataProviders}</p>
@@ -242,7 +244,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-purple-600" />
+              <Shield className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium text-gray-700">Accredited Recipients</span>
             </div>
             <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.accreditedDataRecipients}</p>
@@ -262,12 +264,17 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
         ) : chartData.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="period" 
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
+                  tickFormatter={(value) => {
+                    // Extract month from date string (YYYY-MM format)
+                    const date = new Date(value + '-01');
+                    return date.toLocaleDateString('en-US', { month: 'short' });
+                  }}
                 />
                 <YAxis 
                   tick={{ fontSize: 12 }}
@@ -281,29 +288,37 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Legend />
+                <Legend 
+                  wrapperStyle={{ 
+                    fontSize: '13px', 
+                    paddingTop: '25px',
+                    lineHeight: '22px'
+                  }}
+                  iconSize={12}
+                  itemStyle={{ marginRight: '24px', marginBottom: '6px' }}
+                />
                 <Bar 
                   dataKey="dataProviders" 
-                  name="Data Providers" 
-                  fill="#3b82f6"
+                  name="Data Providers (Banks)" 
+                  fill="#9333ea"
                   radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="dataRecipients" 
-                  name="New Data Recipients" 
+                  name="New Data Recipients (FinTech)" 
                   fill="#10b981"
                   radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="accreditedDataRecipients" 
-                  name="Accredited Data Recipients" 
-                  fill="#8b5cf6"
+                  name="Accredited Recipients (FinTech)" 
+                  fill="#059669"
                   radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="totalAccreditations" 
                   name="Accreditations Completed" 
-                  fill="#f59e0b"
+                  fill="#2563eb"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>
