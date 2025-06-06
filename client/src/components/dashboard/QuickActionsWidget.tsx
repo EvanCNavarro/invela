@@ -22,7 +22,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Gamepad2 } from "lucide-react";
+import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ChevronRight, Users } from "lucide-react";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;
@@ -58,9 +58,19 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     setLocation("/task-center");
   };
 
-  const handlePlayground = () => {
-    // Navigate to playground for testing features
-    setLocation("/playground");
+  const handleRiskScore = () => {
+    // Navigate to risk score configuration
+    setLocation("/risk-score");
+  };
+
+  const handleNetwork = () => {
+    // Navigate to network visualization
+    setLocation("/network");
+  };
+
+  const handleClaims = () => {
+    // Navigate to claims management
+    setLocation("/claims");
   };
 
   const actions = [
@@ -95,10 +105,22 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
       onClick: handleTaskCenter
     },
     {
-      id: "playground",
-      label: "Playground",
-      icon: <Gamepad2 className="h-4 w-4" />,
-      onClick: handlePlayground
+      id: "risk-score",
+      label: "Risk Score",
+      icon: <Shield className="h-4 w-4" />,
+      onClick: handleRiskScore
+    },
+    {
+      id: "network",
+      label: "Network View",
+      icon: <Users className="h-4 w-4" />,
+      onClick: handleNetwork
+    },
+    {
+      id: "claims",
+      label: "Claims Management",
+      icon: <Shield className="h-4 w-4" />,
+      onClick: handleClaims
     }
   ];
 
@@ -113,18 +135,21 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
         headerClassName="pb-4"
         className="h-full"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {actions.map((action) => (
             <Button
               key={action.id}
               variant="outline"
-              className="h-12 px-4 flex items-center justify-start space-x-3 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+              className="h-12 px-4 flex items-center justify-between group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
               onClick={action.onClick}
             >
-              <div className="text-blue-600">
-                {action.icon}
+              <div className="flex items-center space-x-2">
+                <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
+                  {action.icon}
+                </div>
+                <span className="font-medium text-sm text-gray-900 group-hover:text-gray-800">{action.label}</span>
               </div>
-              <span className="font-medium text-sm">{action.label}</span>
+              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200" />
             </Button>
           ))}
         </div>
