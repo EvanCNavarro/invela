@@ -1,0 +1,1917 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-06T13:55:07.765Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-06T13:55:07.769Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":108,"timestamp":"2025-06-06T13:55:07.769Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-06T13:55:08.147Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-06-06T13:55:08.336Z] [INFO] [App] [PROD-DEBUG] Starting server initialization sequence 
+[2025-06-06T13:55:08.336Z] [INFO] [App] [PROD-DEBUG] Beginning API routes registration... 
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-06T13:55:08.339Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (forced production mode) 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-06T13:55:08.340Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-06T13:55:08.343Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-06-06T13:55:08.343Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[2025-06-06T13:55:08.343Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-06T13:55:08.343Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-06T13:55:08.343Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-06T13:55:08.344Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-06T13:55:08.352Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-06T13:55:08.352Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-06T13:55:08.352Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-06T13:55:08.352Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-06T13:55:08.353Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-06T13:55:08.357Z] [INFO] [App] [ServerStartup] API routes registration completed 
+[2025-06-06T13:55:08.357Z] [INFO] [App] [PROD-DEBUG] ✓ All API routes now registered and have priority 
+[2025-06-06T13:55:08.357Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-06T13:55:08.357Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"eo92q3","timestamp":"2025-06-06T13:55:08.357Z"}
+[2025-06-06T13:55:08.357Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-06T13:55:08.357Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-06T13:55:08.357Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-06T13:55:08.357Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-06T13:55:08.359Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-06T13:55:08.359Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-06T13:55:08.359Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-06T13:55:08.359Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-06T13:55:08.359Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-06T13:55:08.359Z] [INFO] [App] [PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes) 
+[2025-06-06T13:55:08.359Z] [INFO] [App] [PROD-DEBUG] Development mode: Setting up Vite development server 
+[2025-06-06T13:55:08.361Z] [INFO] [App] [PROD-DEBUG] ✓ Development server configured with API route priority verified 
+[2025-06-06T13:55:09.360Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-06T13:55:12.230Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T13:55:13.787Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T13:55:13.894Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218113894-m84vemn","clients":1}
+[2025-06-06T13:55:13.904Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218113904-kdmbem2","clients":2}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: 'enf53Ye3savDhLzUj9_TN85B_d7EPtSa',
+  cookies: undefined
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[2025-06-06T13:55:13.947Z] [INFO] [WebSocket] Received message from client client-1749218113894-m84vemn {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-06T13:55:13.946Z"}}
+[2025-06-06T13:55:13.947Z] [INFO] [WebSocket] Authentication from client client-1749218113894-m84vemn {"module":"WebSocket","hasToken":true}
+[2025-06-06T13:55:14.057Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218114057-wmt0mlk","clients":3}
+[2025-06-06T13:55:14.378Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749218113894-m84vemn","code":1001,"reason":"","remainingClients":2}
+[2025-06-06T13:55:14.379Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749218114057-wmt0mlk","code":1001,"reason":"","remainingClients":1}
+[2025-06-06T13:55:14.379Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749218113904-kdmbem2","code":1001,"reason":"","remainingClients":0}
+[2025-06-06T13:55:18.344Z] [INFO] [App] Running background health checks... 
+[2025-06-06T13:55:18.345Z] [StartupChecks] Running application startup health checks... 
+[2025-06-06T13:55:18.345Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-06T13:55:18.345Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-06T13:55:18.526Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-06T13:55:18.554Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-06T13:55:18.584Z] [DBConnectionService] Database connection check successful 
+[2025-06-06T13:55:18.584Z] [StartupChecks] Database health check passed 
+[2025-06-06T13:55:18.584Z] [StartupChecks] All startup health checks passed! 
+[2025-06-06T13:55:18.584Z] [INFO] [App] All background health checks passed successfully. 
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'nZhuHyYH1Ga4QBox11mFk0o7pYTIuQsb',
+  cookies: 'connect.sid=s%3AnZhuHyYH1Ga4QBox11mFk0o7pYTIuQsb.VTHhjLuPegAo%2F2i3y%2FoxWUVdcsqrDnoM2ktYIVFoRK8'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 571,
+  email: 'knakamura@platformcreditunion.com',
+  full_name: 'Kevin Nakamura',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$0vqSnnWZcTnEdkXGIF9b7uMw9OUKABzlQ8NM3ARsEj6dNRGj3/CWq',
+  company_id: 1976,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-06T13:48:01.177Z,
+  updated_at: 2025-06-06T13:48:01.177Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1976
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 571, companyId: 1976 }
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 571,
+  company_id: 1976,
+  email: 'knakamura@platformcreditunion.com'
+}
+[2025-06-06T13:55:40.324Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1976,"userId":571}
+[Current Company] Found company: {
+  id: 1976,
+  name: 'Platform Credit Union',
+  onboardingCompleted: true,
+  riskScore: 4,
+  chosenScore: 38,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 571,
+  companyId: 1976,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T13:55:40.350Z'
+}
+[2025-06-06T13:55:40.353Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1976}
+[Tasks] Automatically unlocking all tasks for company { userId: 571, companyId: 1976, requestedBy: 'automatic_task_unlock' }
+[2025-06-06T13:55:40.354Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1976}
+[2025-06-06T13:55:40.380Z] [INFO] [App] GET /api/companies/current 304 in 62ms :: {"id":1976,"name":"Platform Credit Union","category":"Bank","is_demo":true,"r... 
+[2025-06-06T13:55:40.384Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":1976}
+[Tasks] Successfully unlocked all tasks for company: 1976
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 571',
+    condition2: 'tasks.created_by = 571',
+    condition3: "tasks.company_id = 1976 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('knakamura@platformcreditunion.com')"
+  }
+}
+[2025-06-06T13:55:40.416Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218140416-sg6clv1","clients":1}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-06T13:55:40.475Z] [INFO] [App] GET /api/tasks 304 in 152ms :: [] 
+[2025-06-06T13:55:40.514Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T13:55:40.534Z] [INFO] [WebSocket] Received message from client client-1749218140416-sg6clv1 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-06T13:55:40.424Z"}}
+[2025-06-06T13:55:40.534Z] [INFO] [WebSocket] Authentication from client client-1749218140416-sg6clv1 {"module":"WebSocket","hasToken":true}
+[2025-06-06T13:55:40.566Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 571 
+[2025-06-06T13:55:40.566Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:55:40.566Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:55:40.566Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 571 
+[2025-06-06T13:55:40.627Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 571: completed=false, step=0 
+[2025-06-06T13:55:40.658Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 94ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-06T13:... 
+[Relationships] Fetching network for company: 1976
+[Network Visualization] Fetching network data for company: 1976
+[Accreditation] Fetching accreditation for company: 1976
+[Accreditation] Found accreditation: {
+  id: 1017,
+  accreditationNumber: 1,
+  issuedDate: 2025-06-06T13:47:53.287Z,
+  expiresDate: null,
+  status: 'ACTIVE',
+  daysUntilExpiration: null,
+  isPermanent: true
+}
+[Relationships] Found network members: { count: 100 }
+[2025-06-06T13:55:40.921Z] [INFO] [App] GET /api/companies/1976/accreditation 304 in 60ms :: {"id":1017,"accreditationNumber":1,"issuedDate":"2025-06-06T13:47:53.287Z","e... 
+[Network Visualization] Found network relationships: { count: 100 }
+[Network Visualization] Returning visualization data: { centerNode: 'Platform Credit Union', nodeCount: 100 }
+[2025-06-06T13:55:40.950Z] [INFO] [App] GET /api/relationships 304 in 93ms :: [{"id":1340,"companyId":1976,"relatedCompanyId":488,"relationshipType":"data_... 
+[2025-06-06T13:55:40.968Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218140968-iwkrqw1","clients":2}
+[2025-06-06T13:55:40.979Z] [INFO] [App] GET /api/network/visualization 304 in 119ms :: {"center":{"id":1976,"name":"Platform Credit Union","riskScore":4,"riskBucket... 
+[Companies] Fetching companies for user: { userId: 571, company_id: 1976 }
+[RiskCalculationService] Calculating network risk statistics { userCompanyId: 1976 }
+[RiskCalculationService] Fetching network companies with risk data { userCompanyId: 1976 }
+[RiskCalculationService] Fetching risk data for multiple companies { count: 100 }
+[RiskCalculationService] Fetching risk data for multiple companies { count: 100 }
+[Companies] Query successful, found companies: {
+  count: 101,
+  companies: [
+    {
+      id: 488,
+      name: 'Advanced Gaming Technologies',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 48,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 469,
+      name: 'AgriFinance Connect',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 69,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 505,
+      name: 'Allied Evaluation Specialists',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 59,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 459,
+      name: 'BankingAPI Gateway',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 60,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 658,
+      name: 'Beacon Lending Platform',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 53,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 973,
+      name: 'BlockTrade Capital',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 40,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 475,
+      name: 'BlockTrade Exchange',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 63,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 494,
+      name: 'Bridge Quality Consultants',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 466,
+      name: 'CarbonCredit Markets',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 58,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 496,
+      name: 'Catalyst Consulting Council',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 43,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 657,
+      name: 'Catalyst Investment Tools',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 67,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 498,
+      name: 'Coin Tracker',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 31,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 461,
+      name: 'CommodityTrade Hub',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 500,
+      name: 'Continental Infrastructure Union',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 31,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 450,
+      name: 'CorporateCard Plus',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 44,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 477,
+      name: 'CrowdFund Crypto',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 68,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 504,
+      name: 'Crown Strategy Consortium',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 67,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 441,
+      name: 'CryptoSwap Exchange',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 489,
+      name: 'Cyber Studio Works',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 42,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 479,
+      name: 'DAO Treasury Management',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 65,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 452,
+      name: 'DeFi Bridge Protocol',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 485,
+      name: 'DecentralizedID Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 55,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 464,
+      name: 'DigitalBonds Exchange',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 37,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 436,
+      name: 'DigitalVault Security',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 30,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 456,
+      name: 'ESG Impact Tracker',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 65,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 506,
+      name: 'Edge Lab Center',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 33,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 514,
+      name: 'Edge Lab Global',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 56,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 474,
+      name: 'FastPay Innovations',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 32,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 1180,
+      name: 'FinTech207 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 45,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1181,
+      name: 'FinTech208 Ventures',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 40,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1182,
+      name: 'FinTech209 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 59,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1190,
+      name: 'FinTech217 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1191,
+      name: 'FinTech218 Ventures',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1192,
+      name: 'FinTech219 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1200,
+      name: 'FinTech227 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 54,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1201,
+      name: 'FinTech228 Ventures',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 33,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1210,
+      name: 'FinTech237 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 39,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1212,
+      name: 'FinTech239 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1220,
+      name: 'FinTech247 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 62,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1222,
+      name: 'FinTech249 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 65,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1015,
+      name: 'FinTech37 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 60,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1017,
+      name: 'FinTech39 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 30,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1025,
+      name: 'FinTech47 Group',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 57,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1026,
+      name: 'FinTech48 Ventures',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1027,
+      name: 'FinTech49 Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 1036,
+      name: 'FinTech58 Ventures',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 50,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 493,
+      name: 'Foundation Asset United',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 49,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 446,
+      name: 'FraudShield AI',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 42,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 480,
+      name: 'GigWorker Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 36,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 453,
+      name: 'GlobalRemit Network',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 56,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 659,
+      name: 'Horizon Regulatory Tech',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 42,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 439,
+      name: 'InsurTech Dynamics',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 46,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 501,
+      name: 'International Intelligence Authorities',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 509,
+      name: 'International Trading Center',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 67,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 447,
+      name: 'InvestorPortal Pro',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 970,
+      name: 'LendingEdge Analytics',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 37,
+      accreditationStatus: 'PENDING'
+    },
+    {
+      id: 655,
+      name: 'Meridian Financial Systems',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 46,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 476,
+      name: 'MicroInvest Network',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 63,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 445,
+      name: 'MicroLend Network',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 468,
+      name: 'MortgageTech Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 63,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 481,
+      name: 'NFT Marketplace Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 34,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 503,
+      name: 'National Guard Edge',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 55,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 433,
+      name: 'NeoBank Analytics',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 62,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 473,
+      name: 'NeoLend Platform',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 36,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 502,
+      name: 'Network Studio Advisors',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 60,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 654,
+      name: 'Nexus Trading Systems',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 51,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 448,
+      name: 'OpenBanking Hub',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 56,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 478,
+      name: 'PayLater Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 51,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 442,
+      name: 'PayStream Global',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 58,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 455,
+      name: 'PayrollTech Innovations',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 467,
+      name: 'PensionTech Advisors',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 65,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 1976,
+      name: 'Platform Credit Union',
+      hasLogo: false,
+      hasRelationship: true,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 4,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 656,
+      name: 'Prism Analytics Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 30,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 457,
+      name: 'QuantTrading Systems',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 55,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 492,
+      name: 'Quantum Studio Worldwide',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 449,
+      name: 'RealEstate TokenFi',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 47,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 465,
+      name: 'SmallBiz Banking',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 35,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 443,
+      name: 'SmartContract Verify',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 33,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 495,
+      name: 'Sovereign Audit Federation',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 51,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 856,
+      name: 'SparkInc',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 59,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 483,
+      name: 'StableCoin Protocol',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 50,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 653,
+      name: 'Stellar Payment Networks',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 50,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 497,
+      name: 'Sterling Consulting United',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 50,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 491,
+      name: 'Stream Portfolio Base',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 66,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 460,
+      name: 'StudentLoan Refinance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 64,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 454,
+      name: 'SupplyChain Finance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 38,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 434,
+      name: 'SwiftLedger Technologies',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 40,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 499,
+      name: 'Synergy Infrastructure Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 46,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 471,
+      name: 'TaxOptimization AI',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 46,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 444,
+      name: 'TaxTech Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 65,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 430,
+      name: 'TechFlow Financial',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 45,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 758,
+      name: 'TestFinTech Corp',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 57,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 438,
+      name: 'TradeFi Connect',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 50,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 451,
+      name: 'TradingBot Analytics',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 52,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 484,
+      name: 'TradingBot Retail',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 30,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 508,
+      name: 'United Exchange Platforms',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 37,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 435,
+      name: 'VelocityCredit Platform',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 53,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 660,
+      name: 'Vertex Trading Solutions',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 53,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 507,
+      name: 'Wave Consulting Alliance',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 61,
+      accreditationStatus: 'APPROVED'
+    },
+    {
+      id: 486,
+      name: 'Wave Insights Leaders',
+      hasLogo: false,
+      hasRelationship: false,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 46,
+      accreditationStatus: 'APPROVED'
+    },
+    ... 1 more item
+  ]
+}
+[Companies] Sample risk data check: {
+  firstCompanyRiskData: {
+    id: 488,
+    name: 'Advanced Gaming Technologies',
+    risk_score: 48,
+    risk_clusters: 'PRESENT',
+    accreditation_status: 'APPROVED'
+  }
+}
+[RiskCalculationService] Risk data calculated for multiple companies {
+  count: 100,
+  statistics: {
+    stable: 0,
+    monitoring: 49,
+    approaching: 51,
+    blocked: 0,
+    total: 100
+  }
+}
+[RiskCalculationService] Network companies risk data fetched { userCompanyId: 1976, companiesCount: 100 }
+[RiskCalculationService] Risk data calculated for multiple companies {
+  count: 100,
+  statistics: {
+    stable: 0,
+    monitoring: 49,
+    approaching: 51,
+    blocked: 0,
+    total: 100
+  }
+}
+[RiskCalculationService] Network risk statistics calculated {
+  userCompanyId: 1976,
+  statistics: {
+    stable: 0,
+    monitoring: 49,
+    approaching: 51,
+    blocked: 0,
+    total: 100
+  }
+}
+[2025-06-06T13:55:41.237Z] [INFO] [App] GET /api/companies 304 in 133ms :: [{"id":488,"name":"Advanced Gaming Technologies","category":"FinTech","descri... 
+[2025-06-06T13:55:41.239Z] [INFO] [App] GET /api/network/risk-unified 304 in 105ms :: {"stable":0,"monitoring":49,"approaching":51,"blocked":0,"total":100,"compani... 
+[2025-06-06T13:55:41.576Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218141576-4aqefxt","clients":3}
+[2025-06-06T13:55:41.694Z] [INFO] [WebSocket] Received message from client client-1749218141576-4aqefxt {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749218139627_yr48yq5dc","timestamp":"2025-06-06T13:55:41.583Z"}
+[2025-06-06T13:55:41.694Z] [INFO] [WebSocket] Authentication from client client-1749218141576-4aqefxt {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-06T13:55:42.064Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218142064-gs3omci","clients":4}
+[2025-06-06T13:55:42.561Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218142561-lppm8nl","clients":5}
+[2025-06-06T13:55:43.065Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749218143065-j5sqrzb","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'nZhuHyYH1Ga4QBox11mFk0o7pYTIuQsb',
+  cookies: 'connect.sid=s%3AnZhuHyYH1Ga4QBox11mFk0o7pYTIuQsb.VTHhjLuPegAo%2F2i3y%2FoxWUVdcsqrDnoM2ktYIVFoRK8'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 571,
+  email: 'knakamura@platformcreditunion.com',
+  full_name: 'Kevin Nakamura',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$0vqSnnWZcTnEdkXGIF9b7uMw9OUKABzlQ8NM3ARsEj6dNRGj3/CWq',
+  company_id: 1976,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-06T13:48:01.177Z,
+  updated_at: 2025-06-06T13:48:01.177Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1976
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:55:43.645Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"authenticate","userId":571,"companyId":1976,"clientId":"ws_1749218141911_idw6v24rq","timestamp":"2025-06-06T13:55:43.535Z"}
+[2025-06-06T13:55:43.645Z] [INFO] [WebSocket] Authentication from client client-1749218143065-j5sqrzb {"module":"WebSocket","userId":571,"companyId":1976,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 1976
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:56:04.020Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:03.909Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:56:08.120Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1976,"name":"Platform Credit Union","category":"Bank","is_demo":true,"r... [sampled: request 11] 
+[2025-06-06T13:56:11.025Z] [INFO] [WebSocket] Received message from client client-1749218140416-sg6clv1 {"module":"WebSocket","type":"ping"}
+[2025-06-06T13:56:13.021Z] [INFO] [WebSocket] Received message from client client-1749218142064-gs3omci {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:12.909Z","connectionId":"ws_1749218142078_jlbo0bzz6"}
+[2025-06-06T13:56:13.021Z] [INFO] [WebSocket] Received message from client client-1749218142561-lppm8nl {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:12.909Z","connectionId":"ws_1749218140975_3yhq5xwnr"}
+[2025-06-06T13:56:24.023Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:23.909Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[2025-06-06T13:56:41.020Z] [INFO] [WebSocket] Received message from client client-1749218140416-sg6clv1 {"module":"WebSocket","type":"ping"}
+[2025-06-06T13:56:43.027Z] [INFO] [WebSocket] Received message from client client-1749218142064-gs3omci {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:42.909Z","connectionId":"ws_1749218142078_jlbo0bzz6"}
+[2025-06-06T13:56:43.028Z] [INFO] [WebSocket] Received message from client client-1749218142561-lppm8nl {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:42.909Z","connectionId":"ws_1749218140975_3yhq5xwnr"}
+[2025-06-06T13:56:43.313Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:56:43.198Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 571, companyId: 1976 }
+[Current Company] Found company: {
+  id: 1976,
+  name: 'Platform Credit Union',
+  onboardingCompleted: true,
+  riskScore: 4,
+  chosenScore: 38,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 571,
+  companyId: 1976,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T13:56:43.526Z'
+}
+[Relationships] Fetching network for company: 1976
+[Companies-Risk] Fetching companies with risk data for user: { userId: 571, company_id: 1976 }
+[Relationships] Found network members: { count: 100 }
+[2025-06-06T13:56:43.637Z] [INFO] [App] GET /api/relationships 304 in 92ms :: [{"id":1340,"companyId":1976,"relatedCompanyId":488,"relationshipType":"data_... 
+[Companies-Risk] Query successful, found companies with risk data: {
+  count: 101,
+  companiesWithRiskData: 101,
+  sampleRiskData: [
+    {
+      id: 488,
+      name: 'Advanced Gaming Technologies',
+      risk_score: 48,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    },
+    {
+      id: 469,
+      name: 'AgriFinance Connect',
+      risk_score: 69,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    },
+    {
+      id: 505,
+      name: 'Allied Evaluation Specialists',
+      risk_score: 59,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    }
+  ]
+}
+[2025-06-06T13:56:43.677Z] [INFO] [App] GET /api/companies-with-risk 200 in 128ms :: [{"id":488,"name":"Advanced Gaming Technologies","category":"FinTech","descri... 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:56:49.143Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 571 
+[2025-06-06T13:56:49.143Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:56:49.143Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:56:49.144Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 571 
+[2025-06-06T13:56:49.204Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial dashboard for user 571 
+[2025-06-06T13:56:49.236Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 93ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-06-06T13:56:49.440Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 571 
+[2025-06-06T13:56:49.440Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:56:49.440Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:56:49.440Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 571 
+[2025-06-06T13:56:49.498Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 571: completed=false, step=0 
+[2025-06-06T13:56:49.529Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 90ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-06T13:... 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: 'y3JAoaC4OBDgeoJ9iWG822v9aP9rHuwp',
+  cookies: 'connect.sid=s%3Ay3JAoaC4OBDgeoJ9iWG822v9aP9rHuwp.IYUv9p%2BFF1SpNV3padaA%2FLDi%2FMcg%2B97qxZvHbkUWkCI'
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[DemoAPI] [CompanyName] Starting unique company name generation: {
+  timestamp: '2025-06-06T13:56:54.365Z',
+  requestId: 'req_1749218214365_rla61vjfj',
+  persona: 'data-provider'
+}
+[DemoAPI] [CompanyName] Loaded advanced name generation utilities
+[CompanyNameUtils] Generating advanced company name {
+  timestamp: '2025-06-06T13:56:54.367Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating advanced company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'combinatorial',
+  lengthPreference: 'mixed',
+  persona: 'data-provider'
+}
+[CompanyNameUtils] Routing to banking-specific generation for data-provider persona {
+  timestamp: '2025-06-06T13:56:54.367Z',
+  module: 'CompanyNameUtils',
+  operation: 'Routing to banking-specific generation for data-provider persona',
+  baseName: 'Demo Company',
+  attempt: 1,
+  persona: 'data-provider'
+}
+[CompanyNameUtils] Generating banking-specific company name {
+  timestamp: '2025-06-06T13:56:54.367Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generating banking-specific company name',
+  baseName: 'Demo Company',
+  attempt: 1,
+  strategy: 'banking',
+  lengthPreference: 'mixed'
+}
+[CompanyNameUtils] Generated clean banking company name {
+  timestamp: '2025-06-06T13:56:54.368Z',
+  module: 'CompanyNameUtils',
+  operation: 'Generated clean banking company name',
+  baseName: 'Demo Company',
+  generatedName: 'Treasury Credit Union',
+  nameFormat: 'short',
+  bankingSuffix: 'Credit Union',
+  validationAttempts: 1
+}
+[DemoAPI] [CompanyName] Advanced generation produced: {
+  generatedName: 'Treasury Credit Union',
+  strategy: 'full_combinatorial',
+  duration: 3
+}
+[DemoAPI] [CompanyName] Validating name uniqueness against database...
+[CompanyNameUtils] Starting company name uniqueness check {
+  timestamp: '2025-06-06T13:56:54.368Z',
+  module: 'CompanyNameUtils',
+  operation: 'Starting company name uniqueness check',
+  companyName: 'Treasury Credit Union',
+  nameLength: 21
+}
+[CompanyNameUtils] Company name is unique and available {
+  timestamp: '2025-06-06T13:56:54.399Z',
+  module: 'CompanyNameUtils',
+  operation: 'Company name is unique and available',
+  companyName: 'Treasury Credit Union',
+  duration: 31
+}
+[DemoAPI] [CompanyName] Company name generation completed successfully: {
+  companyName: 'Treasury Credit Union',
+  wasModified: false,
+  strategy: 'full_combinatorial',
+  processingTime: 35,
+  timestamp: '2025-06-06T13:56:54.400Z'
+}
+[2025-06-06T13:56:54.433Z] [INFO] [App] GET /api/demo/generate-company-name 200 in 69ms :: {"success":true,"companyName":"Treasury Credit Union","wasModified":false,"or... 
+[2025-06-06T13:57:03.189Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:03.077Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[2025-06-06T13:57:10.549Z] [INFO] [WebSocket] Received message from client client-1749218140416-sg6clv1 {"module":"WebSocket","type":"ping"}
+[DemoAPI] 🏢 Raw company creation request: {
+  name: 'Treasury Credit Union',
+  type: 'demo',
+  persona: 'data-provider',
+  companySize: 'medium',
+  networkSize: 919,
+  metadata: { networkSize: 919 }
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-06-06T13:57:11.359Z'
+}
+[DemoTransformer] 🔢 Network size validation: {
+  requested: 919,
+  persona: 'data-provider',
+  defaultForPersona: 5,
+  validated: 100,
+  wasAdjusted: true
+}
+[DemoTransformer] 🏢 Company data transformation: {
+  input: {
+    name: 'Treasury Credit Union',
+    persona: 'data-provider',
+    networkSize: 919
+  },
+  output: {
+    name: 'Treasury Credit Union',
+    persona: 'data-provider',
+    category: 'Bank',
+    networkSize: 100,
+    shouldCreateNetwork: true
+  },
+  transformationSuccess: true,
+  timestamp: '2025-06-06T13:57:11.359Z'
+}
+[DemoAPI] 🔄 Company data transformation completed: {
+  originalPersona: 'data-provider',
+  transformedCategory: 'Bank',
+  shouldCreateNetwork: true,
+  networkSize: 100,
+  processingTime: 1
+}
+[DemoAPI] 🎭 Configuring persona-specific settings for: data-provider
+[DemoAPI] ✅ Persona configuration applied: {
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  onboardingRequired: false,
+  tabCount: 7
+}
+[DemoAPI] Generated business details: { persona: 'data-provider', isApproved: true, fieldsGenerated: 19 }
+[DemoAPI] Risk assessment access validation: {
+  persona: 'data-provider',
+  accreditationStatus: 'APPROVED',
+  hasRiskAccess: true,
+  willIncludeRiskScores: 28
+}
+[DemoAPI] Creating demo session tracking: {
+  sessionId: 'demo_1749218231361_data-provider',
+  persona: 'data-provider',
+  timestamp: '2025-06-06T13:57:11.361Z'
+}
+[DemoAPI] ✅ Company created successfully: {
+  id: 1977,
+  name: 'Treasury Credit Union',
+  category: 'Bank',
+  availableTabs: [
+    'dashboard',
+    'network',
+    'task-center',
+    'file-vault',
+    'insights',
+    'claims',
+    'risk-score'
+  ],
+  personaType: 'data-provider',
+  transformedPersona: 'data-provider',
+  shouldCreateNetwork: true,
+  processingTime: 37
+}
+[DemoAPI] Creating accreditation history for demo company: { companyId: 1977, category: 'Bank', riskScore: 14 }
+[AccreditationService] Creating new accreditation { service: 'AccreditationService', companyId: 1977, category: 'Bank' }
+[AccreditationService] Accreditation created successfully {
+  service: 'AccreditationService',
+  companyId: 1977,
+  category: 'Bank',
+  accreditationId: 1018,
+  accreditationNumber: 1,
+  expiresDate: 'permanent'
+}
+[DemoAPI] ✅ Accreditation created successfully: {
+  accreditationId: 1018,
+  accreditationNumber: 1,
+  expiresDate: 'permanent',
+  isPermanent: true
+}
+[DemoAPI] ⏭️ Skipping task creation for persona: {
+  persona: 'data-provider',
+  reason: 'Not a New Data Recipient - tasks not required for this persona'
+}
+[DemoAPI] 🌐 Starting network creation for Data Provider: {
+  bankId: 1977,
+  bankName: 'Treasury Credit Union',
+  targetNetworkSize: 100,
+  persona: 'data-provider'
+}
+[DemoAPI] 📊 FinTech discovery results: { requestedSize: 100, availableCount: 0, firstFewNames: [] }
+[DemoAPI] ⚠️ No FinTech companies available for network creation
+[DemoAPI] 🎉 Demo company creation completed successfully: {
+  companyId: 1977,
+  companyName: 'Treasury Credit Union',
+  persona: 'data-provider',
+  category: 'Bank',
+  availableTabs: 7,
+  networkCreated: true,
+  totalProcessingTime: 166
+}
+[2025-06-06T13:57:11.556Z] [INFO] [App] POST /api/demo/company/create 200 in 198ms :: {"success":true,"company":{"id":1977,"name":"Treasury Credit Union","descript... 
+[2025-06-06T13:57:12.403Z] [INFO] [WebSocket] Received message from client client-1749218142064-gs3omci {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:12.293Z","connectionId":"ws_1749218142078_jlbo0bzz6"}
+[DemoAPI] [Network] Displaying existing network: {
+  companyId: 1977,
+  networkSize: 919,
+  persona: 'data-provider',
+  timestamp: '2025-06-06T13:57:12.441Z'
+}
+[DemoAPI] [Network] Querying existing relationships for company: 1977
+[DemoAPI] [Network] Found relationships: { count: 0, duration: 30 }
+[2025-06-06T13:57:12.503Z] [INFO] [App] POST /api/demo/network/create 200 in 62ms :: {"success":true,"network":{"providerCompanyId":1977,"partnerCount":0,"relatio... 
+[2025-06-06T13:57:12.695Z] [INFO] [WebSocket] Received message from client client-1749218142561-lppm8nl {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:12.583Z","connectionId":"ws_1749218140975_3yhq5xwnr"}
+[DemoAPI] 👤 Raw user creation request: {
+  fullName: 'Madison Bennett',
+  email: 'mbennett@treasurycreditunion.com',
+  companyId: 1977,
+  role: 'provider',
+  persona: 'data-provider',
+  demoSessionId: 'demo_1749218229807_data-provider',
+  metadata: {
+    createdViaDemo: true,
+    persona: 'data-provider',
+    setupTimestamp: '2025-06-06T13:57:09.807Z',
+    demoType: 'interactive_demo'
+  }
+}
+[DemoAPI] 🔍 Company ID resolution: {
+  originalCompanyId: 1977,
+  actualCompanyId: undefined,
+  metadataCompanyId: undefined,
+  companyFromObject: undefined,
+  resolvedId: 1977
+}
+[DemoTransformer] ✅ Persona validation: {
+  original: 'data-provider',
+  preserved: 'data-provider',
+  category: 'Bank',
+  unchanged: true,
+  mappingFound: true,
+  timestamp: '2025-06-06T13:57:13.275Z'
+}
+[DemoTransformer] 👤 User data transformation: {
+  input: {
+    fullName: 'Madison Bennett',
+    email: 'mbennett@treasurycreditunion.com',
+    companyId: 1977,
+    companyIdType: 'number',
+    persona: 'data-provider'
+  },
+  output: {
+    fullName: 'Madison Bennett',
+    email: 'mbennett@treasurycreditunion.com',
+    companyId: 1977,
+    companyIdType: 'number',
+    role: 'provider',
+    persona: 'data-provider'
+  },
+  companyIdTransformed: false,
+  transformationSuccess: true,
+  timestamp: '2025-06-06T13:57:13.275Z'
+}
+[DemoAPI] [UserCreate] 🔧 FIXED Onboarding completion logic: {
+  role: 'provider',
+  persona: 'data-provider',
+  shouldCompleteOnboarding: true,
+  onboardingUserCompleted: true,
+  logic: 'Other persona - onboarding_user_completed = TRUE (skips modal)',
+  modalWillShow: false
+}
+[DemoAPI] ✅ User created successfully: {
+  id: 572,
+  email: 'mbennett@treasurycreditunion.com',
+  fullName: 'Madison Bennett',
+  companyId: 1977,
+  role: 'provider',
+  onboardingCompleted: true
+}
+[2025-06-06T13:57:13.412Z] [INFO] [App] POST /api/demo/user/create 200 in 138ms :: {"success":true,"user":{"id":572,"email":"mbennett@treasurycreditunion.com","... 
+[DemoAPI] [Platform] Starting platform configuration: {
+  userId: 572,
+  companyId: 1977,
+  persona: 'data-provider',
+  timestamp: '2025-06-06T13:57:14.167Z'
+}
+[DemoAPI] [Platform] Configuration completed: { userId: 572, persona: 'data-provider', features: 5, duration: 0 }
+[2025-06-06T13:57:14.198Z] [INFO] [App] POST /api/demo/platform/configure 200 in 31ms :: {"success":true,"configuration":{"userId":572,"companyId":1977,"persona":"dat... 
+[DemoAPI] [Finalize] Starting demo environment finalization: {
+  userId: 572,
+  companyId: 1977,
+  demoType: 'data-provider',
+  timestamp: '2025-06-06T13:57:14.958Z'
+}
+[DemoAPI] [Finalize] Verifying user and company data...
+[DemoAPI] [Finalize] User verification successful: {
+  userId: 572,
+  email: 'mbennett@treasurycreditunion.com',
+  companyId: 1977,
+  fullName: 'Madison Bennett'
+}
+[DemoAPI] [Finalize] Checking if user onboarding should be auto-completed...
+[DemoAPI] [Finalize] User onboarding not auto-completed: { shouldComplete: true, alreadyCompleted: true, category: 'Bank' }
+[DemoAPI] [Finalize] Establishing user session...
+[DemoAPI] [Finalize] Session established successfully
+[DemoAPI] [Finalize] Demo finalization completed successfully: {
+  userId: 572,
+  email: 'mbennett@treasurycreditunion.com',
+  companyId: 1977,
+  environmentId: 'env_demo_1749218234988_572',
+  authenticated: true,
+  totalDuration: 124,
+  timestamp: '2025-06-06T13:57:15.083Z'
+}
+[2025-06-06T13:57:15.116Z] [INFO] [App] POST /api/demo/environment/finalize 200 in 159ms :: {"success":true,"demoReady":true,"authenticated":true,"loginRequired":false,"... 
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'ahkkF1LXwKo6Enz5DU1IXm8B5PQTxO8f',
+  cookies: 'connect.sid=s%3AahkkF1LXwKo6Enz5DU1IXm8B5PQTxO8f.AYMVs1LMkAg32wrnkX9zS3iR7JDkVI2BHyOLoyOzbjI'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 572,
+  email: 'mbennett@treasurycreditunion.com',
+  full_name: 'Madison Bennett',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$vp4FzsIe/wlSma7PO5pg0.m2yR3wB.5Tzg0h.43UtRBSZ/5dRfVeu',
+  company_id: 1977,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-06T13:57:13.365Z,
+  updated_at: 2025-06-06T13:57:13.365Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1977
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 572, companyId: 1977 }
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: {
+  id: 572,
+  company_id: 1977,
+  email: 'mbennett@treasurycreditunion.com'
+}
+[2025-06-06T13:57:18.490Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1977,"userId":572}
+[Current Company] Found company: {
+  id: 1977,
+  name: 'Treasury Credit Union',
+  onboardingCompleted: true,
+  riskScore: 14,
+  chosenScore: 23,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 572,
+  companyId: 1977,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T13:57:18.514Z'
+}
+[2025-06-06T13:57:18.518Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1977}
+[Tasks] Automatically unlocking all tasks for company { userId: 572, companyId: 1977, requestedBy: 'automatic_task_unlock' }
+[2025-06-06T13:57:18.519Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1977}
+[2025-06-06T13:57:18.547Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":1977}
+[Tasks] Successfully unlocked all tasks for company: 1977
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 572',
+    condition2: 'tasks.created_by = 572',
+    condition3: "tasks.company_id = 1977 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('mbennett@treasurycreditunion.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-06T13:57:18.636Z] [INFO] [App] GET /api/tasks 304 in 147ms :: [] 
+[2025-06-06T13:57:18.730Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 572 
+[2025-06-06T13:57:18.730Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:57:18.730Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:57:18.730Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 572 
+[2025-06-06T13:57:18.760Z] [INFO] [App] [TabTutorials] No tutorial status found for dashboard for user 572 
+[2025-06-06T13:57:18.790Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 60ms :: {"exists":false,"completed":false,"currentStep":0,"tabName":"dashboard"} 
+[Relationships] Fetching network for company: 1977
+[Network Visualization] Fetching network data for company: 1977
+[Accreditation] Fetching accreditation for company: 1977
+[Relationships] Found network members: { count: 0 }
+[Accreditation] Found accreditation: {
+  id: 1018,
+  accreditationNumber: 1,
+  issuedDate: 2025-06-06T13:57:11.425Z,
+  expiresDate: null,
+  status: 'ACTIVE',
+  daysUntilExpiration: null,
+  isPermanent: true
+}
+[2025-06-06T13:57:19.056Z] [INFO] [App] GET /api/relationships 200 in 74ms :: [] 
+[Network Visualization] Found network relationships: { count: 0 }
+[Network Visualization] Returning visualization data: { centerNode: 'Treasury Credit Union', nodeCount: 0 }
+[2025-06-06T13:57:19.069Z] [INFO] [App] GET /api/companies/1977/accreditation 200 in 71ms :: {"id":1018,"accreditationNumber":1,"issuedDate":"2025-06-06T13:57:11.425Z","e... 
+[Companies] Fetching companies for user: { userId: 572, company_id: 1977 }
+[2025-06-06T13:57:19.087Z] [INFO] [App] GET /api/network/visualization 200 in 90ms :: {"center":{"id":1977,"name":"Treasury Credit Union","riskScore":14,"riskBucke... 
+[Companies] Query successful, found companies: {
+  count: 1,
+  companies: [
+    {
+      id: 1977,
+      name: 'Treasury Credit Union',
+      hasLogo: false,
+      hasRelationship: true,
+      hasRiskScore: true,
+      hasRiskClusters: true,
+      riskScore: 14,
+      accreditationStatus: 'APPROVED'
+    }
+  ]
+}
+[Companies] Sample risk data check: {
+  firstCompanyRiskData: {
+    id: 1977,
+    name: 'Treasury Credit Union',
+    risk_score: 14,
+    risk_clusters: 'PRESENT',
+    accreditation_status: 'APPROVED'
+  }
+}
+[2025-06-06T13:57:19.178Z] [INFO] [App] GET /api/companies 200 in 94ms :: [{"id":1977,"name":"Treasury Credit Union","category":"Bank","description":"E... 
+[RiskCalculationService] Calculating network risk statistics { userCompanyId: 1977 }
+[RiskCalculationService] Fetching network companies with risk data { userCompanyId: 1977 }
+[Companies-Risk] Fetching companies with risk data for user: { userId: 572, company_id: 1977 }
+[Relationships] Fetching network for company: 1977
+[RiskCalculationService] No network relationships found for detailed data { userCompanyId: 1977 }
+[RiskCalculationService] No network relationships found { userCompanyId: 1977 }
+[Relationships] Found network members: { count: 0 }
+[2025-06-06T13:57:19.317Z] [INFO] [App] GET /api/network/risk-unified 200 in 63ms :: {"stable":0,"monitoring":0,"approaching":0,"blocked":0,"total":0,"companies":[]} 
+[Companies-Risk] Query successful, found companies with risk data: {
+  count: 1,
+  companiesWithRiskData: 1,
+  sampleRiskData: [
+    {
+      id: 1977,
+      name: 'Treasury Credit Union',
+      risk_score: 14,
+      hasRiskClusters: true,
+      accreditation_status: 'APPROVED'
+    }
+  ]
+}
+[2025-06-06T13:57:19.343Z] [INFO] [App] GET /api/relationships 304 in 68ms :: [] 
+[2025-06-06T13:57:19.370Z] [INFO] [App] GET /api/companies-with-risk 200 in 115ms :: [{"id":1977,"name":"Treasury Credit Union","category":"Bank","description":"E... 
+[2025-06-06T13:57:20.641Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 572 
+[2025-06-06T13:57:20.641Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:57:20.641Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:57:20.641Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 572 
+[2025-06-06T13:57:20.703Z] [INFO] [App] [TabTutorials] Created new tutorial entry with seen status for dashboard for user 572 
+[2025-06-06T13:57:20.740Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 99ms :: {"success":true,"message":"Tutorial created and marked as seen successfully",... 
+[2025-06-06T13:57:20.936Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 572 
+[2025-06-06T13:57:20.936Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-06T13:57:20.936Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-06T13:57:20.936Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 572 
+[2025-06-06T13:57:20.995Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 572: completed=false, step=0 
+[2025-06-06T13:57:21.025Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 90ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-06T13:... 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:57:23.199Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:23.076Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:57:30.771Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1977,"name":"Treasury Credit Union","category":"Bank","is_demo":true,"r... [sampled: request 21] 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:57:40.539Z] [INFO] [WebSocket] Received message from client client-1749218140416-sg6clv1 {"module":"WebSocket","type":"ping"}
+[2025-06-06T13:57:41.700Z] [INFO] [WebSocket] Received message from client client-1749218141576-4aqefxt {"module":"WebSocket","type":"ping"}
+[2025-06-06T13:57:42.193Z] [INFO] [WebSocket] Received message from client client-1749218142064-gs3omci {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:42.079Z","connectionId":"ws_1749218142078_jlbo0bzz6"}
+[2025-06-06T13:57:42.687Z] [INFO] [WebSocket] Received message from client client-1749218142561-lppm8nl {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:42.574Z","connectionId":"ws_1749218140975_3yhq5xwnr"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T13:57:43.188Z] [INFO] [WebSocket] Received message from client client-1749218143065-j5sqrzb {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T13:57:43.076Z","connectionId":"ws_1749218141911_idw6v24rq"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active

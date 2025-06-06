@@ -588,7 +588,7 @@ router.post('/demo/company/create', async (req, res) => {
         const availableFinTechs = await db.query.companies.findMany({
           where: and(
             eq(companies.category, 'FinTech'),
-            eq(companies.is_demo, true)  // Use demo FinTech companies from our 1000+ pool
+            eq(companies.is_demo, false)  // Use real FinTech companies for network relationships
           ),
           limit: Math.min(transformedData.networkSize, DEMO_CONFIG.NETWORK_SIZE.MAX) // Cap at configured maximum
         });
