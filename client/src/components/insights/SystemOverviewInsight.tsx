@@ -190,12 +190,15 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       {/* Network Summary Card */}
       {summaryStats && (
         <div className="bg-white rounded-lg border p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-gray-700">
-                <strong className="text-gray-900">Invela Trust Network Overview</strong>: {summaryStats.dataProviders + summaryStats.dataRecipients + 1} Total Companies — {summaryStats.accreditedDataRecipients} Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
-              </span>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Building className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">Invela Trust Network Overview</span>
+              </div>
+              <div className="text-sm text-gray-700 ml-6">
+                {summaryStats.dataProviders + summaryStats.dataRecipients + 1} Total Companies — {summaryStats.accreditedDataRecipients} Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
+              </div>
             </div>
             
             <ToggleGroup
