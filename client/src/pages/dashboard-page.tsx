@@ -45,6 +45,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
+import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
@@ -149,15 +150,15 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
 
 /**
  * Widget configuration for Invela companies
- * Administrative dashboard with system overview and monitoring capabilities
+ * Administrative dashboard with system overview and quick actions
  */
 const INVELA_DEFAULT_WIDGETS: DashboardWidgets = {
-  quickActions: true,
+  quickActions: true, // Administrative quick actions for platform management
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: false, // Risk Radar not applicable for Invela admin users
   riskMonitoring: false, // Risk Monitoring not applicable for Invela admin users
-  taskSummary: true,
+  taskSummary: false, // Replaced with Quick Actions for better admin workflow
   systemOverview: true, // Exclusive system-wide overview for Invela
 };
 
@@ -451,12 +452,12 @@ export default function DashboardPage(): JSX.Element {
                   </div>
                 )}
 
-                {/* Task Summary - 1.5 column width equivalent */}
-                {visibleWidgets.taskSummary && (
+                {/* Quick Actions - 1.5 column width equivalent */}
+                {visibleWidgets.quickActions && (
                   <div className="lg:col-span-1">
-                    <TaskSummaryWidget
-                      onToggle={() => toggleWidget('taskSummary')}
-                      isVisible={visibleWidgets.taskSummary}
+                    <QuickActionsWidget
+                      onToggle={() => toggleWidget('quickActions')}
+                      isVisible={visibleWidgets.quickActions}
                     />
                   </div>
                 )}
