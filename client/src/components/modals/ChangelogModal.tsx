@@ -105,6 +105,81 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'dashboard-quickactions-widget-2025-06-06',
+    date: '2025-06-06',
+    type: 'feature',
+    title: 'QuickActions Dashboard Widget',
+    description: 'Implemented comprehensive 8-button quick actions panel with enhanced navigation and professional styling',
+    details: [
+      'Created 2x4 grid layout with Company Profile, Insights, File Upload, Invite Recipient actions',
+      'Added Task Center, Risk Score, Network View, and Manage Claims functionality',
+      'Enhanced button styling with h-14 height for better space utilization',
+      'Replaced chevron icons with proper ArrowRight icons for navigation clarity',
+      'Implemented hover animations with scale and shadow transitions',
+      'Integrated with existing FileVault and InviteModal components'
+    ],
+    audience: 'product'
+  },
+  {
+    id: 'navigation-risk-score-fix-2025-06-06',
+    date: '2025-06-06',
+    type: 'fix',
+    title: 'Risk Score Navigation Enhancement',
+    description: 'Fixed Risk Score button navigation to properly route to company profile risk analysis tab',
+    details: [
+      'Updated navigation path from /company-profile/1?tab=risk to /network/company/1?tab=risk',
+      'Aligned with existing risk monitoring component navigation patterns',
+      'Ensured consistent routing across all dashboard quick action buttons',
+      'Verified proper tab parameter handling for risk analysis display'
+    ],
+    audience: 'product'
+  },
+  {
+    id: 'terminology-data-recipient-2025-06-06',
+    date: '2025-06-06',
+    type: 'enhancement',
+    title: 'Data Recipient Terminology Update',
+    description: 'Standardized business terminology by replacing FinTech references with Data Recipient across invite workflows',
+    details: [
+      'Updated invite modal dialog title to "Invite a New Data Recipient"',
+      'Changed description text to reference "data recipient invitation"',
+      'Modified checkbox label to "Create as Demo Data Recipient"',
+      'Maintained consistent business language throughout user interface',
+      'Improved clarity for enterprise users and administrative workflows'
+    ],
+    audience: 'product'
+  },
+  {
+    id: 'invela-admin-customization-2025-06-06',
+    date: '2025-06-06',
+    type: 'feature',
+    title: 'Invela Administrative Dashboard Customization',
+    description: 'Implemented specialized dashboard configuration for Invela administrative users with optimized widget layout',
+    details: [
+      'Created INVELA_DEFAULT_WIDGETS configuration excluding Risk Radar and Risk Monitoring',
+      'Implemented 2-column grid layout with balanced Company Snapshot and QuickActions positioning',
+      'Enhanced administrative workflow efficiency with prominent quick action shortcuts',
+      'Provided direct navigation to risk analysis and company management features',
+      'Maintained consistent theming with blue accent colors (#3b82f6)'
+    ],
+    audience: 'product'
+  },
+  {
+    id: 'icon-system-standardization-2025-06-06',
+    date: '2025-06-06',
+    type: 'enhancement',
+    title: 'Icon System Standardization',
+    description: 'Unified icon usage across dashboard components with consistent sizing and unique identifiers',
+    details: [
+      'Standardized lucide-react icon imports and usage patterns',
+      'Implemented unique icons for each quick action button (FileText for claims, Shield for risk)',
+      'Applied consistent h-4 w-4 sizing across all interactive elements',
+      'Enhanced visual hierarchy with proper icon-text relationships',
+      'Improved accessibility with meaningful icon representations'
+    ],
+    audience: 'developer'
+  },
+  {
     id: 'demo-network-size-scaling-2025-06-06',
     date: '2025-06-06',
     type: 'enhancement',
