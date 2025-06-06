@@ -276,6 +276,21 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           </div>
         ) : chartData.length > 0 ? (
           <div className="h-80">
+            {/* Date Range Indicator for 30 Days */}
+            {selectedTimeframe === '30days' && (
+              <div className="text-center text-sm text-gray-500 mb-2">
+                {(() => {
+                  const now = new Date();
+                  const startDate = new Date(now);
+                  startDate.setDate(now.getDate() - 29);
+                  const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
+                  const endMonth = now.toLocaleDateString('en-US', { month: 'short' });
+                  return startMonth === endMonth 
+                    ? `${startMonth} ${startDate.getDate()}-${now.getDate()}`
+                    : `${startMonth} ${startDate.getDate()} - ${endMonth} ${now.getDate()}`;
+                })()}
+              </div>
+            )}
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }} maxBarSize={60}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -293,7 +308,8 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                       if (selectedTimeframe === '1year') {
                         return date.toLocaleDateString('en-US', { month: 'short' });
                       } else if (selectedTimeframe === '30days') {
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        // For 30 days, show only day number to reduce clutter
+                        return date.getDate().toString();
                       } else {
                         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
                       }
