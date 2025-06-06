@@ -123,6 +123,24 @@ const changelogEntries: ChangelogEntry[] = [
     audience: 'product'
   },
   {
+    id: 'demo-data-transformer-architecture-2025-06-06',
+    date: '2025-06-06',
+    type: 'enhancement',
+    title: 'Demo Data Transformer Architecture Overhaul',
+    description: 'Refactored demo data transformation pipeline with improved validation logic and scalable network relationship management',
+    details: [
+      'Updated MAX_NETWORK_SIZE constant from 100 to 1000 in demo-data-transformer.ts',
+      'Enhanced network size validation logic to respect user selections within 5-1000 range',
+      'Improved demo cleanup cascade deletion handling for foreign key constraints',
+      'Added comprehensive database cleanup sequence: relationships → users → accreditation history → companies',
+      'Optimized demo session service for handling larger relationship datasets',
+      'Enhanced logging throughout transformation pipeline for better debugging',
+      'Maintained backward compatibility with existing demo configurations'
+    ],
+    version: '2.1.0',
+    audience: 'developer'
+  },
+  {
     id: 'file-vault-authentication-fix-2025-06-06',
     date: '2025-06-06',
     type: 'fix',
