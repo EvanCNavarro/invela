@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'file-vault-authentication-fix-2025-06-06',
+    date: '2025-06-06',
+    type: 'fix',
+    title: 'FileVault Authentication & Display Resolution',
+    description: 'Fixed critical FileVault functionality including user authentication, file list display, and upload processing',
+    details: [
+      'Resolved module resolution conflict causing upload failures by removing duplicate toast hook file',
+      'Fixed circular dependency in FileVault query logic preventing file list display',
+      'Corrected user authentication hook import to use working API endpoint (/api/user)',
+      'Enhanced server logging for debugging authentication flow and request tracking',
+      'Verified file uploads work correctly on server side with proper WebSocket notifications',
+      'Confirmed API endpoint returns complete user data including company_id field',
+      'FileVault now displays uploaded files properly and handles new file uploads successfully'
+    ],
+    version: '2.0.1',
+    audience: 'product'
+  },
+  {
     id: 'banking-specific-company-name-generation-2025-06-06',
     date: '2025-06-06',
     type: 'feature',
