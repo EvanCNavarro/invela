@@ -193,20 +193,33 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <p className="text-sm text-gray-600 mt-1">Company enrollments and accreditations over time by persona type</p>
         </div>
         
-        <ToggleGroup 
-          type="single" 
-          value={selectedTimeframe} 
+        <ToggleGroup
+          type="single"
+          value={selectedTimeframe}
           onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
-          className="bg-gray-100 rounded-lg"
+          className="justify-start border rounded-md p-1 bg-muted/30"
+          variant="outline"
         >
-          <ToggleGroupItem value="1day" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
-            {getTimeframeLabel('1day')}
+          <ToggleGroupItem 
+            value="1day" 
+            aria-label="1 Day view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
+            1D
           </ToggleGroupItem>
-          <ToggleGroupItem value="30days" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
-            {getTimeframeLabel('30days')}
+          <ToggleGroupItem 
+            value="30days" 
+            aria-label="30 Days view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
+            30D
           </ToggleGroupItem>
-          <ToggleGroupItem value="1year" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
-            {getTimeframeLabel('1year')}
+          <ToggleGroupItem 
+            value="1year" 
+            aria-label="1 Year view" 
+            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+          >
+            1Y
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
