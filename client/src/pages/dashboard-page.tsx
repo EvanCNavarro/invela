@@ -99,6 +99,7 @@ import {
   DashboardSkeleton, 
   FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
+import { SystemOverviewWidget } from "@/components/widgets/SystemOverviewWidget";
 
 // ========================================
 // WIDGET CONFIGURATION INTERFACES
@@ -421,38 +422,44 @@ export default function DashboardPage(): JSX.Element {
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Company Info */}
-                {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-1 space-y-6">
-                    <CompanySnapshot
-                      companyData={companyData}
-                      onToggle={() => toggleWidget('companySnapshot')}
-                      isVisible={visibleWidgets.companySnapshot}
-                    />
-                  </div>
-                )}
+              <div className="space-y-6">
+                {/* System Overview - Full Width Widget for Invela Only */}
+                <SystemOverviewWidget className="w-full" />
+                
+                {/* Three Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Column - Company Info */}
+                  {visibleWidgets.companySnapshot && (
+                    <div className="lg:col-span-1 space-y-6">
+                      <CompanySnapshot
+                        companyData={companyData}
+                        onToggle={() => toggleWidget('companySnapshot')}
+                        isVisible={visibleWidgets.companySnapshot}
+                      />
+                    </div>
+                  )}
 
-                {/* Middle Column - Risk & Analytics */}
-                {visibleWidgets.riskRadar && companyData && (
-                  <div className="lg:col-span-1 h-[400px]">
-                    <RiskRadarWidget
-                      companyId={companyData?.id || 0}
-                      onToggle={() => toggleWidget('riskRadar')}
-                      isVisible={visibleWidgets.riskRadar}
-                    />
-                  </div>
-                )}
+                  {/* Middle Column - Risk & Analytics */}
+                  {visibleWidgets.riskRadar && companyData && (
+                    <div className="lg:col-span-1 h-[400px]">
+                      <RiskRadarWidget
+                        companyId={companyData?.id || 0}
+                        onToggle={() => toggleWidget('riskRadar')}
+                        isVisible={visibleWidgets.riskRadar}
+                      />
+                    </div>
+                  )}
 
-                {/* Right Column - Tasks & Activity */}
-                {visibleWidgets.taskSummary && (
-                  <div className="lg:col-span-1">
-                    <TaskSummaryWidget
-                      onToggle={() => toggleWidget('taskSummary')}
-                      isVisible={visibleWidgets.taskSummary}
-                    />
-                  </div>
-                )}
+                  {/* Right Column - Tasks & Activity */}
+                  {visibleWidgets.taskSummary && (
+                    <div className="lg:col-span-1">
+                      <TaskSummaryWidget
+                        onToggle={() => toggleWidget('taskSummary')}
+                        isVisible={visibleWidgets.taskSummary}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
