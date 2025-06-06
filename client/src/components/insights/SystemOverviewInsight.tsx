@@ -197,15 +197,15 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           type="single" 
           value={selectedTimeframe} 
           onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
-          className="border rounded-lg"
+          className="bg-gray-100 rounded-lg"
         >
-          <ToggleGroupItem value="1day" className="px-3 py-1.5 text-sm">
+          <ToggleGroupItem value="1day" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
             {getTimeframeLabel('1day')}
           </ToggleGroupItem>
-          <ToggleGroupItem value="30days" className="px-3 py-1.5 text-sm">
+          <ToggleGroupItem value="30days" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
             {getTimeframeLabel('30days')}
           </ToggleGroupItem>
-          <ToggleGroupItem value="1year" className="px-3 py-1.5 text-sm">
+          <ToggleGroupItem value="1year" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
             {getTimeframeLabel('1year')}
           </ToggleGroupItem>
         </ToggleGroup>
@@ -217,7 +217,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4 text-blue-600" />
             <span className="text-sm text-gray-700">
-              {summaryStats.dataProviders + summaryStats.dataRecipients + 1} total companies in the Invela Trust Network — {summaryStats.accreditedDataRecipients} active accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
+              <strong className="text-gray-900">Invela Trust Network</strong> Overview: <strong className="text-gray-900">{summaryStats.dataProviders + summaryStats.dataRecipients + 1}</strong> Total Companies — <strong className="text-gray-900">{summaryStats.accreditedDataRecipients}</strong> Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
             </span>
           </div>
         </div>
@@ -295,29 +295,22 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                     lineHeight: '22px'
                   }}
                   iconSize={12}
-                  itemStyle={{ marginRight: '24px', marginBottom: '6px' }}
                 />
                 <Bar 
                   dataKey="dataProviders" 
-                  name="Data Providers (Banks)" 
+                  name="Data Providers" 
                   fill="#9333ea"
                   radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="dataRecipients" 
-                  name="New Data Recipients (FinTech)" 
+                  name="Data Recipients" 
                   fill="#10b981"
                   radius={[2, 2, 0, 0]}
                 />
                 <Bar 
                   dataKey="accreditedDataRecipients" 
-                  name="Accredited Recipients (FinTech)" 
-                  fill="#059669"
-                  radius={[2, 2, 0, 0]}
-                />
-                <Bar 
-                  dataKey="totalAccreditations" 
-                  name="Accreditations Completed" 
+                  name="Accredited Recipients" 
                   fill="#2563eb"
                   radius={[2, 2, 0, 0]}
                 />
