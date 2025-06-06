@@ -15,6 +15,7 @@ import {
 import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
 import { generateFinTechCompanies } from './utils/fintech-company-generator';
 import { AccreditationService } from './services/accreditation-service.js';
+import { DEMO_CONFIG } from '../types/demo-config';
 
 /**
  * Generate randomized risk clusters that sum up to the total score
@@ -577,7 +578,7 @@ router.post('/demo/company/create', async (req, res) => {
             eq(companies.category, 'FinTech'),
             eq(companies.is_demo, false)
           ),
-          limit: Math.min(transformedData.networkSize, 1000) // Cap at 1000 to match our dataset
+          limit: Math.min(transformedData.networkSize, DEMO_CONFIG.NETWORK_SIZE.MAX) // Cap at configured maximum
         });
         
         console.log('[DemoAPI] 📊 FinTech discovery results:', {

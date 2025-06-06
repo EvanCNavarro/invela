@@ -44,7 +44,19 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { DEMO_CONFIG } from '../../../types/demo-config';
+// Centralized demo configuration constants
+const DEMO_CONFIG = {
+  NETWORK_SIZE: {
+    MIN: 5,
+    MAX: 1000,
+    DEFAULT: 25
+  },
+  RISK_PROFILE: {
+    MIN: 0,
+    MAX: 100,
+    DEFAULT: 50
+  }
+} as const;
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
