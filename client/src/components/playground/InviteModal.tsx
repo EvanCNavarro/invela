@@ -179,10 +179,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            Invite a New {variant === 'user' ? 'User' : 'FinTech'}
+            Invite a New {variant === 'user' ? 'User' : 'Data Recipient'}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
-            Please provide details to send a {variant === 'user' ? 'user' : 'FinTech'} invitation.
+            Please provide details to send a {variant === 'user' ? 'user' : 'data recipient'} invitation.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -291,7 +291,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                   htmlFor="demo-fintech-checkbox" 
                   className="text-sm font-medium text-blue-700"
                 >
-                  Create as Demo FinTech
+                  Create as Demo Data Recipient
                 </Label>
               </div>
             )}
