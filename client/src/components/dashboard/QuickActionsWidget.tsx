@@ -22,7 +22,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ChevronRight, Users } from "lucide-react";
+import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ChevronRight, Users, FileText } from "lucide-react";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;
@@ -94,7 +94,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     },
     {
       id: "invite-recipient",
-      label: "Invite Data Recipient",
+      label: "Invite Recipient",
       icon: <UserPlus className="h-4 w-4" />,
       onClick: handleInviteRecipient
     },
@@ -118,8 +118,8 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     },
     {
       id: "claims",
-      label: "Claims Management",
-      icon: <Shield className="h-4 w-4" />,
+      label: "Manage Claims",
+      icon: <FileText className="h-4 w-4" />,
       onClick: handleClaims
     }
   ];
@@ -140,7 +140,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
             <Button
               key={action.id}
               variant="outline"
-              className="h-12 px-4 flex items-center justify-between group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
+              className="h-14 px-4 pr-3 flex items-center justify-between group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
               onClick={action.onClick}
             >
               <div className="flex items-center space-x-2">
@@ -149,7 +149,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
                 </div>
                 <span className="font-medium text-sm text-gray-900 group-hover:text-gray-800">{action.label}</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200" />
+              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200 ml-2" />
             </Button>
           ))}
         </div>
