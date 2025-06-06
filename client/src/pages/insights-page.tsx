@@ -20,6 +20,7 @@ import { NetworkInsightVisualization } from "@/components/insights/NetworkInsigh
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
+import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsight";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 
 // Default visualization types
@@ -37,10 +38,20 @@ const fintechVisualizationTypes = [
   { value: "consent_activity", label: "Consent Activity" },
 ];
 
+// Invela admin-specific visualization types
+const invelaVisualizationTypes = [
+  { value: "system_overview", label: "System Overview" },
+  { value: "risk_monitoring", label: "Risk Monitoring" },
+  { value: "network_visualization", label: "Network Visualization" },
+  { value: "accreditation_status", label: "Accreditation Status" },
+  { value: "consent_activity", label: "Consent Activity" },
+];
+
 export default function InsightsPage() {
   const [selectedVisualization, setSelectedVisualization] = useState("consent_activity");
   const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
   const [isFintech, setIsFintech] = useState(false);
+  const [isInvela, setIsInvela] = useState(false);
   
   // Get current company data
   const { data: currentCompany } = useQuery<any>({
@@ -55,17 +66,23 @@ export default function InsightsPage() {
     queryKey: ["/api/relationships"],
   });
 
-  // No longer need company type distribution API
-
-  // Determine if the current company is a FinTech
+  // Determine company type and set appropriate visualizations
   useEffect(() => {
     if (currentCompany?.category === "FinTech") {
       setIsFintech(true);
+      setIsInvela(false);
       setVisualizationTypes(fintechVisualizationTypes);
       setSelectedVisualization("risk_radar");
+    } else if (currentCompany?.category === "Invela") {
+      setIsFintech(false);
+      setIsInvela(true);
+      setVisualizationTypes(invelaVisualizationTypes);
+      setSelectedVisualization("system_overview");
     } else {
       setIsFintech(false);
+      setIsInvela(false);
       setVisualizationTypes(defaultVisualizationTypes);
+      setSelectedVisualization("consent_activity");
     }
   }, [currentCompany]);
 
