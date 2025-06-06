@@ -119,7 +119,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Updated frontend to automatically pass selected persona information to backend APIs',
       'Maintained backwards compatibility with existing generation logic for all other personas'
     ],
-    version: '1.9.10',
+    version: '2.0.0',
     audience: 'product'
   },
   {
