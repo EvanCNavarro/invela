@@ -156,7 +156,7 @@ const INVELA_DEFAULT_WIDGETS: DashboardWidgets = {
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: false, // Risk Radar not applicable for Invela admin users
-  riskMonitoring: true,
+  riskMonitoring: false, // Risk Monitoring not applicable for Invela admin users
   taskSummary: true,
   systemOverview: true, // Exclusive system-wide overview for Invela
 };
