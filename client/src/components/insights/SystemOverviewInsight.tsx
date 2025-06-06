@@ -277,16 +277,30 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
         ) : chartData.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }} maxBarSize={60}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="period" 
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
                   tickFormatter={(value) => {
-                    // Extract month from date string (YYYY-MM format)
-                    const date = new Date(value + '-01');
-                    return date.toLocaleDateString('en-US', { month: 'short' });
+                    try {
+                      if (selectedTimeframe === '1year') {
+                        // For yearly view, handle YYYY-MM format
+                        const date = new Date(value + '-01');
+                        return date.toLocaleDateString('en-US', { month: 'short' });
+                      } else if (selectedTimeframe === '30days') {
+                        // For 30 days, handle full date
+                        const date = new Date(value);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      } else {
+                        // For 1 day, handle hour format
+                        const date = new Date(value);
+                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                      }
+                    } catch (error) {
+                      return value; // Fallback to original value if formatting fails
+                    }
                   }}
                 />
                 <YAxis 
@@ -305,7 +319,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   wrapperStyle={{ 
                     fontSize: '13px', 
                     paddingTop: '25px',
-                    lineHeight: '22px'
+                    lineHeight: '24px'
                   }}
                   iconSize={12}
                 />
@@ -324,7 +338,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                 <Bar 
                   dataKey="accreditedDataRecipients" 
                   name="Accredited Recipients" 
-                  fill="#2563eb"
+                  fill="#3b82f6"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>
