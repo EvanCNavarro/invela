@@ -120,7 +120,11 @@ export function NetworkSummary() {
   const formatNetworkSize = (num: number) => {
     if (num >= 100000) return `${(num / 1000).toFixed(0)}K`;
     if (num >= 10000) return `${(num / 1000).toFixed(1)}K`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    if (num >= 1000) {
+      const thousands = (num / 1000).toFixed(1);
+      // Remove .0 if it's a whole number
+      return thousands.endsWith('.0') ? `${parseInt(thousands)}K` : `${thousands}K`;
+    }
     return num.toString();
   };
 
