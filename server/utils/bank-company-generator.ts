@@ -38,6 +38,8 @@ interface BankCompany {
   risk_score: number;
   chosen_score: number;
   risk_clusters: any;
+  risk_configuration: any;
+  risk_priorities: any;
   revenue: string;
   revenue_tier: 'small' | 'medium' | 'large' | 'xlarge';
   legal_structure: string;
@@ -56,6 +58,7 @@ interface BankCompany {
   onboarding_company_completed: boolean;
   available_tabs: string[];
   is_demo: boolean;
+  demo_cleanup_eligible: boolean;
   demo_persona_type: 'data-provider';
   files_public: string[];
   files_private: string[];
@@ -77,25 +80,110 @@ interface ProgressCallback {
 }
 
 /**
- * Generate risk clusters for bank companies
+ * Generate risk clusters for bank companies using platform standard categories
  * Banks typically have lower and more stable risk profiles
  */
 function generateBankRiskClusters(totalScore: number): any {
-  // Ensure minimum viable distribution
-  const minPerCategory = 2;
-  const remaining = Math.max(0, totalScore - (minPerCategory * 6));
+  // Use the standard platform risk categories
+  const minPerCategory = 0;
+  const remaining = Math.max(0, totalScore - minPerCategory);
   
-  // Banks have more conservative risk distribution
+  // Banks have more conservative risk distribution, focused on traditional banking risks
   const clusters = {
-    'Operational Risk': minPerCategory + Math.floor(remaining * 0.25),
-    'Credit Risk': minPerCategory + Math.floor(remaining * 0.20),
-    'Market Risk': minPerCategory + Math.floor(remaining * 0.15),
-    'Liquidity Risk': minPerCategory + Math.floor(remaining * 0.15),
-    'Compliance Risk': minPerCategory + Math.floor(remaining * 0.15),
-    'Technology Risk': minPerCategory + Math.floor(remaining * 0.10)
+    'Dark Web Data': Math.floor(remaining * 0.05), // Lower exposure
+    'Cyber Security': Math.floor(remaining * 0.20), // Moderate concern
+    'Public Sentiment': Math.floor(remaining * 0.10), // Lower volatility 
+    'Data Access Scope': Math.floor(remaining * 0.15), // Moderate exposure
+    'Financial Stability': Math.floor(remaining * 0.30), // Primary concern for banks
+    'Potential Liability': Math.floor(remaining * 0.20)  // Significant for regulated institutions
   };
   
   return clusters;
+}
+
+/**
+ * Generate risk configuration for bank companies
+ */
+function generateBankRiskConfiguration(riskScore: number, riskClusters: any): any {
+  // Determine risk level based on score
+  let riskLevel = 'low';
+  if (riskScore > 30) riskLevel = 'medium';
+  if (riskScore > 35) riskLevel = 'high';
+  if (riskScore > 40) riskLevel = 'critical';
+
+  // Create dimensions array matching the platform standard
+  const dimensions = [
+    {
+      id: 'financial_stability',
+      name: 'Financial Stability',
+      color: '#4caf50',
+      value: riskClusters['Financial Stability'],
+      weight: 30,
+      description: 'Financial health and sustainability of the banking institution'
+    },
+    {
+      id: 'cyber_security',
+      name: 'Cyber Security', 
+      color: '#2196f3',
+      value: riskClusters['Cyber Security'],
+      weight: 25,
+      description: 'Protection against digital threats and vulnerabilities'
+    },
+    {
+      id: 'potential_liability',
+      name: 'Potential Liability',
+      color: '#ff9800', 
+      value: riskClusters['Potential Liability'],
+      weight: 20,
+      description: 'Risk exposure from regulatory compliance and operations'
+    },
+    {
+      id: 'data_access_scope',
+      name: 'Data Access Scope',
+      color: '#009688',
+      value: riskClusters['Data Access Scope'], 
+      weight: 15,
+      description: 'Extent and sensitivity of customer data being processed'
+    },
+    {
+      id: 'public_sentiment',
+      name: 'Public Sentiment',
+      color: '#ffc107',
+      value: riskClusters['Public Sentiment'],
+      weight: 7,
+      description: 'Public perception and reputation in the market'
+    },
+    {
+      id: 'dark_web_data',
+      name: 'Dark Web Data',
+      color: '#9c27b0',
+      value: riskClusters['Dark Web Data'],
+      weight: 3,
+      description: 'Presence of sensitive information on the dark web'
+    }
+  ];
+
+  return {
+    score: riskScore,
+    riskLevel,
+    dimensions,
+    thresholds: {
+      low: 30,
+      medium: 60,
+      high: 85
+    }
+  };
+}
+
+/**
+ * Generate risk priorities for bank companies
+ */
+function generateBankRiskPriorities(riskScore: number, dimensions: any[]): any {
+  return {
+    dimensions,
+    riskAcceptanceLevel: riskScore,
+    lastUpdated: new Date().toISOString()
+  };
 }
 
 /**
@@ -149,6 +237,12 @@ async function generateBankData(index: number): Promise<BankCompany> {
   // Generate risk clusters matching the score
   const riskClusters = generateBankRiskClusters(riskScore);
   
+  // Generate risk configuration with proper platform structure
+  const riskConfiguration = generateBankRiskConfiguration(riskScore, riskClusters);
+  
+  // Generate risk priorities with proper platform structure
+  const riskPriorities = generateBankRiskPriorities(riskScore, riskConfiguration.dimensions);
+  
   return {
     name: bankName,
     description: businessDetails.market_position,
@@ -157,6 +251,8 @@ async function generateBankData(index: number): Promise<BankCompany> {
     risk_score: riskScore,
     chosen_score: chosenScore,
     risk_clusters: riskClusters,
+    risk_configuration: riskConfiguration,
+    risk_priorities: riskPriorities,
     revenue: businessDetails.revenue,
     revenue_tier: businessDetails.revenue_tier,
     legal_structure: businessDetails.legal_structure,
@@ -174,7 +270,8 @@ async function generateBankData(index: number): Promise<BankCompany> {
     certifications_compliance: businessDetails.certifications_compliance,
     onboarding_company_completed: true, // Banks are fully onboarded
     available_tabs: getBankAvailableTabs(),
-    is_demo: false, // Production data, not demo
+    is_demo: false, // Production data, not demo cleanup eligible
+    demo_cleanup_eligible: false, // Permanent companies, not demo data
     demo_persona_type: 'data-provider',
     files_public: businessDetails.files_public,
     files_private: businessDetails.files_private
@@ -245,6 +342,8 @@ export async function generateBankCompanies(
         risk_score: bank.risk_score,
         chosen_score: bank.chosen_score,
         risk_clusters: bank.risk_clusters,
+        risk_configuration: bank.risk_configuration,
+        risk_priorities: bank.risk_priorities,
         revenue: bank.revenue,
         revenue_tier: bank.revenue_tier,
         legal_structure: bank.legal_structure,
@@ -263,6 +362,7 @@ export async function generateBankCompanies(
         onboarding_company_completed: bank.onboarding_company_completed,
         available_tabs: bank.available_tabs,
         is_demo: bank.is_demo,
+        demo_cleanup_eligible: bank.demo_cleanup_eligible,
         demo_persona_type: bank.demo_persona_type,
         files_public: bank.files_public,
         files_private: bank.files_private
