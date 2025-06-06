@@ -44,6 +44,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { DEMO_CONFIG } from '../../../types/demo-config';
 
 // Temporary inline types until path resolution is fixed
 type AuthStep = 1 | 2 | 3 | 4 | 5;
@@ -737,8 +738,8 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
     }
     
     if (fields.includes('networkSize')) {
-      // Generate random network size between 5-1000 recipients
-      updates.networkSize = Math.floor(Math.random() * (1000 - 5 + 1)) + 5;
+      // Generate random network size using centralized configuration
+      updates.networkSize = Math.floor(Math.random() * (DEMO_CONFIG.NETWORK_SIZE.MAX - DEMO_CONFIG.NETWORK_SIZE.MIN + 1)) + DEMO_CONFIG.NETWORK_SIZE.MIN;
       console.log(`[DemoStep2] Generated random network size: ${updates.networkSize} recipients`);
     }
     
@@ -1493,13 +1494,13 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                     <div className="flex-1 h-[32px] flex items-center px-3">
                       <input
                         type="range"
-                        min="5"
-                        max="1000"
+                        min={DEMO_CONFIG.NETWORK_SIZE.MIN}
+                        max={DEMO_CONFIG.NETWORK_SIZE.MAX}
                         value={formData.networkSize}
                         onChange={(e) => handleFieldChange('networkSize', parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((formData.networkSize - 5) / (1000 - 5)) * 100}%, #e5e7eb ${((formData.networkSize - 5) / (1000 - 5)) * 100}%, #e5e7eb 100%)`
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((formData.networkSize - DEMO_CONFIG.NETWORK_SIZE.MIN) / (DEMO_CONFIG.NETWORK_SIZE.MAX - DEMO_CONFIG.NETWORK_SIZE.MIN)) * 100}%, #e5e7eb ${((formData.networkSize - DEMO_CONFIG.NETWORK_SIZE.MIN) / (DEMO_CONFIG.NETWORK_SIZE.MAX - DEMO_CONFIG.NETWORK_SIZE.MIN)) * 100}%, #e5e7eb 100%)`
                         }}
                       />
                     </div>
