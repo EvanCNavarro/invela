@@ -237,7 +237,36 @@ export async function generateBankCompanies(
     for (let i = 0; i < bankCompanies.length; i += batchSize) {
       const batch = bankCompanies.slice(i, i + batchSize);
       
-      const batchResults = await db.insert(companies).values(batch).returning({
+      const batchResults = await db.insert(companies).values(batch.map(bank => ({
+        name: bank.name,
+        description: bank.description,
+        category: bank.category,
+        accreditation_status: bank.accreditation_status,
+        risk_score: bank.risk_score,
+        chosen_score: bank.chosen_score,
+        risk_clusters: bank.risk_clusters,
+        revenue: bank.revenue,
+        revenue_tier: bank.revenue_tier,
+        legal_structure: bank.legal_structure,
+        market_position: bank.market_position,
+        hq_address: bank.hq_address,
+        website_url: bank.website_url,
+        products_services: bank.products_services,
+        incorporation_year: bank.incorporation_year,
+        founders_and_leadership: bank.founders_and_leadership,
+        num_employees: bank.num_employees,
+        key_clients_partners: bank.key_clients_partners,
+        investors: bank.investors,
+        funding_stage: bank.funding_stage,
+        exit_strategy_history: bank.exit_strategy_history,
+        certifications_compliance: bank.certifications_compliance,
+        onboarding_company_completed: bank.onboarding_company_completed,
+        available_tabs: bank.available_tabs,
+        is_demo: bank.is_demo,
+        demo_persona_type: bank.demo_persona_type,
+        files_public: bank.files_public,
+        files_private: bank.files_private
+      }))).returning({
         id: companies.id,
         name: companies.name,
         risk_score: companies.risk_score,
