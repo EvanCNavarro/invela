@@ -18,6 +18,24 @@ npm run db:push
 npm run storybook
 ```
 
+## 🔄 Development vs Production Mode
+
+**Quick Reference** - See [DEPLOYMENT_MODE_SWITCHING.md](./DEPLOYMENT_MODE_SWITCHING.md) for complete guide
+
+### Switch to Production (Before Deployment)
+```typescript
+// In server/index.ts line ~307
+if (process.env.NODE_ENV === "production") {
+```
+
+### Switch to Development (For Feature Work)
+```typescript
+// In server/index.ts line ~307
+if (false) {  // Temporarily force development mode
+```
+
+**Always switch to production mode before deploying to avoid "Internal Server Error"**
+
 ## 🏗️ Architecture
 
 ### Core Technologies
