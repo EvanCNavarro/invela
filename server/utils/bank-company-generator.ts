@@ -26,29 +26,39 @@ import { db } from '../../db/index.js';
 import { companies, relationships, accreditationHistory } from '../../db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { generateBusinessDetails } from './business-details-generator.js';
+import { generateAdvancedCompanyName } from './company-name-utils.js';
 import { AccreditationService } from '../services/accreditation-service.js';
 
-// Type definitions
+// Type definitions matching database schema
 interface BankCompany {
   name: string;
+  description: string;
   category: 'Bank';
   accreditation_status: 'APPROVED';
   risk_score: number;
   chosen_score: number;
   risk_clusters: any;
-  description: string;
-  websiteUrl: string;
-  revenue_tier: string;
+  revenue: string;
+  revenue_tier: 'small' | 'medium' | 'large' | 'xlarge';
   legal_structure: string;
+  market_position: string;
+  hq_address: string;
+  website_url: string;
+  products_services: string;
   incorporation_year: number;
-  headquarters_location: string;
-  primary_services: string[];
-  compliance_certifications: string[];
+  founders_and_leadership: string;
+  num_employees: number;
+  key_clients_partners: string;
+  investors: string;
+  funding_stage: string;
+  exit_strategy_history: string | null;
+  certifications_compliance: string;
+  onboarding_company_completed: boolean;
+  available_tabs: string[];
   is_demo: boolean;
   demo_persona_type: 'data-provider';
-  available_tabs: string[];
-  created_at: Date;
-  updated_at: Date;
+  files_public: string[];
+  files_private: string[];
 }
 
 interface NetworkRelationship {
@@ -116,41 +126,58 @@ function getBankAvailableTabs(): string[] {
 }
 
 /**
- * Generate bank company data using business details generator
+ * Generate bank company data using proper business details and naming
  */
 async function generateBankData(index: number): Promise<BankCompany> {
-  // Generate bank name
-  const bankName = `Bank ${index + 1}`;
+  // Generate professional banking name using data-provider persona
+  const bankName = await generateAdvancedCompanyName(
+    'Banking Institution', // Base name for context
+    1, // First attempt
+    { 
+      persona: 'data-provider',
+      lengthPreference: 'mixed',
+      suffixStyle: 'professional'
+    }
+  );
   
-  // Generate business details for data provider persona
+  // Generate comprehensive business details for data provider persona
   const businessDetails = generateBusinessDetails(bankName, 'data-provider', true);
   
-  // Generate risk scores
+  // Generate risk scores appropriate for banks
   const { riskScore, chosenScore } = generateBankRiskScore();
   
-  // Generate risk clusters
+  // Generate risk clusters matching the score
   const riskClusters = generateBankRiskClusters(riskScore);
   
   return {
     name: bankName,
+    description: businessDetails.market_position,
     category: 'Bank',
     accreditation_status: 'APPROVED',
     risk_score: riskScore,
     chosen_score: chosenScore,
     risk_clusters: riskClusters,
-    description: businessDetails.market_position,
-    websiteUrl: businessDetails.website_url,
-    revenue_tier: businessDetails.revenue_tier, // Use the enum value, not formatted revenue
+    revenue: businessDetails.revenue,
+    revenue_tier: businessDetails.revenue_tier,
     legal_structure: businessDetails.legal_structure,
+    market_position: businessDetails.market_position,
+    hq_address: businessDetails.hq_address,
+    website_url: businessDetails.website_url,
+    products_services: businessDetails.products_services,
     incorporation_year: businessDetails.incorporation_year,
-    headquarters_location: businessDetails.hq_address,
-    primary_services: [businessDetails.products_services],
-    compliance_certifications: [businessDetails.certifications_compliance],
+    founders_and_leadership: businessDetails.founders_and_leadership,
+    num_employees: businessDetails.num_employees,
+    key_clients_partners: businessDetails.key_clients_partners,
+    investors: businessDetails.investors,
+    funding_stage: businessDetails.funding_stage,
+    exit_strategy_history: businessDetails.exit_strategy_history,
+    certifications_compliance: businessDetails.certifications_compliance,
+    onboarding_company_completed: true, // Banks are fully onboarded
+    available_tabs: getBankAvailableTabs(),
     is_demo: false, // Production data, not demo
     demo_persona_type: 'data-provider',
-    available_tabs: getBankAvailableTabs(),
-    created_at: new Date(),
-    updated_at: new Date()
+    files_public: businessDetails.files_public,
+    files_private: businessDetails.files_private
   };
 }
 
