@@ -118,6 +118,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Implemented hover animations with scale and shadow transitions',
       'Integrated with existing FileVault and InviteModal components'
     ],
+    version: '2.2.0',
     audience: 'product'
   },
   {
@@ -132,6 +133,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Ensured consistent routing across all dashboard quick action buttons',
       'Verified proper tab parameter handling for risk analysis display'
     ],
+    version: '2.2.1',
     audience: 'product'
   },
   {
@@ -147,6 +149,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Maintained consistent business language throughout user interface',
       'Improved clarity for enterprise users and administrative workflows'
     ],
+    version: '2.2.2',
     audience: 'product'
   },
   {
@@ -162,6 +165,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Provided direct navigation to risk analysis and company management features',
       'Maintained consistent theming with blue accent colors (#3b82f6)'
     ],
+    version: '2.2.3',
     audience: 'product'
   },
   {
@@ -177,6 +181,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Enhanced visual hierarchy with proper icon-text relationships',
       'Improved accessibility with meaningful icon representations'
     ],
+    version: '2.2.4',
     audience: 'developer'
   },
   {
