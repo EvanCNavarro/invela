@@ -1,0 +1,16 @@
+Question ID,Category,Question,Expected Response Type,Compliance Framework
+BCP-001,Risk Assessment,Are business impact analyses conducted to identify critical business functions?,Yes/No,ISO 22301
+BCP-002,Recovery Objectives,Are recovery time objectives (RTO) and recovery point objectives (RPO) defined?,Yes/No,ISO 22301
+BCP-003,Business Continuity Planning,Is there a documented business continuity plan covering all critical functions?,Yes/No,ISO 22301
+BCP-004,Emergency Response,Are emergency response procedures documented and communicated?,Yes/No,ISO 22301
+BCP-005,Communication Plans,Are communication plans established for stakeholders during incidents?,Yes/No,ISO 22301
+BCP-006,Data Backup,Are regular data backups performed and tested for restoration?,Yes/No,ISO 22301
+BCP-007,Alternative Sites,Are alternative operating sites identified and prepared?,Yes/No,ISO 22301
+BCP-008,Supplier Continuity,Are supplier business continuity capabilities assessed?,Yes/No,ISO 22301
+BCP-009,Testing Exercises,Are business continuity plans tested through regular exercises?,Yes/No,ISO 22301
+BCP-010,Training Programs,Are employees trained on business continuity procedures?,Yes/No,ISO 22301
+BCP-011,Plan Maintenance,Are business continuity plans reviewed and updated regularly?,Yes/No,ISO 22301
+BCP-012,Incident Management,Is there an incident management process for business disruptions?,Yes/No,ISO 22301
+BCP-013,Recovery Teams,Are business continuity recovery teams identified and trained?,Yes/No,ISO 22301
+BCP-014,Technology Recovery,Are IT disaster recovery procedures integrated with business continuity plans?,Yes/No,ISO 22301
+BCP-015,Compliance Monitoring,Is compliance with business continuity requirements monitored and reported?,Yes/No,ISO 22301
