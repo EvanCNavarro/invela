@@ -186,6 +186,25 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
 
   return (
     <div className={cn("space-y-6", className)}>
+      {/* Network Overview Header */}
+      {summaryStats && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Building className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Invela Trust Network</h2>
+              <p className="text-sm text-gray-600">
+                {summaryStats.dataProviders + summaryStats.dataRecipients + 1} total companies in the network
+                <span className="mx-2">•</span>
+                {summaryStats.accreditedDataRecipients} active accreditations
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with Time Filter */}
       <div className="flex items-center justify-between">
         <div>
@@ -213,7 +232,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
 
       {/* Summary Stats Cards */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg border p-4">
             <div className="flex items-center gap-2">
               <Building className="h-4 w-4 text-blue-600" />
@@ -236,14 +255,6 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
               <span className="text-sm font-medium text-gray-700">Accredited Recipients</span>
             </div>
             <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.accreditedDataRecipients}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium text-gray-700">Recent Accreditations</span>
-            </div>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.recentAccreditations}</p>
           </div>
         </div>
       )}
