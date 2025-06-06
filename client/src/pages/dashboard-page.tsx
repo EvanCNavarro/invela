@@ -147,6 +147,20 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
   systemOverview: true, // Available for Bank and Invela companies
 };
 
+/**
+ * Widget configuration for Invela companies
+ * Administrative dashboard with system overview and monitoring capabilities
+ */
+const INVELA_DEFAULT_WIDGETS: DashboardWidgets = {
+  quickActions: true,
+  companySnapshot: true,
+  networkVisualization: true,
+  riskRadar: false, // Risk Radar not applicable for Invela admin users
+  riskMonitoring: true,
+  taskSummary: true,
+  systemOverview: true, // Exclusive system-wide overview for Invela
+};
+
 // ========================================
 // MAIN COMPONENT
 // ========================================
@@ -205,13 +219,13 @@ export default function DashboardPage(): JSX.Element {
       const isFinTech = companyData.category === 'FinTech';
       const isInvela = companyData.category === 'Invela';
       
-      // Invela companies get the full widget set, FinTech gets simplified
+      // Company-specific widget configurations
       if (isInvela) {
-        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Full feature set for Invela
+        setVisibleWidgets(INVELA_DEFAULT_WIDGETS); // Invela-specific configuration without Risk Radar
       } else if (isFinTech) {
         setVisibleWidgets(FINTECH_DEFAULT_WIDGETS); // Simplified for FinTech
       } else {
-        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Default full set for other companies
+        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Full set for Bank companies
       }
     }
   }, [companyData]);
