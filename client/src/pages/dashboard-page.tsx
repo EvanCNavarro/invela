@@ -439,10 +439,10 @@ export default function DashboardPage(): JSX.Element {
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Company Info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Company Snapshot - 1.5 column width equivalent */}
                 {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-1 space-y-6">
+                  <div className="lg:col-span-1">
                     <CompanySnapshot
                       companyData={companyData}
                       onToggle={() => toggleWidget('companySnapshot')}
@@ -451,18 +451,7 @@ export default function DashboardPage(): JSX.Element {
                   </div>
                 )}
 
-                {/* Middle Column - Risk & Analytics */}
-                {visibleWidgets.riskRadar && companyData && (
-                  <div className="lg:col-span-1 h-[400px]">
-                    <RiskRadarWidget
-                      companyId={companyData?.id || 0}
-                      onToggle={() => toggleWidget('riskRadar')}
-                      isVisible={visibleWidgets.riskRadar}
-                    />
-                  </div>
-                )}
-
-                {/* Right Column - Tasks & Activity */}
+                {/* Task Summary - 1.5 column width equivalent */}
                 {visibleWidgets.taskSummary && (
                   <div className="lg:col-span-1">
                     <TaskSummaryWidget
