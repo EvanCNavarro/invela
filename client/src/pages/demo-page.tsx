@@ -1506,7 +1506,7 @@ const DemoStep2 = ({ onNext, onBack, selectedPersona, onFormDataChange }: DemoSt
                     
                     {/* Value Display */}
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-700 min-w-[80px] text-center">
+                      <span className="text-sm font-medium text-gray-700 min-w-[120px] text-center">
                         {formData.networkSize} recipients
                       </span>
                       
