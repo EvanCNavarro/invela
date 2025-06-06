@@ -3060,8 +3060,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         created_at: accreditationHistory.created_at,
         updated_at: accreditationHistory.updated_at,
         company_name: companies.name,
-        company_category: companies.category,
-        persona_type: companies.persona_type
+        company_category: companies.category
       })
       .from(accreditationHistory)
       .leftJoin(companies, eq(accreditationHistory.company_id, companies.id))
