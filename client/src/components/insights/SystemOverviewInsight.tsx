@@ -328,7 +328,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   content={(props) => {
                     const { payload } = props;
                     return (
-                      <div className="flex justify-center items-center gap-12 pt-6">
+                      <div className="flex justify-center items-center gap-20 pt-6">
                         {payload?.map((entry, index) => (
                           <div key={index} className="flex items-center">
                             <div 
