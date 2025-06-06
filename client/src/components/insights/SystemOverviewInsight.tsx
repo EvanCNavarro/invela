@@ -230,7 +230,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="flex items-center gap-2">
             <Building className="h-4 w-4 text-blue-600" />
             <span className="text-sm text-gray-700">
-              <strong className="text-gray-900">Invela Trust Network</strong> Overview: <strong className="text-gray-900">{summaryStats.dataProviders + summaryStats.dataRecipients + 1}</strong> Total Companies — <strong className="text-gray-900">{summaryStats.accreditedDataRecipients}</strong> Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
+              <strong className="text-gray-900">Invela Trust Network</strong> Overview: {summaryStats.dataProviders + summaryStats.dataRecipients + 1} Total Companies — {summaryStats.accreditedDataRecipients} Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
             </span>
           </div>
         </div>
