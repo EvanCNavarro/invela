@@ -276,21 +276,6 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           </div>
         ) : chartData.length > 0 ? (
           <div className="h-80">
-            {/* Date Range Indicator for 30 Days */}
-            {selectedTimeframe === '30days' && (
-              <div className="text-center text-sm text-gray-500 mb-2">
-                {(() => {
-                  const now = new Date();
-                  const startDate = new Date(now);
-                  startDate.setDate(now.getDate() - 29);
-                  const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
-                  const endMonth = now.toLocaleDateString('en-US', { month: 'short' });
-                  return startMonth === endMonth 
-                    ? `${startMonth} ${startDate.getDate()}-${now.getDate()}`
-                    : `${startMonth} ${startDate.getDate()} - ${endMonth} ${now.getDate()}`;
-                })()}
-              </div>
-            )}
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }} maxBarSize={60}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -298,23 +283,38 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   dataKey="period" 
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
-                  tickFormatter={(value) => {
+                  tickFormatter={(value, index) => {
                     try {
                       const date = new Date(value);
                       if (isNaN(date.getTime())) {
-                        return value; // Return original value if date is invalid
+                        return value;
                       }
                       
                       if (selectedTimeframe === '1year') {
                         return date.toLocaleDateString('en-US', { month: 'short' });
                       } else if (selectedTimeframe === '30days') {
-                        // For 30 days, show only day number to reduce clutter
-                        return date.getDate().toString();
+                        // Check if this is the first day of a new month
+                        const isFirstOfMonth = date.getDate() === 1;
+                        const isFirstDayInData = index === 0;
+                        
+                        // Also check if previous day was in different month
+                        let isMonthChange = false;
+                        if (index > 0 && chartData[index - 1]) {
+                          const prevDate = new Date(chartData[index - 1].period);
+                          isMonthChange = prevDate.getMonth() !== date.getMonth();
+                        }
+                        
+                        if (isFirstOfMonth || isFirstDayInData || isMonthChange) {
+                          const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+                          return `${monthName}\n${date.getDate()}`;
+                        } else {
+                          return date.getDate().toString();
+                        }
                       } else {
                         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
                       }
                     } catch (error) {
-                      return value; // Fallback to original value if formatting fails
+                      return value;
                     }
                   }}
                 />
