@@ -1,0 +1,200 @@
+[SessionData] Advanced Gaming Technologies 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 54.65736529417336, previousScore30Day: 51.84008616395295, change7Day: -3.65736529417336, …}
+[SessionData] Cyber Studio Works 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 52.13503147289157, previousScore30Day: 53.65416146721691, change7Day: -1.1350314728915691, …}
+[SessionData] Stream Portfolio Base 7day change calculation: 
+Object {timeframe: "7day", currentScore: 51, previousScore7Day: 47.09036383032799, previousScore30Day: 57.28231207374483, change7Day: 3.9096361696720123, …}
+[SessionData] Quantum Studio Worldwide 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 53.5680300090462, previousScore30Day: 60.096387377008796, change7Day: -1.568030009046197, …}
+[SessionData] Foundation Asset United 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.045696187764406, previousScore30Day: 61.91046268027276, change7Day: 0.9543038122355938, …}
+[SessionData] Bridge Quality Consultants 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 48.523362366482615, previousScore30Day: 43.72453798353672, change7Day: 3.4766376335173845, …}
+[SessionData] Sovereign Audit Federation 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.001028545200825, previousScore30Day: 45.53861328680068, change7Day: -2.0010285452008247, …}
+[SessionData] Catalyst Consulting Council 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.478694723919034, previousScore30Day: 47.352688590064645, change7Day: 0.521305276080966, …}
+[SessionData] Sterling Consulting United 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 48.95636090263724, previousScore30Day: 49.16676389332861, change7Day: 3.0436390973627567, …}
+[SessionData] Coin Tracker 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.43402708135545, previousScore30Day: 50.98083919659257, change7Day: -2.4340270813554525, …}
+[SessionData] Synergy Infrastructure Solutions 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 51.91169326007366, previousScore30Day: 52.79491449985653, change7Day: 0.0883067399263382, …}
+[SessionData] Continental Infrastructure Union 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 49.38935943879187, previousScore30Day: 54.608989803120494, change7Day: 2.610640561208129, …}
+[SessionData] International Intelligence Authorities 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.86702561751008, previousScore30Day: 56.423065106384456, change7Day: -2.8670256175100803, …}
+[SessionData] Network Studio Advisors 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 52.34469179622829, previousScore30Day: 58.23714040964842, change7Day: -0.3446917962282896, …}
+[SessionData] National Guard Edge 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 49.8223579749465, previousScore30Day: 60.05121571291238, change7Day: 2.177642025053501, …}
+[SessionData] Crown Strategy Consortium 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 55.30002415366471, previousScore30Day: 61.86529101617634, change7Day: -3.300024153664708, …}
+[SessionData] Allied Evaluation Specialists 7day change calculation: 
+Object {timeframe: "7day", currentScore: 62, previousScore7Day: 58.67174652777612, previousScore30Day: 60.6356389708817, change7Day: 3.328253472223878, …}
+[SessionData] Edge Lab Center 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 50.25535651110113, previousScore30Day: 45.49344162270427, change7Day: 1.7446434888988733, …}
+[SessionData] Wave Consulting Alliance 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 55.733022689819336, previousScore30Day: 47.30751692596823, change7Day: -3.733022689819336, …}
+[SessionData] United Exchange Platforms 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 53.210688868537545, previousScore30Day: 49.12159222923219, change7Day: -1.2106888685375452, …}
+[SessionData] International Trading Center 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 50.688355047255754, previousScore30Day: 50.935667532496154, change7Day: 1.3116449527442455, …}
+[SessionData] Edge Lab Global 7day change calculation: 
+Object {timeframe: "7day", currentScore: 52, previousScore7Day: 54.0766859408468, previousScore30Day: 60.006044048815966, change7Day: -2.076685940846801, …}
+[SessionData] Zenith Financial Technologies 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 56.08395388908684, previousScore30Day: 47.09213468618691, change7Day: -0.08395388908684254, …}
+[SessionData] Stellar Payment Networks 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 59.47228478267789, previousScore30Day: 56.16251120250672, change7Day: -3.472284782677889, …}
+[SessionData] Nexus Trading Systems 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 56.9499509613961, previousScore30Day: 57.97658650577068, change7Day: -0.9499509613960981, …}
+[SessionData] Meridian Financial Systems 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 54.42761714011431, previousScore30Day: 59.790661809034646, change7Day: 1.5723828598856926, …}
+[SessionData] Prism Analytics Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 59.90528331883252, previousScore30Day: 61.60473711229861, change7Day: -3.9052833188325167, …}
+[SessionData] Catalyst Investment Tools 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 57.382949497550726, previousScore30Day: 63.41881241556257, change7Day: -1.382949497550726, …}
+[SessionData] Beacon Lending Platform 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 54.860615676268935, previousScore30Day: 65.23288771882653, change7Day: 1.1393843237310648, …}
+[SessionData] Horizon Regulatory Tech 7day change calculation: 
+Object {timeframe: "7day", currentScore: 56, previousScore7Day: 52.338281854987144, previousScore30Day: 47.046963022090495, change7Day: 3.6617181450128555, …}
+[SessionData] TestFinTech Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 59, previousScore7Day: 61.62723354808986, previousScore30Day: 49.64041804522276, change7Day: -2.627233548089862, …}
+[SessionData] SparkInc 7day change calculation: 
+Object {timeframe: "7day", currentScore: 62, previousScore7Day: 65.43851906247437, previousScore30Day: 70.41979776509106, change7Day: -3.43851906247437, …}
+[SessionData] LendingEdge Analytics 7day change calculation: 
+Object {timeframe: "7day", currentScore: 65, previousScore7Day: 68.89246343635023, previousScore30Day: 60.22438233718276, change7Day: -3.8924634363502264, …}
+[SessionData] RegCompliance Pro 7day change calculation: 
+Object {timeframe: "7day", currentScore: 65, previousScore7Day: 63.847795793786645, previousScore30Day: 63.852532943710685, change7Day: 1.152204206213355, …}
+[SessionData] FinTech37 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 69.38744147866964, previousScore30Day: 63.85777098406106, change7Day: -2.3874414786696434, …}
+[SessionData] FinTech38 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 66.86510765738785, previousScore30Day: 65.67184628732502, change7Day: 0.13489234261214733, …}
+[SessionData] FinTech39 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 64.34277383610606, previousScore30Day: 67.48592159058899, change7Day: 2.657226163893938, …}
+[SessionData] FinTech47 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 68.16410326585174, previousScore30Day: 61.998524016700685, change7Day: -1.164103265851736, …}
+[SessionData] FinTech48 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 65.64176944456995, previousScore30Day: 63.81259931996465, change7Day: 1.3582305554300547, …}
+[SessionData] FinTech49 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 63.119435623288155, previousScore30Day: 65.62667462322861, change7Day: 3.8805643767118454, …}
+[SessionData] FinTech57 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 66.94076505303383, previousScore30Day: 60.13927704934031, change7Day: 0.059234946966171265, …}
+[SessionData] FinTech58 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 67, previousScore7Day: 64.41843123175204, previousScore30Day: 61.95335235260427, change7Day: 2.581568768247962, …}
+[SessionData] FinTech207 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 74.20236096717417, previousScore30Day: 68.18019602261484, change7Day: -2.2023609671741724, …}
+[SessionData] FinTech208 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 71.68002714589238, previousScore30Day: 69.9942713258788, change7Day: 0.31997285410761833, …}
+[SessionData] FinTech209 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 69.15769332461059, previousScore30Day: 71.80834662914276, change7Day: 2.842306675389409, …}
+[SessionData] FinTech217 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 72.97902275435627, previousScore30Day: 66.32094905525446, change7Day: -0.9790227543562651, …}
+[SessionData] FinTech218 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 70.45668893307447, previousScore30Day: 68.13502435851842, change7Day: 1.5433110669255257, …}
+[SessionData] FinTech219 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 75.93435511179268, previousScore30Day: 69.94909966178238, change7Day: -3.9343551117926836, …}
+[SessionData] FinTech227 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 71.75568454153836, previousScore30Day: 64.46170208789408, change7Day: 0.24431545846164227, …}
+[SessionData] FinTech228 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 69.23335072025657, previousScore30Day: 66.27577739115804, change7Day: 2.766649279743433, …}
+[SessionData] FinTech229 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 74.71101689897478, previousScore30Day: 68.089852694422, change7Day: -2.7110168989747763, …}
+[SessionData] FinTech237 Group 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 70.53234632872045, previousScore30Day: 62.602455120533705, change7Day: 1.4676536712795496, …}
+[SessionData] FinTech238 Ventures 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 68.01001250743866, previousScore30Day: 64.41653042379767, change7Day: 3.9899874925613403, …}
+[SessionData] FinTech239 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 72, previousScore7Day: 73.48767868615687, previousScore30Day: 66.23060572706163, change7Day: -1.487678686156869, …}
+[SessionData] FinTech249 Corp 7day change calculation: 
+Object {timeframe: "7day", currentScore: 73, previousScore7Day: 73.26434047333896, previousScore30Day: 65.37135875970125, change7Day: -0.2643404733389616, …}
+[BlockedDataRecipientsAlert] Rendered alert 
+Object {blockedCount: 0}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[RiskRadarChart] Fetched relationship companies: 100
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 101, relationshipCompaniesCount: 100, visualizationNodesCount: 100, uniqueCompaniesCount: 101, approvedCompaniesCount: 78, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Velocity Bank", category: "Bank", isBankOrInvela: true, selectedCompanyId: 1975, networkCompaniesCount: 101, …}
+[Tutorial:TabTutorials] Skipping tutorial for dashboard
+[Tutorial:TabTutorials] Marking tutorial as seen for dashboard
+[API Request] POST /api/user-tab-tutorials/mark-seen with body data 
+Object {bodyPreview: "(Object)"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[API Response] POST /api/user-tab-tutorials/mark-seen - Status: 200
+[Tutorial:TabTutorials] Successfully marked tutorial as seen for dashboard: 
+Object {success: true, message: "Tutorial created and marked as seen successfully", tutorialStatus: {…}}
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-06T13:44:05.408Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/modal_dash_1.png
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: true, completed: false, currentStep: 0, lastSeenAt: "2025-06-06T13:44:05.408Z", completedAt: "2099-12-31T00:00:00.000Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=0, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
