@@ -22,7 +22,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ChevronRight, Users, FileText } from "lucide-react";
+import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ArrowRight, Users, FileText } from "lucide-react";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;
@@ -149,7 +149,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
                 </div>
                 <span className="font-medium text-sm text-gray-900 group-hover:text-gray-800">{action.label}</span>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200 ml-2" />
+              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200 ml-2" />
             </Button>
           ))}
         </div>
