@@ -199,13 +199,13 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
           className="bg-gray-100 rounded-lg"
         >
-          <ToggleGroupItem value="1day" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
+          <ToggleGroupItem value="1day" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
             {getTimeframeLabel('1day')}
           </ToggleGroupItem>
-          <ToggleGroupItem value="30days" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
+          <ToggleGroupItem value="30days" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
             {getTimeframeLabel('30days')}
           </ToggleGroupItem>
-          <ToggleGroupItem value="1year" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-600 data-[state=on]:text-white">
+          <ToggleGroupItem value="1year" className="px-3 py-1.5 text-sm data-[state=on]:bg-blue-500 data-[state=on]:text-white">
             {getTimeframeLabel('1year')}
           </ToggleGroupItem>
         </ToggleGroup>
