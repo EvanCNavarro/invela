@@ -59,8 +59,8 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
   };
 
   const handleRiskScore = () => {
-    // Navigate to risk score configuration
-    setLocation("/risk-score");
+    // Navigate to company profile risk tab for current company
+    setLocation("/company-profile/1?tab=risk");
   };
 
   const handleNetwork = () => {
