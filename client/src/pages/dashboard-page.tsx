@@ -99,7 +99,7 @@ import {
   DashboardSkeleton, 
   FinTechDashboardSkeleton 
 } from "@/components/dashboard/SkeletonWidgets";
-import { SystemOverviewWidget } from "@/components/widgets/SystemOverviewWidget";
+import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 
 // ========================================
 // WIDGET CONFIGURATION INTERFACES
@@ -116,6 +116,7 @@ interface DashboardWidgets {
   riskRadar: boolean;
   riskMonitoring: boolean;
   taskSummary: boolean;
+  systemOverview: boolean;
 }
 
 /**
@@ -129,6 +130,7 @@ const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: false,
   taskSummary: false, // FinTech companies use simplified task management
+  systemOverview: false, // System overview only for Invela
 };
 
 /**
@@ -142,6 +144,7 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
   riskRadar: true,
   riskMonitoring: true,
   taskSummary: true, // Enhanced task tracking for complex operations
+  systemOverview: true, // Available for Banks and Invela
 };
 
 // ========================================
@@ -422,44 +425,38 @@ export default function DashboardPage(): JSX.Element {
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
-              <div className="space-y-6">
-                {/* System Overview - Full Width Widget for Invela Only */}
-                <SystemOverviewWidget className="w-full" />
-                
-                {/* Three Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Left Column - Company Info */}
-                  {visibleWidgets.companySnapshot && (
-                    <div className="lg:col-span-1 space-y-6">
-                      <CompanySnapshot
-                        companyData={companyData}
-                        onToggle={() => toggleWidget('companySnapshot')}
-                        isVisible={visibleWidgets.companySnapshot}
-                      />
-                    </div>
-                  )}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Company Info */}
+                {visibleWidgets.companySnapshot && (
+                  <div className="lg:col-span-1 space-y-6">
+                    <CompanySnapshot
+                      companyData={companyData}
+                      onToggle={() => toggleWidget('companySnapshot')}
+                      isVisible={visibleWidgets.companySnapshot}
+                    />
+                  </div>
+                )}
 
-                  {/* Middle Column - Risk & Analytics */}
-                  {visibleWidgets.riskRadar && companyData && (
-                    <div className="lg:col-span-1 h-[400px]">
-                      <RiskRadarWidget
-                        companyId={companyData?.id || 0}
-                        onToggle={() => toggleWidget('riskRadar')}
-                        isVisible={visibleWidgets.riskRadar}
-                      />
-                    </div>
-                  )}
+                {/* Middle Column - Risk & Analytics */}
+                {visibleWidgets.riskRadar && companyData && (
+                  <div className="lg:col-span-1 h-[400px]">
+                    <RiskRadarWidget
+                      companyId={companyData?.id || 0}
+                      onToggle={() => toggleWidget('riskRadar')}
+                      isVisible={visibleWidgets.riskRadar}
+                    />
+                  </div>
+                )}
 
-                  {/* Right Column - Tasks & Activity */}
-                  {visibleWidgets.taskSummary && (
-                    <div className="lg:col-span-1">
-                      <TaskSummaryWidget
-                        onToggle={() => toggleWidget('taskSummary')}
-                        isVisible={visibleWidgets.taskSummary}
-                      />
-                    </div>
-                  )}
-                </div>
+                {/* Right Column - Tasks & Activity */}
+                {visibleWidgets.taskSummary && (
+                  <div className="lg:col-span-1">
+                    <TaskSummaryWidget
+                      onToggle={() => toggleWidget('taskSummary')}
+                      isVisible={visibleWidgets.taskSummary}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
