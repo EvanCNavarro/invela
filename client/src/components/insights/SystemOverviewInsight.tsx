@@ -281,74 +281,26 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="period" 
-                  tick={(props) => {
-                    const { payload, x, y, index } = props;
-                    const date = new Date(payload.value);
-                    
-                    // Check if this is a month transition
-                    const isFirstOfMonth = date.getDate() === 1;
-                    const isFirstDayInData = index === 0;
-                    let isMonthChange = false;
-                    if (index > 0 && chartData[index - 1]) {
-                      const prevDate = new Date(chartData[index - 1].period);
-                      isMonthChange = prevDate.getMonth() !== date.getMonth();
-                    }
-                    
-                    // Calculate opacity based on days since month start
-                    let opacity = 1;
-                    if (selectedTimeframe === '30days') {
-                      if (isFirstOfMonth || isFirstDayInData || isMonthChange) {
-                        opacity = 1; // Black for month labels
-                      } else {
-                        // Find days since last month change
-                        let daysSinceMonthStart = 0;
-                        for (let i = index - 1; i >= 0; i--) {
-                          const checkDate = new Date(chartData[i].period);
-                          if (checkDate.getMonth() !== date.getMonth()) break;
-                          daysSinceMonthStart++;
-                        }
-                        // Fade from 1.0 to 0.4 over ~15 days
-                        opacity = Math.max(0.4, 1 - (daysSinceMonthStart * 0.04));
-                      }
-                    }
-                    
-                    return (
-                      <text 
-                        x={x} 
-                        y={y} 
-                        dy={16} 
-                        textAnchor="middle" 
-                        fill={`rgba(107, 114, 128, ${opacity})`}
-                        fontSize={12}
-                      >
-                        {payload.value && (() => {
-                          try {
-                            const date = new Date(payload.value);
-                            if (selectedTimeframe === '1year') {
-                              return date.toLocaleDateString('en-US', { month: 'short' });
-                            } else if (selectedTimeframe === '30days') {
-                              if (isFirstOfMonth || isFirstDayInData || isMonthChange) {
-                                const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-                                return (
-                                  <tspan>
-                                    <tspan x={x} dy="0">{monthName}</tspan>
-                                    <tspan x={x} dy="14">{date.getDate()}</tspan>
-                                  </tspan>
-                                );
-                              } else {
-                                return date.getDate().toString();
-                              }
-                            } else {
-                              return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                            }
-                          } catch (error) {
-                            return payload.value;
-                          }
-                        })()}
-                      </text>
-                    );
-                  }}
+                  tick={{ fontSize: 12 }}
                   stroke="#6b7280"
+                  tickFormatter={(value) => {
+                    try {
+                      const date = new Date(value);
+                      if (isNaN(date.getTime())) {
+                        return value;
+                      }
+                      
+                      if (selectedTimeframe === '1year') {
+                        return date.toLocaleDateString('en-US', { month: 'short' });
+                      } else if (selectedTimeframe === '30days') {
+                        return date.getDate().toString();
+                      } else {
+                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                      }
+                    } catch (error) {
+                      return value;
+                    }
+                  }}
                 />
                 <YAxis 
                   tick={{ fontSize: 12 }}
@@ -366,10 +318,14 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   wrapperStyle={{ 
                     fontSize: '13px', 
                     paddingTop: '25px',
-                    lineHeight: '28px',
+                    lineHeight: '32px',
                     fontWeight: 'bold'
                   }}
                   iconSize={12}
+                  layout="horizontal"
+                  align="center"
+                  verticalAlign="bottom"
+                  itemStyle={{ marginRight: '32px' }}
                 />
                 <Bar 
                   dataKey="dataProviders" 
