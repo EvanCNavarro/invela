@@ -769,6 +769,120 @@ export async function registerRoutes(app: Express): Promise<Express> {
   
   // Test routes have been removed
 
+  // System-wide companies endpoint for insights and analytics
+  app.get("/api/companies/all", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Companies All] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Companies All] Fetching ALL companies for system overview');
+
+      // Get ALL companies in the system for system-wide insights
+      const allCompanies = await db.select({
+        id: companies.id,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
+        accreditation_status: companies.accreditation_status,
+        risk_score: companies.risk_score,
+        is_demo: companies.is_demo,
+        created_at: companies.created_at,
+        incorporation_year: sql<number>`COALESCE(${companies.incorporation_year}, 0)`,
+        num_employees: sql<number>`COALESCE(${companies.num_employees}, 0)`
+      })
+      .from(companies)
+      .orderBy(companies.created_at, companies.name);
+
+      console.log('[Companies All] Query successful, found companies:', {
+        count: allCompanies.length,
+        bankCount: allCompanies.filter(c => c.category === 'Bank').length,
+        fintechCount: allCompanies.filter(c => c.category === 'FinTech').length,
+        invelaCount: allCompanies.filter(c => c.category === 'Invela').length
+      });
+
+      // Transform the data to match frontend expectations
+      const transformedCompanies = allCompanies.map(company => ({
+        id: company.id,
+        name: company.name,
+        category: company.category,
+        description: company.description,
+        accreditation_status: company.accreditation_status || null,
+        risk_score: company.risk_score,
+        is_demo: company.is_demo,
+        created_at: company.created_at,
+        incorporation_year: company.incorporation_year,
+        num_employees: company.num_employees
+      }));
+
+      res.json(transformedCompanies);
+    } catch (error) {
+      console.error("[Companies All] Error details:", {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
+      res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
+
+  // System-wide accreditations endpoint for insights and analytics
+  app.get("/api/accreditations/all", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Accreditations All] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Accreditations All] Fetching ALL accreditations for system overview');
+
+      // Get ALL accreditations in the system for system-wide insights
+      const allAccreditations = await db.select({
+        id: accreditationHistory.id,
+        company_id: accreditationHistory.company_id,
+        status: accreditationHistory.status,
+        issued_date: accreditationHistory.issued_date,
+        created_at: accreditationHistory.created_at,
+        accreditation_number: accreditationHistory.accreditation_number,
+        risk_score: accreditationHistory.risk_score
+      })
+      .from(accreditationHistory)
+      .orderBy(accreditationHistory.issued_date, accreditationHistory.created_at);
+
+      console.log('[Accreditations All] Query successful, found accreditations:', {
+        count: allAccreditations.length,
+        activeCount: allAccreditations.filter(a => a.status === 'active').length,
+        todayCount: allAccreditations.filter(a => {
+          const today = new Date().toISOString().split('T')[0];
+          const accredDate = new Date(a.issued_date || a.created_at).toISOString().split('T')[0];
+          return accredDate === today;
+        }).length
+      });
+
+      res.json(allAccreditations);
+    } catch (error) {
+      console.error("[Accreditations All] Error details:", {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
+      res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
+
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
