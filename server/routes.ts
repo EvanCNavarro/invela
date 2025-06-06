@@ -810,6 +810,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
         key_clients_partners: sql<string>`COALESCE(${companies.key_clients_partners}, '')`,
         founders_and_leadership: sql<string>`COALESCE(${companies.founders_and_leadership}, '')`,
+        created_at: companies.created_at,
         has_relationship: sql<boolean>`
           CASE 
             WHEN ${companies.id} = ${req.user.company_id} THEN true
@@ -945,7 +946,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
           has_relationship: company.has_relationship,
           hasRelationship: company.has_relationship, // Add frontend-friendly version
           relationship_type: company.relationship_type,
-          relationshipType: company.relationship_type // Add frontend-friendly version
+          relationshipType: company.relationship_type, // Add frontend-friendly version
+          created_at: company.created_at
         };
       });
 
