@@ -490,7 +490,7 @@ export default function DashboardPage(): JSX.Element {
 
                 {/* Risk Radar for FinTech */}
                 {visibleWidgets.riskRadar && companyData && (
-                  <div className="lg:col-span-1 h-[400px]">
+                  <div className="lg:col-span-2 h-[400px]">
                     <RiskRadarWidget
                       companyId={companyData?.id || 0}
                       onToggle={() => toggleWidget('riskRadar')}
@@ -555,16 +555,7 @@ export default function DashboardPage(): JSX.Element {
               </div>
             )}
             
-            {/* Risk Radar - Only for Bank/Invela companies as full width */}
-            {visibleWidgets.riskRadar && companyData?.category !== 'FinTech' && companyData && (
-              <div className="col-span-3 h-[400px]">
-                <RiskRadarWidget
-                  companyId={companyData?.id || 0}
-                  onToggle={() => toggleWidget('riskRadar')}
-                  isVisible={visibleWidgets.riskRadar}
-                />
-              </div>
-            )}
+
             
             {/* System Overview Widget for Invela - Full width */}
             {visibleWidgets.systemOverview && companyData?.category === 'Invela' && (
