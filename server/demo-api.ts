@@ -15,7 +15,19 @@ import {
 import { generateBusinessDetails, type PersonaType } from './utils/business-details-generator.js';
 import { generateFinTechCompanies } from './utils/fintech-company-generator';
 import { AccreditationService } from './services/accreditation-service.js';
-import { DEMO_CONFIG } from '../types/demo-config';
+// Centralized demo configuration constants
+const DEMO_CONFIG = {
+  NETWORK_SIZE: {
+    MIN: 5,
+    MAX: 1000,
+    DEFAULT: 25
+  },
+  RISK_PROFILE: {
+    MIN: 0,
+    MAX: 100,
+    DEFAULT: 50
+  }
+} as const;
 
 /**
  * Generate randomized risk clusters that sum up to the total score
