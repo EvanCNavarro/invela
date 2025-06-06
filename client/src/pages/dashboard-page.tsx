@@ -115,6 +115,7 @@ interface DashboardWidgets {
   riskRadar: boolean;
   riskMonitoring: boolean;
   taskSummary: boolean;
+  systemOverview: boolean;
 }
 
 /**
