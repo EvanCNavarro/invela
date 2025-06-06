@@ -1,0 +1,310 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-06T09:05:34.218Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-06T09:05:34.222Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":108,"timestamp":"2025-06-06T09:05:34.222Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-06T09:05:34.364Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-06-06T09:05:34.470Z] [INFO] [App] [PROD-DEBUG] Starting server initialization sequence 
+[2025-06-06T09:05:34.470Z] [INFO] [App] [PROD-DEBUG] Beginning API routes registration... 
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (forced production mode) 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-06T09:05:34.474Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-06T09:05:34.476Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-06-06T09:05:34.477Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[2025-06-06T09:05:34.477Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-06T09:05:34.477Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-06T09:05:34.477Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-06T09:05:34.477Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-06T09:05:34.484Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-06T09:05:34.484Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-06T09:05:34.485Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-06T09:05:34.485Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-06T09:05:34.488Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-06T09:05:34.490Z] [INFO] [App] [ServerStartup] API routes registration completed 
+[2025-06-06T09:05:34.491Z] [INFO] [App] [PROD-DEBUG] ✓ All API routes now registered and have priority 
+[2025-06-06T09:05:34.491Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-06T09:05:34.491Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"3zsnpj","timestamp":"2025-06-06T09:05:34.491Z"}
+[2025-06-06T09:05:34.491Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-06T09:05:34.491Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-06T09:05:34.491Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-06T09:05:34.491Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-06T09:05:34.492Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-06T09:05:34.492Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-06T09:05:34.492Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-06T09:05:34.492Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-06T09:05:34.493Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-06T09:05:34.493Z] [INFO] [App] [PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes) 
+[2025-06-06T09:05:34.493Z] [INFO] [App] [PROD-DEBUG] Development mode: Setting up Vite development server 
+[2025-06-06T09:05:34.494Z] [INFO] [App] [PROD-DEBUG] ✓ Development server configured with API route priority verified 
+[2025-06-06T09:05:35.712Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-06T09:05:37.906Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T09:05:38.407Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T09:05:39.411Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200739411-c5msyzv","clients":1}
+[2025-06-06T09:05:39.422Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200739422-a5j5idt","clients":2}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: '6QYiLSyIr-w5GeOeYRmJ8UoEo7S1lphL',
+  cookies: undefined
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[2025-06-06T09:05:39.468Z] [INFO] [WebSocket] Received message from client client-1749200739411-c5msyzv {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-06T09:05:39.465Z"}}
+[2025-06-06T09:05:39.468Z] [INFO] [WebSocket] Authentication from client client-1749200739411-c5msyzv {"module":"WebSocket","hasToken":true}
+[2025-06-06T09:05:39.576Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200739576-78jlhak","clients":3}
+[2025-06-06T09:05:39.947Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749200739422-a5j5idt","code":1001,"reason":"","remainingClients":2}
+[2025-06-06T09:05:39.948Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749200739411-c5msyzv","code":1001,"reason":"","remainingClients":1}
+[2025-06-06T09:05:39.948Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749200739576-78jlhak","code":1001,"reason":"","remainingClients":0}
+[2025-06-06T09:05:40.593Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-06T09:05:44.478Z] [INFO] [App] Running background health checks... 
+[2025-06-06T09:05:44.478Z] [StartupChecks] Running application startup health checks... 
+[2025-06-06T09:05:44.478Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-06T09:05:44.479Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-06T09:05:44.681Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-06T09:05:44.710Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-06T09:05:44.740Z] [DBConnectionService] Database connection check successful 
+[2025-06-06T09:05:44.740Z] [StartupChecks] Database health check passed 
+[2025-06-06T09:05:44.740Z] [StartupChecks] All startup health checks passed! 
+[2025-06-06T09:05:44.740Z] [INFO] [App] All background health checks passed successfully. 
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: '4ZkIXZudmsC5xBuWiePI3NIiEoDqS5Zq',
+  cookies: 'connect.sid=s%3A4ZkIXZudmsC5xBuWiePI3NIiEoDqS5Zq.JJC7t5Z4M%2FAKDb7Qj3nzEwyc4GiWXxCTWXBpVBncKGA'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 568
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 568, companyId: 780 }
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 568, company_id: 780, email: 'hcarter@intelligencebank.com' }
+[2025-06-06T09:05:49.735Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":780,"userId":568}
+[2025-06-06T09:05:49.759Z] [INFO] [App] [TabTutorials] Status request for tab "file-vault" from authenticated user ID: 568 
+[2025-06-06T09:05:49.759Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-06-06T09:05:49.759Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-06-06T09:05:49.759Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: file-vault (raw: file-vault), user: 568 
+[Current Company] Found company: {
+  id: 780,
+  name: 'Intelligence Bank',
+  onboardingCompleted: true,
+  riskScore: 2,
+  chosenScore: 26,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 568,
+  companyId: 780,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T09:05:49.765Z'
+}
+[2025-06-06T09:05:49.781Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200749781-bgeqv3i","clients":1}
+[2025-06-06T09:05:49.790Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":780}
+[Tasks] Automatically unlocking all tasks for company { userId: 568, companyId: 780, requestedBy: 'automatic_task_unlock' }
+[2025-06-06T09:05:49.791Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":780}
+[2025-06-06T09:05:49.819Z] [INFO] [App] GET /api/companies/current 304 in 89ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... 
+[2025-06-06T09:05:49.819Z] [INFO] [App] GET /api/auth/user 200 in 57ms 
+[2025-06-06T09:05:49.820Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":780}
+[Tasks] Successfully unlocked all tasks for company: 780
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 568',
+    condition2: 'tasks.created_by = 568',
+    condition3: "tasks.company_id = 780 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('hcarter@intelligencebank.com')"
+  }
+}
+[2025-06-06T09:05:49.850Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for file-vault for user 568: completed=false, step=0 
+[Tasks] Tasks found: { count: 0 }
+[2025-06-06T09:05:49.888Z] [INFO] [App] GET /api/user-tab-tutorials/file-vault/status 200 in 130ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-06T09:... 
+[2025-06-06T09:05:49.917Z] [INFO] [App] GET /api/tasks 304 in 184ms :: [] 
+[2025-06-06T09:05:49.938Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-06T09:05:49.830Z"}}
+[2025-06-06T09:05:49.938Z] [INFO] [WebSocket] Authentication from client client-1749200749781-bgeqv3i {"module":"WebSocket","hasToken":true}
+[2025-06-06T09:05:50.362Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200750362-iobojat","clients":2}
+[2025-06-06T09:05:50.888Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200750888-u5c5gzd","clients":3}
+[2025-06-06T09:05:51.379Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200751379-3w276s3","clients":4}
+[2025-06-06T09:05:51.889Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200751889-59hb5g1","clients":5}
+[2025-06-06T09:05:52.027Z] [INFO] [WebSocket] Received message from client client-1749200751889-59hb5g1 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749200749031_3z6khqp23","timestamp":"2025-06-06T09:05:51.925Z"}
+[2025-06-06T09:05:52.028Z] [INFO] [WebSocket] Authentication from client client-1749200751889-59hb5g1 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-06T09:05:52.399Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749200752399-j5wweqg","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: '4ZkIXZudmsC5xBuWiePI3NIiEoDqS5Zq',
+  cookies: 'connect.sid=s%3A4ZkIXZudmsC5xBuWiePI3NIiEoDqS5Zq.JJC7t5Z4M%2FAKDb7Qj3nzEwyc4GiWXxCTWXBpVBncKGA'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, user: 568
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:05:52.941Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"authenticate","userId":568,"companyId":780,"clientId":"ws_1749200750314_mo9eyigf9","timestamp":"2025-06-06T09:05:52.838Z"}
+[2025-06-06T09:05:52.941Z] [INFO] [WebSocket] Authentication from client client-1749200752399-j5wweqg {"module":"WebSocket","userId":568,"companyId":780,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 780
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:06:04.507Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":7,"taskIds":[1128,1120,1121,1130,1131,1132,1122]}
+[Task Progress] Calculated progress for task 1128 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1120 (company_kyb): 0/30 = 0%
+[Task Progress] Calculated progress for task 1121 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1130 (company_kyb): 0/30 = 0%
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Task Progress] Calculated progress for task 1131 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1132 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1122 (open_banking): 0/44 = 0%
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:06:12.520Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:12.417Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:06:17.071Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... [sampled: request 11] 
+[2025-06-06T09:06:19.934Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:06:21.007Z] [INFO] [WebSocket] Received message from client client-1749200750888-u5c5gzd {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:20.905Z","connectionId":"ws_1749200750904_l22t620n0"}
+[2025-06-06T09:06:21.500Z] [INFO] [WebSocket] Received message from client client-1749200751379-3w276s3 {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:21.399Z","connectionId":"ws_1749200750404_e9frhl62p"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:06:32.520Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:32.417Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 780
+[2025-06-06T09:06:47.066Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... [sampled: request 21] 
+[2025-06-06T09:06:49.944Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 568, companyId: 780 }
+[Current Company] Found company: {
+  id: 780,
+  name: 'Intelligence Bank',
+  onboardingCompleted: true,
+  riskScore: 2,
+  chosenScore: 26,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 568,
+  companyId: 780,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T09:06:50.068Z'
+}
+[2025-06-06T09:06:51.007Z] [INFO] [WebSocket] Received message from client client-1749200750888-u5c5gzd {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:50.906Z","connectionId":"ws_1749200750904_l22t620n0"}
+[2025-06-06T09:06:51.502Z] [INFO] [WebSocket] Received message from client client-1749200751379-3w276s3 {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:51.399Z","connectionId":"ws_1749200750404_e9frhl62p"}
+[2025-06-06T09:06:52.520Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:06:52.417Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:07:12.520Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:12.418Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:07:17.070Z] [INFO] [App] GET /api/companies/current 304 in 29ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... [sampled: request 31] 
+[2025-06-06T09:07:19.934Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:07:21.010Z] [INFO] [WebSocket] Received message from client client-1749200750888-u5c5gzd {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:20.907Z","connectionId":"ws_1749200750904_l22t620n0"}
+[2025-06-06T09:07:21.502Z] [INFO] [WebSocket] Received message from client client-1749200751379-3w276s3 {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:21.400Z","connectionId":"ws_1749200750404_e9frhl62p"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:07:32.518Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:32.418Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:07:47.066Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... [sampled: request 41] 
+[2025-06-06T09:07:49.946Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 568, companyId: 780 }
+[Current Company] Found company: {
+  id: 780,
+  name: 'Intelligence Bank',
+  onboardingCompleted: true,
+  riskScore: 2,
+  chosenScore: 26,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 568,
+  companyId: 780,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-06T09:07:50.073Z'
+}
+[2025-06-06T09:07:51.010Z] [INFO] [WebSocket] Received message from client client-1749200750888-u5c5gzd {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:50.906Z","connectionId":"ws_1749200750904_l22t620n0"}
+[2025-06-06T09:07:51.499Z] [INFO] [WebSocket] Received message from client client-1749200751379-3w276s3 {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:51.399Z","connectionId":"ws_1749200750404_e9frhl62p"}
+[2025-06-06T09:07:52.036Z] [INFO] [WebSocket] Received message from client client-1749200751889-59hb5g1 {"module":"WebSocket","type":"ping"}
+[2025-06-06T09:07:52.528Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:07:52.418Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:08:12.519Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:08:12.418Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:08:17.073Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":780,"name":"Intelligence Bank","category":"Bank","is_demo":true,"revenu... [sampled: request 51] 
+[2025-06-06T09:08:19.935Z] [INFO] [WebSocket] Received message from client client-1749200749781-bgeqv3i {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:08:21.013Z] [INFO] [WebSocket] Received message from client client-1749200750888-u5c5gzd {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:08:20.907Z","connectionId":"ws_1749200750904_l22t620n0"}
+[2025-06-06T09:08:21.504Z] [INFO] [WebSocket] Received message from client client-1749200751379-3w276s3 {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:08:21.400Z","connectionId":"ws_1749200750404_e9frhl62p"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:08:27.047Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 568 
+[2025-06-06T09:08:27.047Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-06-06T09:08:27.047Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-06-06T09:08:27.047Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: file-vault (raw: file-vault), user: 568 
+[2025-06-06T09:08:27.105Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial file-vault for user 568 
+[2025-06-06T09:08:27.135Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 89ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-06-06T09:08:27.327Z] [INFO] [App] [TabTutorials] Status request for tab "file-vault" from authenticated user ID: 568 
+[2025-06-06T09:08:27.327Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'file-vault' to canonical form 
+[2025-06-06T09:08:27.327Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'file-vault' 
+[2025-06-06T09:08:27.327Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: file-vault (raw: file-vault), user: 568 
+[2025-06-06T09:08:27.384Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for file-vault for user 568: completed=false, step=0 
+[2025-06-06T09:08:27.414Z] [INFO] [App] GET /api/user-tab-tutorials/file-vault/status 200 in 88ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-06T09:... 
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-06T09:08:32.517Z] [INFO] [WebSocket] Received message from client client-1749200752399-j5wweqg {"module":"WebSocket","type":"ping","timestamp":"2025-06-06T09:08:32.418Z","connectionId":"ws_1749200750314_mo9eyigf9"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
