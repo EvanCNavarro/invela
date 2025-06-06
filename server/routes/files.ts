@@ -5,6 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
+import { requireAuth } from '../middleware/auth';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
 import * as WebSocketService from '../services/websocket';
@@ -319,7 +320,7 @@ function detectDocumentCategory(filename: string): DocumentCategory {
 }
 
 // Route handlers
-router.post('/api/files', documentUpload.single('file'), async (req, res) => {
+router.post('/api/files', requireAuth, documentUpload.single('file'), async (req, res) => {
   try {
     console.log('[Files] Processing file upload request');
 
@@ -773,7 +774,7 @@ router.get("/api/documents/:id/results", async (req, res) => {
 });
 
 // Get all files for a company
-router.get('/api/files', async (req, res) => {
+router.get('/api/files', requireAuth, async (req, res) => {
   try {
     console.log('[Files] Starting file fetch request');
 
