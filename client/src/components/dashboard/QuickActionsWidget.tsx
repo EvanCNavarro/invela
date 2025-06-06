@@ -22,7 +22,6 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { useCurrentCompany } from "@/hooks/use-current-company";
 import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Gamepad2 } from "lucide-react";
 
 interface QuickActionsWidgetProps {
@@ -33,12 +32,10 @@ interface QuickActionsWidgetProps {
 export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetProps) {
   const [, setLocation] = useLocation();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const { company } = useCurrentCompany();
 
   const handleCompanyProfile = () => {
-    // Navigate to company profile in network view
-    const companyId = company?.id || 1;
-    setLocation(`/network/company/${companyId}`);
+    // Navigate to company profile in network view - using Invela company ID (1)
+    setLocation("/network/company/1");
   };
 
   const handleInsights = () => {
