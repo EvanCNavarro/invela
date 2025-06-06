@@ -43,7 +43,7 @@ const calculatePersonaStats = (companies: any[], accreditations: any[], timefram
   const dataProviders = companies.filter(c => c.category === 'Bank');
   const dataRecipients = companies.filter(c => c.category === 'FinTech');
   const accreditedRecipients = dataRecipients.filter(c => 
-    accreditations.some(a => a.company_id === c.id && a.status === 'approved')
+    accreditations.some(a => a.company_id === c.id && a.status === 'active')
   );
 
   const recentEnrollments = companies.filter(c => 
@@ -51,7 +51,7 @@ const calculatePersonaStats = (companies: any[], accreditations: any[], timefram
   );
 
   const recentAccreditations = accreditations.filter(a => 
-    new Date(a.created_at) >= startDate && a.status === 'approved'
+    new Date(a.issued_date || a.created_at) >= startDate && a.status === 'active'
   );
 
   return {
@@ -127,8 +127,8 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
     });
 
     const periodAccreditations = accreditations.filter(a => {
-      const createdAt = new Date(a.created_at);
-      return createdAt >= startDate && createdAt < endDate && a.status === 'approved';
+      const createdAt = new Date(a.issued_date || a.created_at);
+      return createdAt >= startDate && createdAt < endDate && a.status === 'active';
     });
 
     const dataProviders = periodCompanies.filter(c => c.category === 'Bank').length;
