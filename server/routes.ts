@@ -867,7 +867,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
           name: networkCompanies[0].name,
           risk_score: networkCompanies[0].risk_score,
           risk_clusters: networkCompanies[0].risk_clusters ? 'PRESENT' : 'MISSING',
-          accreditation_status: networkCompanies[0].accreditation_status
+          accreditation_status: networkCompanies[0].accreditation_status,
+          created_at: networkCompanies[0].created_at
         } : 'NO_COMPANIES'
       });
 
