@@ -56,6 +56,11 @@ interface NameGenerationOptions {
   preserveOriginal?: boolean;
   isDemoContext?: boolean;
   lengthPreference?: 'long' | 'short' | 'mixed';
+  /** 
+   * Persona type for specialized name generation
+   * Used to apply persona-specific naming rules (e.g., banking suffixes for data-provider)
+   */
+  persona?: string;
 }
 
 // ========================================
@@ -190,13 +195,23 @@ const PROFESSIONAL_MODIFIERS = [
   'Innovative', 'Integrated', 'Digital', 'NextGen', 'Pro'
 ] as const;
 
+/**
+ * Banking-specific suffix pool for Data Provider persona
+ * Ensures all banking institutions have appropriate industry-standard suffixes
+ */
+const BANKING_SUFFIXES = [
+  'Bank',
+  'Credit Union'
+] as const;
+
 /** Default configuration for name generation */
-const DEFAULT_GENERATION_OPTIONS: Required<NameGenerationOptions> = {
+const DEFAULT_GENERATION_OPTIONS: Required<Omit<NameGenerationOptions, 'persona'>> & Pick<NameGenerationOptions, 'persona'> = {
   maxAttempts: 5,
   suffixStyle: 'professional',
   preserveOriginal: true,
   isDemoContext: true,
   lengthPreference: 'mixed',
+  persona: 'default',
 };
 
 // ========================================
@@ -260,12 +275,88 @@ function generateShortPortmanteauName(): string {
 }
 
 /**
+ * Generates banking-specific company names with appropriate suffixes
+ * Ensures Data Provider personas receive industry-standard banking names
+ * 
+ * @param baseName - Original company name for context (unused for banking)
+ * @param attempt - Generation attempt number for strategy variation
+ * @param options - Configuration options including length preference
+ * @returns Promise that resolves with a banking company name
+ */
+async function generateBankingCompanyName(
+  baseName: string,
+  attempt: number,
+  options: NameGenerationOptions
+): Promise<string> {
+  logCompanyNameOperation('info', 'Generating banking-specific company name', {
+    baseName,
+    attempt,
+    strategy: 'banking',
+    lengthPreference: options.lengthPreference,
+  });
+
+  // Determine short vs long name generation (50/50 mix like existing system)
+  const useShortName = options.lengthPreference === 'short' || 
+                      (options.lengthPreference === 'mixed' && Math.random() < 0.5);
+
+  // Select banking suffix randomly
+  const bankingSuffix = BANKING_SUFFIXES[Math.floor(Math.random() * BANKING_SUFFIXES.length)];
+
+  let generatedName: string;
+  let attempts = 0;
+  const maxValidationAttempts = 10;
+
+  do {
+    if (useShortName) {
+      // Short format: Single core word + banking suffix
+      const core = ADVANCED_NAME_CORES[Math.floor(Math.random() * ADVANCED_NAME_CORES.length)];
+      generatedName = `${core} ${bankingSuffix}`;
+    } else {
+      // Long format: Prefix + banking suffix
+      const prefix = ADVANCED_NAME_PREFIXES[Math.floor(Math.random() * ADVANCED_NAME_PREFIXES.length)];
+      generatedName = `${prefix} ${bankingSuffix}`;
+    }
+
+    attempts++;
+
+    // Apply existing quality controls
+    if (isCompanyNameClean(generatedName)) {
+      logCompanyNameOperation('info', 'Generated clean banking company name', {
+        baseName,
+        generatedName,
+        nameFormat: useShortName ? 'short' : 'long',
+        bankingSuffix,
+        validationAttempts: attempts,
+      });
+      return generatedName;
+    }
+  } while (attempts < maxValidationAttempts);
+
+  // Fallback if clean name generation fails
+  logCompanyNameOperation('warn', 'Could not generate clean banking name, using fallback', {
+    baseName,
+    attempts,
+  });
+
+  // Simple fallback: Use first prefix + "Bank"
+  const fallbackPrefix = ADVANCED_NAME_PREFIXES[0];
+  const fallbackName = `${fallbackPrefix} Bank`;
+
+  logCompanyNameOperation('info', 'Generated fallback banking name', {
+    baseName,
+    fallbackName,
+  });
+
+  return fallbackName;
+}
+
+/**
  * Generates sophisticated company names using combinatorial approach
  * Leverages expanded name pools for maximum variety and professional appearance
  * 
  * @param baseName - Original company name for context and fallback
  * @param attempt - Generation attempt number for strategy variation
- * @param options - Configuration options including length preference
+ * @param options - Configuration options including length preference and persona
  * @returns Promise that resolves with a professionally crafted company name
  */
 export async function generateAdvancedCompanyName(
