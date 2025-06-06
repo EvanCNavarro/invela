@@ -1,0 +1,16 @@
+Question ID,Category,Question,Expected Response Type,Compliance Framework
+SOC2-001,Security,Do you have documented information security policies?,Yes/No,SOC 2 Type II
+SOC2-002,Security,Are access controls implemented and regularly reviewed?,Yes/No,SOC 2 Type II
+SOC2-003,Security,Do you conduct regular vulnerability assessments?,Yes/No,SOC 2 Type II
+SOC2-004,Availability,Is there a documented business continuity plan?,Yes/No,SOC 2 Type II
+SOC2-005,Availability,Are backup and recovery procedures tested regularly?,Yes/No,SOC 2 Type II
+SOC2-006,Processing Integrity,Are data processing controls documented and tested?,Yes/No,SOC 2 Type II
+SOC2-007,Confidentiality,Is sensitive data encrypted at rest and in transit?,Yes/No,SOC 2 Type II
+SOC2-008,Privacy,Do you have a privacy policy and data handling procedures?,Yes/No,SOC 2 Type II
+SOC2-009,Security,Are user access permissions reviewed quarterly?,Yes/No,SOC 2 Type II
+SOC2-010,Security,Do you maintain an incident response plan?,Yes/No,SOC 2 Type II
+SOC2-011,Availability,Is system monitoring implemented 24/7?,Yes/No,SOC 2 Type II
+SOC2-012,Processing Integrity,Are change management controls in place?,Yes/No,SOC 2 Type II
+SOC2-013,Confidentiality,Do you have data classification procedures?,Yes/No,SOC 2 Type II
+SOC2-014,Privacy,Are data retention policies documented and enforced?,Yes/No,SOC 2 Type II
+SOC2-015,Security,Do you conduct employee security awareness training?,Yes/No,SOC 2 Type II

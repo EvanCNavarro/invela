@@ -1,0 +1,16 @@
+Question ID,Category,Question,Expected Response Type,Compliance Framework
+ISO27001-001,Information Security Policy,Is there a documented information security policy approved by management?,Yes/No,ISO 27001:2013
+ISO27001-002,Risk Management,Are information security risks regularly assessed and managed?,Yes/No,ISO 27001:2013
+ISO27001-003,Asset Management,Is there an inventory of all information assets?,Yes/No,ISO 27001:2013
+ISO27001-004,Human Resource Security,Are background checks conducted for employees with access to sensitive information?,Yes/No,ISO 27001:2013
+ISO27001-005,Physical Security,Are secure areas established to protect information processing facilities?,Yes/No,ISO 27001:2013
+ISO27001-006,Communications Security,Are network security controls implemented and maintained?,Yes/No,ISO 27001:2013
+ISO27001-007,Access Control,Is access to information systems controlled based on business requirements?,Yes/No,ISO 27001:2013
+ISO27001-008,Cryptography,Are cryptographic controls used to protect information?,Yes/No,ISO 27001:2013
+ISO27001-009,Systems Security,Are systems hardened against security threats?,Yes/No,ISO 27001:2013
+ISO27001-010,Supplier Relationships,Are information security requirements included in supplier agreements?,Yes/No,ISO 27001:2013
+ISO27001-011,Incident Management,Is there a documented incident management procedure?,Yes/No,ISO 27001:2013
+ISO27001-012,Business Continuity,Are business continuity plans tested regularly?,Yes/No,ISO 27001:2013
+ISO27001-013,Compliance,Are legal and regulatory requirements identified and monitored?,Yes/No,ISO 27001:2013
+ISO27001-014,Internal Audits,Are internal information security audits conducted?,Yes/No,ISO 27001:2013
+ISO27001-015,Management Review,Does management regularly review the information security management system?,Yes/No,ISO 27001:2013
