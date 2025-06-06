@@ -22,7 +22,8 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus } from "lucide-react";
+import { useCurrentCompany } from "@/hooks/use-current-company";
+import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Gamepad2 } from "lucide-react";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;
@@ -32,10 +33,12 @@ interface QuickActionsWidgetProps {
 export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetProps) {
   const [, setLocation] = useLocation();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const { company } = useCurrentCompany();
 
   const handleCompanyProfile = () => {
-    // Navigate to company profile
-    setLocation("/company/1");
+    // Navigate to company profile in network view
+    const companyId = company?.id || 1;
+    setLocation(`/network/company/${companyId}`);
   };
 
   const handleInsights = () => {
@@ -53,34 +56,52 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     setInviteModalOpen(true);
   };
 
+  const handleTaskCenter = () => {
+    // Navigate to task center
+    setLocation("/task-center");
+  };
+
+  const handlePlayground = () => {
+    // Navigate to playground for testing features
+    setLocation("/playground");
+  };
+
   const actions = [
     {
       id: "company-profile",
-      label: "View Company Profile",
-      icon: <Building2 className="h-5 w-5" />,
-      onClick: handleCompanyProfile,
-      description: "View your company details"
+      label: "Company Profile",
+      icon: <Building2 className="h-4 w-4" />,
+      onClick: handleCompanyProfile
     },
     {
       id: "insights",
       label: "View Insights",
-      icon: <BarChart3 className="h-5 w-5" />,
-      onClick: handleInsights,
-      description: "Access analytics dashboard"
+      icon: <BarChart3 className="h-4 w-4" />,
+      onClick: handleInsights
     },
     {
       id: "upload-file",
       label: "Upload File",
-      icon: <Upload className="h-5 w-5" />,
-      onClick: handleUploadFile,
-      description: "Upload documents to FileVault"
+      icon: <Upload className="h-4 w-4" />,
+      onClick: handleUploadFile
     },
     {
       id: "invite-recipient",
       label: "Invite Data Recipient",
-      icon: <UserPlus className="h-5 w-5" />,
-      onClick: handleInviteRecipient,
-      description: "Invite FinTech companies"
+      icon: <UserPlus className="h-4 w-4" />,
+      onClick: handleInviteRecipient
+    },
+    {
+      id: "task-center",
+      label: "Task Center",
+      icon: <CheckSquare className="h-4 w-4" />,
+      onClick: handleTaskCenter
+    },
+    {
+      id: "playground",
+      label: "Playground",
+      icon: <Gamepad2 className="h-4 w-4" />,
+      onClick: handlePlayground
     }
   ];
 
@@ -100,16 +121,13 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
             <Button
               key={action.id}
               variant="outline"
-              className="h-auto p-4 flex flex-col items-center text-center space-y-2 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+              className="h-12 px-4 flex items-center justify-start space-x-3 hover:bg-blue-50 hover:border-blue-200 transition-colors"
               onClick={action.onClick}
             >
               <div className="text-blue-600">
                 {action.icon}
               </div>
-              <div>
-                <div className="font-medium text-sm">{action.label}</div>
-                <div className="text-xs text-gray-500 mt-1">{action.description}</div>
-              </div>
+              <span className="font-medium text-sm">{action.label}</span>
             </Button>
           ))}
         </div>
