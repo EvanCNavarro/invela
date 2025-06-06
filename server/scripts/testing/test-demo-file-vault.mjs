@@ -5,7 +5,7 @@
  * with demo files by directly importing and calling the populateDemoFileVault function
  */
 
-import { populateDemoFileVault } from './server/utils/demo-file-vault.js';
+import { populateDemoFileVault } from '../../utils/demo-file-vault.js';
 import pg from 'pg';
 
 const { Client } = pg;

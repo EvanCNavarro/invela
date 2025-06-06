@@ -1,0 +1,16 @@
+Question ID,Category,Question,Expected Response Type,Compliance Framework
+PENTEST-001,Network Security,Are external network penetration tests conducted annually?,Yes/No,Security Best Practices
+PENTEST-002,Web Application Security,Are web applications tested for OWASP Top 10 vulnerabilities?,Yes/No,OWASP Guidelines
+PENTEST-003,Internal Network,Are internal network penetration tests performed?,Yes/No,Security Best Practices
+PENTEST-004,Social Engineering,Is social engineering testing included in security assessments?,Yes/No,Security Best Practices
+PENTEST-005,Wireless Security,Are wireless networks included in penetration testing scope?,Yes/No,Security Best Practices
+PENTEST-006,Database Security,Are database security assessments performed regularly?,Yes/No,Security Best Practices
+PENTEST-007,API Security,Are APIs tested for security vulnerabilities?,Yes/No,OWASP API Security
+PENTEST-008,Mobile Applications,Are mobile applications included in security testing?,Yes/No,OWASP Mobile Security
+PENTEST-009,Physical Security,Is physical security testing conducted?,Yes/No,Security Best Practices
+PENTEST-010,Remediation,Are penetration test findings remediated within defined timeframes?,Yes/No,Security Best Practices
+PENTEST-011,Reporting,Are detailed penetration test reports provided and reviewed?,Yes/No,Security Best Practices
+PENTEST-012,Retesting,Is retesting performed after vulnerability remediation?,Yes/No,Security Best Practices
+PENTEST-013,Third Party Testing,Are third-party security assessments conducted by certified professionals?,Yes/No,Security Best Practices
+PENTEST-014,Compliance Testing,Does penetration testing cover compliance requirements?,Yes/No,Regulatory Compliance
+PENTEST-015,Continuous Testing,Are continuous security assessments integrated into the development lifecycle?,Yes/No,DevSecOps Practices
