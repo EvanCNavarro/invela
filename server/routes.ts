@@ -3053,8 +3053,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const accreditationData = await db.select({
         id: accreditationHistory.id,
         company_id: accreditationHistory.company_id,
-        accreditation_status: accreditationHistory.accreditation_status,
-        accreditation_type: accreditationHistory.accreditation_type,
+        status: accreditationHistory.status,
+        accreditation_number: accreditationHistory.accreditation_number,
+        issued_date: accreditationHistory.issued_date,
+        expires_date: accreditationHistory.expires_date,
         created_at: accreditationHistory.created_at,
         updated_at: accreditationHistory.updated_at,
         company_name: companies.name,

@@ -94,7 +94,9 @@ export default function InsightsPage() {
   return (
     <DashboardLayout>
       {/* Add tutorial manager for insights page */}
-      <TutorialManager tabName="insights" />
+      <TutorialManager tabName="insights">
+        <></>
+      </TutorialManager>
       
       <div className="space-y-6 flex flex-col overflow-y-auto pb-8">
         <div className="flex items-center justify-between">
@@ -129,6 +131,10 @@ export default function InsightsPage() {
         )}
 
         <Widget title="" className="h-[600px] mb-12">
+          {selectedVisualization === "system_overview" && isInvela && (
+            <SystemOverviewInsight className="bg-transparent shadow-none border-none" />
+          )}
+          
           {selectedVisualization === "risk_monitoring" && !isFintech && (
             <RiskMonitoringInsight className="bg-transparent shadow-none border-none" />
           )}
