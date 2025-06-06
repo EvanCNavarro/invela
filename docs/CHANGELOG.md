@@ -4,6 +4,24 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 2.0.1 - 2025-06-06
+
+#### 🔧 FileVault Authentication & Display Resolution
+- **Critical Issue Fix**
+  - Resolved FileVault functionality completely broken due to authentication and module conflicts
+  - Fixed circular dependency in FileVault query logic preventing file list display
+  - Corrected user authentication hook import from `@/hooks/use-user` to `@/hooks/useUser`
+  - Enhanced server authentication logging for debugging authentication flow
+  - Verified API endpoint `/api/user` returns complete user data with company_id field
+  - Confirmed file uploads and display now working correctly with real-time WebSocket updates
+
+- **Technical Resolution**
+  - Fixed module resolution conflict causing upload failures by removing duplicate toast hook file
+  - User authentication now working (company_id: 780)
+  - File list displaying uploaded files properly (4 files confirmed)
+  - Database queries executing successfully with proper pagination
+  - Real-time WebSocket notifications for new file uploads operational
+
 ### Version 2.0.0 - 2025-06-06
 
 #### 🏦 Banking-Specific Company Name Generation
