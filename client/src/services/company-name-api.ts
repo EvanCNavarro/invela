@@ -40,6 +40,7 @@ export interface CompanyNameApiResponse {
   strategy: string;
   processingTime: number;
   timestamp: string;
+  persona?: string;
   error?: string;
   details?: string;
   code?: string;
@@ -54,6 +55,11 @@ export interface CompanyNameGenerationOptions {
   maxRetries?: number;
   timeoutMs?: number;
   logLevel?: 'debug' | 'info' | 'warn' | 'error';
+  /** 
+   * Persona type for specialized name generation
+   * Used to apply persona-specific naming rules (e.g., banking suffixes for data-provider)
+   */
+  persona?: string;
 }
 
 // ========================================
@@ -153,8 +159,14 @@ export async function generateUniqueCompanyName(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs);
 
+    // Build API URL with persona parameter if provided
+    const apiUrl = new URL('/api/demo/generate-company-name', window.location.origin);
+    if (config.persona) {
+      apiUrl.searchParams.set('persona', config.persona);
+    }
+
     // Make API request with timeout
-    const response = await fetch('/api/demo/generate-company-name', {
+    const response = await fetch(apiUrl.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

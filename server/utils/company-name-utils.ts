@@ -371,7 +371,18 @@ export async function generateAdvancedCompanyName(
     attempt,
     strategy: 'combinatorial',
     lengthPreference: config.lengthPreference,
+    persona: config.persona,
   });
+
+  // Early return for banking persona - Data Provider gets specialized banking names
+  if (config.persona === 'data-provider') {
+    logCompanyNameOperation('info', 'Routing to banking-specific generation for data-provider persona', {
+      baseName,
+      attempt,
+      persona: config.persona,
+    });
+    return generateBankingCompanyName(baseName, attempt, config);
+  }
 
   // Determine if we should generate short or long name
   let useShortName = false;
