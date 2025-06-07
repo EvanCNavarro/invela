@@ -27,7 +27,7 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
   
   return (
     <motion.div 
-      className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-[#0082FF]' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
+      className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-gradient-to-br from-sky-100 to-blue-50' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
       initial={{ opacity: 0, x: initialX }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ 
@@ -36,9 +36,9 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
       }}
     >
       <img
-        src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"} 
-        alt={isLogin ? "Secure Login Animation" : "Register Animation"}
-        className="w-full h-full object-contain max-w-[500px]"
+        src={isLogin ? "/assets/invela_branding_login.png" : "/assets/register_animation.gif"} 
+        alt={isLogin ? "Invela Professional Network" : "Register Animation"}
+        className="w-full h-full object-cover rounded-lg"
         style={{
           imageRendering: 'auto',
           WebkitBackfaceVisibility: 'hidden',
