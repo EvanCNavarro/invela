@@ -116,7 +116,7 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <AlertDialogTrigger asChild>
         <Button
-          variant={isBlocked ? "default" : "secondary"}
+          variant={isBlocked ? "default" : "outline"}
           size="sm"
           className={`flex items-center gap-2 ${className || ''}`}
           disabled={blockMutation.isPending}
