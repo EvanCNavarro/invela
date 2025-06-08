@@ -46,18 +46,18 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "border-l-2 px-5 py-3 rounded-md mb-0 flex items-center w-fit",
+        "border-l-2 rounded-md mb-0 flex items-center w-fit",
         isBlocked 
           ? "bg-red-50 border-red-200" 
           : "bg-blue-50 border-blue-200",
         className
       )}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex-shrink-0">
+      <div className="flex items-center px-4 py-3">
+        <div className="flex-shrink-0 mr-4">
           <PulsingDot variant={isBlocked ? "red" : "blue"} size="sm" />
         </div>
-        <div>
+        <div className="mr-4">
           <p className={cn(
             "font-medium text-sm leading-none whitespace-nowrap",
             isBlocked ? "text-red-800" : "text-blue-800"
