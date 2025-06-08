@@ -59,23 +59,39 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   }, [currentCompany]);
 
   // Get unified risk data using the new unified hook
+  // Remove conditional enabling to fix React Query timing issue
   const { data: unifiedRiskData, isLoading: isLoadingRiskData } = useUnifiedRiskData({
     includeNetwork: true,
     includeDemo: true,
-    enabled: canViewInsight
+    enabled: true // Always enabled - handle permissions in data processing
   });
 
   // Extract data from unified response
   const companyRiskData = useMemo(() => {
-    if (!unifiedRiskData?.companies?.length) return [];
+    if (!unifiedRiskData?.companies?.length) {
+      logInsight('No unified risk data available', {
+        hasData: !!unifiedRiskData,
+        hasCompanies: !!unifiedRiskData?.companies,
+        companiesLength: unifiedRiskData?.companies?.length || 0,
+        isLoading: isLoadingRiskData
+      });
+      return [];
+    }
     
-    logInsight('Using unified risk data for consistency', {
+    logInsight('Phase 2: Data received from unified API', {
       companiesCount: unifiedRiskData.companies.length,
-      thresholds: unifiedRiskData.thresholds
+      thresholds: unifiedRiskData.thresholds,
+      firstFewCompanies: unifiedRiskData.companies.slice(0, 3).map(c => ({
+        id: c.id,
+        name: c.name,
+        currentScore: c.currentScore,
+        previousScore: c.previousScore,
+        trend: c.trend
+      }))
     });
     
     return unifiedRiskData.companies;
-  }, [unifiedRiskData]);
+  }, [unifiedRiskData, isLoadingRiskData]);
 
   // Get risk thresholds from unified service
   const riskThresholds = unifiedRiskData?.thresholds;

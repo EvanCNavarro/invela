@@ -324,9 +324,27 @@ export class SessionDataService {
    * Get consistent data for multiple companies
    */
   public getCompaniesData(companies: any[]): SessionCompanyData[] {
-    logSession('Getting data for multiple companies', { count: companies.length });
+    logSession('Phase 3: Session service receiving companies data', { 
+      count: companies.length,
+      firstFewCompanies: companies.slice(0, 3).map(c => ({
+        id: c.id,
+        name: c.name,
+        currentScore: c.currentScore,
+        previousScore: c.previousScore,
+        trend: c.trend
+      }))
+    });
     
-    return companies.map(company => this.getCompanyData(company));
+    const processed = companies.map(company => this.getCompanyData(company));
+    
+    logSession('Phase 3: Session service processed companies', {
+      processedCount: processed.length,
+      deterioratingCount: processed.filter(c => c.trend === 'deteriorating').length,
+      improvingCount: processed.filter(c => c.trend === 'improving').length,
+      stableCount: processed.filter(c => c.trend === 'stable').length
+    });
+    
+    return processed;
   }
   
   /**
