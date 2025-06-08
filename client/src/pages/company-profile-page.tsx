@@ -989,12 +989,14 @@ export default function CompanyProfilePage() {
               <span className="text-gray-900 font-medium">{company?.name}</span>
             </nav>
 
-            {/* Block Company Button - industry standard defensive pattern */}
-            <BlockCompanyButton 
-              companyId={company?.id}
-              companyName={company?.name}
-              currentStatus={riskStatus?.status || 'Stable'}
-            />
+            {/* Block Company Button - only render when company data is loaded */}
+            {company?.id && company?.name && (
+              <BlockCompanyButton 
+                companyId={company.id}
+                companyName={company.name}
+                currentStatus={riskStatus?.status || 'Stable'}
+              />
+            )}
           </div>
           <TutorialManager tabName="company-profile">
             <div className="space-y-6">
