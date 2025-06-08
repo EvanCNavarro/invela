@@ -14,27 +14,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUnifiedToast } from '@/hooks/use-unified-toast.tsx';
 import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
-
-// Global image cache for preloading and instant access
-const globalImageCache = new Map<string, HTMLImageElement>();
-
-// Preload images into cache
-const preloadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    if (globalImageCache.has(src)) {
-      resolve(globalImageCache.get(src)!);
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => {
-      globalImageCache.set(src, img);
-      resolve(img);
-    };
-    img.onerror = reject;
-    img.src = src;
-  });
-};
+import { 
+  preloadOnboardingImages, 
+  isImageCached, 
+  getCachedImage,
+  clearImageCache,
+  getCacheStats
+} from '@/utils/intelligent-preloader';
 
 // Type definitions for better type safety
 interface User {
@@ -386,16 +372,14 @@ const StepLayout: React.FC<{
     
     setImageLoaded(false); // Reset loading state
     
-    // Use cached image or preload
-    if (globalImageCache.has(imgSrc)) {
+    // Check if image is already cached by intelligent preloader
+    if (isImageCached(imgSrc)) {
+      console.log(`[StepLayout] Image already cached: ${imgSrc}`);
       setImageLoaded(true);
     } else {
-      preloadImage(imgSrc)
-        .then(() => setImageLoaded(true))
-        .catch(() => {
-          console.warn(`[AnimatedOnboardingModal] Failed to load image: ${imgSrc}`);
-          setImageLoaded(true); // Show content even if image fails
-        });
+      // Image should be preloaded by now, but handle gracefully if not
+      console.log(`[StepLayout] Image not in cache, will load via ProgressiveImage: ${imgSrc}`);
+      setImageLoaded(true); // Let ProgressiveImage handle the loading
     }
   }, [imgSrc]);
   
@@ -499,20 +483,35 @@ export function AnimatedOnboardingModal({
     revenue: '',
   });
 
-  // Preload all onboarding step images when modal opens
+  // Intelligent preloading system - loads all 7 welcome images when modal opens
   useEffect(() => {
     if (isOpen) {
-      const imagesToPreload = [
-        "/images/onboarding/step1-welcome.jpg",
-        "/images/onboarding/step2-company.jpg", 
-        "/images/onboarding/step3-team.jpg",
-        "/images/onboarding/step4-tasks.jpg"
-      ];
-    
-      imagesToPreload.forEach(src => {
-        preloadImage(src).catch(console.warn);
-      });
+      console.log('[OnboardingModal] Modal opened, starting intelligent preload of all welcome images');
+      
+      // Start background preloading immediately
+      preloadOnboardingImages()
+        .then(results => {
+          const successful = results.filter(r => r.success).length;
+          const total = results.length;
+          console.log(`[OnboardingModal] Preload completed: ${successful}/${total} images loaded successfully`);
+          
+          // Log cache statistics
+          const stats = getCacheStats();
+          console.log('[OnboardingModal] Cache statistics:', stats);
+        })
+        .catch(error => {
+          console.error('[OnboardingModal] Preload failed:', error);
+        });
     }
+    
+    // Cleanup cache when modal closes to free memory
+    return () => {
+      if (!isOpen) {
+        // Clear onboarding images from cache when modal closes
+        clearImageCache('welcome_');
+        console.log('[OnboardingModal] Cache cleared on modal close');
+      }
+    };
   }, [isOpen]);
   
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
