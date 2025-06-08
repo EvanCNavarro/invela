@@ -16,7 +16,7 @@ import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
 import { RiskTrendIndicator } from "@/components/risk/RiskTrendIndicator";
 import { RiskStatusSummary } from "@/components/risk/RiskStatusSummary";
-import { getSessionCompanyData, getScoreChange, getFormattedScoreChange } from '@/lib/sessionDataService';
+
 import Fuse from 'fuse.js';
 
 interface CompanyData {
@@ -171,40 +171,52 @@ export default function SimpleCompanyProfile() {
     enabled: !!companyId && !authLoading,
   });
 
-  // Get session-consistent risk status data
+  // Fetch unified risk data to ensure consistency with network view and dashboard
+  const { data: unifiedRiskData } = useQuery<{
+    id: number;
+    name: string;
+    currentScore: number;
+    previousScore: number;
+    status: 'Stable' | 'Monitoring' | 'Approaching Block' | 'Blocked';
+    trend: 'improving' | 'stable' | 'deteriorating';
+    daysInStatus: number;
+    category: string;
+    isDemo: boolean;
+    updatedAt: string;
+    thresholds: any;
+  }>({
+    queryKey: [`/api/companies/${companyId}/risk-unified`],
+    enabled: !!companyId && !authLoading,
+  });
+
+  // Get unified risk status data
   const riskStatus = useMemo(() => {
-    if (!company || !companyId) {
+    if (!unifiedRiskData) {
       return { status: 'Loading...', color: 'gray', description: 'Loading risk data' };
     }
 
-    try {
-      const sessionData = getSessionCompanyData(company);
-      
-      const colorMap = {
-        'Stable': 'green',
-        'Monitoring': 'yellow', 
-        'Approaching Block': 'orange',
-        'Blocked': 'red'
-      };
+    const colorMap = {
+      'Stable': 'green',
+      'Monitoring': 'yellow', 
+      'Approaching Block': 'orange',
+      'Blocked': 'red'
+    };
 
-      console.log('[Company Profile] Using session data for risk status', {
-        companyId: company.id,
-        companyName: company.name,
-        status: sessionData.status,
-        currentScore: sessionData.currentScore
-      });
+    console.log('[Company Profile] Using unified risk data for status', {
+      companyId: unifiedRiskData.id,
+      companyName: unifiedRiskData.name,
+      status: unifiedRiskData.status,
+      currentScore: unifiedRiskData.currentScore
+    });
 
-      return { 
-        status: sessionData.status, 
-        color: colorMap[sessionData.status as keyof typeof colorMap] || 'gray',
-        description: `Risk status: ${sessionData.status}`
-      };
-    } catch (error) {
-      console.error('[Company Profile] Error getting session data:', error);
-      // Fallback to stable status
-      return { status: 'Stable', color: 'green', description: 'Risk level stable' };
-    }
-  }, [company, companyId]);
+    return { 
+      status: unifiedRiskData.status, 
+      color: colorMap[unifiedRiskData.status as keyof typeof colorMap] || 'gray',
+      description: `Risk status: ${unifiedRiskData.status}`,
+      currentScore: unifiedRiskData.currentScore,
+      trend: unifiedRiskData.trend
+    };
+  }, [unifiedRiskData]);
 
   // Fetch users associated with this company
   const { data: usersResponse, isLoading: usersLoading } = useQuery<CompanyUsersResponse>({
@@ -581,20 +593,15 @@ export default function SimpleCompanyProfile() {
                           <div>
                             <label className="text-xs font-medium text-gray-500">S&P DARS</label>
                             <p className="text-sm text-gray-900">
-                              {(() => {
-                                if (!company) return '0/100';
-                                const sessionData = getSessionCompanyData(company);
-                                return `${sessionData.currentScore}/100`;
-                              })()}
+                              {unifiedRiskData ? `${unifiedRiskData.currentScore}/100` : '0/100'}
                             </p>
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500">Risk Level</label>
                             <p className="text-sm text-gray-900">
                               {(() => {
-                                if (!company) return 'Low Risk';
-                                const sessionData = getSessionCompanyData(company);
-                                const score = sessionData.currentScore;
+                                if (!unifiedRiskData) return 'Low Risk';
+                                const score = unifiedRiskData.currentScore;
                                 return score < 30 ? "Low Risk" : score < 70 ? "Medium Risk" : "High Risk";
                               })()}
                             </p>
@@ -603,32 +610,34 @@ export default function SimpleCompanyProfile() {
                             <label className="text-xs font-medium text-gray-500">Status</label>
                             <div className="flex items-center gap-2">
                               {(() => {
-                                if (!company) return (
+                                if (!unifiedRiskData) return (
                                   <>
                                     <Minus className="w-3 h-3 text-gray-900" />
                                     <span className="text-sm text-gray-900">0</span>
                                     <span className="text-sm text-gray-600">Stable</span>
                                   </>
                                 );
-                                const sessionData = getSessionCompanyData(company);
-                                const scoreChange = getScoreChange(sessionData, '30day');
+                                
+                                const scoreChange = unifiedRiskData.currentScore - unifiedRiskData.previousScore;
                                 
                                 const TrendIcon = scoreChange > 3 ? TrendingUp : 
                                                  scoreChange < -3 ? TrendingDown : Minus;
                                 
-                                const statusColor = sessionData.status === 'Blocked' ? 'text-red-600' :
-                                                    sessionData.status === 'Approaching Block' ? 'text-orange-600' :
-                                                    sessionData.status === 'Monitoring' ? 'text-yellow-600' :
+                                const statusColor = unifiedRiskData.status === 'Blocked' ? 'text-red-600' :
+                                                    unifiedRiskData.status === 'Approaching Block' ? 'text-orange-600' :
+                                                    unifiedRiskData.status === 'Monitoring' ? 'text-yellow-600' :
                                                     'text-gray-900';
+                                
+                                const formattedChange = scoreChange > 0 ? `+${scoreChange.toFixed(1)}` : scoreChange.toFixed(1);
                                 
                                 return (
                                   <>
                                     <TrendIcon className={`w-3 h-3 ${statusColor}`} />
                                     <span className={`text-sm ${statusColor}`}>
-                                      {getFormattedScoreChange(sessionData, '30day')}
+                                      {formattedChange}
                                     </span>
                                     <span className={`text-sm ${statusColor}`}>
-                                      {sessionData.status}
+                                      {unifiedRiskData.status}
                                     </span>
                                   </>
                                 );
@@ -638,11 +647,7 @@ export default function SimpleCompanyProfile() {
                           <div>
                             <label className="text-xs font-medium text-gray-500">Days in Status</label>
                             <p className="text-sm text-gray-900">
-                              {(() => {
-                                if (!company) return '0 days';
-                                const sessionData = getSessionCompanyData(company);
-                                return `${sessionData.daysInStatus} days`;
-                              })()}
+                              {unifiedRiskData ? `${unifiedRiskData.daysInStatus} days` : '0 days'}
                             </p>
                           </div>
                           <div>
