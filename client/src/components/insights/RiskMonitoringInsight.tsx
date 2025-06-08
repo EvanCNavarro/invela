@@ -10,6 +10,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Activity } from 'lucide-react';
 import BlockedDataRecipientsAlert from './BlockedDataRecipientsAlert';
 import DeterioratingRiskTable from './DeterioratingRiskTable';
 import { cn } from '@/lib/utils';
@@ -39,13 +40,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   // State for filtering to only show blocked companies
   const [showOnlyBlocked, setShowOnlyBlocked] = useState(false);
   
-  // State for the selected time frame (7 days or 30 days)
-  const [timeframe, setTimeframe] = useState<'7day' | '30day'>('7day');
-  
-  // Debug logging for timeframe changes
-  useEffect(() => {
-    console.log('[RiskMonitoring] Timeframe state changed to:', timeframe);
-  }, [timeframe]);
+  // Removed timeframe state - using fixed 7-day period
 
   // Get the current company data (to check if it's a Bank or Invela)
   const { data: currentCompany, isLoading: isLoadingCurrentCompany } = useQuery<any>({
@@ -169,44 +164,14 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Header row with warning and timeframe toggle */}
-      {/* Row with warning message and timeframe toggle */}
-      <div className="flex justify-between items-center mb-4">
-        {/* Status message on the left - always show */}
-        <div className="flex-grow mr-4">
-          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
+      {/* Header with Risk Monitoring title and blocked count */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Risk Monitoring</h3>
         </div>
-
-        {/* Timeframe toggle on the right */}
-        <div className="flex-shrink-0">
-          <div className="flex bg-muted rounded-md p-1">
-            <button
-              onClick={() => {
-                console.log('[RiskMonitoring] 7-day button clicked');
-                setTimeframe('7day');
-              }}
-              className={`px-3 py-1 text-sm font-medium rounded-sm ${
-                timeframe === '7day' 
-                  ? 'bg-background text-foreground shadow-sm' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              7-Day Change
-            </button>
-            <button
-              onClick={() => {
-                console.log('[RiskMonitoring] 30-day button clicked');
-                setTimeframe('30day');
-              }}
-              className={`px-3 py-1 text-sm font-medium rounded-sm ${
-                timeframe === '30day' 
-                  ? 'bg-background text-foreground shadow-sm' 
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              30-Day Change
-            </button>
-          </div>
+        <div className="flex-grow">
+          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
         </div>
       </div>
       
@@ -215,7 +180,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
         companies={displayCompanies}
         blockThreshold={riskThresholds?.BLOCKED || 70}
         onCompanyClick={handleCompanyClick}
-        timeframe={timeframe}
+        timeframe="7day"
         className={isWidget ? "max-h-96 overflow-auto" : ""}
       />
       
