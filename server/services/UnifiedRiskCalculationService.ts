@@ -140,7 +140,6 @@ export class UnifiedRiskCalculationService {
           id: true,
           name: true,
           risk_score: true,
-          previous_risk_score: true,
           category: true,
           is_demo: true,
           updated_at: true
@@ -152,7 +151,7 @@ export class UnifiedRiskCalculationService {
       }
 
       const currentScore = company.risk_score || 0;
-      const previousScore = company.previous_risk_score || 0;
+      const previousScore = 0; // Default to 0 since we don't have historical data yet
       const status = this.calculateRiskStatus(currentScore);
       const trend = this.calculateRiskTrend(currentScore, previousScore);
       const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
