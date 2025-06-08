@@ -16,11 +16,13 @@
 ### Tutorial Image Mapping Corrections (June 8, 2025)
 - **Claims tutorial restoration**: Fixed claims tutorial to use original blue modal images (modal_claims_1.png, modal_claims_2.png, modal_claims_3.png)
 - **Risk-score-configuration mapping**: Corrected tutorial to use optimized JPEG files from risk-score directory (gauge.png, dimension-cards.png, risk-acceptance.png, comparative.png)
+- **Insights tutorial fix**: Updated insights tutorial to use optimized modal images (modal_insights_1.png, modal_insights_2.png, modal_insights_3.png) instead of generic numbered files
 - **Directory cleanup**: Removed obsolete risk-score-configuration directory and conflicting SVG files
 - **TutorialManager synchronization**: Updated internal image mapping to match intelligent preloader configuration
-- **Path resolution**: Fixed tutorial system to properly resolve image paths for both claims and risk-score-configuration modals
+- **Path resolution**: Fixed tutorial system to properly resolve image paths for claims, risk-score-configuration, and insights modals
 - **Image consistency**: Ensured both intelligent preloader and TutorialManager use identical file mappings
 - **Blue theme restoration**: Preserved original blue-themed tutorial designs showing Active/Disputed/Resolved Claims overview
+- **Optimization utilization**: All tutorial modals now use optimized JPEG files where available for improved loading performance
 
 ### Intelligent Image Preloading System (June 8, 2025)
 - **Modal-aware preloading**: Created intelligent-preloader.ts utility that detects onboarding vs tutorial modals and preloads appropriate image sets

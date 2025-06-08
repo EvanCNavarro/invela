@@ -305,7 +305,7 @@ export function generateTutorialImageSources(tabName: string): ImageSource[] {
     },
     'insights': {
       directory: 'insights',
-      files: ['1.png', '2.png', '3.png']
+      files: ['modal_insights_1.png', 'modal_insights_2.png', 'modal_insights_3.png']
     },
     'file-vault': {
       directory: 'file-vault',
