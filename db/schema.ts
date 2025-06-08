@@ -44,6 +44,16 @@ export const TaskStatus = {
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
+// Risk Status Override Enum for manual company blocking
+export const riskStatusOverrideEnum = pgEnum('risk_status_override', [
+  'BLOCKED',
+  'APPROACHING_BLOCK', 
+  'MONITORING',
+  'STABLE'
+]);
+
+export type RiskStatusOverride = 'BLOCKED' | 'APPROACHING_BLOCK' | 'MONITORING' | 'STABLE';
+
 
 export const DocumentCategory = {
   SOC2_AUDIT: 'soc2_audit',
@@ -111,6 +121,7 @@ export const companies = pgTable("companies", {
   certifications_compliance: text("certifications_compliance"),
   risk_score: integer("risk_score"), // Only populated for APPROVED/accredited companies
   chosen_score: integer("chosen_score"),
+  risk_status_override: riskStatusOverrideEnum("risk_status_override"), // Manual override for risk status
   risk_clusters: jsonb("risk_clusters").$type<{
     "Dark Web Data": number,
     "Cyber Security": number,
