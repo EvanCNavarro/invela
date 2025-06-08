@@ -544,8 +544,44 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
       loading: isLoading
     });
     
+    // Start intelligent preloading when tutorial is enabled and content is available
+    if (tutorialEnabled && hasContent && !isCompleted) {
+      logger.debug(`Starting intelligent preload for tutorial tab: ${normalizedTabName}`);
+      
+      preloadTutorialImages(normalizedTabName)
+        .then(results => {
+          const successful = results.filter(r => r.success).length;
+          const total = results.length;
+          logger.info(`Tutorial preload completed for ${normalizedTabName}: ${successful}/${total} images loaded successfully`);
+          
+          // Log cache statistics
+          const stats = getCacheStats();
+          logger.debug('Tutorial cache statistics:', stats);
+        })
+        .catch(error => {
+          logger.error(`Tutorial preload failed for ${normalizedTabName}:`, error);
+        });
+    }
+    
     setInitializationComplete(true);
-  }, [normalizedTabName, tabName]);
+  }, [normalizedTabName, tabName, tutorialEnabled, isCompleted]);
+  
+  // Cleanup cache when tutorial completes or component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear tutorial images from cache when component unmounts
+      clearImageCache(`tutorials/${normalizedTabName}/`);
+      logger.debug(`Cleared tutorial cache for ${normalizedTabName} on unmount`);
+    };
+  }, [normalizedTabName]);
+  
+  // Clear cache when tutorial is completed
+  useEffect(() => {
+    if (isCompleted) {
+      clearImageCache(`tutorials/${normalizedTabName}/`);
+      logger.debug(`Cleared tutorial cache for ${normalizedTabName} on completion`);
+    }
+  }, [isCompleted, normalizedTabName]);
   
   // React to WebSocket updates
   useEffect(() => {
