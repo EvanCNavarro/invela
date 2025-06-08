@@ -1,0 +1,29 @@
+✅ Vite host restrictions override enabled
+[WebSocket] Smart WebSocket connection manager initialized
+[vite] connecting...
+[WebSocket] Connection to wss://localhost:undefined/ failed: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/' is invalid.
+[vite] failed to connect to websocket.
+your current setup:
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ <--[HTTP]--> localhost:undefined/ (server)
+  (browser) 9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev:/ <--[WebSocket (failing)]--> localhost:undefined/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+[EnhancedKybServiceFactory] Data isolation: Using company-specific instance for: 1983
+[EnhancedKybServiceFactory] Creating new EnhancedKybFormService instance for company-1983-task-default-context
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[KY3PFormService] [KY3P Form Service] Initializing KY3P Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+INFO: [OpenBankingFormService] Initializing Open Banking Form Service 
+Object {companyId: undefined, taskId: undefined}
+[Enhanced KYB Service] Enhanced KYB Form Service initialized with timestamp tracking
+[EnhancedKybServiceFactory] No company context found, using global instance
+[2025-06-08T18:03:40.435Z] [PhaseStartup] PhaseStartup manager initialized 
+[TutorialManager] Tutorial debug utilities not available
+[Main] Starting application bootstrap sequence
+[WebSocket] Smart WebSocket connection manager initialized
+[WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection attempt initiated
+[Main] WebSocket connection managers initialized successfully
+[Main] Application services initialized successfully
+[Main] React application rendered successfully
+[Main] Application bootstrap completed successfully
