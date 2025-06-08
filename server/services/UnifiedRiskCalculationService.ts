@@ -147,7 +147,7 @@ export class UnifiedRiskCalculationService {
    * @param companyId - Company ID
    * @returns Unified risk data
    */
-  static async getCompanyRiskData(companyId: number): Promise<UnifiedRiskData | null> {
+  static async getCompanyRiskData(companyId: number, currentCompanyId?: number): Promise<UnifiedRiskData | null> {
     try {
       const cacheKey = `company_${companyId}`;
       // Clear cache to ensure authentic database scores are used
@@ -179,7 +179,7 @@ export class UnifiedRiskCalculationService {
       // Generate previous score with realistic variation (-15 to +15 points from current)
       const variation = (random - 0.5) * 30; // Range: -15 to +15
       const previousScore = Math.max(0, Math.min(100, currentScore + variation));
-      const status = this.calculateRiskStatus(currentScore, company.risk_status_override);
+      const status = this.calculateRiskStatus(currentScore, company.risk_status_override, companyId, currentCompanyId);
       const trend = this.calculateRiskTrend(currentScore, previousScore);
       const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 
@@ -272,7 +272,7 @@ export class UnifiedRiskCalculationService {
         const variation = (random - 0.5) * 20; // Range: -10 to +10
         const previousScore = Math.max(0, Math.min(100, currentScore + variation));
         
-        const status = this.calculateRiskStatus(currentScore, company.risk_status_override);
+        const status = this.calculateRiskStatus(currentScore, company.risk_status_override, company.id, userCompanyId);
         const trend = this.calculateRiskTrend(currentScore, previousScore);
         const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 

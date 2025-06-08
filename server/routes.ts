@@ -3273,7 +3273,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ error: 'Invalid company ID' });
       }
 
-      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId, req.user?.company_id);
       if (!riskData) {
         return res.status(404).json({ error: 'Company not found' });
       }
@@ -3509,7 +3509,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       }
 
       // Use UnifiedRiskCalculationService for consistent status calculation
-      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId, req.user?.company_id);
 
       if (!riskData) {
         return res.status(404).json({
