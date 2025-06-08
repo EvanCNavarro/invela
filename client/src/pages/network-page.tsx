@@ -102,34 +102,26 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
 };
 
 // Risk Monitoring Status Badge Component using unified risk calculation
-const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
-  const [status, setStatus] = useState<'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable'>('Stable');
-  
-  // Get unified risk thresholds
-  const { data: thresholdsData } = useQuery<{ thresholds: any }>({
-    queryKey: ['/api/risk/unified'],
-    staleTime: 5 * 60 * 1000 // Cache thresholds for 5 minutes
+const RiskMonitoringStatusBadge = ({ companyId }: { companyId: number }) => {
+  // Get unified risk data directly from the API for consistent status
+  const { data: unifiedRiskData } = useQuery<{
+    id: number;
+    name: string;
+    currentScore: number;
+    previousScore: number;
+    status: 'Stable' | 'Monitoring' | 'Approaching Block' | 'Blocked';
+    trend: 'improving' | 'stable' | 'deteriorating';
+    daysInStatus: number;
+    category: string;
+    isDemo: boolean;
+    updatedAt: string;
+  }>({
+    queryKey: [`/api/companies/${companyId}/risk-unified`],
+    enabled: !!companyId,
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
   });
   
-  useEffect(() => {
-    if (!thresholdsData?.thresholds) return;
-    
-    const currentScore = riskScore || 0;
-    const thresholds = thresholdsData.thresholds;
-    let calculatedStatus: 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' = 'Stable';
-    
-    if (currentScore >= thresholds.BLOCKED) {
-      calculatedStatus = 'Blocked';
-    } else if (currentScore >= thresholds.APPROACHING_BLOCK) {
-      calculatedStatus = 'Approaching Block';
-    } else if (currentScore >= thresholds.MONITORING) {
-      calculatedStatus = 'Monitoring';
-    } else {
-      calculatedStatus = 'Stable';
-    }
-    
-    setStatus(calculatedStatus);
-  }, [companyId, riskScore, thresholdsData]);
+  const status = unifiedRiskData?.status || 'Stable';
   
   if (status === 'Blocked') {
     return (
@@ -232,7 +224,7 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
       </TableCell>
       <TableCell className="text-center py-3">
         <div className="flex justify-center min-h-[40px] items-center">
-          <RiskMonitoringStatusBadge companyId={company.id} riskScore={company.riskScore} />
+          <RiskMonitoringStatusBadge companyId={company.id} />
         </div>
       </TableCell>
       <TableCell className="text-center font-medium py-3">
