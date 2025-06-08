@@ -13,6 +13,15 @@
 - **Performance monitoring**: Comprehensive error handling and loading state management
 - **Skeleton variants**: Branded and neutral loading states for different UI contexts
 
+### Tutorial Image Mapping Corrections (June 8, 2025)
+- **Claims tutorial restoration**: Fixed claims tutorial to use original blue modal images (modal_claims_1.png, modal_claims_2.png, modal_claims_3.png)
+- **Risk-score-configuration mapping**: Corrected tutorial to use optimized JPEG files from risk-score directory (gauge.png, dimension-cards.png, risk-acceptance.png, comparative.png)
+- **Directory cleanup**: Removed obsolete risk-score-configuration directory and conflicting SVG files
+- **TutorialManager synchronization**: Updated internal image mapping to match intelligent preloader configuration
+- **Path resolution**: Fixed tutorial system to properly resolve image paths for both claims and risk-score-configuration modals
+- **Image consistency**: Ensured both intelligent preloader and TutorialManager use identical file mappings
+- **Blue theme restoration**: Preserved original blue-themed tutorial designs showing Active/Disputed/Resolved Claims overview
+
 ### Intelligent Image Preloading System (June 8, 2025)
 - **Modal-aware preloading**: Created intelligent-preloader.ts utility that detects onboarding vs tutorial modals and preloads appropriate image sets
 - **Smart caching strategy**: Implemented memory-efficient global cache with automatic cleanup and LRU eviction policies

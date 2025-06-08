@@ -105,6 +105,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'tutorial-image-mapping-corrections-2025-06-08',
+    date: '2025-06-08',
+    type: 'fix',
+    title: 'Tutorial Image Mapping Corrections',
+    description: 'Fixed tutorial system image path conflicts and restored original blue-themed tutorial designs',
+    details: [
+      'Restored claims tutorial to use original blue modal images showing Active/Disputed/Resolved Claims',
+      'Fixed risk-score-configuration tutorial to use optimized JPEG files from risk-score directory',
+      'Removed obsolete risk-score-configuration directory and conflicting SVG files',
+      'Synchronized TutorialManager internal mapping with intelligent preloader configuration',
+      'Ensured consistent image path resolution across both tutorial systems',
+      'Preserved blue-themed tutorial designs with proper file naming conventions'
+    ],
+    version: '2.1.7',
+    audience: 'developer'
+  },
+  {
     id: 'progressive-image-optimization-2025-06-08',
     date: '2025-06-08',
     type: 'performance',
