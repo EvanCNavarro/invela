@@ -130,7 +130,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   }
 
   // Loading state
-  if (isLoadingCurrentCompany || isLoadingCompanies) {
+  if (isLoadingCurrentCompany || isLoadingRiskData) {
     return (
       <div className={cn("space-y-4", className)}>
         <div className="h-20 bg-gray-200 animate-pulse rounded-md"></div>
@@ -185,7 +185,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       {/* Show table with appropriate size based on isWidget */}
       <DeterioratingRiskTable
         companies={displayCompanies}
-        blockThreshold={riskThreshold}
+        blockThreshold={riskThresholds?.BLOCKED || 70}
         onCompanyClick={handleCompanyClick}
         timeframe={timeframe}
         className={isWidget ? "max-h-96 overflow-auto" : ""}
