@@ -499,6 +499,7 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
     totalSteps, 
     isLoading, 
     isCompleted, 
+    hasLoadedData,
     handleNext,
     handleBack,
     handleComplete,
@@ -595,9 +596,10 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
     }
   }, [tutorialUpdate, normalizedTabName, queryClient]);
   
-  // If we're still loading, show a loading state
-  if (isLoading) {
-    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete})`);
+  // If we're still loading OR haven't initialized OR haven't loaded data, don't render anything
+  // This prevents the modal from flashing during navigation
+  if (isLoading || !initializationComplete || !hasLoadedData) {
+    logger.debug(`Waiting for data to load (isLoading: ${isLoading}, initComplete: ${initializationComplete}, hasLoadedData: ${hasLoadedData})`);
     return null;
   }
   
