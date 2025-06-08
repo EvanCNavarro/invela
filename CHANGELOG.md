@@ -2,6 +2,14 @@
 
 ## Recent Updates (June 2025)
 
+### Authentication Visual Branding
+- **Login page branding**: Replaced animated GIF with professional corporate photography featuring businesswoman with urban skyline
+- **Register page branding**: Updated with modern architectural corporate photography showing professional in contemporary setting
+- **Background styling**: Enhanced with complementary gradients (sky gradient for login, neutral gradient for register)
+- **Image optimization**: Implemented object-cover styling for optimal presentation across all devices
+- **Accessibility improvements**: Updated alt text to "Invela Professional Network" and "Invela Corporate Solutions"
+- **File management**: Added new branding assets to `/public/assets/` directory
+
 ### Dashboard Enhancements
 
 #### QuickActionsWidget
