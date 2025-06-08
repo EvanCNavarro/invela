@@ -989,10 +989,10 @@ export default function CompanyProfilePage() {
               <span className="text-gray-900 font-medium">{company?.name}</span>
             </nav>
 
-            {/* Block Company Button with proper functionality */}
+            {/* Block Company Button - industry standard defensive pattern */}
             <BlockCompanyButton 
-              companyId={company?.id || 0}
-              companyName={company?.name || ''}
+              companyId={company?.id}
+              companyName={company?.name}
               currentStatus={riskStatus?.status || 'Stable'}
             />
           </div>
