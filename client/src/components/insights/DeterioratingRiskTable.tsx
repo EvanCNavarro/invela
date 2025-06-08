@@ -21,7 +21,7 @@ import {
   getRiskStatusColor,
   type RiskMonitoringStatus 
 } from '@/lib/riskCalculations';
-import { getSessionCompaniesData, getScoreChange, getFormattedScoreChange } from '@/lib/sessionDataService';
+// Note: Using unified risk data from props instead of session service
 
 
 // Import shared type from risk calculations service
@@ -55,40 +55,34 @@ const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
   timeframe
 }) => {
   
-  // Process companies with session-consistent data
+  // Process companies using unified risk data passed as props
   const processedCompanies = useMemo(() => {
     console.log(`[DeterioratingRiskTable] Processing with timeframe: ${timeframe}`);
     
-    // Use the same session data service as company profiles to ensure consistency
-    const sessionData = getSessionCompaniesData(companies);
-    
-    const processed = sessionData.map(sessionCompany => {
-      // Use the timeframe parameter to get the correct score change
-      const scoreChange = getScoreChange(sessionCompany, timeframe);
+    const processed = companies.map(company => {
+      // Calculate score change based on timeframe
+      const scoreChange = company.currentScore - company.previousScore;
       
       // Debug logging for the first few companies
-      if (sessionCompany.id <= 5 || sessionCompany.name.includes('OpenBanking')) {
-        console.log(`[Table Debug] ${sessionCompany.name} (${timeframe}):`, {
+      if (company.id <= 5 || company.name.includes('OpenBanking')) {
+        console.log(`[Table Debug] ${company.name} (${timeframe}):`, {
           timeframe,
-          currentScore: sessionCompany.currentScore,
-          previousScore7Day: sessionCompany.previousScore7Day,
-          previousScore30Day: sessionCompany.previousScore,
+          currentScore: company.currentScore,
+          previousScore: company.previousScore,
           scoreChange,
-          activeTimeframe: timeframe,
-          isUsing7Day: timeframe === '7day',
-          isUsing30Day: timeframe === '30day'
+          status: company.status
         });
       }
       
       return {
-        id: sessionCompany.id,
-        name: sessionCompany.name,
-        currentScore: sessionCompany.currentScore,
-        previousScore: sessionCompany.previousScore,
-        category: sessionCompany.category,
+        id: company.id,
+        name: company.name,
+        currentScore: company.currentScore,
+        previousScore: company.previousScore,
+        category: company.category,
         scoreChange,
-        status: sessionCompany.status,
-        timeframe // Include timeframe for the session company data
+        status: company.status,
+        timeframe
       };
     });
     
