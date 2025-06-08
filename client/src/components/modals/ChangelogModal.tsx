@@ -113,9 +113,10 @@ const changelogEntries: ChangelogEntry[] = [
     details: [
       'Restored claims tutorial to use original blue modal images showing Active/Disputed/Resolved Claims',
       'Fixed risk-score-configuration tutorial to use optimized JPEG files from risk-score directory',
+      'Updated insights tutorial to use proper modal_insights_X.png files instead of generic numbered files',
       'Removed obsolete risk-score-configuration directory and conflicting SVG files',
       'Synchronized TutorialManager internal mapping with intelligent preloader configuration',
-      'Ensured consistent image path resolution across both tutorial systems',
+      'Ensured consistent image path resolution across claims, risk-score-configuration, and insights tutorials',
       'Preserved blue-themed tutorial designs with proper file naming conventions'
     ],
     version: '2.1.7',
