@@ -105,23 +105,31 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
 const RiskMonitoringStatusBadge = ({ companyId, riskScore }: { companyId: number; riskScore: number | null }) => {
   const [status, setStatus] = useState<'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable'>('Stable');
   
+  // Get unified risk thresholds
+  const { data: thresholdsData } = useQuery<{ thresholds: any }>({
+    queryKey: ['/api/risk/unified'],
+    staleTime: 5 * 60 * 1000 // Cache thresholds for 5 minutes
+  });
+  
   useEffect(() => {
-    // Use unified risk thresholds (consistent with riskCalculationService)
+    if (!thresholdsData?.thresholds) return;
+    
     const currentScore = riskScore || 0;
+    const thresholds = thresholdsData.thresholds;
     let calculatedStatus: 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable' = 'Stable';
     
-    if (currentScore >= 70) {
+    if (currentScore >= thresholds.BLOCKED) {
       calculatedStatus = 'Blocked';
-    } else if (currentScore >= 50) {
+    } else if (currentScore >= thresholds.APPROACHING_BLOCK) {
       calculatedStatus = 'Approaching Block';
-    } else if (currentScore >= 30) {
+    } else if (currentScore >= thresholds.MONITORING) {
       calculatedStatus = 'Monitoring';
     } else {
       calculatedStatus = 'Stable';
     }
     
     setStatus(calculatedStatus);
-  }, [companyId, riskScore]);
+  }, [companyId, riskScore, thresholdsData]);
   
   if (status === 'Blocked') {
     return (

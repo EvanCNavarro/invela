@@ -822,7 +822,13 @@ export default function CompanyProfilePage() {
                       {company.riskScore || company.risk_score || 0}
                     </div>
                     <div className="text-xs text-gray-500">
-                      No Risk
+                      {(() => {
+                        const score = company.riskScore || company.risk_score || 0;
+                        if (score >= 70) return 'High Risk';
+                        if (score >= 50) return 'Medium Risk';
+                        if (score >= 30) return 'Low Risk';
+                        return 'No Risk';
+                      })()}
                     </div>
                   </div>
                   {(company.category === "Bank" || company.category === "Invela") && (
