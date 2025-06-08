@@ -2,6 +2,18 @@
 
 ## Recent Updates (June 2025)
 
+### Company Blocking Functionality Fix (June 8, 2025)
+- **Request body format handling**: Fixed server endpoints to handle nested request body format from frontend API client
+- **Dual route support**: Implemented both PATCH and POST endpoints for `/api/companies/:id/block` with backward compatibility
+- **Body format detection**: Added intelligent detection for direct `{ action, reason }` and nested `{ body: { action, reason } }` formats
+- **Enhanced debugging**: Comprehensive logging to identify request format and processing flow
+- **Button positioning**: Positioned Block Company button above header section, horizontally aligned with breadcrumbs
+- **Secondary styling**: Updated button from destructive red to secondary outline variant matching UI consistency
+- **TypeScript fixes**: Resolved currentStatus prop type errors in BlockCompanyButton component
+- **Error handling**: Improved error messages and validation for invalid actions and company IDs
+- **Cache invalidation**: Proper query cache clearing after blocking/unblocking operations
+- **Status override**: Correctly sets risk_status_override to 'BLOCKED' or null in database
+
 ### Risk Monitoring Widget UI Enhancements (June 8, 2025)
 - **Pulsating status indicators**: Replaced static shield icons with animated pulsing dots for blocked/stable status
 - **Red heartbeat animation**: Blocked recipients display red pulsing dots with expanding ring animation
