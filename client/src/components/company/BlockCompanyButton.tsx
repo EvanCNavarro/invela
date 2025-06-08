@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useCurrentCompany } from '@/hooks/use-current-company';
 
 interface BlockCompanyButtonProps {
   companyId?: number;
@@ -46,6 +47,7 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { company: currentCompany } = useCurrentCompany();
 
   // Block/unblock company mutation - must be declared before any conditional returns
   const blockMutation = useMutation({
@@ -97,20 +99,43 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
     return null;
   }
 
-  const isBlocked = currentStatus === 'Blocked';
+  // Check if this is the current logged-in company
+  const isCurrentCompany = currentCompany?.id === companyId;
+  
+  // Force stable status for current company
+  const effectiveStatus = isCurrentCompany ? 'Stable' : currentStatus;
+  const isBlocked = effectiveStatus === 'Blocked';
   const action = isBlocked ? 'unblock' : 'block';
   const actionLabel = isBlocked ? 'Unblock Company' : 'Block Company';
 
   // Comprehensive debug logging for monitoring
-  console.log(`[BlockCompanyButton] Rendering for company ${companyId} (${companyName}) with status: ${currentStatus}`, {
+  console.log(`[BlockCompanyButton] Rendering for company ${companyId} (${companyName}) with status: ${effectiveStatus}`, {
     companyId,
     companyName,
     currentStatus,
+    effectiveStatus,
+    isCurrentCompany,
     isBlocked,
     action,
     actionLabel,
     timestamp: new Date().toISOString()
   });
+
+  // If this is the current company, show disabled button with protection message
+  if (isCurrentCompany) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className={`flex items-center gap-2 ${className || ''} opacity-50 cursor-not-allowed`}
+        disabled={true}
+        title="Cannot block your own company"
+      >
+        <Shield className="h-4 w-4" />
+        Protected
+      </Button>
+    );
+  }
 
   return (
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

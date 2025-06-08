@@ -17,7 +17,7 @@ export const InviteButton = React.forwardRef<HTMLButtonElement, InviteButtonProp
       {...props}
     >
       <Send className="h-4 w-4" />
-      Invite a New {variant === 'user' ? 'User' : 'FinTech'}
+      Invite a New {variant === 'user' ? 'User' : 'Data Recipient'}
     </Button>
   )
 );
