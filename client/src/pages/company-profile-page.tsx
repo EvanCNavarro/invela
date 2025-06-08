@@ -248,14 +248,14 @@ export default function CompanyProfilePage() {
     error,
     refetch: refetchCompany 
   } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", companyId],
+    queryKey: ["/api/companies", companyId, "profile"],
     queryFn: async () => {
       if (!companyId) throw new Error("No company ID provided");
       
       console.log(`[CompanyProfile] Fetching data for company ID: ${companyId}`);
       
       try {
-        const response = await fetch(`/api/companies/${companyId}`);
+        const response = await fetch(`/api/companies/${companyId}/profile`);
         if (!response.ok) {
           if (response.status === 401) {
             throw new Error("Authentication required");
