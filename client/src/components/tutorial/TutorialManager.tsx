@@ -704,7 +704,7 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
       },
       'claims': {
         directory: 'claims',
-        files: ['2.png', '3.png', '5.png']
+        files: ['modal_claims_1.png', 'modal_claims_2.png', 'modal_claims_3.png']
       },
       'network': {
         directory: 'network',
@@ -727,8 +727,8 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
         files: ['gauge.png', 'dimension-cards.png', 'risk-acceptance.png', 'comparative.png']
       },
       'risk-score-configuration': {
-        directory: 'risk-score-configuration',
-        files: ['1.png', '2.png', '3.png', '4.png', '5.png']
+        directory: 'risk-score',
+        files: ['gauge.png', 'dimension-cards.png', 'risk-acceptance.png', 'comparative.png']
       },
       'claims-risk': {
         directory: 'claims-risk',
