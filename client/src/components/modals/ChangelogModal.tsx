@@ -105,6 +105,23 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'authentication-visual-branding-2025-06-07',
+    date: '2025-06-07',
+    type: 'design',
+    title: 'Authentication Visual Branding Enhancement',
+    description: 'Replaced animated graphics with professional corporate photography to reinforce Invela enterprise identity',
+    details: [
+      'Login page: Professional businesswoman with urban skyline background',
+      'Register page: Modern architectural setting with corporate professional',
+      'Enhanced background styling with complementary gradients (sky for login, neutral for register)',
+      'Optimized image display with object-cover styling for all device sizes',
+      'Updated accessibility with descriptive alt text for screen readers',
+      'Added new branding assets to corporate photography library'
+    ],
+    version: '2.1.5',
+    audience: 'product'
+  },
+  {
     id: 'icon-system-standardization-2025-06-06',
     date: '2025-06-06',
     type: 'enhancement',
