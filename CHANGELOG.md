@@ -2,6 +2,16 @@
 
 ## Recent Updates (June 2025)
 
+### Risk Monitoring Widget UI Enhancements (June 8, 2025)
+- **Pulsating status indicators**: Replaced static shield icons with animated pulsing dots for blocked/stable status
+- **Red heartbeat animation**: Blocked recipients display red pulsing dots with expanding ring animation
+- **Blue stable indicators**: Non-blocked status uses blue pulsing dots for positive visual feedback
+- **Balanced component spacing**: Improved blocked recipients alert with equal padding on all sides (left edge → dot → text → right edge)
+- **Professional visual hierarchy**: Enhanced spacing creates clean, balanced appearance in risk monitoring components
+- **Table header optimization**: Fixed sticky headers with proper column alignment and text truncation for long company names
+- **Scrolling isolation**: Table headers remain fixed while only data rows scroll, improving user experience
+- **Color scheme consistency**: Changed stable status styling from green to blue across all risk monitoring components
+
 ### Unified Risk Calculation System (June 8, 2025)
 - **Single source of truth architecture**: Implemented UnifiedRiskCalculationService to eliminate data inconsistencies across all components
 - **Network table consistency**: Fixed risk status badges to use unified API instead of fragmented session calculations
