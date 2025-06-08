@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUnifiedToast } from '@/hooks/use-unified-toast.tsx';
+import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 
 // Global image cache for preloading and instant access
 const globalImageCache = new Map<string, HTMLImageElement>();
@@ -334,11 +335,15 @@ const StepImage: React.FC<{
   isLoaded
 }) => (
   <div className="w-[360px] h-[360px] relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-slate-100">
-    {isLoaded ? (
-      <img 
-        src={src || ''} 
+    {src ? (
+      <ProgressiveImage
+        src={src}
         alt={alt || 'Onboarding step image'}
         className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
+        skeletonVariant="neutral"
+        priority="lazy"
+        enableLogging={false}
+        onError={(error) => console.warn(`Onboarding image load failed: ${error}`)}
       />
     ) : (
       <div className="w-full h-full flex items-center justify-center">

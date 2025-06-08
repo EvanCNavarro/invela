@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -259,28 +260,27 @@ export function TabTutorialModal({
                       <div className="relative w-full aspect-square flex items-center justify-center">
                         <div className="absolute inset-0 bg-blue-50/50 rounded-lg transform rotate-1"></div>
                         <div className="absolute inset-0 bg-blue-100/20 rounded-lg transform -rotate-1"></div>
-                        <img 
-                          src={imageUrl} 
+                        <ProgressiveImage
+                          src={imageUrl}
                           alt={title}
-                          onError={(e) => {
-                            // Show placeholder image when the original image fails to load
-                            console.error(`Image failed to load: ${imageUrl}`);
-                            e.currentTarget.src = '/assets/tutorials/placeholder.svg';
-                            
-                            // Add a data attribute for debugging
-                            e.currentTarget.setAttribute('data-original-src', imageUrl);
-                          }}
-                          className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10" 
+                          className="relative max-w-[95%] max-h-[95%] object-contain rounded-lg shadow-md border border-blue-100/50 z-10"
+                          skeletonVariant="neutral"
+                          priority="lazy"
+                          enableLogging={false}
+                          onError={(error) => console.error(`Tutorial image load failed: ${error}`)}
                         />
                       </div>
                     </div>
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center p-5">
                       <div className="w-full aspect-square rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground">
-                        <img 
-                          src="/assets/tutorials/placeholder.svg" 
+                        <ProgressiveImage
+                          src="/assets/tutorials/placeholder.svg"
                           alt="No image available"
-                          className="w-[90%] h-[90%] object-contain" 
+                          className="w-[90%] h-[90%] object-contain"
+                          skeletonVariant="neutral"
+                          priority="lazy"
+                          enableLogging={false}
                         />
                       </div>
                     </div>
