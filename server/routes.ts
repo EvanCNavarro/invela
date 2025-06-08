@@ -4964,7 +4964,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // Use the UnifiedRiskCalculationService for consistent calculations
       const { UnifiedRiskCalculationService } = await import('./services/UnifiedRiskCalculationService');
       
-      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId, req.user?.company_id);
       
       if (!riskData) {
         return res.status(404).json({
