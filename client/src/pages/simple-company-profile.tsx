@@ -16,6 +16,7 @@ import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { calculateRiskStatus } from "@/lib/riskCalculations";
 import { RiskTrendIndicator } from "@/components/risk/RiskTrendIndicator";
 import { RiskStatusSummary } from "@/components/risk/RiskStatusSummary";
+import { BlockCompanyButton } from "@/components/company/BlockCompanyButton";
 
 import Fuse from 'fuse.js';
 
