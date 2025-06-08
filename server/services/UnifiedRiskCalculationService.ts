@@ -50,12 +50,13 @@ export class UnifiedRiskCalculationService {
   /**
    * System-wide risk thresholds - single source of truth
    * These values are used consistently across all components
+   * Lower scores = higher risk (standard risk assessment practice)
    */
   private static readonly RISK_THRESHOLDS = {
-    BLOCKED: 70,
-    APPROACHING_BLOCK: 50,
-    MONITORING: 30,
-    STABLE: 0
+    BLOCKED: 35,        // Scores < 35 = Blocked
+    APPROACHING_BLOCK: 50,  // Scores < 50 = Approaching Block
+    MONITORING: 70,     // Scores < 70 = Monitoring
+    STABLE: 100         // Scores >= 70 = Stable
   } as const;
 
   /**
@@ -82,11 +83,11 @@ export class UnifiedRiskCalculationService {
    * @returns Risk status
    */
   static calculateRiskStatus(score: number): RiskStatus {
-    if (score < this.RISK_THRESHOLDS.STABLE) {
+    if (score < this.RISK_THRESHOLDS.BLOCKED) {
       return 'Blocked';
-    } else if (score < this.RISK_THRESHOLDS.MONITORING) {
-      return 'Approaching Block';
     } else if (score < this.RISK_THRESHOLDS.APPROACHING_BLOCK) {
+      return 'Approaching Block';
+    } else if (score < this.RISK_THRESHOLDS.MONITORING) {
       return 'Monitoring';
     } else {
       return 'Stable';
