@@ -383,12 +383,18 @@ export default function NetworkPage() {
         // Filter by accreditation status
         const accreditationMatch = statusFilter === "ALL" || relationship.relatedCompany.accreditationStatus === statusFilter;
         
-        // Filter by risk status
+        // Filter by risk status using unified calculation
         let riskStatusMatch = true;
         if (riskStatusFilter !== "ALL") {
-          const companyData = { id: relationship.relatedCompany.id, risk_score: relationship.relatedCompany.riskScore, name: relationship.relatedCompany.name };
-          const authenticData = sessionDataService.getCompanyData(companyData);
-          riskStatusMatch = authenticData.status === riskStatusFilter;
+          const getStatusFromRiskScore = (score: number | null) => {
+            const currentScore = score || 0;
+            if (currentScore < 35) return 'Blocked';
+            if (currentScore < 50) return 'Approaching Block';
+            if (currentScore < 70) return 'Monitoring';
+            return 'Stable';
+          };
+          const companyStatus = getStatusFromRiskScore(relationship.relatedCompany.riskScore);
+          riskStatusMatch = companyStatus === riskStatusFilter;
         }
         
         return accreditationMatch && riskStatusMatch;
