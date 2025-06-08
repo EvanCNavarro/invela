@@ -82,8 +82,10 @@ export const CompanyProfileHeader: React.FC<CompanyProfileHeaderProps> = ({
   const action = isBlocked ? 'unblock' : 'block';
   const actionLabel = isBlocked ? 'Unblock Company' : 'Block Company';
 
+  console.log('[CompanyProfileHeader] Rendering with:', { companyId, companyName, currentStatus });
+
   return (
-    <div className={`flex items-center justify-between py-4 border-b bg-white ${className}`}>
+    <div className={`flex items-center justify-between py-4 px-6 border-b bg-white shadow-sm ${className}`}>
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-gray-600">
         <Link href="/network" className="hover:text-gray-900 transition-colors">
