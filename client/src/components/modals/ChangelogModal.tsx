@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'unified-risk-calculation-system-2025-06-08',
+    date: '2025-06-08',
+    type: 'enhancement',
+    title: 'Unified Risk Calculation System',
+    description: 'Implemented single source of truth architecture for risk calculations, eliminating data inconsistencies across all platform components',
+    details: [
+      'Created UnifiedRiskCalculationService to centralize all risk score and status calculations',
+      'Fixed network table risk status badges to display consistent data with company profiles',
+      'Updated dashboard widgets to use unified risk data instead of fragmented session calculations',
+      'Corrected risk status column sorting on network page (Blocked → Approaching Block → Monitoring → Stable)',
+      'Standardized risk status thresholds: <35 Blocked, <50 Approaching Block, <70 Monitoring, ≥70 Stable',
+      'Eliminated session data service dependencies from all risk-related components',
+      'Enhanced real-time synchronization with WebSocket integration for unified risk updates'
+    ],
+    version: '2.1.8',
+    audience: 'product'
+  },
+  {
     id: 'tutorial-image-mapping-corrections-2025-06-08',
     date: '2025-06-08',
     type: 'fix',
