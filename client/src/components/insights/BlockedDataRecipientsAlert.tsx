@@ -8,9 +8,8 @@
  */
 
 import React from 'react';
-import { ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PulsingDot from '@/components/ui/pulsing-dot';
 
 interface BlockedDataRecipientsAlertProps {
   /** Number of blocked data recipients */
@@ -47,19 +46,22 @@ const BlockedDataRecipientsAlert: React.FC<BlockedDataRecipientsAlertProps> = ({
   return (
     <div 
       className={cn(
-        "border-l-2 px-4 rounded-md mb-0 h-10 flex items-center w-fit",
+        "border-l-2 px-6 py-2 rounded-md mb-0 h-10 flex items-center w-fit",
         isBlocked 
           ? "bg-red-50 border-red-200" 
-          : "bg-green-50 border-green-200",
+          : "bg-blue-50 border-blue-200",
         className
       )}
     >
-      <div className="flex items-center space-x-3">
-        <div className="flex-shrink-0 text-black">
-          <ShieldAlert className="h-5 w-5" />
+      <div className="flex items-center space-x-4">
+        <div className="flex-shrink-0">
+          <PulsingDot variant={isBlocked ? "red" : "blue"} size="sm" />
         </div>
         <div>
-          <p className="font-medium text-black leading-none whitespace-nowrap">
+          <p className={cn(
+            "font-medium leading-none whitespace-nowrap",
+            isBlocked ? "text-red-800" : "text-blue-800"
+          )}>
             {isBlocked 
               ? `${count} ${count === 1 ? 'Data Recipient is' : 'Data Recipients are'} blocked`
               : 'All Data Recipients are operating normally'

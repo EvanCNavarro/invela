@@ -136,112 +136,120 @@ const RiskTable: React.FC<{
   };
 
   return (
-    <div className="border rounded-md relative max-h-96 overflow-auto">
-      <Table>
-        {/* Sticky header that remains visible during scroll */}
-        <TableHeader className="sticky top-0 z-20 bg-white border-b">
-          <TableRow>
-            <TableHead 
-              className="cursor-pointer select-none bg-white"
-              onClick={() => handleSort('name')}
-            >
-              <div className="flex items-center">
-                Company Name {renderSortIndicator('name')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="text-right cursor-pointer select-none bg-white"
-              onClick={() => handleSort('currentScore')}
-            >
-              <div className="flex items-center justify-end">
-                Current DARS {renderSortIndicator('currentScore')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="text-right cursor-pointer select-none bg-white"
-              onClick={() => handleSort('scoreChange')}
-            >
-              <div className="flex items-center justify-end">
-                Score Change {renderSortIndicator('scoreChange')}
-              </div>
-            </TableHead>
-            <TableHead className="text-center bg-white">Trend</TableHead>
-            <TableHead 
-              className="cursor-pointer select-none bg-white"
-              onClick={() => handleSort('status')}
-            >
-              <div className="flex items-center">
-                Status {renderSortIndicator('status')}
-              </div>
-            </TableHead>
-            <TableHead className="w-[50px] bg-white"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedCompanies.map((company) => (
-            <TableRow 
-              key={company.id}
-              className={cn(
-                onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : ""
-              )}
-              onClick={() => onCompanyClick && onCompanyClick(company.id)}
-            >
-              <TableCell className="font-medium">{company.name}</TableCell>
-              <TableCell className="text-right">{company.currentScore}</TableCell>
-              <TableCell className={`text-right font-medium ${
-                company.status === 'Blocked' ? 'text-red-600' :
-                company.status === 'Approaching Block' ? 'text-orange-600' :
-                company.status === 'Monitoring' ? 'text-yellow-600' :
-                'text-gray-900'
-              }`}>
-                {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
-                 company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
-                 '0'}
-              </TableCell>
-              <TableCell className="text-center">
-                {company.scoreChange > 3 ? (
-                  <TrendingUp className={`h-4 w-4 mx-auto ${
-                    company.status === 'Blocked' ? 'text-red-600' :
-                    company.status === 'Approaching Block' ? 'text-orange-600' :
-                    company.status === 'Monitoring' ? 'text-yellow-600' :
-                    'text-gray-900'
-                  }`} />
-                ) : company.scoreChange < -3 ? (
-                  <TrendingDown className={`h-4 w-4 mx-auto ${
-                    company.status === 'Blocked' ? 'text-red-600' :
-                    company.status === 'Approaching Block' ? 'text-orange-600' :
-                    company.status === 'Monitoring' ? 'text-yellow-600' :
-                    'text-gray-900'
-                  }`} />
-                ) : (
-                  <Minus className={`h-4 w-4 mx-auto ${
-                    company.status === 'Blocked' ? 'text-red-600' :
-                    company.status === 'Approaching Block' ? 'text-orange-600' :
-                    company.status === 'Monitoring' ? 'text-yellow-600' :
-                    'text-gray-900'
-                  }`} />
+    <div className="border rounded-md relative">
+      {/* Fixed header outside scroll container */}
+      <div className="bg-white border-b">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead 
+                className="cursor-pointer select-none"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Company Name {renderSortIndicator('name')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none"
+                onClick={() => handleSort('currentScore')}
+              >
+                <div className="flex items-center justify-end">
+                  Current DARS {renderSortIndicator('currentScore')}
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-right cursor-pointer select-none"
+                onClick={() => handleSort('scoreChange')}
+              >
+                <div className="flex items-center justify-end">
+                  Score Change {renderSortIndicator('scoreChange')}
+                </div>
+              </TableHead>
+              <TableHead className="text-center">Trend</TableHead>
+              <TableHead 
+                className="cursor-pointer select-none"
+                onClick={() => handleSort('status')}
+              >
+                <div className="flex items-center">
+                  Status {renderSortIndicator('status')}
+                </div>
+              </TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+        </Table>
+      </div>
+      
+      {/* Scrollable body */}
+      <div className="max-h-80 overflow-auto">
+        <Table>
+          <TableBody>
+            {sortedCompanies.map((company) => (
+              <TableRow 
+                key={company.id}
+                className={cn(
+                  onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : ""
                 )}
-              </TableCell>
-              <TableCell>
-                <span className={cn(
-                  "text-sm font-medium",
+                onClick={() => onCompanyClick && onCompanyClick(company.id)}
+              >
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell className="text-right">{company.currentScore}</TableCell>
+                <TableCell className={`text-right font-medium ${
                   company.status === 'Blocked' ? 'text-red-600' :
                   company.status === 'Approaching Block' ? 'text-orange-600' :
                   company.status === 'Monitoring' ? 'text-yellow-600' :
                   'text-gray-900'
-                )}>
-                  {company.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                {onCompanyClick && (
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                }`}>
+                  {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
+                   company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
+                   '0'}
+                </TableCell>
+                <TableCell className="text-center">
+                  {company.scoreChange > 3 ? (
+                    <TrendingUp className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
+                  ) : company.scoreChange < -3 ? (
+                    <TrendingDown className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
+                  ) : (
+                    <Minus className={`h-4 w-4 mx-auto ${
+                      company.status === 'Blocked' ? 'text-red-600' :
+                      company.status === 'Approaching Block' ? 'text-orange-600' :
+                      company.status === 'Monitoring' ? 'text-yellow-600' :
+                      'text-gray-900'
+                    }`} />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    company.status === 'Blocked' ? 'text-red-600' :
+                    company.status === 'Approaching Block' ? 'text-orange-600' :
+                    company.status === 'Monitoring' ? 'text-yellow-600' :
+                    'text-gray-900'
+                  )}>
+                    {company.status}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {onCompanyClick && (
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

@@ -40,20 +40,9 @@ const RiskMonitoringWidget: React.FC<RiskMonitoringWidgetProps> = ({
     navigate('/insights');
   };
 
-  // Create title with blocked count
-  const widgetTitle = (
-    <div className="flex items-center gap-3">
-      <span>Risk Monitoring</span>
-      <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-50 border border-red-200">
-        <ShieldAlert className="h-3 w-3" />
-        <span>{blockedCount} Data Recipients are blocked</span>
-      </div>
-    </div>
-  );
-
   return (
     <Widget
-      title={widgetTitle}
+      title="Risk Monitoring"
       icon={<ShieldAlert className="h-5 w-5" />}
       className={className}
       actions={[
@@ -63,6 +52,17 @@ const RiskMonitoringWidget: React.FC<RiskMonitoringWidgetProps> = ({
           icon: <ShieldAlert className="h-4 w-4" />
         }
       ]}
+      headerChildren={
+        <div className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-red-50 border border-red-200">
+          <div className="flex-shrink-0">
+            <div className="relative inline-flex">
+              <div className="absolute inline-flex w-2 h-2 bg-red-400 rounded-full opacity-75 animate-ping"></div>
+              <div className="relative inline-flex w-2 h-2 bg-red-500 rounded-full"></div>
+            </div>
+          </div>
+          <span className="text-red-800">{blockedCount} Data Recipients are blocked</span>
+        </div>
+      }
     >
       <div className="p-4">
         <RiskMonitoringInsight isWidget={true} />
