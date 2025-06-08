@@ -163,12 +163,7 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Header with blocked count alert */}
-      <div className="mb-4">
-        <BlockedDataRecipientsAlert count={blockedCompanies.length} />
-      </div>
-      
+    <div className={cn("space-y-4", className)}>      
       {/* Show table with appropriate size based on isWidget */}
       <DeterioratingRiskTable
         companies={displayCompanies}

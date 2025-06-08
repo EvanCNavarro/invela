@@ -5,11 +5,12 @@
  * in a compact format suitable for the dashboard.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Widget } from './Widget';
 import RiskMonitoringInsight from '../insights/RiskMonitoringInsight';
 import { ShieldAlert } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { useUnifiedRiskData } from '@/lib/useUnifiedRiskData';
 
 interface RiskMonitoringWidgetProps {
   className?: string;
@@ -21,14 +22,38 @@ const RiskMonitoringWidget: React.FC<RiskMonitoringWidgetProps> = ({
   // Use the useLocation hook for navigation
   const [, navigate] = useLocation();
 
+  // Get unified risk data to calculate blocked count
+  const { data: unifiedRiskData } = useUnifiedRiskData({
+    includeNetwork: true,
+    includeDemo: true,
+    enabled: true
+  });
+
+  // Calculate blocked companies count
+  const blockedCount = useMemo(() => {
+    if (!unifiedRiskData?.companies) return 0;
+    return unifiedRiskData.companies.filter(company => company.status === 'Blocked').length;
+  }, [unifiedRiskData]);
+
   // Handle click on "View Details" to navigate to insights page
   const handleViewDetails = () => {
     navigate('/insights');
   };
 
+  // Create title with blocked count
+  const widgetTitle = (
+    <div className="flex items-center gap-3">
+      <span>Risk Monitoring</span>
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-50 border border-red-200">
+        <ShieldAlert className="h-3 w-3" />
+        <span>{blockedCount} Data Recipients are blocked</span>
+      </div>
+    </div>
+  );
+
   return (
     <Widget
-      title="Risk Monitoring"
+      title={widgetTitle}
       icon={<ShieldAlert className="h-5 w-5" />}
       className={className}
       actions={[
