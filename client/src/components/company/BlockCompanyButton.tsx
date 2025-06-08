@@ -40,20 +40,10 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Early return guard for invalid props - industry standard pattern
-  if (!companyId || !companyName) {
-    console.log('[BlockCompanyButton] Invalid props provided, skipping render:', {
-      hasCompanyId: !!companyId,
-      hasCompanyName: !!companyName,
-      companyId,
-      companyName
-    });
-    return null;
-  }
-
-  // Block/unblock company mutation
+  // Block/unblock company mutation - must be declared before any conditional returns
   const blockMutation = useMutation({
     mutationFn: async (action: 'block' | 'unblock') => {
+      if (!companyId) throw new Error('Invalid company ID');
       return apiRequest(`/api/companies/${companyId}/block`, {
         method: 'PATCH',
         body: { 
@@ -88,6 +78,17 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
       });
     }
   });
+
+  // Early return guard for invalid props - after all hooks are declared
+  if (!companyId || !companyName) {
+    console.log('[BlockCompanyButton] Invalid props provided, skipping render:', {
+      hasCompanyId: !!companyId,
+      hasCompanyName: !!companyName,
+      companyId,
+      companyName
+    });
+    return null;
+  }
 
   const isBlocked = currentStatus === 'Blocked';
   const action = isBlocked ? 'unblock' : 'block';
