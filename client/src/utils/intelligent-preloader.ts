@@ -297,7 +297,7 @@ export function generateTutorialImageSources(tabName: string): ImageSource[] {
     },
     'claims': {
       directory: 'claims',
-      files: ['2.png', '3.png', '5.png']
+      files: ['details.png', 'processing.png', 'documentation.png']
     },
     'network': {
       directory: 'network',
