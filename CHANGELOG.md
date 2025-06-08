@@ -2,6 +2,18 @@
 
 ## Recent Updates (June 2025)
 
+### Unified Risk Calculation System (June 8, 2025)
+- **Single source of truth architecture**: Implemented UnifiedRiskCalculationService to eliminate data inconsistencies across all components
+- **Network table consistency**: Fixed risk status badges to use unified API instead of fragmented session calculations
+- **Company profile alignment**: Updated risk assessment sections to use unified data source
+- **Dashboard widget synchronization**: All risk monitoring components now display consistent scores and statuses
+- **Risk status sorting**: Fixed network page column sorting to correctly order by Blocked → Approaching Block → Monitoring → Stable
+- **Data flow unification**: Eliminated session data service dependencies from risk-related components
+- **Status calculation consistency**: All components use identical 35/50/70 score thresholds for Blocked/Approaching/Monitoring/Stable statuses
+- **Path structure correction**: Standardized company profile URLs to `/network/company/{id}?tab=risk` format
+- **Real-time updates**: WebSocket integration ensures all components receive synchronized risk status changes
+- **Performance optimization**: Reduced redundant API calls by centralizing risk calculations in unified service
+
 ### Progressive Image Optimization System (June 8, 2025)
 - **Universal ProgressiveImage component**: Created comprehensive image optimization system with automatic JPEG conversion and PNG fallback
 - **Tutorial image optimization**: Converted 107 tutorial modal images from 1.0-1.2MB PNG to 90-150KB JPEG (85-91% reduction)
