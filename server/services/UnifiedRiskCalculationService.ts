@@ -259,6 +259,11 @@ export class UnifiedRiskCalculationService {
         const trend = this.calculateRiskTrend(currentScore, previousScore);
         const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 
+        // Debug logging for first few companies to verify status calculation
+        if (company.id % 50 === 0) {
+          console.log(`[UnifiedRisk] Company ${company.name} (ID: ${company.id}): score=${currentScore}, status=${status}, thresholds=${JSON.stringify(this.RISK_THRESHOLDS)}`);
+        }
+
         return {
           id: company.id,
           name: company.name,
@@ -382,6 +387,7 @@ export class UnifiedRiskCalculationService {
    * Clear all cached risk data
    */
   static clearAllCache(): void {
+    console.log('[UnifiedRisk] Clearing all cache data');
     this.riskDataCache.clear();
   }
 }
