@@ -81,9 +81,16 @@ export class UnifiedRiskCalculationService {
    * Calculate risk status from score using unified thresholds
    * @param score - Risk score (0-100, where lower scores = higher risk)
    * @param override - Manual status override (takes precedence)
+   * @param companyId - Company ID (if current company, force stable status)
+   * @param currentCompanyId - Current logged-in company ID (for protection)
    * @returns Risk status
    */
-  static calculateRiskStatus(score: number, override?: string | null): RiskStatus {
+  static calculateRiskStatus(score: number, override?: string | null, companyId?: number, currentCompanyId?: number): RiskStatus {
+    // Protect current company - always return Stable status
+    if (companyId && currentCompanyId && companyId === currentCompanyId) {
+      return 'Stable';
+    }
+    
     // Check for manual override first
     if (override) {
       switch (override) {
