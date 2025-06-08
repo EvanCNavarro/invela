@@ -105,6 +105,25 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'ui-ux-improvements-company-protection-2025-06-08',
+    date: '2025-06-08',
+    type: 'enhancement',
+    title: 'UI/UX Improvements and Company Protection',
+    description: 'Enhanced dashboard navigation with Quick Actions bar and implemented comprehensive protection for current company',
+    details: [
+      'Fixed tutorial modal flicker during navigation with improved state management',
+      'Replaced top-right dropdown with full-width Quick Actions bar above dashboard widgets',
+      'Finalized button labels: Company Profile, View Insights, Manage Network, Invite Recipient',
+      'Updated invite button text from "Invite a New FinTech" to "Invite a New Data Recipient"',
+      'Implemented current company protection preventing self-blocking operations',
+      'Added "Protected" button with disabled state for logged-in company',
+      'Enhanced UnifiedRiskCalculationService to force Stable status for current company',
+      'Updated all API routes to include current company context for protection enforcement'
+    ],
+    version: '2.1.9',
+    audience: 'product'
+  },
+  {
     id: 'company-blocking-functionality-fix-2025-06-08',
     date: '2025-06-08',
     type: 'fix',

@@ -2,6 +2,17 @@
 
 ## Recent Updates (June 2025)
 
+### UI/UX Improvements and Company Protection (June 8, 2025)
+- **Tutorial modal flicker fix**: Resolved navigation-related flicker issues with improved state management and data loading checks
+- **Quick Actions bar enhancement**: Replaced top-right dropdown with full-width Quick Actions bar positioned above dashboard widgets
+- **Action button finalization**: Updated button labels to "Company Profile", "View Insights", "Manage Network", "Invite Recipient"
+- **Invite button text update**: Changed from "Invite a New FinTech" to "Invite a New Data Recipient" across all components
+- **Current company protection**: Implemented comprehensive protection preventing logged-in company from being blocked or unblocked
+- **Protected status display**: Current company shows "Protected" button with disabled state and tooltip explanation
+- **Risk status enforcement**: UnifiedRiskCalculationService now forces "Stable" status for current company regardless of score
+- **Consistent protection logic**: Added currentCompanyId parameter throughout risk calculation system for unified protection
+- **API route updates**: Modified all getCompanyRiskData calls to include current company context for protection enforcement
+
 ### Company Blocking Functionality Fix (June 8, 2025)
 - **Request body format handling**: Fixed server endpoints to handle nested request body format from frontend API client
 - **Dual route support**: Implemented both PATCH and POST endpoints for `/api/companies/:id/block` with backward compatibility
