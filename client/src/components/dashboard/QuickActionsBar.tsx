@@ -25,15 +25,16 @@ import { Building2, BarChart3, Users, UserPlus } from "lucide-react";
 
 interface QuickActionsBarProps {
   companyCategory?: string;
+  companyId?: number;
 }
 
-export function QuickActionsBar({ companyCategory }: QuickActionsBarProps) {
+export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarProps) {
   const [, setLocation] = useLocation();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const handleCompanyProfile = () => {
-    // Navigate to company profile in network view - using current company ID (1984 for demo)
-    setLocation("/network/company/1984");
+    // Navigate to company profile in network view using actual company ID
+    setLocation(`/network/company/${companyId || 1984}`);
   };
 
   const handleInsights = () => {
