@@ -78,15 +78,15 @@ export class UnifiedRiskCalculationService {
 
   /**
    * Calculate risk status from score using unified thresholds
-   * @param score - Risk score (0-100)
+   * @param score - Risk score (0-100, where lower scores = higher risk)
    * @returns Risk status
    */
   static calculateRiskStatus(score: number): RiskStatus {
-    if (score >= this.RISK_THRESHOLDS.BLOCKED) {
+    if (score < this.RISK_THRESHOLDS.STABLE) {
       return 'Blocked';
-    } else if (score >= this.RISK_THRESHOLDS.APPROACHING_BLOCK) {
+    } else if (score < this.RISK_THRESHOLDS.MONITORING) {
       return 'Approaching Block';
-    } else if (score >= this.RISK_THRESHOLDS.MONITORING) {
+    } else if (score < this.RISK_THRESHOLDS.APPROACHING_BLOCK) {
       return 'Monitoring';
     } else {
       return 'Stable';
