@@ -964,15 +964,15 @@ export default function CompanyProfilePage() {
   
   return (
       <DashboardLayout>
+        {/* Company Profile Header with breadcrumbs and blocking functionality */}
+        <CompanyProfileHeader 
+          companyId={parseInt(companyId || "0")}
+          companyName={company?.name || 'Loading...'}
+          currentStatus={riskStatus?.status || 'Stable'}
+        />
         <PageTemplate>
           <TutorialManager tabName="company-profile">
             <div className="space-y-6">
-            {/* Company Profile Header with breadcrumbs and blocking functionality */}
-            <CompanyProfileHeader 
-              companyId={parseInt(companyId || "0")}
-              companyName={company?.name || 'Loading...'}
-              currentStatus={riskStatus?.status || 'Stable'}
-            />
           
           {/* Company header with logo, title, and status boxes - neumorphic style */}
           <div className="bg-white rounded-lg p-5 mb-6 shadow-sm border border-gray-100">
