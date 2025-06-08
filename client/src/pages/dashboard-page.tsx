@@ -46,6 +46,7 @@ import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
 import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
+import { QuickActionsBar } from "@/components/dashboard/QuickActionsBar";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
@@ -111,7 +112,6 @@ import {
  * Ensures type safety and consistent widget management across company types
  */
 interface DashboardWidgets {
-  quickActions: boolean;
   companySnapshot: boolean;
   networkVisualization: boolean;
   riskRadar: boolean;
@@ -125,7 +125,6 @@ interface DashboardWidgets {
  * Simplified layout focusing on core risk assessment features
  */
 const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
-  quickActions: true,
   companySnapshot: true,
   networkVisualization: false,
   riskRadar: true,
@@ -139,7 +138,6 @@ const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
  * Full feature set with comprehensive monitoring capabilities
  */
 const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
-  quickActions: true,
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: true,
@@ -363,36 +361,6 @@ export default function DashboardPage(): JSX.Element {
                 <Settings className="w-4 h-4 mr-2" />
                 Customize
               </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <LayoutGrid className="w-4 h-4 mr-2" />
-                    Quick Actions
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Navigation</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleQuickAction('/task-center')}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    Task Center
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction('/network')}>
-                    <Globe className="w-4 h-4 mr-2" />
-                    Network View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleQuickAction('/insights')}>
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Insights
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setOpenFinTechModal(true)}>
-                    <User className="w-4 h-4 mr-2" />
-                    Invite User
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           }
         >
@@ -436,14 +404,17 @@ export default function DashboardPage(): JSX.Element {
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
+            {/* Quick Actions Bar - Full width for data providers */}
+            <QuickActionsBar companyCategory={companyData?.category} />
+            
             {/* Debug logging moved to useEffect for proper React rendering */}
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Company Snapshot - 1.5 column width equivalent */}
+                {/* Company Snapshot - Full width since Quick Actions moved to top */}
                 {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-1">
+                  <div className="lg:col-span-2">
                     <CompanySnapshot
                       companyData={companyData}
                       onToggle={() => toggleWidget('companySnapshot')}
@@ -452,12 +423,12 @@ export default function DashboardPage(): JSX.Element {
                   </div>
                 )}
 
-                {/* Quick Actions - 1.5 column width equivalent */}
-                {visibleWidgets.quickActions && (
-                  <div className="lg:col-span-1">
-                    <QuickActionsWidget
-                      onToggle={() => toggleWidget('quickActions')}
-                      isVisible={visibleWidgets.quickActions}
+                {/* Network Visualization for Invela */}
+                {visibleWidgets.networkVisualization && (
+                  <div className="lg:col-span-2 h-[600px]">
+                    <NetworkVisualizationWidget
+                      onToggle={() => toggleWidget('networkVisualization')}
+                      isVisible={visibleWidgets.networkVisualization}
                     />
                   </div>
                 )}
