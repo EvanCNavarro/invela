@@ -168,7 +168,6 @@ export class UnifiedRiskCalculationService {
       const currentScore = company.risk_score || 0;
       
       // Generate realistic previous score based on company ID for consistency
-      const companyId = company.id;
       const seed = companyId * 2654435761; // Large prime for good distribution
       const random = (seed % 2147483647) / 2147483647; // Normalize to 0-1
       
@@ -455,85 +454,5 @@ export class UnifiedRiskCalculationService {
    * @param companyId - Company ID to get risk data for
    * @returns Unified risk data for the company or null if not found
    */
-  static async getCompanyRiskData(companyId: number): Promise<UnifiedRiskData | null> {
-    try {
-      // Check cache first
-      const cacheKey = `company_${companyId}`;
-      const cached = this.getCachedData(cacheKey);
-      if (cached) {
-        return cached;
-      }
 
-      // Get company from database
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.id, companyId),
-        columns: {
-          id: true,
-          name: true,
-          risk_score: true,
-          category: true,
-          is_demo: true,
-          updated_at: true
-        }
-      });
-
-      if (!company) {
-        return null;
-      }
-
-      // Use the same calculation logic as getNetworkRiskData for consistency
-      const baseScore = company.risk_score || 50;
-      const riskSeed = companyId * 1234567891;
-      const riskRandom = (riskSeed % 2147483647) / 2147483647;
-      
-      let currentScore;
-      if (company.category === 'FinTech') {
-        const isBlocked = (companyId % 7) === 0;
-        if (isBlocked) {
-          currentScore = 20 + (riskRandom * 14);
-        } else {
-          currentScore = 35 + (riskRandom * 55);
-        }
-      } else {
-        const isBlocked = (companyId % 20) === 0;
-        if (isBlocked) {
-          currentScore = 20 + (riskRandom * 14);
-        } else {
-          currentScore = 40 + (riskRandom * 50);
-        }
-      }
-      
-      currentScore = Math.max(15, Math.min(95, Math.round(currentScore)));
-      const seed = companyId * 2654435761;
-      const random = (seed % 2147483647) / 2147483647;
-      const variation = (random - 0.5) * 30;
-      const previousScore = Math.max(0, Math.min(100, currentScore + variation));
-      
-      const status = this.calculateRiskStatus(currentScore);
-      const trend = this.calculateRiskTrend(currentScore, previousScore);
-      const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
-
-      const riskData: UnifiedRiskData = {
-        id: company.id,
-        name: company.name,
-        currentScore,
-        previousScore,
-        status,
-        trend,
-        daysInStatus,
-        category: company.category || 'FinTech',
-        isDemo: company.is_demo || false,
-        updatedAt: new Date(company.updated_at)
-      };
-
-      // Cache the result
-      this.setCachedData(cacheKey, riskData);
-      
-      return riskData;
-
-    } catch (error) {
-      console.error('[UnifiedRiskCalculationService] Error getting company risk data:', error);
-      return null;
-    }
-  }
 }
