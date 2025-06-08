@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'progressive-image-optimization-2025-06-08',
+    date: '2025-06-08',
+    type: 'performance',
+    title: 'Progressive Image Optimization System',
+    description: 'Implemented comprehensive progressive JPEG optimization reducing image sizes by 84-85% across authentication, tutorial, and onboarding components',
+    details: [
+      'Created universal ProgressiveImage component with automatic JPEG conversion and PNG fallback',
+      'Optimized authentication pages with 1.1MB PNG → 180KB JPEG compression',
+      'Enhanced TabTutorialModal with lazy loading and neutral skeleton animations',
+      'Updated AnimatedOnboardingModal StepImage component with progressive enhancement',
+      'Built batch conversion script to process 190+ project images automatically',
+      'Implemented skeleton loading states with branded and neutral variants',
+      'Added comprehensive error handling and performance monitoring'
+    ],
+    version: '2.1.6',
+    audience: 'developer'
+  },
+  {
     id: 'authentication-visual-branding-2025-06-07',
     date: '2025-06-07',
     type: 'design',
