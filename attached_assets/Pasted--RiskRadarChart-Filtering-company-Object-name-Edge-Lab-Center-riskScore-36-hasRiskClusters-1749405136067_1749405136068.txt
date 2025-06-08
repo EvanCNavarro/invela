@@ -1,0 +1,267 @@
+[RiskRadarChart] Filtering company: 
+Object {name: "Edge Lab Center", riskScore: 36, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "United Exchange Platforms", riskScore: 49, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Continental Infrastructure Union", riskScore: 30, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "RealEstate TokenFi", riskScore: 59, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech228 Ventures", riskScore: 62, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech227 Group", riskScore: 59, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "VelocityCredit Platform", riskScore: 44, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SwiftLedger Technologies", riskScore: 57, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalBonds Exchange", riskScore: 47, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DAO Treasury Management", riskScore: 68, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech47 Group", riskScore: 67, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Sovereign Audit Federation", riskScore: 68, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Nexus Trading Systems", riskScore: 54, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Stellar Payment Networks", riskScore: 63, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Trading Center", riskScore: 52, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech49 Corp", riskScore: 41, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Foundation Asset United", riskScore: 53, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech58 Ventures", riskScore: 48, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoSwap Exchange", riskScore: 41, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Zenith Financial Technologies", riskScore: 61, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SparkInc", riskScore: 57, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Intelligence Authorities", riskScore: 34, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Meridian Financial Systems", riskScore: 69, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TaxOptimization AI", riskScore: 64, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Catalyst Investment Tools", riskScore: 42, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Beacon Lending Platform", riskScore: 38, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "LendingEdge Analytics", riskScore: 38, hasRiskClusters: false, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Prism Analytics Corp", riskScore: 42, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "InsurTech Dynamics", riskScore: 61, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NeoLend Platform", riskScore: 39, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Vertex Trading Solutions", riskScore: 55, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SmartContract Verify", riskScore: 67, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "ESG Impact Tracker", riskScore: 68, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "GlobalRemit Network", riskScore: 64, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SupplyChain Finance", riskScore: 67, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CarbonCredit Markets", riskScore: 62, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "WealthTech Solutions", riskScore: 46, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PensionTech Advisors", riskScore: 53, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalAsset Custody", riskScore: 41, hasRiskClusters: false, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 84, visualizationNodesCount: 84, uniqueCompaniesCount: 168, approvedCompaniesCount: 70, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "United Credit Union", category: "Bank", isBankOrInvela: true, selectedCompanyId: 970, networkCompaniesCount: 168, …}
+[RiskRadarChart] Fresh companies data received: 
+Object {count: 85, sampleWithRisk: Array(3)}
+[RiskRadarChart] Fetched relationship companies: 84
+[RiskRadarChart] Using fresh companies data: 85
+[RiskRadarChart] Filtering company: 
+Object {name: "Advanced Gaming Technologies", riskScore: 65, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BankingAPI Gateway", riskScore: 83, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Beacon Lending Platform", riskScore: 24, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "BlockTrade Exchange", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Bridge Quality Consultants", riskScore: 90, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CarbonCredit Markets", riskScore: 84, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Catalyst Investment Tools", riskScore: 74, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Coin Tracker", riskScore: 51, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CommodityTrade Hub", riskScore: 36, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Continental Infrastructure Union", riskScore: 59, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CrowdFund Crypto", riskScore: 47, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Crown Strategy Consortium", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "CryptoSwap Exchange", riskScore: 27, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Cyber Studio Works", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DAO Treasury Management", riskScore: 55, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DeFi Bridge Protocol", riskScore: 82, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DecentralizedID Finance", riskScore: 80, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalAsset Custody", riskScore: 46, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalBonds Exchange", riskScore: 76, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "DigitalVault Security", riskScore: 71, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "ESG Impact Tracker", riskScore: 43, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Edge Lab Center", riskScore: 84, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FastPay Innovations", riskScore: 62, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech207 Group", riskScore: 55, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech208 Ventures", riskScore: 87, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech209 Corp", riskScore: 64, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech217 Group", riskScore: 22, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech218 Ventures", riskScore: 73, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech219 Corp", riskScore: 50, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech227 Group", riskScore: 83, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech228 Ventures", riskScore: 59, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech37 Group", riskScore: 27, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech39 Corp", riskScore: 71, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech47 Group", riskScore: 49, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech49 Corp", riskScore: 58, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FinTech58 Ventures", riskScore: 28, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Foundation Asset United", riskScore: 58, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "FraudShield AI", riskScore: 57, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "GigWorker Finance", riskScore: 87, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "GlobalRemit Network", riskScore: 58, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Horizon Regulatory Tech", riskScore: 82, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "InsurTech Dynamics", riskScore: 56, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Intelligence Authorities", riskScore: 36, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "International Trading Center", riskScore: 69, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "InvestorPortal Pro", riskScore: 89, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "LendingEdge Analytics", riskScore: 70, hasRiskClusters: true, accreditationStatus: "PENDING", isApproved: false, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Meridian Financial Systems", riskScore: 65, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "MicroInvest Network", riskScore: 29, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "MicroLend Network", riskScore: 80, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NFT Marketplace Finance", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "National Guard Edge", riskScore: 44, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "NeoLend Platform", riskScore: 86, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Network Studio Advisors", riskScore: 68, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Nexus Trading Systems", riskScore: 89, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PayLater Solutions", riskScore: 79, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PayStream Global", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "PensionTech Advisors", riskScore: 61, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Prism Analytics Corp", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "QuantTrading Systems", riskScore: 75, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "RealEstate TokenFi", riskScore: 42, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SmallBiz Banking", riskScore: 53, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SmartContract Verify", riskScore: 72, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Sovereign Audit Federation", riskScore: 66, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SparkInc", riskScore: 41, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "StableCoin Protocol", riskScore: 29, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Stellar Payment Networks", riskScore: 57, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Sterling Consulting United", riskScore: 30, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Stream Portfolio Base", riskScore: 50, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SupplyChain Finance", riskScore: 35, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "SwiftLedger Technologies", riskScore: 27, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Synergy Infrastructure Solutions", riskScore: 83, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TaxOptimization AI", riskScore: 78, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TaxTech Solutions", riskScore: 49, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TechFlow Financial", riskScore: 46, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradeFi Connect", riskScore: 79, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradingBot Analytics", riskScore: 50, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "TradingBot Retail", riskScore: 49, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "United Credit Union", riskScore: 50, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "United Exchange Platforms", riskScore: 37, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "VelocityCredit Platform", riskScore: 39, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Vertex Trading Solutions", riskScore: 59, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Wave Consulting Alliance", riskScore: 61, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Wave Insights Leaders", riskScore: 57, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "WealthTech Solutions", riskScore: 47, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Filtering company: 
+Object {name: "Zenith Financial Technologies", riskScore: 64, hasRiskClusters: true, accreditationStatus: "APPROVED", isApproved: true, …}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 85, relationshipCompaniesCount: 84, visualizationNodesCount: 84, uniqueCompaniesCount: 85, approvedCompaniesCount: 71, …}
+allCompaniesCount: 85
+approvedCompaniesCount: 71
+firstFewApproved: Array(5)
+relationshipCompaniesCount: 84
+sampleCompanyFields: Array(3)
+uniqueCompaniesCount: 85
+userType: "Bank"
+visualizationNodesCount: 84
+[[Prototype]]: Object
