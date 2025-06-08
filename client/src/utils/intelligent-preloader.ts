@@ -289,36 +289,70 @@ export function generateTutorialImageSources(tabName: string): ImageSource[] {
   const normalizedTabName = normalizeTabName(tabName);
   const sources: ImageSource[] = [];
   
-  // Tab-specific image mapping based on investigation
-  const tabImageMappings: Record<string, string[]> = {
-    'dashboard': ['modal_dash_1.png', 'modal_dash_2.png', 'modal_dash_3.png'],
-    'claims': ['modal_claims_1.png', 'modal_claims_2.png', 'modal_claims_3.png'],
-    'network': ['modal_network_1.png', 'modal_network_2.png', 'modal_network_3.png'],
-    'insights': ['modal_insights_1.png', 'modal_insights_2.png', 'modal_insights_3.png'],
-    'file-vault': ['modal_file_1.png', 'modal_file_2.png'],
-    'risk': ['modal_risk_1.png', 'modal_risk_2.png', 'modal_risk_3.png'],
-    'claims-risk': ['overview.png', 'distribution.png', 'types.png', 'temporal.png'],
-    'risk-score': ['overview.png', 'gauge.png', 'dimension-cards.png', 'risk-acceptance.png', 'comparative.png'],
-    'company-profile': ['overview.png', 'business-info.png', 'team.png', 'compliance.png'],
-    'playground': ['overview.png']
+  // Tab-specific image mapping based on actual file structure investigation
+  const tabImageMappings: Record<string, { directory: string; files: string[] }> = {
+    'dashboard': {
+      directory: 'dashboard',
+      files: ['modal_dash_1.png', 'modal_dash_2.png', 'modal_dash_3.png']
+    },
+    'claims': {
+      directory: 'claims',
+      files: ['2.png', '3.png', '5.png']
+    },
+    'network': {
+      directory: 'network',
+      files: ['modal_network_1.png', 'modal_network_2.png', 'modal_network_3.png']
+    },
+    'insights': {
+      directory: 'insights',
+      files: ['1.png', '2.png', '3.png']
+    },
+    'file-vault': {
+      directory: 'file-vault',
+      files: ['modal_file_1.png', 'modal_file_2.png', 'categories.png']
+    },
+    'risk': {
+      directory: 'risk',
+      files: ['modal_risk_1.png', 'modal_risk_2.png', 'modal_risk_3.png']
+    },
+    'risk-score': {
+      directory: 'risk-score',
+      files: ['gauge.png', 'dimension-cards.png', 'risk-acceptance.png', 'comparative.png']
+    },
+    'risk-score-configuration': {
+      directory: 'risk-score-configuration',
+      files: ['1.png', '2.png', '3.png', '4.png', '5.png']
+    },
+    'claims-risk': {
+      directory: 'claims-risk',
+      files: ['overview.png', 'distribution.png', 'types.png', 'temporal.png']
+    },
+    'company-profile': {
+      directory: 'company-profile',
+      files: ['business-info.png', 'team.png', 'compliance.png']
+    },
+    'playground': {
+      directory: 'playground',
+      files: ['overview.png', 'scenarios.png']
+    }
   };
   
-  const imageFiles = tabImageMappings[normalizedTabName];
+  const tabMapping = tabImageMappings[normalizedTabName];
   
-  if (!imageFiles) {
+  if (!tabMapping) {
     logger.error(`No image mapping found for tab: ${normalizedTabName}`);
     return sources;
   }
   
   // Generate image sources with priority order
-  imageFiles.forEach((fileName, index) => {
-    const basePath = `/assets/tutorials/${normalizedTabName}/${fileName}`;
+  tabMapping.files.forEach((fileName, index) => {
+    const basePath = `/assets/tutorials/${tabMapping.directory}/${fileName}`;
     const priority = index; // First image has highest priority
     
     sources.push(createImageSource(basePath, priority));
   });
   
-  logger.debug(`Generated ${sources.length} tutorial image sources for ${normalizedTabName}`);
+  logger.debug(`Generated ${sources.length} tutorial image sources for ${normalizedTabName} from directory: ${tabMapping.directory}`);
   return sources;
 }
 

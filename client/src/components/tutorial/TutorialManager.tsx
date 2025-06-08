@@ -696,21 +696,68 @@ export function TutorialManager({ tabName, children }: TutorialManagerProps): Re
   
   // Generate the image URL based on the tab name and step
   const getImageUrl = () => {
-    // Map tab names to their correct image prefix pattern based on available files
-    const tabToPrefix: Record<string, string> = {
-      'dashboard': 'modal_dash',
-      'file-vault': 'modal_file',
-      'risk-score': 'modal_risk',
-      'risk-score-configuration': 'modal_risk',
-      'network': 'modal_network',
-      'claims': 'modal_claims',
-      'insights': 'modal_insights'
+    // Map tab names to their actual file structure based on investigation
+    const tabToImageMapping: Record<string, { directory: string; files: string[] }> = {
+      'dashboard': {
+        directory: 'dashboard',
+        files: ['modal_dash_1.png', 'modal_dash_2.png', 'modal_dash_3.png']
+      },
+      'claims': {
+        directory: 'claims',
+        files: ['2.png', '3.png', '5.png']
+      },
+      'network': {
+        directory: 'network',
+        files: ['modal_network_1.png', 'modal_network_2.png', 'modal_network_3.png']
+      },
+      'insights': {
+        directory: 'insights',
+        files: ['1.png', '2.png', '3.png']
+      },
+      'file-vault': {
+        directory: 'file-vault',
+        files: ['modal_file_1.png', 'modal_file_2.png', 'categories.png']
+      },
+      'risk': {
+        directory: 'risk',
+        files: ['modal_risk_1.png', 'modal_risk_2.png', 'modal_risk_3.png']
+      },
+      'risk-score': {
+        directory: 'risk-score',
+        files: ['gauge.png', 'dimension-cards.png', 'risk-acceptance.png', 'comparative.png']
+      },
+      'risk-score-configuration': {
+        directory: 'risk-score-configuration',
+        files: ['1.png', '2.png', '3.png', '4.png', '5.png']
+      },
+      'claims-risk': {
+        directory: 'claims-risk',
+        files: ['overview.png', 'distribution.png', 'types.png', 'temporal.png']
+      },
+      'company-profile': {
+        directory: 'company-profile',
+        files: ['business-info.png', 'team.png', 'compliance.png']
+      },
+      'playground': {
+        directory: 'playground',
+        files: ['overview.png', 'scenarios.png']
+      }
     };
     
-    // Use the correct prefix or fallback to a normalized version of the tab name
-    const prefix = tabToPrefix[normalizedTabName] || `modal_${normalizedTabName.replace(/-/g, '_')}`;
+    const mapping = tabToImageMapping[normalizedTabName];
     
-    return `/assets/tutorials/${prefix}_${stepToUse + 1}.png`;
+    if (!mapping) {
+      logger.error(`No image mapping found for tab: ${normalizedTabName}`);
+      return '/assets/tutorials/placeholder.svg';
+    }
+    
+    // Get the correct image file for the current step
+    if (stepToUse < mapping.files.length) {
+      return `/assets/tutorials/${mapping.directory}/${mapping.files[stepToUse]}`;
+    }
+    
+    // Fallback to first image if step is out of bounds
+    return `/assets/tutorials/${mapping.directory}/${mapping.files[0]}`;
   };
   
   const imageUrl = getImageUrl();
