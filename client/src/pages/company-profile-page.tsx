@@ -22,6 +22,7 @@ import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { BentoOverview } from "@/components/company/BentoOverview";
 import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
 import { CompanyProfileHeader } from "@/components/company/CompanyProfileHeader";
+import { BlockCompanyButton } from "@/components/company/BlockCompanyButton";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -973,18 +974,28 @@ export default function CompanyProfilePage() {
   return (
       <DashboardLayout>
         <PageTemplate>
-          {/* Simple test div to confirm positioning works */}
-          <div className="bg-red-200 p-4 mb-4 border">
-            <h1>TEST HEADER - Company Profile Controls</h1>
-            <p>Company ID: {companyId}, Name: {company?.name}, Status: {riskStatus?.status}</p>
-          </div>
-          
           {/* Company Profile Header with breadcrumbs and blocking functionality */}
-          <CompanyProfileHeader 
-            companyId={parseInt(companyId || "0")}
-            companyName={company?.name || 'Loading...'}
-            currentStatus={riskStatus?.status || 'Stable'}
-          />
+          <div className="flex items-center justify-between py-4 px-6 border-b bg-white shadow-sm">
+            {/* Breadcrumb Navigation */}
+            <nav className="flex items-center space-x-2 text-sm text-gray-600">
+              <Link href="/network" className="hover:text-gray-900 transition-colors">
+                Network
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+              <Link href="/network" className="hover:text-gray-900 transition-colors">
+                Data Recipients
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+              <span className="text-gray-900 font-medium">{company?.name}</span>
+            </nav>
+
+            {/* Block Company Button with proper functionality */}
+            <BlockCompanyButton 
+              companyId={company?.id || 0}
+              companyName={company?.name || ''}
+              currentStatus={riskStatus?.status || 'Stable'}
+            />
+          </div>
           <TutorialManager tabName="company-profile">
             <div className="space-y-6">
           
