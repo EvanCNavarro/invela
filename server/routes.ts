@@ -533,8 +533,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
       
       // If requesting network data
       if (includeNetwork === 'true') {
+        const userCompanyId = req.user?.company_id;
+        if (!userCompanyId) {
+          return res.status(401).json({ message: 'Unauthorized - no company context' });
+        }
+        
         const includeDemoCompanies = includeDemo === 'true';
-        const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies);
+        const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies, userCompanyId);
         const riskMetrics = UnifiedRiskCalculationService.calculateRiskMetrics(networkRiskData);
         
         return res.json({
