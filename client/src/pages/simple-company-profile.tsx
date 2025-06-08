@@ -400,7 +400,7 @@ export default function SimpleCompanyProfile() {
                   <BlockCompanyButton 
                     companyId={company.id}
                     companyName={company.name}
-                    currentStatus={riskStatus?.status || 'Stable'}
+                    currentStatus={(riskStatus?.status as 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable') || 'Stable'}
                     className="h-16"
                   />
                 )}

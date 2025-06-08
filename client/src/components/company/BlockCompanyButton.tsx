@@ -5,7 +5,7 @@
  * Integrates with the existing backend API for risk status management.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
