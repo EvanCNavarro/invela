@@ -37,6 +37,8 @@ export const CompanyProfileHeader: React.FC<CompanyProfileHeaderProps> = ({
   currentStatus = 'Stable',
   className = ''
 }) => {
+  console.log('[CRITICAL] CompanyProfileHeader component STARTING to render!', { companyId, companyName, currentStatus });
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -85,7 +87,7 @@ export const CompanyProfileHeader: React.FC<CompanyProfileHeaderProps> = ({
   console.log('[CompanyProfileHeader] Rendering with:', { companyId, companyName, currentStatus });
 
   return (
-    <div className={`flex items-center justify-between py-4 px-6 border-b bg-white shadow-sm ${className}`}>
+    <div className={`flex items-center justify-between py-4 px-6 border-b bg-red-100 shadow-lg z-50 ${className}`}>
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-gray-600">
         <Link href="/network" className="hover:text-gray-900 transition-colors">
