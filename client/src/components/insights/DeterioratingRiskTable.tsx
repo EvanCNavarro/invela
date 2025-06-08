@@ -136,50 +136,48 @@ const RiskTable: React.FC<{
   };
 
   return (
-    <div className="border rounded-md relative">
-      {/* Fixed header outside scroll container */}
-      <div className="bg-white border-b">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead 
-                className="cursor-pointer select-none"
-                onClick={() => handleSort('name')}
-              >
-                <div className="flex items-center">
-                  Company Name {renderSortIndicator('name')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-right cursor-pointer select-none"
-                onClick={() => handleSort('currentScore')}
-              >
-                <div className="flex items-center justify-end">
-                  Current DARS {renderSortIndicator('currentScore')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-right cursor-pointer select-none"
-                onClick={() => handleSort('scoreChange')}
-              >
-                <div className="flex items-center justify-end">
-                  Score Change {renderSortIndicator('scoreChange')}
-                </div>
-              </TableHead>
-              <TableHead className="text-center">Trend</TableHead>
-              <TableHead 
-                className="cursor-pointer select-none"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status {renderSortIndicator('status')}
-                </div>
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-        </Table>
-      </div>
+    <div className="border rounded-md relative max-h-96 overflow-hidden">
+      <Table>
+        {/* Sticky header that remains visible during scroll */}
+        <TableHeader className="sticky top-0 z-20 bg-white border-b">
+          <TableRow>
+            <TableHead 
+              className="cursor-pointer select-none bg-white w-[240px]"
+              onClick={() => handleSort('name')}
+            >
+              <div className="flex items-center">
+                Company Name {renderSortIndicator('name')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none bg-white w-[120px]"
+              onClick={() => handleSort('currentScore')}
+            >
+              <div className="flex items-center justify-end">
+                Current DARS {renderSortIndicator('currentScore')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none bg-white w-[120px]"
+              onClick={() => handleSort('scoreChange')}
+            >
+              <div className="flex items-center justify-end">
+                Score Change {renderSortIndicator('scoreChange')}
+              </div>
+            </TableHead>
+            <TableHead className="text-center bg-white w-[80px]">Trend</TableHead>
+            <TableHead 
+              className="cursor-pointer select-none bg-white w-[160px]"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center">
+                Status {renderSortIndicator('status')}
+              </div>
+            </TableHead>
+            <TableHead className="w-[50px] bg-white"></TableHead>
+          </TableRow>
+        </TableHeader>
+      </Table>
       
       {/* Scrollable body */}
       <div className="max-h-80 overflow-auto">
@@ -193,9 +191,13 @@ const RiskTable: React.FC<{
                 )}
                 onClick={() => onCompanyClick && onCompanyClick(company.id)}
               >
-                <TableCell className="font-medium">{company.name}</TableCell>
-                <TableCell className="text-right">{company.currentScore}</TableCell>
-                <TableCell className={`text-right font-medium ${
+                <TableCell className="font-medium w-[240px] truncate max-w-[240px]">
+                  <div className="truncate" title={company.name}>
+                    {company.name}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right w-[120px]">{company.currentScore}</TableCell>
+                <TableCell className={`text-right font-medium w-[120px] ${
                   company.status === 'Blocked' ? 'text-red-600' :
                   company.status === 'Approaching Block' ? 'text-orange-600' :
                   company.status === 'Monitoring' ? 'text-yellow-600' :
@@ -205,7 +207,7 @@ const RiskTable: React.FC<{
                    company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
                    '0'}
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center w-[80px]">
                   {company.scoreChange > 3 ? (
                     <TrendingUp className={`h-4 w-4 mx-auto ${
                       company.status === 'Blocked' ? 'text-red-600' :
@@ -229,7 +231,7 @@ const RiskTable: React.FC<{
                     }`} />
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[160px]">
                   <span className={cn(
                     "text-sm font-medium",
                     company.status === 'Blocked' ? 'text-red-600' :
@@ -240,7 +242,7 @@ const RiskTable: React.FC<{
                     {company.status}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[50px]">
                   {onCompanyClick && (
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   )}
