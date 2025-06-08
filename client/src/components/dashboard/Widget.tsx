@@ -33,6 +33,7 @@ interface WidgetProps {
     onClick: () => void;
     icon?: React.ReactNode;
   }>;
+  headerChildren?: React.ReactNode;
 }
 
 export function Widget({ 
@@ -46,7 +47,8 @@ export function Widget({
   className,
   headerClassName,
   size = 'single',
-  actions = []
+  actions = [],
+  headerChildren
 }: WidgetProps) {
   return (
     <Card className={cn(
@@ -59,7 +61,7 @@ export function Widget({
       className
     )}>
       <div className={cn("flex items-center justify-between px-4 pt-4", headerClassName)}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {icon && (
             <div className="text-muted-foreground">
               {icon}
@@ -71,6 +73,11 @@ export function Widget({
               <p className="text-sm text-muted-foreground">{subtitle}</p>
             )}
           </div>
+          {headerChildren && (
+            <div className="ml-2">
+              {headerChildren}
+            </div>
+          )}
         </div>
         {(onVisibilityToggle || actions.length > 0 || onEdit) && (
           <DropdownMenu>
