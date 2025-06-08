@@ -21,6 +21,7 @@ import { companyTypeColors } from "@/components/network/types";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { BentoOverview } from "@/components/company/BentoOverview";
 import { AccreditationStatusDisplay } from "@/components/company/AccreditationStatusDisplay";
+import { CompanyProfileHeader } from "@/components/company/CompanyProfileHeader";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -302,6 +303,19 @@ export default function CompanyProfilePage() {
       }
     },
     enabled: activeTab === "users" && !authLoading,
+    retry: 1,
+    refetchOnWindowFocus: false
+  });
+
+  // Fetch risk status for blocking functionality
+  const { data: riskStatus } = useQuery({
+    queryKey: [`/api/companies/${companyId}/risk-status`],
+    queryFn: async () => {
+      const response = await fetch(`/api/companies/${companyId}/risk-status`);
+      if (!response.ok) throw new Error('Failed to fetch risk status');
+      return response.json();
+    },
+    enabled: !!companyId && !authLoading,
     retry: 1,
     refetchOnWindowFocus: false
   });
@@ -953,23 +967,12 @@ export default function CompanyProfilePage() {
         <PageTemplate>
           <TutorialManager tabName="company-profile">
             <div className="space-y-6">
-            {/* Breadcrumb navigation - using same pattern as claims tab */}
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
-            <Link href="/" className="hover:text-foreground">
-              <div className="relative w-4 h-4">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="currentColor"/>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="currentColor"/>
-                </svg>
-              </div>
-            </Link>
-            <span>&gt;</span>
-            <Link href="/network" className="hover:text-foreground hover:underline">Network</Link>
-            <span>&gt;</span>
-            <span className="font-semibold text-foreground">{company?.name || 'Loading...'}</span>
-          </div>
-
-          {/* Back to Network button removed as requested */}
+            {/* Company Profile Header with breadcrumbs and blocking functionality */}
+            <CompanyProfileHeader 
+              companyId={parseInt(companyId || "0")}
+              companyName={company?.name || 'Loading...'}
+              currentStatus={riskStatus?.status || 'Stable'}
+            />
           
           {/* Company header with logo, title, and status boxes - neumorphic style */}
           <div className="bg-white rounded-lg p-5 mb-6 shadow-sm border border-gray-100">
