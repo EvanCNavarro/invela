@@ -92,7 +92,7 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
             onClick={handleNetwork}
           >
             <Users className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-900">Managed Network</span>
+            <span className="font-medium text-sm text-gray-900">Manage Network</span>
           </Button>
 
           <Button
