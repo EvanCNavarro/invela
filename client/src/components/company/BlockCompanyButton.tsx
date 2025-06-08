@@ -36,6 +36,13 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
   currentStatus = 'Stable',
   className
 }) => {
+  // Immediate execution debug log
+  console.log('[BlockCompanyButton] Component function executing with props:', {
+    companyId,
+    companyName,
+    currentStatus,
+    timestamp: new Date().toISOString()
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
