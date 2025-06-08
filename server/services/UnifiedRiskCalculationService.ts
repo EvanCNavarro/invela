@@ -80,9 +80,22 @@ export class UnifiedRiskCalculationService {
   /**
    * Calculate risk status from score using unified thresholds
    * @param score - Risk score (0-100, where lower scores = higher risk)
+   * @param override - Manual status override (takes precedence)
    * @returns Risk status
    */
-  static calculateRiskStatus(score: number): RiskStatus {
+  static calculateRiskStatus(score: number, override?: string | null): RiskStatus {
+    // Check for manual override first
+    if (override) {
+      switch (override) {
+        case 'BLOCKED': return 'Blocked';
+        case 'APPROACHING_BLOCK': return 'Approaching Block';
+        case 'MONITORING': return 'Monitoring';
+        case 'STABLE': return 'Stable';
+        default: break; // Fall through to calculated status
+      }
+    }
+
+    // Calculate status from score if no override
     if (score < this.RISK_THRESHOLDS.BLOCKED) {
       return 'Blocked';
     } else if (score < this.RISK_THRESHOLDS.APPROACHING_BLOCK) {
@@ -141,6 +154,7 @@ export class UnifiedRiskCalculationService {
           id: true,
           name: true,
           risk_score: true,
+          risk_status_override: true,
           category: true,
           is_demo: true,
           updated_at: true
@@ -161,7 +175,7 @@ export class UnifiedRiskCalculationService {
       // Generate previous score with realistic variation (-15 to +15 points from current)
       const variation = (random - 0.5) * 30; // Range: -15 to +15
       const previousScore = Math.max(0, Math.min(100, currentScore + variation));
-      const status = this.calculateRiskStatus(currentScore);
+      const status = this.calculateRiskStatus(currentScore, company.risk_status_override);
       const trend = this.calculateRiskTrend(currentScore, previousScore);
       const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 
@@ -208,7 +222,7 @@ export class UnifiedRiskCalculationService {
       if (userCompanyId) {
         // Get companies in user's network relationships
         const networkQuery = `
-          SELECT DISTINCT c.id, c.name, c.risk_score, 
+          SELECT DISTINCT c.id, c.name, c.risk_score, c.risk_status_override,
                  c.category, c.is_demo, c.updated_at
           FROM companies c
           INNER JOIN relationships r ON (
@@ -234,6 +248,7 @@ export class UnifiedRiskCalculationService {
             id: true,
             name: true,
             risk_score: true,
+            risk_status_override: true,
             category: true,
             is_demo: true,
             updated_at: true
