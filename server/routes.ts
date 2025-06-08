@@ -1498,7 +1498,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // NEW: Companies with risk data endpoint (cache-bypassing)
+  // NEW: Companies with risk data endpoint (cache-bypassing) - Now uses UnifiedRiskCalculationService
   app.get("/api/companies-with-risk", requireAuth, async (req, res) => {
     try {
       if (!req.user) {
@@ -1509,80 +1509,74 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      console.log('[Companies-Risk] Fetching companies with risk data for user:', {
+      // Use the UnifiedRiskCalculationService for consistent risk calculations
+      const { UnifiedRiskCalculationService } = await import('./services/UnifiedRiskCalculationService');
+      
+      const userCompanyId = req.user.company_id;
+      const includeDemoCompanies = true;
+      
+      console.log('[Companies-Risk] Using unified risk calculation service for user:', {
         userId: req.user.id,
-        company_id: req.user.company_id
+        company_id: userCompanyId
       });
 
-      // Get all companies that either:
-      // 1. The user's own company
-      // 2. Companies that have a relationship with the user's company
+      // Get network risk data from unified service
+      const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies, userCompanyId);
+      
+      // Get additional company details from database
       const networkCompanies = await db.select({
         id: companies.id,
         name: sql<string>`COALESCE(${companies.name}, '')`,
         category: sql<string>`COALESCE(${companies.category}, '')`,
         description: sql<string>`COALESCE(${companies.description}, '')`,
         accreditation_status: companies.accreditation_status,
-        risk_score: companies.risk_score,
-        chosen_score: companies.chosen_score,
         risk_clusters: companies.risk_clusters,
-        is_demo: companies.is_demo,
-        has_relationship: sql<boolean>`
-          CASE 
-            WHEN ${companies.id} = ${req.user.company_id} THEN true
-            WHEN EXISTS (
-              SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
-              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
-            ) THEN true
-            ELSE false
-          END
-        `
+        is_demo: companies.is_demo
       })
         .from(companies)
         .where(
           or(
-            eq(companies.id, req.user.company_id),
+            eq(companies.id, userCompanyId),
             sql`EXISTS (
             SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
-            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${userCompanyId})
+            OR (r.company_id = ${userCompanyId} AND r.related_company_id = ${companies.id})
           )`
           )
         )
         .orderBy(companies.name);
 
-      console.log('[Companies-Risk] Query successful, found companies with risk data:', {
-        count: networkCompanies.length,
-        companiesWithRiskData: networkCompanies.filter(c => c.risk_score && c.risk_clusters).length,
-        sampleRiskData: networkCompanies.slice(0, 3).map(c => ({
-          id: c.id,
-          name: c.name,
-          risk_score: c.risk_score,
-          hasRiskClusters: !!c.risk_clusters,
-          accreditation_status: c.accreditation_status
-        }))
+      // Merge unified risk data with company details
+      const transformedCompanies = networkCompanies.map(company => {
+        const riskData = networkRiskData.find(rd => rd.id === company.id);
+        return {
+          id: company.id,
+          name: company.name,
+          category: company.category,
+          description: company.description,
+          accreditation_status: company.accreditation_status,
+          accreditationStatus: company.accreditation_status,
+          // Use unified risk calculations instead of database scores
+          risk_score: riskData?.currentScore || 50,
+          riskScore: riskData?.currentScore || 50,
+          chosen_score: riskData?.currentScore || 50,
+          chosenScore: riskData?.currentScore || 50,
+          risk_clusters: company.risk_clusters,
+          riskClusters: company.risk_clusters,
+          is_demo: company.is_demo,
+          isDemo: company.is_demo,
+          has_relationship: true,
+          hasRelationship: true,
+          // Add unified risk status and trend
+          riskStatus: riskData?.status || 'Stable',
+          riskTrend: riskData?.trend || 'stable'
+        };
       });
 
-      // Transform to match frontend expectations with explicit field names
-      const transformedCompanies = networkCompanies.map(company => ({
-        id: company.id,
-        name: company.name,
-        category: company.category,
-        description: company.description,
-        accreditation_status: company.accreditation_status,
-        accreditationStatus: company.accreditation_status, // Both formats
-        risk_score: company.risk_score,
-        riskScore: company.risk_score, // Both formats
-        chosen_score: company.chosen_score,
-        chosenScore: company.chosen_score, // Both formats
-        risk_clusters: company.risk_clusters,
-        riskClusters: company.risk_clusters, // Both formats
-        is_demo: company.is_demo,
-        isDemo: company.is_demo, // Both formats
-        has_relationship: company.has_relationship,
-        hasRelationship: company.has_relationship // Both formats
-      }));
+      console.log('[Companies-Risk] Using unified calculations for', {
+        count: transformedCompanies.length,
+        blockedCount: transformedCompanies.filter(c => c.riskStatus === 'Blocked').length
+      });
 
       // Add cache headers to prevent caching
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -4746,7 +4740,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  // Individual company risk data endpoint (specific route first)
+  // Individual company risk data endpoint (specific route first) - Now uses UnifiedRiskCalculationService
   app.get("/api/companies/:id/risk-unified", requireAuth, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
@@ -4758,9 +4752,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      const { getCompanyRiskData } = await import('./services/riskCalculationService');
+      // Use the UnifiedRiskCalculationService for consistent calculations
+      const { UnifiedRiskCalculationService } = await import('./services/UnifiedRiskCalculationService');
       
-      const riskData = await getCompanyRiskData(companyId);
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
       
       if (!riskData) {
         return res.status(404).json({
@@ -4769,7 +4764,22 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
       
-      res.json(riskData);
+      // Transform to match expected format for individual company endpoints
+      const transformedData = {
+        id: riskData.id,
+        name: riskData.name,
+        currentScore: riskData.currentScore,
+        previousScore: riskData.previousScore,
+        status: riskData.status,
+        trend: riskData.trend,
+        daysInStatus: riskData.daysInStatus,
+        category: riskData.category,
+        isDemo: riskData.isDemo,
+        updatedAt: riskData.updatedAt,
+        thresholds: UnifiedRiskCalculationService.getThresholds()
+      };
+      
+      res.json(transformedData);
       
     } catch (error) {
       console.error(`[UnifiedRisk] Error fetching risk data for company ${req.params.id}:`, error);
@@ -4787,17 +4797,25 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const { getNetworkRiskStatistics, getNetworkCompaniesWithRiskData } = await import('./services/riskCalculationService');
+      // Use the UnifiedRiskCalculationService for consistent calculations
+      const { UnifiedRiskCalculationService } = await import('./services/UnifiedRiskCalculationService');
       
       const userCompanyId = req.user.company_id;
-      const [riskStatistics, companiesData] = await Promise.all([
-        getNetworkRiskStatistics(userCompanyId),
-        getNetworkCompaniesWithRiskData(userCompanyId)
-      ]);
+      const includeDemoCompanies = true; // Include demo companies for network view
+      
+      const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies, userCompanyId);
+      const riskMetrics = UnifiedRiskCalculationService.calculateRiskMetrics(networkRiskData);
       
       res.json({
-        ...riskStatistics,
-        companies: companiesData
+        companies: networkRiskData,
+        metrics: riskMetrics,
+        thresholds: UnifiedRiskCalculationService.getThresholds(),
+        total: riskMetrics.total,
+        blocked: riskMetrics.blocked,
+        approaching: riskMetrics.approaching,
+        monitoring: riskMetrics.monitoring,
+        stable: riskMetrics.stable,
+        blockedPercentage: riskMetrics.blockedPercentage
       });
       
     } catch (error) {
