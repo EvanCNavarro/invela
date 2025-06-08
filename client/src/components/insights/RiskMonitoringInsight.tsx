@@ -164,15 +164,9 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Header with Risk Monitoring title and blocked count */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Risk Monitoring</h3>
-        </div>
-        <div className="flex-grow">
-          <BlockedDataRecipientsAlert count={blockedCompanies.length} />
-        </div>
+      {/* Header with blocked count alert */}
+      <div className="mb-4">
+        <BlockedDataRecipientsAlert count={blockedCompanies.length} />
       </div>
       
       {/* Show table with appropriate size based on isWidget */}

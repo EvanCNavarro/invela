@@ -15,14 +15,12 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { TrendingDown, TrendingUp, Minus, ArrowRight, ArrowDown, ArrowUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { 
   calculateRiskStatus, 
   getRiskStatusColor,
   type RiskMonitoringStatus 
 } from '@/lib/riskCalculations';
-// Note: Using unified risk data from props instead of session service
-
 
 // Import shared type from risk calculations service
 import type { CompanyRiskData } from '@/lib/riskCalculations';
@@ -40,64 +38,6 @@ interface DeterioratingRiskTableProps {
  */
 const logTable = (action: string, details?: any) => {
   console.log(`[DeterioratingRiskTable] ${action}`, details || '');
-};
-
-// Status calculation and styling now handled by shared service
-
-/**
- * DeterioratingRiskTable Component
- */
-const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
-  companies,
-  blockThreshold,
-  className,
-  onCompanyClick,
-  timeframe
-}) => {
-  
-  // Process companies using unified risk data passed as props
-  const processedCompanies = useMemo(() => {
-    console.log(`[DeterioratingRiskTable] Processing with timeframe: ${timeframe}`);
-    
-    const processed = companies.map(company => {
-      // Calculate score change based on timeframe
-      const scoreChange = company.currentScore - company.previousScore;
-      
-      // Debug logging for the first few companies
-      if (company.id <= 5 || company.name.includes('OpenBanking')) {
-        console.log(`[Table Debug] ${company.name} (${timeframe}):`, {
-          timeframe,
-          currentScore: company.currentScore,
-          previousScore: company.previousScore,
-          scoreChange,
-          status: company.status
-        });
-      }
-      
-      return {
-        id: company.id,
-        name: company.name,
-        currentScore: company.currentScore,
-        previousScore: company.previousScore,
-        category: company.category,
-        scoreChange,
-        status: company.status,
-        timeframe
-      };
-    });
-    
-    // Return processed data without hard-coded sorting - let RiskTable handle all sorting
-    return processed;
-  }, [companies, timeframe, blockThreshold]);
-  
-  return (
-    <div className={cn("space-y-4", className)}>
-      <RiskTable 
-        companies={processedCompanies} 
-        onCompanyClick={onCompanyClick} 
-      />
-    </div>
-  );
 };
 
 /**
@@ -196,115 +136,168 @@ const RiskTable: React.FC<{
   };
 
   return (
-    <div className="border rounded-md relative">
-      {/* Table with automatic height based on content */}
-      <div className="overflow-visible">
-        <Table>
-          {/* Sticky header that remains visible during scroll */}
-          <TableHeader className="sticky top-0 z-20 bg-white border-b">
-            <TableRow>
-              <TableHead 
-                className="cursor-pointer select-none bg-white"
-                onClick={() => handleSort('name')}
-              >
-                <div className="flex items-center">
-                  Company Name {renderSortIndicator('name')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-right cursor-pointer select-none bg-white"
-                onClick={() => handleSort('currentScore')}
-              >
-                <div className="flex items-center justify-end">
-                  Current DARS {renderSortIndicator('currentScore')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-right cursor-pointer select-none bg-white"
-                onClick={() => handleSort('scoreChange')}
-              >
-                <div className="flex items-center justify-end">
-                  Score Change {renderSortIndicator('scoreChange')}
-                </div>
-              </TableHead>
-              <TableHead className="text-center bg-white">Trend</TableHead>
-              <TableHead 
-                className="cursor-pointer select-none bg-white"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status {renderSortIndicator('status')}
-                </div>
-              </TableHead>
-              <TableHead className="w-[50px] bg-white"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedCompanies.map((company) => (
-              <TableRow 
-                key={company.id}
-                className={cn(
-                  onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : ""
-                )}
-                onClick={() => onCompanyClick && onCompanyClick(company.id)}
-              >
-                <TableCell className="font-medium">{company.name}</TableCell>
-                <TableCell className="text-right">{company.currentScore}</TableCell>
-                <TableCell className={`text-right font-medium ${
-                  company.status === 'Blocked' ? 'text-red-600' :
-                  company.status === 'Approaching Block' ? 'text-orange-600' :
-                  company.status === 'Monitoring' ? 'text-yellow-600' :
-                  'text-gray-900'
-                }`}>
-                  {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
-                   company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
-                   '0'}
-                </TableCell>
-                <TableCell className="text-center">
-                  {company.scoreChange > 3 ? (
-                    <TrendingUp className={`h-4 w-4 mx-auto ${
-                      company.status === 'Blocked' ? 'text-red-600' :
-                      company.status === 'Approaching Block' ? 'text-orange-600' :
-                      company.status === 'Monitoring' ? 'text-yellow-600' :
-                      'text-gray-900'
-                    }`} />
-                  ) : company.scoreChange < -3 ? (
-                    <TrendingDown className={`h-4 w-4 mx-auto ${
-                      company.status === 'Blocked' ? 'text-red-600' :
-                      company.status === 'Approaching Block' ? 'text-orange-600' :
-                      company.status === 'Monitoring' ? 'text-yellow-600' :
-                      'text-gray-900'
-                    }`} />
-                  ) : (
-                    <Minus className={`h-4 w-4 mx-auto ${
-                      company.status === 'Blocked' ? 'text-red-600' :
-                      company.status === 'Approaching Block' ? 'text-orange-600' :
-                      company.status === 'Monitoring' ? 'text-yellow-600' :
-                      'text-gray-900'
-                    }`} />
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className={cn(
-                    "text-sm font-medium",
+    <div className="border rounded-md relative max-h-96 overflow-auto">
+      <Table>
+        {/* Sticky header that remains visible during scroll */}
+        <TableHeader className="sticky top-0 z-20 bg-white border-b">
+          <TableRow>
+            <TableHead 
+              className="cursor-pointer select-none bg-white"
+              onClick={() => handleSort('name')}
+            >
+              <div className="flex items-center">
+                Company Name {renderSortIndicator('name')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none bg-white"
+              onClick={() => handleSort('currentScore')}
+            >
+              <div className="flex items-center justify-end">
+                Current DARS {renderSortIndicator('currentScore')}
+              </div>
+            </TableHead>
+            <TableHead 
+              className="text-right cursor-pointer select-none bg-white"
+              onClick={() => handleSort('scoreChange')}
+            >
+              <div className="flex items-center justify-end">
+                Score Change {renderSortIndicator('scoreChange')}
+              </div>
+            </TableHead>
+            <TableHead className="text-center bg-white">Trend</TableHead>
+            <TableHead 
+              className="cursor-pointer select-none bg-white"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center">
+                Status {renderSortIndicator('status')}
+              </div>
+            </TableHead>
+            <TableHead className="w-[50px] bg-white"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedCompanies.map((company) => (
+            <TableRow 
+              key={company.id}
+              className={cn(
+                onCompanyClick ? "cursor-pointer transition-colors hover:bg-slate-50/70" : ""
+              )}
+              onClick={() => onCompanyClick && onCompanyClick(company.id)}
+            >
+              <TableCell className="font-medium">{company.name}</TableCell>
+              <TableCell className="text-right">{company.currentScore}</TableCell>
+              <TableCell className={`text-right font-medium ${
+                company.status === 'Blocked' ? 'text-red-600' :
+                company.status === 'Approaching Block' ? 'text-orange-600' :
+                company.status === 'Monitoring' ? 'text-yellow-600' :
+                'text-gray-900'
+              }`}>
+                {company.scoreChange > 0 ? `+${Math.round(company.scoreChange)}` : 
+                 company.scoreChange < 0 ? `${Math.round(company.scoreChange)}` : 
+                 '0'}
+              </TableCell>
+              <TableCell className="text-center">
+                {company.scoreChange > 3 ? (
+                  <TrendingUp className={`h-4 w-4 mx-auto ${
                     company.status === 'Blocked' ? 'text-red-600' :
                     company.status === 'Approaching Block' ? 'text-orange-600' :
                     company.status === 'Monitoring' ? 'text-yellow-600' :
                     'text-gray-900'
-                  )}>
-                    {company.status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {onCompanyClick && (
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                  }`} />
+                ) : company.scoreChange < -3 ? (
+                  <TrendingDown className={`h-4 w-4 mx-auto ${
+                    company.status === 'Blocked' ? 'text-red-600' :
+                    company.status === 'Approaching Block' ? 'text-orange-600' :
+                    company.status === 'Monitoring' ? 'text-yellow-600' :
+                    'text-gray-900'
+                  }`} />
+                ) : (
+                  <Minus className={`h-4 w-4 mx-auto ${
+                    company.status === 'Blocked' ? 'text-red-600' :
+                    company.status === 'Approaching Block' ? 'text-orange-600' :
+                    company.status === 'Monitoring' ? 'text-yellow-600' :
+                    'text-gray-900'
+                  }`} />
+                )}
+              </TableCell>
+              <TableCell>
+                <span className={cn(
+                  "text-sm font-medium",
+                  company.status === 'Blocked' ? 'text-red-600' :
+                  company.status === 'Approaching Block' ? 'text-orange-600' :
+                  company.status === 'Monitoring' ? 'text-yellow-600' :
+                  'text-gray-900'
+                )}>
+                  {company.status}
+                </span>
+              </TableCell>
+              <TableCell>
+                {onCompanyClick && (
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+/**
+ * DeterioratingRiskTable Component
+ */
+const DeterioratingRiskTable: React.FC<DeterioratingRiskTableProps> = ({
+  companies,
+  blockThreshold,
+  className,
+  onCompanyClick,
+  timeframe
+}) => {
+  
+  // Process companies using unified risk data passed as props
+  const processedCompanies = useMemo(() => {
+    console.log(`[DeterioratingRiskTable] Processing with timeframe: ${timeframe}`);
+    
+    const processed = companies.map(company => {
+      // Calculate score change based on timeframe
+      const scoreChange = company.currentScore - company.previousScore;
+      
+      // Debug logging for the first few companies
+      if (company.id <= 5 || company.name.includes('OpenBanking')) {
+        console.log(`[Table Debug] ${company.name} (${timeframe}):`, {
+          timeframe,
+          currentScore: company.currentScore,
+          previousScore: company.previousScore,
+          scoreChange,
+          status: company.status
+        });
+      }
+      
+      return {
+        id: company.id,
+        name: company.name,
+        currentScore: company.currentScore,
+        previousScore: company.previousScore,
+        category: company.category,
+        scoreChange,
+        status: company.status,
+        timeframe
+      };
+    });
+    
+    // Return processed data without hard-coded sorting - let RiskTable handle all sorting
+    return processed;
+  }, [companies, timeframe, blockThreshold]);
+  
+  return (
+    <div className={cn("space-y-4", className)}>
+      <RiskTable 
+        companies={processedCompanies} 
+        onCompanyClick={onCompanyClick} 
+      />
     </div>
   );
 };
