@@ -302,7 +302,7 @@ export class UnifiedRiskCalculationService {
         const variation = (random - 0.5) * 30; // Range: -15 to +15
         const previousScore = Math.max(0, Math.min(100, currentScore + variation));
         
-        const status = this.calculateRiskStatus(currentScore);
+        const status = this.calculateRiskStatus(currentScore, company.risk_status_override);
         const trend = this.calculateRiskTrend(currentScore, previousScore);
         const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 

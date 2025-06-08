@@ -58,6 +58,7 @@ import { logoUpload } from './middleware/upload';
 import { emailService } from './services/email';
 import { createCompany } from "./services/company";
 import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
+import { UnifiedRiskCalculationService } from './services/UnifiedRiskCalculationService';
 
 // WebSocket services for real-time communication
 import * as LegacyWebSocketService from './services/websocket';
@@ -3264,6 +3265,85 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Block/unblock a company (set risk status override)
+  app.patch("/api/companies/:id/block", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { action, reason } = req.body;
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      if (!['block', 'unblock'].includes(action)) {
+        return res.status(400).json({
+          message: "Invalid action. Must be 'block' or 'unblock'",
+          code: "INVALID_ACTION"
+        });
+      }
+
+      // Check if company exists
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          risk_status_override: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      // Set override status
+      const override = action === 'block' ? 'BLOCKED' : null;
+      
+      await db.update(companies)
+        .set({ 
+          risk_status_override: override,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId));
+
+      // Get updated risk data using UnifiedRiskCalculationService
+      const updatedRiskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      
+      // Clear cache to ensure fresh data
+      UnifiedRiskCalculationService.clearAllCache();
+
+      console.log(`[BLOCK-API] Company ${company.name} (ID: ${companyId}) ${action}ed by user. New status: ${updatedRiskData?.status || 'Unknown'}`);
+
+      return res.json({
+        success: true,
+        message: `Company ${action}ed successfully`,
+        company: {
+          id: companyId,
+          name: company.name,
+          action,
+          previousOverride: company.risk_status_override,
+          newOverride: override,
+          currentStatus: updatedRiskData?.status || 'Unknown',
+          reason: reason || `Manual ${action} by user`
+        }
+      });
+
+    } catch (error) {
+      console.error(`[BLOCK-API] Error ${req.body.action}ing company:`, error);
+      return res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
+
   // Get risk status summary for a company
   app.get("/api/companies/:id/risk-status", requireAuth, async (req, res) => {
     try {
@@ -3276,55 +3356,32 @@ export async function registerRoutes(app: Express): Promise<Express> {
         });
       }
 
-      // Get current company data
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.id, companyId),
-        columns: {
-          id: true,
-          name: true,
-          risk_score: true,
-          updated_at: true
-        }
-      });
+      // Use UnifiedRiskCalculationService for consistent status calculation
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
 
-      if (!company) {
+      if (!riskData) {
         return res.status(404).json({
           message: "Company not found",
           code: "COMPANY_NOT_FOUND"
         });
       }
 
-      const riskScore = company.risk_score || 0;
-      
-      // Calculate risk status based on score
-      let status = 'Stable';
-      if (riskScore >= 70) {
-        status = 'Blocked';
-      } else if (riskScore >= 50) {
-        status = 'Approaching Block';
-      }
-
-      // Calculate days in current status (simplified for now)
-      const updatedAt = new Date(company.updated_at);
-      const now = new Date();
-      const daysInStatus = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
-
-      // Determine trend based on risk score
-      let trend: 'improving' | 'stable' | 'deteriorating' = 'stable';
-      if (riskScore < 30) trend = 'improving';
-      else if (riskScore > 60) trend = 'deteriorating';
-
-      res.json({
-        status,
-        daysInStatus: Math.max(1, daysInStatus),
-        trend
+      return res.json({
+        id: riskData.id,
+        name: riskData.name,
+        riskScore: riskData.currentScore,
+        status: riskData.status,
+        trend: riskData.trend,
+        daysInStatus: riskData.daysInStatus,
+        category: riskData.category,
+        lastUpdated: riskData.updatedAt
       });
 
     } catch (error) {
-      console.error(`[Risk Status] Error fetching risk status for company ${req.params.id}:`, error);
-      res.status(500).json({
-        message: "Error fetching risk status data",
-        code: "FETCH_ERROR"
+      console.error('[RISK-STATUS-API] Error getting risk status:', error);
+      return res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR"
       });
     }
   });
