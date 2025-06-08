@@ -962,15 +962,29 @@ export default function CompanyProfilePage() {
     timestamp: new Date().toISOString()
   });
   
+  console.log('[CRITICAL DEBUG] About to render main component with data:', {
+    companyId,
+    companyName: company?.name,
+    riskStatus: riskStatus?.status,
+    hasCompany: !!company,
+    hasRiskStatus: !!riskStatus
+  });
+
   return (
       <DashboardLayout>
-        {/* Company Profile Header with breadcrumbs and blocking functionality */}
-        <CompanyProfileHeader 
-          companyId={parseInt(companyId || "0")}
-          companyName={company?.name || 'Loading...'}
-          currentStatus={riskStatus?.status || 'Stable'}
-        />
         <PageTemplate>
+          {/* Simple test div to confirm positioning works */}
+          <div className="bg-red-200 p-4 mb-4 border">
+            <h1>TEST HEADER - Company Profile Controls</h1>
+            <p>Company ID: {companyId}, Name: {company?.name}, Status: {riskStatus?.status}</p>
+          </div>
+          
+          {/* Company Profile Header with breadcrumbs and blocking functionality */}
+          <CompanyProfileHeader 
+            companyId={parseInt(companyId || "0")}
+            companyName={company?.name || 'Loading...'}
+            currentStatus={riskStatus?.status || 'Stable'}
+          />
           <TutorialManager tabName="company-profile">
             <div className="space-y-6">
           
