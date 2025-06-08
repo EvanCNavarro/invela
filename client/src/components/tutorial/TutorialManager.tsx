@@ -8,6 +8,12 @@ import { apiRequest } from '@/lib/queryClient';
 import { createTutorialLogger } from '@/lib/tutorial-logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { 
+  preloadTutorialImages, 
+  isImageCached, 
+  clearImageCache,
+  getCacheStats
+} from '@/utils/intelligent-preloader';
 
 // Import tutorial debugging utilities if available
 let tutorialDebug: any = null;
