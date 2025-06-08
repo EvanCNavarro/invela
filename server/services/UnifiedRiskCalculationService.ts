@@ -253,25 +253,33 @@ export class UnifiedRiskCalculationService {
         const riskSeed = companyId * 1234567891; // Prime for distribution
         const riskRandom = (riskSeed % 2147483647) / 2147483647;
         
-        // Calculate network-adjusted risk score with realistic business constraints
+        // Use company ID to determine blocking status deterministically
         let currentScore;
         if (company.category === 'FinTech') {
-          // FinTech companies: Higher risk variability, 15% blocking cap
-          const riskMultiplier = 0.3 + (riskRandom * 0.7); // 0.3 to 1.0
-          currentScore = Math.round(baseScore * riskMultiplier);
+          // For FinTech companies: Ensure exactly 15% blocking rate
+          // Sort companies by ID and take every 7th company as blocked (roughly 14.3%)
+          const isBlocked = (companyId % 7) === 0;
           
-          // Ensure 15% blocking rate for FinTech (scores < 35)
-          if (riskRandom < 0.15) {
-            currentScore = Math.round(20 + (riskRandom * 14)); // 20-34 range
+          if (isBlocked) {
+            // Blocked companies: scores 20-34
+            currentScore = 20 + (riskRandom * 14);
+          } else {
+            // Non-blocked companies: scores 35-90
+            currentScore = 35 + (riskRandom * 55);
           }
         } else {
-          // Banks: More stable, lower risk variability  
-          const riskMultiplier = 0.6 + (riskRandom * 0.4); // 0.6 to 1.0
-          currentScore = Math.round(baseScore * riskMultiplier);
+          // Banks: Lower risk profile, very few blocked (5%)
+          const isBlocked = (companyId % 20) === 0; // 5% blocking rate
+          
+          if (isBlocked) {
+            currentScore = 20 + (riskRandom * 14);
+          } else {
+            currentScore = 40 + (riskRandom * 50);
+          }
         }
         
-        // Ensure score bounds
-        currentScore = Math.max(15, Math.min(95, currentScore));
+        // Round and ensure bounds
+        currentScore = Math.max(15, Math.min(95, Math.round(currentScore)));
         const seed = companyId * 2654435761; // Large prime for good distribution
         const random = (seed % 2147483647) / 2147483647; // Normalize to 0-1
         
@@ -302,10 +310,19 @@ export class UnifiedRiskCalculationService {
         };
       });
 
-      // TEMPORARY: Skip caching during threshold fix validation
-      console.log(`[UnifiedRisk] Generated ${networkRiskData.length} companies, blocked count: ${networkRiskData.filter(c => c.status === 'Blocked').length}`);
+      // Debug: Log distribution for validation
+      const statusCounts = {
+        blocked: networkRiskData.filter(c => c.status === 'Blocked').length,
+        approaching: networkRiskData.filter(c => c.status === 'Approaching Block').length,
+        monitoring: networkRiskData.filter(c => c.status === 'Monitoring').length,
+        stable: networkRiskData.filter(c => c.status === 'Stable').length
+      };
       
-      // this.setCachedData(cacheKey, networkRiskData);
+      console.log(`[UnifiedRisk] Risk distribution: Total=${networkRiskData.length}, Blocked=${statusCounts.blocked} (${(statusCounts.blocked/networkRiskData.length*100).toFixed(1)}%), Approaching=${statusCounts.approaching}, Monitoring=${statusCounts.monitoring}, Stable=${statusCounts.stable}`);
+      
+      // Clear cache to ensure fresh calculations with new algorithm
+      this.clearAllCache();
+      this.setCachedData(cacheKey, networkRiskData);
       return networkRiskData;
 
     } catch (error) {
