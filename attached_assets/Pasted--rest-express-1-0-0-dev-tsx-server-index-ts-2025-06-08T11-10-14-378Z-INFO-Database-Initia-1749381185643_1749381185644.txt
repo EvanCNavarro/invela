@@ -1,0 +1,538 @@
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-08T11:10:14.378Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-08T11:10:14.382Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":108,"timestamp":"2025-06-08T11:10:14.382Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-08T11:10:14.603Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-06-08T11:10:14.747Z] [INFO] [App] [PROD-DEBUG] Starting server initialization sequence 
+[2025-06-08T11:10:14.747Z] [INFO] [App] [PROD-DEBUG] Beginning API routes registration... 
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (forced production mode) 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-08T11:10:14.751Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-08T11:10:14.754Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-06-08T11:10:14.754Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[2025-06-08T11:10:14.754Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-08T11:10:14.754Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-08T11:10:14.755Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-08T11:10:14.755Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-08T11:10:14.763Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-08T11:10:14.763Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-08T11:10:14.764Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-08T11:10:14.764Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-08T11:10:14.765Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-08T11:10:14.769Z] [INFO] [App] [ServerStartup] API routes registration completed 
+[2025-06-08T11:10:14.769Z] [INFO] [App] [PROD-DEBUG] ✓ All API routes now registered and have priority 
+[2025-06-08T11:10:14.769Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-08T11:10:14.769Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"nvh6dd","timestamp":"2025-06-08T11:10:14.769Z"}
+[2025-06-08T11:10:14.769Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-08T11:10:14.769Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-08T11:10:14.770Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-08T11:10:14.770Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-08T11:10:14.770Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-08T11:10:14.771Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-08T11:10:14.771Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-08T11:10:14.771Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-08T11:10:14.771Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-08T11:10:14.771Z] [INFO] [App] [PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes) 
+[2025-06-08T11:10:14.771Z] [INFO] [App] [PROD-DEBUG] Development mode: Setting up Vite development server 
+[2025-06-08T11:10:14.772Z] [INFO] [App] [PROD-DEBUG] ✓ Development server configured with API route priority verified 
+[2025-06-08T11:10:16.234Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-08T11:10:18.972Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T11:10:19.716Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T11:10:20.917Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T11:10:20.979Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381020979-e8kv2he","clients":1}
+[2025-06-08T11:10:20.990Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381020990-eh0ybdd","clients":2}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: 'MeWwheXMDN99duCTkZZGXAD3b_FHTeD8',
+  cookies: undefined
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[2025-06-08T11:10:21.019Z] [INFO] [WebSocket] Received message from client client-1749381020979-e8kv2he {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-08T11:10:21.017Z"}}
+[2025-06-08T11:10:21.019Z] [INFO] [WebSocket] Authentication from client client-1749381020979-e8kv2he {"module":"WebSocket","hasToken":true}
+[2025-06-08T11:10:21.080Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381021080-ar5wzoy","clients":3}
+[2025-06-08T11:10:21.338Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381020979-e8kv2he","code":1001,"reason":"","remainingClients":2}
+[2025-06-08T11:10:21.338Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381021080-ar5wzoy","code":1001,"reason":"","remainingClients":1}
+[2025-06-08T11:10:21.339Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381020990-eh0ybdd","code":1001,"reason":"","remainingClients":0}
+[2025-06-08T11:10:24.755Z] [INFO] [App] Running background health checks... 
+[2025-06-08T11:10:24.755Z] [StartupChecks] Running application startup health checks... 
+[2025-06-08T11:10:24.755Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-08T11:10:24.755Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-08T11:10:24.946Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-08T11:10:24.974Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-08T11:10:25.004Z] [DBConnectionService] Database connection check successful 
+[2025-06-08T11:10:25.004Z] [StartupChecks] Database health check passed 
+[2025-06-08T11:10:25.004Z] [StartupChecks] All startup health checks passed! 
+[2025-06-08T11:10:25.004Z] [INFO] [App] All background health checks passed successfully. 
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'tGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7',
+  cookies: 'connect.sid=s%3AtGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7.wFZkA4C54aqRMwv2AeL1wvrSvyXE2OVeoiuqx8uhYLM'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 578,
+  email: 'lbrown@creditunion.com',
+  full_name: 'Lauren Brown',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$2B12ptVKSDnXEeMJ0G6chuGffj0MYPBkKwlN3VXFBz.RDVe962cRa',
+  company_id: 1980,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T10:47:05.179Z,
+  updated_at: 2025-06-08T10:47:05.179Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1980
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 578, companyId: 1980 }
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 578, company_id: 1980, email: 'lbrown@creditunion.com' }
+[2025-06-08T11:10:30.111Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1980,"userId":578}
+[Current Company] Found company: {
+  id: 1980,
+  name: 'Capital Credit Union',
+  onboardingCompleted: true,
+  riskScore: 34,
+  chosenScore: 30,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 578,
+  companyId: 1980,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-08T11:10:30.121Z'
+}
+[2025-06-08T11:10:30.140Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1980}
+[Tasks] Automatically unlocking all tasks for company { userId: 578, companyId: 1980, requestedBy: 'automatic_task_unlock' }
+[2025-06-08T11:10:30.141Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1980}
+[2025-06-08T11:10:30.151Z] [INFO] [App] GET /api/companies/current 304 in 60ms :: {"id":1980,"name":"Capital Credit Union","category":"Bank","is_demo":true,"re... 
+[2025-06-08T11:10:30.169Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":1980}
+[Tasks] Successfully unlocked all tasks for company: 1980
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 578',
+    condition2: 'tasks.created_by = 578',
+    condition3: "tasks.company_id = 1980 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('lbrown@creditunion.com')"
+  }
+}
+[2025-06-08T11:10:30.203Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381030203-u1e9pgb","clients":1}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-08T11:10:30.254Z] [INFO] [App] GET /api/tasks 304 in 145ms :: [] 
+[2025-06-08T11:10:30.333Z] [INFO] [WebSocket] Received message from client client-1749381030203-u1e9pgb {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-08T11:10:30.174Z"}}
+[2025-06-08T11:10:30.333Z] [INFO] [WebSocket] Authentication from client client-1749381030203-u1e9pgb {"module":"WebSocket","hasToken":true}
+[2025-06-08T11:10:30.354Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 578 
+[2025-06-08T11:10:30.354Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-08T11:10:30.354Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-08T11:10:30.354Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 578 
+[2025-06-08T11:10:30.414Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 578: completed=false, step=0 
+[2025-06-08T11:10:30.443Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 90ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-08T11:... 
+[Relationships] Fetching network for company: 1980
+[Network Visualization] Fetching network data for company: 1980
+[Accreditation] Fetching accreditation for company: 1980
+[2025-06-08T11:10:30.732Z] [INFO] [App] GET /api/risk/unified 304 in 41ms :: {"thresholds":{"BLOCKED":70,"APPROACHING_BLOCK":50,"MONITORING":30,"STABLE":0}} 
+[Relationships] Found network members: { count: 181 }
+[2025-06-08T11:10:30.745Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381030744-gkxvclc","clients":2}
+[Accreditation] Found accreditation: {
+  id: 1021,
+  accreditationNumber: 1,
+  issuedDate: 2025-06-08T10:46:52.409Z,
+  expiresDate: null,
+  status: 'ACTIVE',
+  daysUntilExpiration: null,
+  isPermanent: true
+}
+[2025-06-08T11:10:30.771Z] [INFO] [App] GET /api/relationships 304 in 96ms :: [{"id":2361,"companyId":1980,"relatedCompanyId":488,"relationshipType":"data_... 
+[2025-06-08T11:10:30.774Z] [INFO] [App] GET /api/companies/1980/accreditation 304 in 71ms :: {"id":1021,"accreditationNumber":1,"issuedDate":"2025-06-08T10:46:52.409Z","e... 
+[Network Visualization] Found network relationships: { count: 181 }
+[Network Visualization] Returning visualization data: { centerNode: 'Capital Credit Union', nodeCount: 181 }
+[2025-06-08T11:10:30.827Z] [INFO] [App] GET /api/network/visualization 304 in 150ms :: {"center":{"id":1980,"name":"Capital Credit Union","riskScore":34,"riskBucket... 
+[2025-06-08T11:10:31.299Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381031299-vgtbrm5","clients":3}
+[2025-06-08T11:10:31.811Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381031811-y4yb9jo","clients":4}
+[2025-06-08T11:10:32.381Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381032381-4znnmd3","clients":5}
+[2025-06-08T11:10:32.501Z] [INFO] [WebSocket] Received message from client client-1749381032381-4znnmd3 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749381029342_yfztf9ogs","timestamp":"2025-06-08T11:10:32.341Z"}
+[2025-06-08T11:10:32.501Z] [INFO] [WebSocket] Authentication from client client-1749381032381-4znnmd3 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-08T11:10:32.910Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381032910-k5a4u72","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'tGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7',
+  cookies: 'connect.sid=s%3AtGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7.wFZkA4C54aqRMwv2AeL1wvrSvyXE2OVeoiuqx8uhYLM'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 578,
+  email: 'lbrown@creditunion.com',
+  full_name: 'Lauren Brown',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$2B12ptVKSDnXEeMJ0G6chuGffj0MYPBkKwlN3VXFBz.RDVe962cRa',
+  company_id: 1980,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T10:47:05.179Z,
+  updated_at: 2025-06-08T10:47:05.179Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1980
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:10:33.496Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"authenticate","userId":578,"companyId":1980,"clientId":"ws_1749381030651_jc7ludwhb","timestamp":"2025-06-08T11:10:33.336Z"}
+[2025-06-08T11:10:33.497Z] [INFO] [WebSocket] Authentication from client client-1749381032910-k5a4u72 {"module":"WebSocket","userId":578,"companyId":1980,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:10:44.785Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":3,"taskIds":[1135,1136,1134]}
+[Task Progress] Calculated progress for task 1135 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1136 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1134 (company_kyb): 0/30 = 0%
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:10:53.044Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:10:52.876Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 1980
+[2025-06-08T11:10:57.397Z] [INFO] [App] GET /api/companies/current 304 in 31ms :: {"id":1980,"name":"Capital Credit Union","category":"Bank","is_demo":true,"re... [sampled: request 11] 
+[2025-06-08T11:11:00.336Z] [INFO] [WebSocket] Received message from client client-1749381030203-u1e9pgb {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:11:01.424Z] [INFO] [WebSocket] Received message from client client-1749381031299-vgtbrm5 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:01.263Z","connectionId":"ws_1749381031262_8l9w1q5s6"}
+[2025-06-08T11:11:01.949Z] [INFO] [WebSocket] Received message from client client-1749381031811-y4yb9jo {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:01.787Z","connectionId":"ws_1749381030719_en23339s7"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:11:13.032Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:12.875Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:11:27.375Z] [INFO] [App] GET /api/companies/current 304 in 29ms :: {"id":1980,"name":"Capital Credit Union","category":"Bank","is_demo":true,"re... [sampled: request 21] 
+[2025-06-08T11:11:30.335Z] [INFO] [WebSocket] Received message from client client-1749381030203-u1e9pgb {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 578, companyId: 1980 }
+[Current Company] Found company: {
+  id: 1980,
+  name: 'Capital Credit Union',
+  onboardingCompleted: true,
+  riskScore: 34,
+  chosenScore: 30,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 578,
+  companyId: 1980,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-08T11:11:30.366Z'
+}
+[2025-06-08T11:11:31.424Z] [INFO] [WebSocket] Received message from client client-1749381031299-vgtbrm5 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:31.263Z","connectionId":"ws_1749381031262_8l9w1q5s6"}
+[2025-06-08T11:11:31.954Z] [INFO] [WebSocket] Received message from client client-1749381031811-y4yb9jo {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:31.786Z","connectionId":"ws_1749381030719_en23339s7"}
+[2025-06-08T11:11:33.034Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:32.876Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:11:53.035Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:11:52.877Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:11:57.391Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":1980,"name":"Capital Credit Union","category":"Bank","is_demo":true,"re... [sampled: request 31] 
+[2025-06-08T11:12:00.334Z] [INFO] [WebSocket] Received message from client client-1749381030203-u1e9pgb {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:12:01.424Z] [INFO] [WebSocket] Received message from client client-1749381031299-vgtbrm5 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:01.264Z","connectionId":"ws_1749381031262_8l9w1q5s6"}
+[2025-06-08T11:12:01.957Z] [INFO] [WebSocket] Received message from client client-1749381031811-y4yb9jo {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:01.786Z","connectionId":"ws_1749381030719_en23339s7"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:12:13.033Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:12.876Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:12:27.384Z] [INFO] [App] GET /api/companies/current 304 in 30ms :: {"id":1980,"name":"Capital Credit Union","category":"Bank","is_demo":true,"re... [sampled: request 41] 
+[2025-06-08T11:12:30.334Z] [INFO] [WebSocket] Received message from client client-1749381030203-u1e9pgb {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 578, companyId: 1980 }
+[Current Company] Found company: {
+  id: 1980,
+  name: 'Capital Credit Union',
+  onboardingCompleted: true,
+  riskScore: 34,
+  chosenScore: 30,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 578,
+  companyId: 1980,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-08T11:12:30.369Z'
+}
+[2025-06-08T11:12:31.430Z] [INFO] [WebSocket] Received message from client client-1749381031299-vgtbrm5 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:31.264Z","connectionId":"ws_1749381031262_8l9w1q5s6"}
+[2025-06-08T11:12:31.958Z] [INFO] [WebSocket] Received message from client client-1749381031811-y4yb9jo {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:31.786Z","connectionId":"ws_1749381030719_en23339s7"}
+[2025-06-08T11:12:32.501Z] [INFO] [WebSocket] Received message from client client-1749381032381-4znnmd3 {"module":"WebSocket","type":"ping"}
+[2025-06-08T11:12:33.036Z] [INFO] [WebSocket] Received message from client client-1749381032910-k5a4u72 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T11:12:32.876Z","connectionId":"ws_1749381030651_jc7ludwhb"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T11:12:41.100Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381030203-u1e9pgb","code":1001,"reason":"","remainingClients":5}
+[2025-06-08T11:12:41.101Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381030744-gkxvclc","code":1001,"reason":"","remainingClients":4}
+[2025-06-08T11:12:41.102Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381032381-4znnmd3","code":1001,"reason":"","remainingClients":3}
+[2025-06-08T11:12:41.103Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381032910-k5a4u72","code":1001,"reason":"","remainingClients":2}
+[2025-06-08T11:12:41.103Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381031811-y4yb9jo","code":1001,"reason":"","remainingClients":1}
+[2025-06-08T11:12:41.103Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749381031299-vgtbrm5","code":1001,"reason":"","remainingClients":0}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'tGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7',
+  cookies: 'connect.sid=s%3AtGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7.wFZkA4C54aqRMwv2AeL1wvrSvyXE2OVeoiuqx8uhYLM'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 578,
+  email: 'lbrown@creditunion.com',
+  full_name: 'Lauren Brown',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$2B12ptVKSDnXEeMJ0G6chuGffj0MYPBkKwlN3VXFBz.RDVe962cRa',
+  company_id: 1980,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T10:47:05.179Z,
+  updated_at: 2025-06-08T10:47:05.179Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1980
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 578, company_id: 1980, email: 'lbrown@creditunion.com' }
+[2025-06-08T11:12:55.442Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1980,"userId":578}
+[2025-06-08T11:12:55.454Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381175454-qy7v239","clients":1}
+[2025-06-08T11:12:55.471Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1980}
+[Tasks] Automatically unlocking all tasks for company { userId: 578, companyId: 1980, requestedBy: 'automatic_task_unlock' }
+[2025-06-08T11:12:55.472Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1980}
+[2025-06-08T11:12:55.501Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":1980}
+[Tasks] Successfully unlocked all tasks for company: 1980
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 578',
+    condition2: 'tasks.created_by = 578',
+    condition3: "tasks.company_id = 1980 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('lbrown@creditunion.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-08T11:12:55.573Z] [INFO] [WebSocket] Received message from client client-1749381175454-qy7v239 {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-08T11:12:55.416Z"}}
+[2025-06-08T11:12:55.573Z] [INFO] [WebSocket] Authentication from client client-1749381175454-qy7v239 {"module":"WebSocket","hasToken":true}
+[2025-06-08T11:12:55.591Z] [INFO] [App] GET /api/tasks 304 in 150ms :: [] 
+[2025-06-08T11:12:55.653Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 578 
+[2025-06-08T11:12:55.653Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-08T11:12:55.653Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-08T11:12:55.653Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 578 
+[2025-06-08T11:12:55.713Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 578: completed=false, step=0 
+[2025-06-08T11:12:55.744Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 91ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-08T11:... 
+[Relationships] Fetching network for company: 1980
+[Accreditation] Fetching accreditation for company: 1980
+[Network Visualization] Fetching network data for company: 1980
+[2025-06-08T11:12:55.975Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381175975-cmax5hh","clients":2}
+[Accreditation] Found accreditation: {
+  id: 1021,
+  accreditationNumber: 1,
+  issuedDate: 2025-06-08T10:46:52.409Z,
+  expiresDate: null,
+  status: 'ACTIVE',
+  daysUntilExpiration: null,
+  isPermanent: true
+}
+[Relationships] Found network members: { count: 181 }
+[2025-06-08T11:12:56.021Z] [INFO] [App] GET /api/risk/unified 304 in 57ms :: {"thresholds":{"BLOCKED":70,"APPROACHING_BLOCK":50,"MONITORING":30,"STABLE":0}} 
+[2025-06-08T11:12:56.026Z] [INFO] [App] GET /api/companies/1980/accreditation 304 in 84ms :: {"id":1021,"accreditationNumber":1,"issuedDate":"2025-06-08T10:46:52.409Z","e... 
+[2025-06-08T11:12:56.050Z] [INFO] [App] GET /api/relationships 304 in 112ms :: [{"id":2361,"companyId":1980,"relatedCompanyId":488,"relationshipType":"data_... 
+[Network Visualization] Found network relationships: { count: 181 }
+[Network Visualization] Returning visualization data: { centerNode: 'Capital Credit Union', nodeCount: 181 }
+[2025-06-08T11:12:56.086Z] [INFO] [App] GET /api/network/visualization 304 in 123ms :: {"center":{"id":1980,"name":"Capital Credit Union","riskScore":34,"riskBucket... 
+[2025-06-08T11:12:56.475Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381176475-qf5dzup","clients":3}
+[2025-06-08T11:12:56.973Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381176973-3urwg25","clients":4}
+[2025-06-08T11:12:57.104Z] [INFO] [App] [TabTutorials] Using authenticated user ID for mark-seen: 578 
+[2025-06-08T11:12:57.104Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-08T11:12:57.104Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-08T11:12:57.104Z] [INFO] [App] [TabTutorials] Marking tutorial as seen for tab: dashboard (raw: dashboard), user: 578 
+[2025-06-08T11:12:57.164Z] [INFO] [App] [TabTutorials] Updated last seen timestamp for tutorial dashboard for user 578 
+[2025-06-08T11:12:57.195Z] [INFO] [App] POST /api/user-tab-tutorials/mark-seen 200 in 91ms :: {"success":true,"message":"Tutorial marked as seen successfully","tutorialSta... 
+[2025-06-08T11:12:57.399Z] [INFO] [App] [TabTutorials] Status request for tab "dashboard" from authenticated user ID: 578 
+[2025-06-08T11:12:57.399Z] [INFO] [App] [TabTutorials] Normalizing tab name from 'dashboard' to canonical form 
+[2025-06-08T11:12:57.399Z] [INFO] [App] [TabTutorials] Tab name already in canonical form: 'dashboard' 
+[2025-06-08T11:12:57.399Z] [INFO] [App] [TabTutorials] Checking tutorial status for tab: dashboard (raw: dashboard), user: 578 
+[2025-06-08T11:12:57.459Z] [INFO] [App] [TabTutorials] Retrieved tutorial status for dashboard for user 578: completed=false, step=0 
+[2025-06-08T11:12:57.470Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381177470-1zrb105","clients":5}
+[2025-06-08T11:12:57.490Z] [INFO] [App] GET /api/user-tab-tutorials/dashboard/status 200 in 92ms :: {"exists":true,"completed":false,"currentStep":0,"lastSeenAt":"2025-06-08T11:... 
+[2025-06-08T11:12:57.594Z] [INFO] [WebSocket] Received message from client client-1749381177470-1zrb105 {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749381174636_foh77vd5k","timestamp":"2025-06-08T11:12:57.433Z"}
+[2025-06-08T11:12:57.595Z] [INFO] [WebSocket] Authentication from client client-1749381177470-1zrb105 {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-08T11:12:58.099Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749381178099-e3thky7","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'tGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7',
+  cookies: 'connect.sid=s%3AtGeB_GlMJLJk8Ntz7kR4Mvojr8L4pdJ7.wFZkA4C54aqRMwv2AeL1wvrSvyXE2OVeoiuqx8uhYLM'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 578,
+  email: 'lbrown@creditunion.com',
+  full_name: 'Lauren Brown',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$2B12ptVKSDnXEeMJ0G6chuGffj0MYPBkKwlN3VXFBz.RDVe962cRa',
+  company_id: 1980,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T10:47:05.179Z,
+  updated_at: 2025-06-08T10:47:05.179Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1980
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 1980
+[2025-06-08T11:12:58.661Z] [INFO] [WebSocket] Received message from client client-1749381178099-e3thky7 {"module":"WebSocket","type":"authenticate","userId":578,"companyId":1980,"clientId":"ws_1749381175935_gnas4667x","timestamp":"2025-06-08T11:12:58.501Z"}
+[2025-06-08T11:12:58.661Z] [INFO] [WebSocket] Authentication from client client-1749381178099-e3thky7 {"module":"WebSocket","userId":578,"companyId":1980,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active

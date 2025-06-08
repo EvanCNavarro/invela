@@ -78,7 +78,7 @@ export function useUnifiedRiskData(options: UseUnifiedRiskDataOptions = {}) {
   const url = `/api/risk/unified${queryString ? `?${queryString}` : ''}`;
 
   return useQuery<UnifiedRiskResponse>({
-    queryKey: ['/api/risk/unified', { companyId, includeNetwork, includeDemo }],
+    queryKey: [url, { companyId, includeNetwork, includeDemo }],
     enabled,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     refetchOnWindowFocus: false,
