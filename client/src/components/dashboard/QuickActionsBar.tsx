@@ -21,7 +21,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Users, UserPlus } from "lucide-react";
+import { Building2, BarChart3, Users, UserPlus, Grid3X3 } from "lucide-react";
 
 interface QuickActionsBarProps {
   companyCategory?: string;
@@ -61,7 +61,10 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
     <>
       <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-900">Quick Actions</h3>
+          <div className="flex items-center gap-2">
+            <Grid3X3 className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-medium text-gray-900">Quick Actions</h3>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -71,7 +74,7 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
             onClick={handleCompanyProfile}
           >
             <Building2 className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-900">View Company Profile</span>
+            <span className="font-medium text-sm text-gray-900">Company Profile</span>
           </Button>
 
           <Button
@@ -89,7 +92,7 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
             onClick={handleNetwork}
           >
             <Users className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-900">View Network</span>
+            <span className="font-medium text-sm text-gray-900">Managed Network</span>
           </Button>
 
           <Button
