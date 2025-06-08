@@ -182,33 +182,56 @@ export class UnifiedRiskCalculationService {
   /**
    * Get risk data for all companies in the network
    * @param includeDemo - Whether to include demo companies
+   * @param userCompanyId - User's company ID for network filtering
    * @returns Array of unified risk data
    */
-  static async getNetworkRiskData(includeDemo: boolean = true): Promise<UnifiedRiskData[]> {
+  static async getNetworkRiskData(includeDemo: boolean = true, userCompanyId?: number): Promise<UnifiedRiskData[]> {
     try {
-      const cacheKey = `network_${includeDemo}`;
+      const cacheKey = `network_${includeDemo}_${userCompanyId || 'all'}`;
       const cached = this.getCachedData(cacheKey);
       if (cached) {
         return cached;
       }
 
-      const whereConditions = includeDemo 
-        ? undefined 
-        : and(eq(companies.is_demo, false));
+      let companiesData;
 
-      const companiesData = await db.query.companies.findMany({
-        where: whereConditions,
-        columns: {
-          id: true,
-          name: true,
-          risk_score: true,
-          previous_risk_score: true,
-          category: true,
-          is_demo: true,
-          updated_at: true
-        },
-        orderBy: (companies, { desc }) => [desc(companies.risk_score)]
-      });
+      if (userCompanyId) {
+        // Get companies in user's network relationships
+        const networkQuery = `
+          SELECT DISTINCT c.id, c.name, c.risk_score, c.previous_risk_score, 
+                 c.category, c.is_demo, c.updated_at
+          FROM companies c
+          INNER JOIN relationships r ON (
+            (r.company_id = ${userCompanyId} AND r.related_company_id = c.id) OR
+            (r.related_company_id = ${userCompanyId} AND r.company_id = c.id)
+          )
+          WHERE c.id != ${userCompanyId}
+          ${includeDemo ? '' : 'AND c.is_demo = false'}
+          ORDER BY c.risk_score DESC NULLS LAST
+        `;
+        
+        const result = await db.execute(sql.raw(networkQuery));
+        companiesData = result;
+      } else {
+        // Fallback to all companies if no user context
+        const whereConditions = includeDemo 
+          ? undefined 
+          : and(eq(companies.is_demo, false));
+
+        companiesData = await db.query.companies.findMany({
+          where: whereConditions,
+          columns: {
+            id: true,
+            name: true,
+            risk_score: true,
+            previous_risk_score: true,
+            category: true,
+            is_demo: true,
+            updated_at: true
+          },
+          orderBy: (companies, { desc }) => [desc(companies.risk_score)]
+        });
+      }
 
       const networkRiskData = companiesData.map(company => {
         const currentScore = company.risk_score || 0;
