@@ -341,8 +341,8 @@ const StepImage: React.FC<{
         alt={alt || 'Onboarding step image'}
         className="w-full h-full object-cover rounded-xl shadow-lg border border-slate-200/60"
         skeletonVariant="neutral"
-        priority="lazy"
-        enableLogging={false}
+        priority="eager"
+        enableLogging={true}
         onError={(error) => console.warn(`Onboarding image load failed: ${error}`)}
       />
     ) : (
