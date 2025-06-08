@@ -24,19 +24,32 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 interface BlockCompanyButtonProps {
-  companyId: number;
-  companyName: string;
+  companyId?: number;
+  companyName?: string;
   currentStatus?: 'Blocked' | 'Approaching Block' | 'Monitoring' | 'Stable';
+  className?: string;
 }
 
 export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
   companyId,
   companyName,
-  currentStatus = 'Stable'
+  currentStatus = 'Stable',
+  className
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Early return guard for invalid props - industry standard pattern
+  if (!companyId || !companyName) {
+    console.log('[BlockCompanyButton] Invalid props provided, skipping render:', {
+      hasCompanyId: !!companyId,
+      hasCompanyName: !!companyName,
+      companyId,
+      companyName
+    });
+    return null;
+  }
 
   // Block/unblock company mutation
   const blockMutation = useMutation({
@@ -80,7 +93,16 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
   const action = isBlocked ? 'unblock' : 'block';
   const actionLabel = isBlocked ? 'Unblock Company' : 'Block Company';
 
-  console.log(`[BlockCompanyButton] Rendering for company ${companyId} (${companyName}) with status: ${currentStatus}`);
+  // Comprehensive debug logging for monitoring
+  console.log(`[BlockCompanyButton] Rendering for company ${companyId} (${companyName}) with status: ${currentStatus}`, {
+    companyId,
+    companyName,
+    currentStatus,
+    isBlocked,
+    action,
+    actionLabel,
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -88,7 +110,7 @@ export const BlockCompanyButton: React.FC<BlockCompanyButtonProps> = ({
         <Button
           variant={isBlocked ? "default" : "destructive"}
           size="sm"
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${className || ''}`}
           disabled={blockMutation.isPending}
         >
           {isBlocked ? (
