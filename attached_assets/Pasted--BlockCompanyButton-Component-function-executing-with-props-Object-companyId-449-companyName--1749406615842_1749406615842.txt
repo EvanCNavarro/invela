@@ -1,0 +1,29 @@
+[BlockCompanyButton] Component function executing with props: 
+Object {companyId: 449, companyName: "RealEstate TokenFi", currentStatus: "Monitoring", timestamp: "2025-06-08T18:16:49.480Z"}
+[BlockCompanyButton] Rendering for company 449 (RealEstate TokenFi) with status: Monitoring 
+Object {companyId: 449, companyName: "RealEstate TokenFi", currentStatus: "Monitoring", isBlocked: false, action: "block", …}
+[Router] Rendering company profile page for ID: 449
+[Router Debug] Full location when rendering company profile: /network/company/449
+[Router Debug] Query parameters present: none
+[Company Profile Debug] Received company data: 
+Object {id: 449, name: "RealEstate TokenFi", description: "Blockchain-based real estate investment and tokenization platform.", category: "FinTech", risk_score: 59, …}
+[Company Profile Debug] Risk fields analysis: 
+Object {risk_score: 59, riskScore: undefined, chosen_score: 61, risk_clusters: {…}, finalRiskValue: 59}
+[Company Profile Debug] Business fields check: 
+Object {products_services: "Real estate tokenization, fractional ownership, property investments", market_position: "growth", founders_and_leadership: "Jennifer Lee (CEO), Carlos Santos (CTO), Mark Thompson (Chief Legal Officer)", key_clients_partners: "Real estate funds, institutional investors", investors: "Series A: Andreessen Horowitz, Digital Currency Group", …}
+[Users Debug] Users extracted: 
+Object {usersResponse: undefined, usersCount: 0, firstUser: undefined, activeTab: "overview", searchTerm: ""}
+[Users Debug] Initializing Fuse with 0 users
+[Users Debug] No users available for filtering
+[BlockCompanyButton] Component function executing with props: 
+Object {companyId: 449, companyName: "RealEstate TokenFi", currentStatus: "Monitoring", timestamp: "2025-06-08T18:16:52.481Z"}
+[BlockCompanyButton] Rendering for company 449 (RealEstate TokenFi) with status: Monitoring 
+Object {companyId: 449, companyName: "RealEstate TokenFi", currentStatus: "Monitoring", isBlocked: false, action: "block", …}
+action: "block"
+actionLabel: "Block Company"
+companyId: 449
+companyName: "RealEstate TokenFi"
+currentStatus: "Monitoring"
+isBlocked: false
+timestamp: "2025-06-08T18:16:52.481Z"
+[[Prototype]]: Object
