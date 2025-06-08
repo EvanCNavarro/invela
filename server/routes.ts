@@ -3265,6 +3265,31 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
+  // Get company risk status
+  app.get('/api/companies/:id/risk-status', optionalAuth, async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ error: 'Invalid company ID' });
+      }
+
+      const riskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      if (!riskData) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+
+      res.json({
+        status: riskData.status,
+        currentScore: riskData.currentScore,
+        trend: riskData.trend,
+        daysInStatus: riskData.daysInStatus
+      });
+    } catch (error) {
+      console.error('Error fetching company risk status:', error);
+      res.status(500).json({ error: 'Failed to fetch risk status' });
+    }
+  });
+
   // Block/unblock a company (set risk status override)
   app.patch("/api/companies/:id/block", requireAuth, async (req, res) => {
     try {
