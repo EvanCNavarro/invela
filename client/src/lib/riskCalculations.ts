@@ -34,6 +34,7 @@ export interface CompanyRiskData {
   currentScore: number;
   previousScore: number;
   category: string;
+  status: RiskMonitoringStatus;
 }
 
 /**
