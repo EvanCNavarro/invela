@@ -62,7 +62,7 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
       <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Grid3X3 className="h-4 w-4 text-blue-600" />
+            <Grid3X3 className="h-4 w-4 text-gray-600" />
             <h3 className="text-sm font-medium text-gray-900">Quick Actions</h3>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function QuickActionsBar({ companyCategory, companyId }: QuickActionsBarP
             onClick={handleInviteRecipient}
           >
             <UserPlus className="h-4 w-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-900">Invite Data Recipient</span>
+            <span className="font-medium text-sm text-gray-900">Invite Recipient</span>
           </Button>
         </div>
       </div>
