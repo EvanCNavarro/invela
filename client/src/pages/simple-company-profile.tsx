@@ -394,6 +394,16 @@ export default function SimpleCompanyProfile() {
                     </span>
                   </div>
                 </div>
+
+                {/* Block Company Button */}
+                {company?.id && company?.name && (
+                  <BlockCompanyButton 
+                    companyId={company.id}
+                    companyName={company.name}
+                    currentStatus={riskStatus?.status || 'Stable'}
+                    className="h-16"
+                  />
+                )}
               </div>
             </div>
           </div>
