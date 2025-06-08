@@ -45,7 +45,6 @@ import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
-import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
 import { QuickActionsBar } from "@/components/dashboard/QuickActionsBar";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
@@ -151,7 +150,6 @@ const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
  * Administrative dashboard with system overview and quick actions
  */
 const INVELA_DEFAULT_WIDGETS: DashboardWidgets = {
-  quickActions: true, // Administrative quick actions for platform management
   companySnapshot: true,
   networkVisualization: true,
   riskRadar: false, // Risk Radar not applicable for Invela admin users
@@ -405,7 +403,7 @@ export default function DashboardPage(): JSX.Element {
           {/* Main Dashboard Content */}
           <div className="space-y-6">
             {/* Quick Actions Bar - Full width for data providers */}
-            <QuickActionsBar companyCategory={companyData?.category} />
+            <QuickActionsBar companyCategory={companyData?.category} companyId={companyData?.id} />
             
             {/* Debug logging moved to useEffect for proper React rendering */}
             
