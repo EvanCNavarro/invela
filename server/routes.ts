@@ -3300,7 +3300,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
       
       const companyId = parseInt(req.params.id);
-      const { action, reason } = req.body;
+      
+      // Handle both direct body format and nested body format
+      let action, reason;
+      if (req.body.body && typeof req.body.body === 'object') {
+        // Nested format: { body: { action: 'block', reason: '...' } }
+        ({ action, reason } = req.body.body);
+        console.log(`[BLOCK-API] Using nested body format:`, { action, reason });
+      } else {
+        // Direct format: { action: 'block', reason: '...' }
+        ({ action, reason } = req.body);
+        console.log(`[BLOCK-API] Using direct body format:`, { action, reason });
+      }
       
       if (isNaN(companyId)) {
         return res.status(400).json({
@@ -3392,7 +3403,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
       
       const companyId = parseInt(req.params.id);
-      const { action, reason } = req.body;
+      
+      // Handle both direct body format and nested body format
+      let action, reason;
+      if (req.body.body && typeof req.body.body === 'object') {
+        // Nested format: { body: { action: 'block', reason: '...' } }
+        ({ action, reason } = req.body.body);
+        console.log(`[BLOCK-API] Using nested body format:`, { action, reason });
+      } else {
+        // Direct format: { action: 'block', reason: '...' }
+        ({ action, reason } = req.body);
+        console.log(`[BLOCK-API] Using direct body format:`, { action, reason });
+      }
       
       if (isNaN(companyId)) {
         return res.status(400).json({

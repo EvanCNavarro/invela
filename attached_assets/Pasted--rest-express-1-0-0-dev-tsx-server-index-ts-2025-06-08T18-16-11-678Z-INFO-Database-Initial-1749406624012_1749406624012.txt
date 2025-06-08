@@ -1,0 +1,307 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+[2025-06-08T18:16:11.678Z] [INFO] [Database] Initializing database connection with Neon PostgreSQL optimizations {"module":"Database","poolSize":3,"idleTimeout":600000,"connectionTimeout":180000}
+[2025-06-08T18:16:11.681Z] [INFO] [Database] Database configuration completed successfully {"module":"Database","schemasLoaded":109,"timestamp":"2025-06-08T18:16:11.681Z"}
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[OpenAI] Service initialized with API key: API key is set
+[2025-06-08T18:16:11.909Z] [INFO] [NeonConnectionService] Initializing Neon Connection Service {"module":"NeonConnectionService"}
+[WebSocketService] Initialized in fallback mode (WebSocket server not available)
+[2025-06-08T18:16:12.081Z] [INFO] [App] [PROD-DEBUG] Starting server initialization sequence 
+[2025-06-08T18:16:12.081Z] [INFO] [App] [PROD-DEBUG] Beginning API routes registration... 
+[Routes] Registering demo API routes with priority...
+[Routes] Demo API routes registered successfully with priority
+[Routes] Registering company name validation API...
+[Routes] Company name validation API registered successfully
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ProductionConfig] Applying Replit-optimized production configuration... 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ProductionConfig] Applied memory optimization: max-old-space-size=1024MB 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ProductionConfig] Enabled package layer optimization for deployment size reduction 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ProductionConfig] Production configuration applied successfully 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ProductionConfig] All Replit deployment optimizations applied successfully 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ENV] Server will listen on PORT=5000 (forced production mode) 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ENV] Environment=production (forced production) 
+[2025-06-08T18:16:12.086Z] [INFO] [App] [ENV] Deployment approach: Replit forced configuration for consistent Cloud Run deployment 
+[2025-06-08T18:16:12.089Z] [INFO] [App] Server running on 0.0.0.0:5000 
+[2025-06-08T18:16:12.089Z] [INFO] [App] Environment: production 
+[Deployment] Server running on 0.0.0.0:5000
+[Deployment] Environment: production
+[Deployment] Port forwarding: Custom port: 5000
+[Deployment] Production mode: Optimized for deployment
+[2025-06-08T18:16:12.089Z] [INFO] [App] Starting periodic task reconciliation system... 
+[2025-06-08T18:16:12.090Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system stopped {"module":"PeriodicTaskReconciliation","status":"inactive"}
+[2025-06-08T18:16:12.090Z] [INFO] [PeriodicTaskReconciliation] Periodic reconciliation system started {"module":"PeriodicTaskReconciliation","intervalMs":300000,"cacheCleanupIntervalMs":900000,"status":"active"}
+[2025-06-08T18:16:12.090Z] [INFO] [App] Task reconciliation system initialized successfully 
+[Routes] Registering demo cleanup API...
+[Routes] Demo cleanup API registered successfully
+[2025-06-08T18:16:12.097Z] [INFO] [App] [KY3P-BATCH-UPDATE] Registering KY3P batch update routes 
+[2025-06-08T18:16:12.097Z] [INFO] [App] Registering KY3P batch update routes 
+[2025-06-08T18:16:12.097Z] [INFO] [App] [UnifiedKY3P] Registering unified KY3P update routes 
+[Routes] Registered KY3P field key router
+[2025-06-08T18:16:12.098Z] [INFO] [App] Registering KY3P field update routes 
+[2025-06-08T18:16:12.099Z] [INFO] [App] [OpenBankingRoutes] Setting up routes... 
+[Routes] Setting up transaction-based unified form submission router
+[Routes] Successfully registered transaction-based unified form submission router
+[Routes] Setting up unified form submission router
+[Routes] Successfully registered unified form submission router
+[Routes] Setting up transactional form submission router
+[Routes] Successfully registered transactional form submission router
+[Routes] Route registration completed: 16 modules initialized [DemoAPI, CompanyNameValidation, DemoCleanup, CompanySearch, KYB, KY3P-SubmissionFix, TaskProgress, UnifiedFormUpdate, KY3P-Fixed, KY3P-DemoAutofill, KY3P-BatchUpdate, KY3P-UnifiedUpdate, KY3P-FieldKey, UnifiedClearFields, CompanyUsers, TaskBroadcast]
+[2025-06-08T18:16:12.101Z] [INFO] [App] [ServerStartup] API routes registration completed 
+[2025-06-08T18:16:12.101Z] [INFO] [App] [PROD-DEBUG] ✓ All API routes now registered and have priority 
+[2025-06-08T18:16:12.101Z] [INFO] [App] [WebSocket] Setting up unified WebSocket server on path /ws 
+[2025-06-08T18:16:12.101Z] [INFO] [WebSocket] Unified WebSocket server initialized successfully {"module":"WebSocket","clients":0,"path":"/ws","id":"wwx1u1","timestamp":"2025-06-08T18:16:12.101Z"}
+[2025-06-08T18:16:12.101Z] [INFO] [App] [WebSocket] Unified WebSocket server initialized successfully 
+[2025-06-08T18:16:12.102Z] [INFO] [App] [WebSocket] Unified WebSocket server handles form submission broadcasting 
+[2025-06-08T18:16:12.102Z] [INFO] [App] [WebSocket] Skipping redundant WebSocket server initialization for deployment compatibility 
+[2025-06-08T18:16:12.102Z] [INFO] [App] [ServerStartup] WebSocket server initialized with unified implementation 
+[2025-06-08T18:16:12.102Z] [INFO] [App] [TaskWebSocket] WebSocket server registered with unified implementation 
+[2025-06-08T18:16:12.102Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-update utility 
+[2025-06-08T18:16:12.102Z] [INFO] [TaskBroadcast] WebSocket server reference established {"module":"TaskBroadcast"}
+[2025-06-08T18:16:12.102Z] [INFO] [TaskBroadcast] WebSocket server initialized {"module":"TaskBroadcast","connectedClients":0,"status":"active"}
+[2025-06-08T18:16:12.103Z] [INFO] [App] [ServerStartup] WebSocket server registered with task-broadcast utility 
+[2025-06-08T18:16:12.103Z] [INFO] [App] [PROD-DEBUG] Now setting up frontend serving (should be AFTER API routes) 
+[2025-06-08T18:16:12.103Z] [INFO] [App] [PROD-DEBUG] Development mode: Setting up Vite development server 
+[2025-06-08T18:16:12.104Z] [INFO] [App] [PROD-DEBUG] ✓ Development server configured with API route priority verified 
+[2025-06-08T18:16:13.610Z] [INFO] [App] [ServerStartup] WebSocket server active with 0 connected clients 
+[2025-06-08T18:16:15.982Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T18:16:16.737Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T18:16:17.584Z] [INFO] [Database] Successfully established new database connection {"module":"Database"}
+[2025-06-08T18:16:17.594Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406577594-hpwi6ya","clients":1}
+[2025-06-08T18:16:17.606Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406577606-vtah50j","clients":2}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: false,
+  hasUser: false,
+  hasSession: true,
+  sessionId: 'Qeyd16rqCR1HtMyfs3z-DNY1fvnpO6Cl',
+  cookies: undefined
+}
+[AUTH-DEBUG] Authentication failed for /api/user
+[2025-06-08T18:16:17.637Z] [INFO] [WebSocket] Received message from client client-1749406577594-hpwi6ya {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-08T18:16:17.636Z"}}
+[2025-06-08T18:16:17.637Z] [INFO] [WebSocket] Authentication from client client-1749406577594-hpwi6ya {"module":"WebSocket","hasToken":true}
+[2025-06-08T18:16:17.713Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406577713-agt7rhl","clients":3}
+[2025-06-08T18:16:18.017Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749406577713-agt7rhl","code":1001,"reason":"","remainingClients":2}
+[2025-06-08T18:16:18.017Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749406577606-vtah50j","code":1001,"reason":"","remainingClients":1}
+[2025-06-08T18:16:18.017Z] [INFO] [WebSocket] Client disconnected {"module":"WebSocket","clientId":"client-1749406577594-hpwi6ya","code":1001,"reason":"","remainingClients":0}
+[2025-06-08T18:16:22.091Z] [INFO] [App] Running background health checks... 
+[2025-06-08T18:16:22.091Z] [StartupChecks] Running application startup health checks... 
+[2025-06-08T18:16:22.091Z] [StartupChecks] Database health check attempt 1/3 
+[2025-06-08T18:16:22.092Z] [INFO] [NeonConnectionService] Creating minimal connection pool for Neon PostgreSQL {"module":"NeonConnectionService"}
+[2025-06-08T18:16:22.290Z] [INFO] [NeonConnectionService] New client connected to the pool {"module":"NeonConnectionService"}
+[2025-06-08T18:16:22.319Z] [INFO] [NeonConnectionService] Connection pool initialized successfully {"module":"NeonConnectionService"}
+[2025-06-08T18:16:22.347Z] [DBConnectionService] Database connection check successful 
+[2025-06-08T18:16:22.347Z] [StartupChecks] Database health check passed 
+[2025-06-08T18:16:22.347Z] [StartupChecks] All startup health checks passed! 
+[2025-06-08T18:16:22.347Z] [INFO] [App] All background health checks passed successfully. 
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'qXDPh0GsEoklXRhDIfsfIQ7ebe06Vcxp',
+  cookies: 'connect.sid=s%3AqXDPh0GsEoklXRhDIfsfIQ7ebe06Vcxp.mu84GTguyBj6iWcajJMhweENrn13I6FtdqGz6HlATL4'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 581,
+  email: 'lmishra@unitedcreditunion.com',
+  full_name: 'Layla Mishra',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$5Cdjs62lmHXsw3yCT2DsYuJazXBLj6icOMLsRgNXivSszaozvFfbu',
+  company_id: 1983,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T15:59:15.989Z,
+  updated_at: 2025-06-08T15:59:15.989Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1983
+[PROD-DEBUG] /api/tasks request received: GET - Route handler active
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 581, company_id: 1983, email: 'lmishra@unitedcreditunion.com' }
+[2025-06-08T18:16:27.336Z] [INFO] [App] Performing dynamic task unlocking check for company {"companyId":1983,"userId":581}
+[Accreditation] Fetching accreditation for company: 449
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Fetching company for user: { userId: 581, companyId: 1983 }
+[2025-06-08T18:16:27.354Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406587354-c3b0p3w","clients":1}
+[2025-06-08T18:16:27.387Z] [INFO] [App] No completed KYB tasks found, skipping security task unlock check {"companyId":1983}
+[Tasks] Automatically unlocking all tasks for company { userId: 581, companyId: 1983, requestedBy: 'automatic_task_unlock' }
+[2025-06-08T18:16:27.389Z] [INFO] [App] [TaskDependencies] Unlocking ALL tasks for company {"companyId":1983}
+[Accreditation] Found accreditation: {
+  id: 12,
+  accreditationNumber: 1,
+  issuedDate: 2025-05-27T11:16:01.247Z,
+  expiresDate: 2026-05-27T11:16:01.247Z,
+  status: 'ACTIVE',
+  daysUntilExpiration: 353,
+  isPermanent: false
+}
+[Current Company] Found company: {
+  id: 1983,
+  name: 'United Credit Union',
+  onboardingCompleted: true,
+  riskScore: 3,
+  chosenScore: 29,
+  isDemo: true
+}
+[Current Company] Onboarding status check: {
+  userId: 581,
+  companyId: 1983,
+  userOnboardingStatus: true,
+  companyOnboardingStatus: true,
+  timestamp: '2025-06-08T18:16:27.397Z'
+}
+[Company Profile] Retrieved profile for company 449: RealEstate TokenFi
+[Company Profile Debug] API returning data: {
+  id: 449,
+  name: 'RealEstate TokenFi',
+  hasBusinessFields: {
+    products_services: true,
+    market_position: true,
+    founders_and_leadership: true,
+    key_clients_partners: true,
+    investors: true,
+    funding_stage: true,
+    certifications_compliance: true
+  },
+  businessFieldValues: {
+    products_services: 'Real estate tokenization, fractional ownership, property investments',
+    market_position: 'growth',
+    founders_and_leadership: 'Jennifer Lee (CEO), Carlos Santos (CTO), Mark Thompson (Chief Legal Officer)',
+    key_clients_partners: 'Real estate funds, institutional investors',
+    investors: 'Series A: Andreessen Horowitz, Digital Currency Group',
+    funding_stage: 'Series A',
+    certifications_compliance: 'SEC registered, state real estate licenses, SOC 2 Type II'
+  }
+}
+[2025-06-08T18:16:27.442Z] [INFO] [App] [TaskDependencies] No tasks found to unlock {"companyId":1983}
+[Tasks] Successfully unlocked all tasks for company: 1983
+[2025-06-08T18:16:27.446Z] [INFO] [App] GET /api/companies/449/accreditation 304 in 109ms :: {"id":12,"accreditationNumber":1,"issuedDate":"2025-05-27T11:16:01.247Z","exp... 
+[2025-06-08T18:16:27.456Z] [INFO] [App] GET /api/companies/current 304 in 118ms :: {"id":1983,"name":"United Credit Union","category":"Bank","is_demo":true,"rev... 
+[2025-06-08T18:16:27.470Z] [INFO] [App] GET /api/companies/449/profile 304 in 110ms :: {"id":449,"name":"RealEstate TokenFi","description":"Blockchain-based real es... 
+[2025-06-08T18:16:27.473Z] [INFO] [App] GET /api/companies/449/risk-unified 304 in 109ms :: {"id":449,"name":"RealEstate TokenFi","currentScore":59,"previousScore":73.83... 
+[2025-06-08T18:16:27.474Z] [INFO] [WebSocket] Received message from client client-1749406587354-c3b0p3w {"module":"WebSocket","type":"authenticate","data":{"timestamp":"2025-06-08T18:16:27.330Z"}}
+[2025-06-08T18:16:27.474Z] [INFO] [WebSocket] Authentication from client client-1749406587354-c3b0p3w {"module":"WebSocket","hasToken":true}
+[Tasks] KYB tasks found: { count: 0 }
+[Tasks] Query conditions: {
+  conditions: {
+    condition1: 'tasks.assigned_to = 581',
+    condition2: 'tasks.created_by = 581',
+    condition3: "tasks.company_id = 1983 AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'",
+    condition4: "tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('lmishra@unitedcreditunion.com')"
+  }
+}
+[Tasks] Tasks found: { count: 0 }
+[2025-06-08T18:16:27.545Z] [INFO] [App] GET /api/tasks 304 in 212ms :: [] 
+[Company Logo] Fetching logo for company ID: 449
+[Company Logo] No logo assigned for company: RealEstate TokenFi (449)
+[2025-06-08T18:16:27.832Z] [WARN] [App] GET /api/companies/449/logo 404 in 60ms :: {"message":"No logo assigned to company","code":"LOGO_NOT_ASSIGNED"} 
+[2025-06-08T18:16:27.855Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406587855-n7l4joo","clients":2}
+[2025-06-08T18:16:28.362Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406588362-zet2txg","clients":3}
+[2025-06-08T18:16:28.916Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406588916-l4kz4ed","clients":4}
+[2025-06-08T18:16:29.506Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406589506-zmhmkbp","clients":5}
+[2025-06-08T18:16:29.630Z] [INFO] [WebSocket] Received message from client client-1749406589506-zmhmkbp {"module":"WebSocket","type":"authenticate","userId":null,"companyId":null,"clientId":"ws_1749406586562_x4q1okzqs","timestamp":"2025-06-08T18:16:29.482Z"}
+[2025-06-08T18:16:29.631Z] [INFO] [WebSocket] Authentication from client client-1749406589506-zmhmkbp {"module":"WebSocket","userId":null,"companyId":null,"hasToken":true}
+[2025-06-08T18:16:30.003Z] [INFO] [WebSocket] Client connected {"module":"WebSocket","clientId":"client-1749406590003-ju3d6v8","clients":6}
+[AUTH-DEBUG] /api/user request: {
+  isAuthenticated: true,
+  hasUser: true,
+  hasSession: true,
+  sessionId: 'qXDPh0GsEoklXRhDIfsfIQ7ebe06Vcxp',
+  cookies: 'connect.sid=s%3AqXDPh0GsEoklXRhDIfsfIQ7ebe06Vcxp.mu84GTguyBj6iWcajJMhweENrn13I6FtdqGz6HlATL4'
+}
+[AUTH-DEBUG] Authentication successful for /api/user, full user object: {
+  id: 581,
+  email: 'lmishra@unitedcreditunion.com',
+  full_name: 'Layla Mishra',
+  first_name: null,
+  last_name: null,
+  password: '$2b$10$5Cdjs62lmHXsw3yCT2DsYuJazXBLj6icOMLsRgNXivSszaozvFfbu',
+  company_id: 1983,
+  onboarding_user_completed: true,
+  is_demo_user: true,
+  demo_session_id: null,
+  demo_created_at: null,
+  demo_persona_type: 'data-provider',
+  demo_expires_at: null,
+  demo_cleanup_eligible: true,
+  demo_last_login: null,
+  created_at: 2025-06-08T15:59:15.989Z,
+  updated_at: 2025-06-08T15:59:15.989Z
+}
+[AUTH-DEBUG] User keys: [
+  'id',
+  'email',
+  'full_name',
+  'first_name',
+  'last_name',
+  'password',
+  'company_id',
+  'onboarding_user_completed',
+  'is_demo_user',
+  'demo_session_id',
+  'demo_created_at',
+  'demo_persona_type',
+  'demo_expires_at',
+  'demo_cleanup_eligible',
+  'demo_last_login',
+  'created_at',
+  'updated_at'
+]
+[AUTH-DEBUG] User company_id: 1983
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T18:16:30.552Z] [INFO] [WebSocket] Received message from client client-1749406590003-ju3d6v8 {"module":"WebSocket","type":"authenticate","userId":581,"companyId":1983,"clientId":"ws_1749406587866_jc5ifsopz","timestamp":"2025-06-08T18:16:30.410Z"}
+[2025-06-08T18:16:30.552Z] [INFO] [WebSocket] Authentication from client client-1749406590003-ju3d6v8 {"module":"WebSocket","userId":581,"companyId":1983,"hasToken":true}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[Current Company] Using cached company data: 1983
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T18:16:42.121Z] [INFO] [PeriodicTaskReconciliation] Reconciling batch of tasks {"module":"PeriodicTaskReconciliation","batchSize":3,"taskIds":[1135,1136,1134]}
+[Task Progress] Calculated progress for task 1135 (ky3p): 0/0 = 0%
+[Task Progress] Calculated progress for task 1136 (open_banking): 0/44 = 0%
+[Task Progress] Calculated progress for task 1134 (company_kyb): 0/30 = 0%
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[BLOCK-API] Received POST request to block/unblock company 449 {
+  body: {
+    method: 'PATCH',
+    body: { action: 'block', reason: 'Manual block from company profile' }
+  },
+  companyId: '449',
+  headers: 'application/json'
+}
+[2025-06-08T18:16:49.499Z] [WARN] [App] POST /api/companies/449/block 400 in 32ms :: {"message":"Invalid action. Must be 'block' or 'unblock'","code":"INVALID_ACT... 
+[2025-06-08T18:16:50.128Z] [INFO] [WebSocket] Received message from client client-1749406590003-ju3d6v8 {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T18:16:49.985Z","connectionId":"ws_1749406587866_jc5ifsopz"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T18:16:54.685Z] [INFO] [App] GET /api/companies/current 304 in 32ms :: {"id":1983,"name":"United Credit Union","category":"Bank","is_demo":true,"rev... [sampled: request 11] 
+[2025-06-08T18:16:57.475Z] [INFO] [WebSocket] Received message from client client-1749406587354-c3b0p3w {"module":"WebSocket","type":"ping"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
+[2025-06-08T18:16:58.481Z] [INFO] [WebSocket] Received message from client client-1749406588362-zet2txg {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T18:16:58.339Z","connectionId":"ws_1749406588337_1q3fs8av8"}
+[2025-06-08T18:16:59.035Z] [INFO] [WebSocket] Received message from client client-1749406588916-l4kz4ed {"module":"WebSocket","type":"ping","timestamp":"2025-06-08T18:16:58.893Z","connectionId":"ws_1749406587833_kr15bvoab"}
+[PROD-DEBUG] /api/companies/current request received: GET - Route handler active
