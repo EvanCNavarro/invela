@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'company-blocking-functionality-fix-2025-06-08',
+    date: '2025-06-08',
+    type: 'fix',
+    title: 'Company Blocking Functionality Fix',
+    description: 'Resolved API request body formatting issues that prevented company blocking operations from working correctly',
+    details: [
+      'Fixed server endpoints to handle nested request body format from frontend API client',
+      'Implemented dual PATCH and POST endpoints for backward compatibility',
+      'Added intelligent body format detection for direct and nested data structures',
+      'Enhanced debugging with comprehensive logging and error handling',
+      'Positioned Block Company button above header with secondary outline styling',
+      'Resolved TypeScript prop type errors in BlockCompanyButton component',
+      'Improved cache invalidation after blocking/unblocking operations'
+    ],
+    version: '2.1.8',
+    audience: 'product'
+  },
+  {
     id: 'unified-risk-calculation-system-2025-06-08',
     date: '2025-06-08',
     type: 'enhancement',
