@@ -259,9 +259,9 @@ export class UnifiedRiskCalculationService {
         const trend = this.calculateRiskTrend(currentScore, previousScore);
         const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
 
-        // Debug logging for first few companies to verify status calculation
-        if (company.id % 50 === 0) {
-          console.log(`[UnifiedRisk] Company ${company.name} (ID: ${company.id}): score=${currentScore}, status=${status}, thresholds=${JSON.stringify(this.RISK_THRESHOLDS)}`);
+        // Debug logging for status calculation validation
+        if (currentScore < 35) {
+          console.log(`[UnifiedRisk] BLOCKED Company: ${company.name} (ID: ${company.id}) score=${currentScore}, status=${status}`);
         }
 
         return {
@@ -278,7 +278,10 @@ export class UnifiedRiskCalculationService {
         };
       });
 
-      this.setCachedData(cacheKey, networkRiskData);
+      // TEMPORARY: Skip caching during threshold fix validation
+      console.log(`[UnifiedRisk] Generated ${networkRiskData.length} companies, blocked count: ${networkRiskData.filter(c => c.status === 'Blocked').length}`);
+      
+      // this.setCachedData(cacheKey, networkRiskData);
       return networkRiskData;
 
     } catch (error) {
