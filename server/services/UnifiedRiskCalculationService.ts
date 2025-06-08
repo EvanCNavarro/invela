@@ -193,12 +193,12 @@ export class UnifiedRiskCalculationService {
         return cached;
       }
 
-      let companiesData;
+      let companiesData: any[] = [];
 
       if (userCompanyId) {
         // Get companies in user's network relationships
         const networkQuery = `
-          SELECT DISTINCT c.id, c.name, c.risk_score, c.previous_risk_score, 
+          SELECT DISTINCT c.id, c.name, c.risk_score, 
                  c.category, c.is_demo, c.updated_at
           FROM companies c
           INNER JOIN relationships r ON (
@@ -211,31 +211,31 @@ export class UnifiedRiskCalculationService {
         `;
         
         const result = await db.execute(sql.raw(networkQuery));
-        companiesData = result;
+        companiesData = Array.isArray(result) ? result : (result.rows || []);
       } else {
         // Fallback to all companies if no user context
         const whereConditions = includeDemo 
           ? undefined 
           : and(eq(companies.is_demo, false));
 
-        companiesData = await db.query.companies.findMany({
+        const queryResult = await db.query.companies.findMany({
           where: whereConditions,
           columns: {
             id: true,
             name: true,
             risk_score: true,
-            previous_risk_score: true,
             category: true,
             is_demo: true,
             updated_at: true
           },
           orderBy: (companies, { desc }) => [desc(companies.risk_score)]
         });
+        companiesData = queryResult;
       }
 
-      const networkRiskData = companiesData.map(company => {
+      const networkRiskData = companiesData.map((company: any) => {
         const currentScore = company.risk_score || 0;
-        const previousScore = company.previous_risk_score || 0;
+        const previousScore = 0; // Default to 0 since we don't have historical data yet
         const status = this.calculateRiskStatus(currentScore);
         const trend = this.calculateRiskTrend(currentScore, previousScore);
         const daysInStatus = this.calculateDaysInStatus(new Date(company.updated_at));
