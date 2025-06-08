@@ -78,6 +78,18 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
       return [];
     }
     
+    // Debug: Check for FastPay specifically to trace data transformation
+    const fastPayData = unifiedRiskData.companies.find(c => c.name.includes('FastPay'));
+    if (fastPayData) {
+      console.log('[FRONTEND-DEBUG] FastPay data received from API:', {
+        id: fastPayData.id,
+        name: fastPayData.name,
+        currentScore: fastPayData.currentScore,
+        status: fastPayData.status,
+        rawObject: fastPayData
+      });
+    }
+    
     logInsight('Phase 2: Data received from unified API', {
       companiesCount: unifiedRiskData.companies.length,
       thresholds: unifiedRiskData.thresholds,

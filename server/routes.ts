@@ -542,6 +542,17 @@ export async function registerRoutes(app: Express): Promise<Express> {
         const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies, userCompanyId);
         const riskMetrics = UnifiedRiskCalculationService.calculateRiskMetrics(networkRiskData);
         
+        // Debug: Log the data being sent to frontend
+        const fastPayData = networkRiskData.find(c => c.name.includes('FastPay'));
+        if (fastPayData) {
+          console.log(`[UNIFIED-API] Sending FastPay data to frontend:`, {
+            id: fastPayData.id,
+            name: fastPayData.name,
+            currentScore: fastPayData.currentScore,
+            status: fastPayData.status
+          });
+        }
+        
         return res.json({
           companies: networkRiskData,
           metrics: riskMetrics,
