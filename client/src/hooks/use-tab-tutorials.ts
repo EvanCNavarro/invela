@@ -107,6 +107,7 @@ export function useTabTutorials(inputTabName: string) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [tutorialEnabled, setTutorialEnabled] = useState(false);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
   
   const queryClient = useQueryClient();
   
@@ -225,8 +226,10 @@ export function useTabTutorials(inputTabName: string) {
       setCurrentStep(data.currentStep || 0);
       setIsCompleted(data.completed || false);
       setTutorialEnabled(true);
+      setHasLoadedData(true);
     } else if (error) {
       logger.error(`Error in tutorial data for ${tabName}:`, error);
+      setHasLoadedData(true); // Mark as loaded even on error to prevent infinite loading
     }
   }, [data, error, tabName, totalSteps]);
   
@@ -278,6 +281,7 @@ export function useTabTutorials(inputTabName: string) {
     currentStep,
     totalSteps,
     isCompleted,
+    hasLoadedData,
     handleNext,
     handleBack,
     handleComplete,
