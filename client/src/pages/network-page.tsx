@@ -339,14 +339,18 @@ export default function NetworkPage() {
     if (sortField === "riskStatus") {
       // Sort by risk status priority: Blocked > Approaching Block > Monitoring > Stable
       const statusOrder = { 'Blocked': 0, 'Approaching Block': 1, 'Monitoring': 2, 'Stable': 3 };
-      const getStatusFromCompany = (relationship: NetworkRelationship) => {
-        const companyData = { id: relationship.relatedCompany.id, risk_score: relationship.relatedCompany.riskScore, name: relationship.relatedCompany.name };
-        const authenticData = sessionDataService.getCompanyData(companyData);
-        return authenticData.status;
+      
+      // For now, we'll need to derive status from risk score using the same logic as UnifiedRiskCalculationService
+      const getStatusFromRiskScore = (score: number | null) => {
+        const currentScore = score || 0;
+        if (currentScore < 35) return 'Blocked';
+        if (currentScore < 50) return 'Approaching Block';
+        if (currentScore < 70) return 'Monitoring';
+        return 'Stable';
       };
       
-      const aStatus = getStatusFromCompany(a);
-      const bStatus = getStatusFromCompany(b);
+      const aStatus = getStatusFromRiskScore(a.relatedCompany.riskScore);
+      const bStatus = getStatusFromRiskScore(b.relatedCompany.riskScore);
       const aOrder = statusOrder[aStatus as keyof typeof statusOrder] ?? 4;
       const bOrder = statusOrder[bStatus as keyof typeof statusOrder] ?? 4;
       
