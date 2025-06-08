@@ -3293,6 +3293,12 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // Block/unblock a company (set risk status override)
   app.patch("/api/companies/:id/block", requireAuth, async (req, res) => {
     try {
+      console.log(`[BLOCK-API] Received ${req.method} request to block/unblock company ${req.params.id}`, {
+        body: req.body,
+        companyId: req.params.id,
+        headers: req.headers['content-type']
+      });
+      
       const companyId = parseInt(req.params.id);
       const { action, reason } = req.body;
       
@@ -3361,10 +3367,109 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
 
     } catch (error) {
-      console.error(`[BLOCK-API] Error ${req.body.action}ing company:`, error);
+      console.error(`[BLOCK-API] Error ${req.body?.action || 'unknown'}ing company:`, {
+        error: error.message,
+        stack: error.stack,
+        body: req.body,
+        params: req.params,
+        method: req.method
+      });
       return res.status(500).json({
         message: "Internal server error",
-        code: "INTERNAL_ERROR"
+        code: "INTERNAL_ERROR",
+        details: error.message
+      });
+    }
+  });
+
+  // Also handle POST for backward compatibility
+  app.post("/api/companies/:id/block", requireAuth, async (req, res) => {
+    try {
+      console.log(`[BLOCK-API] Received ${req.method} request to block/unblock company ${req.params.id}`, {
+        body: req.body,
+        companyId: req.params.id,
+        headers: req.headers['content-type']
+      });
+      
+      const companyId = parseInt(req.params.id);
+      const { action, reason } = req.body;
+      
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
+
+      if (!['block', 'unblock'].includes(action)) {
+        return res.status(400).json({
+          message: "Invalid action. Must be 'block' or 'unblock'",
+          code: "INVALID_ACTION"
+        });
+      }
+
+      // Check if company exists
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, companyId),
+        columns: {
+          id: true,
+          name: true,
+          risk_score: true,
+          risk_status_override: true
+        }
+      });
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      // Set override status
+      const override = action === 'block' ? 'BLOCKED' : null;
+      
+      await db.update(companies)
+        .set({ 
+          risk_status_override: override,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, companyId));
+
+      // Get updated risk data using UnifiedRiskCalculationService
+      const updatedRiskData = await UnifiedRiskCalculationService.getCompanyRiskData(companyId);
+      
+      // Clear cache to ensure fresh data
+      UnifiedRiskCalculationService.clearAllCache();
+
+      console.log(`[BLOCK-API] Company ${company.name} (ID: ${companyId}) ${action}ed by user. New status: ${updatedRiskData?.status || 'Unknown'}`);
+
+      return res.json({
+        success: true,
+        message: `Company ${action}ed successfully`,
+        company: {
+          id: companyId,
+          name: company.name,
+          action,
+          previousOverride: company.risk_status_override,
+          newOverride: override,
+          currentStatus: updatedRiskData?.status || 'Unknown',
+          reason: reason || `Manual ${action} by user`
+        }
+      });
+
+    } catch (error) {
+      console.error(`[BLOCK-API] Error ${req.body?.action || 'unknown'}ing company:`, {
+        error: error.message,
+        stack: error.stack,
+        body: req.body,
+        params: req.params,
+        method: req.method
+      });
+      return res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR",
+        details: error.message
       });
     }
   });
