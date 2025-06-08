@@ -13,6 +13,17 @@
 - **Performance monitoring**: Comprehensive error handling and loading state management
 - **Skeleton variants**: Branded and neutral loading states for different UI contexts
 
+### Intelligent Image Preloading System (June 8, 2025)
+- **Modal-aware preloading**: Created intelligent-preloader.ts utility that detects onboarding vs tutorial modals and preloads appropriate image sets
+- **Smart caching strategy**: Implemented memory-efficient global cache with automatic cleanup and LRU eviction policies
+- **Progressive loading priority**: Prioritizes current step images first, then loads remaining images sequentially in background
+- **Fallback mechanisms**: Attempts progressive JPEG first with automatic PNG fallback for failed loads
+- **Performance monitoring**: Comprehensive logging system with cache statistics and load time tracking
+- **Error handling**: Robust retry mechanisms with configurable timeouts and graceful degradation
+- **Integration points**: Added preloading to AnimatedOnboardingModal and TutorialManager components
+- **Cache management**: Automatic cleanup on modal close and tutorial completion to optimize memory usage
+- **User experience**: Eliminated loading delays between modal steps with instant image transitions
+
 ### Authentication Visual Branding
 - **Login page branding**: Replaced animated GIF with professional corporate photography featuring businesswoman with urban skyline
 - **Register page branding**: Updated with modern architectural corporate photography showing professional in contemporary setting
