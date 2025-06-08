@@ -498,6 +498,65 @@ export async function registerRoutes(app: Express): Promise<Express> {
   
   // Register enhanced debugging routes
   app.use('/api/debug', enhancedDebugRoutes);
+
+  // Unified Risk API Endpoint - Single source of truth for all risk calculations
+  app.get("/api/risk/unified", requireAuth, async (req, res) => {
+    try {
+      const { companyId, includeNetwork, includeDemo } = req.query;
+      
+      // Import the unified service
+      const { UnifiedRiskCalculationService } = await import('./services/UnifiedRiskCalculationService');
+      
+      // If requesting specific company data
+      if (companyId) {
+        const id = parseInt(companyId as string);
+        if (isNaN(id)) {
+          return res.status(400).json({
+            message: "Invalid company ID",
+            code: "INVALID_ID"
+          });
+        }
+        
+        const companyRiskData = await UnifiedRiskCalculationService.getCompanyRiskData(id);
+        if (!companyRiskData) {
+          return res.status(404).json({
+            message: "Company not found",
+            code: "COMPANY_NOT_FOUND"
+          });
+        }
+        
+        return res.json({
+          company: companyRiskData,
+          thresholds: UnifiedRiskCalculationService.getThresholds()
+        });
+      }
+      
+      // If requesting network data
+      if (includeNetwork === 'true') {
+        const includeDemoCompanies = includeDemo === 'true';
+        const networkRiskData = await UnifiedRiskCalculationService.getNetworkRiskData(includeDemoCompanies);
+        const riskMetrics = UnifiedRiskCalculationService.calculateRiskMetrics(networkRiskData);
+        
+        return res.json({
+          companies: networkRiskData,
+          metrics: riskMetrics,
+          thresholds: UnifiedRiskCalculationService.getThresholds()
+        });
+      }
+      
+      // Default response with thresholds only
+      return res.json({
+        thresholds: UnifiedRiskCalculationService.getThresholds()
+      });
+      
+    } catch (error) {
+      console.error('[Unified Risk API] Error:', error);
+      res.status(500).json({
+        message: "Internal server error",
+        code: "INTERNAL_ERROR"
+      });
+    }
+  });
   app.use('/api/debug', debugRouter);
   // Register debug-routes.ts
   app.use('/api/debug', debugRoutesTs);

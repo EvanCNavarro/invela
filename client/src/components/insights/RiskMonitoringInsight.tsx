@@ -12,17 +12,8 @@ import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BlockedDataRecipientsAlert from './BlockedDataRecipientsAlert';
 import DeterioratingRiskTable from './DeterioratingRiskTable';
-import { type CompanyRiskData } from '@/lib/riskCalculations';
 import { cn } from '@/lib/utils';
-import { 
-  generateRealisticRiskData, 
-  calculateRiskMetrics,
-  type RiskMonitoringStatus 
-} from '@/lib/riskCalculations';
-import { getSessionCompaniesData, type SessionCompanyData } from '@/lib/sessionDataService';
-
-// Use unified risk threshold to match system-wide standards
-const UNIFIED_BLOCKED_THRESHOLD = 70;
+import { useUnifiedRiskData, type UnifiedRiskData } from '@/lib/useUnifiedRiskData';
 
 interface RiskMonitoringInsightProps {
   className?: string;
@@ -61,57 +52,40 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
     queryKey: ['/api/companies/current'],
   });
 
-  // Get all companies data
-  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery<any[]>({
-    queryKey: ['/api/companies'],
-  });
-
-  // Use unified risk threshold for consistency across all components
-  const riskThreshold = useMemo(() => {
-    // Always use the unified blocked threshold for consistency
-    return UNIFIED_BLOCKED_THRESHOLD;
-  }, []);
-
   // Check if current company is allowed to see this insight (Bank or Invela)
   const canViewInsight = useMemo(() => {
     if (!currentCompany) return false;
     return ['Bank', 'Invela'].includes(currentCompany.category);
   }, [currentCompany]);
 
-  // Get unified risk data from the same endpoint as other components
-  const { data: unifiedRiskData } = useQuery<any>({
-    queryKey: ['/api/network/risk-unified'],
-    enabled: !!currentCompany,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+  // Get unified risk data using the new unified hook
+  const { data: unifiedRiskData, isLoading: isLoadingRiskData } = useUnifiedRiskData({
+    includeNetwork: true,
+    includeDemo: true,
+    enabled: canViewInsight
   });
 
-  // Convert unified risk data to component format
+  // Extract data from unified response
   const companyRiskData = useMemo(() => {
     if (!unifiedRiskData?.companies?.length) return [];
     
     logInsight('Using unified risk data for consistency', {
       companiesCount: unifiedRiskData.companies.length,
-      threshold: riskThreshold
+      thresholds: unifiedRiskData.thresholds
     });
     
-    return unifiedRiskData.companies.map((company: { id: number; name: string; currentScore: number; previousScore?: number; category?: string }) => ({
-      id: company.id,
-      name: company.name,
-      currentScore: company.currentScore,
-      previousScore: company.previousScore,
-      category: company.category || 'FinTech'
-    }));
-  }, [unifiedRiskData, riskThreshold]);
+    return unifiedRiskData.companies;
+  }, [unifiedRiskData]);
 
-  // Calculate risk metrics using shared service
-  const riskMetrics = useMemo(() => {
-    return calculateRiskMetrics(companyRiskData, riskThreshold);
-  }, [companyRiskData, riskThreshold]);
+  // Get risk thresholds from unified service
+  const riskThresholds = unifiedRiskData?.thresholds;
+  const riskMetrics = unifiedRiskData?.metrics;
 
-  // Filter for blocked companies (using unified threshold logic: >= 70 is blocked)
+  // Filter for blocked companies (using unified threshold logic)
   const blockedCompanies = useMemo(() => {
-    return companyRiskData.filter((company: any) => company.currentScore >= riskThreshold);
-  }, [companyRiskData, riskThreshold]);
+    if (!riskThresholds) return [];
+    return companyRiskData.filter(company => company.status === 'Blocked');
+  }, [companyRiskData, riskThresholds]);
 
   // Companies to display in the table (filtered or all)
   const displayCompanies = useMemo(() => {
