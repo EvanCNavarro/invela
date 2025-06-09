@@ -200,7 +200,7 @@ export function QuickActionsWidget({
                 <div className="text-blue-600 group-hover:text-blue-700">
                   <action.icon className="h-4 w-4" />
                 </div>
-                <span className="text-sm font-medium text-gray-900 text-left leading-tight truncate">
+                <span className="widget-text text-left truncate">
                   {action.label}
                 </span>
               </div>

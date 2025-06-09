@@ -239,36 +239,22 @@
   }
 
 /* ========================================
-   WIDGET DESIGN TOKENS - ENTERPRISE SYSTEM
+   SIMPLIFIED TYPOGRAPHY SYSTEM - 3 SIZES ONLY
    ======================================== */
 
-/* Widget Typography Scale */
-.text-widget-title {
-  @apply text-lg font-semibold leading-tight text-foreground;
+/* Typography Tier 1: Widget Titles - Large */
+.widget-title {
+  @apply text-lg font-medium text-black leading-tight;
 }
 
-.text-widget-subtitle {
-  @apply text-sm font-medium text-muted-foreground leading-relaxed;
+/* Typography Tier 2: Primary Text - Medium */
+.widget-text {
+  @apply text-sm font-normal text-black leading-normal;
 }
 
-.text-widget-value {
-  @apply text-2xl font-bold leading-none text-foreground;
-}
-
-.text-widget-value-large {
-  @apply text-3xl font-bold leading-none text-foreground;
-}
-
-.text-widget-label {
-  @apply text-xs font-medium text-foreground leading-tight;
-}
-
-.text-widget-body {
-  @apply text-sm text-foreground leading-relaxed;
-}
-
-.text-widget-caption {
-  @apply text-xs text-muted-foreground leading-relaxed;
+/* Typography Tier 3: Numbers/Values - Medium (same size, different weight) */
+.widget-number {
+  @apply text-sm font-medium text-black leading-normal;
 }
 
 /* Widget Spacing System */

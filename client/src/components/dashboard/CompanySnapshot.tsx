@@ -96,7 +96,7 @@ export function CompanySnapshot({
               {companyData?.name || 'Company Name'}
             </h3>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="widget-text">
                 {companyData?.category || 'FinTech'}
               </Badge>
             </div>
@@ -115,7 +115,7 @@ export function CompanySnapshot({
               <span className="widget-number">{riskScore}</span>
               <Badge 
                 variant="secondary" 
-                className={`text-xs ${riskStatus.color} ${riskStatus.bg}`}
+                className={`widget-text ${riskStatus.color} ${riskStatus.bg}`}
               >
                 {riskStatus.label}
               </Badge>
@@ -137,7 +137,7 @@ export function CompanySnapshot({
               <accreditationBadge.icon className={`h-4 w-4 ${accreditationBadge.color}`} />
               <span className="widget-text">Status</span>
             </div>
-            <Badge variant={accreditationBadge.variant} className="text-xs">
+            <Badge variant={accreditationBadge.variant} className="widget-text">
               {accreditationStatus}
             </Badge>
           </div>
