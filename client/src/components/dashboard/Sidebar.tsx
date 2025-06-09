@@ -400,7 +400,7 @@ export function Sidebar({
       href: "/network",
       locked: !availableTabs.includes('network'),
       pulsingDot: showPulsingDot,
-      hideForFinTech: true
+      hideForFinTech: false
     },
     {
       icon: FileIcon,
