@@ -44,10 +44,8 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 // Removed obsolete widgets for simplified 3-widget dashboard layout
-import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
-import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { WidgetCustomizationDropdown } from "@/components/dashboard/WidgetCustomizationDropdown";
 import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
+import { VisualizerWidget } from "@/components/dashboard/VisualizerWidget";
 
 // UI components for interactive elements and page structure
 import { Button } from "@/components/ui/button";
@@ -151,8 +149,8 @@ export default function DashboardPage(): JSX.Element {
   // Modal state management for user interactions
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   
-  // Widget visibility state with proper type declaration and dynamic initialization
-  const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(getAdminWidgets());
+  // Simplified widget visibility state for 3-widget dashboard
+  const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(DEFAULT_WIDGETS);
   
   // ========================================
   // DATA FETCHING
@@ -174,26 +172,16 @@ export default function DashboardPage(): JSX.Element {
   // EFFECTS
   // ========================================
 
-  // Update widget visibility based on company type
+  // Debug logging for simplified dashboard structure
   useEffect(() => {
     if (companyData) {
-      const isFinTech = companyData.category === 'FinTech';
-      const isInvela = companyData.category === 'Invela';
-      const isBank = companyData.category === 'Bank';
-      
-      // Company-specific widget configurations
-      if (isInvela) {
-        setVisibleWidgets(getAdminWidgets()); // Admin gets all available widgets
-      } else if (isFinTech) {
-        setVisibleWidgets(FINTECH_WIDGETS); // Data Recipients: limited widget set
-      } else if (isBank) {
-        setVisibleWidgets(BANK_WIDGETS); // Data Providers: monitoring-focused widgets
-      } else {
-        // Fallback to admin widgets for unknown categories
-        setVisibleWidgets(getAdminWidgets());
-      }
+      console.log('[Dashboard] Company loaded:', {
+        name: companyData.name,
+        category: companyData.category,
+        widgets: visibleWidgets
+      });
     }
-  }, [companyData]);
+  }, [companyData, visibleWidgets]);
 
   // ========================================
   // EVENT HANDLERS
@@ -317,15 +305,7 @@ export default function DashboardPage(): JSX.Element {
         <PageTemplate
           title="Dashboard"
           description="Enterprise risk assessment and monitoring overview"
-          headerActions={
-            <div className="flex items-center gap-2">
-              <WidgetCustomizationDropdown
-                visibleWidgets={visibleWidgets}
-                onToggleWidget={toggleWidget}
-                companyCategory={companyData?.category}
-              />
-            </div>
-          }
+          headerActions={null}
         >
 
 
@@ -341,163 +321,30 @@ export default function DashboardPage(): JSX.Element {
               </div>
             )}
             
-            {/* Debug logging moved to useEffect for proper React rendering */}
-            
-            {/* Invela Company Layout - Optimized for Invela Trust Network */}
-            {companyData?.category === 'Invela' && (
-              <div className="space-y-6">
-                {/* Top row with Company Overview and System Overview */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Company Overview - Single column */}
-                  {visibleWidgets.companySnapshot && (
-                    <div className="lg:col-span-1">
-                      <CompanySnapshot
-                        companyData={companyData}
-                        onToggle={() => toggleWidget('companySnapshot')}
-                        isVisible={visibleWidgets.companySnapshot}
-                        animationDelay={200}
-                      />
-                    </div>
-                  )}
-
-                  {/* System Overview - Takes 2 columns */}
-                  {visibleWidgets.systemOverview && (
-                    <div className="lg:col-span-2 widget-entrance-animation widget-entrance-stagger-3">
-                      <SystemOverviewWidget
-                        onToggle={() => toggleWidget('systemOverview')}
-                        isVisible={visibleWidgets.systemOverview}
-                      />
-                    </div>
-                  )}
+            {/* Unified Layout for All Company Types - Simplified 3-Widget Structure */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Company Snapshot Widget */}
+              {visibleWidgets.companySnapshot && (
+                <div className="widget-entrance-animation widget-entrance-stagger-2">
+                  <CompanySnapshot
+                    companyData={companyData}
+                    onToggle={() => toggleWidget('companySnapshot')}
+                    isVisible={visibleWidgets.companySnapshot}
+                    animationDelay={200}
+                  />
                 </div>
+              )}
 
-                {/* Network Visualization - Full width */}
-                {visibleWidgets.networkVisualization && (
-                  <div className="h-[600px] widget-entrance-animation widget-entrance-stagger-4">
-                    <NetworkVisualizationWidget
-                      onToggle={() => toggleWidget('networkVisualization')}
-                      isVisible={visibleWidgets.networkVisualization}
-                    />
-                  </div>
-                )}
-
-                {/* Risk Radar and Task Summary for Invela */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                  {/* Risk Radar for Invela */}
-                  {visibleWidgets.riskRadar && companyData && (
-                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-5">
-                      <RiskRadarWidget
-                        companyId={companyData?.id || 0}
-                        onToggle={() => toggleWidget('riskRadar')}
-                        isVisible={visibleWidgets.riskRadar}
-                      />
-                    </div>
-                  )}
-
-                  {/* Task Summary for Invela */}
-                  {visibleWidgets.taskSummary && (
-                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-6">
-                      <TaskSummaryWidget
-                        onToggle={() => toggleWidget('taskSummary')}
-                        isVisible={visibleWidgets.taskSummary}
-                      />
-                    </div>
-                  )}
+              {/* Dynamic Visualizer Widget - Contains all insights in dropdown */}
+              {visibleWidgets.visualizer && (
+                <div className="widget-entrance-animation widget-entrance-stagger-3">
+                  <VisualizerWidget
+                    onToggle={() => toggleWidget('visualizer')}
+                    isVisible={visibleWidgets.visualizer}
+                  />
                 </div>
-              </div>
-            )}
-
-            {/* FinTech Layout - Simplified for FinTech companies */}
-            {companyData?.category === 'FinTech' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Company Snapshot */}
-                {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-1">
-                    <CompanySnapshot
-                      companyData={companyData}
-                      onToggle={() => toggleWidget('companySnapshot')}
-                      isVisible={visibleWidgets.companySnapshot}
-                      animationDelay={200}
-                    />
-                  </div>
-                )}
-
-                {/* Task Summary for FinTech */}
-                {visibleWidgets.taskSummary && (
-                  <div className="lg:col-span-1">
-                    <TaskSummaryWidget
-                      onToggle={() => toggleWidget('taskSummary')}
-                      isVisible={visibleWidgets.taskSummary}
-                    />
-                  </div>
-                )}
-
-                {/* Risk Radar for FinTech */}
-                {visibleWidgets.riskRadar && companyData && (
-                  <div className="lg:col-span-2 h-[400px]">
-                    <RiskRadarWidget
-                      companyId={companyData?.id || 0}
-                      onToggle={() => toggleWidget('riskRadar')}
-                      isVisible={visibleWidgets.riskRadar}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Bank Layout - Full feature set for traditional banks */}
-            {companyData?.category === 'Bank' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Company Info */}
-                {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-1 space-y-6">
-                    {/* Company Snapshot */}
-                    <div>
-                      <CompanySnapshot
-                        companyData={companyData}
-                        onToggle={() => toggleWidget('companySnapshot')}
-                        isVisible={visibleWidgets.companySnapshot}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Right Columns - Visualization */}
-                {(visibleWidgets.networkVisualization || visibleWidgets.companySnapshot) && (
-                  <div className={cn(
-                    "space-y-6",
-                    visibleWidgets.companySnapshot ? "lg:col-span-2" : "lg:col-span-3"
-                  )}>
-                    {!visibleWidgets.companySnapshot && visibleWidgets.networkVisualization && (
-                      <div>
-                        <CompanySnapshot
-                          companyData={companyData}
-                          onToggle={() => toggleWidget('companySnapshot')}
-                          isVisible={visibleWidgets.companySnapshot}
-                        />
-                      </div>
-                    )}
-
-                    {/* Network Visualization for Bank/Invela */}
-                    {visibleWidgets.networkVisualization && (
-                      <div className="h-[600px]">
-                        <NetworkVisualizationWidget
-                          onToggle={() => toggleWidget('networkVisualization')}
-                          isVisible={visibleWidgets.networkVisualization}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Risk Monitoring Widget for Bank/Invela - Full width */}
-            {visibleWidgets.riskMonitoring && companyData?.category !== 'FinTech' && (
-              <div className="col-span-3 mt-4">
-                <RiskMonitoringWidget />
-              </div>
-            )}
+              )}
+            </div>
             
 
 
