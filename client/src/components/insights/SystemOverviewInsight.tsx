@@ -186,85 +186,96 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* Header with Time Filter */}
-      {/* Network Summary Card */}
-      {summaryStats && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Building className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">Invela Trust Network Overview</span>
-              </div>
-              <div className="text-sm text-gray-700 ml-6">
-                {summaryStats.dataProviders + summaryStats.dataRecipients + 1} Total Companies — {summaryStats.accreditedDataRecipients} Active Accreditations ({Math.round((summaryStats.accreditedDataRecipients / (summaryStats.dataProviders + summaryStats.dataRecipients + 1)) * 100)}%)
-              </div>
-            </div>
-            
-            <ToggleGroup
-              type="single"
-              value={selectedTimeframe}
-              onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
-              className="justify-start border rounded-md p-1 bg-muted/30"
-              variant="outline"
-            >
-              <ToggleGroupItem 
-                value="1day" 
-                aria-label="1 Day view" 
-                className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                1D
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="30days" 
-                aria-label="30 Days view" 
-                className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                30D
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="1year" 
-                aria-label="1 Year view" 
-                className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                1Y
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </div>
-      )}
-
-      {/* Summary Stats Cards */}
+      {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center gap-2">
-              <Building className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-gray-700">Data Providers</span>
+          {/* Data Providers Card */}
+          <div className="bg-white rounded-lg border p-4 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-600">Data Providers</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</p>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+              </div>
             </div>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.dataProviders}</p>
           </div>
           
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-gray-700">Data Recipients</span>
+          {/* Data Recipients Card */}
+          <div className="bg-white rounded-lg border p-4 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-600">Data Recipients</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</p>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
             </div>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.dataRecipients}</p>
           </div>
           
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Accredited Recipients</span>
+          {/* Accredited Recipients Card */}
+          <div className="bg-white rounded-lg border p-4 hover:shadow-md transition-all duration-200 group">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-600">Accredited Recipients</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</p>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </div>
             </div>
-            <p className="text-2xl font-semibold text-gray-900 mt-1">{summaryStats.accreditedDataRecipients}</p>
           </div>
         </div>
       )}
 
-      {/* Chart */}
+      {/* Chart with Integrated Time Selector */}
       <div className="bg-white rounded-lg border p-6">
+        {/* Chart Header with Time Selector */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Enrollment Trends</h3>
+          <ToggleGroup
+            type="single"
+            value={selectedTimeframe}
+            onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
+            className="border rounded-md p-1 bg-gray-50"
+            variant="outline"
+          >
+            <ToggleGroupItem 
+              value="1day" 
+              aria-label="1 Day view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              1D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="30days" 
+              aria-label="30 Days view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              30D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="1year" 
+              aria-label="1 Year view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              1Y
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        {/* Chart Content */}
         {isLoading ? (
           <div className="flex items-center justify-center h-80">
             <div className="flex items-center gap-2 text-gray-500">
@@ -273,14 +284,20 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-80">
+          <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }} maxBarSize={60}>
+              <BarChart 
+                data={chartData} 
+                margin={{ top: 20, right: 10, left: 10, bottom: 80 }} 
+                maxBarSize={50}
+                barCategoryGap="20%"
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="period" 
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
+                  height={60}
                   tickFormatter={(value) => {
                     try {
                       const date = new Date(value);
@@ -303,6 +320,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                 <YAxis 
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
+                  width={40}
                 />
                 <Tooltip 
                   contentStyle={{
@@ -314,26 +332,26 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                 />
                 <Legend 
                   wrapperStyle={{ 
-                    fontSize: '13px', 
-                    paddingTop: '25px',
-                    lineHeight: '32px',
-                    fontWeight: 'bold'
+                    fontSize: '12px', 
+                    paddingTop: '15px',
+                    lineHeight: '20px',
+                    fontWeight: '500'
                   }}
-                  iconSize={12}
+                  iconSize={10}
                   layout="horizontal"
                   align="center"
                   verticalAlign="bottom"
                   content={(props) => {
                     const { payload } = props;
                     return (
-                      <div className="flex justify-center items-center gap-20 pt-6">
+                      <div className="flex justify-center items-center gap-6 pt-4">
                         {payload?.map((entry, index) => (
                           <div key={index} className="flex items-center">
                             <div 
-                              className="w-3 h-3 mr-2" 
+                              className="w-3 h-3 mr-2 rounded-sm" 
                               style={{ backgroundColor: entry.color }}
                             />
-                            <span className="text-sm font-bold text-gray-700">
+                            <span className="text-sm font-medium text-gray-700">
                               {entry.value}
                             </span>
                           </div>
