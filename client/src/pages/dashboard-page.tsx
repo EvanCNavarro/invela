@@ -50,13 +50,13 @@ import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisual
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
+import { WidgetCustomizationDropdown } from "@/components/dashboard/WidgetCustomizationDropdown";
 
 // UI components for interactive elements and page structure
 import { Button } from "@/components/ui/button";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
-import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 
 // Tutorial system for user guidance and onboarding
 import { TutorialManager } from "@/components/tutorial/TutorialManager";
@@ -185,7 +185,6 @@ export default function DashboardPage(): JSX.Element {
   
   // Modal state management for user interactions
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
-  const [sideDrawerOpen, setSideDrawerOpen] = useState(false);
   
   // Widget visibility state with proper type declaration and dynamic initialization
   const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(OTHER_DEFAULT_WIDGETS);
@@ -351,54 +350,17 @@ export default function DashboardPage(): JSX.Element {
           description="Enterprise risk assessment and monitoring overview"
           headerActions={
             <div className="flex items-center gap-2">
-              <Button
+              <WidgetCustomizationDropdown
+                visibleWidgets={visibleWidgets}
+                onToggleWidget={toggleWidget}
+                companyCategory={companyData?.category}
                 variant="outline"
                 size="sm"
-                onClick={() => setSideDrawerOpen(true)}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Customize
-              </Button>
+              />
             </div>
           }
         >
-          {/* Widget Customization Side Drawer */}
-          <PageSideDrawer
-            defaultOpen={sideDrawerOpen}
-            onOpenChange={(open) => setSideDrawerOpen(open)}
-            title="Customize Dashboard"
-          >
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Available Widgets</h4>
-                
-                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <label className="text-sm capitalize cursor-pointer">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                    <Button
-                      variant={isVisible ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleWidget(key as keyof typeof visibleWidgets)}
-                    >
-                      {isVisible ? (
-                        <>
-                          <Check className="w-3 h-3 mr-1" />
-                          Visible
-                        </>
-                      ) : (
-                        <>
-                          <Info className="w-3 h-3 mr-1" />
-                          Hidden
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PageSideDrawer>
+
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
