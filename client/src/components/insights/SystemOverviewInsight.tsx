@@ -232,21 +232,21 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             <ToggleGroupItem 
               value="1day" 
               aria-label="1 Day view" 
-              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-sm px-6 py-2 h-8 min-w-[60px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="30days" 
               aria-label="30 Days view" 
-              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-sm px-6 py-2 h-8 min-w-[60px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               30D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="1year" 
               aria-label="1 Year view" 
-              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-sm px-6 py-2 h-8 min-w-[60px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1Y
             </ToggleGroupItem>
@@ -262,7 +262,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-48">
+          <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
