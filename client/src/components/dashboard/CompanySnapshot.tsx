@@ -36,14 +36,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { 
   Building2, 
-  Award,
-  CheckCircle,
-  Network,
   TrendingUp,
   Loader2,
-  ExternalLink,
-  Shield,
-  Users
+  ExternalLink
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { cn } from "@/lib/utils";
@@ -112,7 +107,7 @@ export function CompanySnapshot({
   // Get persona-specific metrics from configuration system
   const personaMetrics = getCompanySnapshotForPersona(persona, {
     companyData,
-    relationships,
+    relationships: relationships || [],
     accreditationData,
     isLoading: isLoadingRelationships || isLoadingAccreditation
   });
@@ -140,127 +135,186 @@ export function CompanySnapshot({
     }
   };
 
+  // ========================================
+  // LOADING & ERROR STATE HANDLING
+  // ========================================
+
+  // Show enhanced loading skeleton during data fetch
+  if (isLoadingRelationships || isLoadingAccreditation || isInitializing) {
+    console.log('[CompanySnapshot] Rendering loading state');
+    return (
+      <Widget
+        title="Company Snapshot"
+        icon={<Building2 className="widget-icon-header" />}
+        onVisibilityToggle={onToggle}
+        isVisible={isVisible}
+        size="standard"
+        loadingState="shimmer"
+        isLoading={true}
+        animationDelay={animationDelay}
+        ariaLabel="Company snapshot widget loading"
+      >
+        <div className="space-y-4">
+          <div className="widget-skeleton-shimmer h-20 rounded-lg" 
+               style={{ animationDelay: `${animationDelay}ms` }} />
+          <div className="widget-grid-metrics">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="widget-skeleton-shimmer h-24 rounded-lg"
+                style={{ animationDelay: `${animationDelay + (index * 100)}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+      </Widget>
+    );
+  }
+
+  // Show error state with retry option
+  if (relationshipsError || accreditationError) {
+    console.error('[CompanySnapshot] Error loading data:', { relationshipsError, accreditationError });
+    return (
+      <Widget
+        title="Company Snapshot"
+        icon={<Building2 className="widget-icon-header" />}
+        onVisibilityToggle={onToggle}
+        isVisible={isVisible}
+        size="standard"
+        error="Unable to load company data. Please refresh to try again."
+        animationDelay={animationDelay}
+      >
+        <div />
+      </Widget>
+    );
+  }
+
+  // ========================================
+  // MAIN RENDER - ENTERPRISE WIDGET
+  // ========================================
+
+  const companyName = companyData?.name || "Loading...";
+  console.log('[CompanySnapshot] Rendering main widget with', personaMetrics.length, 'metrics for', persona);
+
   return (
     <Widget
       title="Company Snapshot"
-      icon={<Building2 className="h-5 w-5" />}
+      subtitle={`${companyName} • ${personaMetrics.length} key metrics`}
+      icon={<Building2 className="widget-icon-header widget-color-primary" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
-      headerClassName="pb-2"
+      size="standard"
+      entranceAnimation="fadeIn"
+      animationDelay={animationDelay}
+      ariaLabel={`Company snapshot for ${companyName}`}
+      className="h-full"
     >
-      <div className="space-y-4">
-        {/* Company Banner */}
-        <Card className="p-4 border rounded-lg shadow-sm">
-          <div className="flex flex-col items-center">
+      <div className="space-y-6">
+        {/* Company Banner with Enhanced Styling */}
+        <div 
+          className={cn(
+            "widget-card-header p-4 rounded-lg group",
+            "widget-entrance-animation"
+          )}
+          style={{ animationDelay: `${animationDelay}ms` }}
+        >
+          <div className="flex flex-col items-center widget-gap-standard">
             {companyData?.logoId ? (
               <img
                 src={`/api/companies/${companyData.id}/logo`}
                 alt={`${companyName} logo`}
-                className="w-8 h-8 object-contain mb-2"
+                className="w-12 h-12 object-contain rounded-lg shadow-sm"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center mb-2">
-                <span className="text-sm font-medium text-white">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
+                <span className="text-lg font-bold text-white">
                   {companyName.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
-            <span className="text-xl font-semibold text-black">{companyName}</span>
+            <div className="text-center">
+              <h3 className="text-widget-title font-semibold">{companyName}</h3>
+              <p className="text-widget-caption mt-1">
+                {persona} Account • {new Date().getFullYear()}
+              </p>
+            </div>
           </div>
-        </Card>
-        
-        {/* Top Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Company Relationships Card */}
-          <Card 
-            className={cn(
-              cardClassName, 
-              "cursor-pointer transition-colors hover:bg-gray-50"
-            )}
-            onClick={handleRelationshipsClick}
-          >
-            <div className="flex items-center justify-center mb-2">
-              <Network className={iconClassName} />
-              <span className={labelClassName}>
-                RELATIONSHIPS
-              </span>
-            </div>
-            <div className={valueClassName}>
-              {isLoadingRelationships ? (
-                <Skeleton className="h-10 w-14 mx-auto" />
-              ) : (
-                relationshipsCount
-              )}
-            </div>
-          </Card>
-          
-          {/* Risk Score Changes Card */}
-          <Card className={cardClassName}>
-            <div className="flex items-center justify-center mb-2">
-              <TrendingUp className={iconClassName} />
-              <span className={labelClassName}>
-                RISK CHANGES
-              </span>
-            </div>
-            <div className={valueClassName}>
-              {riskScoreChanges}
-            </div>
-          </Card>
         </div>
         
-        {/* Bottom Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* S&P Business Data Risk Score Card */}
-          <Card className={cn(
-            cardClassName,
-            "border-blue-500/50 border-2"
-          )}>
-            <div className="flex flex-col items-center mb-1 sm:mb-2">
-              <div className="flex items-center justify-center">
-                <Award className={iconClassName} />
-                <span className="text-xs sm:text-sm font-medium text-foreground">S&P DATA</span>
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-foreground text-center">ACCESS RISK SCORE</span>
-            </div>
-            <div className={valueClassName}>
-              {riskScore}
-            </div>
-          </Card>
-          
-          {/* Accreditation Card */}
-          <Card className={cn(
-            cardClassName,
-            "border-green-500/50 border-2"
-          )}>
-            <div className="flex items-center justify-center mb-1 sm:mb-2">
-              <CheckCircle className={iconClassName} />
-              <span className={labelClassName}>
-                ACCREDITATION
-              </span>
-            </div>
-            <div className="text-lg sm:text-xl font-semibold text-black">
-              {displayStatus}
-            </div>
-            {accreditationData && (
-              <div className="text-xs mt-1 text-center">
-                {accreditationData.isPermanent ? (
-                  <span className="text-gray-600">(No expiration)</span>
-                ) : accreditationData.daysUntilExpiration !== null ? (
-                  accreditationData.daysUntilExpiration < 0 ? (
-                    <span className="text-gray-600">(Expired {Math.abs(accreditationData.daysUntilExpiration)} days ago)</span>
-                  ) : accreditationData.daysUntilExpiration === 0 ? (
-                    <span className="text-gray-600">(Expires today)</span>
-                  ) : (
-                    <span className="text-gray-600">(Expires in {accreditationData.daysUntilExpiration} days)</span>
-                  )
-                ) : null}
-              </div>
-            )}
-          </Card>
+        {/* Persona-Based Metrics Grid */}
+        <div className="widget-grid-metrics">
+          {personaMetrics.map((metric, index) => {
+            const IconComponent = metric.icon;
+            const statusColors = {
+              success: 'text-green-600 border-green-200 bg-green-50',
+              warning: 'text-yellow-600 border-yellow-200 bg-yellow-50',
+              error: 'text-red-600 border-red-200 bg-red-50',
+              neutral: 'text-muted-foreground border-border bg-card'
+            };
+            
+            return (
+              <button
+                key={metric.id}
+                className={cn(
+                  "widget-card-metric p-4 rounded-lg group text-left",
+                  "widget-entrance-animation",
+                  statusColors[metric.status || 'neutral'],
+                  metric.clickable && "cursor-pointer hover:shadow-md widget-interaction-smooth",
+                  !metric.clickable && "cursor-default"
+                )}
+                style={{ 
+                  animationDelay: `${animationDelay + ((index + 1) * 150)}ms` 
+                }}
+                onClick={() => metric.clickable && handleMetricClick(metric.id)}
+                disabled={!metric.clickable}
+                aria-label={metric.description || metric.label}
+                title={metric.description}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <IconComponent className="widget-icon-standard" />
+                  {metric.clickable && (
+                    <ExternalLink className="widget-icon-chevron opacity-0 group-hover:opacity-100 widget-interaction-smooth" />
+                  )}
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-widget-caption font-medium">
+                    {metric.label}
+                  </p>
+                  <p className="text-widget-value font-bold">
+                    {metric.value}
+                  </p>
+                  {metric.trend && (
+                    <div className="flex items-center widget-gap-compact">
+                      <TrendingUp className={cn(
+                        "widget-icon-small",
+                        metric.trend === 'up' ? 'text-green-500' : 
+                        metric.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
+                      )} />
+                      <span className="text-widget-caption">
+                        {metric.trend === 'up' ? 'Trending up' : 
+                         metric.trend === 'down' ? 'Trending down' : 'Stable'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Empty State */}
+        {personaMetrics.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Building2 className="widget-icon-large text-muted-foreground mx-auto mb-2" />
+              <p className="text-widget-caption">No metrics available for {persona} users</p>
+            </div>
+          </div>
+        )}
       </div>
     </Widget>
   );
