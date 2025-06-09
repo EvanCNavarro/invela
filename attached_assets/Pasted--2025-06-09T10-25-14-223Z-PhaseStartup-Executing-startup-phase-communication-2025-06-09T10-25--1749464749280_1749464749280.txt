@@ -1,0 +1,36 @@
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Executing startup phase: communication 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-06-09T10:25:14.223Z] [App] Communication phase initializing 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Executing startup phase: ready 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-06-09T10:25:14.223Z] [App] Application ready for user interaction 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-06-09T10:25:14.223Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[2025-06-09T10:25:14.432Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+OTHER_DEFAULT_WIDGETS is not defined
+OTHER_DEFAULT_WIDGETS is not defined
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464714776-9y4xamg", timestamp: "2025-06-09T10:25:14.776Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-09T10:25:14.898Z", message: "Authentication successful"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464715284-z63f2v0", timestamp: "2025-06-09T10:25:15.284Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464715780-jpn95b7", timestamp: "2025-06-09T10:25:15.780Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464716294-ux44ene", timestamp: "2025-06-09T10:25:16.294Z", message: "Connection established"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T10:25:44.900Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T10:25:45.901Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T10:25:46.421Z", echo: {…}}
