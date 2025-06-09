@@ -337,7 +337,7 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-center">
           {showDropdown && isBankOrInvela && filteredCompanies.length > 0 && (
             <Select

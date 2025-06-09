@@ -130,7 +130,7 @@ export function RiskRadarRechartsSimple({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-center">
           {showDropdown && companiesWithClusters.length > 1 && (
             <Select 
