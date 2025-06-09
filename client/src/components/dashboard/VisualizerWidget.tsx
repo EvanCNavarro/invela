@@ -437,8 +437,8 @@ export function VisualizerWidget({
           <InsightErrorBoundary insightName="Risk Radar (ApexCharts Improved)">
             <Suspense fallback={<InsightLoadingSkeleton />}>
               <RiskRadarApexImproved 
-                companyId={currentCompany?.id || 0}
-                showDropdown={false}
+                companyId={459}
+                showDropdown={true}
                 className="shadow-none border-none w-full h-full"
               />
             </Suspense>
