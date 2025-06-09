@@ -62,8 +62,8 @@ const NetworkScatterPlotInsight = React.lazy(() =>
   }))
 );
 const NetworkTreemapInsight = React.lazy(() => 
-  import('@/components/insights/NetworkTreemapInsight').then(module => ({ 
-    default: module.NetworkTreemapInsight 
+  import('@/components/insights/NetworkTreemapPremium').then(module => ({ 
+    default: module.NetworkTreemapPremium 
   }))
 );
 const NetworkChordInsight = React.lazy(() => 
