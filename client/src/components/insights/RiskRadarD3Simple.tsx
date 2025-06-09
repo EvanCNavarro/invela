@@ -97,14 +97,13 @@ export function RiskRadarD3Simple({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const width = 320;
-    const height = 320;
-    const margin = 30;
-    const radius = Math.min(width, height) / 2 - margin;
-    const centerX = width / 2;
-    const centerY = height / 2;
+    const size = 380;
+    const margin = 50;
+    const radius = (size - margin * 2) / 2;
+    const centerX = size / 2;
+    const centerY = size / 2;
 
-    svg.attr('width', width).attr('height', height);
+    svg.attr('width', size).attr('height', size);
 
     const g = svg.append('g')
       .attr('transform', `translate(${centerX}, ${centerY})`);
@@ -304,30 +303,19 @@ export function RiskRadarD3Simple({
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="relative">
-          <svg ref={svgRef} className="w-full h-auto" />
-          <div
-            ref={tooltipRef}
-            className="absolute pointer-events-none bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 transition-opacity duration-200 z-50"
-            style={{ position: 'absolute' }}
-          />
+      <CardContent className="pt-0 pb-4">
+        <div className="flex justify-center items-center">
+          <div className="relative">
+            <svg ref={svgRef} style={{ display: 'block' }} />
+            <div
+              ref={tooltipRef}
+              className="absolute pointer-events-none bg-gray-900 text-white text-xs rounded px-2 py-1 opacity-0 transition-opacity duration-200 z-50"
+              style={{ position: 'absolute' }}
+            />
+          </div>
         </div>
         
-        {displayCompany && (
-          <div className="mt-4 pt-4 border-t">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Risk Score:</span>
-                <span className="ml-2 text-blue-600">{displayCompany.risk_score}/100</span>
-              </div>
-              <div>
-                <span className="font-medium">Category:</span>
-                <span className="ml-2">{displayCompany.category}</span>
-              </div>
-            </div>
-          </div>
-        )}
+
       </CardContent>
     </Card>
   );
