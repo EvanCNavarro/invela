@@ -157,6 +157,9 @@ const pdfExtract = new PDFExtract();
 // Import admin demo cleanup routes
 import adminDemoCleanupRoutes from './routes/admin-demo-cleanup';
 
+// Import FinTech tab migration routes for Phase 1 implementation
+import fintechTabMigrationRouter from './routes/fintech-tab-migration';
+
 // Company cache for current company endpoint - exported for other modules to use
 export const companyCache = new Map<number, { company: any, timestamp: number }>();
 export const COMPANY_CACHE_TTL = 1 * 60 * 1000; // Reduced to 1 minute to improve UI responsiveness
@@ -769,6 +772,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
   
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
+  
+  // Register FinTech tab migration routes for Phase 1 implementation
+  app.use('/api/fintech-tab-migration', fintechTabMigrationRouter);
+  routeRegistrationTracker.register('FinTechTabMigration');
   app.use(tasksRouter);
   
   // Register Risk Score Configuration routes with optional authentication
