@@ -91,10 +91,13 @@ export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
   });
 
   // Fetch network relationships data
-  const { data: relationships, isLoading } = useQuery<any[]>({
+  const { data: networkData, isLoading } = useQuery<any>({
     queryKey: ['/api/relationships/network'],
     enabled: true
   });
+
+  // Extract relationships from network data
+  const relationships = networkData?.nodes || [];
 
   // Process chord data
   const chordData = useMemo(() => {
@@ -107,28 +110,32 @@ export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
     const nodeMap = new Map<string, ChordNode>();
     const flowMap = new Map<string, ChordFlow>();
 
-    relationships.forEach(rel => {
+    relationships.forEach((rel: any) => {
+      const relType = rel.relationshipType || 'data_provider';
+      const riskScore = rel.riskScore || 0;
+      const accredStatus = rel.accreditationStatus || 'PENDING';
+      const category = rel.category || 'FinTech';
+      
       // Apply filters
       const matchesRelType = filters.relationshipTypes.length === 0 || 
-        filters.relationshipTypes.includes(rel.relationshipType);
+        filters.relationshipTypes.includes(relType);
+      const riskLevel = getRiskLevel(riskScore);
       const matchesRisk = filters.riskLevels.length === 0 || 
-        filters.riskLevels.includes(rel.riskLevel);
+        filters.riskLevels.includes(riskLevel);
       const matchesAccreditation = filters.accreditationStatus.length === 0 || 
-        filters.accreditationStatus.includes(rel.accreditationStatus);
+        filters.accreditationStatus.includes(accredStatus);
 
       if (!matchesRelType || !matchesRisk || !matchesAccreditation) return;
 
-      // Determine grouping
+      // Determine grouping - Invela (center) connects to all network companies
       let sourceGroup, targetGroup;
       
       if (viewMode === 'category') {
-        sourceGroup = rel.sourceCategory || 'Unknown';
-        targetGroup = rel.targetCategory || 'Unknown';
+        sourceGroup = 'Invela';
+        targetGroup = category;
       } else {
-        const sourceRisk = getRiskLevel(rel.sourceRiskScore || 0);
-        const targetRisk = getRiskLevel(rel.targetRiskScore || 0);
-        sourceGroup = sourceRisk;
-        targetGroup = targetRisk;
+        sourceGroup = 'Low Risk'; // Invela is low risk
+        targetGroup = riskLevel;
       }
 
       // Create/update nodes
