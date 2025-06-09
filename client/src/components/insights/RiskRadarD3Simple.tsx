@@ -97,9 +97,9 @@ export function RiskRadarD3Simple({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const width = 450;
-    const height = 450;
-    const margin = 60;
+    const width = 320;
+    const height = 320;
+    const margin = 30;
     const radius = Math.min(width, height) / 2 - margin;
     const centerX = width / 2;
     const centerY = height / 2;
@@ -219,7 +219,7 @@ export function RiskRadarD3Simple({
     // Labels with line wrapping (no animation)
     chartData.forEach((d, i) => {
       const angle = angleScale(i) - Math.PI / 2;
-      const labelRadius = radius + 25;
+      const labelRadius = radius + 15;
       const x = Math.cos(angle) * labelRadius;
       const y = Math.sin(angle) * labelRadius;
       
@@ -283,7 +283,7 @@ export function RiskRadarD3Simple({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-center">
           {showDropdown && companiesWithClusters.length > 1 && (
             <Select 
