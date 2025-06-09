@@ -185,43 +185,43 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           {/* Data Providers Card */}
-          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="w-3 h-3 bg-purple-600 rounded-sm" />
-              <span className="text-sm font-medium text-gray-600">Data Providers</span>
+          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
+            <div className="p-2.5 pl-4">
+              <div className="text-sm font-medium text-gray-600 mb-1">Data Providers</div>
+              <div className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</div>
           </div>
           
           {/* Data Recipients Card */}
-          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="w-3 h-3 bg-green-600 rounded-sm" />
-              <span className="text-sm font-medium text-gray-600">Data Recipients</span>
+          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600"></div>
+            <div className="p-2.5 pl-4">
+              <div className="text-sm font-medium text-gray-600 mb-1">Data Recipients</div>
+              <div className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</div>
           </div>
           
           {/* Accredited Recipients Card */}
-          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div className="w-3 h-3 bg-blue-600 rounded-sm" />
-              <span className="text-sm font-medium text-gray-600">Accredited Recipients</span>
+          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
+            <div className="p-2.5 pl-4">
+              <div className="text-sm font-medium text-gray-600 mb-1">Accredited Recipients</div>
+              <div className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</div>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</div>
           </div>
         </div>
       )}
 
-      {/* Chart without Legend */}
-      <div className="bg-white rounded-lg border p-4">
-        {/* Chart Header with Time Selector */}
-        <div className="flex items-center justify-start mb-3">
+      {/* Chart */}
+      <div className="bg-white rounded-lg border p-3">
+        {/* Chart Header with Time Selector on Right */}
+        <div className="flex items-center justify-end mb-2">
           <ToggleGroup
             type="single"
             value={selectedTimeframe}
@@ -232,21 +232,21 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             <ToggleGroupItem 
               value="1day" 
               aria-label="1 Day view" 
-              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="30days" 
               aria-label="30 Days view" 
-              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               30D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="1year" 
               aria-label="1 Year view" 
-              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1Y
             </ToggleGroupItem>
@@ -255,27 +255,27 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
 
         {/* Chart Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center h-72">
+          <div className="flex items-center justify-center h-64">
             <div className="flex items-center gap-2 text-gray-500">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Loading enrollment data...</span>
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-72">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 10, right: 10, left: 10, bottom: 40 }} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 25 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="period" 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
                   stroke="#6b7280"
-                  height={60}
+                  height={40}
                   tickFormatter={(value) => {
                     try {
                       const date = new Date(value);
@@ -296,9 +296,9 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   }}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 11 }}
                   stroke="#6b7280"
-                  width={40}
+                  width={35}
                 />
                 <Tooltip 
                   contentStyle={{
@@ -331,7 +331,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-72">
+          <div className="flex items-center justify-center h-64">
             <div className="text-center text-gray-500">
               <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No enrollment data available</p>
