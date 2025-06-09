@@ -67,25 +67,27 @@ interface WidgetCustomizationDropdownProps {
 
 /**
  * Human-readable widget labels for enhanced user experience
+ * Ordered by their visual appearance on the dashboard
  */
 const WIDGET_LABELS: Record<keyof WidgetVisibility, string> = {
+  quickActions: 'Quick Actions',
   companySnapshot: 'Company Snapshot',
   networkVisualization: 'Network Visualization',
   riskRadar: 'Risk Radar',
   riskMonitoring: 'Risk Monitoring',
   taskSummary: 'Task Summary',
   systemOverview: 'System Overview',
-  quickActions: 'Quick Actions',
 };
 
 /**
  * Widget availability per persona type
  * Defines which widgets each company category can access
+ * Ordered by their visual appearance on the dashboard
  */
 const PERSONA_WIDGETS: Record<string, (keyof WidgetVisibility)[]> = {
-  'Invela': ['companySnapshot', 'networkVisualization', 'riskRadar', 'riskMonitoring', 'taskSummary', 'systemOverview', 'quickActions'],
-  'Bank': ['companySnapshot', 'networkVisualization', 'riskMonitoring', 'quickActions'],
-  'FinTech': ['companySnapshot', 'riskRadar', 'taskSummary', 'quickActions'],
+  'Invela': ['quickActions', 'companySnapshot', 'networkVisualization', 'riskRadar', 'riskMonitoring', 'taskSummary', 'systemOverview'],
+  'Bank': ['quickActions', 'companySnapshot', 'networkVisualization', 'riskMonitoring'],
+  'FinTech': ['quickActions', 'companySnapshot', 'riskRadar', 'taskSummary'],
 };
 
 // ========================================
