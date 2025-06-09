@@ -372,10 +372,12 @@ export default function DashboardPage(): JSX.Element {
           <div className="space-y-6">
             {/* Quick Actions Widget - Available for all personas when enabled */}
             {visibleWidgets.quickActions && (
-              <QuickActionsWidget
-                onToggle={() => toggleWidget('quickActions')}
-                isVisible={visibleWidgets.quickActions}
-              />
+              <div className="widget-entrance-animation widget-entrance-stagger-1">
+                <QuickActionsWidget
+                  onToggle={() => toggleWidget('quickActions')}
+                  isVisible={visibleWidgets.quickActions}
+                />
+              </div>
             )}
             
             {/* Debug logging moved to useEffect for proper React rendering */}
@@ -387,7 +389,7 @@ export default function DashboardPage(): JSX.Element {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Company Overview - Single column */}
                   {visibleWidgets.companySnapshot && (
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1 widget-entrance-animation widget-entrance-stagger-2">
                       <CompanySnapshot
                         companyData={companyData}
                         onToggle={() => toggleWidget('companySnapshot')}
@@ -398,7 +400,7 @@ export default function DashboardPage(): JSX.Element {
 
                   {/* Network Visualization - Takes 2 columns */}
                   {visibleWidgets.networkVisualization && (
-                    <div className="lg:col-span-2 h-[600px]">
+                    <div className="lg:col-span-2 h-[600px] widget-entrance-animation widget-entrance-stagger-3">
                       <NetworkVisualizationWidget
                         onToggle={() => toggleWidget('networkVisualization')}
                         isVisible={visibleWidgets.networkVisualization}
@@ -411,7 +413,7 @@ export default function DashboardPage(): JSX.Element {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   {/* Risk Radar for Invela */}
                   {visibleWidgets.riskRadar && companyData && (
-                    <div className="h-[400px]">
+                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-4">
                       <RiskRadarWidget
                         companyId={companyData?.id || 0}
                         onToggle={() => toggleWidget('riskRadar')}
@@ -422,7 +424,7 @@ export default function DashboardPage(): JSX.Element {
 
                   {/* Task Summary for Invela */}
                   {visibleWidgets.taskSummary && (
-                    <div className="h-[400px]">
+                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-5">
                       <TaskSummaryWidget
                         onToggle={() => toggleWidget('taskSummary')}
                         isVisible={visibleWidgets.taskSummary}

@@ -87,6 +87,33 @@ export function CompanySnapshot({
   };
   
   const personaColors = getPersonaColors(companyData?.category || 'FinTech');
+  
+  // Get company role based on category
+  const getCompanyRole = (category: string) => {
+    switch (category) {
+      case 'Invela':
+        return 'System Admin';
+      case 'Bank':
+        return 'Data Provider';
+      case 'FinTech':
+      default:
+        return 'Data Recipient';
+    }
+  };
+  
+  // Calculate days until expiration
+  const getExpirationInfo = () => {
+    const expirationDate = new Date('2025-12-31'); // Using the December 2025 date
+    const today = new Date();
+    const diffTime = expirationDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 0) {
+      return `Expires in ${diffDays} days`;
+    } else {
+      return 'Expired';
+    }
+  };
 
   if (isLoadingRelationships) {
     return (
@@ -113,12 +140,12 @@ export function CompanySnapshot({
       isVisible={isVisible}
     >
       <div className="space-y-4">
-        {/* Company Header with Logo */}
-        <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
-          <div className="flex items-center gap-4">
-            {/* Company Logo/Avatar */}
+        {/* Compact Company Header */}
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
+          <div className="flex items-center gap-3">
+            {/* Smaller Company Logo/Avatar */}
             <div className="flex-shrink-0">
-              <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${personaColors.gradient} flex items-center justify-center text-white font-semibold text-lg shadow-sm`}>
+              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${personaColors.gradient} flex items-center justify-center text-white font-semibold text-sm shadow-sm`}>
                 {(companyData?.name || 'C')[0].toUpperCase()}
               </div>
             </div>
@@ -128,76 +155,64 @@ export function CompanySnapshot({
               <h3 className="widget-title truncate mb-1">
                 {companyData?.name || 'Company Name'}
               </h3>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="widget-text">
-                  {companyData?.category || 'FinTech'}
-                </Badge>
-                {/* New Alerts Badge */}
-                <Badge variant="secondary" className="widget-text bg-orange-100 text-orange-800 border-orange-200">
-                  0 New Alerts
-                </Badge>
+              <div className="widget-text text-gray-600">
+                {getCompanyRole(companyData?.category || 'FinTech')}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Key Metrics Grid - 2x2 Layout */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Risk Score */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <Shield className={`h-4 w-4 ${personaColors.iconColor}`} />
-              <span className="widget-text">Risk Score</span>
+        {/* Metrics Grid - Network, Risk Score, and Full-Width Accreditation */}
+        <div className="space-y-3">
+          {/* Top Row: Network and Risk Score */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Network Size */}
+            <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center space-x-2 mb-3">
+                <Users className={`h-4 w-4 ${personaColors.iconColor}`} />
+                <span className="widget-text">Network</span>
+              </div>
+              <div className="widget-number text-2xl mb-1">{networkCount}</div>
+              <div className="widget-text text-gray-500 text-sm">companies</div>
             </div>
-            <div className="space-y-1">
-              <div className="widget-number text-2xl">{riskScore}</div>
+
+            {/* Risk Score */}
+            <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center space-x-2 mb-3">
+                <Shield className={`h-4 w-4 ${personaColors.iconColor}`} />
+                <span className="widget-text">Risk Score</span>
+              </div>
+              <div className="widget-number text-2xl mb-1">{riskScore}</div>
               <Badge 
                 variant="secondary" 
-                className={`widget-text ${riskStatus.color} ${riskStatus.bg}`}
+                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskStatus.color} ${riskStatus.bg} border-0`}
               >
                 {riskStatus.label}
               </Badge>
             </div>
           </div>
 
-          {/* Network Size */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <Users className={`h-4 w-4 ${personaColors.iconColor}`} />
-              <span className="widget-text">Network</span>
-            </div>
-            <div className="space-y-1">
-              <div className="widget-number text-2xl">{networkCount}</div>
-              <div className="widget-text text-gray-500">companies</div>
-            </div>
-          </div>
-
-          {/* Accreditation Status */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm">
-            <div className="flex items-center space-x-2 mb-2">
+          {/* Bottom Row: Full-Width Accreditation */}
+          <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+            <div className="flex items-center justify-center space-x-2 mb-3">
               <accreditationBadge.icon className={`h-4 w-4 ${personaColors.iconColor}`} />
               <span className="widget-text">Accreditation</span>
             </div>
-            <div className="space-y-1">
-              <Badge variant={accreditationBadge.variant} className="widget-text">
-                {accreditationStatus}
+            <div className="space-y-2">
+              <Badge 
+                className={`inline-flex px-4 py-2 rounded-full text-sm font-medium border-0 ${
+                  accreditationStatus === 'APPROVED' 
+                    ? 'bg-green-100 text-green-800' 
+                    : accreditationStatus === 'PENDING'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {accreditationStatus === 'APPROVED' ? 'Approved' : 
+                 accreditationStatus === 'PENDING' ? 'Pending' : 'Rejected'}
               </Badge>
-              <div className="widget-text text-gray-500 text-xs">
-                Expires: Dec 2025
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <Clock className={`h-4 w-4 ${personaColors.iconColor}`} />
-              <span className="widget-text">Last Update</span>
-            </div>
-            <div className="space-y-1">
-              <div className="widget-text">Today</div>
-              <div className="widget-text text-gray-500 text-xs">
-                Risk assessment
+              <div className="widget-text text-gray-500 text-sm">
+                {getExpirationInfo()}
               </div>
             </div>
           </div>
