@@ -8,6 +8,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { 
   Building2, 
   Shield,
@@ -15,24 +16,38 @@ import {
   CheckCircle,
   AlertTriangle,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 interface CompanySnapshotProps {
   companyData: any;
   onToggle: () => void;
   isVisible: boolean;
+  /** Animation delay for staggered entrance effects */
+  animationDelay?: number;
 }
 
 export function CompanySnapshot({ 
   companyData, 
   onToggle, 
-  isVisible
+  isVisible,
+  animationDelay = 0
 }: CompanySnapshotProps) {
   const [, setLocation] = useLocation();
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize animation state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
   // Fetch network relationships
   const { data: relationships, isLoading: isLoadingRelationships } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
@@ -118,18 +133,47 @@ export function CompanySnapshot({
     }
   };
 
-  if (isLoadingRelationships) {
+  // Show enhanced loading skeleton during data fetch
+  if (isLoadingRelationships || isInitializing) {
     return (
       <Widget
         title="Company Overview"
-        icon={<Building2 className="h-5 w-5 text-gray-700" />}
+        icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
+        size="standard"
+        loadingState="shimmer"
+        isLoading={true}
+        animationDelay={animationDelay}
+        ariaLabel="Company overview widget loading"
       >
-        <div className="space-y-4 animate-pulse">
-          <div className="h-16 bg-gray-200 rounded"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
-          <div className="h-12 bg-gray-200 rounded"></div>
+        <div className="space-y-4">
+          {/* Company Header Skeleton */}
+          <div 
+            className="widget-skeleton-shimmer h-16 rounded-lg"
+            style={{ animationDelay: `${animationDelay}ms` }}
+          />
+          
+          {/* Metrics Grid Skeleton */}
+          <div className="space-y-3">
+            {/* Network and Risk Score Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div 
+                className="widget-skeleton-shimmer h-20 rounded-lg"
+                style={{ animationDelay: `${animationDelay + 100}ms` }}
+              />
+              <div 
+                className="widget-skeleton-shimmer h-20 rounded-lg"
+                style={{ animationDelay: `${animationDelay + 200}ms` }}
+              />
+            </div>
+            
+            {/* Accreditation Full Width Skeleton */}
+            <div 
+              className="widget-skeleton-shimmer h-16 rounded-lg"
+              style={{ animationDelay: `${animationDelay + 300}ms` }}
+            />
+          </div>
         </div>
       </Widget>
     );
@@ -141,12 +185,20 @@ export function CompanySnapshot({
       icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
+      size="standard"
+      entranceAnimation="fadeIn"
+      animationDelay={animationDelay}
+      ariaLabel="Company overview widget"
     >
       <div className="space-y-4">
         {/* Compact Company Header - Clickable */}
         <button 
           onClick={() => setLocation(`/network/company/${companyData?.id || 1}`)}
-          className="w-full p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border hover:bg-gradient-to-br hover:from-blue-100 hover:to-indigo-100 hover:border-blue-200 transition-all duration-200 group"
+          className={cn(
+            "w-full p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border hover:bg-gradient-to-br hover:from-blue-100 hover:to-indigo-100 hover:border-blue-200 transition-all duration-200 group",
+            "widget-entrance-animation"
+          )}
+          style={{ animationDelay: `${animationDelay}ms` }}
           title="View company profile"
         >
           <div className="flex items-center gap-3">
@@ -175,7 +227,10 @@ export function CompanySnapshot({
         </button>
 
         {/* Metrics Grid - Network, Risk Score, and Full-Width Accreditation */}
-        <div className="space-y-3">
+        <div 
+          className={cn("space-y-3", "widget-entrance-animation")}
+          style={{ animationDelay: `${animationDelay + 100}ms` }}
+        >
           {/* Top Row: Network and Risk Score */}
           <div className="grid grid-cols-2 gap-3">
             {/* Network Size */}
