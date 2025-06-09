@@ -144,15 +144,15 @@ export async function submitForm(
         timestamp: new Date().toISOString()
       });
       
-      // 5. Execute form-specific post-submission logic 
-      let unlockedTabs: string[] = [];
+      // 5. Execute form-specific post-submission logic (no tab unlocking)
+      const unlockedTabs: string[] = []; // Tabs no longer unlocked via form submission
       
       if (formType === 'kyb' || formType === 'company_kyb') {
-        unlockedTabs = await handleKybPostSubmission(trx, taskId, companyId, formData, transactionId);
+        await handleKybPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
-        unlockedTabs = await handleKy3pPostSubmission(trx, taskId, companyId, formData, transactionId);
+        await handleKy3pPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else if (formType === 'open_banking') {
-        unlockedTabs = await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, transactionId);
+        await handleOpenBankingPostSubmission(trx, taskId, companyId, formData, transactionId);
       } else {
         logger.warn(`Unsupported form type: ${formType}, no post-submission handlers will run`, {
         ...baseLogContext,
@@ -165,7 +165,7 @@ export async function submitForm(
         ...baseLogContext,
         taskId,
         formType,
-        unlockedTabs
+        tabUnlockingRemoved: true
       });
       
       // Return success result
@@ -613,8 +613,8 @@ async function persistOpenBankingResponses(trx: any, taskId: number, formData: R
 
 /**
  * Handle KYB-specific post-submission logic
- * - Unlocks File Vault tab
- * - Unlocks dependent tasks
+ * - No longer unlocks tabs (all tabs unlocked by default)
+ * - Still unlocks dependent tasks
  */
 async function handleKybPostSubmission(
   trx: any,
@@ -622,7 +622,7 @@ async function handleKybPostSubmission(
   companyId: number,
   formData: Record<string, any>,
   transactionId?: string
-): Promise<string[]> {
+): Promise<void> {
   const startTime = performance.now();
   const kybPostLogContext = { 
     namespace: 'KybPostSubmission', 
@@ -631,31 +631,23 @@ async function handleKybPostSubmission(
     transactionId 
   };
   
-  logger.info('Processing KYB post-submission logic', {
+  logger.info('Processing KYB post-submission logic (tab unlocking disabled)', {
     ...kybPostLogContext,
     timestamp: new Date().toISOString()
   });
   
   try {
-    // KYB unlocks only the File Vault tab
-    const unlockedTabs = ['file-vault'];
-    
-    // Unlock File Vault tab
-    await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
-    
     // Unlock dependent security tasks like KY3P
     const dependentTaskIds = await synchronizeTasks(companyId, taskId);
     
     const endTime = performance.now();
     logger.info('KYB post-submission completed', { 
       ...kybPostLogContext,
-      unlockedTabs,
+      tabUnlockingRemoved: true,
       dependentTasksUnlocked: dependentTaskIds.length,
       duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
-    
-    return unlockedTabs;
   } catch (error) {
     const endTime = performance.now();
     logger.error('Error in KYB post-submission processing', {
@@ -671,7 +663,7 @@ async function handleKybPostSubmission(
 
 /**
  * Handle KY3P-specific post-submission logic
- * - No tabs are unlocked
+ * - No tabs are unlocked (all tabs unlocked by default)
  */
 async function handleKy3pPostSubmission(
   trx: any,
@@ -679,7 +671,7 @@ async function handleKy3pPostSubmission(
   companyId: number,
   formData: Record<string, any>,
   transactionId?: string
-): Promise<string[]> {
+): Promise<void> {
   const startTime = performance.now();
   const ky3pPostLogContext = { 
     namespace: 'Ky3pPostSubmission', 
@@ -688,21 +680,19 @@ async function handleKy3pPostSubmission(
     transactionId 
   };
   
-  logger.info('Processing KY3P post-submission logic', {
+  logger.info('Processing KY3P post-submission logic (tab unlocking disabled)', {
     ...ky3pPostLogContext,
     timestamp: new Date().toISOString()
   });
   
   try {
-    // KY3P doesn't unlock any tabs
-    logger.info('KY3P post-submission completed (no tabs to unlock)', {
+    // KY3P doesn't unlock any tabs (handled by default tab configuration)
+    logger.info('KY3P post-submission completed', {
       ...ky3pPostLogContext,
+      tabUnlockingRemoved: true,
       duration: `${(performance.now() - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
-    
-    // Return empty array since no tabs are unlocked
-    return [];
   } catch (error) {
     const endTime = performance.now();
     logger.error('Error in KY3P post-submission processing', {
@@ -718,7 +708,7 @@ async function handleKy3pPostSubmission(
 
 /**
  * Handle Open Banking-specific post-submission logic
- * - Unlocks Dashboard and Insights tabs
+ * - No longer unlocks tabs (all tabs unlocked by default)
  * - Updates company onboarding status
  * - Generates risk score
  * - Updates accreditation status
@@ -727,7 +717,7 @@ async function handleKy3pPostSubmission(
  * Handle Open Banking post-submission processing
  * 
  * This function performs the following steps after an Open Banking form is submitted:
- * 1. Unlocks Dashboard and Insights tabs for the company
+ * 1. Tab unlocking removed (all tabs unlocked by default)
  * 2. Marks company onboarding as completed
  * 3. Generates a risk score (random value between 5-95)
  * 4. Calculates risk clusters based on the risk score
@@ -738,7 +728,7 @@ async function handleKy3pPostSubmission(
  * @param companyId The company ID
  * @param formData The form data
  * @param transactionId Optional transaction ID for tracking
- * @returns Array of unlocked tabs
+ * @returns void (no longer returns unlocked tabs)
  */
 async function handleOpenBankingPostSubmission(
   trx: any,
@@ -746,7 +736,7 @@ async function handleOpenBankingPostSubmission(
   companyId: number,
   formData: Record<string, any>,
   transactionId?: string
-): Promise<string[]> {
+): Promise<void> {
   const startTime = performance.now();
   const obPostLogContext = { 
     namespace: 'OpenBankingPostSubmission', 
@@ -766,13 +756,10 @@ async function handleOpenBankingPostSubmission(
   // Track success of each step
   const stepResults = {
     companyVerified: false,
-    tabsUnlocked: false,
     onboardingCompleted: false,
     riskScoreGenerated: false,
     accreditationUpdated: false
   };
-  
-  let unlockedTabs: string[] = [];
   
   try {
     // STEP 0: Verify company exists before proceeding
@@ -789,33 +776,13 @@ async function handleOpenBankingPostSubmission(
     console.log(`[OpenBankingPostSubmission] ✅ Company verified: ${companyId}`);
     stepResults.companyVerified = true;
     
-    // STEP 1: Unlock Dashboard and Insights tabs
-    // Open Banking unlocks Dashboard and Insights tabs
-    unlockedTabs = ['dashboard', 'insights'];
-    
-    try {
-      // Unlock Dashboard and Insights tabs
-      await unlockTabsForCompany(trx, companyId, unlockedTabs, transactionId);
-      console.log(`[OpenBankingPostSubmission] ✅ Unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
-      stepResults.tabsUnlocked = true;
-      
-      logger.info('Unlocked dashboard and insights tabs', { 
-        ...obPostLogContext,
-        step: 'tabs_unlock',
-        tabs: unlockedTabs,
-        status: 'success',
-        timestamp: new Date().toISOString()
-      });
-    } catch (tabError) {
-      console.error(`[OpenBankingPostSubmission] ❌ Failed to unlock tabs:`, tabError);
-      logger.error('Failed to unlock tabs', {
-        ...obPostLogContext,
-        step: 'tabs_unlock',
-        error: tabError instanceof Error ? tabError.message : String(tabError),
-        status: 'failed'
-      });
-      // Continue execution - don't break the whole process if tab unlocking fails
-    }
+    // STEP 1: Tab unlocking removed (all tabs unlocked by default)
+    logger.info('Tab unlocking step bypassed - tabs unlocked by default', { 
+      ...obPostLogContext,
+      step: 'tabs_unlock_bypassed',
+      tabUnlockingRemoved: true,
+      timestamp: new Date().toISOString()
+    });
     
     // STEP 2: Mark company onboarding as completed
     // This is crucial for the post-submission workflow
@@ -1341,78 +1308,9 @@ async function generateRiskScore(
 }
 
 /**
- * Unlock tabs for a company within a transaction
+ * Deprecated function - tab unlocking removed
+ * All FinTech companies now have tabs unlocked by default
  */
-async function unlockTabsForCompany(trx: any, companyId: number, tabNames: string[], transactionId?: string): Promise<void> {
-  const startTime = performance.now();
-  const tabsLogContext = { 
-    namespace: 'UnlockTabs', 
-    companyId,
-    transactionId 
-  };
-  
-  if (!tabNames || tabNames.length === 0) {
-    logger.info('No tabs to unlock', {
-      ...tabsLogContext,
-      timestamp: new Date().toISOString()
-    });
-    return;
-  }
-  
-  logger.info('Unlocking tabs for company', { 
-    ...tabsLogContext, 
-    tabNames,
-    timestamp: new Date().toISOString() 
-  });
-  
-  try {
-    // Get current company tabs from database
-    const [company] = await trx.select(companies.available_tabs)
-      .from(companies)
-      .where(eq(companies.id, companyId));
-    
-    if (!company) {
-      logger.error('Company not found when unlocking tabs', tabsLogContext);
-      throw new Error(`Company ${companyId} not found`);
-    }
-    
-    // Ensure available_tabs is an array
-    const currentTabs = Array.isArray(company.available_tabs) 
-      ? company.available_tabs 
-      : ['task-center'];
-    
-    // Add new tabs if not already present
-    const updatedTabs = [...new Set([...currentTabs, ...tabNames])];
-    
-    // Update company tabs
-    await trx.update(companies)
-      .set({ 
-        available_tabs: updatedTabs,
-        updated_at: new Date()
-      })
-      .where(eq(companies.id, companyId));
-    
-    const endTime = performance.now();
-    logger.info('Successfully unlocked tabs', {
-      ...tabsLogContext,
-      unlockedTabs: tabNames,
-      allTabs: updatedTabs,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const endTime = performance.now();
-    logger.error('Error unlocking tabs', {
-      ...tabsLogContext,
-      tabNames,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      duration: `${(endTime - startTime).toFixed(2)}ms`,
-      timestamp: new Date().toISOString()
-    });
-    throw error; // Re-throw to trigger transaction rollback
-  }
-}
 
 /**
  * Broadcast form submission results to connected clients
