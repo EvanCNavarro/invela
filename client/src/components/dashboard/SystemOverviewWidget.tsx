@@ -42,7 +42,6 @@ export function SystemOverviewWidget({ onToggle, isVisible }: SystemOverviewWidg
       icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
-      headerClassName="pb-2"
       className="h-full flex flex-col"
     >
       <div className="flex-grow overflow-hidden min-h-0">
