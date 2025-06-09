@@ -50,6 +50,7 @@ import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { WidgetCustomizationDropdown } from "@/components/dashboard/WidgetCustomizationDropdown";
+import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
 
 // UI components for interactive elements and page structure
 import { Button } from "@/components/ui/button";

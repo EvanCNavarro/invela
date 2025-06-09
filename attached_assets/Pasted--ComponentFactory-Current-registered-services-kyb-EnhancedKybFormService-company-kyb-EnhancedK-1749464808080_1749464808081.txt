@@ -1,0 +1,79 @@
+[ComponentFactory] Current registered services: [kyb: EnhancedKybFormService, company_kyb: EnhancedKybFormService, ky3p: UnifiedKY3PFormService, sp_ky3p_assessment: UnifiedKY3PFormService, security: UnifiedKY3PFormService, security_assessment: UnifiedKY3PFormService, open_banking: OpenBankingFormService, open_banking_survey: OpenBankingFormService]
+[2025-06-09T10:26:41.803Z] [UnifiedServiceRegistration] Registered OpenBankingService for task type: open_banking_survey 
+[ComponentFactory] Getting all registered form services (8 total)
+[ComponentFactory] Registered service: kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: company_kyb -> EnhancedKybFormService
+[ComponentFactory] Registered service: ky3p -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: sp_ky3p_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: security_assessment -> UnifiedKY3PFormService
+[ComponentFactory] Registered service: open_banking -> OpenBankingFormService
+[ComponentFactory] Registered service: open_banking_survey -> OpenBankingFormService
+[2025-06-09T10:26:41.803Z] [UnifiedServiceRegistration] Successfully registered 8 services: 
+(8) ["kyb", "company_kyb", "ky3p", "sp_ky3p_assessment", "security", "security_assessment", "open_banking", "open_banking_survey"]
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Phase services completed successfully 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Phase communication dependencies satisfied, executing... 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Executing startup phase: communication 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Executing 1 callbacks for phase communication 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Executing callback 1/1 for phase communication 
+[2025-06-09T10:26:41.803Z] [App] Communication phase initializing 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Executing startup phase: ready 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-06-09T10:26:41.803Z] [App] Application ready for user interaction 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-06-09T10:26:41.803Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 8, email: "evan.navarro@invela.com", timestamp: "2025-06-09T10:26:42.032Z"}
+[2025-06-09T10:26:42.038Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+QuickActionsWidget is not defined
+QuickActionsWidget is not defined
+[WebSocketEventBridge] Cleaning up event bridge
+[IntelligentPreloader:CacheManager] Cleared 0 images matching pattern: welcome_ 
+[OnboardingModal] Cache cleared on modal close
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464802408-ajopdto", timestamp: "2025-06-09T10:26:42.408Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.431Z", id: 858, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.461Z", id: 168, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.490Z", id: 123, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-09T10:26:42.525Z", message: "Authentication successful"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.526Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.556Z", id: 720, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.588Z", id: 251, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.617Z", id: 124, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.647Z", id: 1033, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.677Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T10:26:42.706Z", id: 172, status: "completed", progress: 100, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464802941-sn1a472", timestamp: "2025-06-09T10:26:42.941Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464803459-skb5kfs", timestamp: "2025-06-09T10:26:43.459Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749464803992-cy9n11w", timestamp: "2025-06-09T10:26:43.993Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
