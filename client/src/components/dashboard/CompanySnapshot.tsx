@@ -141,7 +141,7 @@ export function CompanySnapshot({
     >
       <div className="space-y-4">
         {/* Compact Company Header */}
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
+        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
           <div className="flex items-center gap-3">
             {/* Smaller Company Logo/Avatar */}
             <div className="flex-shrink-0">
@@ -155,7 +155,7 @@ export function CompanySnapshot({
               <h3 className="widget-title truncate mb-1">
                 {companyData?.name || 'Company Name'}
               </h3>
-              <div className="widget-text text-gray-600">
+              <div className="widget-text text-gray-600 text-sm">
                 {getCompanyRole(companyData?.category || 'FinTech')}
               </div>
             </div>
@@ -173,7 +173,7 @@ export function CompanySnapshot({
                 <span className="widget-text">Network</span>
               </div>
               <div className="widget-number text-2xl mb-1">{networkCount}</div>
-              <div className="widget-text text-gray-500 text-sm">companies</div>
+              <div className="widget-text text-gray-500 text-sm">Companies</div>
             </div>
 
             {/* Risk Score */}
@@ -183,12 +183,9 @@ export function CompanySnapshot({
                 <span className="widget-text">Risk Score</span>
               </div>
               <div className="widget-number text-2xl mb-1">{riskScore}</div>
-              <Badge 
-                variant="secondary" 
-                className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskStatus.color} ${riskStatus.bg} border-0`}
-              >
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskStatus.color} ${riskStatus.bg} border-0 cursor-default`}>
                 {riskStatus.label}
-              </Badge>
+              </span>
             </div>
           </div>
 
@@ -199,18 +196,16 @@ export function CompanySnapshot({
               <span className="widget-text">Accreditation</span>
             </div>
             <div className="space-y-2">
-              <Badge 
-                className={`inline-flex px-4 py-2 rounded-full text-sm font-medium border-0 ${
-                  accreditationStatus === 'APPROVED' 
-                    ? 'bg-green-100 text-green-800' 
-                    : accreditationStatus === 'PENDING'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
+              <span className={`inline-flex px-4 py-2 rounded-full text-sm font-medium border-0 cursor-default ${
+                accreditationStatus === 'APPROVED' 
+                  ? 'bg-green-100 text-green-800' 
+                  : accreditationStatus === 'PENDING'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
                 {accreditationStatus === 'APPROVED' ? 'Approved' : 
                  accreditationStatus === 'PENDING' ? 'Pending' : 'Rejected'}
-              </Badge>
+              </span>
               <div className="widget-text text-gray-500 text-sm">
                 {getExpirationInfo()}
               </div>
