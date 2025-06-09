@@ -217,7 +217,7 @@ async function createFintechCompany(specialization) {
     funding_stage: revenueTier === 'large' ? 'Series C' : revenueTier === 'medium' ? 'Series B' : 'Series A',
     certifications_compliance: 'SOC 2 Type II, PCI DSS compliant, financial services certified',
     onboarding_company_completed: true,
-    available_tabs: '{"dashboard", "network", "file-vault", "company-profile", "risk-monitoring", "accreditation"}',
+    available_tabs: '{"task-center", "dashboard", "file-vault", "insights", "network"}',
     is_demo: false,
     demo_cleanup_eligible: false,
     demo_persona_type: personaType,

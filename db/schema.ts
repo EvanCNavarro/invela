@@ -163,7 +163,7 @@ export const companies = pgTable("companies", {
   registry_date: timestamp("registry_date").notNull().defaultNow(),
   files_public: jsonb("files_public").$type<string[]>().default([]),
   files_private: jsonb("files_private").$type<string[]>().default([]),
-  available_tabs: text("available_tabs").array().notNull().default(['task-center']),
+  available_tabs: text("available_tabs").array().notNull().default(['task-center', 'dashboard', 'file-vault', 'insights', 'network']),
   is_demo: boolean("is_demo").default(false),
   // Demo-specific fields (exist in database but missing from schema)
   demo_created_at: timestamp("demo_created_at"),
