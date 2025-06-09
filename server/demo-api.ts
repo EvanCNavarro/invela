@@ -302,7 +302,7 @@ router.post('/demo/company/create', async (req, res) => {
           return {
             category: 'FinTech',
             accreditation_status: 'APPROVED',
-            available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights'],
+            available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights', 'network'],
             onboarding_company_completed: true,
             demo_persona_type: 'accredited-data-recipient',
             description: 'Accredited FinTech with full business platform access',
@@ -328,7 +328,7 @@ router.post('/demo/company/create', async (req, res) => {
           return {
             category: 'FinTech',
             accreditation_status: 'PENDING',
-            available_tabs: ['task-center'],
+            available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights', 'network'],
             onboarding_company_completed: false,
             demo_persona_type: 'new-data-recipient',
             description: 'New FinTech company beginning the onboarding process'

@@ -409,20 +409,14 @@ export async function updateCompanyAfterCardCompletion(
       newTabs.push('builder', 'playground', 'network');
     } else if (company.category === 'Bank') {
       newTabs.push('builder', 'network');
+    } else if (company.category === 'FinTech') {
+      // FinTech companies now get network tab access immediately
+      newTabs.push('network');
     }
-    // FinTech companies only get the basic tabs
 
     // Combine existing tabs with new ones, removing duplicates
-    // For FinTech companies, ensure network, builder, and playground are never included
     const currentTabs = company.available_tabs || ['task-center'];
     let updatedTabs = Array.from(new Set([...currentTabs, ...newTabs]));
-
-    // If company is FinTech, remove restricted tabs
-    if (company.category === 'FinTech') {
-      updatedTabs = updatedTabs.filter(tab =>
-        !['network', 'builder', 'playground'].includes(tab)
-      );
-    }
 
     // Update company with new tabs and completed onboarding
     const [updatedCompany] = await db.update(companies)
