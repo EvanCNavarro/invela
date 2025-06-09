@@ -63,8 +63,9 @@ export default function SimpleTreemap() {
       value: getRevenueValue(node.revenueTier),
       category: node.category,
       revenue_tier: node.revenueTier,
+      revenue_value: node.revenue || node.revenueValue,
       risk_score: node.riskScore,
-      num_employees: node.numEmployees || (node.revenueTier === 'large' ? 500 : node.revenueTier === 'medium' ? 150 : 50),
+      num_employees: node.numEmployees || node.num_employees,
       accreditation_status: node.accreditationStatus,
     }));
 
@@ -258,12 +259,20 @@ export default function SimpleTreemap() {
     }
   }
 
-  // Helper function to get role type
+  // Helper function to get role type (corrected logic)
   const getRoleType = (category: string) => {
-    if (category === 'Bank') return 'Data Recipient';
-    if (category === 'FinTech') return 'Data Provider';
+    if (category === 'FinTech') return 'Data Recipient';
+    if (category === 'Bank') return 'Data Provider';
     if (category === 'Invela') return 'Invela Platform';
     return 'Unknown';
+  };
+
+  // Helper function to format revenue value
+  const formatRevenueValue = (value: number) => {
+    if (!value) return 'Not disclosed';
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+    return `$${value.toLocaleString()}`;
   };
 
   // Helper function to format revenue tier
@@ -317,19 +326,26 @@ export default function SimpleTreemap() {
               </div>
               
               <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Revenue Value</div>
+                <div className="font-medium text-blue-400">{formatRevenueValue(hoveredNode.revenue_value)}</div>
+              </div>
+              
+              <div>
                 <div className="text-gray-400 text-xs uppercase tracking-wide">Risk Score</div>
                 <div className="font-medium">{hoveredNode.risk_score || 'N/A'}</div>
               </div>
               
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Status</div>
-                <div className="font-medium">
+              <div className="col-span-2">
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Accreditation</div>
+                <div className="font-medium mt-1">
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     hoveredNode.accreditation_status === 'APPROVED' 
                       ? 'bg-green-900 text-green-300' 
-                      : 'bg-yellow-900 text-yellow-300'
+                      : hoveredNode.accreditation_status === 'PENDING'
+                      ? 'bg-yellow-900 text-yellow-300'
+                      : 'bg-gray-700 text-gray-300'
                   }`}>
-                    {hoveredNode.accreditation_status || 'Pending'}
+                    {hoveredNode.accreditation_status || 'Not Started'}
                   </span>
                 </div>
               </div>
