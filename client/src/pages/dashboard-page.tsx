@@ -382,10 +382,10 @@ export default function DashboardPage(): JSX.Element {
             
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {/* Company Snapshot - Full width since Quick Actions moved to top */}
                 {visibleWidgets.companySnapshot && (
-                  <div className="lg:col-span-2">
+                  <div>
                     <CompanySnapshot
                       companyData={companyData}
                       onToggle={() => toggleWidget('companySnapshot')}
@@ -396,13 +396,37 @@ export default function DashboardPage(): JSX.Element {
 
                 {/* Network Visualization for Invela */}
                 {visibleWidgets.networkVisualization && (
-                  <div className="lg:col-span-2 h-[600px]">
+                  <div className="h-[600px]">
                     <NetworkVisualizationWidget
                       onToggle={() => toggleWidget('networkVisualization')}
                       isVisible={visibleWidgets.networkVisualization}
                     />
                   </div>
                 )}
+
+                {/* Risk Radar and Task Summary for Invela */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Risk Radar for Invela */}
+                  {visibleWidgets.riskRadar && companyData && (
+                    <div className="h-[400px]">
+                      <RiskRadarWidget
+                        companyId={companyData?.id || 0}
+                        onToggle={() => toggleWidget('riskRadar')}
+                        isVisible={visibleWidgets.riskRadar}
+                      />
+                    </div>
+                  )}
+
+                  {/* Task Summary for Invela */}
+                  {visibleWidgets.taskSummary && (
+                    <div>
+                      <TaskSummaryWidget
+                        onToggle={() => toggleWidget('taskSummary')}
+                        isVisible={visibleWidgets.taskSummary}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
