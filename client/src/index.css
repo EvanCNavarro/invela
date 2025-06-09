@@ -482,7 +482,7 @@
 /* Widget Card Variants */
 .widget-card-metric {
   @apply p-4 rounded-lg border shadow-sm;
-  background: #fafafa;
+  background: white;
 }
 
 .widget-card-interactive {

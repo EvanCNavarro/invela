@@ -322,10 +322,10 @@ export default function DashboardPage(): JSX.Element {
             )}
             
             {/* Unified Layout for All Company Types - Simplified 3-Widget Structure */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Company Snapshot Widget */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Company Snapshot Widget - 1 column */}
               {visibleWidgets.companySnapshot && (
-                <div className="widget-entrance-animation widget-entrance-stagger-2">
+                <div className="lg:col-span-1 widget-entrance-animation widget-entrance-stagger-2">
                   <CompanySnapshot
                     companyData={companyData}
                     onToggle={() => toggleWidget('companySnapshot')}
@@ -335,9 +335,9 @@ export default function DashboardPage(): JSX.Element {
                 </div>
               )}
 
-              {/* Dynamic Visualizer Widget - Contains all insights in dropdown */}
+              {/* Dynamic Visualizer Widget - 2 columns */}
               {visibleWidgets.visualizer && (
-                <div className="widget-entrance-animation widget-entrance-stagger-3">
+                <div className="lg:col-span-2 widget-entrance-animation widget-entrance-stagger-3">
                   <VisualizerWidget
                     onToggle={() => toggleWidget('visualizer')}
                     isVisible={visibleWidgets.visualizer}
