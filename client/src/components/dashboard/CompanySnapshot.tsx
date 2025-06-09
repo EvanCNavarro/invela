@@ -14,10 +14,12 @@ import {
   Users,
   CheckCircle,
   AlertTriangle,
-  Clock
+  Clock,
+  ArrowRight
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
+import { useLocation } from "wouter";
 
 interface CompanySnapshotProps {
   companyData: any;
@@ -30,6 +32,7 @@ export function CompanySnapshot({
   onToggle, 
   isVisible
 }: CompanySnapshotProps) {
+  const [, setLocation] = useLocation();
   // Fetch network relationships
   const { data: relationships, isLoading: isLoadingRelationships } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
@@ -155,9 +158,14 @@ export function CompanySnapshot({
               <h3 className="widget-title truncate mb-1">
                 {companyData?.name || 'Company Name'}
               </h3>
-              <div className="widget-text text-gray-600 text-sm">
+              <button 
+                onClick={() => setLocation(`/network/company/${companyData?.id || 1}`)}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all duration-200 hover:shadow-sm group bg-blue-100 text-blue-800 hover:bg-blue-200"
+                title="View company profile"
+              >
                 {getCompanyRole(companyData?.category || 'FinTech')}
-              </div>
+                <ArrowRight className="h-3 w-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
             </div>
           </div>
         </div>
