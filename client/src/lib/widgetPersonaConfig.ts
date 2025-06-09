@@ -135,14 +135,10 @@ export const getQuickActionsForPersona = (persona: Persona, onNavigate: (path: s
 
   const personaConfigs: Record<Persona, WidgetAction[]> = {
     'Invela': [
-      baseActions.companyProfile,
-      baseActions.viewTasks,
       baseActions.manageNetwork,
-      baseActions.inviteToNetwork,
       baseActions.viewInsights,
-      baseActions.uploadFiles,
-      baseActions.manageClaims,
-      baseActions.viewRiskScore
+      baseActions.viewTasks,
+      baseActions.inviteToNetwork
     ],
     'Bank': [
       baseActions.companyProfile,
@@ -252,7 +248,7 @@ export const getCompanySnapshotForPersona = (
 
 export const WIDGET_PERMISSIONS: Record<Persona, Record<string, PersonaWidgetConfig>> = {
   'Invela': {
-    'quickActions': { visible: true, variant: 'full', maxActions: 8, priority: 1 },
+    'quickActions': { visible: true, variant: 'full', maxActions: 4, priority: 1 },
     'companySnapshot': { visible: true, variant: 'detailed', priority: 2 },
     'riskRadar': { visible: true, variant: 'admin', priority: 3 },
     'taskSummary': { visible: true, variant: 'full', priority: 4 },

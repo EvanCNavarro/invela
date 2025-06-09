@@ -149,7 +149,7 @@ const generateTimeSeriesData = (companies: any[], accreditations: any[], timefra
 };
 
 export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightProps) {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>('30days');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>('1year');
 
   // Fetch ALL companies in the system for system-wide overview
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
