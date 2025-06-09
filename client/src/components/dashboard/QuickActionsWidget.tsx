@@ -1,28 +1,40 @@
 /**
  * ========================================
- * Quick Actions Widget - Invela Dashboard Component
+ * Quick Actions Widget - Enterprise Dashboard Component
  * ========================================
  * 
- * Administrative quick action buttons for Invela company users.
- * Provides one-click access to common platform management tasks.
+ * Persona-based quick action interface providing contextual access to platform
+ * functionality. Implements the unified design token system with smooth animations,
+ * accessibility compliance, and responsive behavior.
  * 
- * Key Actions:
- * - View Company Profile
- * - Navigate to Insights
- * - Upload Files (FileVault integration)
- * - Invite Data Recipients (FinTech companies)
+ * Key Features:
+ * - Persona-based action filtering (Invela, Bank, FinTech)
+ * - Unified design token integration
+ * - Smooth entrance animations with staggered delays
+ * - Professional hover and focus interactions
+ * - Accessibility-compliant design
+ * - Loading states with shimmer effects
+ * - Error handling with fallback UI
+ * 
+ * Design System Integration:
+ * - widget-button-action for consistent button styling
+ * - widget-grid-actions for responsive layout
+ * - widget-icon-standard for icon sizing
+ * - widget-entrance-animation for premium feel
  * 
  * @module components/dashboard/QuickActionsWidget
- * @version 1.0.0
- * @since 2025-06-06
+ * @version 3.0.0
+ * @since 2025-06-09
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Widget } from "@/components/dashboard/Widget";
-import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ArrowRight, Users, FileText, Zap, TrendingUp, FolderOpen, Network, Activity, Eye, Settings, MessageSquare, BarChart2, AlertTriangle, ListTodo, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Zap, ArrowRight, Loader2 } from "lucide-react";
+import { getQuickActionsForPersona, type Persona } from "@/lib/widgetPersonaConfig";
+import { cn } from "@/lib/utils";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;

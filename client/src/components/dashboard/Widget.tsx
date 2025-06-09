@@ -41,23 +41,75 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
-interface WidgetProps {
-  title: string;
-  subtitle?: string;
+// ========================================
+// TYPES & INTERFACES
+// ========================================
+
+/**
+ * Widget size variants affecting layout and responsive behavior
+ */
+type WidgetSize = 'compact' | 'standard' | 'expanded' | 'full';
+
+/**
+ * Loading state variants for consistent UX patterns
+ */
+type LoadingState = 'skeleton' | 'shimmer' | 'spinner' | 'none';
+
+/**
+ * Animation entrance effects for premium feel
+ */
+type EntranceAnimation = 'fadeIn' | 'slideUp' | 'scale' | 'none';
+
+/**
+ * Widget action interface for dropdown menu items
+ */
+interface WidgetAction {
+  label: string;
+  onClick: () => void;
   icon?: React.ReactNode;
+  variant?: 'default' | 'destructive';
+}
+
+/**
+ * Enhanced widget props interface with design system integration
+ */
+interface WidgetProps {
+  /** Widget title using standardized typography */
+  title: string;
+  /** Optional subtitle with muted styling */
+  subtitle?: string;
+  /** Header icon with standardized sizing */
+  icon?: React.ReactNode;
+  /** Widget content */
   children: React.ReactNode;
+  /** Visibility toggle callback */
   onVisibilityToggle?: () => void;
+  /** Current visibility state */
   isVisible?: boolean;
+  /** Edit/configure callback */
   onEdit?: () => void;
+  /** Additional CSS classes */
   className?: string;
+  /** Header-specific CSS classes */
   headerClassName?: string;
-  size?: 'single' | 'double' | 'triple';
-  actions?: Array<{
-    label: string;
-    onClick: () => void;
-    icon?: React.ReactNode;
-  }>;
+  /** Widget size variant affecting layout */
+  size?: WidgetSize;
+  /** Loading state for consistent UX */
+  loadingState?: LoadingState;
+  /** Entrance animation effect */
+  entranceAnimation?: EntranceAnimation;
+  /** Animation delay in milliseconds */
+  animationDelay?: number;
+  /** Custom actions for dropdown menu */
+  actions?: WidgetAction[];
+  /** Additional header content */
   headerChildren?: React.ReactNode;
+  /** Loading state indicator */
+  isLoading?: boolean;
+  /** Error state with fallback UI */
+  error?: string | null;
+  /** Accessibility label for screen readers */
+  ariaLabel?: string;
 }
 
 export function Widget({ 
