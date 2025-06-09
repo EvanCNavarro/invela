@@ -218,28 +218,41 @@ export function RiskRadarD3Simple({
     // Labels with line wrapping (no animation)
     chartData.forEach((d, i) => {
       const angle = angleScale(i) - Math.PI / 2;
-      const labelRadius = radius + 15;
+      const labelRadius = radius + 20;
       const x = Math.cos(angle) * labelRadius;
       const y = Math.sin(angle) * labelRadius;
       
-      // Split category name for line wrapping
+      // Split category name for line wrapping (max 2 lines)
       const words = d.category.split(' ');
       const labelGroup = g.append('g')
         .attr('transform', `translate(${x}, ${y})`);
       
       if (words.length > 1) {
-        // Multi-line labels
-        words.forEach((word, wordIndex) => {
+        // Multi-line labels (limit to 2 lines)
+        const firstLine = words.slice(0, Math.ceil(words.length / 2)).join(' ');
+        const secondLine = words.slice(Math.ceil(words.length / 2)).join(' ');
+        
+        labelGroup.append('text')
+          .attr('x', 0)
+          .attr('y', -6)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', '11px')
+          .attr('font-weight', '500')
+          .attr('fill', '#374151')
+          .text(firstLine);
+          
+        if (secondLine) {
           labelGroup.append('text')
             .attr('x', 0)
-            .attr('y', (wordIndex - (words.length - 1) / 2) * 12)
+            .attr('y', 6)
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
-            .attr('font-size', '10px')
-            .attr('font-weight', '600')
-            .attr('fill', '#1e293b')
-            .text(word);
-        });
+            .attr('font-size', '11px')
+            .attr('font-weight', '500')
+            .attr('fill', '#374151')
+            .text(secondLine);
+        }
       } else {
         // Single line labels
         labelGroup.append('text')
@@ -247,9 +260,9 @@ export function RiskRadarD3Simple({
           .attr('y', 0)
           .attr('text-anchor', 'middle')
           .attr('dominant-baseline', 'middle')
-          .attr('font-size', '10px')
-          .attr('font-weight', '600')
-          .attr('fill', '#1e293b')
+          .attr('font-size', '11px')
+          .attr('font-weight', '500')
+          .attr('fill', '#374151')
           .text(d.category);
       }
     });
@@ -282,14 +295,14 @@ export function RiskRadarD3Simple({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-center">
-          {showDropdown && companiesWithClusters.length > 1 && (
+      <CardHeader className="pb-1 pt-3">
+        {showDropdown && companiesWithClusters.length > 1 && (
+          <div className="flex justify-center">
             <Select 
               value={selectedCompanyId?.toString() || ''} 
               onValueChange={(value) => setSelectedCompanyId(Number(value))}
             >
-              <SelectTrigger className="w-80">
+              <SelectTrigger className="w-64 h-8 text-sm">
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent>
@@ -300,10 +313,10 @@ export function RiskRadarD3Simple({
                 ))}
               </SelectContent>
             </Select>
-          )}
-        </div>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="pt-0 pb-4">
+      <CardContent className="pt-1 pb-2">
         <div className="flex justify-center items-center">
           <div className="relative">
             <svg ref={svgRef} style={{ display: 'block' }} />
