@@ -11,7 +11,7 @@ import { tasks, companies, files } from '@db/schema';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as fileCreation from '../services/fileCreation';
-import UnifiedTabService from '../services/unified-tab-service';
+import { UnifiedTabService } from '../services/unified-tab-service';
 import { broadcast, broadcastFormSubmission } from '../services/websocket';
 import { generateMissingFileForTask, FileFixResult } from './fix-missing-file';
 
@@ -363,62 +363,11 @@ export function createFormSubmissionRouter(): Router {
               fileName: fileResult.fileName
             });
             
-            // Determine which tabs to unlock based on form type
-            let unlockedTabs: string[] = [];
+            // Tab unlocking logic removed - all tabs are now unlocked by default for FinTech companies
+            // Form submission only tracks completion metadata without affecting tab access
+            logger.info(`Form submission completed for ${formType} - no tab unlocking required`);
             
-            // Set the appropriate tabs to unlock based on form type
-            if (formType === 'kyb' || formType === 'company_kyb') {
-              // KYB forms unlock ONLY file-vault tab - explicitly NOT dashboard
-              unlockedTabs = ['file-vault'];
-              logger.info('Unlocking tabs for KYB submission:', unlockedTabs);
-              // CRITICAL FIX: Ensure unlockedTabs only contains 'file-vault' for KYB
-              if (unlockedTabs.includes('dashboard')) {
-                logger.warn('Removing dashboard from unlockedTabs for KYB form - it should not be unlocked');
-                unlockedTabs = unlockedTabs.filter(tab => tab !== 'dashboard');
-              }
-            } else if (formType === 'ky3p' || formType === 'sp_ky3p_assessment') {
-              // KY3P forms don't unlock any tabs
-              unlockedTabs = [];
-              logger.info('No tabs unlocked for KY3P submission');
-            } else if (formType === 'open_banking' || formType === 'open_banking_survey') {
-              // Open Banking forms unlock dashboard and insights
-              unlockedTabs = ['dashboard', 'insights'];
-              logger.info('Unlocking tabs for Open Banking submission:', unlockedTabs);
-            } else if (formType === 'card' || formType === 'company_card') {
-              // Card industry forms unlock dashboard
-              unlockedTabs = ['dashboard'];
-              logger.info('Unlocking tabs for Card submission:', unlockedTabs);
-            }
-            
-            // Use the new unified tab service to handle all tab unlocking in a consistent way
-            if (unlockedTabs.length > 0) {
-              logger.info(`🔐 Form submitted - unlocking tabs for company ${companyId}:`, { tabs: unlockedTabs });
-              
-              try {
-                // Use our unified tab service to handle tab unlocking in a standardized way
-                const success = await UnifiedTabService.unlockTabs(companyId, unlockedTabs);
-                
-                if (success) {
-                  logger.info(`✅ Successfully unlocked tabs for company ${companyId}: ${unlockedTabs.join(', ')}`);
-                } else {
-                  logger.warn(`⚠️ Failed to unlock tabs for company ${companyId} - UnifiedTabService.unlockTabs returned false`);
-                }
-              } catch (tabUnlockError) {
-                logger.error(`🔴 Error unlocking tabs for company ${companyId}:`, tabUnlockError as any);
-                // Continue with the form submission even if tab unlock fails
-              }
-            } else {
-              logger.info(`No tabs to unlock for form type ${formType}`);
-            }
-            
-            // CRITICAL FIX: Explicitly broadcast the company tabs update as a separate event
-            // This ensures the tab update event is sent regardless of whether clients are listening
-            // for form submission events
-            if (unlockedTabs.length > 0) {
-              logger.info(`Broadcasting tabs update completed via UnifiedTabService`);
-              // The UnifiedTabService.unlockTabs method already handles tab broadcasting
-              // No need for additional broadcasting here
-            }
+            const unlockedTabs: string[] = []; // No tabs unlocked via form submission
             
             // Define completed actions for better organization
             const completedActions = [

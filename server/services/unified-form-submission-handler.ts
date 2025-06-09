@@ -702,7 +702,7 @@ async function handleOpenBankingPostSubmission(
       submissionTimestamp
     });
     
-    // Step 2: Update the company record to unlock dashboard and insights features
+    // Step 2: Update company metadata to track form completion (no tab unlocking)
     if (task.company_id) {
       const companyId = task.company_id;
       
@@ -719,67 +719,28 @@ async function handleOpenBankingPostSubmission(
         return { dashboardUnlocked: false };
       }
       
-      // Update company metadata to track unlocked features
+      // Update company metadata to track form completion only
       const currentMetadata = company?.metadata || {};
       
       await tx.update(companies)
         .set({
           metadata: {
             ...currentMetadata,
-            dashboard_unlocked: true,
-            insights_unlocked: true,
-            dashboard_unlocked_at: submissionTimestamp,
-            insights_unlocked_at: submissionTimestamp,
-            dashboard_unlocked_by: userId || currentMetadata.created_by_id
+            open_banking_completed: true,
+            open_banking_completed_at: submissionTimestamp,
+            open_banking_completed_by: userId || currentMetadata.created_by_id
           },
           updated_at: new Date()
         })
         .where(eq(companies.id, companyId));
       
-      // Step 3: Use the UnifiedTabService within the transaction to unlock tabs
-      // This is imported from the tab-service.ts module which handles all tab operations
-      // We're importing it directly here to use it within the transaction
-      // Alternatively we could create a method to accept a transaction object 
-      const currentTabs = Array.isArray(company.available_tabs) 
-        ? company.available_tabs 
-        : ['task-center'];
-        
-      const tabsToAdd = ['dashboard', 'insights'];
-      const updatedTabs = [...new Set([...currentTabs, ...tabsToAdd])];
-      
-      // Only update if there are actual changes
-      if (updatedTabs.length !== currentTabs.length || 
-          !updatedTabs.every(tab => currentTabs.includes(tab))) {
-        
-        // Update available_tabs within the transaction
-        await tx.update(companies)
-          .set({ 
-            available_tabs: updatedTabs,
-            updated_at: new Date()
-          })
-          .where(eq(companies.id, companyId));
-          
-        logger.info(`[OpenBankingHandler] Updated company tabs`, {
-          ...context,
-          addedTabs: tabsToAdd,
-          updatedTabs,
-          tabUpdateSuccessful: true
-        });
-        
-        // Note: We will broadcast the tab update after the transaction commits
-        // We'll set a flag to ensure this happens in the broadcastFormSubmissionEvent function
-      }
-      
       logger.info(`[OpenBankingHandler] Post-submission process completed successfully`, {
         ...context,
-        dashboardUnlocked: true,
-        insightsUnlocked: true,
-        availableTabs: updatedTabs
+        formCompleted: true
       });
       
       return { 
-        dashboardUnlocked: true,
-        availableTabs: updatedTabs
+        dashboardUnlocked: false  // No longer unlocking tabs
       };
     }
     
