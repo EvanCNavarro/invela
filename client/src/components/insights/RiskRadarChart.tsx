@@ -606,7 +606,7 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? 140 : 170,
+        size: className?.includes("border-none") ? Math.min(width * 0.7, height * 0.7, 200) : 170,
         offsetY: className?.includes("border-none") ? -5 : -10,
         offsetX: 0,
         polygons: {
