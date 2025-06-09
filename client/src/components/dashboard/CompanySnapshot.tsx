@@ -257,6 +257,27 @@ export function CompanySnapshot({
             </div>
           </div>
 
+          {/* Third Row: Slim Alert Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Active Alerts */}
+            <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="widget-text text-sm">Active Alerts</span>
+              </div>
+              <div className="widget-number text-xl">0</div>
+            </div>
+
+            {/* New Alerts */}
+            <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="widget-text text-sm">New Alerts</span>
+              </div>
+              <div className="widget-number text-xl">0</div>
+            </div>
+          </div>
+
           {/* Bottom Row: Full-Width Accreditation */}
           <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
             <div className="flex items-center justify-center space-x-2 mb-3">
