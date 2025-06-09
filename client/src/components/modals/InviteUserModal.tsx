@@ -167,6 +167,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                       disabled={isPending}
                       placeholder="user@company.com"
                       aria-label="User's email address"
+                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
