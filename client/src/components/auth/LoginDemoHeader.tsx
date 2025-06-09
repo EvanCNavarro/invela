@@ -79,9 +79,9 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       const response = await apiRequest('/api/demo-login', {
         method: 'POST',
         body: JSON.stringify({})
-      });
+      }) as any;
 
-      if (response.success) {
+      if (response?.success) {
         toast({
           title: "Demo login successful",
           description: "Redirecting to dashboard...",
@@ -90,7 +90,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       } else {
         toast({
           title: "Demo login failed",
-          description: response.message || "Please try again.",
+          description: response?.message || "Please try again.",
           variant: "destructive"
         });
       }
