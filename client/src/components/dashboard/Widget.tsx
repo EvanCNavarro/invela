@@ -134,7 +134,7 @@ export function Widget({
 }: WidgetProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
+      "transition-all duration-200 bg-white shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200",
       // Widget sizing handled by parent grid
       '',
       !isVisible && 'opacity-50',
