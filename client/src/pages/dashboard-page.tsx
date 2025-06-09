@@ -45,7 +45,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
-import { QuickActionsBar } from "@/components/dashboard/QuickActionsBar";
+import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
@@ -115,45 +115,51 @@ interface DashboardWidgets {
   riskMonitoring: boolean;
   taskSummary: boolean;
   systemOverview: boolean;
+  quickActions: boolean;
 }
 
 /**
- * Widget configuration for FinTech companies
+ * Widget configuration for FinTech companies (Data Recipients)
  * Simplified layout focusing on core risk assessment features
  */
-const FINTECH_DEFAULT_WIDGETS: DashboardWidgets = {
+const FINTECH_WIDGETS: DashboardWidgets = {
   companySnapshot: true,
   networkVisualization: false,
   riskRadar: true,
   riskMonitoring: false,
-  taskSummary: false, // FinTech companies use simplified task management
-  systemOverview: false, // Not available for FinTech companies
+  taskSummary: true,
+  systemOverview: false,
+  quickActions: true,
 };
 
 /**
- * Widget configuration for Bank and Invela companies
- * Full feature set with comprehensive monitoring capabilities
+ * Widget configuration for Bank companies (Data Providers)
+ * Enhanced monitoring capabilities for data contribution oversight
  */
-const OTHER_DEFAULT_WIDGETS: DashboardWidgets = {
+const BANK_WIDGETS: DashboardWidgets = {
   companySnapshot: true,
   networkVisualization: true,
-  riskRadar: true,
+  riskRadar: false,
   riskMonitoring: true,
-  taskSummary: true, // Enhanced task tracking for complex operations
-  systemOverview: true, // Available for Bank and Invela companies
+  taskSummary: false,
+  systemOverview: false,
+  quickActions: true,
 };
 
 /**
- * Widget configuration for Invela companies
- * Administrative dashboard with system overview and quick actions
+ * Function to get all available widgets for Admin/Invela users
+ * Automatically includes any new widgets added to the system
  */
-const INVELA_DEFAULT_WIDGETS: DashboardWidgets = {
-  companySnapshot: true,
-  networkVisualization: true,
-  riskRadar: false, // Risk Radar not applicable for Invela admin users
-  riskMonitoring: false, // Risk Monitoring not applicable for Invela admin users
-  taskSummary: false, // Replaced with Quick Actions for better admin workflow
-  systemOverview: true, // Exclusive system-wide overview for Invela
+const getAdminWidgets = (): DashboardWidgets => {
+  return {
+    companySnapshot: true,
+    networkVisualization: true,
+    riskRadar: true,
+    riskMonitoring: true,
+    taskSummary: true,
+    systemOverview: true,
+    quickActions: true,
+  };
 };
 
 // ========================================
@@ -212,14 +218,18 @@ export default function DashboardPage(): JSX.Element {
     if (companyData) {
       const isFinTech = companyData.category === 'FinTech';
       const isInvela = companyData.category === 'Invela';
+      const isBank = companyData.category === 'Bank';
       
       // Company-specific widget configurations
       if (isInvela) {
-        setVisibleWidgets(INVELA_DEFAULT_WIDGETS); // Invela-specific configuration without Risk Radar
+        setVisibleWidgets(getAdminWidgets()); // Admin gets all available widgets
       } else if (isFinTech) {
-        setVisibleWidgets(FINTECH_DEFAULT_WIDGETS); // Simplified for FinTech
+        setVisibleWidgets(FINTECH_WIDGETS); // Data Recipients: limited widget set
+      } else if (isBank) {
+        setVisibleWidgets(BANK_WIDGETS); // Data Providers: monitoring-focused widgets
       } else {
-        setVisibleWidgets(OTHER_DEFAULT_WIDGETS); // Full set for Bank companies
+        // Fallback to admin widgets for unknown categories
+        setVisibleWidgets(getAdminWidgets());
       }
     }
   }, [companyData]);
@@ -362,8 +372,13 @@ export default function DashboardPage(): JSX.Element {
 
           {/* Main Dashboard Content */}
           <div className="space-y-6">
-            {/* Quick Actions Bar - Full width for data providers */}
-            <QuickActionsBar companyCategory={companyData?.category} companyId={companyData?.id} />
+            {/* Quick Actions Widget - Available for all personas when enabled */}
+            {visibleWidgets.quickActions && (
+              <QuickActionsWidget
+                onToggle={() => toggleWidget('quickActions')}
+                isVisible={visibleWidgets.quickActions}
+              />
+            )}
             
             {/* Debug logging moved to useEffect for proper React rendering */}
             
@@ -403,6 +418,16 @@ export default function DashboardPage(): JSX.Element {
                       companyData={companyData}
                       onToggle={() => toggleWidget('companySnapshot')}
                       isVisible={visibleWidgets.companySnapshot}
+                    />
+                  </div>
+                )}
+
+                {/* Task Summary for FinTech */}
+                {visibleWidgets.taskSummary && (
+                  <div className="lg:col-span-1">
+                    <TaskSummaryWidget
+                      onToggle={() => toggleWidget('taskSummary')}
+                      isVisible={visibleWidgets.taskSummary}
                     />
                   </div>
                 )}
