@@ -8,6 +8,8 @@ interface CompanyData {
   category: string;
   revenue_tier: string;
   risk_score: number;
+  num_employees?: number;
+  accreditation_status?: string;
 }
 
 interface TreemapNode {
@@ -16,11 +18,15 @@ interface TreemapNode {
   category: string;
   revenue_tier: string;
   risk_score: number;
+  num_employees?: number;
+  accreditation_status?: string;
 }
 
 export default function SimpleTreemap() {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
 
   // Fetch network data
   const { data: networkData } = useQuery({
@@ -58,6 +64,8 @@ export default function SimpleTreemap() {
       category: node.category,
       revenue_tier: node.revenueTier,
       risk_score: node.riskScore,
+      num_employees: node.numEmployees || (node.revenueTier === 'large' ? 500 : node.revenueTier === 'medium' ? 150 : 50),
+      accreditation_status: node.accreditationStatus,
     }));
 
     // Create hierarchy
@@ -73,15 +81,53 @@ export default function SimpleTreemap() {
 
     treemap(root);
 
-    // Color function
-    const getColor = (category: string) => {
-      if (category === 'Bank') return '#3B82F6';
-      if (category === 'FinTech') return '#10B981';
-      if (category === 'Invela') return '#8B5CF6';
-      return '#6B7280';
+    // Enhanced color function with gradients based on revenue tiers
+    const getColor = (category: string, revenueTier: string) => {
+      const baseColors = {
+        'Bank': '#2563EB',     // Blue
+        'FinTech': '#059669',  // Green
+        'Invela': '#7C3AED',   // Purple
+        'Default': '#4B5563'   // Gray
+      };
+      
+      const base = baseColors[category as keyof typeof baseColors] || baseColors.Default;
+      
+      // Create different shades based on revenue tier
+      if (revenueTier === 'large') return base;
+      if (revenueTier === 'medium') return base + '99'; // Add opacity
+      return base + '66'; // Lighter shade for small
     };
 
-    // Create rectangles
+    // Mouse event handlers
+    const handleMouseOver = (event: any, d: any) => {
+      setHoveredNode(d.data);
+      
+      // Fade out all other rectangles
+      svg.selectAll('rect')
+        .style('opacity', (rectData: any) => rectData === d ? 1 : 0.3);
+      
+      // Position tooltip
+      if (tooltipRef.current) {
+        const rect = svgRef.current!.getBoundingClientRect();
+        tooltipRef.current.style.left = (event.clientX - rect.left + 10) + 'px';
+        tooltipRef.current.style.top = (event.clientY - rect.top - 10) + 'px';
+        tooltipRef.current.style.opacity = '1';
+      }
+    };
+
+    const handleMouseOut = () => {
+      setHoveredNode(null);
+      
+      // Restore opacity for all rectangles
+      svg.selectAll('rect').style('opacity', 1);
+      
+      // Hide tooltip
+      if (tooltipRef.current) {
+        tooltipRef.current.style.opacity = '0';
+      }
+    };
+
+    // Create rectangles with hover interactions
     const leaves = svg.selectAll('g')
       .data(root.leaves())
       .enter()
@@ -92,9 +138,13 @@ export default function SimpleTreemap() {
       .attr('y', d => d.y0)
       .attr('width', d => d.x1 - d.x0)
       .attr('height', d => d.y1 - d.y0)
-      .attr('fill', d => getColor(d.data.category))
+      .attr('fill', d => getColor(d.data.category, d.data.revenue_tier))
       .attr('stroke', '#ffffff')
-      .attr('stroke-width', 1);
+      .attr('stroke-width', 1)
+      .style('cursor', 'pointer')
+      .style('transition', 'opacity 0.2s ease')
+      .on('mouseover', handleMouseOver)
+      .on('mouseout', handleMouseOut);
 
     // Add text labels
     leaves.append('text')
@@ -106,13 +156,13 @@ export default function SimpleTreemap() {
       .style('font-size', d => {
         const width = d.x1 - d.x0;
         const height = d.y1 - d.y0;
-        return Math.min(width / 8, height / 4, 12) + 'px';
+        return Math.min(width / 10, height / 5, 10) + 'px';
       })
       .style('font-weight', '500')
       .style('pointer-events', 'none')
       .text(d => {
         const width = d.x1 - d.x0;
-        return width > 60 ? d.data.name : '';
+        return width > 50 ? d.data.name : '';
       });
 
   }, [networkData, dimensions]);
@@ -127,14 +177,85 @@ export default function SimpleTreemap() {
     }
   }
 
+  // Helper function to get role type
+  const getRoleType = (category: string) => {
+    if (category === 'Bank') return 'Data Recipient';
+    if (category === 'FinTech') return 'Data Provider';
+    if (category === 'Invela') return 'Invela Platform';
+    return 'Unknown';
+  };
+
+  // Helper function to format revenue tier
+  const formatRevenueTier = (tier: string) => {
+    if (!tier) return 'Not specified';
+    return tier.charAt(0).toUpperCase() + tier.slice(1) + ' Revenue';
+  };
+
   return (
-    <div className="w-full h-full bg-white">
+    <div className="w-full h-full bg-white relative">
       <svg
         ref={svgRef}
         width={dimensions.width}
         height={dimensions.height}
         className="w-full h-full"
       />
+      
+      {/* Enhanced Tooltip */}
+      <div
+        ref={tooltipRef}
+        className="absolute z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl pointer-events-none opacity-0 transition-opacity duration-200 min-w-[280px]"
+        style={{ maxWidth: '320px' }}
+      >
+        {hoveredNode && (
+          <div className="space-y-3">
+            {/* Company Name */}
+            <div className="font-bold text-lg border-b border-gray-600 pb-2">
+              {hoveredNode.name}
+            </div>
+            
+            {/* Key Details Grid */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Category</div>
+                <div className="font-medium">{hoveredNode.category}</div>
+              </div>
+              
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Role</div>
+                <div className="font-medium">{getRoleType(hoveredNode.category)}</div>
+              </div>
+              
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Revenue Tier</div>
+                <div className="font-medium text-green-400">{formatRevenueTier(hoveredNode.revenue_tier)}</div>
+              </div>
+              
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Company Size</div>
+                <div className="font-medium">{hoveredNode.num_employees?.toLocaleString() || 'N/A'} employees</div>
+              </div>
+              
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Risk Score</div>
+                <div className="font-medium">{hoveredNode.risk_score || 'N/A'}</div>
+              </div>
+              
+              <div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Status</div>
+                <div className="font-medium">
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    hoveredNode.accreditation_status === 'APPROVED' 
+                      ? 'bg-green-900 text-green-300' 
+                      : 'bg-yellow-900 text-yellow-300'
+                  }`}>
+                    {hoveredNode.accreditation_status || 'Pending'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
