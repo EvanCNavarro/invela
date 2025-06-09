@@ -80,7 +80,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
   return (
     <Widget
       title="Task Summary"
-      icon={<FileText className="h-5 w-5 text-gray-700" />}
+      icon={<FileText className="h-5 w-5 text-blue-600" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
     >
@@ -103,7 +103,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-gray-700" />
+              <CheckCircle className="h-4 w-4 text-blue-600" />
               <span className="widget-text">Completed</span>
             </div>
             <div className="widget-number">{taskSummary.completed}</div>
@@ -111,7 +111,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
           
           <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
             <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-gray-700" />
+              <Clock className="h-4 w-4 text-blue-600" />
               <span className="widget-text">Incomplete</span>
             </div>
             <div className="widget-number">{taskSummary.incomplete}</div>
