@@ -262,44 +262,40 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-32 -mb-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={chartData} 
-                margin={{ top: 5, right: 5, left: 5, bottom: 0 }} 
-                maxBarSize={50}
-                barCategoryGap="20%"
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="period" 
-                  tick={{ fontSize: 11 }}
-                  stroke="#6b7280"
-                  height={15}
-                  axisLine={false}
-                  tickFormatter={(value) => {
-                    try {
-                      const date = new Date(value);
-                      if (isNaN(date.getTime())) {
-                        return value;
-                      }
-                      
-                      if (selectedTimeframe === '1year') {
-                        return date.toLocaleDateString('en-US', { month: 'short' });
-                      } else if (selectedTimeframe === '30days') {
-                        return date.getDate().toString();
-                      } else {
-                        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                      }
-                    } catch (error) {
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart 
+              data={chartData} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }} 
+              maxBarSize={50}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="period" 
+                tick={{ fontSize: 12 }}
+                stroke="#6b7280"
+                tickFormatter={(value) => {
+                  try {
+                    const date = new Date(value);
+                    if (isNaN(date.getTime())) {
                       return value;
                     }
-                  }}
-                />
+                    
+                    if (selectedTimeframe === '1year') {
+                      return date.toLocaleDateString('en-US', { month: 'short' });
+                    } else if (selectedTimeframe === '30days') {
+                      return date.getDate().toString();
+                    } else {
+                      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    }
+                  } catch (error) {
+                    return value;
+                  }
+                }}
+              />
                 <YAxis 
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 12 }}
                   stroke="#6b7280"
-                  width={35}
                 />
                 <Tooltip 
                   contentStyle={{
@@ -330,7 +326,6 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                 />
               </BarChart>
             </ResponsiveContainer>
-          </div>
         ) : (
           <div className="flex items-center justify-center h-64">
             <div className="text-center text-gray-500">
