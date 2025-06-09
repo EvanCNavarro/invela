@@ -34,13 +34,9 @@ export default function SimpleTreemap() {
     refetchOnMount: true,
   });
 
-  // Force refetch on component mount and every 2 seconds for debugging
+  // Force refetch on component mount
   useEffect(() => {
     refetch();
-    const interval = setInterval(() => {
-      refetch();
-    }, 2000);
-    return () => clearInterval(interval);
   }, [refetch]);
 
   // Update dimensions on resize
@@ -94,6 +90,12 @@ export default function SimpleTreemap() {
       .sum((d: any) => d.value || 1)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
+    console.log('[SimpleTreemap] Hierarchy created:', {
+      childrenCount: treeData.length,
+      leavesCount: root.leaves().length,
+      dimensions: dimensions
+    });
+
     // Create treemap layout - ensure all data fits in one view
     const treemap = d3.treemap()
       .size([dimensions.width, dimensions.height])
@@ -101,6 +103,17 @@ export default function SimpleTreemap() {
       .paddingInner(1);
 
     treemap(root);
+
+    console.log('[SimpleTreemap] First few leaves:', root.leaves().slice(0, 3).map(d => ({
+      name: d.data.name,
+      value: d.data.value,
+      x0: d.x0,
+      y0: d.y0,
+      x1: d.x1,
+      y1: d.y1,
+      width: d.x1 - d.x0,
+      height: d.y1 - d.y0
+    })));
 
     // Enhanced color function with darker greens and proper gradients
     const getColor = (category: string, revenueTier: string) => {
@@ -198,18 +211,37 @@ export default function SimpleTreemap() {
       .enter()
       .append('g');
 
+    console.log('[SimpleTreemap] About to create rectangles for leaves:', leaves.size());
+
     const rects = leaves.append('rect')
-      .attr('x', d => d.x0)
+      .attr('x', d => {
+        console.log('[SimpleTreemap] Setting x position:', d.x0);
+        return d.x0;
+      })
       .attr('y', d => d.y0)
-      .attr('width', d => d.x1 - d.x0)
-      .attr('height', d => d.y1 - d.y0)
-      .attr('fill', d => getColor(d.data.category, d.data.revenue_tier))
+      .attr('width', d => {
+        const width = d.x1 - d.x0;
+        console.log('[SimpleTreemap] Setting width:', width);
+        return width;
+      })
+      .attr('height', d => {
+        const height = d.y1 - d.y0;
+        console.log('[SimpleTreemap] Setting height:', height);
+        return height;
+      })
+      .attr('fill', d => {
+        const color = getColor(d.data.category, d.data.revenue_tier);
+        console.log('[SimpleTreemap] Setting color:', color, 'for category:', d.data.category, 'tier:', d.data.revenue_tier);
+        return color;
+      })
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1)
       .style('cursor', 'pointer')
       .style('transition', 'opacity 0.2s ease')
       .on('mouseover', handleMouseOver)
       .on('mouseout', handleMouseOut);
+
+    console.log('[SimpleTreemap] Created rectangles:', rects.size());
 
     // Enhanced text labels with proper wrapping and sizing
     leaves.each(function(d: any) {

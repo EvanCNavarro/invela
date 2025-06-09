@@ -1,0 +1,37 @@
+[SimpleTreemap] Raw node data: 
+Object {name: "Advanced Infrastructure Technologies", revenue: "$1.1M", numEmployees: 15, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Standard Governance Worldwide", revenue: "$1.4M", numEmployees: 18, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Edge Lab Global", revenue: "$500K", numEmployees: 8, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "NextGen Payments", revenue: "$78M", numEmployees: 156, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Test Quick Actions FinTech", revenue: null, numEmployees: null, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Final Test FinTech Corp", revenue: null, numEmployees: null, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "ElligibleForCleanup", revenue: "17500000", numEmployees: 25, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "ElligibleForCleanup", revenue: "17500000", numEmployees: 25, revenueTier: "medium", category: "FinTech"}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:17:49.084Z", echo: {…}}
+[VisualizerWidget] Changing visualization: consent_activity
+[VisualizerWidget] State update: 
+Object {selectedVisualization: "consent_activity", companyCategory: "Invela", availableCount: 6, currentTime: "2025-06-09T23:17:49.199Z"}
+[ConsentActivityChart] Using fallback data for timeframe: 1year
+[ResponsiveChart] Dimensions updated: 
+Object {width: 646.671875, height: 404.169921875}
+[ConsentActivityInsight] Current company category: Invela
+API error 500: {"message":"Error fetching companies","code":"INTERNAL_ERROR"}...
+[TanStack Query] Error fetching /api/companies: 
+Error {}
+
+[ConsentActivityChart] Calculated consents data: 
+Object {companyId: 1, activeConsents: 35521419, newlyGranted: 3273329}
+[ResponsiveChart] Dimensions updated: 
+Object {width: 646.671875, height: 404.169921875}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:17:50.706Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:17:51.278Z", echo: {…}}
