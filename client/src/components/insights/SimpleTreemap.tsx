@@ -71,7 +71,7 @@ export default function SimpleTreemap() {
 
   // Render treemap
   useEffect(() => {
-    if (!networkData?.nodes || !svgRef.current) return;
+    if (!networkData || !networkData.nodes || !svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -212,24 +212,24 @@ export default function SimpleTreemap() {
     console.log('[SimpleTreemap] About to create rectangles for leaves:', leaves.size());
 
     const rects = leaves.append('rect')
-      .attr('x', d => {
+      .attr('x', (d: any) => {
         console.log('[SimpleTreemap] Setting x position:', d.x0);
-        return d.x0;
+        return d.x0 || 0;
       })
-      .attr('y', d => d.y0)
-      .attr('width', d => {
-        const width = d.x1 - d.x0;
+      .attr('y', (d: any) => d.y0 || 0)
+      .attr('width', (d: any) => {
+        const width = (d.x1 || 0) - (d.x0 || 0);
         console.log('[SimpleTreemap] Setting width:', width);
-        return width;
+        return Math.max(0, width);
       })
-      .attr('height', d => {
-        const height = d.y1 - d.y0;
+      .attr('height', (d: any) => {
+        const height = (d.y1 || 0) - (d.y0 || 0);
         console.log('[SimpleTreemap] Setting height:', height);
-        return height;
+        return Math.max(0, height);
       })
-      .attr('fill', d => {
-        const color = getColor(d.data.category, d.data.revenue_tier);
-        console.log('[SimpleTreemap] Setting color:', color, 'for category:', d.data.category, 'tier:', d.data.revenue_tier);
+      .attr('fill', (d: any) => {
+        const color = getColor(d.data?.category || 'Unknown', d.data?.revenue_tier || 'unknown');
+        console.log('[SimpleTreemap] Setting color:', color, 'for category:', d.data?.category, 'tier:', d.data?.revenue_tier);
         return color;
       })
       .attr('stroke', '#ffffff')
@@ -244,10 +244,10 @@ export default function SimpleTreemap() {
     // Enhanced text labels with proper wrapping and sizing
     leaves.each(function(d: any) {
       const group = d3.select(this);
-      const width = d.x1 - d.x0;
-      const height = d.y1 - d.y0;
-      const centerX = (d.x0 + d.x1) / 2;
-      const centerY = (d.y0 + d.y1) / 2;
+      const width = (d.x1 || 0) - (d.x0 || 0);
+      const height = (d.y1 || 0) - (d.y0 || 0);
+      const centerX = ((d.x0 || 0) + (d.x1 || 0)) / 2;
+      const centerY = ((d.y0 || 0) + (d.y1 || 0)) / 2;
       
       // Only show text if rectangle is large enough
       if (width > 40 && height > 20) {
