@@ -1330,7 +1330,7 @@ export async function broadcastFormSubmissionResult(
     logger.info('Broadcasting successful form submission', {
       ...broadcastLogContext,
       fileId: result.fileId,
-      unlockedTabs: result.unlockedTabs,
+      tabUnlockingRemoved: true,
       timestamp: new Date().toISOString()
     });
     
@@ -1353,18 +1353,8 @@ export async function broadcastFormSubmissionResult(
       status: 'success',
       companyId,
       fileId: result.fileId,
-      fileName: result.fileName,
-      unlockedTabs: result.unlockedTabs
+      fileName: result.fileName
     });
-    
-    // If tabs were unlocked, broadcast company tabs update
-    if (result.unlockedTabs.length > 0) {
-      await WebSocketService.broadcast('company_tabs_updated', {
-        companyId,
-        updatedTabs: result.unlockedTabs,
-        timestamp: new Date().toISOString()
-      });
-    }
     
     const endTime = performance.now();
     logger.info('Form submission broadcast completed', {
