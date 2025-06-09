@@ -92,7 +92,7 @@ export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
 
   // Fetch network relationships data
   const { data: relationships, isLoading } = useQuery<any[]>({
-    queryKey: ['/api/network/relationships'],
+    queryKey: ['/api/relationships/network'],
     enabled: true
   });
 

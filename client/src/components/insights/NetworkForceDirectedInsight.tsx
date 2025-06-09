@@ -105,12 +105,12 @@ export function NetworkForceDirectedInsight({ className }: NetworkForceDirectedI
 
   // Fetch companies and relationships
   const { data: companies, isLoading: companiesLoading } = useQuery<any[]>({
-    queryKey: ['/api/companies-with-risk'],
+    queryKey: ['/api/companies'],
     enabled: true
   });
 
   const { data: relationships, isLoading: relationshipsLoading } = useQuery<any[]>({
-    queryKey: ['/api/network/relationships'],
+    queryKey: ['/api/relationships/network'],
     enabled: true
   });
 
