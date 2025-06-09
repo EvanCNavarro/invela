@@ -72,8 +72,8 @@ const NetworkChordInsight = React.lazy(() =>
   }))
 );
 const NetworkForceDirectedInsight = React.lazy(() => 
-  import('@/components/insights/NetworkForceDirectedInsight').then(module => ({ 
-    default: module.NetworkForceDirectedInsight 
+  import('@/components/insights/NetworkForceDirectedSimple').then(module => ({ 
+    default: module.NetworkForceDirectedSimple 
   }))
 );
 const AccreditationDotMatrix = React.lazy(() => 
