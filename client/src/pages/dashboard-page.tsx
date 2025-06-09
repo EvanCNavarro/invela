@@ -64,8 +64,6 @@ import { TutorialManager } from "@/components/tutorial/TutorialManager";
 // Icon components for visual consistency and accessibility
 import {
   Settings,
-  Check,
-  Info,
   Activity,
   Bell,
   Zap,

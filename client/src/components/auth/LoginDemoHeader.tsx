@@ -39,7 +39,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Professional iconography
-import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight, Maximize2 } from "lucide-react";
+import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight, Maximize2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 
 // Modal components
 import ChangelogModal from "@/components/modals/ChangelogModal";
@@ -95,6 +95,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [, setLocation] = useLocation();
 
   // ========================================
@@ -151,6 +152,20 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
     setLocation('/demo');
   };
 
+  /**
+   * Handle collapse/expand toggle
+   * Toggles the visibility of the three action buttons with smooth animation
+   */
+  const handleToggleCollapse = (): void => {
+    logger.info('LoginDemoHeader toggle', {
+      timestamp: new Date().toISOString(),
+      action: 'toggle_collapse',
+      newState: !isCollapsed
+    });
+
+    setIsCollapsed(!isCollapsed);
+  };
+
   // ========================================
   // RENDER
   // ========================================
@@ -160,8 +175,38 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       "w-full",
       className
     )}>
-      {/* Main container with professional styling */}
-      <div className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden p-1">
+      {/* Toggle Button */}
+      <div className="bg-gray-100 rounded-t-lg border-b border-gray-200 px-4 py-2">
+        <button
+          onClick={handleToggleCollapse}
+          className="flex items-center justify-center w-full text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-inset transition-all duration-200 group"
+        >
+          <div className="flex items-center space-x-2">
+            {isCollapsed ? (
+              <>
+                <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium">Show Development Tools</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-4 h-4" />
+                <span className="text-sm font-medium">Hide Development Tools</span>
+              </>
+            )}
+            {isCollapsed ? (
+              <ChevronDown className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+            ) : (
+              <ChevronUp className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Main container with collapsible content and smooth slide animation */}
+      <div className={cn(
+        "bg-gray-50 border-b border-gray-200 overflow-hidden p-1 transition-all duration-300 ease-in-out",
+        isCollapsed ? "max-h-0 opacity-0 transform -translate-y-2" : "max-h-96 opacity-100 transform translate-y-0"
+      )}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
           
           {/* Left Button - Changelog Access */}
