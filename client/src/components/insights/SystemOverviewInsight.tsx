@@ -193,7 +193,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
             <div className="p-2.5 pl-4">
-              <div className="text-sm font-medium text-gray-600 mb-1">Data Providers</div>
+              <div className="text-sm font-semibold text-gray-600 mb-1">Data Providers</div>
               <div className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</div>
             </div>
           </div>
@@ -202,7 +202,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600"></div>
             <div className="p-2.5 pl-4">
-              <div className="text-sm font-medium text-gray-600 mb-1">Data Recipients</div>
+              <div className="text-sm font-semibold text-gray-600 mb-1">Data Recipients</div>
               <div className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
             <div className="p-2.5 pl-4">
-              <div className="text-sm font-medium text-gray-600 mb-1">Accredited Recipients</div>
+              <div className="text-sm font-semibold text-gray-600 mb-1">Accredited Recipients</div>
               <div className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</div>
             </div>
           </div>
@@ -221,32 +221,32 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       {/* Chart */}
       <div className="bg-white rounded-lg border p-3">
         {/* Chart Header with Time Selector on Right */}
-        <div className="flex items-center justify-end mb-2">
+        <div className="flex items-center justify-end mb-1">
           <ToggleGroup
             type="single"
             value={selectedTimeframe}
             onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
-            className="border rounded-md p-1 bg-gray-50"
+            className="border rounded-md p-0.5 bg-gray-50"
             variant="outline"
           >
             <ToggleGroupItem 
               value="1day" 
               aria-label="1 Day view" 
-              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="30days" 
               aria-label="30 Days view" 
-              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               30D
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="1year" 
               aria-label="1 Year view" 
-              className="text-xs px-2.5 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+              className="text-xs px-4 py-1 h-6 min-w-[48px] data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
               1Y
             </ToggleGroupItem>
@@ -255,18 +255,18 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
 
         {/* Chart Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-48">
             <div className="flex items-center gap-2 text-gray-500">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Loading enrollment data...</span>
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-64">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 5, right: 5, left: 5, bottom: 25 }} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 15 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >

@@ -204,7 +204,7 @@ export function QuickActionsWidget({
                   {action.label}
                 </span>
               </div>
-              <ArrowRight className="h-4 w-4 text-gray-600 transition-transform group-hover:translate-x-0.5 flex-shrink-0" />
+              <ArrowRight className="h-4 w-4 text-gray-600 group-hover:text-blue-600 transition-all group-hover:translate-x-0.5 flex-shrink-0" />
             </button>
           ))}
         </div>
