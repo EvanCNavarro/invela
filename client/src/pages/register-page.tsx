@@ -176,7 +176,12 @@ export default function RegisterPage() {
               password: '',
             });
             
-            // Removed auto-focus to prevent unwanted focusing behavior
+            // Focus on the password input after a short delay to allow the form to render
+            setTimeout(() => {
+              if (passwordInputRef.current) {
+                passwordInputRef.current.focus();
+              }
+            }, 300);
 
             // Debug form values after setting
             console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
@@ -198,7 +203,11 @@ export default function RegisterPage() {
             password: '',
           });
           
-          // Removed auto-focus to prevent unwanted focusing behavior
+          setTimeout(() => {
+            if (passwordInputRef.current) {
+              passwordInputRef.current.focus();
+            }
+          }, 300);
         }
       } else {
         console.log("[Registration] Invalid invitation code response");
@@ -738,6 +747,7 @@ export default function RegisterPage() {
                           <InvitationCodeInput
                             value={field.value}
                             onChange={field.onChange}
+                            autoFocus={true}
                           />
                         </div>
                       </FormControl>

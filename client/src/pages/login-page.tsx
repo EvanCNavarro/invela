@@ -195,6 +195,7 @@ export default function LoginPage() {
                       {...field}
                       type="email"
                       autoComplete="email"
+                      autoFocus
                       placeholder="Enter your email"
                       ref={emailInputRef}
                       className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
