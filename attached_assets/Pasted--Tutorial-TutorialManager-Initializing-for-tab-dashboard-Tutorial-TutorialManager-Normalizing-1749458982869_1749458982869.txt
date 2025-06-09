@@ -1,0 +1,87 @@
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/dashboard/modal_dash_1.png
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[CurrentCompany] Setting company context: 1986
+[RiskRadarChart] Setting selected company ID from companyId prop 1986
+[RiskRadarChart] Company category check: 
+Object {category: "FinTech", isBankOrInvela: false, isFintech: true, showDropdownProp: false}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: false, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Setting selected company ID from companyId prop 1986
+[RiskRadarChart] Display company updated: 
+Object {id: 1986, name: "Network Wealth Corporation", category: "FinTech"}
+[RiskRadarChart] Updated cached risk clusters 
+Object {companyId: 1986, companyName: "Network Wealth Corporation", hasData: true}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] Rendering loading skeleton 
+Object {isLoading: false, hasPrevData: true, isTransitioning: false, chartComponentLoaded: false}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Wealth Corporation", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 1986, networkCompaniesCount: 0, …}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Wealth Corporation", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 1986, networkCompaniesCount: 0, …}
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 161.70ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_3.jpg"}
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 163.00ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_2.jpg"}
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 163.60ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_1.jpg"}
+[IntelligentPreloader:TutorialPreloader] Tutorial preload completed for dashboard completed in 163.90ms 
+Object {total: 3, successful: 3, failed: 0}
+[Tutorial:TutorialManager] Tutorial preload completed for dashboard: 3/3 images loaded successfully
+[Tutorial:TutorialManager] Tutorial cache statistics: 
+Object {cached: 3, loading: 0, totalMemoryUsage: 3, successRate: 100}
+API error 500: {"message":"Error fetching relationships"}...
+[TanStack Query] Error fetching /api/relationships: 
+Error {}
+
+[2025-06-09T08:49:25.816Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connection established
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Wealth Corporation", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 1986, networkCompaniesCount: 0, …}
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749458965865-kp8alw8", timestamp: "2025-06-09T08:49:25.865Z", message: "Connection established"}
+[RiskRadarChart] Data source analysis: 
+Object {allCompaniesCount: 0, relationshipCompaniesCount: 0, visualizationNodesCount: 0, uniqueCompaniesCount: 0, approvedCompaniesCount: 0, …}
+[RiskRadarChart] RENDER DEBUG - Current state 
+Object {company: "Network Wealth Corporation", category: "FinTech", isBankOrInvela: false, selectedCompanyId: 1986, networkCompaniesCount: 0, …}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749458966392-s0tm4t2", timestamp: "2025-06-09T08:49:26.392Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749458966929-g7oe0b4", timestamp: "2025-06-09T08:49:26.929Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-06-09T08:49:28.012Z] [WebSocket] WebSocket connection established 
+[2025-06-09T08:49:28.012Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-09T08:49:28.013Z] [WebSocket] Received message of type: connection_established 
+[2025-06-09T08:49:28.013Z] [WebSocket] WebSocket server connection confirmed with ID: client-1749458968024-k7pgfuo 
+[2025-06-09T08:49:28.467Z] [WebSocket] Sending authentication message 
+Object {userId: 584, companyId: 1986, connectionId: "ws_1749458965816_b500df71v", hasUserData: true, hasCompanyData: true}
+[2025-06-09T08:49:28.588Z] [WebSocket] Received message of type: authenticated 
+[2025-06-09T08:49:28.588Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
