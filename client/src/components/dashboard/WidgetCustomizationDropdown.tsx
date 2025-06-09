@@ -22,6 +22,7 @@
 import { useMemo } from 'react';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -132,13 +133,10 @@ export function WidgetCustomizationDropdown({
           variant="outline" 
           size="sm" 
           className="h-8 px-3 flex items-center gap-2 hover:bg-gray-50 transition-colors duration-200"
-          aria-label={`Customize widgets (${visibleCount}/${availableWidgets.length} visible)`}
+          aria-label="Customize widgets"
         >
           <Settings className="h-4 w-4" />
-          <span className="text-sm font-medium">Widgets</span>
-          <span className="text-xs text-gray-600">
-            {visibleCount}/{availableWidgets.length}
-          </span>
+          <span className="text-sm font-medium">Customize</span>
         </Button>
       </DropdownMenuTrigger>
       
@@ -155,6 +153,10 @@ export function WidgetCustomizationDropdown({
             key={widgetKey}
             checked={visibleWidgets[widgetKey]}
             onCheckedChange={() => onToggleWidget(widgetKey)}
+            className={cn(
+              "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+              visibleWidgets[widgetKey] && "bg-blue-50 text-blue-900"
+            )}
           >
             {WIDGET_LABELS[widgetKey]}
           </DropdownMenuCheckboxItem>
