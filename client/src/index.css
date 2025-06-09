@@ -464,11 +464,11 @@
 /* Widget Button Variants */
 .widget-button-action {
   @apply h-14 px-4 flex items-center justify-between;
-  @apply border border-input bg-background;
-  @apply hover:bg-accent hover:border-accent-foreground/20;
-  @apply hover:shadow-sm hover:-translate-y-0.5;
+  @apply border border-gray-200 bg-white;
+  @apply hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50;
+  @apply hover:border-blue-200 hover:shadow-sm hover:-translate-y-0.5;
   @apply transition-all duration-200 ease-in-out;
-  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  @apply focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
 }
 
 .widget-button-secondary {
