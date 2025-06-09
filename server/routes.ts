@@ -1000,7 +1000,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
         hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
         num_employees: sql<number>`COALESCE(${companies.num_employees}, 0)`,
-        revenue: sql<number>`COALESCE(${companies.revenue}, 0)`,
+        revenue: sql<string>`COALESCE(${companies.revenue}, '0')`,
         revenue_tier: sql<string>`COALESCE(${companies.revenue_tier}, '')`,
         products_services: sql<string>`COALESCE(${companies.products_services}, '')`,
         incorporation_year: sql<number>`COALESCE(${companies.incorporation_year}, 0)`,
@@ -1009,6 +1009,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         key_clients_partners: sql<string>`COALESCE(${companies.key_clients_partners}, '')`,
         founders_and_leadership: sql<string>`COALESCE(${companies.founders_and_leadership}, '')`,
         created_at: companies.created_at,
+        logo_id: companies.logo_id,
         has_relationship: sql<boolean>`
           CASE 
             WHEN ${companies.id} = ${req.user.company_id} THEN true
