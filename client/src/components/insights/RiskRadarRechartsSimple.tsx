@@ -36,7 +36,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg border">
         <p className="font-semibold">{label}</p>
-        <p className="text-blue-300">{`Score: ${data.value}/10`}</p>
+        <p className="text-blue-300">{`Score: ${data.value}/100`}</p>
       </div>
     );
   }
@@ -100,7 +100,7 @@ export function RiskRadarRechartsSimple({
     return Object.entries(companyWithClusters.risk_clusters).map(([category, value]) => ({
       category,
       value: Number(value) || 0,
-      fullMark: 10
+      fullMark: 100
     }));
   }, [displayCompany]);
 
@@ -193,7 +193,7 @@ export function RiskRadarRechartsSimple({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium">Risk Score:</span>
-                <span className="ml-2 text-blue-600">{displayCompany.risk_score}/10</span>
+                <span className="ml-2 text-blue-600">{displayCompany.risk_score}/100</span>
               </div>
               <div>
                 <span className="font-medium">Category:</span>
