@@ -19,7 +19,9 @@ import {
   Clock,
   ArrowRight,
   Loader2,
-  Gauge
+  Gauge,
+  Medal,
+  Share2
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
@@ -237,8 +239,8 @@ export function CompanySnapshot({
             {/* Network Size */}
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <Users className={`widget-icon-standard ${personaColors.iconColor}`} />
-                <span className="widget-text">Network</span>
+                <Share2 className={`widget-icon-standard ${personaColors.iconColor}`} />
+                <span className="widget-text font-semibold">Network Risk</span>
               </div>
               <div className="widget-number text-2xl mb-1">{networkCount}</div>
               <div className="widget-text text-gray-500 text-sm">Companies</div>
@@ -247,8 +249,8 @@ export function CompanySnapshot({
             {/* Risk Score */}
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <AlertTriangle className={`widget-icon-standard ${personaColors.iconColor}`} />
-                <span className="widget-text">Risk Score</span>
+                <Gauge className={`widget-icon-standard ${personaColors.iconColor}`} />
+                <span className="widget-text font-semibold">Risk Score</span>
               </div>
               <div className="widget-number text-2xl mb-1">{riskScore}</div>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskStatus.color} ${riskStatus.bg} border-0 cursor-default`}>
@@ -260,8 +262,8 @@ export function CompanySnapshot({
           {/* Third Row: Full-Width Accreditation */}
           <div className="widget-card-metric text-center">
             <div className="flex items-center justify-center space-x-2 mb-3">
-              <accreditationBadge.icon className={`widget-icon-standard ${personaColors.iconColor}`} />
-              <span className="widget-text">Accreditation</span>
+              <Medal className={`widget-icon-standard ${personaColors.iconColor}`} />
+              <span className="widget-text font-semibold">Accreditation</span>
             </div>
             <div className="space-y-2">
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border-0 cursor-default ${

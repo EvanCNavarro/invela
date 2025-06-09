@@ -363,7 +363,7 @@ export function VisualizerWidget({
 
   return (
     <Widget
-      title="Insights Visualizer"
+      title="Visualizer"
       icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
@@ -374,7 +374,7 @@ export function VisualizerWidget({
             value={selectedVisualization}
             onValueChange={handleVisualizationChange}
           >
-            <SelectTrigger className="w-[240px]">
+            <SelectTrigger className="w-[240px] font-semibold">
               <SelectValue placeholder="Select visualization" />
             </SelectTrigger>
             <SelectContent>
