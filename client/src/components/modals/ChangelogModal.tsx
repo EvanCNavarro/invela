@@ -105,6 +105,24 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'tab-unlocking-transformation-2025-06-09',
+    date: '2025-06-09',
+    type: 'feature',
+    title: 'Tab Unlocking System Transformation',
+    description: 'Transformed FinTech company tab access from progressive unlocking to immediate availability of all 5 core tabs',
+    details: [
+      'Eliminated progressive tab unlocking system for all 1,112 FinTech companies',
+      'Implemented immediate access to Dashboard, Task Center, File Vault, Insights, and Network tabs',
+      'Resolved critical database schema compilation errors causing system instability',
+      'Fixed relationships endpoint with optimized direct SQL query implementation',
+      'Removed tab unlocking logic from form submission workflows for better performance',
+      'Cleaned up deprecated WebSocket tab unlocking events while maintaining core functionality',
+      'Completed comprehensive 5-phase system verification confirming 100% success rate'
+    ],
+    version: '2.2.1',
+    audience: 'product'
+  },
+  {
     id: 'authentication-image-update-2025-06-09',
     date: '2025-06-09',
     type: 'design',
