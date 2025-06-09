@@ -225,37 +225,39 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
   return (
     <div className={cn(
-      "w-full relative", // Added relative for tab positioning
+      "w-full", // Outer container
       className
     )}>
-      {/* 🚀 PHASE 3: Floating Toggle Button - Completely Outside */}
-      <motion.button
-        onClick={handleToggleCollapse}
-        className="absolute -top-8 right-0 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2 z-20"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{
-          duration: 0.2,
-          ease: "easeInOut"
-        }}
-        aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
-      >
-        <motion.div
-          animate={{ 
-            rotate: isCollapsed ? 180 : 0 
-          }}
+      {/* 🚀 PHASE 3: Container for Toggle Button and Collapsible Content */}
+      <div className="relative pt-8">
+        {/* Toggle Button - Positioned in the padding space */}
+        <motion.button
+          onClick={handleToggleCollapse}
+          className="absolute top-0 right-0 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2 z-20"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           transition={{
-            duration: ANIMATION_CONFIG.duration,
-            ease: ANIMATION_CONFIG.ease
+            duration: 0.2,
+            ease: "easeInOut"
           }}
+          aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
         >
-          <ChevronUp className="w-5 h-5 text-gray-600" />
-        </motion.div>
-      </motion.button>
+          <motion.div
+            animate={{ 
+              rotate: isCollapsed ? 180 : 0 
+            }}
+            transition={{
+              duration: ANIMATION_CONFIG.duration,
+              ease: ANIMATION_CONFIG.ease
+            }}
+          >
+            <ChevronUp className="w-5 h-5 text-gray-600" />
+          </motion.div>
+        </motion.button>
 
-      {/* 🚀 PHASE 2: Animated Container with Motion */}
-      <motion.div 
-        className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+        {/* 🚀 PHASE 2: Animated Container with Motion */}
+        <motion.div 
+          className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
         initial={false}
         animate={{
           height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
@@ -365,6 +367,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
       {/* Removed Storybook Modal - using direct component library access */}
 
+      </div>
     </div>
   );
 }
