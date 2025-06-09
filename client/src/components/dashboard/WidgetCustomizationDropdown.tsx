@@ -134,7 +134,13 @@ export function WidgetCustomizationDropdown({
   // ========================================
   
   return (
-    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+    <DropdownMenu 
+      open={dropdownOpen} 
+      onOpenChange={(open) => {
+        setDropdownOpen(open);
+        if (!open) setHoveredWidget(null);
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
@@ -157,19 +163,18 @@ export function WidgetCustomizationDropdown({
         
         <div className="space-y-1">
           {availableWidgets.map((widgetKey) => (
-            <DropdownMenuPrimitive.CheckboxItem
+            <div
               key={widgetKey}
-              checked={visibleWidgets[widgetKey]}
-              onCheckedChange={(checked) => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 onToggleWidget(widgetKey);
-                // Keep dropdown open after selection
-                setTimeout(() => setDropdownOpen(true), 0);
               }}
               onMouseEnter={() => setHoveredWidget(widgetKey)}
               onMouseLeave={() => setHoveredWidget(null)}
               className={cn(
                 "relative flex cursor-pointer select-none items-center rounded-lg py-3 pl-10 pr-4 text-sm outline-none transition-all duration-200",
-                "hover:bg-black hover:bg-opacity-5",
+                "hover:bg-gray-100",
                 visibleWidgets[widgetKey] 
                   ? "bg-blue-50 border border-blue-200 shadow-sm" 
                   : "border border-transparent"
@@ -177,17 +182,17 @@ export function WidgetCustomizationDropdown({
             >
               <span className="absolute left-3 flex h-4 w-4 items-center justify-center">
                 {hoveredWidget === widgetKey ? (
-                  // Show X for checked items on hover, dot for unchecked
+                  // Show X for checked items on hover, small dot for unchecked
                   visibleWidgets[widgetKey] ? (
-                    <X className="h-4 w-4 text-red-500" strokeWidth={2} />
+                    <X className="h-3.5 w-3.5 text-gray-500" strokeWidth={2} />
                   ) : (
-                    <Circle className="h-4 w-4 text-gray-400 fill-gray-400" strokeWidth={0} />
+                    <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
                   )
                 ) : (
                   // Normal state - checkmark for selected items
-                  <DropdownMenuPrimitive.ItemIndicator>
+                  visibleWidgets[widgetKey] && (
                     <Check className="h-4 w-4 text-blue-600" strokeWidth={3} />
-                  </DropdownMenuPrimitive.ItemIndicator>
+                  )
                 )}
               </span>
               <span className={cn(
@@ -198,7 +203,7 @@ export function WidgetCustomizationDropdown({
               )}>
                 {WIDGET_LABELS[widgetKey]}
               </span>
-            </DropdownMenuPrimitive.CheckboxItem>
+            </div>
           ))}
         </div>
       </DropdownMenuContent>
