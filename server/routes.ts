@@ -2207,44 +2207,54 @@ export async function registerRoutes(app: Express): Promise<Express> {
     try {
       console.log('[Relationships] Fetching network for company:', req.user.company_id);
 
-      // Get all relationships where the current company is either the creator or related company
-      const networkRelationships = await db.select({
-        id: relationships.id,
-        companyId: relationships.company_id,
-        relatedCompanyId: relationships.related_company_id,
-        relationshipType: relationships.relationship_type,
-        status: relationships.status,
-        metadata: relationships.metadata,
-        createdAt: relationships.created_at,
-        // Join with companies to get related company details
-        relatedCompany: {
-          id: companies.id,
-          name: companies.name,
-          category: companies.category,
-          logoId: companies.logo_id,
-          accreditationStatus: companies.accreditation_status,
-          riskScore: companies.risk_score,
-          isDemo: companies.is_demo
-        }
-      })
-        .from(relationships)
-        .innerJoin(
-          companies,
-          eq(
-            companies.id,
-            sql`CASE 
-          WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
-          ELSE ${relationships.company_id}
-        END`
-          )
+      // Use direct SQL query to avoid Drizzle ORM schema compilation issues
+      const relationshipsData = await db.execute(sql`
+        SELECT 
+          r.id,
+          r.company_id as "companyId",
+          r.related_company_id as "relatedCompanyId", 
+          r.relationship_type as "relationshipType",
+          r.status,
+          r.metadata,
+          r.created_at as "createdAt",
+          c.id as "relatedCompany_id",
+          c.name as "relatedCompany_name",
+          c.category as "relatedCompany_category",
+          c.logo_id as "relatedCompany_logoId",
+          c.accreditation_status as "relatedCompany_accreditationStatus",
+          c.risk_score as "relatedCompany_riskScore",
+          c.is_demo as "relatedCompany_isDemo"
+        FROM relationships r
+        LEFT JOIN companies c ON (
+          CASE 
+            WHEN r.company_id = ${req.user.company_id} THEN c.id = r.related_company_id
+            ELSE c.id = r.company_id
+          END
         )
-        .where(
-          or(
-            eq(relationships.company_id, req.user.company_id),
-            eq(relationships.related_company_id, req.user.company_id)
-          )
-        )
-        .orderBy(companies.name);
+        WHERE r.company_id = ${req.user.company_id} 
+           OR r.related_company_id = ${req.user.company_id}
+        ORDER BY c.name
+      `);
+
+      // Transform the raw results into the expected format
+      const networkRelationships = relationshipsData.rows.map((row: any) => ({
+        id: row.id,
+        companyId: row.companyId,
+        relatedCompanyId: row.relatedCompanyId,
+        relationshipType: row.relationshipType,
+        status: row.status,
+        metadata: row.metadata,
+        createdAt: row.createdAt,
+        relatedCompany: row.relatedCompany_id ? {
+          id: row.relatedCompany_id,
+          name: row.relatedCompany_name,
+          category: row.relatedCompany_category,
+          logoId: row.relatedCompany_logoId,
+          accreditationStatus: row.relatedCompany_accreditationStatus,
+          riskScore: row.relatedCompany_riskScore,
+          isDemo: row.relatedCompany_isDemo
+        } : null
+      }));
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
