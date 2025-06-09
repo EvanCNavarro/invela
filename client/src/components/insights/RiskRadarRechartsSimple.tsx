@@ -152,9 +152,9 @@ export function RiskRadarRechartsSimple({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-[450px]">
+        <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={chartData} margin={{ top: 40, right: 60, bottom: 40, left: 60 }}>
+            <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
               <PolarGrid stroke="#e2e8f0" />
               <PolarAngleAxis 
                 dataKey="category" 

@@ -359,12 +359,12 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="w-full h-[450px] flex justify-center items-center">
+        <div className="w-full h-[350px] flex justify-center items-center">
           <ReactApexChart
             options={chartOptions}
             series={series}
             type="radar"
-            height="420"
+            height="320"
             width="100%"
           />
         </div>
