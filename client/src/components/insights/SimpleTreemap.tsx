@@ -81,24 +81,36 @@ export default function SimpleTreemap() {
 
     treemap(root);
 
-    // Enhanced color function with gradients based on revenue tiers
+    // Enhanced color function with darker greens and proper gradients
     const getColor = (category: string, revenueTier: string) => {
       const baseColors = {
-        'Bank': '#2563EB',     // Blue
-        'FinTech': '#059669',  // Green
-        'Invela': '#7C3AED',   // Purple
-        'Default': '#4B5563'   // Gray
+        'Bank': {
+          large: '#1E40AF',    // Dark blue
+          medium: '#3B82F6',   // Medium blue  
+          small: '#60A5FA'     // Light blue
+        },
+        'FinTech': {
+          large: '#065F46',    // Dark green (matching approved chip)
+          medium: '#047857',   // Medium green
+          small: '#059669'     // Lighter green
+        },
+        'Invela': {
+          large: '#581C87',    // Dark purple
+          medium: '#7C3AED',   // Medium purple
+          small: '#A855F7'     // Light purple
+        },
+        'Default': {
+          large: '#374151',    // Dark gray
+          medium: '#4B5563',   // Medium gray
+          small: '#6B7280'     // Light gray
+        }
       };
       
-      const base = baseColors[category as keyof typeof baseColors] || baseColors.Default;
-      
-      // Create different shades based on revenue tier
-      if (revenueTier === 'large') return base;
-      if (revenueTier === 'medium') return base + '99'; // Add opacity
-      return base + '66'; // Lighter shade for small
+      const categoryColors = baseColors[category as keyof typeof baseColors] || baseColors.Default;
+      return categoryColors[revenueTier as keyof typeof categoryColors] || categoryColors.small;
     };
 
-    // Mouse event handlers
+    // Mouse event handlers with smart tooltip positioning
     const handleMouseOver = (event: any, d: any) => {
       setHoveredNode(d.data);
       
@@ -106,11 +118,43 @@ export default function SimpleTreemap() {
       svg.selectAll('rect')
         .style('opacity', (rectData: any) => rectData === d ? 1 : 0.3);
       
-      // Position tooltip
+      // Smart tooltip positioning
       if (tooltipRef.current) {
-        const rect = svgRef.current!.getBoundingClientRect();
-        tooltipRef.current.style.left = (event.clientX - rect.left + 10) + 'px';
-        tooltipRef.current.style.top = (event.clientY - rect.top - 10) + 'px';
+        const svgRect = svgRef.current!.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const mouseX = event.clientX - svgRect.left;
+        const mouseY = event.clientY - svgRect.top;
+        
+        const tooltipWidth = 320; // Max width from CSS
+        const tooltipHeight = 200; // Estimated height
+        const padding = 15;
+        
+        // Calculate position based on available space
+        let left = mouseX + padding;
+        let top = mouseY - padding;
+        
+        // Check if tooltip would go off right edge
+        if (left + tooltipWidth > dimensions.width) {
+          left = mouseX - tooltipWidth - padding;
+        }
+        
+        // Check if tooltip would go off bottom edge
+        if (top + tooltipHeight > dimensions.height) {
+          top = mouseY - tooltipHeight + padding;
+        }
+        
+        // Check if tooltip would go off top edge
+        if (top < 0) {
+          top = mouseY + padding;
+        }
+        
+        // Check if tooltip would go off left edge
+        if (left < 0) {
+          left = padding;
+        }
+        
+        tooltipRef.current.style.left = left + 'px';
+        tooltipRef.current.style.top = top + 'px';
         tooltipRef.current.style.opacity = '1';
       }
     };
@@ -146,24 +190,61 @@ export default function SimpleTreemap() {
       .on('mouseover', handleMouseOver)
       .on('mouseout', handleMouseOut);
 
-    // Add text labels
-    leaves.append('text')
-      .attr('x', d => (d.x0 + d.x1) / 2)
-      .attr('y', d => (d.y0 + d.y1) / 2)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .style('fill', '#ffffff')
-      .style('font-size', d => {
-        const width = d.x1 - d.x0;
-        const height = d.y1 - d.y0;
-        return Math.min(width / 10, height / 5, 10) + 'px';
-      })
-      .style('font-weight', '500')
-      .style('pointer-events', 'none')
-      .text(d => {
-        const width = d.x1 - d.x0;
-        return width > 50 ? d.data.name : '';
-      });
+    // Enhanced text labels with proper wrapping and sizing
+    leaves.each(function(d: any) {
+      const group = d3.select(this);
+      const width = d.x1 - d.x0;
+      const height = d.y1 - d.y0;
+      const centerX = (d.x0 + d.x1) / 2;
+      const centerY = (d.y0 + d.y1) / 2;
+      
+      // Only show text if rectangle is large enough
+      if (width > 40 && height > 20) {
+        const name = d.data.name;
+        const maxCharsPerLine = Math.floor(width / 6); // Estimate chars that fit
+        const fontSize = Math.min(width / 12, height / 6, 9);
+        
+        if (fontSize >= 6) {
+          // Split long names into multiple lines
+          const words = name.split(' ');
+          const lines: string[] = [];
+          let currentLine = '';
+          
+          for (const word of words) {
+            if ((currentLine + word).length <= maxCharsPerLine) {
+              currentLine += (currentLine ? ' ' : '') + word;
+            } else {
+              if (currentLine) lines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          if (currentLine) lines.push(currentLine);
+          
+          // Limit to 2 lines max for small rectangles, 3 for larger ones
+          const maxLines = height > 40 ? 3 : 2;
+          const displayLines = lines.slice(0, maxLines);
+          
+          // Add text lines
+          displayLines.forEach((line, i) => {
+            const lineHeight = fontSize * 1.1;
+            const totalHeight = displayLines.length * lineHeight;
+            const startY = centerY - (totalHeight / 2) + (i * lineHeight) + (fontSize / 2);
+            
+            group.append('text')
+              .attr('x', centerX)
+              .attr('y', startY)
+              .attr('text-anchor', 'middle')
+              .attr('dominant-baseline', 'middle')
+              .style('fill', '#ffffff')
+              .style('font-size', fontSize + 'px')
+              .style('font-weight', '500')
+              .style('pointer-events', 'none')
+              .style('text-shadow', '1px 1px 2px rgba(0,0,0,0.5)')
+              .text(line + (i === maxLines - 1 && lines.length > maxLines ? '...' : ''));
+          });
+        }
+      }
+    });
 
   }, [networkData, dimensions]);
 
