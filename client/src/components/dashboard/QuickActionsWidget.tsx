@@ -172,7 +172,7 @@ export function QuickActionsWidget({
     <>
       <Widget
         title="Quick Actions"
-        icon={<Zap className="h-5 w-5 text-gray-700" />}
+        icon={<Zap className="h-5 w-5 text-blue-600" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
