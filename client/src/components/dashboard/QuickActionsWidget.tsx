@@ -197,14 +197,14 @@ export function QuickActionsWidget({
               title={action.description}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="text-gray-700">
+                <div className="text-blue-600 group-hover:text-blue-700">
                   <action.icon className="h-4 w-4" />
                 </div>
-                <span className="widget-text text-left leading-tight truncate">
+                <span className="text-sm font-medium text-gray-900 text-left leading-tight truncate">
                   {action.label}
                 </span>
               </div>
-              <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
             </button>
           ))}
         </div>
