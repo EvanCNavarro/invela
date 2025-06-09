@@ -58,16 +58,26 @@ export default function SimpleTreemap() {
     svg.selectAll('*').remove();
 
     // Transform data for treemap
-    const treeData = networkData.nodes.map((node: any) => ({
-      name: node.name,
-      value: getRevenueValue(node.revenueTier || node.revenue_tier),
-      category: node.category,
-      revenue_tier: node.revenueTier || node.revenue_tier,
-      revenue_value: node.revenue || node.revenueValue || 0,
-      risk_score: node.riskScore || node.risk_score,
-      num_employees: node.numEmployees || node.num_employees || 0,
-      accreditation_status: node.accreditationStatus || node.accreditation_status,
-    }));
+    const treeData = networkData.nodes.map((node: any) => {
+      console.log('[SimpleTreemap] Raw node data:', {
+        name: node.name,
+        revenue: node.revenue,
+        numEmployees: node.numEmployees,
+        revenueTier: node.revenueTier,
+        category: node.category
+      });
+      
+      return {
+        name: node.name,
+        value: getRevenueValue(node.revenueTier || node.revenue_tier),
+        category: node.category,
+        revenue_tier: node.revenueTier || node.revenue_tier,
+        revenue_value: node.revenue || node.revenueValue || 0,
+        risk_score: node.riskScore || node.risk_score,
+        num_employees: node.numEmployees || node.num_employees || 0,
+        accreditation_status: node.accreditationStatus || node.accreditation_status,
+      };
+    });
 
     // Create hierarchy
     const root = d3.hierarchy({ children: treeData } as any)
@@ -268,11 +278,17 @@ export default function SimpleTreemap() {
   };
 
   // Helper function to format revenue value
-  const formatRevenueValue = (value: number) => {
-    if (!value) return 'Not disclosed';
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-    return `$${value.toLocaleString()}`;
+  const formatRevenueValue = (value: any) => {
+    if (!value || value === 0) return 'Not disclosed';
+    // If it's already a formatted string from the database, return it directly
+    if (typeof value === 'string' && value.includes('$')) return value;
+    // Otherwise format as number
+    if (typeof value === 'number') {
+      if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+      return `$${value.toLocaleString()}`;
+    }
+    return 'Not disclosed';
   };
 
   // Helper function to format revenue tier

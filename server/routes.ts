@@ -2336,8 +2336,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
           accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
           riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
           revenueTier: companies.revenue_tier,
-          revenue: sql<number>`COALESCE(${companies.revenue}, 0)`,
-          numEmployees: sql<number>`COALESCE(${companies.num_employees}, 0)`,
+          revenue: companies.revenue,
+          numEmployees: companies.num_employees,
           isDemo: companies.is_demo
         }
       })
