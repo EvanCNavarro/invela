@@ -159,15 +159,17 @@ export function CompanySnapshot({
             
             {/* Company Info */}
             <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-2">
-                <h3 className="widget-title truncate">
-                  {companyData?.name || 'Company Name'}
-                </h3>
-                <ArrowRight className="h-4 w-4 text-blue-600 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-              </div>
+              <h3 className="widget-title truncate">
+                {companyData?.name || 'Company Name'}
+              </h3>
               <div className="widget-text text-gray-600 text-sm">
                 {getCompanyRole(companyData?.category || 'FinTech')}
               </div>
+            </div>
+            
+            {/* Right-aligned arrow */}
+            <div className="flex-shrink-0">
+              <ArrowRight className="h-4 w-4 text-blue-600 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
           </div>
         </button>
