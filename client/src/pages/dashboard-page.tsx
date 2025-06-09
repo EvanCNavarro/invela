@@ -405,10 +405,10 @@ export default function DashboardPage(): JSX.Element {
                 )}
 
                 {/* Risk Radar and Task Summary for Invela */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   {/* Risk Radar for Invela */}
                   {visibleWidgets.riskRadar && companyData && (
-                    <div className="h-[320px]">
+                    <div className="h-[400px]">
                       <RiskRadarWidget
                         companyId={companyData?.id || 0}
                         onToggle={() => toggleWidget('riskRadar')}
@@ -419,7 +419,7 @@ export default function DashboardPage(): JSX.Element {
 
                   {/* Task Summary for Invela */}
                   {visibleWidgets.taskSummary && (
-                    <div className="h-[320px]">
+                    <div className="h-[400px]">
                       <TaskSummaryWidget
                         onToggle={() => toggleWidget('taskSummary')}
                         isVisible={visibleWidgets.taskSummary}
