@@ -190,27 +190,27 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       {summaryStats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Data Providers Card */}
-          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+          <div className="relative widget-card-metric text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
-            <div className="p-3 pl-4">
+            <div className="pl-1">
               <div className="widget-text mb-3">Data Providers</div>
               <div className="widget-number text-xl">{summaryStats.dataProviders}</div>
             </div>
           </div>
           
           {/* Data Recipients Card */}
-          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+          <div className="relative widget-card-metric text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600"></div>
-            <div className="p-3 pl-4">
+            <div className="pl-1">
               <div className="widget-text mb-3">Data Recipients</div>
               <div className="widget-number text-xl">{summaryStats.dataRecipients}</div>
             </div>
           </div>
           
           {/* Accredited Recipients Card */}
-          <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
+          <div className="relative widget-card-metric text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
-            <div className="p-3 pl-4">
+            <div className="pl-1">
               <div className="widget-text mb-3">Accredited Recipients</div>
               <div className="widget-number text-xl">{summaryStats.accreditedDataRecipients}</div>
             </div>
