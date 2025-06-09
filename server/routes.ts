@@ -2328,18 +2328,16 @@ export async function registerRoutes(app: Express): Promise<Express> {
         relationshipType: relationships.relationship_type,
         status: relationships.status,
         metadata: relationships.metadata,
-        // Join with companies to get related company details
-        relatedCompany: {
-          id: companies.id,
-          name: companies.name,
-          category: sql<string>`COALESCE(${companies.category}, '')`,
-          accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
-          riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
-          revenueTier: companies.revenue_tier,
-          revenue: companies.revenue,
-          numEmployees: companies.num_employees,
-          isDemo: companies.is_demo
-        }
+        // Flat field selection for related company details
+        relatedCompanyIdField: companies.id,
+        relatedCompanyName: companies.name,
+        relatedCompanyCategory: sql<string>`COALESCE(${companies.category}, '')`,
+        relatedCompanyAccreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
+        relatedCompanyRiskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
+        relatedCompanyRevenueTier: companies.revenue_tier,
+        relatedCompanyRevenue: companies.revenue,
+        relatedCompanyNumEmployees: companies.num_employees,
+        relatedCompanyIsDemo: companies.is_demo
       })
       .from(relationships)
       .innerJoin(
@@ -2374,25 +2372,32 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       // 4. Transform into the expected format
       const nodes = networkRelationships.map(rel => {
+        console.log('[Network API] Raw relationship data:', {
+          companyName: rel.relatedCompanyName,
+          revenue: rel.relatedCompanyRevenue,
+          numEmployees: rel.relatedCompanyNumEmployees,
+          revenueTier: rel.relatedCompanyRevenueTier,
+          allFields: Object.keys(rel)
+        });
+        
         // Get revenue tier from either the company record or metadata, or use default
-        const revenueTier = rel.relatedCompany.revenueTier || (rel.metadata?.revenueTier as string) || 'Enterprise';
+        const revenueTier = rel.relatedCompanyRevenueTier || (rel.metadata?.revenueTier as string) || 'Enterprise';
         
         // Create node for the visualization
         return {
-          id: rel.relatedCompany.id,
-          name: rel.relatedCompany.name,
+          id: rel.relatedCompanyIdField,
+          name: rel.relatedCompanyName,
           relationshipId: rel.id,
           relationshipType: rel.relationshipType || 'partner',
           relationshipStatus: rel.status || 'active',
-          riskScore: rel.relatedCompany.riskScore || 0,
-          riskBucket: getRiskBucket(rel.relatedCompany.riskScore || 0),
-          accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
+          riskScore: rel.relatedCompanyRiskScore || 0,
+          riskBucket: getRiskBucket(rel.relatedCompanyRiskScore || 0),
+          accreditationStatus: rel.relatedCompanyAccreditationStatus || 'PENDING',
           revenueTier,
-          revenue: rel.relatedCompany.revenue || 0,
-          numEmployees: rel.relatedCompany.numEmployees || 0,
-          category: rel.relatedCompany.category || 'Other',
-          // activeConsents field removed as it doesn't exist in the database schema
-          isDemo: rel.relatedCompany.isDemo
+          revenue: rel.relatedCompanyRevenue,
+          numEmployees: rel.relatedCompanyNumEmployees,
+          category: rel.relatedCompanyCategory || 'Other',
+          isDemo: rel.relatedCompanyIsDemo
         };
       });
 
