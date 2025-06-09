@@ -103,13 +103,13 @@ export function NetworkForceDirectedInsight({ className }: NetworkForceDirectedI
     searchTerm: ''
   });
 
-  // Fetch companies and relationships
-  const { data: companies, isLoading: companiesLoading } = useQuery<any[]>({
+  // Fetch companies and relationships with error handling
+  const { data: companies, isLoading: companiesLoading, error: companiesError } = useQuery<any[]>({
     queryKey: ['/api/companies'],
     enabled: true
   });
 
-  const { data: networkData, isLoading: relationshipsLoading } = useQuery<any>({
+  const { data: networkData, isLoading: relationshipsLoading, error: networkError } = useQuery<any>({
     queryKey: ['/api/relationships/network'],
     enabled: true
   });
@@ -118,6 +118,7 @@ export function NetworkForceDirectedInsight({ className }: NetworkForceDirectedI
   const relationships = networkData?.nodes || [];
 
   const isLoading = companiesLoading || relationshipsLoading;
+  const hasError = companiesError || networkError;
 
   // Process and filter data
   const { nodes, links } = useMemo(() => {
@@ -510,10 +511,32 @@ export function NetworkForceDirectedInsight({ className }: NetworkForceDirectedI
     });
   };
 
+  if (hasError) {
+    return (
+      <Card className={cn("w-full h-[400px] flex items-center justify-center", className)}>
+        <div className="text-center text-gray-500">
+          <p>Unable to load network data</p>
+          <p className="text-sm">Please check your connection and try again</p>
+        </div>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return (
       <Card className={cn("w-full h-[700px] flex items-center justify-center", className)}>
         <Loader2 className="h-8 w-8 animate-spin" />
+      </Card>
+    );
+  }
+
+  if (clusteredNodes.length === 0) {
+    return (
+      <Card className={cn("w-full h-[400px] flex items-center justify-center", className)}>
+        <div className="text-center text-gray-500">
+          <p>No network data available</p>
+          <p className="text-sm">Network relationships will appear here when available</p>
+        </div>
       </Card>
     );
   }
