@@ -30,6 +30,14 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ChevronRight, Home, ArrowLeft } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  INSIGHT_COLORS, 
+  getCategoryColor, 
+  getRiskColor, 
+  getRevenueTierColor,
+  getAccreditationColor 
+} from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface TreemapNode {
   id: string;

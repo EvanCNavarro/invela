@@ -128,33 +128,18 @@ export default function SimpleTreemap() {
       height: d.y1 - d.y0
     })));
 
-    // Enhanced color function with darker greens and proper gradients
+    // Standardized color function using design system
     const getColor = (category: string, revenueTier: string) => {
-      const baseColors = {
-        'Bank': {
-          large: '#1E40AF',    // Dark blue
-          medium: '#3B82F6',   // Medium blue  
-          small: '#60A5FA'     // Light blue
-        },
-        'FinTech': {
-          large: '#065F46',    // Dark green (matching approved chip)
-          medium: '#047857',   // Medium green
-          small: '#059669'     // Lighter green
-        },
-        'Invela': {
-          large: '#581C87',    // Dark purple
-          medium: '#7C3AED',   // Medium purple
-          small: '#A855F7'     // Light purple
-        },
-        'Default': {
-          large: '#374151',    // Dark gray
-          medium: '#4B5563',   // Medium gray
-          small: '#6B7280'     // Light gray
-        }
-      };
+      // Use design system for category colors first
+      const categoryColor = getCategoryColor(category);
       
-      const categoryColors = baseColors[category as keyof typeof baseColors] || baseColors.Default;
-      return categoryColors[revenueTier as keyof typeof categoryColors] || categoryColors.small;
+      // If we have a revenue tier, use the revenue tier color system
+      if (revenueTier && revenueTier !== 'unknown') {
+        return getRevenueTierColor(revenueTier);
+      }
+      
+      // Fallback to category color
+      return categoryColor;
     };
 
     // Mouse event handlers with smart tooltip positioning
