@@ -257,7 +257,30 @@ export function CompanySnapshot({
             </div>
           </div>
 
-          {/* Third Row: Slim Alert Cards */}
+          {/* Third Row: Full-Width Accreditation */}
+          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <accreditationBadge.icon className={`h-4 w-4 ${personaColors.iconColor}`} />
+              <span className="widget-text">Accreditation</span>
+            </div>
+            <div className="space-y-1">
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border-0 cursor-default ${
+                accreditationStatus === 'APPROVED' 
+                  ? 'bg-green-100 text-green-800' 
+                  : accreditationStatus === 'PENDING'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {accreditationStatus === 'APPROVED' ? 'Approved' : 
+                 accreditationStatus === 'PENDING' ? 'Pending' : 'Rejected'}
+              </span>
+              <div className="widget-text text-gray-500 text-sm">
+                {getExpirationInfo()}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Row: Slim Alert Cards */}
           <div className="grid grid-cols-2 gap-3">
             {/* Active Alerts */}
             <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
@@ -275,29 +298,6 @@ export function CompanySnapshot({
                 <span className="widget-text text-sm">New Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
-            </div>
-          </div>
-
-          {/* Bottom Row: Full-Width Accreditation */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <accreditationBadge.icon className={`h-4 w-4 ${personaColors.iconColor}`} />
-              <span className="widget-text">Accreditation</span>
-            </div>
-            <div className="space-y-2">
-              <span className={`inline-flex px-4 py-2 rounded-full text-sm font-medium border-0 cursor-default ${
-                accreditationStatus === 'APPROVED' 
-                  ? 'bg-green-100 text-green-800' 
-                  : accreditationStatus === 'PENDING'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {accreditationStatus === 'APPROVED' ? 'Approved' : 
-                 accreditationStatus === 'PENDING' ? 'Pending' : 'Rejected'}
-              </span>
-              <div className="widget-text text-gray-500 text-sm">
-                {getExpirationInfo()}
-              </div>
             </div>
           </div>
         </div>
