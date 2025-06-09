@@ -22,7 +22,6 @@
  * - Network Treemap (Bank/Invela only)
  * - Network Chord Diagram (Bank/Invela only)
  * - Force-Directed Network (Bank/Invela only)
- * - Accreditation Status (All personas)
  * - Risk Radar Chart (All personas)
  * 
  * @module components/dashboard/VisualizerWidget
@@ -76,11 +75,7 @@ const NetworkForceDirectedInsight = React.lazy(() =>
     default: module.NetworkForceDirectedSimple 
   }))
 );
-const AccreditationDotMatrix = React.lazy(() => 
-  import('@/components/insights/AccreditationDotMatrix').then(module => ({ 
-    default: module.AccreditationDotMatrix 
-  }))
-);
+
 const RiskRadarD3Simple = React.lazy(() => 
   import('@/components/insights/RiskRadarD3Simple').then(module => ({ 
     default: module.RiskRadarD3Simple 
@@ -113,12 +108,7 @@ interface VisualizationOption {
  * Complete list of available visualizations with persona restrictions
  */
 const VISUALIZATION_OPTIONS: VisualizationOption[] = [
-  {
-    value: 'accreditation_status',
-    label: 'Accreditation Status',
-    category: 'Compliance',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
+
   {
     value: 'consent_activity',
     label: 'Consent Activity',
@@ -338,14 +328,6 @@ export function VisualizerWidget({
           </InsightErrorBoundary>
         );
       
-      case 'accreditation_status':
-        return (
-          <InsightErrorBoundary insightName="Accreditation Status">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
-              <AccreditationDotMatrix {...insightProps} />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
       
       case 'risk_radar':
         return (
