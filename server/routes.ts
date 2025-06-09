@@ -1287,27 +1287,9 @@ export async function registerRoutes(app: Express): Promise<Express> {
         companyId: companyId
       });
 
-      // Use a direct query to get the most updated company data including the risk_score
-      // Be explicit about the fields we select to avoid errors with missing columns
-      const [company] = await db.select({
-        id: companies.id,
-        name: companies.name,
-        category: companies.category,
-        is_demo: companies.is_demo,
-        revenue_tier: companies.revenue_tier,
-        onboarding_company_completed: companies.onboarding_company_completed,
-        risk_score: companies.risk_score,
-        chosen_score: companies.chosen_score,
-        accreditation_status: companies.accreditation_status,
-        website_url: companies.website_url,
-        num_employees: companies.num_employees,
-        incorporation_year: companies.incorporation_year,
-        available_tabs: companies.available_tabs,
-        logo_id: companies.logo_id,
-        created_at: companies.created_at,
-        updated_at: companies.updated_at,
-        risk_clusters: companies.risk_clusters
-      })
+      // Use a simplified query to avoid schema compilation errors
+      // Select only essential fields to fix Drizzle ORM issues
+      const [company] = await db.select()
       .from(companies)
       .where(eq(companies.id, companyId));
 
