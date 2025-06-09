@@ -143,8 +143,12 @@ export function CompanySnapshot({
       isVisible={isVisible}
     >
       <div className="space-y-4">
-        {/* Compact Company Header */}
-        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
+        {/* Compact Company Header - Clickable */}
+        <button 
+          onClick={() => setLocation(`/network/company/${companyData?.id || 1}`)}
+          className="w-full p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border hover:bg-gradient-to-br hover:from-blue-100 hover:to-indigo-100 hover:border-blue-200 transition-all duration-200 group"
+          title="View company profile"
+        >
           <div className="flex items-center gap-3">
             {/* Smaller Company Logo/Avatar */}
             <div className="flex-shrink-0">
@@ -154,21 +158,19 @@ export function CompanySnapshot({
             </div>
             
             {/* Company Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="widget-title truncate mb-1">
-                {companyData?.name || 'Company Name'}
-              </h3>
-              <button 
-                onClick={() => setLocation(`/network/company/${companyData?.id || 1}`)}
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all duration-200 hover:shadow-sm group bg-blue-100 text-blue-800 hover:bg-blue-200"
-                title="View company profile"
-              >
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-2">
+                <h3 className="widget-title truncate">
+                  {companyData?.name || 'Company Name'}
+                </h3>
+                <ArrowRight className="h-4 w-4 text-blue-600 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              </div>
+              <div className="widget-text text-gray-600 text-sm">
                 {getCompanyRole(companyData?.category || 'FinTech')}
-                <ArrowRight className="h-3 w-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+              </div>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Metrics Grid - Network, Risk Score, and Full-Width Accreditation */}
         <div className="space-y-3">
