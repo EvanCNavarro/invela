@@ -39,7 +39,6 @@ export function SystemOverviewWidget({ onToggle, isVisible }: SystemOverviewWidg
   return (
     <Widget
       title="System Overview"
-      subtitle="Platform-wide enrollment statistics and trends"
       icon={<BarChart3 className="h-5 w-5" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}

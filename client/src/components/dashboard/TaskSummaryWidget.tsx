@@ -147,9 +147,13 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
         )}
 
         {/* View All Tasks Button */}
-        <Button variant="outline" className="w-full" size="sm">
+        <Button 
+          variant="outline" 
+          className="w-full text-black border-gray-300 hover:bg-gray-50 hover:border-gray-400" 
+          size="sm"
+        >
+          <ArrowRight className="h-4 w-4 mr-2 text-blue-600" />
           View All Tasks
-          <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </Widget>
