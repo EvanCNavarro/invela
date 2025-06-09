@@ -11,7 +11,7 @@ export function NetworkVisualizationWidget({ onToggle, isVisible }: NetworkVisua
   return (
     <Widget
       title="Network Visualization"
-      icon={<Globe className="h-5 w-5" />}
+      icon={<Globe className="h-5 w-5 text-gray-700" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-2"
