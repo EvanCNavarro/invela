@@ -22,11 +22,19 @@ import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
 import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsight";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
+import { NetworkScatterPlotInsight } from "@/components/insights/NetworkScatterPlotInsight";
+import { NetworkTreemapInsight } from "@/components/insights/NetworkTreemapInsight";
+import { NetworkChordInsight } from "@/components/insights/NetworkChordInsight";
+import { NetworkForceDirectedInsight } from "@/components/insights/NetworkForceDirectedInsight";
 
 // Default visualization types
 const defaultVisualizationTypes = [
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "network_visualization", label: "Network Visualization" },
+  { value: "network_scatter_plot", label: "Network Scatter Plot" },
+  { value: "network_treemap", label: "Network Treemap" },
+  { value: "network_chord", label: "Network Chord Diagram" },
+  { value: "network_force_directed", label: "Force-Directed Network" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "consent_activity", label: "Consent Activity" },
@@ -43,6 +51,10 @@ const invelaVisualizationTypes = [
   { value: "system_overview", label: "System Overview" },
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "network_visualization", label: "Network Visualization" },
+  { value: "network_scatter_plot", label: "Network Scatter Plot" },
+  { value: "network_treemap", label: "Network Treemap" },
+  { value: "network_chord", label: "Network Chord Diagram" },
+  { value: "network_force_directed", label: "Force-Directed Network" },
   { value: "accreditation_status", label: "Accreditation Status" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
@@ -143,7 +155,21 @@ export default function InsightsPage() {
             <NetworkInsightVisualization />
           )}
 
-          {/* Company Type Distribution visualization has been removed */}
+          {selectedVisualization === "network_scatter_plot" && !isFintech && (
+            <NetworkScatterPlotInsight className="bg-transparent shadow-none border-none" />
+          )}
+
+          {selectedVisualization === "network_treemap" && !isFintech && (
+            <NetworkTreemapInsight className="bg-transparent shadow-none border-none" />
+          )}
+
+          {selectedVisualization === "network_chord" && !isFintech && (
+            <NetworkChordInsight className="bg-transparent shadow-none border-none" />
+          )}
+
+          {selectedVisualization === "network_force_directed" && !isFintech && (
+            <NetworkForceDirectedInsight className="bg-transparent shadow-none border-none" />
+          )}
 
           {selectedVisualization === "accreditation_status" && !isFintech && (
             <AccreditationDotMatrix />
