@@ -231,55 +231,31 @@ export class UnifiedTabService {
   }
   
   /**
-   * Unlocks appropriate tabs based on form submission type
-   * @param companyId Company ID
-   * @param formType Type of form being submitted
-   * @param options Additional options
-   * @returns Object with unlocked tabs information
+   * Legacy method for form submission tab unlocking - now deprecated
+   * All FinTech companies have tabs unlocked by default
+   * @deprecated This method is no longer needed as tabs are unlocked by default
    */
   static async unlockTabsForFormSubmission(
     companyId: number,
     formType: string,
     options: { broadcast?: boolean } = {}
   ): Promise<{ availableTabs: string[] }> {
-    tabLogger.info('Unlocking tabs for form submission', { companyId, formType });
+    tabLogger.info('Form submission tab unlocking bypassed - tabs unlocked by default', { companyId, formType });
     
     try {
-      // Determine which tabs to unlock based on form type
-      let tabsToUnlock: string[] = [];
-      
-      if (formType === 'kyb' || formType === 'company_kyb') {
-        // KYB unlocks the File Vault tab
-        tabsToUnlock = ['file-vault'];
-      } else if (formType === 'open_banking' || formType === 'open_banking_survey') {
-        // Open Banking unlocks dashboard and insights
-        tabsToUnlock = ['dashboard', 'insights'];
-      } else if (formType === 'card' || formType === 'company_card') {
-        // Card industry forms unlock dashboard
-        tabsToUnlock = ['dashboard'];
-      }
-      // KY3P doesn't unlock any tabs
-      
-      // Only proceed if there are tabs to unlock
-      if (tabsToUnlock.length > 0) {
-        const updatedTabs = await this.addTabsToCompany(companyId, tabsToUnlock, 'form_submission');
-        return { availableTabs: updatedTabs };
-      }
-      
-      // Return current tabs if no changes needed
+      // Get current tabs without modification
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, companyId))
         .limit(1);
       
-      const currentTabs = company?.available_tabs || [];
+      const currentTabs = company?.available_tabs || ['task-center', 'dashboard', 'file-vault', 'insights', 'network'];
       return { availableTabs: currentTabs };
     } catch (error) {
-      tabLogger.error('Error unlocking tabs for form submission', {
+      tabLogger.error('Error getting company tabs', {
         companyId,
         formType,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
