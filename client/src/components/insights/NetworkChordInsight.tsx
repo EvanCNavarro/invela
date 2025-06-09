@@ -287,7 +287,7 @@ export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
       .enter()
       .append('path')
       .attr('class', 'ribbon')
-      .attr('d', ribbon)
+      .attr('d', (d: any) => ribbon(d) || '')
       .attr('fill', (d, i) => `url(#gradient-${i})`)
       .attr('stroke', 'none')
       .attr('opacity', 0.6)
@@ -316,7 +316,7 @@ export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
       .attr('class', 'arc');
 
     arcs.append('path')
-      .attr('d', arc)
+      .attr('d', (d: any) => arc(d as any))
       .attr('fill', d => chordData.nodes[d.index]?.color || '#64748b')
       .attr('stroke', 'white')
       .attr('stroke-width', 2)
