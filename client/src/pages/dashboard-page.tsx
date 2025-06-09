@@ -313,19 +313,18 @@ export default function DashboardPage(): JSX.Element {
           <div className="space-y-6">
             {/* Quick Actions Widget - Available for all personas when enabled */}
             {visibleWidgets.quickActions && (
-              <div className="widget-entrance-animation widget-entrance-stagger-1">
-                <QuickActionsWidget
-                  onToggle={() => toggleWidget('quickActions')}
-                  isVisible={visibleWidgets.quickActions}
-                />
-              </div>
+              <QuickActionsWidget
+                onToggle={() => toggleWidget('quickActions')}
+                isVisible={visibleWidgets.quickActions}
+                animationDelay={0}
+              />
             )}
             
             {/* Unified Layout for All Company Types - Simplified 3-Widget Structure */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Company Snapshot Widget - 1 column */}
               {visibleWidgets.companySnapshot && (
-                <div className="lg:col-span-1 widget-entrance-animation widget-entrance-stagger-2">
+                <div className="lg:col-span-1">
                   <CompanySnapshot
                     companyData={companyData}
                     onToggle={() => toggleWidget('companySnapshot')}
@@ -337,10 +336,11 @@ export default function DashboardPage(): JSX.Element {
 
               {/* Dynamic Visualizer Widget - 2 columns */}
               {visibleWidgets.visualizer && (
-                <div className="lg:col-span-2 widget-entrance-animation widget-entrance-stagger-3">
+                <div className="lg:col-span-2">
                   <VisualizerWidget
                     onToggle={() => toggleWidget('visualizer')}
                     isVisible={visibleWidgets.visualizer}
+                    animationDelay={400}
                   />
                 </div>
               )}
