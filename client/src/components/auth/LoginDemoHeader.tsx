@@ -261,75 +261,100 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
               >
                 {/* Left Button - Changelog Access */}
                 <button
-            onClick={handleChangelogAccess}
-            className="p-3 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-inset transition-all duration-200 group rounded-md"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="relative w-7 h-7 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center transition-colors">
-                  <Activity className="w-4 h-4 text-green-600" />
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                </div>
-                <div className="text-left">
-                  <h3 className="text-sm font-semibold text-green-900">
-                    View Changelog
-                  </h3>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Maximize2 className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform duration-200" />
-              </div>
-            </div>
-          </button>
+                  onClick={handleChangelogAccess}
+                  className="p-3 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-inset transition-all duration-200 group rounded-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative w-7 h-7 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Activity className="w-4 h-4 text-green-600" />
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-sm font-semibold text-green-900">
+                          View Changelog
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Maximize2 className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </button>
 
-          {/* Middle Button - Storybook Access */}
-          <button
-            onClick={handleStorybookAccess}
-            className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 group rounded-md"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-7 h-7 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
-                  <BookOpen className="w-4 h-4 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-sm font-semibold text-purple-900">
-                    Component Library
-                  </h3>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <SquareArrowOutUpRight className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform duration-200" />
-              </div>
-            </div>
-          </button>
+                {/* Middle Button - Storybook Access */}
+                <button
+                  onClick={handleStorybookAccess}
+                  className="p-3 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset transition-all duration-200 group rounded-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-7 h-7 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
+                        <BookOpen className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-sm font-semibold text-purple-900">
+                          Component Library
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <SquareArrowOutUpRight className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </button>
 
-          {/* Right Button - Demo Access */}
-          <button
-            onClick={handleDemoLogin}
-            className="p-3 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 group rounded-md"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-7 h-7 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
-                  <Zap className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-sm font-semibold text-blue-900">
-                    Login to Demo Account
-                  </h3>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <ArrowRight className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
-              </div>
-            </div>
-          </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                {/* Right Button - Demo Access */}
+                <button
+                  onClick={handleDemoLogin}
+                  className="p-3 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset transition-all duration-200 group rounded-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-7 h-7 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Zap className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-sm font-semibold text-blue-900">
+                          Login to Demo Account
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <ArrowRight className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* 🚀 PHASE 3: Toggle Button - Fixed Position */}
+      <motion.button
+        onClick={handleToggleCollapse}
+        className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 z-10"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{
+          duration: 0.2,
+          ease: "easeInOut"
+        }}
+        aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
+      >
+        <motion.div
+          animate={{ 
+            rotate: isCollapsed ? 180 : 0 
+          }}
+          transition={{
+            duration: ANIMATION_CONFIG.duration,
+            ease: ANIMATION_CONFIG.ease
+          }}
+        >
+          <ChevronUp className="w-4 h-4 text-gray-600" />
         </motion.div>
+      </motion.button>
 
       {/* Changelog Modal */}
       <ChangelogModal 
