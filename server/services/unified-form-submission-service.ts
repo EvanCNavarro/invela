@@ -12,8 +12,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import * as WebSocketService from '../services/websocket';
 import * as FileCreationService from '../services/fileCreation';
-import * as UnifiedTabService from '../services/unified-tab-service';
-import * as TransactionManager from '../services/transaction-manager';
+// import * as UnifiedTabService from '../services/unified-tab-service'; // Removed - tab unlocking disabled
+// import * as TransactionManager from '../services/transaction-manager'; // Using direct db.transaction instead
 import { synchronizeTasks } from '../services/synchronous-task-dependencies';
 import { mapClientFormTypeToSchemaType } from '../utils/form-type-mapper';
 import { accreditationHistory } from '@db/schema';
@@ -30,7 +30,6 @@ export interface FormSubmissionResult {
   success: boolean;
   fileId?: number;
   fileName?: string;
-  unlockedTabs: string[];
   error?: string;
 }
 
@@ -64,7 +63,7 @@ export async function submitForm(
     // Execute the entire submission process in a transaction
     const transactionStartTime = performance.now();
     
-    const result = await TransactionManager.withTransaction(async (trx) => {
+    const result = await db.transaction(async (trx) => {
       logger.info('Starting form submission transaction', { 
         ...baseLogContext,
         transactionId,
@@ -172,8 +171,7 @@ export async function submitForm(
       return {
         success: true,
         fileId: fileResult.fileId,
-        fileName: fileResult.fileName,
-        unlockedTabs
+        fileName: fileResult.fileName
       };
     });
     
@@ -194,7 +192,6 @@ export async function submitForm(
     // Return failure result
     return {
       success: false,
-      unlockedTabs: [],
       error: error instanceof Error ? error.message : String(error)
     };
   }
@@ -1039,12 +1036,10 @@ async function handleOpenBankingPostSubmission(
     logger.info('Open Banking post-submission completed', {
       ...obPostLogContext,
       stepResults,
-      unlockedTabs,
+      tabUnlockingRemoved: true,
       duration: `${(endTime - startTime).toFixed(2)}ms`,
       timestamp: new Date().toISOString()
     });
-    
-    return unlockedTabs;
     
   } catch (error) {
     // Log the error with extensive context
