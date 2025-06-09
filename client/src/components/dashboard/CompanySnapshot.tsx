@@ -233,11 +233,11 @@ export function CompanySnapshot({
           style={{ animationDelay: `${animationDelay + 100}ms` }}
         >
           {/* Top Row: Network and Risk Score */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="widget-grid-compact">
             {/* Network Size */}
-            <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+            <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <Users className={`h-4 w-4 ${personaColors.iconColor}`} />
+                <Users className={`widget-icon-standard ${personaColors.iconColor}`} />
                 <span className="widget-text">Network</span>
               </div>
               <div className="widget-number text-2xl mb-1">{networkCount}</div>
@@ -245,9 +245,9 @@ export function CompanySnapshot({
             </div>
 
             {/* Risk Score */}
-            <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+            <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <AlertTriangle className={`h-4 w-4 ${personaColors.iconColor}`} />
+                <AlertTriangle className={`widget-icon-standard ${personaColors.iconColor}`} />
                 <span className="widget-text">Risk Score</span>
               </div>
               <div className="widget-number text-2xl mb-1">{riskScore}</div>
@@ -258,12 +258,12 @@ export function CompanySnapshot({
           </div>
 
           {/* Third Row: Full-Width Accreditation */}
-          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <accreditationBadge.icon className={`h-4 w-4 ${personaColors.iconColor}`} />
+          <div className="widget-card-metric text-center">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <accreditationBadge.icon className={`widget-icon-standard ${personaColors.iconColor}`} />
               <span className="widget-text">Accreditation</span>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border-0 cursor-default ${
                 accreditationStatus === 'APPROVED' 
                   ? 'bg-green-100 text-green-800' 
@@ -280,22 +280,22 @@ export function CompanySnapshot({
             </div>
           </div>
 
-          {/* Bottom Row: Slim Alert Cards */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Bottom Row: Alert Cards */}
+          <div className="widget-grid-compact">
             {/* Active Alerts */}
-            <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="widget-text text-sm">Active Alerts</span>
+            <div className="widget-card-metric text-center">
+              <div className="flex items-center justify-center space-x-2 mb-3">
+                <AlertTriangle className="widget-icon-standard text-amber-600" />
+                <span className="widget-text">Active Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>
 
             {/* New Alerts */}
-            <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span className="widget-text text-sm">New Alerts</span>
+            <div className="widget-card-metric text-center">
+              <div className="flex items-center justify-center space-x-2 mb-3">
+                <Clock className="widget-icon-standard text-blue-600" />
+                <span className="widget-text">New Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>
