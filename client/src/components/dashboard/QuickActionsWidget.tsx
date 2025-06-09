@@ -196,15 +196,15 @@ export function QuickActionsWidget({
               aria-label={action.description || action.label}
               title={action.description}
             >
-              <div className="flex items-center widget-gap-compact min-w-0 flex-1">
-                <div className="widget-color-primary group-hover:widget-color-primary">
-                  <action.icon className="widget-icon-standard" />
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="text-gray-700">
+                  <action.icon className="h-4 w-4" />
                 </div>
-                <span className="text-widget-label text-left leading-tight truncate">
+                <span className="widget-text text-left leading-tight truncate">
                   {action.label}
                 </span>
               </div>
-              <ArrowRight className="widget-icon-chevron text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 widget-interaction-smooth flex-shrink-0" />
+              <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
             </button>
           ))}
         </div>
@@ -213,8 +213,8 @@ export function QuickActionsWidget({
         {actions.length === 0 && (
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
-              <Loader2 className="widget-icon-large animate-spin text-muted-foreground mx-auto mb-2" />
-              <p className="text-widget-caption">Loading actions...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
+              <p className="widget-text">Loading actions...</p>
             </div>
           </div>
         )}

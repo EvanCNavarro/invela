@@ -235,8 +235,8 @@ export function CompanySnapshot({
               </div>
             )}
             <div className="text-center">
-              <h3 className="text-widget-title font-semibold">{companyName}</h3>
-              <p className="text-widget-caption mt-1">
+              <h3 className="widget-title">{companyName}</h3>
+              <p className="widget-text mt-1">
                 {persona} Account • {new Date().getFullYear()}
               </p>
             </div>
@@ -287,13 +287,13 @@ export function CompanySnapshot({
                     {metric.value}
                   </p>
                   {metric.trend && (
-                    <div className="flex items-center widget-gap-compact">
+                    <div className="flex items-center gap-1">
                       <TrendingUp className={cn(
-                        "widget-icon-small",
+                        "h-3 w-3",
                         metric.trend === 'up' ? 'text-green-500' : 
                         metric.trend === 'down' ? 'text-red-500' : 'text-muted-foreground'
                       )} />
-                      <span className="text-widget-caption">
+                      <span className="widget-text">
                         {metric.trend === 'up' ? 'Trending up' : 
                          metric.trend === 'down' ? 'Trending down' : 'Stable'}
                       </span>
