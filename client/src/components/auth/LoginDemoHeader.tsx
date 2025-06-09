@@ -231,7 +231,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       {/* 🚀 PHASE 3: Floating Toggle Button - Completely Outside */}
       <motion.button
         onClick={handleToggleCollapse}
-        className="absolute -top-12 right-0 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2 z-20"
+        className="absolute -top-8 right-0 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2 z-20"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         transition={{
