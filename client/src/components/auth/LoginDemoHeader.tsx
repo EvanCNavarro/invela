@@ -230,7 +230,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
     )}>
       {/* 🚀 PHASE 2: Animated Container with Motion */}
       <motion.div 
-        className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden"
+        className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden relative"
         initial={false}
         animate={{
           height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
@@ -244,6 +244,34 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
           minHeight: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : 'auto'
         }}
       >
+        {/* 🚀 PHASE 3: Integrated Toggle Button - Top Right */}
+        <motion.button
+          onClick={handleToggleCollapse}
+          className="absolute top-3 right-3 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 z-10 flex items-center space-x-1"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{
+            duration: 0.2,
+            ease: "easeInOut"
+          }}
+          aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
+        >
+          <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+            {isCollapsed ? "SHOW" : "HIDE"}
+          </span>
+          <motion.div
+            animate={{ 
+              rotate: isCollapsed ? 180 : 0 
+            }}
+            transition={{
+              duration: ANIMATION_CONFIG.duration,
+              ease: ANIMATION_CONFIG.ease
+            }}
+          >
+            <ChevronUp className="w-3 h-3 text-gray-500" />
+          </motion.div>
+        </motion.button>
+
         {/* 🚀 PHASE 2: Button Content with Conditional Rendering */}
         <div className="p-1">
           <AnimatePresence mode="wait">
@@ -330,31 +358,6 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
           </AnimatePresence>
         </div>
       </motion.div>
-
-      {/* 🚀 PHASE 3: Toggle Button - Fixed Position */}
-      <motion.button
-        onClick={handleToggleCollapse}
-        className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 z-10"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{
-          duration: 0.2,
-          ease: "easeInOut"
-        }}
-        aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
-      >
-        <motion.div
-          animate={{ 
-            rotate: isCollapsed ? 180 : 0 
-          }}
-          transition={{
-            duration: ANIMATION_CONFIG.duration,
-            ease: ANIMATION_CONFIG.ease
-          }}
-        >
-          <ChevronUp className="w-4 h-4 text-gray-600" />
-        </motion.div>
-      </motion.button>
 
       {/* Changelog Modal */}
       <ChangelogModal 
