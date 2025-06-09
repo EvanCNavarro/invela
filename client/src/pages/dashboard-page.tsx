@@ -408,7 +408,7 @@ export default function DashboardPage(): JSX.Element {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Risk Radar for Invela */}
                   {visibleWidgets.riskRadar && companyData && (
-                    <div className="h-[400px]">
+                    <div className="h-[380px]">
                       <RiskRadarWidget
                         companyId={companyData?.id || 0}
                         onToggle={() => toggleWidget('riskRadar')}
