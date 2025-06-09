@@ -115,7 +115,7 @@ export function RiskRadarD3Simple({
       .range([0, 2 * Math.PI]);
 
     const radiusScale = d3.scaleLinear()
-      .domain([0, 10])
+      .domain([0, 100])
       .range([0, radius]);
 
     // Grid circles with labels
@@ -133,7 +133,7 @@ export function RiskRadarD3Simple({
         .attr('y', -(radius / levels) * i)
         .attr('font-size', '8px')
         .attr('fill', '#64748b')
-        .text((10 / levels) * i);
+        .text((100 / levels) * i);
     }
 
     // Grid lines
@@ -178,7 +178,7 @@ export function RiskRadarD3Simple({
       .attr('stroke-dasharray', totalLength + ' ' + totalLength)
       .attr('stroke-dashoffset', totalLength)
       .transition()
-      .duration(1500)
+      .duration(800)
       .attr('stroke-dashoffset', 0);
 
     // Data points with interactions
@@ -210,7 +210,7 @@ export function RiskRadarD3Simple({
           .style('opacity', 1)
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 10) + 'px')
-          .html(`<strong>${d.category}</strong><br/>Score: ${d.value}/10`);
+          .html(`<strong>${d.category}</strong><br/>Score: ${d.value}/100`);
       })
       .on('mouseleave', function() {
         d3.select(this)
@@ -221,8 +221,8 @@ export function RiskRadarD3Simple({
         tooltip.style('opacity', 0);
       })
       .transition()
-      .delay((d, i) => i * 200)
-      .duration(500)
+      .delay((d, i) => i * 100)
+      .duration(300)
       .attr('r', 4);
 
     // Labels
@@ -247,8 +247,8 @@ export function RiskRadarD3Simple({
       .style('opacity', 0)
       .text(d => d.category)
       .transition()
-      .delay((d, i) => i * 150 + 500)
-      .duration(300)
+      .delay((d, i) => i * 75 + 300)
+      .duration(200)
       .style('opacity', 1);
 
   }, [chartData]);
@@ -321,7 +321,7 @@ export function RiskRadarD3Simple({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="font-medium">Risk Score:</span>
-                <span className="ml-2 text-blue-600">{displayCompany.risk_score}/10</span>
+                <span className="ml-2 text-blue-600">{displayCompany.risk_score}/100</span>
               </div>
               <div>
                 <span className="font-medium">Category:</span>
