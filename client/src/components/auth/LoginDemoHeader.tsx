@@ -228,26 +228,11 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       "w-full relative", // Added relative for tab positioning
       className
     )}>
-      {/* 🚀 PHASE 2: Animated Container with Motion */}
-      <motion.div 
-        className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden relative"
-        initial={false}
-        animate={{
-          height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
-        }}
-        transition={{
-          duration: ANIMATION_CONFIG.duration,
-          ease: ANIMATION_CONFIG.ease
-        }}
-        style={{
-          // Ensure minimum height for collapsed state
-          minHeight: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : 'auto'
-        }}
-      >
-        {/* 🚀 PHASE 3: Integrated Toggle Button - Top Right Corner */}
+      {/* 🚀 PHASE 3: External Toggle Button - Above Container */}
+      <div className="flex justify-end mb-2">
         <motion.button
           onClick={handleToggleCollapse}
-          className="absolute top-3 right-3 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 z-10 rounded-lg p-2"
+          className="bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{
@@ -268,6 +253,24 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
             <ChevronUp className="w-5 h-5 text-gray-600" />
           </motion.div>
         </motion.button>
+      </div>
+
+      {/* 🚀 PHASE 2: Animated Container with Motion */}
+      <motion.div 
+        className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+        initial={false}
+        animate={{
+          height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
+        }}
+        transition={{
+          duration: ANIMATION_CONFIG.duration,
+          ease: ANIMATION_CONFIG.ease
+        }}
+        style={{
+          // Ensure minimum height for collapsed state
+          minHeight: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : 'auto'
+        }}
+      >
 
         {/* 🚀 PHASE 2: Button Content with Conditional Rendering */}
         <div className="p-1">
