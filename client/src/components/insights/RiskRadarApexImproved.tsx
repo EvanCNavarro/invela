@@ -183,9 +183,18 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
           strokeWidth: 1,
           connectorColors: '#e2e8f0',
           fill: {
-            colors: ['transparent']
+            colors: ['#f8fafc', '#f1f5f9']
           }
         }
+      }
+    },
+    grid: {
+      show: true,
+      padding: {
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: 20
       }
     },
     xaxis: {
@@ -200,16 +209,18 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
     },
     yaxis: {
       show: true,
+      min: 0,
       max: 100,
-      tickAmount: 4,
+      tickAmount: 5,
       labels: {
+        show: true,
         style: {
-          fontSize: '9px',
-          colors: '#64748b'
+          fontSize: '10px',
+          colors: '#64748b',
+          fontWeight: 500
         },
         formatter: (val: number) => {
-          const rounded = Math.round(val);
-          return rounded % 25 === 0 ? rounded.toString() : '';
+          return Math.round(val).toString();
         }
       }
     },
