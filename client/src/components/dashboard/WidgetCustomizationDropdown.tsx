@@ -127,7 +127,7 @@ export function WidgetCustomizationDropdown({
   // ========================================
   
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
@@ -166,7 +166,14 @@ export function WidgetCustomizationDropdown({
                   <Check className="h-4 w-4 text-blue-600 font-semibold" strokeWidth={3} />
                 </DropdownMenuPrimitive.ItemIndicator>
               </span>
-              <span className="font-medium text-gray-900">{WIDGET_LABELS[widgetKey]}</span>
+              <span className={cn(
+                "transition-all duration-200",
+                visibleWidgets[widgetKey] 
+                  ? "font-bold text-gray-900" 
+                  : "font-medium text-gray-500"
+              )}>
+                {WIDGET_LABELS[widgetKey]}
+              </span>
             </DropdownMenuPrimitive.CheckboxItem>
           ))}
         </div>
