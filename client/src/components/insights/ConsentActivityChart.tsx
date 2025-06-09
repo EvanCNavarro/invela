@@ -5,6 +5,7 @@ import { NetworkNode } from '@/components/network/types';
 import { Loader2 } from 'lucide-react';
 import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
 import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
+import { ApexChartContainer } from '@/components/ui/responsive-chart-container';
 
 // Define the timeframe options
 export type TimeframeOption = '1day' | '30days' | '1year';
@@ -489,14 +490,14 @@ function ConsentActivityChartInternal({
   }
   
   return (
-    <Card className={`${className}`}>
+    <Card className={`${className} overflow-hidden`}>
       <CardContent className="p-6">
         {!chartComponentLoaded ? (
           <div className="flex items-center justify-center" style={{ height }}>
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div style={{ height, width }}>
+          <ApexChartContainer height={height}>
             {ReactApexChart && (
               <ReactApexChart
                 options={chartOptions}
@@ -506,7 +507,7 @@ function ConsentActivityChartInternal({
                 width="100%"
               />
             )}
-          </div>
+          </ApexChartContainer>
         )}
       </CardContent>
     </Card>

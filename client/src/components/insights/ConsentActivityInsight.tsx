@@ -116,7 +116,28 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
         </div>
         
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          {/* Timeframe toggle group */}
+          {/* Company dropdown - second in order */}
+          {showCompanyDropdown && (
+            <Select
+              value={selectedCompanyId?.toString()}
+              onValueChange={handleCompanyChange}
+            >
+              <SelectTrigger className="w-full sm:w-[200px] text-sm">
+                <SelectValue placeholder="Select Company" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id.toString()}>
+                    <span className="truncate max-w-[150px] block" title={company.name}>
+                      {company.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          {/* Timeframe toggle group - last */}
           <ToggleGroup
             type="single"
             value={timeframe}
@@ -146,27 +167,6 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
               1Y
             </ToggleGroupItem>
           </ToggleGroup>
-          
-          {/* Company dropdown - compact and last */}
-          {showCompanyDropdown && (
-            <Select
-              value={selectedCompanyId?.toString()}
-              onValueChange={handleCompanyChange}
-            >
-              <SelectTrigger className="w-full sm:w-[200px] text-sm">
-                <SelectValue placeholder="Select Company" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCompanies.map((company) => (
-                  <SelectItem key={company.id} value={company.id.toString()}>
-                    <span className="truncate max-w-[150px] block" title={company.name}>
-                      {company.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
         </div>
       </div>
       
