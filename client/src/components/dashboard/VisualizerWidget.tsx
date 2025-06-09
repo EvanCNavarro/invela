@@ -114,33 +114,27 @@ interface VisualizationOption {
  */
 const VISUALIZATION_OPTIONS: VisualizationOption[] = [
   {
-    value: 'consent_activity',
-    label: 'Consent Activity',
-    category: 'Activity',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
     value: 'accreditation_status',
     label: 'Accreditation Status',
     category: 'Compliance',
     personas: ['Invela', 'Bank', 'FinTech']
   },
   {
-    value: 'risk_radar',
-    label: 'Risk Radar',
-    category: 'Risk',
+    value: 'consent_activity',
+    label: 'Consent Activity',
+    category: 'Activity',
     personas: ['Invela', 'Bank', 'FinTech']
   },
   {
-    value: 'system_overview',
-    label: 'System Overview',
-    category: 'System',
-    personas: ['Invela']
+    value: 'network_force_directed',
+    label: 'Force-Directed Network',
+    category: 'Network',
+    personas: ['Invela', 'Bank']
   },
   {
-    value: 'risk_monitoring',
-    label: 'Risk Monitoring',
-    category: 'Risk',
+    value: 'network_chord',
+    label: 'Network Chord Diagram',
+    category: 'Network',
     personas: ['Invela', 'Bank']
   },
   {
@@ -156,18 +150,31 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
     personas: ['Invela', 'Bank']
   },
   {
-    value: 'network_chord',
-    label: 'Network Chord Diagram',
-    category: 'Network',
+    value: 'risk_monitoring',
+    label: 'Risk Monitoring',
+    category: 'Risk',
     personas: ['Invela', 'Bank']
   },
   {
-    value: 'network_force_directed',
-    label: 'Force-Directed Network',
-    category: 'Network',
-    personas: ['Invela', 'Bank']
+    value: 'risk_radar',
+    label: 'Risk Radar',
+    category: 'Risk',
+    personas: ['Invela', 'Bank', 'FinTech']
+  },
+  {
+    value: 'system_overview',
+    label: 'System Overview',
+    category: 'System',
+    personas: ['Invela']
   }
 ];
+
+// Persona-specific default visualizations
+const PERSONA_DEFAULTS = {
+  'Invela': 'system_overview',
+  'Bank': 'consent_activity',
+  'FinTech': 'consent_activity'
+};
 
 // ========================================
 // ERROR BOUNDARY COMPONENT
@@ -377,9 +384,9 @@ export function VisualizerWidget({
             <SelectTrigger className="w-[240px] font-semibold">
               <SelectValue placeholder="Select visualization" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
               {availableVisualizations.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
                   {option.label}
                 </SelectItem>
               ))}
