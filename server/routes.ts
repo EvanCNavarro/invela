@@ -4674,9 +4674,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       });
       
       // Now fetch all the needed companies in one query
-      // Convert the Set to a string for SQL IN operation
       const companyIdsArray = [...relatedCompanyIds, req.user.company_id];
-      const companyIds = companyIdsArray.join(',');
       
       const allCompaniesData = await db.select({
         id: companies.id,
@@ -4687,7 +4685,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         category: companies.category
       })
       .from(companies)
-      .where(sql`${companies.id} IN (${companyIds})`);
+      .where(inArray(companies.id, companyIdsArray));
       
       console.log('[Network] Found companies:', allCompaniesData.length);
       
