@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -52,7 +52,7 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
   }, [currentCompany]);
   
   // Filter companies for the dropdown to only include FinTechs if needed
-  const filteredCompanies = React.useMemo(() => {
+  const filteredCompanies = useMemo(() => {
     if (!companies || companies.length === 0) return [];
     
     // Include network relationships if available
