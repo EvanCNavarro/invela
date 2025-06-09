@@ -64,7 +64,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     return (
       <Widget
         title="Task Summary"
-        icon={<FileText className="h-5 w-5" />}
+        icon={<FileText className="h-5 w-5 text-gray-700" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
       >
@@ -80,7 +80,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
   return (
     <Widget
       title="Task Summary"
-      icon={<FileText className="h-5 w-5" />}
+      icon={<FileText className="h-5 w-5 text-gray-700" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
     >

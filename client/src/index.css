@@ -24,19 +24,19 @@
 .widget-title {
   font-size: var(--widget-title-size);
   font-weight: var(--widget-title-weight);
-  color: theme('colors.foreground');
+  color: black;
 }
 
-.widget-data {
+.widget-number {
   font-size: var(--widget-data-size);
   font-weight: var(--widget-data-weight);
-  color: theme('colors.foreground');
+  color: black;
 }
 
 .widget-text {
   font-size: var(--widget-text-size);
   font-weight: var(--widget-text-weight);
-  color: theme('colors.muted.foreground');
+  color: black;
 }
 
 /* Custom Animation Classes */

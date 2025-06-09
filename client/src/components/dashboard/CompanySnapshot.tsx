@@ -68,7 +68,7 @@ export function CompanySnapshot({
     return (
       <Widget
         title="Company Overview"
-        icon={<Building2 className="h-5 w-5" />}
+        icon={<Building2 className="h-5 w-5 text-gray-700" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
       >
@@ -84,7 +84,7 @@ export function CompanySnapshot({
   return (
     <Widget
       title="Company Overview"
-      icon={<Building2 className="h-5 w-5" />}
+      icon={<Building2 className="h-5 w-5 text-gray-700" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
     >
@@ -92,7 +92,7 @@ export function CompanySnapshot({
         {/* Company Name & Category */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
           <div className="space-y-2">
-            <h3 className="widget-title text-black truncate">
+            <h3 className="widget-title truncate">
               {companyData?.name || 'Company Name'}
             </h3>
             <div className="flex items-center gap-2">
@@ -109,10 +109,10 @@ export function CompanySnapshot({
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
             <div className="flex items-center space-x-2">
               <Shield className="h-4 w-4 text-gray-700" />
-              <span className="widget-text text-black">Risk Score</span>
+              <span className="widget-text">Risk Score</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="widget-number text-black">{riskScore}</span>
+              <span className="widget-number">{riskScore}</span>
               <Badge 
                 variant="secondary" 
                 className={`text-xs ${riskStatus.color} ${riskStatus.bg}`}
@@ -126,16 +126,16 @@ export function CompanySnapshot({
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4 text-gray-700" />
-              <span className="widget-text text-black">Network</span>
+              <span className="widget-text">Network</span>
             </div>
-            <span className="widget-number text-black">{networkCount} companies</span>
+            <span className="widget-number">{networkCount} companies</span>
           </div>
 
           {/* Accreditation Status */}
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
             <div className="flex items-center space-x-2">
               <accreditationBadge.icon className={`h-4 w-4 ${accreditationBadge.color}`} />
-              <span className="widget-text text-black">Status</span>
+              <span className="widget-text">Status</span>
             </div>
             <Badge variant={accreditationBadge.variant} className="text-xs">
               {accreditationStatus}
