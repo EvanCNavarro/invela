@@ -145,7 +145,7 @@ export function CompanySnapshot({
     return (
       <Widget
         title="Company Snapshot"
-        icon={<Building2 className="widget-icon-header" />}
+        icon={<Building2 className="h-5 w-5 text-gray-700" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
@@ -177,7 +177,7 @@ export function CompanySnapshot({
     return (
       <Widget
         title="Company Snapshot"
-        icon={<Building2 className="widget-icon-header" />}
+        icon={<Building2 className="h-5 w-5 text-gray-700" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
@@ -199,8 +199,7 @@ export function CompanySnapshot({
   return (
     <Widget
       title="Company Snapshot"
-      subtitle={`${companyName} • ${personaMetrics.length} key metrics`}
-      icon={<Building2 className="widget-icon-header widget-color-primary" />}
+      icon={<Building2 className="h-5 w-5 text-gray-700" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       size="standard"
@@ -274,17 +273,17 @@ export function CompanySnapshot({
                 title={metric.description}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="widget-icon-standard" />
+                  <IconComponent className="h-4 w-4 text-gray-700" />
                   {metric.clickable && (
-                    <ExternalLink className="widget-icon-chevron opacity-0 group-hover:opacity-100 widget-interaction-smooth" />
+                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                 </div>
                 
                 <div className="space-y-1">
-                  <p className="text-widget-caption font-medium">
+                  <p className="widget-text">
                     {metric.label}
                   </p>
-                  <p className="text-widget-value font-bold">
+                  <p className="widget-data">
                     {metric.value}
                   </p>
                   {metric.trend && (

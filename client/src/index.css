@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+ * WIDGET DESIGN TOKENS - SIMPLIFIED FONT HIERARCHY
+ * ======================================== */
+
+:root {
+  /* Simplified Font Hierarchy - Only 3 Sizes */
+  --widget-title-size: 1.125rem;      /* Widget titles */
+  --widget-title-weight: 600;
+  --widget-data-size: 1.5rem;         /* Data numbers/values */
+  --widget-data-weight: 700;
+  --widget-text-size: 0.875rem;       /* All other text */
+  --widget-text-weight: 400;
+  
+  /* Widget Colors */
+  --widget-icon-color: theme('colors.gray.700');
+  --widget-transition: all 0.2s ease-in-out;
+}
+
+/* Widget Typography Classes */
+.widget-title {
+  font-size: var(--widget-title-size);
+  font-weight: var(--widget-title-weight);
+  color: theme('colors.foreground');
+}
+
+.widget-data {
+  font-size: var(--widget-data-size);
+  font-weight: var(--widget-data-weight);
+  color: theme('colors.foreground');
+}
+
+.widget-text {
+  font-size: var(--widget-text-size);
+  font-weight: var(--widget-text-weight);
+  color: theme('colors.muted.foreground');
+}
+
 /* Custom Animation Classes */
 .fade-out {
   opacity: 0;
