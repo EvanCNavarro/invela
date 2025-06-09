@@ -163,23 +163,14 @@ export function RiskRadarD3Simple({
       })
       .curve(d3.curveLinearClosed);
 
-    // Data area with animation
-    const path = g.append('path')
+    // Data area without animation
+    g.append('path')
       .datum(chartData)
       .attr('fill', '#4965EC')
       .attr('fill-opacity', 0.2)
       .attr('stroke', '#4965EC')
       .attr('stroke-width', 2)
       .attr('d', line);
-
-    // Animate the path
-    const totalLength = path.node()?.getTotalLength() || 0;
-    path
-      .attr('stroke-dasharray', totalLength + ' ' + totalLength)
-      .attr('stroke-dashoffset', totalLength)
-      .transition()
-      .duration(800)
-      .attr('stroke-dashoffset', 0);
 
     // Data points with interactions
     g.selectAll('.dot')
@@ -225,31 +216,44 @@ export function RiskRadarD3Simple({
       .duration(300)
       .attr('r', 4);
 
-    // Labels
-    g.selectAll('.label')
-      .data(chartData)
-      .enter()
-      .append('text')
-      .attr('class', 'label')
-      .attr('x', (d, i) => {
-        const angle = angleScale(i) - Math.PI / 2;
-        return Math.cos(angle) * (radius + 20);
-      })
-      .attr('y', (d, i) => {
-        const angle = angleScale(i) - Math.PI / 2;
-        return Math.sin(angle) * (radius + 20);
-      })
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .attr('font-size', '10px')
-      .attr('font-weight', '600')
-      .attr('fill', '#1e293b')
-      .style('opacity', 0)
-      .text(d => d.category)
-      .transition()
-      .delay((d, i) => i * 75 + 300)
-      .duration(200)
-      .style('opacity', 1);
+    // Labels with line wrapping (no animation)
+    chartData.forEach((d, i) => {
+      const angle = angleScale(i) - Math.PI / 2;
+      const labelRadius = radius + 25;
+      const x = Math.cos(angle) * labelRadius;
+      const y = Math.sin(angle) * labelRadius;
+      
+      // Split category name for line wrapping
+      const words = d.category.split(' ');
+      const labelGroup = g.append('g')
+        .attr('transform', `translate(${x}, ${y})`);
+      
+      if (words.length > 1) {
+        // Multi-line labels
+        words.forEach((word, wordIndex) => {
+          labelGroup.append('text')
+            .attr('x', 0)
+            .attr('y', (wordIndex - (words.length - 1) / 2) * 12)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('font-size', '10px')
+            .attr('font-weight', '600')
+            .attr('fill', '#1e293b')
+            .text(word);
+        });
+      } else {
+        // Single line labels
+        labelGroup.append('text')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', '10px')
+          .attr('font-weight', '600')
+          .attr('fill', '#1e293b')
+          .text(d.category);
+      }
+    });
 
   }, [chartData]);
 
@@ -280,19 +284,13 @@ export function RiskRadarD3Simple({
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base font-semibold">Risk Radar (D3 Interactive)</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {displayCompany?.name || 'No company selected'} - Risk Assessment
-            </p>
-          </div>
+        <div className="flex items-center justify-center">
           {showDropdown && companiesWithClusters.length > 1 && (
             <Select 
               value={selectedCompanyId?.toString() || ''} 
               onValueChange={(value) => setSelectedCompanyId(Number(value))}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-80">
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent>
