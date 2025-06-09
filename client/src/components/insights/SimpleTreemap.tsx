@@ -47,6 +47,18 @@ export default function SimpleTreemap() {
     return <InsightLoadingSkeleton variant="network" animationDelay={0} />;
   }
 
+  // Handle no data case
+  if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-gray-500">
+        <div className="text-center">
+          <p className="text-lg">No network data available</p>
+          <p className="text-sm">Companies will appear here once network data is loaded</p>
+        </div>
+      </div>
+    );
+  }
+
   // Force refetch on component mount
   useEffect(() => {
     refetch();
@@ -71,13 +83,14 @@ export default function SimpleTreemap() {
 
   // Render treemap
   useEffect(() => {
-    if (!networkData || !networkData.nodes || !svgRef.current) return;
+    if (!networkData || !networkData.nodes || networkData.nodes.length === 0 || !svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
     // Transform data for treemap
-    const treeData = networkData.nodes.map((node: any) => {
+    const nodes = networkData?.nodes || [];
+    const treeData = nodes.map((node: any) => {
       console.log('[SimpleTreemap] Raw node data:', {
         name: node.name,
         revenue: node.revenue,
@@ -117,15 +130,15 @@ export default function SimpleTreemap() {
 
     treemap(root);
 
-    console.log('[SimpleTreemap] First few leaves:', root.leaves().slice(0, 3).map(d => ({
+    console.log('[SimpleTreemap] First few leaves:', root.leaves().slice(0, 3).map((d: any) => ({
       name: d.data.name,
       value: d.data.value,
-      x0: d.x0,
-      y0: d.y0,
-      x1: d.x1,
-      y1: d.y1,
-      width: d.x1 - d.x0,
-      height: d.y1 - d.y0
+      x0: (d as any).x0 || 0,
+      y0: (d as any).y0 || 0,
+      x1: (d as any).x1 || 0,
+      y1: (d as any).y1 || 0,
+      width: ((d as any).x1 || 0) - ((d as any).x0 || 0),
+      height: ((d as any).y1 || 0) - ((d as any).y0 || 0)
     })));
 
     // Standardized color function using design system
