@@ -79,6 +79,15 @@ const riskLevelColors = {
   'Critical Risk': '#dc2626'
 };
 
+// Helper function to get risk level from score
+const getRiskLevel = (score: number): string => {
+  if (score === 0) return 'No Risk';
+  if (score <= 33) return 'Low Risk';
+  if (score <= 66) return 'Medium Risk';
+  if (score <= 99) return 'High Risk';
+  return 'Critical Risk';
+};
+
 export function NetworkChordInsight({ className }: NetworkChordInsightProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [viewMode, setViewMode] = useState<'category' | 'risk'>('category');
