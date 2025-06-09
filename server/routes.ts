@@ -990,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         name: sql<string>`COALESCE(${companies.name}, '')`,
         category: sql<string>`COALESCE(${companies.category}, '')`,
         description: sql<string>`COALESCE(${companies.description}, '')`,
-        accreditation_status: companies.accreditation_status,
+        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
         risk_score: companies.risk_score,
         chosen_score: companies.chosen_score,
         risk_clusters: companies.risk_clusters,
