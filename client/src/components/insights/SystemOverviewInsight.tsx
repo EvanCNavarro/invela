@@ -185,34 +185,34 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1">
           {/* Data Providers Card */}
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
-            <div className="p-2.5 pl-4">
-              <div className="text-sm font-semibold text-gray-600 mb-1">Data Providers</div>
-              <div className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</div>
+            <div className="p-4 pl-5">
+              <div className="widget-text mb-3">Data Providers</div>
+              <div className="widget-number text-2xl mb-1">{summaryStats.dataProviders}</div>
             </div>
           </div>
           
           {/* Data Recipients Card */}
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600"></div>
-            <div className="p-2.5 pl-4">
-              <div className="text-sm font-semibold text-gray-600 mb-1">Data Recipients</div>
-              <div className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</div>
+            <div className="p-4 pl-5">
+              <div className="widget-text mb-3">Data Recipients</div>
+              <div className="widget-number text-2xl mb-1">{summaryStats.dataRecipients}</div>
             </div>
           </div>
           
           {/* Accredited Recipients Card */}
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
-            <div className="p-2.5 pl-4">
-              <div className="text-sm font-semibold text-gray-600 mb-1">Accredited Recipients</div>
-              <div className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</div>
+            <div className="p-4 pl-5">
+              <div className="widget-text mb-3">Accredited Recipients</div>
+              <div className="widget-number text-2xl mb-1">{summaryStats.accreditedDataRecipients}</div>
             </div>
           </div>
         </div>
@@ -266,7 +266,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 5, right: 5, left: 5, bottom: 15 }} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >
@@ -275,7 +275,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   dataKey="period" 
                   tick={{ fontSize: 11 }}
                   stroke="#6b7280"
-                  height={40}
+                  height={25}
                   tickFormatter={(value) => {
                     try {
                       const date = new Date(value);
