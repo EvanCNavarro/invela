@@ -102,63 +102,78 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
   
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Company dropdown - only shown for Banks and Invela users */}
-        {showCompanyDropdown && (
-          <Select
-            value={selectedCompanyId?.toString()}
-            onValueChange={handleCompanyChange}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Company dropdown - only shown for Banks and Invela users */}
+          {showCompanyDropdown && (
+            <Select
+              value={selectedCompanyId?.toString()}
+              onValueChange={handleCompanyChange}
+            >
+              <SelectTrigger className="w-full sm:w-[280px]">
+                <SelectValue placeholder="Select Company" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id.toString()}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          {/* Timeframe toggle group */}
+          <ToggleGroup
+            type="single"
+            value={timeframe}
+            onValueChange={handleTimeframeChange}
+            className="justify-start border rounded-md p-1 bg-muted/30"
+            variant="outline"
           >
-            <SelectTrigger className="w-full sm:w-[280px]">
-              <SelectValue placeholder="Select Company" />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredCompanies.map((company) => (
-                <SelectItem key={company.id} value={company.id.toString()}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+            <ToggleGroupItem 
+              value="1day" 
+              aria-label="1 Day view" 
+              className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              1D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="30days" 
+              aria-label="30 Days view" 
+              className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              30D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="1year" 
+              aria-label="1 Year view" 
+              className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              1Y
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         
-        {/* Timeframe toggle group */}
-        <ToggleGroup
-          type="single"
-          value={timeframe}
-          onValueChange={handleTimeframeChange}
-          className="justify-start border rounded-md p-1 bg-muted/30"
-          variant="outline"
-        >
-          <ToggleGroupItem 
-            value="1day" 
-            aria-label="1 Day view" 
-            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-          >
-            1D
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="30days" 
-            aria-label="30 Days view" 
-            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-          >
-            30D
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="1year" 
-            aria-label="1 Year view" 
-            className="text-sm px-3 py-1 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-          >
-            1Y
-          </ToggleGroupItem>
-        </ToggleGroup>
+        {/* Data Legend - moved from chart to header */}
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-gray-600">Active Consents</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="text-gray-600">Newly Granted</span>
+          </div>
+        </div>
       </div>
       
-      {/* Render chart component with selected options */}
+      {/* Render chart component with selected options and hidden legend */}
       <ConsentActivityChart
         companyId={selectedCompanyId}
         timeframe={timeframe}
         showDropdown={false}
+        showLegend={false}
         className="border-none shadow-none"
       />
     </div>
