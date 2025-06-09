@@ -200,8 +200,8 @@ export function Widget({
               ))}
               {onEdit && (
                 <DropdownMenuItem onClick={onEdit}>
-                  <GripVertical className="h-4 w-4 mr-2" />
-                  Edit Widget
+                  <Maximize2 className="h-4 w-4 mr-2" />
+                  Configure Widget
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
