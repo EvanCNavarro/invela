@@ -83,34 +83,9 @@ const AccreditationDotMatrix = React.lazy(() =>
     default: module.AccreditationDotMatrix 
   }))
 );
-const RiskRadarChart = React.lazy(() => 
-  import('@/components/insights/RiskRadarChart').then(module => ({ 
-    default: module.RiskRadarChart 
-  }))
-);
-const RiskRadarRecharts = React.lazy(() => 
-  import('@/components/insights/RiskRadarRecharts').then(module => ({ 
-    default: module.RiskRadarRecharts 
-  }))
-);
-const RiskRadarD3 = React.lazy(() => 
-  import('@/components/insights/RiskRadarD3').then(module => ({ 
-    default: module.RiskRadarD3 
-  }))
-);
-const RiskRadarApexImproved = React.lazy(() => 
-  import('@/components/insights/RiskRadarApexImproved').then(module => ({ 
-    default: module.RiskRadarApexImproved 
-  }))
-);
 const RiskRadarD3Simple = React.lazy(() => 
   import('@/components/insights/RiskRadarD3Simple').then(module => ({ 
     default: module.RiskRadarD3Simple 
-  }))
-);
-const RiskRadarRechartsSimple = React.lazy(() => 
-  import('@/components/insights/RiskRadarRechartsSimple').then(module => ({ 
-    default: module.RiskRadarRechartsSimple 
   }))
 );
 
@@ -184,37 +159,7 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
   },
   {
     value: 'risk_radar',
-    label: 'Risk Radar (Original ApexCharts)',
-    category: 'Risk',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
-    value: 'risk_radar_recharts',
-    label: 'Risk Radar (Recharts Test)',
-    category: 'Risk',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
-    value: 'risk_radar_d3',
-    label: 'Risk Radar (D3 Test)',
-    category: 'Risk',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
-    value: 'risk_radar_apex_improved',
-    label: 'Risk Radar (ApexCharts Improved)',
-    category: 'Risk',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
-    value: 'risk_radar_d3_simple',
-    label: 'Risk Radar (D3 Simple)',
-    category: 'Risk',
-    personas: ['Invela', 'Bank', 'FinTech']
-  },
-  {
-    value: 'risk_radar_recharts_simple',
-    label: 'Risk Radar (Recharts Simple)',
+    label: 'Risk Radar',
     category: 'Risk',
     personas: ['Invela', 'Bank', 'FinTech']
   },
@@ -419,70 +364,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Risk Radar">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarChart 
-                companyId={currentCompany?.id || 0}
-                showDropdown={false}
-                className="shadow-none border-none w-full h-full"
-              />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
-      
-      case 'risk_radar_recharts':
-        return (
-          <InsightErrorBoundary insightName="Risk Radar (Recharts)">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarRecharts 
-                companyId={currentCompany?.id || 0}
-                showDropdown={false}
-                className="shadow-none border-none w-full h-full"
-              />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
-      
-      case 'risk_radar_d3':
-        return (
-          <InsightErrorBoundary insightName="Risk Radar (D3)">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarD3 
-                companyId={currentCompany?.id || 0}
-                showDropdown={false}
-                className="shadow-none border-none w-full h-full"
-              />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
-      
-      case 'risk_radar_apex_improved':
-        return (
-          <InsightErrorBoundary insightName="Risk Radar (ApexCharts Improved)">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarApexImproved 
-                companyId={459}
-                showDropdown={true}
-                className="shadow-none border-none w-full h-full"
-              />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
-      
-      case 'risk_radar_d3_simple':
-        return (
-          <InsightErrorBoundary insightName="Risk Radar (D3 Simple)">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
               <RiskRadarD3Simple 
-                className="shadow-none border-none w-full h-full"
-              />
-            </Suspense>
-          </InsightErrorBoundary>
-        );
-
-      case 'risk_radar_recharts_simple':
-        return (
-          <InsightErrorBoundary insightName="Risk Radar (Recharts Simple)">
-            <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarRechartsSimple 
                 className="shadow-none border-none w-full h-full"
               />
             </Suspense>
