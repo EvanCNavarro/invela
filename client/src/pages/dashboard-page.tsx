@@ -383,26 +383,29 @@ export default function DashboardPage(): JSX.Element {
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
               <div className="space-y-6">
-                {/* Company Snapshot - Full width since Quick Actions moved to top */}
-                {visibleWidgets.companySnapshot && (
-                  <div>
-                    <CompanySnapshot
-                      companyData={companyData}
-                      onToggle={() => toggleWidget('companySnapshot')}
-                      isVisible={visibleWidgets.companySnapshot}
-                    />
-                  </div>
-                )}
+                {/* Top row with Company Overview and Network Visualization */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Company Overview - Single column */}
+                  {visibleWidgets.companySnapshot && (
+                    <div className="lg:col-span-1">
+                      <CompanySnapshot
+                        companyData={companyData}
+                        onToggle={() => toggleWidget('companySnapshot')}
+                        isVisible={visibleWidgets.companySnapshot}
+                      />
+                    </div>
+                  )}
 
-                {/* Network Visualization for Invela */}
-                {visibleWidgets.networkVisualization && (
-                  <div className="h-[600px]">
-                    <NetworkVisualizationWidget
-                      onToggle={() => toggleWidget('networkVisualization')}
-                      isVisible={visibleWidgets.networkVisualization}
-                    />
-                  </div>
-                )}
+                  {/* Network Visualization - Takes 2 columns */}
+                  {visibleWidgets.networkVisualization && (
+                    <div className="lg:col-span-2 h-[600px]">
+                      <NetworkVisualizationWidget
+                        onToggle={() => toggleWidget('networkVisualization')}
+                        isVisible={visibleWidgets.networkVisualization}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {/* Risk Radar and Task Summary for Invela */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
