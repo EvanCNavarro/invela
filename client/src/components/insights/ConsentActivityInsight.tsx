@@ -4,6 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ConsentActivityChart, TimeframeOption } from './ConsentActivityChart';
 import { Loader2 } from 'lucide-react';
+import { INSIGHT_COLORS } from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface ConsentActivityInsightProps {
   className?: string;
@@ -91,13 +93,9 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
     }
   };
   
-  // Loading state
+  // Show standardized loading skeleton
   if (isCurrentCompanyLoading || (showCompanyDropdown && isCompaniesLoading)) {
-    return (
-      <div className="flex items-center justify-center h-[500px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <InsightLoadingSkeleton variant="chart" animationDelay={100} />;
   }
   
   return (
@@ -106,11 +104,11 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
         {/* Data Legend - first in order */}
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: INSIGHT_COLORS.primary.blue }}></div>
             <span className="text-gray-600">Active Consents</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: INSIGHT_COLORS.primary.green }}></div>
             <span className="text-gray-600">Newly Granted</span>
           </div>
         </div>
