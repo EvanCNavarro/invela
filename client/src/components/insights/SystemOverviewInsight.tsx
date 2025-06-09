@@ -188,7 +188,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
     <div className={cn("space-y-3", className)}>
       {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Data Providers Card */}
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
@@ -219,9 +219,9 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       )}
 
       {/* Chart */}
-      <div className="bg-white rounded-lg border p-3">
+      <div className="bg-white rounded-lg border p-4">
         {/* Chart Header with Time Selector on Right */}
-        <div className="flex items-center justify-end mb-1">
+        <div className="flex items-center justify-end mb-3">
           <ToggleGroup
             type="single"
             value={selectedTimeframe}
@@ -262,11 +262,11 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-52">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 5, right: 5, left: 5, bottom: 5 }} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 0 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >
