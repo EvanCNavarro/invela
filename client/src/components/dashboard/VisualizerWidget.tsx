@@ -40,7 +40,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { InsightLoadingSkeleton } from '@/components/insights/InsightLoadingSkeleton';
 
 // Lazy load insight components for optimal performance
 const SystemOverviewInsight = React.lazy(() => 
