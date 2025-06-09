@@ -101,18 +101,22 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
           </div>
         </div>
 
-        {/* Task Metrics - Icon, Text, Number layout */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col items-center text-center p-4 bg-green-50 rounded-lg border border-green-200">
-            <CheckCircle className="h-6 w-6 text-green-600 mb-2" />
-            <div className="text-xs font-medium text-green-600 mb-1">Completed</div>
-            <div className="text-2xl font-bold text-green-700">{taskSummary.completed}</div>
+        {/* Task Metrics - Horizontal layout */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-600">Completed</span>
+            </div>
+            <div className="text-xl font-bold text-green-700">{taskSummary.completed}</div>
           </div>
           
-          <div className="flex flex-col items-center text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
-            <Clock className="h-6 w-6 text-amber-600 mb-2" />
-            <div className="text-xs font-medium text-amber-600 mb-1">Incomplete</div>
-            <div className="text-2xl font-bold text-amber-700">{taskSummary.incomplete}</div>
+          <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-600">Incomplete</span>
+            </div>
+            <div className="text-xl font-bold text-amber-700">{taskSummary.incomplete}</div>
           </div>
         </div>
 
