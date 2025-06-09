@@ -240,7 +240,7 @@ export function CompanySnapshot({
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
                 <Network className={`widget-icon-standard ${personaColors.iconColor}`} />
-                <span className="widget-text font-semibold">Network</span>
+                <span className="widget-text font-medium">Network</span>
               </div>
               <div className="widget-number text-2xl mb-1">{networkCount}</div>
               <div className="widget-text text-gray-500 text-sm">Companies</div>
@@ -250,7 +250,7 @@ export function CompanySnapshot({
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
                 <Gauge className={`widget-icon-standard ${personaColors.iconColor}`} />
-                <span className="widget-text font-semibold">Risk Score</span>
+                <span className="widget-text font-medium">Risk Score</span>
               </div>
               <div className="widget-number text-2xl mb-1">{riskScore}</div>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${riskStatus.color} ${riskStatus.bg} border-0 cursor-default`}>
@@ -263,7 +263,7 @@ export function CompanySnapshot({
           <div className="widget-card-metric text-center">
             <div className="flex items-center justify-center space-x-2 mb-3">
               <Medal className={`widget-icon-standard ${personaColors.iconColor}`} />
-              <span className="widget-text font-semibold">Accreditation</span>
+              <span className="widget-text font-medium">Accreditation</span>
             </div>
             <div className="space-y-2">
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border-0 cursor-default ${
@@ -288,7 +288,7 @@ export function CompanySnapshot({
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
                 <AlertTriangle className="widget-icon-standard text-blue-600" />
-                <span className="widget-text font-semibold">Active Alerts</span>
+                <span className="widget-text font-medium">Active Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>
@@ -297,7 +297,7 @@ export function CompanySnapshot({
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
                 <Clock className="widget-icon-standard text-blue-600" />
-                <span className="widget-text font-semibold">New Alerts</span>
+                <span className="widget-text font-medium">New Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>

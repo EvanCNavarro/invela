@@ -377,7 +377,7 @@ export function VisualizerWidget({
             <SelectTrigger className="w-[240px] font-semibold">
               <SelectValue placeholder="Select visualization" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               {availableVisualizations.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
