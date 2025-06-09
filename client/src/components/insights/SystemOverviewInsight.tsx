@@ -193,7 +193,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
             <div className="p-3 pl-4">
-              <div className="widget-text mb-1">Data Providers</div>
+              <div className="widget-text mb-3">Data Providers</div>
               <div className="widget-number text-xl">{summaryStats.dataProviders}</div>
             </div>
           </div>
@@ -202,7 +202,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-600"></div>
             <div className="p-3 pl-4">
-              <div className="widget-text mb-1">Data Recipients</div>
+              <div className="widget-text mb-3">Data Recipients</div>
               <div className="widget-number text-xl">{summaryStats.dataRecipients}</div>
             </div>
           </div>
@@ -211,7 +211,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
             <div className="p-3 pl-4">
-              <div className="widget-text mb-1">Accredited Recipients</div>
+              <div className="widget-text mb-3">Accredited Recipients</div>
               <div className="widget-number text-xl">{summaryStats.accreditedDataRecipients}</div>
             </div>
           </div>
@@ -219,7 +219,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       )}
 
       {/* Chart */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-white rounded-lg border p-3">
         {/* Chart Header with Time Selector on Right */}
         <div className="flex items-center justify-end mb-3">
           <ToggleGroup
