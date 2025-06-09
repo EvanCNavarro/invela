@@ -45,7 +45,6 @@ import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
 import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
 import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
-import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
 import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
 import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
@@ -362,8 +361,6 @@ export default function DashboardPage(): JSX.Element {
                 visibleWidgets={visibleWidgets}
                 onToggleWidget={toggleWidget}
                 companyCategory={companyData?.category}
-                variant="outline"
-                size="sm"
               />
             </div>
           }
