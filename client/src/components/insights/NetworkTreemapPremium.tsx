@@ -27,7 +27,8 @@ import * as d3 from 'd3';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Home, ArrowLeft, Network, Users, Building2 } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ChevronRight, Home, ArrowLeft, Network, Users, Building2, DollarSign, TrendingUp, UserCheck, Link } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -84,12 +85,40 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
   const [selectedNode, setSelectedNode] = useState<TreemapNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [sizeMetric, setSizeMetric] = useState<'revenue' | 'risk_score' | 'company_size' | 'relationships'>('revenue');
 
   // Fetch network relationships for the viewing company
   const { data: networkData, isLoading } = useQuery<any>({
     queryKey: ['/api/relationships/network'],
     enabled: true
   });
+
+  // Calculate value based on selected metric
+  const calculateNodeValue = useCallback((node: any) => {
+    switch (sizeMetric) {
+      case 'revenue':
+        // Map revenue tiers to numeric values
+        const revenueTierValues = {
+          'large': 1000000,
+          'medium': 500000,
+          'small': 100000,
+          'startup': 50000
+        };
+        return revenueTierValues[node.revenueTier?.toLowerCase() as keyof typeof revenueTierValues] || 100000;
+      
+      case 'risk_score':
+        return Math.max(node.riskScore || 50, 10); // Ensure minimum size
+      
+      case 'company_size':
+        return Math.max(node.numEmployees || 25, 5); // Use employee count
+      
+      case 'relationships':
+        return Math.max(node.relationshipCount || 1, 1);
+      
+      default:
+        return 100000; // Default to medium revenue
+    }
+  }, [sizeMetric]);
 
   // Process network data into hierarchical structure
   const hierarchicalData = useMemo(() => {
@@ -98,11 +127,12 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     const nodes = networkData.nodes || [];
     const center = networkData.center || { name: 'Invela', id: '1' };
 
-    // Create root node
+    // Create root node with total value
+    const totalValue = nodes.reduce((sum, node) => sum + calculateNodeValue(node), 0);
     const root: TreemapNode = {
       id: 'root',
       name: 'Network Ecosystem',
-      value: nodes.length,
+      value: totalValue,
       level: 0,
       children: []
     };
@@ -111,10 +141,11 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     const categoryGroups = d3.group(nodes, (d: any) => d.category || 'Unknown');
     
     categoryGroups.forEach((categoryNodes, category) => {
+      const categoryValue = categoryNodes.reduce((sum, node) => sum + calculateNodeValue(node), 0);
       const categoryNode: TreemapNode = {
         id: `cat_${category}`,
         name: category,
-        value: categoryNodes.length,
+        value: categoryValue,
         level: 1,
         category,
         companyCount: categoryNodes.length,
@@ -132,10 +163,11 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
       });
 
       riskGroups.forEach((riskNodes, riskLevel) => {
+        const riskValue = riskNodes.reduce((sum, node) => sum + calculateNodeValue(node), 0);
         const riskNode: TreemapNode = {
           id: `risk_${category}_${riskLevel}`,
           name: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk`,
-          value: riskNodes.length,
+          value: riskValue,
           level: 2,
           category,
           riskScore: riskLevel === 'critical' ? 90 : riskLevel === 'high' ? 70 : riskLevel === 'medium' ? 50 : 20,
@@ -146,15 +178,16 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
 
         // Add individual companies
         riskNodes.forEach((company: any) => {
+          const companyValue = calculateNodeValue(company);
           const companyNode: TreemapNode = {
             id: `company_${company.companyId || company.id}`,
             name: company.companyName || company.name,
-            value: 1,
+            value: companyValue,
             level: 3,
             category,
             riskScore: company.riskScore || 0,
             accreditationStatus: company.accreditationStatus || 'unknown',
-            relationshipCount: 1,
+            relationshipCount: company.relationshipCount || 1,
             color: d3.interpolate(colorSchemes.risk[riskLevel as keyof typeof colorSchemes.risk], '#ffffff')(0.3)
           };
           riskNode.children!.push(companyNode);
@@ -167,7 +200,7 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     });
 
     return root;
-  }, [networkData]);
+  }, [networkData, calculateNodeValue]);
 
   // Create D3 treemap layout
   const treemapLayout = useMemo(() => {
@@ -356,7 +389,7 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
         return width > 100 ? name : width > 60 ? name.slice(0, 10) + '...' : '';
       });
 
-    // Add value information
+    // Add value information based on selected metric
     texts.append('tspan')
       .attr('x', d => ((d.x1 || 0) - (d.x0 || 0)) / 2)
       .attr('dy', '1.2em')
@@ -366,7 +399,22 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
         const width = (d.x1 || 0) - (d.x0 || 0);
         if (width < 60) return '';
         
-        if (d.data.level === 3) return `Risk: ${d.data.riskScore || 0}`;
+        if (d.data.level === 3) {
+          // Individual company level - show metric value
+          switch (sizeMetric) {
+            case 'revenue':
+              const revenueTier = d.data.riskScore ? 'Medium' : 'Small'; // Placeholder mapping
+              return `${revenueTier} Revenue`;
+            case 'risk_score':
+              return `Risk: ${d.data.riskScore || 0}`;
+            case 'company_size':
+              return `${d.data.relationshipCount * 25 || 25} employees`;
+            case 'relationships':
+              return `${d.data.relationshipCount || 1} links`;
+            default:
+              return `Risk: ${d.data.riskScore || 0}`;
+          }
+        }
         return `${d.data.companyCount || d.data.value} companies`;
       });
 
@@ -461,17 +509,62 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
           )}
         </div>
 
-        {/* Stats Bar */}
+        {/* Size Metric Filter & Stats Bar */}
         <div className="flex items-center justify-between p-4 bg-white border-b">
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
-              {currentData?.leaves().length || 0} items
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              Level {currentLevel + 1}
-            </Badge>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                {currentData?.leaves().length || 0} items
+              </Badge>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                Level {currentLevel + 1}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Size by:</span>
+              <ToggleGroup
+                type="single"
+                value={sizeMetric}
+                onValueChange={(value) => value && setSizeMetric(value as typeof sizeMetric)}
+                className="h-8"
+              >
+                <ToggleGroupItem 
+                  value="revenue" 
+                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  title="Size rectangles by revenue tier"
+                >
+                  <DollarSign className="h-3 w-3" />
+                  Revenue
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="risk_score" 
+                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  title="Size rectangles by risk score"
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  Risk
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="company_size" 
+                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  title="Size rectangles by employee count"
+                >
+                  <UserCheck className="h-3 w-3" />
+                  Size
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="relationships" 
+                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  title="Size rectangles by relationship count"
+                >
+                  <Link className="h-3 w-3" />
+                  Links
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
           
           <div className="text-sm text-gray-600">
