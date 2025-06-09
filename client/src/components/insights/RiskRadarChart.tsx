@@ -527,10 +527,10 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     grid: {
       show: false, // Removed horizontal lines in the background
       padding: {
-        top: className?.includes("border-none") ? 40 : 60,
-        bottom: className?.includes("border-none") ? 40 : 60,
-        left: className?.includes("border-none") ? 40 : 70, 
-        right: className?.includes("border-none") ? 40 : 70
+        top: 20,
+        bottom: 20,
+        left: 20, 
+        right: 20
       }
     },
     yaxis: {
@@ -554,12 +554,12 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
       categories: displayRiskClusters ? formatCategoryNames(Object.keys(displayRiskClusters)) : [],
       labels: {
         style: {
-          fontSize: className?.includes("border-none") ? '11px' : '12px',
+          fontSize: '10px',
           fontWeight: 700, // Bold weight to match reference
           colors: ['#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b', '#1e293b']
         },
         rotate: 0,
-        offsetY: className?.includes("border-none") ? 8 : 3, // More distance from the chart
+        offsetY: 15, // More distance from the chart
         offsetX: 0,
         formatter: function(val: string) {
           // Don't truncate for the widget version - ensures all text is visible
@@ -606,8 +606,8 @@ function RiskRadarChartInternal({ className, companyId, showDropdown = true, wid
     },
     plotOptions: {
       radar: {
-        size: className?.includes("border-none") ? Math.min(width * 0.85, height * 0.8, 220) : 170,
-        offsetY: className?.includes("border-none") ? -10 : -10,
+        size: Math.min(width * 0.6, height * 0.6, 180),
+        offsetY: 0,
         offsetX: 0,
         polygons: {
           strokeColors: '#e2e8f0',
@@ -894,10 +894,10 @@ export function RiskRadarChart({ className, companyId, showDropdown }: { classNa
     <ChartErrorBoundary>
       <ContainerAwareChartWrapper
         minWidth={280}
-        minHeight={250}
-        maxHeight={400}
-        aspectRatio={1.2}
-        fallbackHeight={320}
+        minHeight={280}
+        maxHeight={360}
+        aspectRatio={1.0}
+        fallbackHeight={300}
         className={className}
       >
         {({ width, height }: { width: number; height: number }) => (
