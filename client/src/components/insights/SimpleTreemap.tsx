@@ -29,9 +29,15 @@ export default function SimpleTreemap() {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
 
   // Fetch network data
-  const { data: networkData } = useQuery({
+  const { data: networkData, refetch } = useQuery({
     queryKey: ['/api/relationships/network'],
+    refetchOnMount: true,
   });
+
+  // Force refetch on component mount
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   // Update dimensions on resize
   useEffect(() => {
