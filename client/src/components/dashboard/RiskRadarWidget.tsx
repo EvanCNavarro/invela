@@ -49,7 +49,7 @@ export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWid
       className="h-full flex flex-col"
     >
       <div className="flex-grow overflow-hidden min-h-0">
-        <div className="w-full h-full max-h-[320px] min-h-[250px]">
+        <div className="w-full h-full max-h-[280px] min-h-[220px]">
           <RiskRadarChart 
             companyId={companyId} 
             showDropdown={false}
