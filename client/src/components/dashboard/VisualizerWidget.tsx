@@ -103,6 +103,11 @@ const RiskRadarApexImproved = React.lazy(() =>
     default: module.RiskRadarApexImproved 
   }))
 );
+const RiskRadarD3Simple = React.lazy(() => 
+  import('@/components/insights/RiskRadarD3Simple').then(module => ({ 
+    default: module.RiskRadarD3Simple 
+  }))
+);
 
 // ========================================
 // TYPE DEFINITIONS
@@ -193,6 +198,12 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
   {
     value: 'risk_radar_apex_improved',
     label: 'Risk Radar (ApexCharts Improved)',
+    category: 'Risk',
+    personas: ['Invela', 'Bank', 'FinTech']
+  },
+  {
+    value: 'risk_radar_d3_simple',
+    label: 'Risk Radar (D3 Simple)',
     category: 'Risk',
     personas: ['Invela', 'Bank', 'FinTech']
   },
@@ -439,6 +450,17 @@ export function VisualizerWidget({
               <RiskRadarApexImproved 
                 companyId={459}
                 showDropdown={true}
+                className="shadow-none border-none w-full h-full"
+              />
+            </Suspense>
+          </InsightErrorBoundary>
+        );
+      
+      case 'risk_radar_d3_simple':
+        return (
+          <InsightErrorBoundary insightName="Risk Radar (D3 Simple)">
+            <Suspense fallback={<InsightLoadingSkeleton />}>
+              <RiskRadarD3Simple 
                 className="shadow-none border-none w-full h-full"
               />
             </Suspense>
