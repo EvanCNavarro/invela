@@ -103,7 +103,7 @@ function RiskRadarD3Internal({
 
   // Find the selected company and its risk clusters
   const displayCompany = allCompaniesData.find(c => c.id === selectedCompanyId) || company;
-  const riskClusters = displayCompany?.risk_clusters;
+  const riskClusters = displayCompany?.risk_clusters as RiskClusters | undefined;
 
   // Transform risk clusters data for D3
   const chartData = React.useMemo(() => {
