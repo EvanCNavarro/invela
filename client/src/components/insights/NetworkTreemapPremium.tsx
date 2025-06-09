@@ -529,11 +529,14 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
                 type="single"
                 value={sizeMetric}
                 onValueChange={(value) => value && setSizeMetric(value as typeof sizeMetric)}
-                className="h-8"
+                className="h-8 border border-gray-200 rounded-md bg-gray-50"
               >
                 <ToggleGroupItem 
                   value="revenue" 
-                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  className={cn(
+                    "h-8 px-3 text-xs flex items-center gap-1 data-[state=on]:bg-blue-600 data-[state=on]:text-white",
+                    sizeMetric === 'revenue' && "bg-blue-600 text-white"
+                  )}
                   title="Size rectangles by revenue tier"
                 >
                   <DollarSign className="h-3 w-3" />
@@ -541,7 +544,10 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="risk_score" 
-                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  className={cn(
+                    "h-8 px-3 text-xs flex items-center gap-1 data-[state=on]:bg-blue-600 data-[state=on]:text-white",
+                    sizeMetric === 'risk_score' && "bg-blue-600 text-white"
+                  )}
                   title="Size rectangles by risk score"
                 >
                   <TrendingUp className="h-3 w-3" />
@@ -549,7 +555,10 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="company_size" 
-                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  className={cn(
+                    "h-8 px-3 text-xs flex items-center gap-1 data-[state=on]:bg-blue-600 data-[state=on]:text-white",
+                    sizeMetric === 'company_size' && "bg-blue-600 text-white"
+                  )}
                   title="Size rectangles by employee count"
                 >
                   <UserCheck className="h-3 w-3" />
@@ -557,7 +566,10 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
                 </ToggleGroupItem>
                 <ToggleGroupItem 
                   value="relationships" 
-                  className="h-8 px-3 text-xs flex items-center gap-1"
+                  className={cn(
+                    "h-8 px-3 text-xs flex items-center gap-1 data-[state=on]:bg-blue-600 data-[state=on]:text-white",
+                    sizeMetric === 'relationships' && "bg-blue-600 text-white"
+                  )}
                   title="Size rectangles by relationship count"
                 >
                   <Link className="h-3 w-3" />
@@ -592,12 +604,23 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
             <div className="space-y-1">
               <div className="font-semibold">{hoveredNode.name}</div>
               <div className="text-sm opacity-90">Category: {hoveredNode.category}</div>
-              {hoveredNode.riskScore !== undefined && (
-                <div className="text-sm opacity-90">Risk Score: {hoveredNode.riskScore}</div>
+              
+              {/* Show current size metric value */}
+              <div className="text-sm opacity-90">
+                {sizeMetric === 'revenue' && `Revenue: ${hoveredNode.riskScore ? 'Medium Tier' : 'Small Tier'}`}
+                {sizeMetric === 'risk_score' && `Risk Score: ${hoveredNode.riskScore || 'N/A'}`}
+                {sizeMetric === 'company_size' && `Employees: ${(hoveredNode.relationshipCount || 1) * 25}`}
+                {sizeMetric === 'relationships' && `Connections: ${hoveredNode.relationshipCount || 1}`}
+              </div>
+
+              {hoveredNode.level === 3 && hoveredNode.accreditationStatus && (
+                <div className="text-sm opacity-90">Status: {hoveredNode.accreditationStatus}</div>
               )}
+              
               {hoveredNode.companyCount && (
                 <div className="text-sm opacity-90">Companies: {hoveredNode.companyCount}</div>
               )}
+              
               {hoveredNode.children && hoveredNode.children.length > 0 && (
                 <div className="text-xs text-blue-300 mt-2">Click to drill down</div>
               )}
