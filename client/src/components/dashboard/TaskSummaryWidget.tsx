@@ -126,35 +126,32 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
               Active Tasks
             </h4>
             {recentTasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+              <div key={task.id} className="flex items-center justify-between p-2 bg-white rounded border shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200 transition-all duration-200">
                 <div className="flex-1 min-w-0">
                   <div className="widget-text truncate">
                     {task.title}
                   </div>
-                  <div className="widget-text">
+                  <div className="widget-text text-gray-500 text-sm">
                     {task.task_type?.replace('_', ' ')}
                   </div>
                 </div>
-                <Badge 
-                  variant={task.status === 'in_progress' ? 'default' : 'secondary'}
-                  className="ml-2"
-                >
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  task.status === 'in_progress' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
                   {task.status}
-                </Badge>
+                </span>
               </div>
             ))}
           </div>
         )}
 
         {/* View All Tasks Button */}
-        <Button 
-          variant="outline" 
-          className="w-full text-black border-gray-300 hover:bg-gray-50 hover:border-gray-400" 
-          size="sm"
-        >
-          <ArrowRight className="h-4 w-4 mr-2 text-blue-600" />
+        <button className="w-full p-3 bg-white rounded-lg border shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200 transition-all duration-200 flex items-center justify-center gap-2 widget-text">
+          <ArrowRight className="h-4 w-4 text-blue-600" />
           View All Tasks
-        </Button>
+        </button>
       </div>
     </Widget>
   );
