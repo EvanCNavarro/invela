@@ -1,12 +1,35 @@
+/**
+ * ========================================
+ * Widget Component - Enterprise Dashboard Foundation
+ * ========================================
+ * 
+ * Enhanced base widget component implementing the unified design token system
+ * for consistent enterprise-grade dashboard widgets. Features persona-based
+ * content variants, standardized loading states, and accessibility-compliant
+ * interactions with smooth animations.
+ * 
+ * Key Features:
+ * - Unified design token system integration
+ * - Standardized loading states with shimmer effects
+ * - Enterprise-grade accessibility support
+ * - Smooth entrance animations with reduced motion support
+ * - Professional hover and focus interactions
+ * - Responsive design patterns
+ * 
+ * @module components/dashboard/Widget
+ * @version 3.0.0
+ * @since 2025-06-09
+ */
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   MoreVertical, 
   Eye, 
   EyeOff,
   Maximize2,
-  Minimize2,
-  GripVertical
+  Loader2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface WidgetProps {
   title: string;
