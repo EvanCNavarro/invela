@@ -39,11 +39,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Professional iconography
-import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight, Maximize2 } from "lucide-react";
+import { Zap, BookOpen, ExternalLink, ArrowRight, ArrowUpRight, Activity, SquareArrowOutUpRight, Maximize2, ChevronUp, ChevronDown } from "lucide-react";
 
 // Modal components
 import ChangelogModal from "@/components/modals/ChangelogModal";
 // Removed Storybook modal import
+
+// Animation framework
+import { motion, AnimatePresence } from "framer-motion";
 
 // Development utilities
 import getLogger from '@/utils/logger';
@@ -96,6 +99,10 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
   const [isStorybookLoading, setIsStorybookLoading] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [, setLocation] = useLocation();
+  
+  // 🚀 PHASE 1: Core Collapsible State Management
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // ========================================
   // EVENT HANDLERS
@@ -151,21 +158,109 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
     setLocation('/demo');
   };
 
+  /**
+   * 🚀 PHASE 1: Toggle Collapsible State Handler
+   * Handles the show/hide functionality with animation state management
+   */
+  const handleToggleCollapse = (): void => {
+    try {
+      // Prevent multiple rapid clicks during animation
+      if (isAnimating) {
+        logger.debug('Toggle blocked - animation in progress', {
+          isAnimating,
+          currentState: isCollapsed
+        });
+        return;
+      }
+
+      setIsAnimating(true);
+      const newCollapsedState = !isCollapsed;
+      
+      logger.info('LoginDemoHeader collapse toggle', {
+        previousState: isCollapsed,
+        newState: newCollapsedState,
+        timestamp: new Date().toISOString(),
+        action: 'header_collapse_toggle'
+      });
+
+      setIsCollapsed(newCollapsedState);
+
+      // Reset animation state after transition completes
+      setTimeout(() => {
+        setIsAnimating(false);
+        logger.debug('Animation state reset', {
+          finalState: newCollapsedState
+        });
+      }, 350); // Slightly longer than animation duration for safety
+
+    } catch (error) {
+      logger.error('Error toggling collapse state', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Reset states on error to prevent UI lock
+      setIsAnimating(false);
+    }
+  };
+
+  // ========================================
+  // ANIMATION CONSTANTS
+  // ========================================
+
+  /**
+   * 🚀 PHASE 2: Animation Configuration
+   * Industry-standard animation timing and easing curves
+   */
+  const ANIMATION_CONFIG = {
+    duration: 0.3,
+    ease: [0.4, 0.0, 0.2, 1], // Material Design easing
+    expandedHeight: 'auto',
+    collapsedHeight: '16px'
+  } as const;
+
   // ========================================
   // RENDER
   // ========================================
 
   return (
     <div className={cn(
-      "w-full",
+      "w-full relative", // Added relative for tab positioning
       className
     )}>
-      {/* Main container with professional styling */}
-      <div className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden p-1">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-          
-          {/* Left Button - Changelog Access */}
-          <button
+      {/* 🚀 PHASE 2: Animated Container with Motion */}
+      <motion.div 
+        className="bg-gray-50 rounded-t-lg border-b border-gray-200 overflow-hidden"
+        initial={false}
+        animate={{
+          height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
+        }}
+        transition={{
+          duration: ANIMATION_CONFIG.duration,
+          ease: ANIMATION_CONFIG.ease
+        }}
+        style={{
+          // Ensure minimum height for collapsed state
+          minHeight: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : 'auto'
+        }}
+      >
+        {/* 🚀 PHASE 2: Button Content with Conditional Rendering */}
+        <div className="p-1">
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.div 
+                key="buttons-content"
+                className="grid grid-cols-1 md:grid-cols-3 gap-1"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{
+                  duration: ANIMATION_CONFIG.duration * 0.8,
+                  ease: ANIMATION_CONFIG.ease
+                }}
+              >
+                {/* Left Button - Changelog Access */}
+                <button
             onClick={handleChangelogAccess}
             className="p-3 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-inset transition-all duration-200 group rounded-md"
           >
@@ -230,8 +325,11 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
               </div>
             </div>
           </button>
-        </div>
-      </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
 
       {/* Changelog Modal */}
       <ChangelogModal 
