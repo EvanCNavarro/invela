@@ -191,6 +191,99 @@ export const getQuickActionsForPersona = (persona: Persona, onNavigate: (path: s
 };
 
 // ========================================
+// COMPANY SNAPSHOT CONFIGURATION
+// ========================================
+
+export interface CompanyMetric {
+  id: string;
+  label: string;
+  value: string | number;
+  description?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  trend?: 'up' | 'down' | 'stable';
+  clickable?: boolean;
+  status?: 'success' | 'warning' | 'error' | 'neutral';
+}
+
+export const getCompanySnapshotForPersona = (
+  persona: Persona, 
+  data: {
+    companyData: any;
+    relationships: any[];
+    accreditationData: any;
+    isLoading: boolean;
+  }
+): CompanyMetric[] => {
+  const { companyData, relationships, accreditationData, isLoading } = data;
+  
+  const riskScore = companyData?.riskScore || companyData?.risk_score || 0;
+  const relationshipsCount = relationships?.length || 0;
+  const accreditationStatus = companyData?.accreditation_status || accreditationData?.status || "PENDING";
+  const displayStatus = accreditationStatus === "VALID" ? "APPROVED" : accreditationStatus;
+
+  const baseMetrics = {
+    relationships: {
+      id: 'relationships',
+      label: 'Network Relationships',
+      value: isLoading ? 'Loading...' : relationshipsCount,
+      description: 'Connected companies in your network',
+      icon: Network,
+      clickable: true,
+      status: relationshipsCount > 50 ? 'success' : relationshipsCount > 20 ? 'warning' : 'neutral' as const
+    },
+    riskScore: {
+      id: 'risk-score',
+      label: 'Risk Score',
+      value: isLoading ? 'Loading...' : riskScore,
+      description: 'Current unified risk assessment score',
+      icon: Shield,
+      clickable: true,
+      status: riskScore < 30 ? 'error' : riskScore < 50 ? 'warning' : 'success' as const,
+      trend: 'stable' as const
+    },
+    accreditation: {
+      id: 'accreditation',
+      label: 'Accreditation Status',
+      value: isLoading ? 'Loading...' : displayStatus,
+      description: 'Current accreditation verification status',
+      icon: Award,
+      clickable: true,
+      status: displayStatus === 'APPROVED' ? 'success' : displayStatus === 'PENDING' ? 'warning' : 'error' as const
+    },
+    riskChanges: {
+      id: 'risk-changes',
+      label: 'Recent Changes',
+      value: '+11',
+      description: 'Risk score changes in the last 30 days',
+      icon: TrendingUp,
+      clickable: false,
+      status: 'warning' as const,
+      trend: 'up' as const
+    }
+  };
+
+  const personaConfigs: Record<Persona, CompanyMetric[]> = {
+    'Invela': [
+      baseMetrics.relationships,
+      baseMetrics.riskScore,
+      baseMetrics.accreditation,
+      baseMetrics.riskChanges
+    ],
+    'Bank': [
+      baseMetrics.riskScore,
+      baseMetrics.accreditation,
+      baseMetrics.relationships
+    ],
+    'FinTech': [
+      baseMetrics.riskScore,
+      baseMetrics.accreditation
+    ]
+  };
+
+  return personaConfigs[persona] || [];
+};
+
+// ========================================
 // WIDGET PERMISSION MATRIX
 // ========================================
 
