@@ -1,0 +1,36 @@
+[2025-06-09T23:02:11.516Z] [WebSocket] WebSocket connection established 
+[2025-06-09T23:02:11.516Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-09T23:02:11.517Z] [WebSocket] Received message of type: connection_established 
+[2025-06-09T23:02:11.517Z] [WebSocket] WebSocket server connection confirmed with ID: client-1749510131519-b1fhe71 
+[2025-06-09T23:02:11.982Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1749510130083_hzcazxs0t", hasUserData: true, hasCompanyData: true}
+[2025-06-09T23:02:12.105Z] [WebSocket] Received message of type: authenticated 
+[2025-06-09T23:02:12.105Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:02:39.241Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:02:41.256Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:02:41.256Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:03:09.267Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:03:11.241Z", echo: {…}}
+[WebSocket] Received message: 
+Object {type: "pong", timestamp: "2025-06-09T23:03:11.242Z", echo: {…}}
+[VisualizerWidget] Changing visualization: network_treemap
+[VisualizerWidget] State update: 
+Object {selectedVisualization: "network_treemap", companyCategory: "Invela", availableCount: 6, currentTime: "2025-06-09T23:03:21.903Z"}
+availableCount: 6
+companyCategory: "Invela"
+currentTime: "2025-06-09T23:03:21.903Z"
+selectedVisualization: "network_treemap"
+[[Prototype]]: Object
+[SimpleTreemap] Hovered node data: 
+Object {name: "QuantumPay Solutions", value: 100, category: "FinTech", revenue_tier: "large", revenue_value: undefined, …}
+[SimpleTreemap] Hovered node data: 
+Object {name: "TradeFi Connect", value: 100, category: "FinTech", revenue_tier: "large", revenue_value: undefined, …}
+[SimpleTreemap] Hovered node data: 
+Object {name: "TradeFi Connect", value: 100, category: "FinTech", revenue_tier: "large", revenue_value: undefined, …}
+[SimpleTreemap] Hovered node data: 
+Object {name: "QuantumPay Solutions", value: 100, category: "FinTech", revenue_tier: "large", revenue_value: undefined, …}

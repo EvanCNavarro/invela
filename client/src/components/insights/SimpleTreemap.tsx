@@ -63,9 +63,9 @@ export default function SimpleTreemap() {
       value: getRevenueValue(node.revenueTier || node.revenue_tier),
       category: node.category,
       revenue_tier: node.revenueTier || node.revenue_tier,
-      revenue_value: node.revenue || node.revenueValue,
+      revenue_value: node.revenue || node.revenueValue || 0,
       risk_score: node.riskScore || node.risk_score,
-      num_employees: node.numEmployees || node.num_employees,
+      num_employees: node.numEmployees || node.num_employees || 0,
       accreditation_status: node.accreditationStatus || node.accreditation_status,
     }));
 
@@ -113,7 +113,6 @@ export default function SimpleTreemap() {
 
     // Mouse event handlers with smart tooltip positioning
     const handleMouseOver = (event: any, d: any) => {
-      console.log('[SimpleTreemap] Hovered node data:', d.data);
       setHoveredNode(d.data);
       
       // Fade out all other rectangles

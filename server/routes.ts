@@ -2336,6 +2336,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
           accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
           riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`,
           revenueTier: companies.revenue_tier,
+          revenue: sql<number>`COALESCE(${companies.revenue}, 0)`,
+          numEmployees: sql<number>`COALESCE(${companies.num_employees}, 0)`,
           isDemo: companies.is_demo
         }
       })
@@ -2386,6 +2388,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
           riskBucket: getRiskBucket(rel.relatedCompany.riskScore || 0),
           accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
           revenueTier,
+          revenue: rel.relatedCompany.revenue || 0,
+          numEmployees: rel.relatedCompany.numEmployees || 0,
           category: rel.relatedCompany.category || 'Other',
           // activeConsents field removed as it doesn't exist in the database schema
           isDemo: rel.relatedCompany.isDemo
