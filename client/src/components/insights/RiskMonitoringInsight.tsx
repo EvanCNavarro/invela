@@ -55,10 +55,10 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
 
   // Get unified risk data using the new unified hook
   // Remove conditional enabling to fix React Query timing issue
-  const { data: unifiedRiskData, isLoading: isLoadingRiskData } = useUnifiedRiskData({
+  const { data: unifiedRiskData, isLoading: isLoadingRiskData, error: riskDataError } = useUnifiedRiskData({
     includeNetwork: true,
     includeDemo: true,
-    enabled: true // Always enabled - handle permissions in data processing
+    enabled: canViewInsight // Only enabled if user has permission
   });
 
   // Extract data from unified response
@@ -150,6 +150,18 @@ const RiskMonitoringInsight: React.FC<RiskMonitoringInsightProps> = ({
   // Don't render if company can't view this insight
   if (!canViewInsight) {
     return null;
+  }
+
+  // Error state
+  if (riskDataError) {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="text-center text-gray-500 py-8">
+          <p>Unable to load risk monitoring data</p>
+          <p className="text-sm">Please check your connection and try again</p>
+        </div>
+      </div>
+    );
   }
 
   // Loading state
