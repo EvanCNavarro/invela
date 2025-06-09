@@ -120,7 +120,7 @@ export function QuickActionsWidget({
     return (
       <Widget
         title="Quick Actions"
-        icon={<Zap className="widget-icon-header" />}
+        icon={<Zap className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
@@ -150,7 +150,7 @@ export function QuickActionsWidget({
     return (
       <Widget
         title="Quick Actions"
-        icon={<Zap className="widget-icon-header" />}
+        icon={<Zap className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
@@ -172,7 +172,7 @@ export function QuickActionsWidget({
     <>
       <Widget
         title="Quick Actions"
-        icon={<Zap className="h-5 w-5 text-blue-600" />}
+        icon={<Zap className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
         size="standard"
