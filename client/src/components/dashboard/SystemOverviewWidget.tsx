@@ -39,7 +39,7 @@ export function SystemOverviewWidget({ onToggle, isVisible }: SystemOverviewWidg
   return (
     <Widget
       title="System Overview"
-      icon={<BarChart3 className="h-5 w-5 text-gray-700" />}
+      icon={<BarChart3 className="h-5 w-5 text-blue-600" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-2"

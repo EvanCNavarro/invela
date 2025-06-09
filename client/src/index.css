@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 /* ========================================
- * WIDGET DESIGN TOKENS - SIMPLIFIED FONT HIERARCHY
+ * ENTERPRISE DASHBOARD DESIGN SYSTEM
  * ======================================== */
 
 :root {
-  /* Simplified Font Hierarchy - Only 3 Sizes */
+  /* Typography Scale */
   --widget-title-size: 1.125rem;      /* Widget titles */
   --widget-title-weight: 600;
   --widget-data-size: 1.5rem;         /* Data numbers/values */
@@ -15,9 +15,26 @@
   --widget-text-size: 0.875rem;       /* All other text */
   --widget-text-weight: 400;
   
-  /* Widget Colors */
-  --widget-icon-color: theme('colors.gray.700');
-  --widget-transition: all 0.2s ease-in-out;
+  /* Enhanced Spacing System */
+  --widget-padding-x: 1.5rem;         /* 24px horizontal padding */
+  --widget-padding-y: 1.25rem;        /* 20px vertical padding */
+  --widget-header-padding: 1rem;      /* 16px header padding */
+  --widget-content-gap: 1rem;         /* 16px content gap */
+  --widget-border-radius: 0.75rem;    /* 12px border radius */
+  
+  /* Color System */
+  --widget-icon-primary: theme('colors.blue.600');
+  --widget-icon-invela: theme('colors.blue.600');
+  --widget-icon-bank: theme('colors.purple.600');
+  --widget-icon-fintech: theme('colors.green.600');
+  --widget-border: theme('colors.gray.200');
+  --widget-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --widget-shadow-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  
+  /* Animation & Transitions */
+  --widget-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --widget-hover-scale: 1.02;
+  --widget-entrance-delay: 0.1s;
 }
 
 /* Widget Typography Classes */
@@ -25,21 +42,129 @@
   font-size: var(--widget-title-size);
   font-weight: var(--widget-title-weight);
   color: black;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .widget-number {
   font-size: var(--widget-data-size);
   font-weight: var(--widget-data-weight);
   color: black;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-feature-settings: 'tnum' 1; /* Tabular numbers for consistent width */
 }
 
 .widget-text {
   font-size: var(--widget-text-size);
   font-weight: var(--widget-text-weight);
   color: black;
+  line-height: 1.5;
 }
 
-/* Custom Animation Classes */
+/* Enhanced Widget Component Classes */
+.widget-container {
+  background: white;
+  border: 1px solid var(--widget-border);
+  border-radius: var(--widget-border-radius);
+  box-shadow: var(--widget-shadow);
+  transition: var(--widget-transition);
+  overflow: hidden;
+}
+
+.widget-container:hover {
+  box-shadow: var(--widget-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.widget-header {
+  padding: var(--widget-header-padding);
+  border-bottom: 1px solid var(--widget-border);
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+}
+
+.widget-content {
+  padding: var(--widget-padding-y) var(--widget-padding-x);
+  gap: var(--widget-content-gap);
+}
+
+.widget-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.widget-metric-card {
+  padding: 1rem;
+  background: white;
+  border: 1px solid var(--widget-border);
+  border-radius: calc(var(--widget-border-radius) - 0.25rem);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: var(--widget-transition);
+}
+
+.widget-metric-card:hover {
+  background: #fafafa;
+  border-color: var(--widget-icon-primary);
+}
+
+.widget-icon-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Premium Animation System */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.widget-entrance-animation {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.widget-entrance-stagger-1 { animation-delay: 0.1s; }
+.widget-entrance-stagger-2 { animation-delay: 0.2s; }
+.widget-entrance-stagger-3 { animation-delay: 0.3s; }
+.widget-entrance-stagger-4 { animation-delay: 0.4s; }
+.widget-entrance-stagger-5 { animation-delay: 0.5s; }
+.widget-entrance-stagger-6 { animation-delay: 0.6s; }
+.widget-entrance-stagger-7 { animation-delay: 0.7s; }
+
+.metric-card-entrance {
+  animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .fade-out {
   opacity: 0;
   transform: scale(0.98);

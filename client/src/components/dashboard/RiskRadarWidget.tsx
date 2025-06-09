@@ -41,7 +41,7 @@ export function RiskRadarWidget({ companyId, onToggle, isVisible }: RiskRadarWid
   return (
     <Widget
       title="Risk Radar"
-      icon={<Shield className="h-5 w-5 text-gray-700" />}
+      icon={<Shield className="h-5 w-5 text-blue-600" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
       headerClassName="pb-1" /* Reduce padding below header */
