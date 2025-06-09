@@ -3645,7 +3645,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
               status: 'active',
               accreditation_status: 'PENDING',
               onboarding_company_completed: false,
-              available_tabs: ['task-center'],
+              available_tabs: ['dashboard', 'task-center', 'file-vault', 'insights', 'network'],
               is_demo: req.body.is_demo === true, // Set demo status from request
               metadata: {
                 invited_by: req.user!.id,
