@@ -385,7 +385,7 @@ export default function DashboardPage(): JSX.Element {
             {/* Invela Company Layout - Optimized for Invela Trust Network */}
             {companyData?.category === 'Invela' && (
               <div className="space-y-6">
-                {/* Top row with Company Overview and Network Visualization */}
+                {/* Top row with Company Overview and System Overview */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Company Overview - Single column */}
                   {visibleWidgets.companySnapshot && (
@@ -399,22 +399,32 @@ export default function DashboardPage(): JSX.Element {
                     </div>
                   )}
 
-                  {/* Network Visualization - Takes 2 columns */}
-                  {visibleWidgets.networkVisualization && (
-                    <div className="lg:col-span-2 h-[600px] widget-entrance-animation widget-entrance-stagger-3">
-                      <NetworkVisualizationWidget
-                        onToggle={() => toggleWidget('networkVisualization')}
-                        isVisible={visibleWidgets.networkVisualization}
+                  {/* System Overview - Takes 2 columns */}
+                  {visibleWidgets.systemOverview && (
+                    <div className="lg:col-span-2 widget-entrance-animation widget-entrance-stagger-3">
+                      <SystemOverviewWidget
+                        onToggle={() => toggleWidget('systemOverview')}
+                        isVisible={visibleWidgets.systemOverview}
                       />
                     </div>
                   )}
                 </div>
 
+                {/* Network Visualization - Full width */}
+                {visibleWidgets.networkVisualization && (
+                  <div className="h-[600px] widget-entrance-animation widget-entrance-stagger-4">
+                    <NetworkVisualizationWidget
+                      onToggle={() => toggleWidget('networkVisualization')}
+                      isVisible={visibleWidgets.networkVisualization}
+                    />
+                  </div>
+                )}
+
                 {/* Risk Radar and Task Summary for Invela */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   {/* Risk Radar for Invela */}
                   {visibleWidgets.riskRadar && companyData && (
-                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-4">
+                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-5">
                       <RiskRadarWidget
                         companyId={companyData?.id || 0}
                         onToggle={() => toggleWidget('riskRadar')}
@@ -425,7 +435,7 @@ export default function DashboardPage(): JSX.Element {
 
                   {/* Task Summary for Invela */}
                   {visibleWidgets.taskSummary && (
-                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-5">
+                    <div className="h-[400px] widget-entrance-animation widget-entrance-stagger-6">
                       <TaskSummaryWidget
                         onToggle={() => toggleWidget('taskSummary')}
                         isVisible={visibleWidgets.taskSummary}
