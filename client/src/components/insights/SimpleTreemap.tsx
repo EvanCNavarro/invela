@@ -65,10 +65,11 @@ export default function SimpleTreemap() {
       .sum((d: any) => d.value || 1)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    // Create treemap layout
+    // Create treemap layout - ensure all data fits in one view
     const treemap = d3.treemap()
       .size([dimensions.width, dimensions.height])
-      .padding(2);
+      .padding(1)
+      .paddingInner(1);
 
     treemap(root);
 
