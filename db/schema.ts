@@ -86,21 +86,12 @@ export const tasks = pgTable("tasks", {
   updated_at: timestamp("updated_at").defaultNow(), 
 });
 
-export const companyLogos = pgTable("company_logos", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  company_id: integer("company_id").references(() => companies.id).notNull(),
-  file_name: text("file_name").notNull(),
-  file_path: text("file_path").notNull(),
-  file_type: text("file_type").notNull(),
-  uploaded_at: timestamp("uploaded_at").defaultNow(),
-});
-
+// Forward declaration for companies table
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
   category: text("category").notNull(), 
-  logo_id: uuid("logo_id").references(() => companyLogos.id),
   stock_ticker: text("stock_ticker"),
   website_url: text("website_url"),
   legal_structure: text("legal_structure"),
@@ -177,6 +168,16 @@ export const companies = pgTable("companies", {
   accreditation_count: integer("accreditation_count").default(0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Company logos table - defined after companies to resolve circular reference
+export const companyLogos = pgTable("company_logos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  file_name: text("file_name").notNull(),
+  file_path: text("file_path").notNull(),
+  file_type: text("file_type").notNull(),
+  uploaded_at: timestamp("uploaded_at").defaultNow(),
 });
 
 export const users = pgTable("users", {
@@ -320,7 +321,7 @@ export const kybResponses = pgTable("kyb_responses", {
   task_id: integer("task_id").references(() => tasks.id).notNull(),
   field_id: integer("field_id").references(() => kybFields.id).notNull(),
   response_value: text("response_value"),
-  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('empty'),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('EMPTY'),
   version: integer("version").notNull().default(1),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
