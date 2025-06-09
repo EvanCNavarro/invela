@@ -1685,6 +1685,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
         num_employees: companies.num_employees,
         incorporation_year: companies.incorporation_year,
         available_tabs: companies.available_tabs,
+        logo_id: companies.logo_id,
         created_at: companies.created_at,
         updated_at: companies.updated_at,
         // Business information fields

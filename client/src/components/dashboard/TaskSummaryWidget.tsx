@@ -64,7 +64,6 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     return (
       <Widget
         title="Task Summary"
-        subtitle="Loading task overview..."
         icon={<FileText className="h-5 w-5" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
@@ -81,7 +80,6 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
   return (
     <Widget
       title="Task Summary"
-      subtitle={`${taskSummary.total} total tasks`}
       icon={<FileText className="h-5 w-5" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
@@ -90,8 +88,8 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
         {/* Progress Overview */}
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Completion Rate</span>
-            <span className="text-2xl font-bold text-indigo-600">{taskSummary.completionRate}%</span>
+            <span className="widget-text">Completion Rate</span>
+            <span className="widget-number">{taskSummary.completionRate}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
@@ -105,35 +103,35 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-600">Completed</span>
+              <CheckCircle className="h-4 w-4 text-gray-700" />
+              <span className="widget-text">Completed</span>
             </div>
-            <div className="text-xl font-bold text-green-700">{taskSummary.completed}</div>
+            <div className="widget-number text-green-700">{taskSummary.completed}</div>
           </div>
           
           <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
             <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-600">Incomplete</span>
+              <Clock className="h-4 w-4 text-gray-700" />
+              <span className="widget-text">Incomplete</span>
             </div>
-            <div className="text-xl font-bold text-amber-700">{taskSummary.incomplete}</div>
+            <div className="widget-number text-amber-700">{taskSummary.incomplete}</div>
           </div>
         </div>
 
         {/* Recent Active Tasks */}
         {recentTasks.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700 flex items-center">
-              <Activity className="h-4 w-4 mr-2" />
+            <h4 className="widget-text flex items-center">
+              <Activity className="h-4 w-4 mr-2 text-gray-700" />
               Active Tasks
             </h4>
             {recentTasks.map((task) => (
               <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <div className="widget-text truncate">
                     {task.title}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="widget-text text-gray-500">
                     {task.task_type?.replace('_', ' ')}
                   </div>
                 </div>
