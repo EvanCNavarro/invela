@@ -218,7 +218,7 @@ function ConsentActivityChartInternal({
   showDropdown = true,
   showLegend = true,
   width = 800,
-  height = 500
+  height = 380
 }: ConsentActivityChartProps) {
   // Reference for the ApexCharts component
   const chartRef = useRef<any>(null);
@@ -356,10 +356,10 @@ function ConsentActivityChartInternal({
         }
       },
       padding: {
-        top: 30,
-        right: 50,
-        bottom: 40,
-        left: 50
+        top: 10,
+        right: 20,
+        bottom: 15,
+        left: 20
       }
     },
     xaxis: {
@@ -377,7 +377,7 @@ function ConsentActivityChartInternal({
           day: 'dd MMM',
           hour: timeframe === '1day' ? 'HH:mm' : undefined,
         },
-        offsetY: 8,
+        offsetY: 4,
         offsetX: 0,
         rotate: 0,
         trim: false,

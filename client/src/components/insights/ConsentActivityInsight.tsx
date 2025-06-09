@@ -101,28 +101,21 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
   }
   
   return (
-    <div className={`space-y-4 ${className}`}>
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Company dropdown - only shown for Banks and Invela users */}
-          {showCompanyDropdown && (
-            <Select
-              value={selectedCompanyId?.toString()}
-              onValueChange={handleCompanyChange}
-            >
-              <SelectTrigger className="w-full sm:w-[280px]">
-                <SelectValue placeholder="Select Company" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCompanies.map((company) => (
-                  <SelectItem key={company.id} value={company.id.toString()}>
-                    {company.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
+    <div className={`space-y-2 ${className}`}>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Data Legend - first in order */}
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-gray-600">Active Consents</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="text-gray-600">Newly Granted</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           {/* Timeframe toggle group */}
           <ToggleGroup
             type="single"
@@ -153,18 +146,27 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
               1Y
             </ToggleGroupItem>
           </ToggleGroup>
-        </div>
-        
-        {/* Data Legend - moved from chart to header */}
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-gray-600">Active Consents</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-gray-600">Newly Granted</span>
-          </div>
+          
+          {/* Company dropdown - compact and last */}
+          {showCompanyDropdown && (
+            <Select
+              value={selectedCompanyId?.toString()}
+              onValueChange={handleCompanyChange}
+            >
+              <SelectTrigger className="w-full sm:w-[200px] text-sm">
+                <SelectValue placeholder="Select Company" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCompanies.map((company) => (
+                  <SelectItem key={company.id} value={company.id.toString()}>
+                    <span className="truncate max-w-[150px] block" title={company.name}>
+                      {company.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
       
