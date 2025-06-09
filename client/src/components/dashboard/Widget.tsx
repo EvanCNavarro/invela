@@ -122,16 +122,21 @@ export function Widget({
   onEdit,
   className,
   headerClassName,
-  size = 'single',
+  size = 'standard',
+  loadingState = 'none',
+  entranceAnimation = 'fadeIn',
+  animationDelay = 0,
   actions = [],
-  headerChildren
+  headerChildren,
+  isLoading = false,
+  error = null,
+  ariaLabel
 }: WidgetProps) {
   return (
     <Card className={cn(
       "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
-      size === 'single' ? 'col-span-1' : 
-      size === 'double' ? 'col-span-2' : 
-      'col-span-3',
+      // Widget sizing handled by parent grid
+      '',
       !isVisible && 'opacity-50',
       className?.includes("h-full") ? "flex flex-col h-full" : "",
       className

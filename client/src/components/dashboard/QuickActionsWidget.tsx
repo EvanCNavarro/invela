@@ -29,10 +29,23 @@
 
 import { useState, useEffect } from "react";
 import { Widget } from "@/components/dashboard/Widget";
+import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Zap, ArrowRight, Loader2 } from "lucide-react";
+import { 
+  Zap, 
+  ArrowRight, 
+  Loader2, 
+  Building2, 
+  BarChart2, 
+  FolderOpen, 
+  UserPlus, 
+  ListTodo, 
+  AlertTriangle, 
+  Network, 
+  Plus 
+} from "lucide-react";
 import { getQuickActionsForPersona, type Persona } from "@/lib/widgetPersonaConfig";
 import { cn } from "@/lib/utils";
 

@@ -315,7 +315,7 @@
 
 /* Widget Button Variants */
 .widget-button-action {
-  @apply h-14 px-4 flex items-center justify-between group;
+  @apply h-14 px-4 flex items-center justify-between;
   @apply border border-input bg-background;
   @apply hover:bg-accent hover:border-accent-foreground/20;
   @apply hover:shadow-sm hover:-translate-y-0.5;
