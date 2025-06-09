@@ -518,8 +518,7 @@
 }
 
 .widget-hover-lift {
-  @apply hover:shadow-md hover:-translate-y-0.5;
-  @apply transition-all duration-200 ease-in-out;
+  /* Hover effects removed for non-interactive elements */
 }
 
 .widget-interaction-smooth {
