@@ -39,7 +39,7 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
   
   // Determine if current company is a FinTech (which affects dropdown visibility)
   useEffect(() => {
-    if (currentCompany) {
+    if (currentCompany?.id) {
       console.log('[ConsentActivityInsight] Current company category:', currentCompany.category);
       const isFintech = currentCompany.category === 'FinTech';
       
@@ -49,21 +49,22 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
       // Default to current company's ID
       setSelectedCompanyId(currentCompany.id);
     }
-  }, [currentCompany]);
+  }, [currentCompany?.id, currentCompany?.category]);
   
   // Filter companies for the dropdown to only include FinTechs if needed
   const filteredCompanies = useMemo(() => {
     if (!companies || companies.length === 0) return [];
     
     // Include network relationships if available
-    if (networkData && networkData.nodes && networkData.nodes.length > 0) {
+    if (networkData?.nodes && Array.isArray(networkData.nodes) && networkData.nodes.length > 0) {
       const networkNodes = networkData.nodes
-        .filter((node: any) => node.category === 'FinTech')
+        .filter((node: any) => node?.category === 'FinTech')
         .map((node: any) => ({
           id: node.id,
-          name: node.name,
+          name: node.name || 'Unknown Company',
           category: node.category
-        }));
+        }))
+        .filter((node: any) => node.id && node.name);
       
       // Combine with companies and remove duplicates
       const allCompanies = [...companies, ...networkNodes];
@@ -72,12 +73,12 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
       );
       
       // Sort alphabetically by name
-      return uniqueCompanies.sort((a, b) => a.name.localeCompare(b.name));
+      return uniqueCompanies.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
     
     // If no network data, just show all companies
-    return companies.sort((a, b) => a.name.localeCompare(b.name));
-  }, [companies, networkData]);
+    return companies.filter(c => c?.name).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [companies, networkData?.nodes]);
   
   // Handle company selection change
   const handleCompanyChange = (companyId: string) => {
