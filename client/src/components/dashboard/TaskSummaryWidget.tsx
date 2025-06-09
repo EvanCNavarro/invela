@@ -86,14 +86,14 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
     >
       <div className="space-y-4">
         {/* Progress Overview */}
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
+        <div className="p-4 bg-white rounded-lg border shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200 transition-all duration-200">
           <div className="flex items-center justify-between mb-2">
             <span className="widget-text">Completion Rate</span>
             <span className="widget-number">{taskSummary.completionRate}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${taskSummary.completionRate}%` }}
             ></div>
           </div>
@@ -101,7 +101,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
 
         {/* Task Metrics - Horizontal layout */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+          <div className="flex items-center justify-between p-3 bg-white rounded-lg border shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200 transition-all duration-200">
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-4 w-4 text-blue-600" />
               <span className="widget-text">Completed</span>
@@ -109,7 +109,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
             <div className="widget-number">{taskSummary.completed}</div>
           </div>
           
-          <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+          <div className="flex items-center justify-between p-3 bg-white rounded-lg border shadow-sm hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100/50 hover:border-blue-200 transition-all duration-200">
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-blue-600" />
               <span className="widget-text">Incomplete</span>
