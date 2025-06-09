@@ -43,10 +43,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 // Specialized dashboard widget components for data visualization
 import { Widget } from "@/components/dashboard/Widget";
 import { CompanySnapshot } from "@/components/dashboard/CompanySnapshot";
-import { RiskRadarWidget } from "@/components/dashboard/RiskRadarWidget";
-import { TaskSummaryWidget } from "@/components/dashboard/TaskSummaryWidget";
-import { NetworkVisualizationWidget } from "@/components/dashboard/NetworkVisualizationWidget";
-import RiskMonitoringWidget from "@/components/dashboard/RiskMonitoringWidget";
+// Removed obsolete widgets for simplified 3-widget dashboard layout
 import { SystemOverviewWidget } from "@/components/dashboard/SystemOverviewWidget";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { WidgetCustomizationDropdown } from "@/components/dashboard/WidgetCustomizationDropdown";
@@ -105,62 +102,26 @@ import {
 // ========================================
 
 /**
- * Interface defining all available dashboard widgets
- * Ensures type safety and consistent widget management across company types
+ * Interface defining simplified dashboard widgets for enterprise-grade design
+ * Reduced to 3 core widgets for streamlined user experience
  */
 interface DashboardWidgets {
-  companySnapshot: boolean;
-  networkVisualization: boolean;
-  riskRadar: boolean;
-  riskMonitoring: boolean;
-  taskSummary: boolean;
-  systemOverview: boolean;
   quickActions: boolean;
+  companySnapshot: boolean;
+  visualizer: boolean;
 }
 
 /**
- * Widget configuration for FinTech companies (Data Recipients)
- * Simplified layout focusing on core risk assessment features
+ * Default widget configuration for all company types
+ * Unified experience with 3 essential widgets
  */
-const FINTECH_WIDGETS: DashboardWidgets = {
-  companySnapshot: true,
-  networkVisualization: false,
-  riskRadar: true,
-  riskMonitoring: false,
-  taskSummary: true,
-  systemOverview: false,
+const DEFAULT_WIDGETS: DashboardWidgets = {
   quickActions: true,
+  companySnapshot: true,
+  visualizer: true,
 };
 
-/**
- * Widget configuration for Bank companies (Data Providers)
- * Enhanced monitoring capabilities for data contribution oversight
- */
-const BANK_WIDGETS: DashboardWidgets = {
-  companySnapshot: true,
-  networkVisualization: true,
-  riskRadar: false,
-  riskMonitoring: true,
-  taskSummary: false,
-  systemOverview: false,
-  quickActions: true,
-};
-
-/**
- * Function to get all available widgets for Admin/Invela users
- * Automatically includes any new widgets added to the system
- */
-const getAdminWidgets = (): DashboardWidgets => {
-  return {
-    companySnapshot: true,
-    networkVisualization: true,
-    riskRadar: true,
-    riskMonitoring: true,
-    taskSummary: true,
-    systemOverview: true,
-    quickActions: true,
-  };
-};
+// Removed obsolete persona-specific configurations - now using unified experience
 
 // ========================================
 // MAIN COMPONENT
