@@ -80,7 +80,7 @@
 .widget-header {
   padding: var(--widget-header-padding);
   border-bottom: 1px solid var(--widget-border);
-  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  background: white;
 }
 
 .widget-content {
@@ -96,7 +96,7 @@
 
 .widget-metric-card {
   padding: 1rem;
-  background: #fafafa;
+  background: white;
   border: 1px solid var(--widget-border);
   border-radius: calc(var(--widget-border-radius) - 0.25rem);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);

@@ -54,7 +54,9 @@ const ConsentActivityInsight = React.lazy(() =>
   }))
 );
 const RiskMonitoringInsight = React.lazy(() => 
-  import('@/components/insights/RiskMonitoringInsight')
+  import('@/components/insights/RiskMonitoringInsight').then(module => ({ 
+    default: module.RiskMonitoringInsight 
+  }))
 );
 const NetworkScatterPlotInsight = React.lazy(() => 
   import('@/components/insights/NetworkScatterPlotInsight').then(module => ({ 
