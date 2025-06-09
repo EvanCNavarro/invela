@@ -43,7 +43,7 @@ import {
   Database,
   Lock,
   Award,
-  FileCheck
+  FileCheck,
 } from "lucide-react";
 
 // ========================================
@@ -106,7 +106,7 @@ export const getQuickActionsForPersona = (persona: Persona, onNavigate: (path: s
     viewInsights: {
       id: "view-insights",
       label: "View Insights",
-      icon: BarChart3,
+      icon: BarChart2,
       onClick: () => onNavigate("/insights"),
       description: "Access comprehensive risk analysis and reports"
     },

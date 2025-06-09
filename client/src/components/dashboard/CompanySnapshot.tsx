@@ -287,8 +287,8 @@ export function CompanySnapshot({
             {/* Active Alerts */}
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <AlertTriangle className="widget-icon-standard text-amber-600" />
-                <span className="widget-text">Active Alerts</span>
+                <AlertTriangle className="widget-icon-standard text-blue-600" />
+                <span className="widget-text font-semibold">Active Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>
@@ -297,7 +297,7 @@ export function CompanySnapshot({
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
                 <Clock className="widget-icon-standard text-blue-600" />
-                <span className="widget-text">New Alerts</span>
+                <span className="widget-text font-semibold">New Alerts</span>
               </div>
               <div className="widget-number text-xl">0</div>
             </div>
