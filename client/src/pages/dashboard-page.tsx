@@ -389,11 +389,12 @@ export default function DashboardPage(): JSX.Element {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Company Overview - Single column */}
                   {visibleWidgets.companySnapshot && (
-                    <div className="lg:col-span-1 widget-entrance-animation widget-entrance-stagger-2">
+                    <div className="lg:col-span-1">
                       <CompanySnapshot
                         companyData={companyData}
                         onToggle={() => toggleWidget('companySnapshot')}
                         isVisible={visibleWidgets.companySnapshot}
+                        animationDelay={200}
                       />
                     </div>
                   )}
@@ -445,6 +446,7 @@ export default function DashboardPage(): JSX.Element {
                       companyData={companyData}
                       onToggle={() => toggleWidget('companySnapshot')}
                       isVisible={visibleWidgets.companySnapshot}
+                      animationDelay={200}
                     />
                   </div>
                 )}

@@ -200,6 +200,12 @@
   animation: shimmer 1.5s infinite linear;
 }
 
+.widget-skeleton-shimmer {
+  background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
 @keyframes skeleton-pulse {
   0% {
     opacity: 0.6;
