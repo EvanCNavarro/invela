@@ -43,7 +43,7 @@ const RiskMonitoringWidget: React.FC<RiskMonitoringWidgetProps> = ({
   return (
     <Widget
       title="Risk Monitoring"
-      icon={<ShieldAlert className="h-5 w-5" />}
+      icon={<ShieldAlert className="h-5 w-5 text-gray-700" />}
       className={className}
       actions={[
         {
