@@ -190,7 +190,7 @@ export default function DashboardPage(): JSX.Element {
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   
   // Widget visibility state with proper type declaration and dynamic initialization
-  const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(OTHER_DEFAULT_WIDGETS);
+  const [visibleWidgets, setVisibleWidgets] = useState<DashboardWidgets>(getAdminWidgets());
   
   // ========================================
   // DATA FETCHING
