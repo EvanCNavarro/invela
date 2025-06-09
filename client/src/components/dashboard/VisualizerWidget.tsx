@@ -108,6 +108,11 @@ const RiskRadarD3Simple = React.lazy(() =>
     default: module.RiskRadarD3Simple 
   }))
 );
+const RiskRadarRechartsSimple = React.lazy(() => 
+  import('@/components/insights/RiskRadarRechartsSimple').then(module => ({ 
+    default: module.RiskRadarRechartsSimple 
+  }))
+);
 
 // ========================================
 // TYPE DEFINITIONS
@@ -204,6 +209,12 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
   {
     value: 'risk_radar_d3_simple',
     label: 'Risk Radar (D3 Simple)',
+    category: 'Risk',
+    personas: ['Invela', 'Bank', 'FinTech']
+  },
+  {
+    value: 'risk_radar_recharts_simple',
+    label: 'Risk Radar (Recharts Simple)',
     category: 'Risk',
     personas: ['Invela', 'Bank', 'FinTech']
   },
@@ -461,6 +472,17 @@ export function VisualizerWidget({
           <InsightErrorBoundary insightName="Risk Radar (D3 Simple)">
             <Suspense fallback={<InsightLoadingSkeleton />}>
               <RiskRadarD3Simple 
+                className="shadow-none border-none w-full h-full"
+              />
+            </Suspense>
+          </InsightErrorBoundary>
+        );
+
+      case 'risk_radar_recharts_simple':
+        return (
+          <InsightErrorBoundary insightName="Risk Radar (Recharts Simple)">
+            <Suspense fallback={<InsightLoadingSkeleton />}>
+              <RiskRadarRechartsSimple 
                 className="shadow-none border-none w-full h-full"
               />
             </Suspense>
