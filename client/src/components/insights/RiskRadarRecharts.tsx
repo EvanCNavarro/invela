@@ -159,6 +159,16 @@ function RiskRadarRechartsInternal({ className, companyId, showDropdown = true }
 
   const isLoading = isCompanyLoading || isAllCompaniesLoading;
 
+  // Debug logging
+  console.log('[RiskRadarRecharts] Component state:', {
+    isCompanyLoading,
+    isAllCompaniesLoading,
+    displayCompany: displayCompany?.name,
+    hasRiskClusters: !!riskClusters,
+    chartDataLength: chartData.length,
+    riskClusters: riskClusters ? Object.keys(riskClusters) : null
+  });
+
   if (isLoading) {
     return (
       <Card className={cn("w-full", className)}>
