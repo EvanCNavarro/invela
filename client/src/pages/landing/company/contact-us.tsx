@@ -47,13 +47,7 @@ export default function ContactUsPage() {
     shouldFocusError: true,
   });
   
-  // Set autofocus on component mount
-  useEffect(() => {
-    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-    if (nameInput) {
-      nameInput.focus();
-    }
-  }, []);
+  // Removed auto-focus to prevent unwanted focusing behavior
 
   function onSubmit(data: ContactFormValues) {
     // In a real implementation, this would send the data to a server
