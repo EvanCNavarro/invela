@@ -42,7 +42,8 @@ import {
   Globe,
   Database,
   Lock,
-  Award
+  Award,
+  FileCheck
 } from "lucide-react";
 
 // ========================================
@@ -81,109 +82,81 @@ export const getQuickActionsForPersona = (persona: Persona, onNavigate: (path: s
       onClick: () => onNavigate("/network/company/1"),
       description: "View detailed company information and metrics"
     },
-    insights: {
-      id: "insights",
-      label: "Risk Insights",
+    viewTasks: {
+      id: "view-tasks",
+      label: "View Tasks",
+      icon: ListTodo,
+      onClick: () => onNavigate("/task-center"),
+      description: "Access task center and manage assignments"
+    },
+    manageNetwork: {
+      id: "manage-network",
+      label: "Manage Network",
+      icon: Network,
+      onClick: () => onNavigate("/network"),
+      description: "View and manage company network relationships"
+    },
+    inviteToNetwork: {
+      id: "invite-network",
+      label: "Invite to Network",
+      icon: UserPlus,
+      onClick: () => onNavigate("/network?action=invite"),
+      description: "Invite new companies to your network"
+    },
+    viewInsights: {
+      id: "view-insights",
+      label: "View Insights",
       icon: BarChart3,
       onClick: () => onNavigate("/insights"),
       description: "Access comprehensive risk analysis and reports"
     },
-    uploadFile: {
-      id: "upload-file",
+    uploadFiles: {
+      id: "upload-files",
       label: "Upload Files",
       icon: Upload,
       onClick: () => onNavigate("/file-vault"),
       description: "Upload documents to secure file vault"
     },
-    inviteRecipient: {
-      id: "invite-recipient",
-      label: "Invite Companies",
-      icon: UserPlus,
-      onClick: () => {}, // Will be handled by modal
-      description: "Invite data recipients to the platform"
+    manageClaims: {
+      id: "manage-claims",
+      label: "Manage Claims",
+      icon: FileCheck,
+      onClick: () => onNavigate("/claims"),
+      description: "Create and manage insurance claims"
     },
-    taskCenter: {
-      id: "task-center",
-      label: "Task Center",
-      icon: CheckSquare,
-      onClick: () => onNavigate("/task-center"),
-      description: "Manage compliance and onboarding tasks"
-    },
-    riskScore: {
-      id: "risk-score",
-      label: "Risk Assessment",
+    viewRiskScore: {
+      id: "view-risk-score",
+      label: "View Risk Score",
       icon: Shield,
       onClick: () => onNavigate("/network/company/1?tab=risk"),
-      description: "View detailed risk scoring and analysis"
-    },
-    network: {
-      id: "network",
-      label: "Network View",
-      icon: Network,
-      onClick: () => onNavigate("/network"),
-      description: "Explore company relationship network"
-    },
-    claims: {
-      id: "claims",
-      label: "Create Claim",
-      icon: Plus,
-      onClick: () => onNavigate("/claims"),
-      description: "Submit new compliance or risk claims"
-    },
-    systemSettings: {
-      id: "system-settings",
-      label: "System Settings",
-      icon: Settings,
-      onClick: () => onNavigate("/settings"),
-      description: "Configure platform and user settings"
-    },
-    compliance: {
-      id: "compliance",
-      label: "Compliance Hub",
-      icon: Lock,
-      onClick: () => onNavigate("/compliance"),
-      description: "Access compliance tools and reporting"
-    },
-    analytics: {
-      id: "analytics",
-      label: "Analytics",
-      icon: TrendingUp,
-      onClick: () => onNavigate("/analytics"),
-      description: "View platform usage and performance metrics"
-    },
-    support: {
-      id: "support",
-      label: "Support Center",
-      icon: MessageSquare,
-      onClick: () => onNavigate("/support"),
-      description: "Get help and access documentation"
+      description: "View detailed risk assessment and scoring"
     }
   };
 
-  const personaConfigs = {
+  const personaConfigs: Record<Persona, WidgetAction[]> = {
     'Invela': [
-      baseActions.systemSettings,
-      baseActions.analytics,
-      baseActions.network,
-      baseActions.inviteRecipient,
-      baseActions.insights,
-      baseActions.compliance,
-      baseActions.uploadFile,
-      baseActions.support
+      baseActions.companyProfile,
+      baseActions.viewTasks,
+      baseActions.manageNetwork,
+      baseActions.inviteToNetwork,
+      baseActions.viewInsights,
+      baseActions.uploadFiles,
+      baseActions.manageClaims,
+      baseActions.viewRiskScore
     ],
     'Bank': [
       baseActions.companyProfile,
-      baseActions.compliance,
-      baseActions.riskScore,
-      baseActions.network,
-      baseActions.uploadFile,
-      baseActions.support
+      baseActions.viewTasks,
+      baseActions.manageNetwork,
+      baseActions.viewInsights,
+      baseActions.uploadFiles,
+      baseActions.viewRiskScore
     ],
     'FinTech': [
-      baseActions.taskCenter,
-      baseActions.companyProfile,
-      baseActions.uploadFile,
-      baseActions.support
+      baseActions.viewTasks,
+      baseActions.uploadFiles,
+      baseActions.viewInsights,
+      baseActions.viewRiskScore
     ]
   };
 
@@ -207,76 +180,66 @@ export interface CompanyMetric {
 
 export const getCompanySnapshotForPersona = (
   persona: Persona, 
-  data: {
-    companyData: any;
-    relationships: any[];
-    accreditationData: any;
-    isLoading: boolean;
-  }
+  companyData: any
 ): CompanyMetric[] => {
-  const { companyData, relationships, accreditationData, isLoading } = data;
-  
-  const riskScore = companyData?.riskScore || companyData?.risk_score || 0;
-  const relationshipsCount = relationships?.length || 0;
-  const accreditationStatus = companyData?.accreditation_status || accreditationData?.status || "PENDING";
-  const displayStatus = accreditationStatus === "VALID" ? "APPROVED" : accreditationStatus;
-
   const baseMetrics = {
-    relationships: {
-      id: 'relationships',
-      label: 'Network Relationships',
-      value: isLoading ? 'Loading...' : relationshipsCount,
-      description: 'Connected companies in your network',
-      icon: Network,
-      clickable: true,
-      status: relationshipsCount > 50 ? 'success' : relationshipsCount > 20 ? 'warning' : 'neutral' as const
-    },
     riskScore: {
-      id: 'risk-score',
-      label: 'Risk Score',
-      value: isLoading ? 'Loading...' : riskScore,
-      description: 'Current unified risk assessment score',
+      id: "risk-score",
+      label: "Risk Score",
+      value: companyData?.risk_score || companyData?.riskScore || "N/A",
+      description: "Current risk assessment score",
       icon: Shield,
       clickable: true,
-      status: riskScore < 30 ? 'error' : riskScore < 50 ? 'warning' : 'success' as const,
-      trend: 'stable' as const
+      status: "neutral" as const
     },
-    accreditation: {
-      id: 'accreditation',
-      label: 'Accreditation Status',
-      value: isLoading ? 'Loading...' : displayStatus,
-      description: 'Current accreditation verification status',
+    employees: {
+      id: "employees",
+      label: "Employees",
+      value: companyData?.num_employees || "N/A",
+      description: "Total number of employees",
+      icon: Users,
+      clickable: true,
+      status: "neutral" as const,
+      trend: "stable" as const
+    },
+    revenue: {
+      id: "revenue",
+      label: "Revenue Tier",
+      value: companyData?.revenue_tier || "N/A",
+      description: "Company revenue classification",
+      icon: TrendingUp,
+      clickable: true,
+      status: "neutral" as const
+    },
+    compliance: {
+      id: "compliance",
+      label: "Compliance Status",
+      value: companyData?.certifications_compliance ? "Certified" : "Pending",
+      description: "Current compliance and certification status",
       icon: Award,
       clickable: true,
-      status: displayStatus === 'APPROVED' ? 'success' : displayStatus === 'PENDING' ? 'warning' : 'error' as const
-    },
-    riskChanges: {
-      id: 'risk-changes',
-      label: 'Recent Changes',
-      value: '+11',
-      description: 'Risk score changes in the last 30 days',
-      icon: TrendingUp,
-      clickable: false,
-      status: 'warning' as const,
-      trend: 'up' as const
+      status: "neutral" as const
     }
   };
 
   const personaConfigs: Record<Persona, CompanyMetric[]> = {
     'Invela': [
-      baseMetrics.relationships,
       baseMetrics.riskScore,
-      baseMetrics.accreditation,
-      baseMetrics.riskChanges
+      baseMetrics.employees,
+      baseMetrics.revenue,
+      baseMetrics.compliance
     ],
     'Bank': [
       baseMetrics.riskScore,
-      baseMetrics.accreditation,
-      baseMetrics.relationships
+      baseMetrics.employees,
+      baseMetrics.revenue,
+      baseMetrics.compliance
     ],
     'FinTech': [
       baseMetrics.riskScore,
-      baseMetrics.accreditation
+      baseMetrics.employees,
+      baseMetrics.revenue,
+      baseMetrics.compliance
     ]
   };
 
@@ -284,116 +247,50 @@ export const getCompanySnapshotForPersona = (
 };
 
 // ========================================
-// WIDGET PERMISSION MATRIX
+// WIDGET PERMISSIONS & AVAILABILITY
 // ========================================
 
 export const WIDGET_PERMISSIONS: Record<Persona, Record<string, PersonaWidgetConfig>> = {
   'Invela': {
-    quickActions: { 
-      visible: true, 
-      variant: 'admin',
-      maxActions: 8,
-      priority: 1 
-    },
-    companySnapshot: { 
-      visible: true, 
-      variant: 'comprehensive',
-      priority: 2 
-    },
-    networkVisualization: { 
-      visible: true, 
-      variant: 'platform-wide',
-      priority: 3 
-    },
-    riskRadar: { 
-      visible: true, 
-      variant: 'detailed',
-      priority: 4 
-    },
-    riskMonitoring: { 
-      visible: true, 
-      variant: 'admin',
-      priority: 5 
-    },
-    taskSummary: { 
-      visible: true, 
-      variant: 'management',
-      priority: 6 
-    },
-    systemOverview: { 
-      visible: true, 
-      variant: 'platform',
-      priority: 7 
-    }
+    'quickActions': { visible: true, variant: 'full', maxActions: 8, priority: 1 },
+    'companySnapshot': { visible: true, variant: 'detailed', priority: 2 },
+    'riskRadar': { visible: true, variant: 'admin', priority: 3 },
+    'taskSummary': { visible: true, variant: 'full', priority: 4 },
+    'systemOverview': { visible: true, variant: 'admin', priority: 5 },
+    'networkHealth': { visible: true, variant: 'detailed', priority: 6 },
+    'complianceTracker': { visible: true, variant: 'full', priority: 7 }
   },
   'Bank': {
-    quickActions: { 
-      visible: true, 
-      variant: 'banking',
-      maxActions: 6,
-      priority: 1 
-    },
-    companySnapshot: { 
-      visible: true, 
-      variant: 'institutional',
-      priority: 2 
-    },
-    networkVisualization: { 
-      visible: true, 
-      variant: 'relationships',
-      priority: 3 
-    },
-    riskMonitoring: { 
-      visible: true, 
-      variant: 'compliance',
-      priority: 4 
-    }
+    'quickActions': { visible: true, variant: 'standard', maxActions: 6, priority: 1 },
+    'companySnapshot': { visible: true, variant: 'standard', priority: 2 },
+    'riskRadar': { visible: true, variant: 'readonly', priority: 3 },
+    'taskSummary': { visible: true, variant: 'standard', priority: 4 },
+    'systemOverview': { visible: false, variant: 'hidden', priority: 0 },
+    'networkHealth': { visible: true, variant: 'standard', priority: 5 },
+    'complianceTracker': { visible: true, variant: 'readonly', priority: 6 }
   },
   'FinTech': {
-    quickActions: { 
-      visible: true, 
-      variant: 'self-service',
-      maxActions: 4,
-      priority: 1 
-    },
-    companySnapshot: { 
-      visible: true, 
-      variant: 'company-focused',
-      priority: 2 
-    },
-    riskRadar: { 
-      visible: true, 
-      variant: 'self-assessment',
-      priority: 3 
-    },
-    taskSummary: { 
-      visible: true, 
-      variant: 'personal',
-      priority: 4 
-    }
+    'quickActions': { visible: true, variant: 'minimal', maxActions: 4, priority: 1 },
+    'companySnapshot': { visible: true, variant: 'basic', priority: 2 },
+    'riskRadar': { visible: true, variant: 'readonly', priority: 3 },
+    'taskSummary': { visible: true, variant: 'basic', priority: 4 },
+    'systemOverview': { visible: false, variant: 'hidden', priority: 0 },
+    'networkHealth': { visible: false, variant: 'hidden', priority: 0 },
+    'complianceTracker': { visible: true, variant: 'basic', priority: 5 }
   }
 };
 
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
-
-/**
- * Get available widgets for a specific persona
- */
 export const getAvailableWidgets = (persona: Persona): string[] => {
   const permissions = WIDGET_PERMISSIONS[persona];
-  return Object.entries(permissions)
-    .filter(([_, config]) => config.visible)
-    .sort((a, b) => (a[1].priority || 999) - (b[1].priority || 999))
-    .map(([widgetKey]) => widgetKey);
+  return Object.keys(permissions).filter(widgetKey => permissions[widgetKey].visible);
 };
 
 /**
  * Check if a widget is available for a persona
  */
 export const isWidgetAvailable = (persona: Persona, widgetKey: string): boolean => {
-  return WIDGET_PERMISSIONS[persona]?.[widgetKey]?.visible || false;
+  const config = WIDGET_PERMISSIONS[persona]?.[widgetKey];
+  return config ? config.visible : false;
 };
 
 /**
@@ -407,5 +304,6 @@ export const getWidgetConfig = (persona: Persona, widgetKey: string): PersonaWid
  * Get widget variant for a specific persona
  */
 export const getWidgetVariant = (persona: Persona, widgetKey: string): string => {
-  return WIDGET_PERMISSIONS[persona]?.[widgetKey]?.variant || 'default';
+  const config = getWidgetConfig(persona, widgetKey);
+  return config ? config.variant : 'default';
 };
