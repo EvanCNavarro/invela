@@ -97,6 +97,8 @@ interface VisualizerWidgetProps {
   onToggle?: () => void;
   isVisible?: boolean;
   className?: string;
+  /** Animation delay for staggered entrance effects */
+  animationDelay?: number;
 }
 
 /**
@@ -226,15 +228,31 @@ class InsightErrorBoundary extends React.Component<
 export function VisualizerWidget({ 
   onToggle, 
   isVisible = true, 
-  className = '' 
+  className = '',
+  animationDelay = 0
 }: VisualizerWidgetProps) {
-  // State for selected visualization
-  const [selectedVisualization, setSelectedVisualization] = useState<string>('consent_activity');
-  
   // Get current company data for persona-based filtering
   const { data: currentCompany } = useQuery<any>({
     queryKey: ['/api/companies/current'],
   });
+
+  // Get persona-specific default visualization
+  const getDefaultVisualization = (persona: string) => {
+    return PERSONA_DEFAULTS[persona as keyof typeof PERSONA_DEFAULTS] || 'consent_activity';
+  };
+
+  // State for selected visualization with persona-specific default
+  const [selectedVisualization, setSelectedVisualization] = useState<string>(() => {
+    return getDefaultVisualization(currentCompany?.category || 'FinTech');
+  });
+
+  // Update selected visualization when company data loads
+  useEffect(() => {
+    if (currentCompany && currentCompany.category) {
+      const defaultViz = getDefaultVisualization(currentCompany.category);
+      setSelectedVisualization(defaultViz);
+    }
+  }, [currentCompany]);
 
   // Filter visualizations based on company persona
   const availableVisualizations = React.useMemo(() => {
@@ -369,36 +387,40 @@ export function VisualizerWidget({
   };
 
   return (
-    <Widget
-      title="Visualizer"
-      icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
-      onVisibilityToggle={onToggle}
-      isVisible={isVisible}
-      className={className}
-      headerChildren={
-        <div className="flex items-center gap-2">
-          <Select
-            value={selectedVisualization}
-            onValueChange={handleVisualizationChange}
-          >
-            <SelectTrigger className="w-[240px] font-semibold">
-              <SelectValue placeholder="Select visualization" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg">
-              {availableVisualizations.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      }
+    <div 
+      className={`widget-entrance-animation ${className}`}
+      style={{ animationDelay: `${animationDelay}ms` }}
     >
-      <div className="h-[500px] w-full overflow-hidden">
-        {renderSelectedInsight()}
-      </div>
-    </Widget>
+      <Widget
+        title="Visualizer"
+        icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
+        onVisibilityToggle={onToggle}
+        isVisible={isVisible}
+        headerChildren={
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedVisualization}
+              onValueChange={handleVisualizationChange}
+            >
+              <SelectTrigger className="w-[240px] font-semibold">
+                <SelectValue placeholder="Select visualization" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                {availableVisualizations.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
+        <div className="h-[500px] w-full overflow-hidden">
+          {renderSelectedInsight()}
+        </div>
+      </Widget>
+    </div>
   );
 }
 
