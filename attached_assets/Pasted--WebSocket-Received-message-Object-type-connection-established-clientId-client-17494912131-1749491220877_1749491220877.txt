@@ -1,0 +1,31 @@
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749491213171-3isbabj", timestamp: "2025-06-09T17:46:53.171Z", message: "Connection established"}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: insights
+[Tutorial:TutorialManager] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] Normalizing tab name from 'insights' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'insights'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: insights (original: insights)
+[Tutorial:TabTutorials] Current state for insights: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for tab insights (path: /insights, expected: /insights)
+[Tutorial:TutorialManager] Tutorial already completed for tab: insights
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+relationships.forEach is not a function
+relationships.forEach is not a function
+[Tutorial:TutorialWebSocket] Cleaned up WebSocket listener for insights
+[IntelligentPreloader:CacheManager] Cleared 0 images matching pattern: tutorials/insights/ 
+[Tutorial:TutorialManager] Cleared tutorial cache for insights on unmount
+[WebSocketEventBridge] Cleaning up event bridge
+[IntelligentPreloader:CacheManager] Cleared 0 images matching pattern: welcome_ 
+[OnboardingModal] Cache cleared on modal close
+[2025-06-09T17:46:54.171Z] [WebSocket] WebSocket connection established 
+[2025-06-09T17:46:54.172Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-09T17:46:54.172Z] [WebSocket] Received message of type: connection_established 
+[2025-06-09T17:46:54.172Z] [WebSocket] WebSocket server connection confirmed with ID: client-1749491214209-7zvyum7 
+[2025-06-09T17:46:54.600Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1749491212148_9cfovndqu", hasUserData: true, hasCompanyData: true}
+[2025-06-09T17:46:54.715Z] [WebSocket] Received message of type: authenticated 
+[2025-06-09T17:46:54.716Z] [WebSocket] WebSocket authentication confirmed for client: unknown 

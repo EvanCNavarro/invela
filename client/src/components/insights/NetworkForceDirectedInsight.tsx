@@ -109,52 +109,67 @@ export function NetworkForceDirectedInsight({ className }: NetworkForceDirectedI
     enabled: true
   });
 
-  const { data: relationships, isLoading: relationshipsLoading } = useQuery<any[]>({
+  const { data: networkData, isLoading: relationshipsLoading } = useQuery<any>({
     queryKey: ['/api/relationships/network'],
     enabled: true
   });
+
+  // Extract relationships from network data
+  const relationships = networkData?.nodes || [];
 
   const isLoading = companiesLoading || relationshipsLoading;
 
   // Process and filter data
   const { nodes, links } = useMemo(() => {
-    if (!companies || !relationships) return { nodes: [], links: [] };
+    if (!relationships) return { nodes: [], links: [] };
 
-    // Filter companies
-    const filteredCompanies = companies.filter(company => {
+    // Filter relationships (which are the network nodes)
+    const filteredRelationships = relationships.filter((rel: any) => {
       const matchesCategory = filters.categories.length === 0 || 
-        filters.categories.includes(company.category);
+        filters.categories.includes(rel.category);
       const matchesAccreditation = filters.accreditationStatus.length === 0 || 
-        filters.accreditationStatus.includes(company.accreditationStatus);
-      const matchesRisk = company.riskScore >= filters.riskRange[0] && 
-        company.riskScore <= filters.riskRange[1];
+        filters.accreditationStatus.includes(rel.accreditationStatus);
+      const matchesRisk = rel.riskScore >= filters.riskRange[0] && 
+        rel.riskScore <= filters.riskRange[1];
       const matchesSearch = filters.searchTerm === '' ||
-        company.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
+        rel.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
       
       return matchesCategory && matchesAccreditation && matchesRisk && matchesSearch;
     });
 
-    // Create nodes
-    const processedNodes: ForceNode[] = filteredCompanies.map(company => ({
-      id: company.id.toString(),
-      name: company.name,
-      category: company.category || 'Unknown',
-      riskScore: company.riskScore || 0,
-      revenueTier: company.revenueTier || 1,
-      accreditationStatus: company.accreditationStatus || 'Unknown',
-      relationshipCount: company.relationshipCount || 0,
-      color: categoryColors[company.category] || categoryColors.Unknown,
-      radius: Math.max(8, Math.min(25, (company.relationshipCount || 1) * 2))
+    // Add Invela as the center node
+    const centerNode: ForceNode = {
+      id: 'invela',
+      name: 'Invela',
+      category: 'Invela',
+      riskScore: 0,
+      revenueTier: 3,
+      accreditationStatus: 'APPROVED',
+      relationshipCount: filteredRelationships.length,
+      color: categoryColors.Invela || '#2563eb',
+      radius: 15
+    };
+
+    // Create nodes from filtered relationships
+    const relationshipNodes: ForceNode[] = filteredRelationships.map((rel: any) => ({
+      id: rel.id.toString(),
+      name: rel.name,
+      category: rel.category || 'Unknown',
+      riskScore: rel.riskScore || 0,
+      revenueTier: rel.revenueTier || 1,
+      accreditationStatus: rel.accreditationStatus || 'Unknown',
+      relationshipCount: 1,
+      color: categoryColors[rel.category] || categoryColors.Unknown,
+      radius: Math.max(8, Math.min(20, 8 + (rel.riskScore || 0) / 10))
     }));
 
-    // Create links from relationships
-    const companyIds = new Set(processedNodes.map(n => n.id));
-    const processedLinks: ForceLink[] = relationships
-      .filter(rel => companyIds.has(rel.sourceId?.toString()) && companyIds.has(rel.targetId?.toString()))
-      .map(rel => ({
-        source: rel.sourceId.toString(),
-        target: rel.targetId.toString(),
-        relationshipType: rel.relationshipType || 'unknown',
+    const processedNodes = [centerNode, ...relationshipNodes];
+
+    // Create links from Invela to all companies
+    const processedLinks: ForceLink[] = filteredRelationships.map((rel: any) => ({
+      source: 'invela',
+      target: rel.id.toString(),
+      relationshipType: rel.relationshipType || 'network_member',
         strength: getRelationshipStrength(rel.relationshipType),
         distance: getRelationshipDistance(rel.relationshipType)
       }));
