@@ -105,6 +105,22 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'authentication-image-update-2025-06-09',
+    date: '2025-06-09',
+    type: 'design',
+    title: 'Authentication Image Update',
+    description: 'Updated register page branding image with new professional corporate visual and progressive JPEG optimization',
+    details: [
+      'Replaced authentication register page with new professional corporate image',
+      'Applied progressive JPEG optimization achieving 84% file size reduction (1.4MB PNG → 224KB JPEG)',
+      'Maintained branded skeleton loading animations and automatic fallback system',
+      'Preserved existing authentication flow styling and responsive design standards',
+      'Enhanced perceived performance with progressive loading capabilities'
+    ],
+    version: '2.2.0',
+    audience: 'product'
+  },
+  {
     id: 'ui-ux-improvements-company-protection-2025-06-08',
     date: '2025-06-08',
     type: 'enhancement',
