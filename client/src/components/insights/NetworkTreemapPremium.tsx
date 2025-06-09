@@ -299,33 +299,13 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     // Clear previous content
     svg.selectAll('*').remove();
 
-    // Create gradient definitions
-    const defs = svg.append('defs');
-    
-    currentData.leaves().forEach((d, i) => {
-      const gradient = defs.append('linearGradient')
-        .attr('id', `gradient-${i}`)
-        .attr('gradientTransform', 'rotate(135)');
-      
-      const baseColor = d.data.color || colorSchemes.primary.start;
-      const lighterColor = d3.interpolate(baseColor, '#ffffff')(0.3);
-      const darkerColor = d3.interpolate(baseColor, '#000000')(0.2);
-      
-      gradient.append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', lighterColor)
-        .attr('stop-opacity', 0.95);
-      
-      gradient.append('stop')
-        .attr('offset', '60%')
-        .attr('stop-color', baseColor)
-        .attr('stop-opacity', 0.85);
-      
-      gradient.append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', darkerColor)
-        .attr('stop-opacity', 0.75);
-    });
+    // Color function for nodes
+    const getNodeColor = (node: TreemapNode) => {
+      if (node.category === 'Bank') return '#3B82F6';
+      if (node.category === 'FinTech') return '#10B981';
+      if (node.category === 'Invela') return '#8B5CF6';
+      return '#6B7280';
+    };
 
     // Create rectangles with animation
     const leaves = svg.selectAll('g')
@@ -337,14 +317,10 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     const rects = leaves.append('rect')
       .attr('width', 0)
       .attr('height', 0)
-      .attr('fill', (d, i) => `url(#gradient-${i})`)
+      .attr('fill', d => getNodeColor(d.data))
       .attr('stroke', '#ffffff')
-      .attr('stroke-width', 2)
-      .attr('rx', 8)
-      .attr('ry', 8)
-      .style('cursor', d => d.data.children && d.data.children.length > 0 ? 'pointer' : 'default')
-      .style('opacity', 0.9)
-      .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
+      .attr('stroke-width', 1)
+      .style('cursor', d => d.data.children && d.data.children.length > 0 ? 'pointer' : 'default');
 
     // Animate rectangles in
     rects.transition()
@@ -359,9 +335,8 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
         d3.select(this)
           .transition()
           .duration(200)
-          .style('opacity', 1)
-          .attr('stroke-width', 3)
-          .style('filter', 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))');
+          .attr('stroke-width', 2)
+          .style('opacity', 0.8);
         
         handleMouseEnter(event as any, d.data);
       })
@@ -369,9 +344,8 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
         d3.select(this)
           .transition()
           .duration(200)
-          .style('opacity', 0.9)
-          .attr('stroke-width', 2)
-          .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
+          .attr('stroke-width', 1)
+          .style('opacity', 1);
         
         handleMouseLeave();
       })
@@ -380,18 +354,16 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     // Add text labels
     const texts = leaves.append('text')
       .attr('x', d => ((d.x1 || 0) - (d.x0 || 0)) / 2)
-      .attr('y', d => ((d.y1 || 0) - (d.y0 || 0)) / 2 - 8)
+      .attr('y', d => ((d.y1 || 0) - (d.y0 || 0)) / 2)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .style('fill', '#ffffff')
       .style('font-size', d => {
         const width = (d.x1 || 0) - (d.x0 || 0);
         const height = (d.y1 || 0) - (d.y0 || 0);
-        return Math.min(width / 6, height / 3, 16) + 'px';
+        return Math.min(width / 8, height / 4, 12) + 'px';
       })
-      .style('font-weight', '700')
-      .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
-      .style('text-shadow', '0 1px 3px rgba(0, 0, 0, 0.5)')
+      .style('font-weight', '500')
       .style('opacity', 0)
       .style('pointer-events', 'none');
 
