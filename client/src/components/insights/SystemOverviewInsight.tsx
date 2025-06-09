@@ -188,7 +188,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
     <div className={cn("space-y-4", className)}>
       {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
           {/* Data Providers Card */}
           <div className="relative bg-white rounded-lg border shadow-sm text-center overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-600"></div>
