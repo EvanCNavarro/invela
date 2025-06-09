@@ -990,7 +990,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
         name: sql<string>`COALESCE(${companies.name}, '')`,
         category: sql<string>`COALESCE(${companies.category}, '')`,
         description: sql<string>`COALESCE(${companies.description}, '')`,
-        logo_id: companies.logo_id,
         accreditation_status: companies.accreditation_status,
         risk_score: companies.risk_score,
         chosen_score: companies.chosen_score,
@@ -1686,7 +1685,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
         num_employees: companies.num_employees,
         incorporation_year: companies.incorporation_year,
         available_tabs: companies.available_tabs,
-        logo_id: companies.logo_id,
         created_at: companies.created_at,
         updated_at: companies.updated_at,
         // Business information fields
