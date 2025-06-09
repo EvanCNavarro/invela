@@ -30,13 +30,17 @@ export default function SimpleTreemap() {
 
   // Fetch network data
   const { data: networkData, refetch } = useQuery({
-    queryKey: ['/api/relationships/network'],
+    queryKey: ['/api/network/visualization'],
     refetchOnMount: true,
   });
 
-  // Force refetch on component mount
+  // Force refetch on component mount and every 2 seconds for debugging
   useEffect(() => {
     refetch();
+    const interval = setInterval(() => {
+      refetch();
+    }, 2000);
+    return () => clearInterval(interval);
   }, [refetch]);
 
   // Update dimensions on resize

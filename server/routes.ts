@@ -2290,13 +2290,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const companyId = req.user.company_id;
       const cachedData = networkCache.get(companyId);
       
-      // Use cached data if it exists and is not expired
-      if (cachedData && (now - cachedData.timestamp) < NETWORK_CACHE_TTL) {
-        if (Math.random() < 0.1) { // Log only ~10% of cache hits to reduce noise
-          console.log('[Network Visualization] Using cached network data for company:', companyId);
-        }
-        return res.json(cachedData.data);
-      }
+      // Temporarily disable cache to debug data issues
+      // if (cachedData && (now - cachedData.timestamp) < NETWORK_CACHE_TTL) {
+      //   if (Math.random() < 0.1) { // Log only ~10% of cache hits to reduce noise
+      //     console.log('[Network Visualization] Using cached network data for company:', companyId);
+      //   }
+      //   return res.json(cachedData.data);
+      // }
       
       console.log('[Network Visualization] Fetching network data for company:', companyId);
 

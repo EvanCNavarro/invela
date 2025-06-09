@@ -1,0 +1,284 @@
+[2025-06-09T23:12:31.320Z] [PhaseStartup] Phase ready dependencies satisfied, executing... 
+[2025-06-09T23:12:31.320Z] [PhaseStartup] Executing startup phase: ready 
+[2025-06-09T23:12:31.320Z] [PhaseStartup] Executing 1 callbacks for ready phase - will complete immediately 
+[2025-06-09T23:12:31.320Z] [App] Application ready for user interaction 
+[2025-06-09T23:12:31.320Z] [PhaseStartup] Phase ready marked as completed immediately 
+[2025-06-09T23:12:31.320Z] [PhaseStartup] Phase communication completed successfully 
+[Router] Current location: /
+[WebSocket] Connection attempt initiated
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(1), hasFileVault: false, hasDashboard: false, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=undefined, path=/, file-vault-unlocked=false
+[WebSocketEventBridge] Initializing event bridge
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: undefined, category: undefined, visibleWidgets: {…}, shouldShowLoading: true, isInvelaCompany: false}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Auth] User object in AuthProvider changed: 
+Object {userId: 8, email: "evan.navarro@invela.com", timestamp: "2025-06-09T23:12:31.582Z"}
+[2025-06-09T23:12:31.590Z] [UnifiedServiceRegistration] QueryClient not available, skipping Risk Score Data Service initialization 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: false, hasLoadedData: false)
+[Sidebar] Available tabs updated: 
+Object {tabs: Array(8), hasFileVault: true, hasDashboard: true, hasTaskCenter: true, currentRoute: "/", …}
+[Sidebar] Tab state check: company=1, path=/, file-vault-unlocked=true
+[CurrentCompany] Setting company context: 1
+[Tutorial:TabTutorials] Fetching tutorial status for: dashboard
+[API Request] GET /api/user-tab-tutorials/dashboard/status without body data 
+[Tutorial:TutorialWebSocket] Setting up WebSocket listener for dashboard
+[Tutorial:TutorialWebSocket] App WebSocket not available, using event bridge only
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: false, …}
+[Dashboard] Company loaded: 
+Object {name: "Invela", category: "Invela", widgets: {…}}
+🔍 DASHBOARD RENDER DEBUG: 
+Object {companyData: {…}, category: "Invela", visibleWidgets: {…}, shouldShowLoading: false, isInvelaCompany: true}
+[OnboardingWrapper] Checking onboarding status 
+Object {userId: 8, databaseStatus: "completed", localStorageStatus: "not stored or not completed", showModal: false}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: true, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: true, initComplete: true, hasLoadedData: false)
+[WebSocket] WebSocket connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749510751932-g32dgwi", timestamp: "2025-06-09T23:12:31.932Z", message: "Connection established"}
+[WebSocket] Server connection confirmed: Connection established
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:31.943Z", id: 338, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:31.974Z", id: 123, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.006Z", id: 858, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.039Z", id: 168, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "authenticated", timestamp: "2025-06-09T23:12:32.061Z", message: "Authentication successful"}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.070Z", id: 122, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.101Z", id: 124, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.134Z", id: 720, status: "completed", progress: 100, …}
+[API Response] GET /api/user-tab-tutorials/dashboard/status - Status: 200
+[Tutorial:TabTutorials] Received tutorial status for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-06-09T23:09:38.406Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: false, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Waiting for data to load (isLoading: false, initComplete: true, hasLoadedData: false)
+[Tutorial:TabTutorials] Updating local state for dashboard: 
+Object {exists: true, completed: true, currentStep: 2, lastSeenAt: "2025-06-09T23:09:38.406Z", completedAt: "2025-05-12T23:24:10.005Z", …}
+[Tutorial:TabTutorials] Real step information: currentStep=2, totalSteps=4
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[QuickActions] User persona detected: Invela from company: Invela
+[QuickActions] Loaded 4 actions for persona: Invela
+[QuickActions] Rendering loading state
+[QuickActions] Widget initializing with animation delay: 0
+[VisualizerWidget] State update: 
+Object {selectedVisualization: "system_overview", companyCategory: "Invela", availableCount: 6, currentTime: "2025-06-09T23:12:32.126Z"}
+[CurrentCompany] Setting company context: 1
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 2, totalSteps: 4, enabled: true, …}
+[IntelligentPreloader:CacheManager] Cleared 0 images matching pattern: tutorials/dashboard/ 
+[Tutorial:TutorialManager] Cleared tutorial cache for dashboard on completion
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.165Z", id: 251, status: "completed", progress: 100, …}
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 2, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /)
+[Tutorial:TutorialManager] Tutorial already completed for tab: dashboard
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.197Z", id: 1033, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.227Z", id: 991, status: "completed", progress: 100, …}
+[WebSocket] Received message: 
+Object {type: "task_updated", timestamp: "2025-06-09T23:12:32.258Z", id: 172, status: "completed", progress: 100, …}
+[2025-06-09T23:12:32.315Z] [WebSocket] Connecting to WebSocket: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[QuickActions] Initialization complete
+[QuickActions] User persona detected: Invela from company: Invela
+[QuickActions] Loaded 4 actions for persona: Invela
+[QuickActions] Rendering main widget with 4 actions for Invela
+[CurrentCompany] Setting company context: 1
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749510752478-93x6aeo", timestamp: "2025-06-09T23:12:32.479Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749510753008-jkdnct9", timestamp: "2025-06-09T23:12:33.008Z", message: "Connection established"}
+[WebSocket] Connection established
+[WebSocket] Received message: 
+Object {type: "connection_established", clientId: "client-1749510753522-mzdnhh2", timestamp: "2025-06-09T23:12:33.522Z", message: "Connection established"}
+[WebSocketEventBridge] Successfully subscribed to WebSocket events
+[2025-06-09T23:12:34.730Z] [WebSocket] WebSocket connection established 
+[2025-06-09T23:12:34.731Z] [WebSocket] Fetching current user data for WebSocket authentication 
+[2025-06-09T23:12:34.731Z] [WebSocket] Received message of type: connection_established 
+[2025-06-09T23:12:34.731Z] [WebSocket] WebSocket server connection confirmed with ID: client-1749510754769-stjsa0c 
+[VisualizerWidget] Changing visualization: network_treemap
+[VisualizerWidget] State update: 
+Object {selectedVisualization: "network_treemap", companyCategory: "Invela", availableCount: 6, currentTime: "2025-06-09T23:12:35.020Z"}
+[2025-06-09T23:12:35.299Z] [WebSocket] Sending authentication message 
+Object {userId: 8, companyId: 1, connectionId: "ws_1749510752315_71g1h61cb", hasUserData: true, hasCompanyData: true}
+[2025-06-09T23:12:35.456Z] [WebSocket] Received message of type: authenticated 
+[2025-06-09T23:12:35.456Z] [WebSocket] WebSocket authentication confirmed for client: unknown 
+[SimpleTreemap] Raw node data: 
+Object {name: "TechFlow Financial", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CryptoFlow Payments", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "RegTech Innovations", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TradeFi Connect", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "InsurTech Dynamics", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CrowdFund Crypto", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Wave Insights Leaders", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "QuantumPay Solutions", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "NeoBank Analytics", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "SwiftLedger Technologies", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "VelocityCredit Platform", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "DigitalVault Security", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "PayStream Global", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "Wealthfront", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "SparkInc", revenue: undefined, numEmployees: undefined, revenueTier: "xlarge", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "WealthTech Pro", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CryptoSwap Exchange", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "SmartContract Verify", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TaxTech Solutions", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "MicroLend Network", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "FraudShield AI", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "InvestorPortal Pro", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "OpenBanking Hub", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "RealEstate TokenFi", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CorporateCard Plus", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TradingBot Analytics", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "DeFi Bridge Protocol", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "GlobalRemit Network", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "SupplyChain Finance", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "PayrollTech Innovations", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "ESG Impact Tracker", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "QuantTrading Systems", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "ClimateFinance Labs", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "BankingAPI Gateway", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "StudentLoan Refinance", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CommodityTrade Hub", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "RetailCredit Solutions", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TreasuryTech Pro", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "DigitalBonds Exchange", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "SmallBiz Banking", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CarbonCredit Markets", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "PensionTech Advisors", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "MortgageTech Solutions", revenue: undefined, numEmployees: undefined, revenueTier: "large", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "AgriFinance Connect", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "DigitalAsset Custody", revenue: undefined, numEmployees: undefined, revenueTier: "medium", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TaxOptimization AI", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "CryptoVenture Labs", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "NeoLend Platform", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "FastPay Innovations", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "BlockTrade Exchange", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "MicroInvest Network", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "PayLater Solutions", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "DAO Treasury Management", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "GigWorker Finance", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "NFT Marketplace Finance", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "QuickCash Advances", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "StableCoin Protocol", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
+[SimpleTreemap] Raw node data: 
+Object {name: "TradingBot Retail", revenue: undefined, numEmployees: undefined, revenueTier: "small", category: "FinTech"}
