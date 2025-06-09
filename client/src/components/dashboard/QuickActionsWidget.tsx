@@ -22,7 +22,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useLocation } from "wouter";
-import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ArrowRight, Users, FileText, Zap, TrendingUp, FolderOpen, Network, Activity, Eye, Settings, MessageSquare } from "lucide-react";
+import { Building2, BarChart3, Upload, UserPlus, CheckSquare, Shield, ArrowRight, Users, FileText, Zap, TrendingUp, FolderOpen, Network, Activity, Eye, Settings, MessageSquare, BarChart2, AlertTriangle, ListTodo, Plus } from "lucide-react";
 
 interface QuickActionsWidgetProps {
   onToggle: () => void;
@@ -77,49 +77,49 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     {
       id: "company-profile",
       label: "Company Profile",
-      icon: <Building2 className="h-5 w-5" />,
+      icon: <Building2 className="h-4 w-4" />,
       onClick: handleCompanyProfile
     },
     {
       id: "insights",
-      label: "View Insights",
-      icon: <TrendingUp className="h-5 w-5" />,
+      label: "Insights",
+      icon: <BarChart2 className="h-4 w-4" />,
       onClick: handleInsights
     },
     {
       id: "upload-file",
       label: "Upload Files",
-      icon: <FolderOpen className="h-5 w-5" />,
+      icon: <FolderOpen className="h-4 w-4" />,
       onClick: handleUploadFile
     },
     {
       id: "invite-recipient",
-      label: "Invite Users",
-      icon: <UserPlus className="h-5 w-5" />,
+      label: "Invite Recipient",
+      icon: <UserPlus className="h-4 w-4" />,
       onClick: handleInviteRecipient
     },
     {
       id: "task-center",
-      label: "Task Center",
-      icon: <CheckSquare className="h-5 w-5" />,
+      label: "View Tasks",
+      icon: <ListTodo className="h-4 w-4" />,
       onClick: handleTaskCenter
     },
     {
       id: "risk-score",
       label: "Risk Analysis",
-      icon: <Activity className="h-5 w-5" />,
+      icon: <AlertTriangle className="h-4 w-4" />,
       onClick: handleRiskScore
     },
     {
       id: "network",
-      label: "Network View",
-      icon: <Network className="h-5 w-5" />,
+      label: "Manage Network",
+      icon: <Network className="h-4 w-4" />,
       onClick: handleNetwork
     },
     {
       id: "claims",
-      label: "Claims",
-      icon: <MessageSquare className="h-5 w-5" />,
+      label: "Create Claim",
+      icon: <Plus className="h-4 w-4" />,
       onClick: handleClaims
     }
   ];
@@ -139,13 +139,13 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
             <Button
               key={action.id}
               variant="outline"
-              className="h-16 px-3 flex flex-col items-center justify-center gap-2 group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
+              className="h-14 px-3 flex items-center justify-start gap-3 group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
               onClick={action.onClick}
             >
-              <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
+              <div className="text-blue-600 group-hover:text-blue-700 transition-colors flex-shrink-0">
                 {action.icon}
               </div>
-              <span className="font-medium text-xs text-center text-gray-900 group-hover:text-gray-800 leading-tight">{action.label}</span>
+              <span className="font-medium text-xs text-left text-gray-900 group-hover:text-gray-800 leading-tight truncate">{action.label}</span>
             </Button>
           ))}
         </div>
