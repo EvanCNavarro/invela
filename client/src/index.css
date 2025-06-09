@@ -491,6 +491,20 @@
   }
 }
 
+/* Dashboard Layout System */
+.dashboard-container {
+  @apply w-full max-w-7xl mx-auto;
+}
+
+.dashboard-grid {
+  @apply auto-rows-fr;
+  min-height: 200px;
+}
+
+.dashboard-grid > * {
+  @apply h-full;
+}
+
   .animate-pulse-subtle {
     animation: pulse-subtle 2s infinite ease-in-out;
   }
