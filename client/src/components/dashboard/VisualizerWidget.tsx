@@ -255,10 +255,17 @@ export function VisualizerWidget({
   }, [currentCompany]);
 
   // Filter visualizations based on company persona
+  // Invela admin gets access to ALL visualizations for comprehensive oversight
   const availableVisualizations = React.useMemo(() => {
     if (!currentCompany) return VISUALIZATION_OPTIONS;
     
     const companyCategory = currentCompany.category as 'Invela' | 'Bank' | 'FinTech';
+    
+    // Invela admin has access to every single insight graph
+    if (companyCategory === 'Invela') {
+      return VISUALIZATION_OPTIONS;
+    }
+    
     return VISUALIZATION_OPTIONS.filter(option => 
       option.personas.includes(companyCategory)
     );

@@ -46,10 +46,11 @@ const fintechVisualizationTypes = [
   { value: "consent_activity", label: "Consent Activity" },
 ];
 
-// Invela admin-specific visualization types
+// Invela admin-specific visualization types - COMPLETE ACCESS TO ALL INSIGHTS
 const invelaVisualizationTypes = [
   { value: "system_overview", label: "System Overview" },
   { value: "risk_monitoring", label: "Risk Monitoring" },
+  { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "network_visualization", label: "Network Visualization" },
   { value: "network_scatter_plot", label: "Network Scatter Plot" },
   { value: "network_treemap", label: "Network Treemap" },
