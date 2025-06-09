@@ -156,7 +156,9 @@ export function QuickActionsWidget({
         size="standard"
         error="Unable to load quick actions. Please refresh to try again."
         animationDelay={animationDelay}
-      />
+      >
+        <div />
+      </Widget>
     );
   }
 
@@ -170,30 +172,53 @@ export function QuickActionsWidget({
     <>
       <Widget
         title="Quick Actions"
-        icon={<Zap className="h-5 w-5" />}
+        subtitle={`${actions.length} actions available for ${persona} users`}
+        icon={<Zap className="widget-icon-header widget-color-primary" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
-        headerClassName="pb-4"
+        size="standard"
+        entranceAnimation="fadeIn"
+        animationDelay={animationDelay}
+        ariaLabel={`Quick actions for ${persona} users`}
         className="h-full"
       >
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {actions.map((action) => (
-            <Button
+        <div className="widget-grid-actions">
+          {actions.map((action, index) => (
+            <button
               key={action.id}
-              variant="outline"
-              className="h-14 px-3 flex items-center justify-between group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
+              className={cn(
+                "widget-button-action rounded-lg group",
+                "widget-entrance-animation"
+              )}
+              style={{ 
+                animationDelay: `${animationDelay + (index * 100)}ms` 
+              }}
               onClick={action.onClick}
+              aria-label={action.description || action.label}
+              title={action.description}
             >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="text-blue-600 group-hover:text-blue-700 transition-colors flex-shrink-0">
-                  {action.icon}
+              <div className="flex items-center widget-gap-compact min-w-0 flex-1">
+                <div className="widget-color-primary group-hover:widget-color-primary">
+                  <action.icon className="widget-icon-standard" />
                 </div>
-                <span className="font-medium text-xs text-left text-gray-900 group-hover:text-gray-800 leading-tight truncate">{action.label}</span>
+                <span className="text-widget-label text-left leading-tight truncate">
+                  {action.label}
+                </span>
               </div>
-              <ArrowRight className="h-3 w-3 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-1" />
-            </Button>
+              <ArrowRight className="widget-icon-chevron text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 widget-interaction-smooth flex-shrink-0" />
+            </button>
           ))}
         </div>
+
+        {/* Show loading indicator when actions are being processed */}
+        {actions.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <Loader2 className="widget-icon-large animate-spin text-muted-foreground mx-auto mb-2" />
+              <p className="text-widget-caption">Loading actions...</p>
+            </div>
+          </div>
+        )}
       </Widget>
 
       {/* Invite Modal for FinTech companies */}

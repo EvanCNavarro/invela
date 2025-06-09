@@ -1,89 +1,143 @@
 /**
  * ========================================
- * Company Snapshot Widget - Executive Overview
+ * Company Snapshot Widget - Enterprise Dashboard Component
  * ========================================
  * 
- * Comprehensive company overview widget providing key business metrics,
- * risk indicators, and network relationships for executive decision-making.
- * Features real-time data integration and interactive navigation capabilities.
+ * Comprehensive company overview widget providing persona-specific business metrics,
+ * risk indicators, and network relationships. Implements unified design token system
+ * with smooth animations, accessibility compliance, and responsive behavior.
  * 
  * Key Features:
- * - Real-time company performance metrics
- * - Risk score and trending indicators
- * - Network relationship visualization
- * - Interactive navigation to detailed views
- * - Responsive design with loading states
+ * - Persona-based content filtering (Invela, Bank, FinTech)
+ * - Real-time company performance metrics with unified risk calculations
+ * - Interactive network relationship visualization
+ * - Smooth entrance animations with staggered delays
+ * - Professional loading states with shimmer effects
+ * - Accessibility-compliant design with proper ARIA labels
+ * 
+ * Design System Integration:
+ * - widget-card-metric for consistent metric display
+ * - widget-grid-metrics for responsive layout
+ * - widget-entrance-animation for premium feel
+ * - widget-skeleton-shimmer for loading states
  * 
  * Data Sources:
  * - Company profile and business information
- * - Real-time risk assessment data
+ * - Real-time unified risk assessment data
  * - Network relationship analysis
- * - Performance trend calculations
+ * - Accreditation status verification
  * 
  * @module components/dashboard/CompanySnapshot
- * @version 1.0.0
- * @since 2025-05-23
+ * @version 3.0.0
+ * @since 2025-06-09
  */
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { 
   Building2, 
   Award,
   CheckCircle,
   Network,
-  TrendingUp
+  TrendingUp,
+  Loader2,
+  ExternalLink,
+  Shield,
+  Users
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { getCompanySnapshotForPersona, type Persona } from "@/lib/widgetPersonaConfig";
 
 interface CompanySnapshotProps {
   companyData: any;
   onToggle: () => void;
   isVisible: boolean;
+  /** Animation delay for staggered entrance effects */
+  animationDelay?: number;
 }
 
-export function CompanySnapshot({ companyData, onToggle, isVisible }: CompanySnapshotProps) {
+export function CompanySnapshot({ 
+  companyData, 
+  onToggle, 
+  isVisible, 
+  animationDelay = 0 
+}: CompanySnapshotProps) {
   const [, setLocation] = useLocation();
-  
-  // Fetch network relationships to get the count
-  const { data: relationships, isLoading: isLoadingRelationships } = useQuery<any[]>({
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // ========================================
+  // INITIALIZATION & PERSONA DETECTION
+  // ========================================
+
+  // Initialize loading state management
+  useEffect(() => {
+    console.log('[CompanySnapshot] Widget initializing with animation delay:', animationDelay);
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      console.log('[CompanySnapshot] Initialization complete');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
+
+  // Determine user persona from company data with fallback
+  const persona: Persona = (companyData as any)?.category || 'FinTech';
+  console.log('[CompanySnapshot] User persona detected:', persona, 'from company:', (companyData as any)?.name);
+
+  // ========================================
+  // DATA FETCHING WITH ENHANCED ERROR HANDLING
+  // ========================================
+
+  // Fetch network relationships with retry logic
+  const { data: relationships, isLoading: isLoadingRelationships, error: relationshipsError } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
     enabled: !!companyData?.id,
+    retry: 3,
+    retryDelay: 1000
   });
 
-  // Fetch accreditation information
+  // Fetch accreditation information with enhanced error handling
   const { data: accreditationData, isLoading: isLoadingAccreditation, error: accreditationError } = useQuery({
     queryKey: [`/api/companies/${companyData?.id}/accreditation`],
-    enabled: !!companyData?.id
+    enabled: !!companyData?.id,
+    retry: 2,
+    retryDelay: 800
   });
 
+  // ========================================
+  // PERSONA-BASED METRIC CONFIGURATION
+  // ========================================
 
+  // Get persona-specific metrics from configuration system
+  const personaMetrics = getCompanySnapshotForPersona(persona, {
+    companyData,
+    relationships,
+    accreditationData,
+    isLoading: isLoadingRelationships || isLoadingAccreditation
+  });
 
-  // For risk score changes, we'll use a static value of 11 as suggested
-  const riskScoreChanges = 11;
+  console.log('[CompanySnapshot] Loaded', personaMetrics.length, 'metrics for persona:', persona);
 
-  // Get the company's risk score
-  const riskScore = companyData?.riskScore || companyData?.risk_score || 0;
-  
-  // Get the accreditation status
-  const accreditationStatus = companyData?.accreditation_status || "PENDING";
-  const displayStatus = accreditationStatus === "VALID" ? "APPROVED" : accreditationStatus;
+  // ========================================
+  // NAVIGATION HANDLERS
+  // ========================================
 
-  const companyName = companyData?.name || "Loading...";
-  const relationshipsCount = relationships?.length || 0;
-
-  // Common styles
-  const cardClassName = "p-3 sm:p-4 border rounded-lg shadow-sm flex flex-col items-center";
-  const labelClassName = "text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-foreground text-center";
-  const valueClassName = "text-2xl sm:text-3xl font-bold text-black";
-  const iconClassName = "h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 text-foreground";
-
-  // Handle click on relationships card
-  const handleRelationshipsClick = () => {
-    setLocation("/network");
+  const handleMetricClick = (metricId: string) => {
+    console.log('[CompanySnapshot] Metric clicked:', metricId);
+    switch (metricId) {
+      case 'relationships':
+        setLocation("/network");
+        break;
+      case 'risk-score':
+        setLocation(`/network/company/${companyData?.id}?tab=risk`);
+        break;
+      case 'accreditation':
+        setLocation(`/network/company/${companyData?.id}?tab=profile`);
+        break;
+      default:
+        console.log('[CompanySnapshot] No navigation configured for metric:', metricId);
+    }
   };
 
   return (

@@ -41,7 +41,8 @@ import {
   CreditCard,
   Globe,
   Database,
-  Lock
+  Lock,
+  Award
 } from "lucide-react";
 
 // ========================================
