@@ -82,7 +82,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     },
     {
       id: "insights",
-      label: "Insights",
+      label: "View Insights",
       icon: <BarChart2 className="h-4 w-4" />,
       onClick: handleInsights
     },
@@ -106,7 +106,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
     },
     {
       id: "risk-score",
-      label: "Risk Analysis",
+      label: "View Risk Score",
       icon: <AlertTriangle className="h-4 w-4" />,
       onClick: handleRiskScore
     },
@@ -139,13 +139,16 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
             <Button
               key={action.id}
               variant="outline"
-              className="h-14 px-3 flex items-center justify-start gap-3 group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
+              className="h-14 px-3 flex items-center justify-between group hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
               onClick={action.onClick}
             >
-              <div className="text-blue-600 group-hover:text-blue-700 transition-colors flex-shrink-0">
-                {action.icon}
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="text-blue-600 group-hover:text-blue-700 transition-colors flex-shrink-0">
+                  {action.icon}
+                </div>
+                <span className="font-medium text-xs text-left text-gray-900 group-hover:text-gray-800 leading-tight truncate">{action.label}</span>
               </div>
-              <span className="font-medium text-xs text-left text-gray-900 group-hover:text-gray-800 leading-tight truncate">{action.label}</span>
+              <ArrowRight className="h-3 w-3 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2 hidden sm:block lg:hidden xl:block" />
             </Button>
           ))}
         </div>
