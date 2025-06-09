@@ -52,102 +52,119 @@ import { cn } from "@/lib/utils";
 interface QuickActionsWidgetProps {
   onToggle: () => void;
   isVisible: boolean;
+  /** Animation delay for staggered entrance effects */
+  animationDelay?: number;
 }
 
-export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetProps) {
+export function QuickActionsWidget({ 
+  onToggle, 
+  isVisible, 
+  animationDelay = 0 
+}: QuickActionsWidgetProps) {
   const [, setLocation] = useLocation();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  const handleCompanyProfile = () => {
-    // Navigate to company profile in network view - using Invela company ID (1)
-    setLocation("/network/company/1");
-  };
+  // ========================================
+  // DATA FETCHING & PERSONA DETECTION
+  // ========================================
 
-  const handleInsights = () => {
-    // Navigate to insights tab
-    setLocation("/insights");
-  };
+  // Fetch current company data to determine user persona
+  const { data: companyData, isLoading: companyLoading, error } = useQuery({
+    queryKey: ['/api/companies/current'],
+    retry: 3,
+    retryDelay: 1000
+  });
 
-  const handleUploadFile = () => {
-    // Navigate to file vault for upload functionality
-    setLocation("/file-vault");
-  };
+  // Initialize loading state management
+  useEffect(() => {
+    console.log('[QuickActions] Widget initializing with animation delay:', animationDelay);
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      console.log('[QuickActions] Initialization complete');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
 
-  const handleInviteRecipient = () => {
-    // Open the invite modal for FinTech companies
+  // Determine user persona from company data with fallback
+  const persona: Persona = (companyData as any)?.category || 'FinTech';
+  console.log('[QuickActions] User persona detected:', persona, 'from company:', (companyData as any)?.name);
+
+  // ========================================
+  // PERSONA-BASED ACTION CONFIGURATION
+  // ========================================
+
+  // Handle invite modal for recipient invitations
+  const handleInviteModal = () => {
+    console.log('[QuickActions] Opening invite modal');
     setInviteModalOpen(true);
   };
+  
+  // Get persona-specific actions from configuration system
+  const personaActions = getQuickActionsForPersona(persona, setLocation);
+  console.log('[QuickActions] Loaded', personaActions.length, 'actions for persona:', persona);
+  
+  // Map actions with proper event handlers
+  const actions = personaActions.map(action => ({
+    ...action,
+    onClick: action.id === 'invite-recipient' ? handleInviteModal : action.onClick
+  }));
 
-  const handleTaskCenter = () => {
-    // Navigate to task center
-    setLocation("/task-center");
-  };
+  // ========================================
+  // LOADING & ERROR STATE HANDLING
+  // ========================================
 
-  const handleRiskScore = () => {
-    // Navigate to network company profile risk tab for current company
-    setLocation("/network/company/1?tab=risk");
-  };
+  // Show enhanced loading skeleton during data fetch
+  if (companyLoading || isInitializing) {
+    console.log('[QuickActions] Rendering loading state');
+    return (
+      <Widget
+        title="Quick Actions"
+        icon={<Zap className="widget-icon-header" />}
+        onVisibilityToggle={onToggle}
+        isVisible={isVisible}
+        size="standard"
+        loadingState="shimmer"
+        isLoading={true}
+        animationDelay={animationDelay}
+        ariaLabel="Quick actions widget loading"
+      >
+        <div className="widget-grid-actions">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={`skeleton-${index}`}
+              className="widget-skeleton-shimmer h-14 rounded-lg"
+              style={{ 
+                animationDelay: `${animationDelay + (index * 100)}ms` 
+              }}
+            />
+          ))}
+        </div>
+      </Widget>
+    );
+  }
 
-  const handleNetwork = () => {
-    // Navigate to network visualization
-    setLocation("/network");
-  };
+  // Show error state with retry option
+  if (error) {
+    console.error('[QuickActions] Error loading data:', error);
+    return (
+      <Widget
+        title="Quick Actions"
+        icon={<Zap className="widget-icon-header" />}
+        onVisibilityToggle={onToggle}
+        isVisible={isVisible}
+        size="standard"
+        error="Unable to load quick actions. Please refresh to try again."
+        animationDelay={animationDelay}
+      />
+    );
+  }
 
-  const handleClaims = () => {
-    // Navigate to claims management
-    setLocation("/claims");
-  };
+  // ========================================
+  // MAIN RENDER - ENTERPRISE WIDGET
+  // ========================================
 
-  const actions = [
-    {
-      id: "company-profile",
-      label: "Company Profile",
-      icon: <Building2 className="h-4 w-4" />,
-      onClick: handleCompanyProfile
-    },
-    {
-      id: "insights",
-      label: "View Insights",
-      icon: <BarChart2 className="h-4 w-4" />,
-      onClick: handleInsights
-    },
-    {
-      id: "upload-file",
-      label: "Upload Files",
-      icon: <FolderOpen className="h-4 w-4" />,
-      onClick: handleUploadFile
-    },
-    {
-      id: "invite-recipient",
-      label: "Invite Recipient",
-      icon: <UserPlus className="h-4 w-4" />,
-      onClick: handleInviteRecipient
-    },
-    {
-      id: "task-center",
-      label: "View Tasks",
-      icon: <ListTodo className="h-4 w-4" />,
-      onClick: handleTaskCenter
-    },
-    {
-      id: "risk-score",
-      label: "View Risk Score",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      onClick: handleRiskScore
-    },
-    {
-      id: "network",
-      label: "Manage Network",
-      icon: <Network className="h-4 w-4" />,
-      onClick: handleNetwork
-    },
-    {
-      id: "claims",
-      label: "Create Claim",
-      icon: <Plus className="h-4 w-4" />,
-      onClick: handleClaims
-    }
-  ];
+  console.log('[QuickActions] Rendering main widget with', actions.length, 'actions for', persona);
 
   return (
     <>
