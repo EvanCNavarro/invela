@@ -57,44 +57,17 @@ export default function SimpleTreemap() {
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Debug logging to check data
-    console.log('[SimpleTreemap] Raw network data sample:', networkData.nodes?.slice(0, 2));
-    
     // Transform data for treemap
-    const treeData = networkData.nodes.map((node: any) => {
-      const transformed = {
-        name: node.name,
-        value: getRevenueValue(node.revenueTier || node.revenue_tier),
-        category: node.category,
-        revenue_tier: node.revenueTier || node.revenue_tier,
-        revenue_value: node.revenue || node.revenueValue,
-        risk_score: node.riskScore || node.risk_score,
-        num_employees: node.numEmployees || node.num_employees,
-        accreditation_status: node.accreditationStatus || node.accreditation_status,
-      };
-      
-      // Debug log first few transformations
-      if (treeData.length < 3) {
-        console.log('[SimpleTreemap] Transformed node:', {
-          original: {
-            name: node.name,
-            category: node.category,
-            revenue: node.revenue,
-            revenueTier: node.revenueTier,
-            revenue_tier: node.revenue_tier,
-            numEmployees: node.numEmployees,
-            num_employees: node.num_employees,
-            riskScore: node.riskScore,
-            risk_score: node.risk_score,
-            accreditationStatus: node.accreditationStatus,
-            accreditation_status: node.accreditation_status
-          },
-          transformed
-        });
-      }
-      
-      return transformed;
-    });
+    const treeData = networkData.nodes.map((node: any) => ({
+      name: node.name,
+      value: getRevenueValue(node.revenueTier || node.revenue_tier),
+      category: node.category,
+      revenue_tier: node.revenueTier || node.revenue_tier,
+      revenue_value: node.revenue || node.revenueValue,
+      risk_score: node.riskScore || node.risk_score,
+      num_employees: node.numEmployees || node.num_employees,
+      accreditation_status: node.accreditationStatus || node.accreditation_status,
+    }));
 
     // Create hierarchy
     const root = d3.hierarchy({ children: treeData } as any)
