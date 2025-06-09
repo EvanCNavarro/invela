@@ -229,11 +229,11 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       className
     )}>
       {/* 🚀 PHASE 3: Container for Toggle Button and Collapsible Content */}
-      <div className="relative">
+      <div className="relative pt-8">
         {/* Toggle Button - Tab-like styling */}
         <motion.button
           onClick={handleToggleCollapse}
-          className="absolute -top-10 right-4 bg-white hover:bg-gray-50 border border-gray-200 border-b-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-t-lg px-3 py-2 shadow-sm z-20"
+          className="absolute -top-8 right-4 bg-white hover:bg-gray-50 border border-gray-200 border-b-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-t-lg px-3 py-2 shadow-sm z-20"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{
