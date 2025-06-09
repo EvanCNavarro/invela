@@ -9,6 +9,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { 
   Building2, 
   Shield,
@@ -22,7 +23,6 @@ import {
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { cn } from "@/lib/utils";
 
 interface CompanySnapshotProps {
   companyData: any;
