@@ -96,16 +96,10 @@
 
 .widget-metric-card {
   padding: 1rem;
-  background: white;
+  background: #fafafa;
   border: 1px solid var(--widget-border);
   border-radius: calc(var(--widget-border-radius) - 0.25rem);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  transition: var(--widget-transition);
-}
-
-.widget-metric-card:hover {
-  background: #fafafa;
-  border-color: var(--widget-icon-primary);
 }
 
 .widget-icon-container {
@@ -487,8 +481,8 @@
 
 /* Widget Card Variants */
 .widget-card-metric {
-  @apply p-4 rounded-lg border bg-card shadow-sm;
-  @apply hover:shadow-md transition-shadow duration-200;
+  @apply p-4 rounded-lg border shadow-sm;
+  background: #fafafa;
 }
 
 .widget-card-interactive {
