@@ -262,11 +262,11 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-48">
+          <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 5, right: 5, left: 5, bottom: 0 }} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 5 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >
@@ -275,7 +275,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
                   dataKey="period" 
                   tick={{ fontSize: 11 }}
                   stroke="#6b7280"
-                  height={25}
+                  height={20}
                   tickFormatter={(value) => {
                     try {
                       const date = new Date(value);
