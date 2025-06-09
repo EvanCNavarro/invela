@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  Loader2
+  Loader2,
+  Gauge
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
@@ -246,7 +247,7 @@ export function CompanySnapshot({
             {/* Risk Score */}
             <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <Shield className={`h-4 w-4 ${personaColors.iconColor}`} />
+                <AlertTriangle className={`h-4 w-4 ${personaColors.iconColor}`} />
                 <span className="widget-text">Risk Score</span>
               </div>
               <div className="widget-number text-2xl mb-1">{riskScore}</div>
