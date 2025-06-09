@@ -86,7 +86,7 @@ export function NetworkScatterPlotInsight({ className }: NetworkScatterPlotInsig
 
   // Fetch companies with risk data
   const { data: companies, isLoading } = useQuery<any[]>({
-    queryKey: ['/api/companies-with-risk'],
+    queryKey: ['/api/companies'],
     enabled: true
   });
 
@@ -99,22 +99,22 @@ export function NetworkScatterPlotInsight({ className }: NetworkScatterPlotInsig
         const matchesType = filters.companyTypes.length === 0 || 
           filters.companyTypes.includes(company.category);
         const matchesAccreditation = filters.accreditationStatus.length === 0 || 
-          filters.accreditationStatus.includes(company.accreditationStatus);
-        const matchesRisk = company.riskScore >= filters.riskRange[0] && 
-          company.riskScore <= filters.riskRange[1];
-        const matchesRevenue = company.revenueTier >= filters.revenueRange[0] && 
-          company.revenueTier <= filters.revenueRange[1];
+          filters.accreditationStatus.includes(company.accreditation_status || company.accreditationStatus);
+        const matchesRisk = (company.risk_score || company.riskScore || 0) >= filters.riskRange[0] && 
+          (company.risk_score || company.riskScore || 0) <= filters.riskRange[1];
+        const matchesRevenue = (company.revenue_tier || company.revenueTier || 1) >= filters.revenueRange[0] && 
+          (company.revenue_tier || company.revenueTier || 1) <= filters.revenueRange[1];
         
         return matchesType && matchesAccreditation && matchesRisk && matchesRevenue;
       })
       .map(company => ({
         id: company.id,
         name: company.name,
-        riskScore: company.riskScore || 0,
-        revenueTier: company.revenueTier || 1,
-        category: company.category,
-        accreditationStatus: company.accreditationStatus,
-        relationshipCount: company.relationshipCount || 1
+        riskScore: company.risk_score || company.riskScore || 0,
+        revenueTier: company.revenue_tier || company.revenueTier || 1,
+        category: company.category || 'Unknown',
+        accreditationStatus: company.accreditation_status || company.accreditationStatus || 'PENDING',
+        relationshipCount: 1 // Default since we don't have this data directly
       }));
   }, [companies, filters]);
 

@@ -74,7 +74,7 @@ export function NetworkTreemapInsight({ className }: NetworkTreemapInsightProps)
 
   // Fetch companies with risk data
   const { data: companies, isLoading } = useQuery<any[]>({
-    queryKey: ['/api/companies-with-risk'],
+    queryKey: ['/api/companies'],
     enabled: true
   });
 
@@ -110,7 +110,7 @@ export function NetworkTreemapInsight({ className }: NetworkTreemapInsightProps)
 
       // Level 2: Risk Levels within Category
       const riskGroups = d3.group(categoryCompanies, d => {
-        const score = d.riskScore || 0;
+        const score = d.risk_score || d.riskScore || 0;
         if (score === 0) return 'none';
         if (score <= 33) return 'low';
         if (score <= 66) return 'medium';
@@ -134,7 +134,7 @@ export function NetworkTreemapInsight({ className }: NetworkTreemapInsightProps)
         };
 
         // Level 3: Accreditation Status within Risk Level
-        const accreditationGroups = d3.group(riskCompanies, d => d.accreditationStatus || 'Unknown');
+        const accreditationGroups = d3.group(riskCompanies, d => d.accreditation_status || d.accreditationStatus || 'PENDING');
 
         accreditationGroups.forEach((accreditationCompanies, accreditationStatus) => {
           const accreditationNode: TreemapNode = {
