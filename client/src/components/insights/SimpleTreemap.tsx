@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useQuery } from '@tanstack/react-query';
+import { 
+  INSIGHT_COLORS, 
+  getCategoryColor, 
+  getRiskColor, 
+  getRevenueTierColor,
+  getAccreditationColor 
+} from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface CompanyData {
   id: number;
@@ -29,10 +37,15 @@ export default function SimpleTreemap() {
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
 
   // Fetch network data
-  const { data: networkData, refetch } = useQuery({
+  const { data: networkData, refetch, isLoading } = useQuery({
     queryKey: ['/api/network/visualization'],
     refetchOnMount: true,
   });
+
+  // Show standardized loading skeleton
+  if (isLoading) {
+    return <InsightLoadingSkeleton variant="network" animationDelay={0} />;
+  }
 
   // Force refetch on component mount
   useEffect(() => {
