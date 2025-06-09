@@ -148,7 +148,7 @@ export function QuickActionsWidget({ onToggle, isVisible }: QuickActionsWidgetPr
                 </div>
                 <span className="font-medium text-xs text-left text-gray-900 group-hover:text-gray-800 leading-tight truncate">{action.label}</span>
               </div>
-              <ArrowRight className="h-3 w-3 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-2 hidden sm:block lg:hidden xl:block" />
+              <ArrowRight className="h-3 w-3 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0 ml-1" />
             </Button>
           ))}
         </div>
