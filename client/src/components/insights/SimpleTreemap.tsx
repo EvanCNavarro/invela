@@ -113,6 +113,7 @@ export default function SimpleTreemap() {
 
     // Mouse event handlers with smart tooltip positioning
     const handleMouseOver = (event: any, d: any) => {
+      console.log('[SimpleTreemap] Hovered node data:', d.data);
       setHoveredNode(d.data);
       
       // Fade out all other rectangles
