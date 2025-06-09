@@ -1,26 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { NetworkNode } from '@/components/network/types';
 import { Loader2 } from 'lucide-react';
-import { ChartErrorBoundary } from '@/components/ui/chart-error-boundary';
-import { ResponsiveChartWrapper } from '@/components/ui/responsive-chart-wrapper';
-import { ApexChartContainer } from '@/components/ui/responsive-chart-container';
+import { INSIGHT_COLORS } from '@/lib/insightDesignSystem';
 
 // Define the timeframe options
 export type TimeframeOption = '1day' | '30days' | '1year';
-
-// Chart data point interface
-interface ChartDataPoint {
-  x: string | Date;
-  y: number;
-}
-
-// Series data for the chart
-interface ChartSeries {
-  name: string;
-  data: ChartDataPoint[];
-}
 
 // Props for the chart component
 interface ConsentActivityChartProps {
