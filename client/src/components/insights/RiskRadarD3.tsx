@@ -86,7 +86,7 @@ function RiskRadarD3Internal({
   // Company type checks
   const isBankOrInvela = company?.category === 'Bank' || company?.category === 'Invela';
 
-  // Get companies data
+  // Get companies data - only fetch if we need the dropdown
   const { data: allCompaniesData = [], isLoading: isAllCompaniesLoading } = useQuery<CompanyWithRiskClusters[]>({
     queryKey: ['/api/companies-with-risk'],
     queryFn: async () => {
@@ -96,9 +96,9 @@ function RiskRadarD3Internal({
       }
       return response.json();
     },
-    enabled: isBankOrInvela && !!company?.id,
-    staleTime: 0,
-    gcTime: 0
+    enabled: showDropdown && isBankOrInvela && !!company?.id,
+    staleTime: 30000,
+    gcTime: 300000
   });
 
   // Find the selected company and its risk clusters with proper fallback logic
