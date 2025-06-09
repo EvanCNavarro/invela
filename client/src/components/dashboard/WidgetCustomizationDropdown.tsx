@@ -19,8 +19,8 @@
  * @since 2025-06-09
  */
 
-import { useMemo } from 'react';
-import { Settings, Check } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Settings, Check, X, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -105,6 +105,13 @@ export function WidgetCustomizationDropdown({
 }: WidgetCustomizationDropdownProps) {
   
   // ========================================
+  // STATE MANAGEMENT
+  // ========================================
+  
+  const [hoveredWidget, setHoveredWidget] = useState<keyof WidgetVisibility | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  // ========================================
   // COMPUTED STATE
   // ========================================
   
@@ -127,7 +134,7 @@ export function WidgetCustomizationDropdown({
   // ========================================
   
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
@@ -153,24 +160,41 @@ export function WidgetCustomizationDropdown({
             <DropdownMenuPrimitive.CheckboxItem
               key={widgetKey}
               checked={visibleWidgets[widgetKey]}
-              onCheckedChange={() => onToggleWidget(widgetKey)}
+              onCheckedChange={(checked) => {
+                onToggleWidget(widgetKey);
+                // Keep dropdown open after selection
+                setTimeout(() => setDropdownOpen(true), 0);
+              }}
+              onMouseEnter={() => setHoveredWidget(widgetKey)}
+              onMouseLeave={() => setHoveredWidget(null)}
               className={cn(
-                "relative flex cursor-pointer select-none items-center rounded-lg py-3 pl-10 pr-4 text-sm outline-none transition-all duration-200 hover:bg-gray-50 focus:bg-gray-50",
+                "relative flex cursor-pointer select-none items-center rounded-lg py-3 pl-10 pr-4 text-sm outline-none transition-all duration-200",
+                "hover:bg-black hover:bg-opacity-5",
                 visibleWidgets[widgetKey] 
                   ? "bg-blue-50 border border-blue-200 shadow-sm" 
                   : "border border-transparent"
               )}
             >
               <span className="absolute left-3 flex h-4 w-4 items-center justify-center">
-                <DropdownMenuPrimitive.ItemIndicator>
-                  <Check className="h-4 w-4 text-blue-600 font-semibold" strokeWidth={3} />
-                </DropdownMenuPrimitive.ItemIndicator>
+                {hoveredWidget === widgetKey ? (
+                  // Show X for checked items on hover, dot for unchecked
+                  visibleWidgets[widgetKey] ? (
+                    <X className="h-4 w-4 text-red-500" strokeWidth={2} />
+                  ) : (
+                    <Circle className="h-4 w-4 text-gray-400 fill-gray-400" strokeWidth={0} />
+                  )
+                ) : (
+                  // Normal state - checkmark for selected items
+                  <DropdownMenuPrimitive.ItemIndicator>
+                    <Check className="h-4 w-4 text-blue-600" strokeWidth={3} />
+                  </DropdownMenuPrimitive.ItemIndicator>
+                )}
               </span>
               <span className={cn(
-                "transition-all duration-200",
+                "transition-all duration-200 text-sm font-semibold",
                 visibleWidgets[widgetKey] 
-                  ? "font-bold text-gray-900" 
-                  : "font-medium text-gray-500"
+                  ? "text-gray-900" 
+                  : "text-gray-500"
               )}>
                 {WIDGET_LABELS[widgetKey]}
               </span>
