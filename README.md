@@ -41,11 +41,23 @@ if (false) {  // Temporarily force development mode
 ### Core Technologies
 - **Frontend**: React 18 + TypeScript + Wouter routing
 - **Backend**: Express.js + TypeScript + WebSocket
-- **Database**: PostgreSQL + Drizzle ORM
+- **Database**: PostgreSQL + Drizzle ORM (32 tables, multi-tenant)
 - **Styling**: Tailwind CSS + Radix UI components
 - **State**: TanStack Query + Zustand
-- **Real-time**: WebSocket communication
-- **Design System**: Storybook documentation
+- **Real-time**: WebSocket communication (5-client connection pool)
+- **Design System**: Storybook components
+
+### System Overview
+**Multi-Tenant Architecture**: Company-scoped data isolation with session-based authentication
+**Assessment Types**: KYB (Know Your Business), KY3P (Know Your Third Party), Open Banking, Security
+**Risk Engine**: Multi-dimensional scoring with weighted calculations (KYB 40%, KY3P 35%, Open Banking 15%, Additional 10%)
+**Real-time Updates**: WebSocket broadcasting for task progress, risk scores, and file operations
+
+### Quick Reference
+- **API Documentation**: [API_REFERENCE.md](./API_REFERENCE.md)
+- **Architecture Details**: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- **Development Standards**: [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)
+- **Setup Guide**: [SETUP_GUIDE.md](./SETUP_GUIDE.md)
 
 ### Layered Architecture
 ```
