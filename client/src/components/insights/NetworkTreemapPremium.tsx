@@ -305,15 +305,26 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     currentData.leaves().forEach((d, i) => {
       const gradient = defs.append('linearGradient')
         .attr('id', `gradient-${i}`)
-        .attr('gradientTransform', 'rotate(45)');
+        .attr('gradientTransform', 'rotate(135)');
+      
+      const baseColor = d.data.color || colorSchemes.primary.start;
+      const lighterColor = d3.interpolate(baseColor, '#ffffff')(0.3);
+      const darkerColor = d3.interpolate(baseColor, '#000000')(0.2);
       
       gradient.append('stop')
         .attr('offset', '0%')
-        .attr('stop-color', d.data.color || colorSchemes.primary.start);
+        .attr('stop-color', lighterColor)
+        .attr('stop-opacity', 0.95);
+      
+      gradient.append('stop')
+        .attr('offset', '60%')
+        .attr('stop-color', baseColor)
+        .attr('stop-opacity', 0.85);
       
       gradient.append('stop')
         .attr('offset', '100%')
-        .attr('stop-color', d3.interpolate(d.data.color || colorSchemes.primary.start, '#ffffff')(0.4));
+        .attr('stop-color', darkerColor)
+        .attr('stop-opacity', 0.75);
     });
 
     // Create rectangles with animation
@@ -327,12 +338,13 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
       .attr('width', 0)
       .attr('height', 0)
       .attr('fill', (d, i) => `url(#gradient-${i})`)
-      .attr('stroke', '#1e293b')
-      .attr('stroke-width', 1.5)
-      .attr('rx', 4)
-      .attr('ry', 4)
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2)
+      .attr('rx', 8)
+      .attr('ry', 8)
       .style('cursor', d => d.data.children && d.data.children.length > 0 ? 'pointer' : 'default')
-      .style('opacity', 0.8);
+      .style('opacity', 0.9)
+      .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
 
     // Animate rectangles in
     rects.transition()
@@ -348,7 +360,8 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
           .transition()
           .duration(200)
           .style('opacity', 1)
-          .attr('stroke-width', 2.5);
+          .attr('stroke-width', 3)
+          .style('filter', 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2))');
         
         handleMouseEnter(event as any, d.data);
       })
@@ -356,8 +369,9 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
         d3.select(this)
           .transition()
           .duration(200)
-          .style('opacity', 0.8)
-          .attr('stroke-width', 1.5);
+          .style('opacity', 0.9)
+          .attr('stroke-width', 2)
+          .style('filter', 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))');
         
         handleMouseLeave();
       })
@@ -366,16 +380,18 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
     // Add text labels
     const texts = leaves.append('text')
       .attr('x', d => ((d.x1 || 0) - (d.x0 || 0)) / 2)
-      .attr('y', d => ((d.y1 || 0) - (d.y0 || 0)) / 2)
+      .attr('y', d => ((d.y1 || 0) - (d.y0 || 0)) / 2 - 8)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .style('fill', '#ffffff')
       .style('font-size', d => {
         const width = (d.x1 || 0) - (d.x0 || 0);
         const height = (d.y1 || 0) - (d.y0 || 0);
-        return Math.min(width / 8, height / 4, 14) + 'px';
+        return Math.min(width / 6, height / 3, 16) + 'px';
       })
-      .style('font-weight', '600')
+      .style('font-weight', '700')
+      .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
+      .style('text-shadow', '0 1px 3px rgba(0, 0, 0, 0.5)')
       .style('opacity', 0)
       .style('pointer-events', 'none');
 
@@ -579,8 +595,16 @@ export function NetworkTreemapPremium({ className }: NetworkTreemapPremiumProps)
             </div>
           </div>
           
-          <div className="text-sm text-gray-600">
-            Click rectangles to drill down • Hover for details
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <span>Click rectangles to drill down • Hover for details</span>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-xs text-gray-500">
+                Sizing by {sizeMetric === 'revenue' ? 'Revenue' : 
+                          sizeMetric === 'risk_score' ? 'Risk Score' : 
+                          sizeMetric === 'company_size' ? 'Employee Count' : 'Relationships'}
+              </span>
+            </div>
           </div>
         </div>
 
