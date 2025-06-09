@@ -60,7 +60,7 @@ const RiskMonitoringWidget: React.FC<RiskMonitoringWidgetProps> = ({
               <div className="relative inline-flex w-2 h-2 bg-red-500 rounded-full"></div>
             </div>
           </div>
-          <span className="widget-text text-red-800">{blockedCount} Data Recipients are blocked</span>
+          <span className="widget-text">{blockedCount} Data Recipients are blocked</span>
         </div>
       }
     >
