@@ -54,9 +54,7 @@ const ConsentActivityInsight = React.lazy(() =>
   }))
 );
 const RiskMonitoringInsight = React.lazy(() => 
-  import('@/components/insights/RiskMonitoringInsight').then(module => ({ 
-    default: module.RiskMonitoringInsight 
-  }))
+  import('@/components/insights/RiskMonitoringInsight')
 );
 const NetworkScatterPlotInsight = React.lazy(() => 
   import('@/components/insights/NetworkScatterPlotInsight').then(module => ({ 
@@ -69,8 +67,8 @@ const NetworkTreemapInsight = React.lazy(() =>
   }))
 );
 const NetworkChordInsight = React.lazy(() => 
-  import('@/components/insights/NetworkChordInsight').then(module => ({ 
-    default: module.NetworkChordInsight 
+  import('@/components/insights/NetworkChordSimple').then(module => ({ 
+    default: module.NetworkChordSimple 
   }))
 );
 const NetworkForceDirectedInsight = React.lazy(() => 
