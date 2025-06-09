@@ -338,19 +338,13 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base font-semibold">Risk Radar (ApexCharts Improved)</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground mt-1">
-              Multi-dimensional risk assessment
-            </CardDescription>
-          </div>
+        <div className="flex items-center justify-center">
           {showDropdown && isBankOrInvela && filteredCompanies.length > 0 && (
             <Select
               value={selectedCompanyId?.toString()}
               onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
             >
-              <SelectTrigger className="w-48 bg-white border border-gray-200 shadow-sm hover:bg-gray-50">
+              <SelectTrigger className="w-80 bg-white border border-gray-200 shadow-sm hover:bg-gray-50">
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg">
@@ -365,12 +359,12 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="w-full h-[300px] flex justify-center items-center">
+        <div className="w-full h-[450px] flex justify-center items-center">
           <ReactApexChart
             options={chartOptions}
             series={series}
             type="radar"
-            height="280"
+            height="420"
             width="100%"
           />
         </div>

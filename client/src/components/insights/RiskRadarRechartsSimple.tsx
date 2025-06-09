@@ -131,19 +131,13 @@ export function RiskRadarRechartsSimple({
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base font-semibold">Risk Radar (Recharts Interactive)</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {displayCompany?.name || 'No company selected'} - Risk Assessment
-            </p>
-          </div>
+        <div className="flex items-center justify-center">
           {showDropdown && companiesWithClusters.length > 1 && (
             <Select 
               value={selectedCompanyId?.toString() || ''} 
               onValueChange={(value) => setSelectedCompanyId(Number(value))}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-80">
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent>
@@ -158,9 +152,9 @@ export function RiskRadarRechartsSimple({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-[300px]">
+        <div className="h-[450px]">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+            <RadarChart data={chartData} margin={{ top: 40, right: 60, bottom: 40, left: 60 }}>
               <PolarGrid stroke="#e2e8f0" />
               <PolarAngleAxis 
                 dataKey="category" 

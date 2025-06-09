@@ -97,9 +97,9 @@ export function RiskRadarD3Simple({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const width = 300;
-    const height = 300;
-    const margin = 40;
+    const width = 450;
+    const height = 450;
+    const margin = 60;
     const radius = Math.min(width, height) / 2 - margin;
     const centerX = width / 2;
     const centerY = height / 2;
