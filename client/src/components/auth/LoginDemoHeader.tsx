@@ -257,7 +257,7 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
 
         {/* 🚀 PHASE 2: Animated Container with Motion */}
         <motion.div 
-          className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden"
+          className="overflow-hidden"
         initial={false}
         animate={{
           height: isCollapsed ? ANIMATION_CONFIG.collapsedHeight : ANIMATION_CONFIG.expandedHeight
@@ -273,12 +273,12 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       >
 
         {/* 🚀 PHASE 2: Button Content with Conditional Rendering */}
-        <div className="p-1">
+        <div className="p-0">
           <AnimatePresence mode="wait">
             {!isCollapsed && (
               <motion.div 
                 key="buttons-content"
-                className="grid grid-cols-1 md:grid-cols-3 gap-1"
+                className="grid grid-cols-1 md:grid-cols-3 gap-3"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
