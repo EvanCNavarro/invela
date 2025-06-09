@@ -106,7 +106,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
               <CheckCircle className="h-4 w-4 text-gray-700" />
               <span className="widget-text">Completed</span>
             </div>
-            <div className="widget-number text-green-700">{taskSummary.completed}</div>
+            <div className="widget-number">{taskSummary.completed}</div>
           </div>
           
           <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
@@ -114,7 +114,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
               <Clock className="h-4 w-4 text-gray-700" />
               <span className="widget-text">Incomplete</span>
             </div>
-            <div className="widget-number text-amber-700">{taskSummary.incomplete}</div>
+            <div className="widget-number">{taskSummary.incomplete}</div>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export function TaskSummaryWidget({ onToggle, isVisible }: TaskSummaryWidgetProp
                   <div className="widget-text truncate">
                     {task.title}
                   </div>
-                  <div className="widget-text text-gray-500">
+                  <div className="widget-text">
                     {task.task_type?.replace('_', ' ')}
                   </div>
                 </div>
