@@ -201,6 +201,296 @@
     }
   }
 
+/* ========================================
+   WIDGET DESIGN TOKENS - ENTERPRISE SYSTEM
+   ======================================== */
+
+/* Widget Typography Scale */
+.text-widget-title {
+  @apply text-lg font-semibold leading-tight text-foreground;
+}
+
+.text-widget-subtitle {
+  @apply text-sm font-medium text-muted-foreground leading-relaxed;
+}
+
+.text-widget-value {
+  @apply text-2xl font-bold leading-none text-foreground;
+}
+
+.text-widget-value-large {
+  @apply text-3xl font-bold leading-none text-foreground;
+}
+
+.text-widget-label {
+  @apply text-xs font-medium text-foreground leading-tight;
+}
+
+.text-widget-body {
+  @apply text-sm text-foreground leading-relaxed;
+}
+
+.text-widget-caption {
+  @apply text-xs text-muted-foreground leading-relaxed;
+}
+
+/* Widget Spacing System */
+.widget-padding-header {
+  @apply px-6 py-4;
+}
+
+.widget-padding-content {
+  @apply px-6 pb-6;
+}
+
+.widget-padding-compact {
+  @apply px-4 py-3;
+}
+
+.widget-gap-standard {
+  @apply gap-4;
+}
+
+.widget-gap-compact {
+  @apply gap-3;
+}
+
+.widget-gap-tight {
+  @apply gap-2;
+}
+
+/* Widget Icon Sizing */
+.widget-icon-standard {
+  @apply h-4 w-4 flex-shrink-0;
+}
+
+.widget-icon-header {
+  @apply h-5 w-5 flex-shrink-0;
+}
+
+.widget-icon-chevron {
+  @apply h-3 w-3 flex-shrink-0;
+}
+
+.widget-icon-large {
+  @apply h-6 w-6 flex-shrink-0;
+}
+
+/* Widget Semantic Colors */
+.widget-color-primary {
+  @apply text-primary hover:text-primary/80;
+}
+
+.widget-color-success {
+  @apply text-emerald-600;
+}
+
+.widget-color-warning {
+  @apply text-amber-600;
+}
+
+.widget-color-error {
+  @apply text-red-600;
+}
+
+.widget-color-info {
+  @apply text-blue-600;
+}
+
+.widget-bg-success {
+  @apply bg-emerald-50 border-emerald-200;
+}
+
+.widget-bg-warning {
+  @apply bg-amber-50 border-amber-200;
+}
+
+.widget-bg-error {
+  @apply bg-red-50 border-red-200;
+}
+
+.widget-bg-info {
+  @apply bg-blue-50 border-blue-200;
+}
+
+/* Widget Button Variants */
+.widget-button-action {
+  @apply h-14 px-4 flex items-center justify-between group;
+  @apply border border-input bg-background;
+  @apply hover:bg-accent hover:border-accent-foreground/20;
+  @apply hover:shadow-sm hover:-translate-y-0.5;
+  @apply transition-all duration-200 ease-in-out;
+  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+}
+
+.widget-button-secondary {
+  @apply px-3 py-2 text-sm font-medium;
+  @apply border border-input bg-background text-foreground;
+  @apply hover:bg-accent hover:text-accent-foreground;
+  @apply transition-colors duration-200;
+  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1;
+}
+
+/* Widget Card Variants */
+.widget-card-metric {
+  @apply p-4 rounded-lg border bg-card shadow-sm;
+  @apply hover:shadow-md transition-shadow duration-200;
+}
+
+.widget-card-interactive {
+  @apply p-4 rounded-lg border bg-card shadow-sm cursor-pointer;
+  @apply hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5;
+  @apply transition-all duration-200 ease-in-out;
+  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+}
+
+.widget-card-status {
+  @apply px-3 py-2 rounded-lg border;
+  @apply flex items-center gap-2;
+  @apply transition-colors duration-200;
+}
+
+/* Widget Grid Layouts */
+.widget-grid-actions {
+  @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3;
+}
+
+.widget-grid-metrics {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.widget-grid-compact {
+  @apply grid grid-cols-2 gap-3;
+}
+
+/* Widget Animations & Interactions */
+.widget-entrance-animation {
+  @apply opacity-0 translate-y-4;
+  animation: widget-fade-in 0.4s ease-out forwards;
+}
+
+.widget-hover-lift {
+  @apply hover:shadow-md hover:-translate-y-0.5;
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.widget-interaction-smooth {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.widget-focus-ring {
+  @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  @apply focus-visible:outline-none;
+}
+
+/* Widget Loading States */
+.widget-skeleton {
+  @apply animate-pulse rounded-md bg-muted;
+}
+
+.widget-skeleton-shimmer {
+  @apply relative overflow-hidden bg-muted rounded-md;
+}
+
+.widget-skeleton-shimmer::after {
+  content: '';
+  @apply absolute inset-0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: widget-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Widget Responsive Patterns */
+.widget-responsive-text {
+  @apply text-sm sm:text-base;
+}
+
+.widget-responsive-padding {
+  @apply px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-4;
+}
+
+.widget-responsive-gap {
+  @apply gap-2 sm:gap-3 lg:gap-4;
+}
+
+/* Widget Keyframe Animations */
+@keyframes widget-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes widget-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes widget-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(var(--primary), 0);
+  }
+}
+
+/* Widget Status Indicators */
+.widget-status-success {
+  @apply widget-card-status widget-bg-success widget-color-success;
+}
+
+.widget-status-warning {
+  @apply widget-card-status widget-bg-warning widget-color-warning;
+}
+
+.widget-status-error {
+  @apply widget-card-status widget-bg-error widget-color-error;
+}
+
+.widget-status-info {
+  @apply widget-card-status widget-bg-info widget-color-info;
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  .widget-entrance-animation,
+  .widget-hover-lift,
+  .widget-interaction-smooth {
+    animation: none;
+    transition: none;
+  }
+  
+  .widget-skeleton-shimmer::after {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .widget-card-metric,
+  .widget-card-interactive {
+    @apply border-2;
+  }
+  
+  .widget-button-action,
+  .widget-button-secondary {
+    @apply border-2;
+  }
+}
+
   .animate-pulse-subtle {
     animation: pulse-subtle 2s infinite ease-in-out;
   }
