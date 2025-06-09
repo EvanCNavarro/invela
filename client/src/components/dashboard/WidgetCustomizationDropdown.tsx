@@ -20,17 +20,17 @@
  */
 
 import { useMemo } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 
 // ========================================
 // TYPE DEFINITIONS
@@ -142,25 +142,34 @@ export function WidgetCustomizationDropdown({
       
       <DropdownMenuContent 
         align="end" 
-        className="w-56"
+        className="w-64 p-2"
         sideOffset={4}
       >
-        <DropdownMenuLabel>Available Widgets</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="px-2 py-2 text-sm font-semibold text-gray-900">Available Widgets</DropdownMenuLabel>
+        <DropdownMenuSeparator className="my-2" />
         
-        {availableWidgets.map((widgetKey) => (
-          <DropdownMenuCheckboxItem
-            key={widgetKey}
-            checked={visibleWidgets[widgetKey]}
-            onCheckedChange={() => onToggleWidget(widgetKey)}
-            className={cn(
-              "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-              visibleWidgets[widgetKey] && "bg-blue-50 text-blue-900"
-            )}
-          >
-            {WIDGET_LABELS[widgetKey]}
-          </DropdownMenuCheckboxItem>
-        ))}
+        <div className="space-y-1">
+          {availableWidgets.map((widgetKey) => (
+            <DropdownMenuPrimitive.CheckboxItem
+              key={widgetKey}
+              checked={visibleWidgets[widgetKey]}
+              onCheckedChange={() => onToggleWidget(widgetKey)}
+              className={cn(
+                "relative flex cursor-pointer select-none items-center rounded-lg py-3 pl-10 pr-4 text-sm outline-none transition-all duration-200 hover:bg-gray-50 focus:bg-gray-50",
+                visibleWidgets[widgetKey] 
+                  ? "bg-blue-50 border border-blue-200 shadow-sm" 
+                  : "border border-transparent"
+              )}
+            >
+              <span className="absolute left-3 flex h-4 w-4 items-center justify-center">
+                <DropdownMenuPrimitive.ItemIndicator>
+                  <Check className="h-4 w-4 text-blue-600 font-semibold" strokeWidth={3} />
+                </DropdownMenuPrimitive.ItemIndicator>
+              </span>
+              <span className="font-medium text-gray-900">{WIDGET_LABELS[widgetKey]}</span>
+            </DropdownMenuPrimitive.CheckboxItem>
+          ))}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
