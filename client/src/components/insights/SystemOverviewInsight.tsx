@@ -4,6 +4,14 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Loader2, Users, Shield, Building, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  INSIGHT_COLORS, 
+  getCategoryColor, 
+  getRiskColor, 
+  getRevenueTierColor,
+  getAccreditationColor 
+} from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface SystemOverviewInsightProps {
   className?: string;
