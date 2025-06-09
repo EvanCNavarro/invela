@@ -73,11 +73,13 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
   // Load ApexCharts components only on client side
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      console.log('[RiskRadarApexImproved] Loading ApexCharts component...');
       import('react-apexcharts').then((mod) => {
+        console.log('[RiskRadarApexImproved] ApexCharts loaded successfully');
         ReactApexChart = mod.default;
         setChartComponentLoaded(true);
       }).catch(err => {
-        console.error("Error loading ApexCharts:", err);
+        console.error('[RiskRadarApexImproved] Error loading ApexCharts:', err);
       });
     }
   }, []);
