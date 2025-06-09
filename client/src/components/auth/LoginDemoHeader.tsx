@@ -228,32 +228,30 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       "w-full relative", // Added relative for tab positioning
       className
     )}>
-      {/* 🚀 PHASE 3: External Toggle Button - Above Container */}
-      <div className="flex justify-end mb-2">
-        <motion.button
-          onClick={handleToggleCollapse}
-          className="bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{
-            duration: 0.2,
-            ease: "easeInOut"
+      {/* 🚀 PHASE 3: Floating Toggle Button - Completely Outside */}
+      <motion.button
+        onClick={handleToggleCollapse}
+        className="absolute -top-12 right-0 bg-transparent hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-all duration-200 rounded-lg p-2 z-20"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{
+          duration: 0.2,
+          ease: "easeInOut"
+        }}
+        aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
+      >
+        <motion.div
+          animate={{ 
+            rotate: isCollapsed ? 180 : 0 
           }}
-          aria-label={isCollapsed ? "Show header actions" : "Hide header actions"}
+          transition={{
+            duration: ANIMATION_CONFIG.duration,
+            ease: ANIMATION_CONFIG.ease
+          }}
         >
-          <motion.div
-            animate={{ 
-              rotate: isCollapsed ? 180 : 0 
-            }}
-            transition={{
-              duration: ANIMATION_CONFIG.duration,
-              ease: ANIMATION_CONFIG.ease
-            }}
-          >
-            <ChevronUp className="w-5 h-5 text-gray-600" />
-          </motion.div>
-        </motion.button>
-      </div>
+          <ChevronUp className="w-5 h-5 text-gray-600" />
+        </motion.div>
+      </motion.button>
 
       {/* 🚀 PHASE 2: Animated Container with Motion */}
       <motion.div 
