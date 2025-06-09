@@ -188,106 +188,85 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
     <div className={cn("space-y-6", className)}>
       {/* Summary Stats Cards - Company Overview Style */}
       {summaryStats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {/* Data Providers Card */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <Building className="h-4 w-4 text-purple-600" />
+          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <div className="w-3 h-3 bg-purple-600 rounded-sm" />
               <span className="text-sm font-medium text-gray-600">Data Providers</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">{summaryStats.dataProviders}</div>
-            <div className="text-sm text-gray-500">Companies</div>
+            <div className="text-2xl font-bold text-gray-900">{summaryStats.dataProviders}</div>
           </div>
           
           {/* Data Recipients Card */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <Users className="h-4 w-4 text-green-600" />
+          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <div className="w-3 h-3 bg-green-600 rounded-sm" />
               <span className="text-sm font-medium text-gray-600">Data Recipients</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">{summaryStats.dataRecipients}</div>
-            <div className="text-sm text-gray-500">Companies</div>
+            <div className="text-2xl font-bold text-gray-900">{summaryStats.dataRecipients}</div>
           </div>
           
           {/* Accredited Recipients Card */}
-          <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <Shield className="h-4 w-4 text-blue-600" />
+          <div className="p-3 bg-white rounded-lg border shadow-sm text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <div className="w-3 h-3 bg-blue-600 rounded-sm" />
               <span className="text-sm font-medium text-gray-600">Accredited Recipients</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">{summaryStats.accreditedDataRecipients}</div>
-            <div className="text-sm text-gray-500">Companies</div>
+            <div className="text-2xl font-bold text-gray-900">{summaryStats.accreditedDataRecipients}</div>
           </div>
         </div>
       )}
 
-      {/* Chart with Legend at Top Right */}
-      <div className="bg-white rounded-lg border p-6">
-        {/* Chart Header with Time Selector and Legend */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center justify-between w-full">
-            <ToggleGroup
-              type="single"
-              value={selectedTimeframe}
-              onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
-              className="border rounded-md p-1 bg-gray-50"
-              variant="outline"
+      {/* Chart without Legend */}
+      <div className="bg-white rounded-lg border p-4">
+        {/* Chart Header with Time Selector */}
+        <div className="flex items-center justify-start mb-3">
+          <ToggleGroup
+            type="single"
+            value={selectedTimeframe}
+            onValueChange={(value) => value && setSelectedTimeframe(value as TimeframeOption)}
+            className="border rounded-md p-1 bg-gray-50"
+            variant="outline"
+          >
+            <ToggleGroupItem 
+              value="1day" 
+              aria-label="1 Day view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
             >
-              <ToggleGroupItem 
-                value="1day" 
-                aria-label="1 Day view" 
-                className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                1D
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="30days" 
-                aria-label="30 Days view" 
-                className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                30D
-              </ToggleGroupItem>
-              <ToggleGroupItem 
-                value="1year" 
-                aria-label="1 Year view" 
-                className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
-              >
-                1Y
-              </ToggleGroupItem>
-            </ToggleGroup>
-            
-            {/* Legend at Top Right */}
-            <div className="flex items-center gap-6">
-              <div className="flex items-center">
-                <div className="w-3 h-3 mr-2 rounded-sm bg-purple-600" />
-                <span className="text-sm font-medium text-gray-700">Data Providers</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 mr-2 rounded-sm bg-green-600" />
-                <span className="text-sm font-medium text-gray-700">Data Recipients</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 mr-2 rounded-sm bg-blue-600" />
-                <span className="text-sm font-medium text-gray-700">Accredited Recipients</span>
-              </div>
-            </div>
-          </div>
+              1D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="30days" 
+              aria-label="30 Days view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              30D
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="1year" 
+              aria-label="1 Year view" 
+              className="text-sm px-3 py-1.5 data-[state=on]:bg-blue-100 data-[state=on]:text-blue-700 data-[state=on]:border-blue-300"
+            >
+              1Y
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         {/* Chart Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center h-80">
+          <div className="flex items-center justify-center h-72">
             <div className="flex items-center gap-2 text-gray-500">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Loading enrollment data...</span>
             </div>
           </div>
         ) : chartData.length > 0 ? (
-          <div className="h-96">
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 20, right: 10, left: 10, bottom: 80 }} 
+                margin={{ top: 10, right: 10, left: 10, bottom: 40 }} 
                 maxBarSize={50}
                 barCategoryGap="20%"
               >
@@ -352,7 +331,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-80">
+          <div className="flex items-center justify-center h-72">
             <div className="text-center text-gray-500">
               <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">No enrollment data available</p>
