@@ -101,9 +101,25 @@ function RiskRadarD3Internal({
     gcTime: 0
   });
 
-  // Find the selected company and its risk clusters
-  const displayCompany = allCompaniesData.find(c => c.id === selectedCompanyId) || company;
-  const riskClusters = displayCompany?.risk_clusters as RiskClusters | undefined;
+  // Find the selected company and its risk clusters with proper fallback logic
+  const displayCompany = React.useMemo(() => {
+    if (selectedCompanyId) {
+      return allCompaniesData.find(c => c.id === selectedCompanyId) || company;
+    }
+    return company;
+  }, [allCompaniesData, selectedCompanyId, company]);
+
+  // Extract risk clusters with multiple fallback patterns
+  const riskClusters = React.useMemo(() => {
+    if (!displayCompany) return null;
+    
+    // Try multiple data source patterns
+    const clusters = displayCompany.risk_clusters || 
+                    (displayCompany as any).riskClusters || 
+                    displayCompany.relatedCompany?.riskClusters;
+    
+    return clusters as RiskClusters | undefined;
+  }, [displayCompany]);
 
   // Transform risk clusters data for D3
   const chartData = React.useMemo(() => {
