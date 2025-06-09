@@ -126,24 +126,6 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
     personas: ['Invela', 'Bank', 'FinTech']
   },
   {
-    value: 'network_force_directed',
-    label: 'Force-Directed Network',
-    category: 'Network',
-    personas: ['Invela', 'Bank']
-  },
-  {
-    value: 'network_chord',
-    label: 'Network Chord Diagram',
-    category: 'Network',
-    personas: ['Invela', 'Bank']
-  },
-  {
-    value: 'network_scatter_plot',
-    label: 'Network Scatter Plot',
-    category: 'Network',
-    personas: ['Invela', 'Bank']
-  },
-  {
     value: 'network_treemap',
     label: 'Network Tree Map',
     category: 'Network',
