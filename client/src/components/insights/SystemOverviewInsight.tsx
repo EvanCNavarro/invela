@@ -219,7 +219,7 @@ export function SystemOverviewInsight({ className = '' }: SystemOverviewInsightP
       )}
 
       {/* Chart */}
-      <div className="bg-white rounded-lg border p-3">
+      <div className="bg-white rounded-lg border pt-3 px-3 pb-0">
         {/* Chart Header with Time Selector on Right */}
         <div className="flex items-center justify-end mb-3">
           <ToggleGroup
