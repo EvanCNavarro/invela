@@ -21,7 +21,7 @@ import {
   Loader2,
   Gauge,
   Medal,
-  Share2
+  Network
 } from "lucide-react";
 import { Widget } from "@/components/dashboard/Widget";
 import { Badge } from "@/components/ui/badge";
@@ -239,8 +239,8 @@ export function CompanySnapshot({
             {/* Network Size */}
             <div className="widget-card-metric text-center">
               <div className="flex items-center justify-center space-x-2 mb-3">
-                <Share2 className={`widget-icon-standard ${personaColors.iconColor}`} />
-                <span className="widget-text font-semibold">Network Risk</span>
+                <Network className={`widget-icon-standard ${personaColors.iconColor}`} />
+                <span className="widget-text font-semibold">Network</span>
               </div>
               <div className="widget-number text-2xl mb-1">{networkCount}</div>
               <div className="widget-text text-gray-500 text-sm">Companies</div>
