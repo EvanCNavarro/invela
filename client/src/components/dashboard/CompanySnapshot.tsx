@@ -138,7 +138,7 @@ export function CompanySnapshot({
   return (
     <Widget
       title="Company Overview"
-      icon={<Building2 className={`h-5 w-5 ${personaColors.iconColor}`} />}
+      icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
       onVisibilityToggle={onToggle}
       isVisible={isVisible}
     >
