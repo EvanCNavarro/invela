@@ -539,16 +539,7 @@ export default function DashboardPage(): JSX.Element {
             )}
             
 
-            
-            {/* System Overview Widget for Invela - Full width */}
-            {visibleWidgets.systemOverview && companyData?.category === 'Invela' && (
-              <div className="col-span-3 mt-4">
-                <SystemOverviewWidget
-                  onToggle={() => toggleWidget('systemOverview')}
-                  isVisible={visibleWidgets.systemOverview}
-                />
-              </div>
-            )}
+
           </div>
 
         </PageTemplate>
