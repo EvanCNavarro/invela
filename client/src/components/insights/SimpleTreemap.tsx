@@ -57,17 +57,44 @@ export default function SimpleTreemap() {
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
+    // Debug logging to check data
+    console.log('[SimpleTreemap] Raw network data sample:', networkData.nodes?.slice(0, 2));
+    
     // Transform data for treemap
-    const treeData = networkData.nodes.map((node: any) => ({
-      name: node.name,
-      value: getRevenueValue(node.revenueTier),
-      category: node.category,
-      revenue_tier: node.revenueTier,
-      revenue_value: node.revenue || node.revenueValue,
-      risk_score: node.riskScore,
-      num_employees: node.numEmployees || node.num_employees,
-      accreditation_status: node.accreditationStatus,
-    }));
+    const treeData = networkData.nodes.map((node: any) => {
+      const transformed = {
+        name: node.name,
+        value: getRevenueValue(node.revenueTier || node.revenue_tier),
+        category: node.category,
+        revenue_tier: node.revenueTier || node.revenue_tier,
+        revenue_value: node.revenue || node.revenueValue,
+        risk_score: node.riskScore || node.risk_score,
+        num_employees: node.numEmployees || node.num_employees,
+        accreditation_status: node.accreditationStatus || node.accreditation_status,
+      };
+      
+      // Debug log first few transformations
+      if (treeData.length < 3) {
+        console.log('[SimpleTreemap] Transformed node:', {
+          original: {
+            name: node.name,
+            category: node.category,
+            revenue: node.revenue,
+            revenueTier: node.revenueTier,
+            revenue_tier: node.revenue_tier,
+            numEmployees: node.numEmployees,
+            num_employees: node.num_employees,
+            riskScore: node.riskScore,
+            risk_score: node.risk_score,
+            accreditationStatus: node.accreditationStatus,
+            accreditation_status: node.accreditation_status
+          },
+          transformed
+        });
+      }
+      
+      return transformed;
+    });
 
     // Create hierarchy
     const root = d3.hierarchy({ children: treeData } as any)
@@ -303,16 +330,16 @@ export default function SimpleTreemap() {
               {hoveredNode.name}
             </div>
             
-            {/* Key Details Grid */}
+            {/* Key Details Grid - 6 specific fields in order */}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Category</div>
-                <div className="font-medium">{hoveredNode.category}</div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Type</div>
+                <div className="font-medium">{getRoleType(hoveredNode.category)}</div>
               </div>
               
               <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Role</div>
-                <div className="font-medium">{getRoleType(hoveredNode.category)}</div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">Size</div>
+                <div className="font-medium">{hoveredNode.num_employees?.toLocaleString() || 'N/A'} employees</div>
               </div>
               
               <div>
@@ -321,12 +348,7 @@ export default function SimpleTreemap() {
               </div>
               
               <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Company Size</div>
-                <div className="font-medium">{hoveredNode.num_employees?.toLocaleString() || 'N/A'} employees</div>
-              </div>
-              
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Revenue Value</div>
+                <div className="text-gray-400 text-xs uppercase tracking-wide">ARR</div>
                 <div className="font-medium text-blue-400">{formatRevenueValue(hoveredNode.revenue_value)}</div>
               </div>
               
@@ -335,7 +357,7 @@ export default function SimpleTreemap() {
                 <div className="font-medium">{hoveredNode.risk_score || 'N/A'}</div>
               </div>
               
-              <div className="col-span-2">
+              <div>
                 <div className="text-gray-400 text-xs uppercase tracking-wide">Accreditation</div>
                 <div className="font-medium mt-1">
                   <span className={`px-2 py-1 rounded-full text-xs ${
