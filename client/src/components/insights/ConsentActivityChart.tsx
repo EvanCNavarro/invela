@@ -27,6 +27,7 @@ interface ConsentActivityChartProps {
   companyId?: number;
   timeframe: TimeframeOption;
   showDropdown?: boolean;
+  showLegend?: boolean;
   width?: number;
   height?: number;
 }
@@ -215,6 +216,7 @@ function ConsentActivityChartInternal({
   companyId,
   timeframe = '1year',
   showDropdown = true,
+  showLegend = true,
   width = 800,
   height = 500
 }: ConsentActivityChartProps) {
@@ -409,6 +411,7 @@ function ConsentActivityChartInternal({
       }
     },
     legend: {
+      show: showLegend,
       position: 'top',
       horizontalAlign: 'right',
       offsetY: 15,
