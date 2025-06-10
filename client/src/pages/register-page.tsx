@@ -1019,7 +1019,7 @@ export default function RegisterPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-full px-3 hover:bg-transparent"
+                            className="h-full px-3 hover:bg-transparent focus:outline-none focus:ring-0 select-none"
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? (
