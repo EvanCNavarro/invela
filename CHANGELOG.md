@@ -2,6 +2,17 @@
 
 ## Recent Updates (June 2025)
 
+### UI Polish and Selection Highlight Fixes (June 10, 2025)
+- **Selection highlight elimination**: Removed blue selection highlights from all interactive elements (buttons, dropdowns, toggles)
+- **Password visibility toggles**: Fixed login and register page password show/hide buttons with comprehensive anti-selection styling
+- **Development tools button**: Enhanced "Show Development Tools" / "Hide Development Tools" button with smooth hover interactions
+- **Insights tab cleanup**: Completely removed Network Scatter Plot visualization option from insights page
+- **Treemap naming consistency**: Standardized "Network Treemap" naming across dashboard and insights components
+- **Dashboard skeleton removal**: Eliminated handmade skeleton loading components that showed empty rectangular boxes
+- **WebKit compatibility**: Added comprehensive browser-specific CSS properties (WebkitUserSelect, WebkitTapHighlightColor)
+- **Focus ring optimization**: Enhanced focus management with focus-visible variants for better accessibility
+- **Interactive element polish**: Applied anti-selection styling to Button, DropdownMenuTrigger, and custom components
+
 ### Tab Unlocking System Transformation (June 9, 2025)
 - **FinTech tab access transformation**: Eliminated progressive tab unlocking system for all 1,112 FinTech companies
 - **Immediate access implementation**: All FinTech companies now have instant access to all 5 tabs (Dashboard, Task Center, File Vault, Insights, Network)

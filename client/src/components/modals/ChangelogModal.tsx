@@ -105,6 +105,26 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'ui-polish-selection-highlights-2025-06-10',
+    date: '2025-06-10',
+    type: 'design',
+    title: 'UI Polish and Selection Highlight Fixes',
+    description: 'Comprehensive elimination of selection highlights and visual polish improvements across all interactive elements',
+    details: [
+      'Removed blue selection highlights from all interactive elements (buttons, dropdowns, toggles)',
+      'Fixed login and register page password show/hide buttons with anti-selection styling',
+      'Enhanced "Show Development Tools" button with smooth hover interactions',
+      'Completely removed Network Scatter Plot visualization option from insights page',
+      'Standardized "Network Treemap" naming across dashboard and insights components',
+      'Eliminated handmade skeleton loading components that showed empty rectangular boxes',
+      'Added comprehensive browser-specific CSS properties (WebkitUserSelect, WebkitTapHighlightColor)',
+      'Enhanced focus management with focus-visible variants for better accessibility',
+      'Applied anti-selection styling to Button, DropdownMenuTrigger, and custom components'
+    ],
+    version: '2.2.2',
+    audience: 'product'
+  },
+  {
     id: 'tab-unlocking-transformation-2025-06-09',
     date: '2025-06-09',
     type: 'feature',
