@@ -115,7 +115,7 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
   },
   {
     value: 'network_treemap',
-    label: 'Network Tree Map',
+    label: 'Network Treemap',
     category: 'Network',
     personas: ['Invela', 'Bank']
   },

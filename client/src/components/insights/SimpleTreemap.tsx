@@ -358,25 +358,8 @@ export default function SimpleTreemap() {
 
   return (
     <div className="w-full h-full relative">
-      {/* Standardized Controls */}
-      <div className="flex gap-3 mb-4 p-4 bg-white border-b border-gray-200">
-        <StandardizedDropdown
-          options={viewModeOptions}
-          value={viewMode}
-          onValueChange={setViewMode}
-          placeholder="Select view mode..."
-          className="w-48"
-        />
-        <StandardizedTimeSelector
-          value={timeFrame}
-          onValueChange={setTimeFrame}
-          className="w-32"
-          variant="compact"
-        />
-      </div>
-
       {/* Treemap Visualization */}
-      <div className="w-full bg-white relative" style={{ height: 'calc(100% - 80px)' }}>
+      <div className="w-full bg-white relative h-full">
         <svg
           ref={svgRef}
           width={dimensions.width}
