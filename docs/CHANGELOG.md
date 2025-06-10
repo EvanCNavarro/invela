@@ -4,6 +4,33 @@
 
 This document tracks major development updates and feature releases for the enterprise risk assessment platform. Updates are categorized and maintained in chronological order.
 
+### Version 2.2.3 - 2025-06-10
+
+#### 📊 Risk Radar Default Visualization & Icon Standardization
+- **Enhanced Visualization Experience**
+  - Set risk radar as the default visualization for all company types (FinTech, Bank, Invela) across dashboard and insights page
+  - Updated VisualizerWidget persona defaults to prioritize risk radar chart over other visualization options
+  - Implemented universal access to risk cluster analysis as the primary data view for immediate user insights
+
+- **Visual Consistency Improvements**
+  - Standardized Company Snapshot widget icons to consistently use blue color (`text-blue-600`) regardless of persona type
+  - Fixed Network, Risk Score, and Accreditation icons to remain blue instead of changing to persona-specific colors
+  - Maintained persona-based avatar gradients while unifying functional icon colors for better visual coherence and user experience
+
+### Version 2.2.2 - 2025-06-10
+
+#### 🎨 UI Polish and Selection Highlight Elimination
+- **Comprehensive Selection Highlight Removal**
+  - Eliminated blue selection highlights from all interactive elements including buttons, dropdowns, and toggles
+  - Applied comprehensive anti-selection styling with WebKit-specific CSS properties
+  - Enhanced focus management using focus-visible variants for improved accessibility without visual pollution
+
+- **Interface Component Polish**
+  - Fixed login and register page password visibility toggles with anti-selection styling
+  - Enhanced development tools button with smooth hover interactions and proper state management
+  - Removed handmade skeleton loading components that displayed empty rectangular placeholder boxes
+  - Standardized "Network Treemap" naming consistency across dashboard and insights components
+
 ### Version 2.0.1 - 2025-06-06
 
 #### 🔧 FileVault Authentication & Display Resolution

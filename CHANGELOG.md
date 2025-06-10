@@ -2,6 +2,13 @@
 
 ## Recent Updates (June 2025)
 
+### Risk Radar Visualization and Icon Standardization (June 10, 2025)
+- **Risk radar default visualization**: Made risk radar the default chart for all company types across dashboard and insights page
+- **Universal visualization access**: Updated both VisualizerWidget and insights page to default to risk radar for FinTech, Bank, and Invela personas
+- **Company snapshot icon standardization**: Fixed icon colors in Company Snapshot widget to consistently use blue (`text-blue-600`) regardless of persona type
+- **Icon color consistency**: Network, Risk Score, and Accreditation icons now remain blue for all company types instead of changing to persona colors
+- **Visual coherence improvement**: Maintained persona-based avatar gradients while standardizing functional icon colors for better UX
+
 ### UI Polish and Selection Highlight Fixes (June 10, 2025)
 - **Selection highlight elimination**: Removed blue selection highlights from all interactive elements (buttons, dropdowns, toggles)
 - **Password visibility toggles**: Fixed login and register page password show/hide buttons with comprehensive anti-selection styling
