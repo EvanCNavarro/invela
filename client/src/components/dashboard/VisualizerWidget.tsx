@@ -223,7 +223,7 @@ export function VisualizerWidget({
       setLoadingProgress(30);
       setIsInitializing(false);
       console.log('[VisualizerWidget] Initialization phase complete');
-    }, animationDelay + 600); // Ensure loading shows for widgets with animation delays
+    }, 300); // Same timer as other widgets
     
     return () => clearTimeout(initTimer);
   }, [animationDelay]);
@@ -504,7 +504,7 @@ export function VisualizerWidget({
   };
 
   // Show enhanced loading skeleton during data fetch - following QuickActions pattern
-  if (companyLoading || isInitializing) {
+  if (companyLoading || isInitializing || !currentCompany) {
     console.log('[VisualizerWidget] Rendering loading skeleton');
     return (
       <div 
