@@ -339,33 +339,7 @@ export function VisualizerWidget({
     </div>
   );
 
-  // ========================================
-  // LOADING STATE HANDLERS
-  // ========================================
 
-  // Show enhanced loading skeleton during initialization and data loading
-  if (isInitializing || companyLoading) {
-    console.log('[VisualizerWidget] Rendering loading state - Progress:', loadingProgress);
-    return (
-      <div 
-        className={`widget-entrance-animation ${className}`}
-        style={{ animationDelay: `${animationDelay}ms` }}
-      >
-        <Widget
-          title="Visualizer"
-          icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
-          onVisibilityToggle={onToggle}
-          isVisible={isVisible}
-          loadingState="shimmer"
-          isLoading={true}
-          animationDelay={animationDelay}
-          ariaLabel="Visualizer widget loading"
-        >
-          {renderGenericVisualizationSkeleton()}
-        </Widget>
-      </div>
-    );
-  }
 
   // Show error state with retry option
   if (companyError) {
