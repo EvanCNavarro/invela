@@ -257,7 +257,19 @@ router.post('/demo/company/create', async (req, res) => {
     // ========================================
     
     // Transform the company data using our utility
-    const transformedData = transformCompanyData(req.body);
+    // Map companyName to name field for transformation compatibility
+    const normalizedPayload = {
+      ...req.body,
+      name: req.body.companyName || req.body.name
+    };
+    
+    console.log('[DemoAPI] 🔧 Payload normalization:', {
+      original: req.body,
+      normalized: normalizedPayload,
+      hasName: !!normalizedPayload.name
+    });
+    
+    const transformedData = transformCompanyData(normalizedPayload);
     
     console.log('[DemoAPI] 🔄 Company data transformation completed:', {
       originalPersona: req.body.persona,

@@ -1,0 +1,56 @@
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/dashboard/modal_dash_1.png
+[QuickActions] User persona detected: Invela from company: Invela
+[QuickActions] Loaded 4 actions for persona: Invela
+[QuickActions] Rendering loading state
+[VisualizerWidget] Rendering loading skeleton
+[QuickActions] Widget initializing with animation delay: 0
+[VisualizerWidget] Initializing with animation delay: 400
+[VisualizerWidget] Company data loaded: Invela
+[VisualizerWidget] State update: 
+Object {selectedVisualization: "system_overview", companyCategory: "Invela", availableCount: 5, currentTime: "2025-06-10T11:10:34.334Z"}
+[CurrentCompany] Setting company context: 1
+[Tutorial:TutorialManager] Found tutorial content for dashboard with 3 steps
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Starting intelligent preload for tutorial tab: dashboard
+[IntelligentPreloader:TutorialPreloader] Starting intelligent preload for tutorial modal: dashboard 
+[IntelligentPreloader:TutorialGenerator] Generating tutorial image sources for tab: dashboard 
+[IntelligentPreloader:TutorialGenerator] Generated 3 tutorial image sources for dashboard from directory: dashboard 
+[Tutorial:TutorialManager] 🚀 Initializing for tab: dashboard
+[Tutorial:TutorialManager] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TutorialManager] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] Normalizing tab name from 'dashboard' to canonical form
+[Tutorial:TabTutorials] Tab name already in canonical form: 'dashboard'
+[Tutorial:TabTutorials] 🚀 Initializing for tab: dashboard (original: dashboard)
+[Tutorial:TabTutorials] Current state for dashboard: 
+Object {tutorialEnabled: true, isLoading: false, error: null, currentStep: 0, totalSteps: 4, …}
+[Tutorial:TutorialManager] Base route check: true for dashboard (path: /dashboard)
+[Tutorial:TutorialManager] Available tutorial tabs: claims, risk-score-configuration, risk-score, insights, network, file-vault, company-profile, playground, dashboard
+[Tutorial:TutorialManager] 🎨 Rendering tutorial step 1 of 3 for dashboard
+[Tutorial:TutorialManager] Current tutorial state 
+Object {tabName: "dashboard", normalizedTabName: "dashboard", currentStep: 0, totalSteps: 4, enabled: true, …}
+[Tutorial:TutorialManager] Loading image for dashboard, step 1: /assets/tutorials/dashboard/modal_dash_1.png
+[VisualizerWidget] Rendering loading skeleton
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 134.60ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_3.jpg"}
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 142.10ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_1.jpg"}
+[IntelligentPreloader:TutorialPreloader] Progressive JPEG loaded completed in 266.50ms 
+Object {src: "/assets/tutorials/dashboard/modal_dash_2.jpg"}
+[IntelligentPreloader:TutorialPreloader] Tutorial preload completed for dashboard completed in 267.00ms 
+Object {total: 3, successful: 3, failed: 0}
