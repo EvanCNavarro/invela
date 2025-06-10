@@ -214,6 +214,17 @@ export function VisualizerWidget({
     retryDelay: 1000
   });
 
+  // Fetch visualization data - this creates the actual loading state
+  const { data: allCompanies, isLoading: isLoadingCompanies } = useQuery<any[]>({
+    queryKey: ['/api/companies/all'],
+    enabled: !!currentCompany
+  });
+
+  const { data: allAccreditations, isLoading: isLoadingAccreditations } = useQuery<any[]>({
+    queryKey: ['/api/accreditations/all'],
+    enabled: !!currentCompany
+  });
+
   // Initialize loading state management with progress tracking
   useEffect(() => {
     console.log('[VisualizerWidget] Initializing with animation delay:', animationDelay);
@@ -503,8 +514,8 @@ export function VisualizerWidget({
     }
   };
 
-  // Show enhanced loading skeleton during data fetch - following QuickActions pattern
-  if (companyLoading || isInitializing || !currentCompany) {
+  // Show enhanced loading skeleton during data fetch - following CompanySnapshot pattern
+  if (isLoadingCompanies || isLoadingAccreditations || isInitializing) {
     console.log('[VisualizerWidget] Rendering loading skeleton');
     return (
       <div 
