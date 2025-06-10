@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ConsentActivityChart, TimeframeOption } from './ConsentActivityChart';
 import { Loader2 } from 'lucide-react';
+import { INSIGHT_COLORS } from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface ConsentActivityInsightProps {
   className?: string;
@@ -37,7 +39,7 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
   
   // Determine if current company is a FinTech (which affects dropdown visibility)
   useEffect(() => {
-    if (currentCompany) {
+    if (currentCompany?.id) {
       console.log('[ConsentActivityInsight] Current company category:', currentCompany.category);
       const isFintech = currentCompany.category === 'FinTech';
       
@@ -47,21 +49,22 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
       // Default to current company's ID
       setSelectedCompanyId(currentCompany.id);
     }
-  }, [currentCompany]);
+  }, [currentCompany?.id, currentCompany?.category]);
   
   // Filter companies for the dropdown to only include FinTechs if needed
-  const filteredCompanies = React.useMemo(() => {
+  const filteredCompanies = useMemo(() => {
     if (!companies || companies.length === 0) return [];
     
     // Include network relationships if available
-    if (networkData && networkData.nodes && networkData.nodes.length > 0) {
+    if (networkData?.nodes && Array.isArray(networkData.nodes) && networkData.nodes.length > 0) {
       const networkNodes = networkData.nodes
-        .filter((node: any) => node.category === 'FinTech')
+        .filter((node: any) => node?.category === 'FinTech')
         .map((node: any) => ({
           id: node.id,
-          name: node.name,
+          name: node.name || 'Unknown Company',
           category: node.category
-        }));
+        }))
+        .filter((node: any) => node.id && node.name);
       
       // Combine with companies and remove duplicates
       const allCompanies = [...companies, ...networkNodes];
@@ -70,12 +73,12 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
       );
       
       // Sort alphabetically by name
-      return uniqueCompanies.sort((a, b) => a.name.localeCompare(b.name));
+      return uniqueCompanies.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
     
     // If no network data, just show all companies
-    return companies.sort((a, b) => a.name.localeCompare(b.name));
-  }, [companies, networkData]);
+    return companies.filter(c => c?.name).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [companies, networkData?.nodes]);
   
   // Handle company selection change
   const handleCompanyChange = (companyId: string) => {
@@ -91,13 +94,9 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
     }
   };
   
-  // Loading state
+  // Show standardized loading skeleton
   if (isCurrentCompanyLoading || (showCompanyDropdown && isCompaniesLoading)) {
-    return (
-      <div className="flex items-center justify-center h-[500px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <InsightLoadingSkeleton variant="chart" animationDelay={100} />;
   }
   
   return (
@@ -106,11 +105,11 @@ export function ConsentActivityInsight({ className = '' }: ConsentActivityInsigh
         {/* Data Legend - first in order */}
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: INSIGHT_COLORS.primary.blue }}></div>
             <span className="text-gray-600">Active Consents</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: INSIGHT_COLORS.primary.green }}></div>
             <span className="text-gray-600">Newly Granted</span>
           </div>
         </div>
