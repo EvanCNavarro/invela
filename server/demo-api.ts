@@ -446,32 +446,44 @@ router.post('/demo/company/create', async (req, res) => {
     });
 
     // ========================================
-    // ACCREDITATION CREATION
+    // ACCREDITATION CREATION (CONDITIONAL)
     // ========================================
 
-    try {
-      console.log('[DemoAPI] Creating accreditation history for demo company:', {
-        companyId: company.id,
-        category: personaConfig.category,
-        riskScore: businessDetails.risk_score
-      });
+    // Only create accreditation for personas that should already be accredited
+    const shouldCreateAccreditation = ['data-provider', 'accredited-data-recipient', 'invela-admin'].includes(transformedData.persona);
 
-      const accreditationInfo = await AccreditationService.createAccreditation({
-        companyId: company.id,
-        riskScore: businessDetails.risk_score || 0,
-        riskClusters: businessDetails.risk_clusters || {},
-        category: personaConfig.category
-      });
+    if (shouldCreateAccreditation) {
+      try {
+        console.log('[DemoAPI] Creating accreditation history for pre-accredited persona:', {
+          companyId: company.id,
+          persona: transformedData.persona,
+          category: personaConfig.category,
+          riskScore: businessDetails.risk_score
+        });
 
-      console.log('[DemoAPI] ✅ Accreditation created successfully:', {
-        accreditationId: accreditationInfo.id,
-        accreditationNumber: accreditationInfo.accreditationNumber,
-        expiresDate: accreditationInfo.expiresDate?.toISOString() || 'permanent',
-        isPermanent: accreditationInfo.isPermanent
+        const accreditationInfo = await AccreditationService.createAccreditation({
+          companyId: company.id,
+          riskScore: businessDetails.risk_score || 0,
+          riskClusters: businessDetails.risk_clusters || {},
+          category: personaConfig.category
+        });
+
+        console.log('[DemoAPI] ✅ Accreditation created successfully:', {
+          accreditationId: accreditationInfo.id,
+          accreditationNumber: accreditationInfo.accreditationNumber,
+          expiresDate: accreditationInfo.expiresDate?.toISOString() || 'permanent',
+          isPermanent: accreditationInfo.isPermanent
+        });
+      } catch (accreditationError) {
+        console.error('[DemoAPI] ❌ Failed to create accreditation, continuing with demo creation:', accreditationError);
+        // Continue with demo creation even if accreditation fails
+      }
+    } else {
+      console.log('[DemoAPI] ⏭️ Skipping accreditation creation for new data recipient - will be created after form completion:', {
+        companyId: company.id,
+        persona: transformedData.persona,
+        accreditationStatus: personaConfig.accreditation_status
       });
-    } catch (accreditationError) {
-      console.error('[DemoAPI] ❌ Failed to create accreditation, continuing with demo creation:', accreditationError);
-      // Continue with demo creation even if accreditation fails
     }
 
     // ========================================
