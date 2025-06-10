@@ -214,14 +214,9 @@ export function VisualizerWidget({
     retryDelay: 1000
   });
 
-  // Fetch visualization data - this creates the actual loading state
-  const { data: allCompanies, isLoading: isLoadingCompanies } = useQuery<any[]>({
-    queryKey: ['/api/companies/all'],
-    enabled: !!currentCompany
-  });
-
-  const { data: allAccreditations, isLoading: isLoadingAccreditations } = useQuery<any[]>({
-    queryKey: ['/api/accreditations/all'],
+  // Fetch visualization data - this creates the actual loading state like CompanySnapshot
+  const { data: allCompanies, isLoading: isLoadingVisualizationData } = useQuery<any[]>({
+    queryKey: ['/api/companies/all', 'visualizer'], // Widget-specific cache key
     enabled: !!currentCompany
   });
 
@@ -515,7 +510,7 @@ export function VisualizerWidget({
   };
 
   // Show enhanced loading skeleton during data fetch - following CompanySnapshot pattern
-  if (isLoadingCompanies || isLoadingAccreditations || isInitializing) {
+  if (isLoadingVisualizationData || isInitializing) {
     console.log('[VisualizerWidget] Rendering loading skeleton');
     return (
       <div 
