@@ -90,10 +90,7 @@ import { cn } from "@/lib/utils";
 import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { NetworkVisualization } from "@/components/network";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
-import { 
-  DashboardSkeleton, 
-  FinTechDashboardSkeleton 
-} from "@/components/dashboard/SkeletonWidgets";
+
 
 // ========================================
 // WIDGET CONFIGURATION INTERFACES
@@ -210,45 +207,17 @@ export default function DashboardPage(): JSX.Element {
   // LOADING STATES
   // ========================================
 
-  // ========================================
-  // LOADING STATE MANAGEMENT
-  // ========================================
-  
-  /**
-   * Enhanced loading state management following enterprise standards
-   * Implements proper data availability checks to ensure dashboard renders
-   * when company data is successfully loaded from authenticated sources
-   * 
-   * Loading Logic:
-   * - Show loading skeleton only when actively fetching AND no data exists
-   * - Prioritize data availability over loading state to prevent infinite loading
-   * - Maintain enterprise UX standards with proper skeleton display
-   */
-  const shouldShowLoading = isCompanyLoading && !companyData;
-
   // Debug dashboard rendering
   useEffect(() => {
     console.log('🔍 DASHBOARD RENDER DEBUG:', {
       companyData,
       category: companyData?.category,
       visibleWidgets,
-      shouldShowLoading,
       isInvelaCompany: companyData?.category === 'Invela'
     });
-  }, [companyData, visibleWidgets, shouldShowLoading]);
+  }, [companyData, visibleWidgets]);
   
-  if (shouldShowLoading) {
-    return (
-      <DashboardLayout>
-        <PageTemplate
-          title="Dashboard"
-          description="Enterprise risk assessment and monitoring overview"
-        >
-          <DashboardSkeleton />
-        </PageTemplate>
-      </DashboardLayout>
-    );
-  }
+
 
   // Handle error states with proper enterprise error display
   if (companyError) {
