@@ -263,11 +263,7 @@ router.post('/demo/company/create', async (req, res) => {
       name: req.body.companyName || req.body.name
     };
     
-    console.log('[DemoAPI] 🔧 Payload normalization:', {
-      original: req.body,
-      normalized: normalizedPayload,
-      hasName: !!normalizedPayload.name
-    });
+
     
     const transformedData = transformCompanyData(normalizedPayload);
     
