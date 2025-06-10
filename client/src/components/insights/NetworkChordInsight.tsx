@@ -37,6 +37,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Loader2, Filter, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  INSIGHT_COLORS, 
+  getCategoryColor, 
+  getRiskColor, 
+  getRevenueTierColor,
+  getAccreditationColor 
+} from '@/lib/insightDesignSystem';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface ChordNode {
   id: string;

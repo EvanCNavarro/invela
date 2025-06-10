@@ -42,29 +42,7 @@ export const INSIGHT_COLORS = {
       secondary: '#047857',  // Emerald-700
       light: '#D1FAE5',      // Emerald-100
       gradient: 'from-emerald-500 to-green-600'
-    },
-    success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#3B82F6'
-  },
-
-  // Semantic Colors (standardized across tooltips and interactions)
-  semantic: {
-    primary: '#3B82F6',
-    secondary: '#6B7280',
-    success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#3B82F6'
-  },
-
-  // Neutral Colors (background and text)
-  neutrals: {
-    white: '#FFFFFF',
-    gray: '#6B7280',
-    darkGray: '#374151',
-    lightGray: '#F3F4F6'
+    }
   },
 
   // Risk Level Colors (standardized across all risk visualizations)
