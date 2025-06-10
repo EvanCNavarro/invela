@@ -61,11 +61,18 @@ export const CompanyProfileHeader: React.FC<CompanyProfileHeaderProps> = ({
       queryClient.invalidateQueries({ queryKey: ['/api/risk/unified'] });
       queryClient.invalidateQueries({ queryKey: ['/api/companies-with-risk'] });
       
-      toast({
+      const toastResult = toast({
         title: action === 'block' ? 'Company Blocked' : 'Company Unblocked',
         description: `${companyName} has been ${action}ed successfully. Risk status updated across all systems.`,
         variant: action === 'block' ? 'destructive' : 'default'
       });
+      
+      // Ensure unblock toasts also auto-dismiss after 3 seconds
+      if (action === 'unblock') {
+        setTimeout(() => {
+          toastResult.dismiss();
+        }, 3000);
+      }
       
       console.log(`[CompanyProfileHeader] Successfully ${action}ed company:`, data);
       setIsDialogOpen(false);
