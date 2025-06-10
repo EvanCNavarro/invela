@@ -57,9 +57,23 @@ export function CompanySnapshot({
     enabled: !!companyData?.id
   });
 
+  // Fetch real accreditation data from the API
+  const { data: accreditationData, isLoading: isLoadingAccreditation } = useQuery<{
+    id: number;
+    accreditationNumber: string;
+    issuedDate: string;
+    expiresDate: string | null;
+    status: string;
+    daysUntilExpiration: number | null;
+    isPermanent: boolean;
+  }>({
+    queryKey: [`/api/companies/${companyData?.id}/accreditation`],
+    enabled: !!companyData?.id
+  });
+
   const networkCount = relationships?.length || 0;
   const riskScore = companyData?.risk_score || companyData?.riskScore || 0;
-  const accreditationStatus = companyData?.accreditation_status || 'PENDING';
+  const accreditationStatus = accreditationData?.status?.toUpperCase() || companyData?.accreditation_status || 'PENDING';
 
   const getRiskStatus = (score: number) => {
     if (score >= 70) return { label: 'High Risk', color: 'text-red-600', bg: 'bg-red-50' };
@@ -122,22 +136,31 @@ export function CompanySnapshot({
     }
   };
   
-  // Calculate days until expiration
+  // Calculate days until expiration using real data
   const getExpirationInfo = () => {
-    const expirationDate = new Date('2025-12-31'); // Using the December 2025 date
-    const today = new Date();
-    const diffTime = expirationDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    console.log('[CompanySnapshot] Accreditation data:', accreditationData);
     
-    if (diffDays > 0) {
-      return `Expires in ${diffDays} days`;
+    if (!accreditationData) {
+      return 'No accreditation found';
+    }
+    
+    if (accreditationData.isPermanent) {
+      return 'Permanent accreditation';
+    }
+    
+    if (accreditationData.daysUntilExpiration === null) {
+      return 'Expiration unknown';
+    }
+    
+    if (accreditationData.daysUntilExpiration > 0) {
+      return `Expires in ${accreditationData.daysUntilExpiration} days`;
     } else {
       return 'Expired';
     }
   };
 
   // Show enhanced loading skeleton during data fetch
-  if (isLoadingRelationships || isInitializing) {
+  if (isLoadingRelationships || isLoadingAccreditation || isInitializing) {
     return (
       <Widget
         title="Company Snapshot"
