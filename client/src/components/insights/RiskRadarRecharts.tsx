@@ -116,9 +116,9 @@ function RiskRadarRechartsInternal({ className, companyId, showDropdown = true }
     if (!displayCompany) return null;
     
     // Try multiple data source patterns
-    const clusters = displayCompany.risk_clusters || 
+    const clusters = (displayCompany as any).risk_clusters || 
                     (displayCompany as any).riskClusters || 
-                    displayCompany.relatedCompany?.riskClusters;
+                    (displayCompany as any).relatedCompany?.riskClusters;
     
     return clusters as RiskClusters | undefined;
   }, [displayCompany]);
