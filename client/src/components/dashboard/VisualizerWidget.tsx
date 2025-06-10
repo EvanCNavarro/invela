@@ -61,9 +61,7 @@ const NetworkScatterPlotInsight = React.lazy(() =>
   }))
 );
 const NetworkTreemapInsight = React.lazy(() => 
-  import('@/components/insights/SimpleTreemap').then(module => ({ 
-    default: module.default 
-  }))
+  import('@/components/insights/SimpleTreemap')
 );
 const NetworkChordInsight = React.lazy(() => 
   import('@/components/insights/NetworkChordSimple').then(module => ({ 
@@ -411,21 +409,19 @@ export function VisualizerWidget({
 
   // Render the selected insight component
   const renderSelectedInsight = () => {
-    // Show loading skeleton during visualization transition
+    // Show generic visualization skeleton during content loading
     if (isLoadingVisualization) {
       return renderGenericVisualizationSkeleton();
     }
 
-    const insightProps = {
-      className: 'bg-transparent shadow-none border-none w-full h-full'
-    };
+    const baseClassName = 'bg-transparent shadow-none border-none w-full h-full';
 
     switch (selectedVisualization) {
       case 'system_overview':
         return (
           <InsightErrorBoundary insightName="System Overview">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <SystemOverviewInsight {...insightProps} />
+              <SystemOverviewInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -434,7 +430,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Consent Activity">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <ConsentActivityInsight {...insightProps} />
+              <ConsentActivityInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -443,7 +439,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Risk Monitoring">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskMonitoringInsight {...insightProps} />
+              <RiskMonitoringInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -452,7 +448,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Network Scatter Plot">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <NetworkScatterPlotInsight {...insightProps} />
+              <NetworkScatterPlotInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -461,7 +457,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Network Treemap">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <NetworkTreemapInsight {...insightProps} />
+              <NetworkTreemapInsight />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -470,7 +466,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Network Chord Diagram">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <NetworkChordInsight {...insightProps} />
+              <NetworkChordInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -479,7 +475,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Force-Directed Network">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <NetworkForceDirectedInsight {...insightProps} />
+              <NetworkForceDirectedInsight className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -489,9 +485,7 @@ export function VisualizerWidget({
         return (
           <InsightErrorBoundary insightName="Risk Radar">
             <Suspense fallback={<InsightLoadingSkeleton />}>
-              <RiskRadarD3Simple 
-                className="shadow-none border-none w-full h-full"
-              />
+              <RiskRadarD3Simple className={baseClassName} />
             </Suspense>
           </InsightErrorBoundary>
         );
@@ -509,6 +503,9 @@ export function VisualizerWidget({
     }
   };
 
+  // Determine overall loading state for widget-level skeleton
+  const isWidgetLoading = isInitializing || companyLoading || !currentCompany || availableVisualizations.length === 0;
+
   return (
     <div 
       className={`widget-entrance-animation ${className}`}
@@ -519,29 +516,35 @@ export function VisualizerWidget({
         icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
+        isLoading={isWidgetLoading}
+        loadingState="shimmer"
         headerChildren={
-          <div className="flex items-center gap-2">
-            <Select
-              value={selectedVisualization}
-              onValueChange={handleVisualizationChange}
-            >
-              <SelectTrigger className="w-[240px] font-semibold">
-                <SelectValue placeholder="Select visualization" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                {availableVisualizations.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          !isWidgetLoading ? (
+            <div className="flex items-center gap-2">
+              <Select
+                value={selectedVisualization}
+                onValueChange={handleVisualizationChange}
+              >
+                <SelectTrigger className="w-[240px] font-semibold">
+                  <SelectValue placeholder="Select visualization" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  {availableVisualizations.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : undefined
         }
       >
-        <div className="h-[500px] w-full overflow-hidden">
-          {renderSelectedInsight()}
-        </div>
+        {!isWidgetLoading && (
+          <div className="h-[500px] w-full overflow-hidden">
+            {renderSelectedInsight()}
+          </div>
+        )}
       </Widget>
     </div>
   );
