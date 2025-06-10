@@ -289,17 +289,11 @@ export function RiskRadarD3Simple({
 
   if (!chartData) {
     return (
-      <Card className={cn("w-full", className)}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Risk Radar (D3 Interactive)</CardTitle>
-          <p className="text-sm text-muted-foreground">No risk cluster data available</p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center justify-center h-[300px] text-gray-500">
-            <p>No risk cluster data available for this company</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("w-full h-full flex items-center justify-center", className)}>
+        <div className="text-center text-gray-400">
+          <p className="text-sm font-medium">No current data found</p>
+        </div>
+      </div>
     );
   }
 

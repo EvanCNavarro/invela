@@ -193,22 +193,11 @@ function RiskRadarRechartsInternal({ className, companyId, showDropdown = true }
 
   if (!displayCompany || !riskClusters || Object.keys(riskClusters).length === 0) {
     return (
-      <Card className={cn("w-full", className)}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Risk Radar</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center justify-center h-[280px]">
-            <div className="text-center text-gray-500">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No risk cluster data available</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {displayCompany?.name || 'Company'} does not have risk cluster analysis
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("w-full h-full flex items-center justify-center", className)}>
+        <div className="text-center text-gray-400">
+          <p className="text-sm font-medium">No current data found</p>
+        </div>
+      </div>
     );
   }
 
