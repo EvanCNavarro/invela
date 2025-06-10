@@ -267,9 +267,6 @@ function RiskRadarApexImprovedInternal({ className, companyId, showDropdown = tr
         formatter: (val: number) => val.toString()
       }
     },
-    grid: {
-      show: false
-    },
     legend: {
       show: false
     }
