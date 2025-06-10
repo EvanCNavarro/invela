@@ -2,6 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
