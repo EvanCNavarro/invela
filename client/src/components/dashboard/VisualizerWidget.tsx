@@ -295,47 +295,20 @@ export function VisualizerWidget({
   // GENERIC VISUALIZATION SKELETON
   // ========================================
   
-  const renderGenericVisualizationSkeleton = () => (
-    <div className="space-y-4 p-4">
-      {/* Visualization Controls Skeleton */}
-      <div className="flex gap-3">
-        <div 
-          className="widget-skeleton-shimmer h-10 w-48 rounded-lg"
-          style={{ animationDelay: `${animationDelay}ms` }}
-        />
-        <div 
-          className="widget-skeleton-shimmer h-10 w-32 rounded-lg"
-          style={{ animationDelay: `${animationDelay + 100}ms` }}
-        />
-      </div>
-      
-      {/* Main Visualization Area Skeleton */}
+  // Simple skeleton matching working pattern
+  const visualizerSkeleton = (
+    <div className="space-y-4">
+      {/* Selector skeleton */}
       <div 
-        className="widget-skeleton-shimmer h-[400px] rounded-lg relative overflow-hidden"
-        style={{ animationDelay: `${animationDelay + 200}ms` }}
-      >
-        {/* Simulated chart elements */}
-        <div className="absolute inset-8 flex items-end justify-between opacity-20">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div
-              key={`chart-bar-${index}`}
-              className="bg-blue-200 rounded-t"
-              style={{ 
-                width: '8%',
-                height: `${20 + (index * 10)}%`,
-                animationDelay: `${animationDelay + 400 + (index * 50)}ms`,
-                animation: 'pulse 2s ease-in-out infinite'
-              }}
-            />
-          ))}
-        </div>
-      </div>
+        className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
+        style={{ animationDelay: `${animationDelay}ms` }}
+      />
       
-      {/* Loading Progress Indicator */}
-      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>Loading visualization... {loadingProgress}%</span>
-      </div>
+      {/* Chart area skeleton */}
+      <div 
+        className="widget-skeleton-shimmer h-[450px] rounded-lg"
+        style={{ animationDelay: `${animationDelay + 100}ms` }}
+      />
     </div>
   );
 
@@ -391,7 +364,7 @@ export function VisualizerWidget({
   const renderSelectedInsight = () => {
     // Show generic visualization skeleton during content loading
     if (isLoadingVisualization) {
-      return renderGenericVisualizationSkeleton();
+      return visualizerSkeleton;
     }
 
     const baseClassName = 'bg-transparent shadow-none border-none w-full h-full';
@@ -502,40 +475,7 @@ export function VisualizerWidget({
           animationDelay={animationDelay}
           ariaLabel="Visualizer widget loading"
         >
-          <div className="space-y-4">
-            {/* Visualization Selector Skeleton */}
-            <div 
-              className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
-              style={{ animationDelay: `${animationDelay}ms` }}
-            />
-            
-            {/* Main Visualization Area Skeleton */}
-            <div 
-              className="widget-skeleton-shimmer h-[450px] rounded-lg relative overflow-hidden"
-              style={{ animationDelay: `${animationDelay + 100}ms` }}
-            >
-              {/* Chart skeleton elements */}
-              <div className="absolute inset-4 space-y-3">
-                {/* Chart controls skeleton */}
-                <div className="flex gap-3">
-                  <div 
-                    className="widget-skeleton-shimmer h-8 w-32 rounded-md"
-                    style={{ animationDelay: `${animationDelay + 200}ms` }}
-                  />
-                  <div 
-                    className="widget-skeleton-shimmer h-8 w-24 rounded-md"
-                    style={{ animationDelay: `${animationDelay + 300}ms` }}
-                  />
-                </div>
-                
-                {/* Chart area skeleton */}
-                <div 
-                  className="widget-skeleton-shimmer h-[350px] rounded-md"
-                  style={{ animationDelay: `${animationDelay + 400}ms` }}
-                />
-              </div>
-            </div>
-          </div>
+          {visualizerSkeleton}
         </Widget>
       </div>
     );
