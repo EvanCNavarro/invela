@@ -179,7 +179,14 @@ export function LoginDemoHeader({ className }: LoginDemoHeaderProps) {
       <div className="bg-gray-100 rounded-t-lg border-b border-gray-200 px-4 py-2">
         <button
           onClick={handleToggleCollapse}
-          className="flex items-center justify-center w-full text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-inset transition-all duration-200 group"
+          className="flex items-center justify-center w-full text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 select-none user-select-none transition-all duration-200 group"
+          style={{
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTapHighlightColor: 'transparent'
+          }}
         >
           <div className="flex items-center space-x-2">
             {isCollapsed ? (
