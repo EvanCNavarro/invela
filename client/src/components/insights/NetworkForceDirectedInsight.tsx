@@ -39,14 +39,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Loader2, Filter, Search, Play, Pause, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  INSIGHT_COLORS, 
-  getCategoryColor, 
-  getRiskColor, 
-  getRevenueTierColor,
-  getAccreditationColor 
-} from '@/lib/insightDesignSystem';
-import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 
 interface ForceNode extends d3.SimulationNodeDatum {
   id: string;
