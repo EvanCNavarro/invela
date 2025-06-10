@@ -223,7 +223,7 @@ export function VisualizerWidget({
       setLoadingProgress(30);
       setIsInitializing(false);
       console.log('[VisualizerWidget] Initialization phase complete');
-    }, 300);
+    }, animationDelay + 600); // Ensure loading shows for widgets with animation delays
     
     return () => clearTimeout(initTimer);
   }, [animationDelay]);
