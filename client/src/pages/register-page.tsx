@@ -1019,7 +1019,14 @@ export default function RegisterPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-full px-3 hover:bg-transparent focus:outline-none focus:ring-0 select-none"
+                            className="h-full px-3 hover:bg-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 select-none user-select-none"
+                            style={{ 
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none',
+                              userSelect: 'none',
+                              WebkitTapHighlightColor: 'transparent'
+                            }}
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? (

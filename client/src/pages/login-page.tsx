@@ -251,7 +251,14 @@ export default function LoginPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent focus:outline-none focus:ring-0 select-none"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 select-none user-select-none"
+                      style={{ 
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none',
+                        userSelect: 'none',
+                        WebkitTapHighlightColor: 'transparent'
+                      }}
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
