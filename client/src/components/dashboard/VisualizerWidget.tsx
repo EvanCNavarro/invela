@@ -141,9 +141,9 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
 
 // Persona-specific default visualizations
 const PERSONA_DEFAULTS = {
-  'Invela': 'system_overview',
-  'Bank': 'consent_activity',
-  'FinTech': 'consent_activity'
+  'Invela': 'risk_radar',
+  'Bank': 'risk_radar',
+  'FinTech': 'risk_radar'
 };
 
 // ========================================

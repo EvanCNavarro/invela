@@ -78,12 +78,12 @@ export default function InsightsPage() {
       setIsFintech(false);
       setIsInvela(true);
       setVisualizationTypes(invelaVisualizationTypes);
-      setSelectedVisualization("system_overview");
+      setSelectedVisualization("risk_radar");
     } else {
       setIsFintech(false);
       setIsInvela(false);
       setVisualizationTypes(defaultVisualizationTypes);
-      setSelectedVisualization("consent_activity");
+      setSelectedVisualization("risk_radar");
     }
   }, [currentCompany]);
 
