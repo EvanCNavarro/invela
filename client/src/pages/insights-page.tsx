@@ -23,17 +23,13 @@ import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsig
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { NetworkScatterPlotInsight } from "@/components/insights/NetworkScatterPlotInsight";
 import { NetworkTreemapInsight } from "@/components/insights/NetworkTreemapInsight";
-import { NetworkChordInsight } from "@/components/insights/NetworkChordInsight";
-import { NetworkForceDirectedInsight } from "@/components/insights/NetworkForceDirectedInsight";
 
 // Default visualization types
 const defaultVisualizationTypes = [
+  { value: "network_treemap", label: "Network Treemap" },
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "network_visualization", label: "Network Visualization" },
   { value: "network_scatter_plot", label: "Network Scatter Plot" },
-  { value: "network_treemap", label: "Network Treemap" },
-  { value: "network_chord", label: "Network Chord Diagram" },
-  { value: "network_force_directed", label: "Force-Directed Network" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
@@ -46,20 +42,17 @@ const fintechVisualizationTypes = [
 
 // Invela admin-specific visualization types - COMPLETE ACCESS TO ALL INSIGHTS
 const invelaVisualizationTypes = [
+  { value: "network_treemap", label: "Network Treemap" },
   { value: "system_overview", label: "System Overview" },
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "network_visualization", label: "Network Visualization" },
   { value: "network_scatter_plot", label: "Network Scatter Plot" },
-  { value: "network_treemap", label: "Network Treemap" },
-  { value: "network_chord", label: "Network Chord Diagram" },
-  { value: "network_force_directed", label: "Force-Directed Network" },
-  { value: "accreditation_status", label: "Accreditation Status" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("consent_activity");
+  const [selectedVisualization, setSelectedVisualization] = useState("network_treemap");
   const [visualizationTypes, setVisualizationTypes] = useState(defaultVisualizationTypes);
   const [isFintech, setIsFintech] = useState(false);
   const [isInvela, setIsInvela] = useState(false);
@@ -162,16 +155,6 @@ export default function InsightsPage() {
             <NetworkTreemapInsight className="bg-transparent shadow-none border-none" />
           )}
 
-          {selectedVisualization === "network_chord" && !isFintech && (
-            <NetworkChordInsight className="bg-transparent shadow-none border-none" />
-          )}
-
-          {selectedVisualization === "network_force_directed" && !isFintech && (
-            <NetworkForceDirectedInsight className="bg-transparent shadow-none border-none" />
-          )}
-
-
-          
           {selectedVisualization === "risk_radar" && (
             <div className="w-full h-full">
               {/* Explicitly set showDropdown to true with improved spacing */}
