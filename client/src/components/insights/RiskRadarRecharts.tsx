@@ -205,7 +205,7 @@ function RiskRadarRechartsInternal({ className, companyId, showDropdown = true }
             </div>
             <h3 className="text-base font-medium text-gray-700 mb-2">Risk Analysis Not Found</h3>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Complete your INVELA trust network accreditation to receive your risk assessment.
+              Complete your Invela Trust Network Accreditation, to receive your company risk assessment.
             </p>
           </div>
         </div>
