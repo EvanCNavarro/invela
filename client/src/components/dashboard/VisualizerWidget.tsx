@@ -452,8 +452,8 @@ export function VisualizerWidget({
     }
   };
 
-  // Show enhanced loading skeleton during data fetch - following CompanySnapshot pattern
-  if (isLoadingVisualizationData || isInitializing) {
+  // Show enhanced loading skeleton during data fetch - following QuickActions pattern
+  if (companyLoading || isInitializing) {
     console.log('[VisualizerWidget] Rendering loading skeleton');
     return (
       <div 
