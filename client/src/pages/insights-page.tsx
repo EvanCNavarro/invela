@@ -17,7 +17,6 @@ import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
-import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
 import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsight";
@@ -35,7 +34,6 @@ const defaultVisualizationTypes = [
   { value: "network_treemap", label: "Network Treemap" },
   { value: "network_chord", label: "Network Chord Diagram" },
   { value: "network_force_directed", label: "Force-Directed Network" },
-  { value: "accreditation_status", label: "Accreditation Status" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
@@ -172,9 +170,7 @@ export default function InsightsPage() {
             <NetworkForceDirectedInsight className="bg-transparent shadow-none border-none" />
           )}
 
-          {selectedVisualization === "accreditation_status" && !isFintech && (
-            <AccreditationDotMatrix />
-          )}
+
           
           {selectedVisualization === "risk_radar" && (
             <div className="w-full h-full">
