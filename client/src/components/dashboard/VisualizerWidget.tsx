@@ -295,22 +295,7 @@ export function VisualizerWidget({
   // GENERIC VISUALIZATION SKELETON
   // ========================================
   
-  // Simple skeleton matching working pattern
-  const visualizerSkeleton = (
-    <div className="space-y-4">
-      {/* Selector skeleton */}
-      <div 
-        className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
-        style={{ animationDelay: `${animationDelay}ms` }}
-      />
-      
-      {/* Chart area skeleton */}
-      <div 
-        className="widget-skeleton-shimmer h-[450px] rounded-lg"
-        style={{ animationDelay: `${animationDelay + 100}ms` }}
-      />
-    </div>
-  );
+
 
 
 
@@ -364,7 +349,18 @@ export function VisualizerWidget({
   const renderSelectedInsight = () => {
     // Show generic visualization skeleton during content loading
     if (isLoadingVisualization) {
-      return visualizerSkeleton;
+      return (
+        <div className="space-y-4">
+          <div 
+            className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
+            style={{ animationDelay: `${animationDelay}ms` }}
+          />
+          <div 
+            className="widget-skeleton-shimmer h-[400px] rounded-lg"
+            style={{ animationDelay: `${animationDelay + 100}ms` }}
+          />
+        </div>
+      );
     }
 
     const baseClassName = 'bg-transparent shadow-none border-none w-full h-full';
@@ -475,7 +471,16 @@ export function VisualizerWidget({
           animationDelay={animationDelay}
           ariaLabel="Visualizer widget loading"
         >
-          {visualizerSkeleton}
+          <div className="space-y-4">
+            <div 
+              className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
+              style={{ animationDelay: `${animationDelay}ms` }}
+            />
+            <div 
+              className="widget-skeleton-shimmer h-[400px] rounded-lg"
+              style={{ animationDelay: `${animationDelay + 100}ms` }}
+            />
+          </div>
         </Widget>
       </div>
     );
