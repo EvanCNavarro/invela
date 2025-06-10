@@ -40,7 +40,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { InsightLoadingSkeleton } from '@/components/insights/InsightLoadingSkeleton';
 
 // Lazy load insight components for optimal performance
 const SystemOverviewInsight = React.lazy(() => 
@@ -120,7 +119,7 @@ const VISUALIZATION_OPTIONS: VisualizationOption[] = [
     value: 'network_treemap',
     label: 'Network Tree Map',
     category: 'Network',
-    personas: ['Bank']
+    personas: ['Invela', 'Bank']
   },
   {
     value: 'risk_monitoring',

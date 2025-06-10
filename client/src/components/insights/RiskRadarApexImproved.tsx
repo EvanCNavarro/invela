@@ -18,14 +18,6 @@ import {
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { 
-  INSIGHT_COLORS, 
-  getCategoryColor, 
-  getRiskColor, 
-  getRevenueTierColor,
-  getAccreditationColor 
-} from '@/lib/insightDesignSystem';
-import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
 import { AlertTriangle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
