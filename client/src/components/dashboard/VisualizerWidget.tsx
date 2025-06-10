@@ -503,8 +503,63 @@ export function VisualizerWidget({
     }
   };
 
-  // Determine overall loading state for widget-level skeleton
-  const isWidgetLoading = isInitializing || companyLoading || !currentCompany || availableVisualizations.length === 0;
+  // Show enhanced loading skeleton during data fetch - following QuickActions pattern
+  if (companyLoading || isInitializing) {
+    console.log('[VisualizerWidget] Rendering loading skeleton');
+    return (
+      <div 
+        className={`widget-entrance-animation ${className}`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+      >
+        <Widget
+          title="Visualizer"
+          icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
+          onVisibilityToggle={onToggle}
+          isVisible={isVisible}
+          size="standard"
+          loadingState="shimmer"
+          isLoading={true}
+          animationDelay={animationDelay}
+          ariaLabel="Visualizer widget loading"
+        >
+          <div className="space-y-4">
+            {/* Visualization Selector Skeleton */}
+            <div 
+              className="widget-skeleton-shimmer h-10 w-[240px] rounded-lg"
+              style={{ animationDelay: `${animationDelay}ms` }}
+            />
+            
+            {/* Main Visualization Area Skeleton */}
+            <div 
+              className="widget-skeleton-shimmer h-[450px] rounded-lg relative overflow-hidden"
+              style={{ animationDelay: `${animationDelay + 100}ms` }}
+            >
+              {/* Chart skeleton elements */}
+              <div className="absolute inset-4 space-y-3">
+                {/* Chart controls skeleton */}
+                <div className="flex gap-3">
+                  <div 
+                    className="widget-skeleton-shimmer h-8 w-32 rounded-md"
+                    style={{ animationDelay: `${animationDelay + 200}ms` }}
+                  />
+                  <div 
+                    className="widget-skeleton-shimmer h-8 w-24 rounded-md"
+                    style={{ animationDelay: `${animationDelay + 300}ms` }}
+                  />
+                </div>
+                
+                {/* Chart area skeleton */}
+                <div 
+                  className="widget-skeleton-shimmer h-[350px] rounded-md"
+                  style={{ animationDelay: `${animationDelay + 400}ms` }}
+                />
+              </div>
+            </div>
+          </div>
+        </Widget>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -516,35 +571,33 @@ export function VisualizerWidget({
         icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
         onVisibilityToggle={onToggle}
         isVisible={isVisible}
-        isLoading={isWidgetLoading}
-        loadingState="shimmer"
+        size="standard"
+        entranceAnimation="fadeIn"
+        animationDelay={animationDelay}
+        ariaLabel="Visualizer widget"
         headerChildren={
-          !isWidgetLoading ? (
-            <div className="flex items-center gap-2">
-              <Select
-                value={selectedVisualization}
-                onValueChange={handleVisualizationChange}
-              >
-                <SelectTrigger className="w-[240px] font-semibold">
-                  <SelectValue placeholder="Select visualization" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  {availableVisualizations.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : undefined
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedVisualization}
+              onValueChange={handleVisualizationChange}
+            >
+              <SelectTrigger className="w-[240px] font-semibold">
+                <SelectValue placeholder="Select visualization" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                {availableVisualizations.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="bg-white hover:bg-gray-50">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         }
       >
-        {!isWidgetLoading && (
-          <div className="h-[500px] w-full overflow-hidden">
-            {renderSelectedInsight()}
-          </div>
-        )}
+        <div className="h-[500px] w-full overflow-hidden">
+          {renderSelectedInsight()}
+        </div>
       </Widget>
     </div>
   );
