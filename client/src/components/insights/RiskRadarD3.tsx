@@ -354,18 +354,20 @@ function RiskRadarD3Internal({
   if (!displayCompany || !riskClusters || Object.keys(riskClusters).length === 0) {
     return (
       <div className={cn("w-full h-full flex items-center justify-center", className)}>
-        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
+        <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 max-w-sm mx-auto">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <h3 className="text-base font-medium text-gray-700 mb-2">Risk Analysis Not Found</h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Complete your INVELA trust network accreditation to receive your risk assessment.
+            </p>
           </div>
-          <h3 className="text-base font-medium text-gray-700 mb-1">Risk Analysis Pending</h3>
-          <p className="text-sm text-gray-500 max-w-sm">
-            Risk cluster data will appear here once your company assessment is complete.
-          </p>
         </div>
       </div>
     );
