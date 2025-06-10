@@ -21,7 +21,6 @@ import { RiskRadarChart } from "@/components/insights/RiskRadarChart";
 import { ConsentActivityInsight } from "@/components/insights/ConsentActivityInsight";
 import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsight";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
-import { NetworkScatterPlotInsight } from "@/components/insights/NetworkScatterPlotInsight";
 import SimpleTreemap from "@/components/insights/SimpleTreemap";
 
 // Default visualization types
@@ -29,7 +28,6 @@ const defaultVisualizationTypes = [
   { value: "network_treemap", label: "Network Treemap" },
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "network_visualization", label: "Network Visualization" },
-  { value: "network_scatter_plot", label: "Network Scatter Plot" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
@@ -47,7 +45,6 @@ const invelaVisualizationTypes = [
   { value: "risk_monitoring", label: "Risk Monitoring" },
   { value: "risk_radar", label: "Risk Radar Chart" },
   { value: "network_visualization", label: "Network Visualization" },
-  { value: "network_scatter_plot", label: "Network Scatter Plot" },
   { value: "consent_activity", label: "Consent Activity" },
 ];
 
@@ -145,10 +142,6 @@ export default function InsightsPage() {
           
           {selectedVisualization === "network_visualization" && !isFintech && (
             <NetworkInsightVisualization />
-          )}
-
-          {selectedVisualization === "network_scatter_plot" && !isFintech && (
-            <NetworkScatterPlotInsight className="bg-transparent shadow-none border-none" />
           )}
 
           {selectedVisualization === "network_treemap" && !isFintech && (
