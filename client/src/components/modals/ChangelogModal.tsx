@@ -105,6 +105,22 @@ interface ChangelogModalProps {
  */
 const changelogEntries: ChangelogEntry[] = [
   {
+    id: 'risk-radar-visualization-icon-standardization-2025-06-10',
+    date: '2025-06-10',
+    type: 'enhancement',
+    title: 'Risk Radar Default Visualization & Icon Standardization',
+    description: 'Made risk radar the default visualization across all company types and standardized icon colors in Company Snapshot widget',
+    details: [
+      'Set risk radar as default chart for all company types (FinTech, Bank, Invela) on dashboard and insights page',
+      'Updated VisualizerWidget persona defaults to use risk radar instead of other visualizations',
+      'Standardized Company Snapshot widget icons to consistently use blue color regardless of persona type',
+      'Fixed Network, Risk Score, and Accreditation icons to remain blue instead of changing to persona colors',
+      'Maintained persona-based avatar gradients while unifying functional icon colors for better visual coherence'
+    ],
+    version: '2.2.3',
+    audience: 'product'
+  },
+  {
     id: 'ui-polish-selection-highlights-2025-06-10',
     date: '2025-06-10',
     type: 'design',
