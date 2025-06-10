@@ -73,7 +73,10 @@ export function CompanySnapshot({
 
   const networkCount = relationships?.length || 0;
   const riskScore = companyData?.risk_score || companyData?.riskScore || 0;
-  const accreditationStatus = accreditationData?.status?.toUpperCase() || companyData?.accreditation_status || 'PENDING';
+  const accreditationStatus = (() => {
+    const status = accreditationData?.status?.toUpperCase() || companyData?.accreditation_status || 'PENDING';
+    return status === 'ACTIVE' ? 'APPROVED' : status;
+  })();
 
   const getRiskStatus = (score: number) => {
     if (score >= 70) return { label: 'High Risk', color: 'text-red-600', bg: 'bg-red-50' };
