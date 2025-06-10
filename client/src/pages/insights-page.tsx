@@ -22,7 +22,7 @@ import { ConsentActivityInsight } from "@/components/insights/ConsentActivityIns
 import { SystemOverviewInsight } from "@/components/insights/SystemOverviewInsight";
 import RiskMonitoringInsight from "@/components/insights/RiskMonitoringInsight";
 import { NetworkScatterPlotInsight } from "@/components/insights/NetworkScatterPlotInsight";
-import { NetworkTreemapInsight } from "@/components/insights/NetworkTreemapInsight";
+import SimpleTreemap from "@/components/insights/SimpleTreemap";
 
 // Default visualization types
 const defaultVisualizationTypes = [
@@ -152,7 +152,7 @@ export default function InsightsPage() {
           )}
 
           {selectedVisualization === "network_treemap" && !isFintech && (
-            <NetworkTreemapInsight className="bg-transparent shadow-none border-none" />
+            <SimpleTreemap />
           )}
 
           {selectedVisualization === "risk_radar" && (
