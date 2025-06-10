@@ -113,13 +113,13 @@ export function CompanySnapshot({
       case 'Bank':
         return {
           gradient: 'from-purple-500 to-violet-600',
-          iconColor: 'text-purple-600'
+          iconColor: 'text-blue-600'
         };
       case 'FinTech':
       default:
         return {
           gradient: 'from-green-500 to-emerald-600',
-          iconColor: 'text-green-600'
+          iconColor: 'text-blue-600'
         };
     }
   };
