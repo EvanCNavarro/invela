@@ -201,10 +201,45 @@ export function VisualizerWidget({
   className = '',
   animationDelay = 0
 }: VisualizerWidgetProps) {
+  // ========================================
+  // LOADING STATE MANAGEMENT
+  // ========================================
+  
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoadingVisualization, setIsLoadingVisualization] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  
   // Get current company data for persona-based filtering
-  const { data: currentCompany } = useQuery<any>({
+  const { data: currentCompany, isLoading: companyLoading, error: companyError } = useQuery<any>({
     queryKey: ['/api/companies/current'],
+    retry: 3,
+    retryDelay: 1000
   });
+
+  // Initialize loading state management with progress tracking
+  useEffect(() => {
+    console.log('[VisualizerWidget] Initializing with animation delay:', animationDelay);
+    setLoadingProgress(0);
+    
+    const initTimer = setTimeout(() => {
+      setLoadingProgress(30);
+      setIsInitializing(false);
+      console.log('[VisualizerWidget] Initialization phase complete');
+    }, 300);
+    
+    return () => clearTimeout(initTimer);
+  }, [animationDelay]);
+
+  // Track company data loading progress
+  useEffect(() => {
+    if (companyLoading) {
+      setLoadingProgress(prev => Math.min(prev + 20, 60));
+      console.log('[VisualizerWidget] Loading company data...');
+    } else if (currentCompany) {
+      setLoadingProgress(80);
+      console.log('[VisualizerWidget] Company data loaded:', currentCompany.name);
+    }
+  }, [companyLoading, currentCompany]);
 
   // Get persona-specific default visualization
   const getDefaultVisualization = (persona: string) => {
@@ -221,6 +256,7 @@ export function VisualizerWidget({
     if (currentCompany && currentCompany.category) {
       const defaultViz = getDefaultVisualization(currentCompany.category);
       setSelectedVisualization(defaultViz);
+      setLoadingProgress(90);
     }
   }, [currentCompany]);
 
@@ -251,17 +287,137 @@ export function VisualizerWidget({
     });
   }, [selectedVisualization, currentCompany, availableVisualizations]);
 
-  // Handle visualization selection change
+  // ========================================
+  // GENERIC VISUALIZATION SKELETON
+  // ========================================
+  
+  const renderGenericVisualizationSkeleton = () => (
+    <div className="space-y-4 p-4">
+      {/* Visualization Controls Skeleton */}
+      <div className="flex gap-3">
+        <div 
+          className="widget-skeleton-shimmer h-10 w-48 rounded-lg"
+          style={{ animationDelay: `${animationDelay}ms` }}
+        />
+        <div 
+          className="widget-skeleton-shimmer h-10 w-32 rounded-lg"
+          style={{ animationDelay: `${animationDelay + 100}ms` }}
+        />
+      </div>
+      
+      {/* Main Visualization Area Skeleton */}
+      <div 
+        className="widget-skeleton-shimmer h-[400px] rounded-lg relative overflow-hidden"
+        style={{ animationDelay: `${animationDelay + 200}ms` }}
+      >
+        {/* Simulated chart elements */}
+        <div className="absolute inset-8 flex items-end justify-between opacity-20">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={`chart-bar-${index}`}
+              className="bg-blue-200 rounded-t"
+              style={{ 
+                width: '8%',
+                height: `${20 + (index * 10)}%`,
+                animationDelay: `${animationDelay + 400 + (index * 50)}ms`,
+                animation: 'pulse 2s ease-in-out infinite'
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Loading Progress Indicator */}
+      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Loading visualization... {loadingProgress}%</span>
+      </div>
+    </div>
+  );
+
+  // ========================================
+  // LOADING STATE HANDLERS
+  // ========================================
+
+  // Show enhanced loading skeleton during initialization and data loading
+  if (isInitializing || companyLoading) {
+    console.log('[VisualizerWidget] Rendering loading state - Progress:', loadingProgress);
+    return (
+      <div 
+        className={`widget-entrance-animation ${className}`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+      >
+        <Widget
+          title="Visualizer"
+          icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
+          onVisibilityToggle={onToggle}
+          isVisible={isVisible}
+          loadingState="shimmer"
+          isLoading={true}
+          animationDelay={animationDelay}
+          ariaLabel="Visualizer widget loading"
+        >
+          {renderGenericVisualizationSkeleton()}
+        </Widget>
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (companyError) {
+    console.error('[VisualizerWidget] Error loading company data:', companyError);
+    return (
+      <div 
+        className={`widget-entrance-animation ${className}`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+      >
+        <Widget
+          title="Visualizer"
+          icon={<BarChart3 className="h-5 w-5 text-muted-foreground" />}
+          onVisibilityToggle={onToggle}
+          isVisible={isVisible}
+          error="Unable to load visualization data. Please refresh to try again."
+          animationDelay={animationDelay}
+        >
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="text-center text-gray-500">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">Visualization Unavailable</p>
+              <p className="text-sm">Please refresh the page to try again</p>
+            </div>
+          </div>
+        </Widget>
+      </div>
+    );
+  }
+
+  // ========================================
+  // VISUALIZATION RENDERING
+  // ========================================
+
+  // Handle visualization selection change with loading state
   const handleVisualizationChange = (value: string) => {
     console.log('[VisualizerWidget] Changing visualization:', value);
-    setSelectedVisualization(value);
+    setIsLoadingVisualization(true);
+    setLoadingProgress(85);
+    
+    // Brief loading delay for smooth transition
+    setTimeout(() => {
+      setSelectedVisualization(value);
+      setLoadingProgress(100);
+      setIsLoadingVisualization(false);
+    }, 200);
   };
 
   // Render the selected insight component
   const renderSelectedInsight = () => {
+    // Show loading skeleton during visualization transition
+    if (isLoadingVisualization) {
+      return renderGenericVisualizationSkeleton();
+    }
+
     const insightProps = {
-      className: 'bg-transparent shadow-none border-none w-full h-full',
-      companyId: currentCompany?.id
+      className: 'bg-transparent shadow-none border-none w-full h-full'
     };
 
     switch (selectedVisualization) {
