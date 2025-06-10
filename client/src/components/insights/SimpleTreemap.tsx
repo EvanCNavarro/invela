@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useQuery } from '@tanstack/react-query';
+import { InsightLoadingSkeleton } from './InsightLoadingSkeleton';
+import { StandardizedDropdown } from './shared/StandardizedDropdown';
+import { StandardizedTimeSelector } from './shared/StandardizedTimeSelector';
+import { INSIGHT_COLORS, INSIGHT_ANIMATIONS } from '@/lib/insightDesignSystem';
 
 interface CompanyData {
   id: number;
@@ -27,10 +31,12 @@ export default function SimpleTreemap() {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [hoveredNode, setHoveredNode] = useState<TreemapNode | null>(null);
+  const [timeFrame, setTimeFrame] = useState('30d');
+  const [viewMode, setViewMode] = useState('companies');
 
-  // Fetch network data
-  const { data: networkData, refetch } = useQuery({
-    queryKey: ['/api/network/visualization'],
+  // Fetch network data with standardized loading
+  const { data: networkData, isLoading, refetch } = useQuery({
+    queryKey: ['/api/network/visualization', timeFrame],
     refetchOnMount: true,
   });
 
@@ -339,72 +345,115 @@ export default function SimpleTreemap() {
     return tier.charAt(0).toUpperCase() + tier.slice(1) + ' Revenue';
   };
 
+  // Show loading skeleton
+  if (isLoading) {
+    return <InsightLoadingSkeleton variant="network" height="h-[600px]" />;
+  }
+
+  // Standardized view mode options
+  const viewModeOptions = [
+    { value: 'companies', label: 'All Companies', description: 'View all companies in network' },
+    { value: 'relationships', label: 'Relationships', description: 'Focus on network connections' }
+  ];
+
   return (
-    <div className="w-full h-full bg-white relative">
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        className="w-full h-full"
-      />
-      
-      {/* Enhanced Tooltip */}
-      <div
-        ref={tooltipRef}
-        className="absolute z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl pointer-events-none opacity-0 transition-opacity duration-200 min-w-[280px]"
-        style={{ maxWidth: '320px' }}
-      >
-        {hoveredNode && (
-          <div className="space-y-3">
-            {/* Company Name */}
-            <div className="font-bold text-lg border-b border-gray-600 pb-2">
-              {hoveredNode.name}
-            </div>
-            
-            {/* Key Details Grid - 6 specific fields in order */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Type</div>
-                <div className="font-medium">{getRoleType(hoveredNode.category)}</div>
+    <div className="w-full h-full relative">
+      {/* Standardized Controls */}
+      <div className="flex gap-3 mb-4 p-4 bg-white border-b border-gray-200">
+        <StandardizedDropdown
+          options={viewModeOptions}
+          value={viewMode}
+          onValueChange={setViewMode}
+          placeholder="Select view mode..."
+          className="w-48"
+        />
+        <StandardizedTimeSelector
+          value={timeFrame}
+          onValueChange={setTimeFrame}
+          className="w-32"
+          variant="compact"
+        />
+      </div>
+
+      {/* Treemap Visualization */}
+      <div className="w-full bg-white relative" style={{ height: 'calc(100% - 80px)' }}>
+        <svg
+          ref={svgRef}
+          width={dimensions.width}
+          height={dimensions.height}
+          className="w-full h-full"
+        />
+        
+        {/* Enhanced Tooltip */}
+        <div
+          ref={tooltipRef}
+          className="absolute z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl pointer-events-none opacity-0 transition-opacity duration-200 min-w-[280px]"
+          style={{ maxWidth: '320px' }}
+        >
+          {hoveredNode && (
+            <div className="space-y-3">
+              {/* Company Name */}
+              <div className="font-bold text-lg border-b border-gray-600 pb-2">
+                {hoveredNode.name}
               </div>
               
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Size</div>
-                <div className="font-medium">{hoveredNode.num_employees?.toLocaleString() || 'N/A'} employees</div>
-              </div>
-              
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Revenue Tier</div>
-                <div className="font-medium text-green-400">{formatRevenueTier(hoveredNode.revenue_tier)}</div>
-              </div>
-              
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">ARR</div>
-                <div className="font-medium text-blue-400">{formatRevenueValue(hoveredNode.revenue_value)}</div>
-              </div>
-              
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Risk Score</div>
-                <div className="font-medium">{hoveredNode.risk_score || 'N/A'}</div>
-              </div>
-              
-              <div>
-                <div className="text-gray-400 text-xs uppercase tracking-wide">Accreditation</div>
-                <div className="font-medium mt-1">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    hoveredNode.accreditation_status === 'APPROVED' 
-                      ? 'bg-green-900 text-green-300' 
-                      : hoveredNode.accreditation_status === 'PENDING'
-                      ? 'bg-yellow-900 text-yellow-300'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}>
-                    {hoveredNode.accreditation_status || 'Not Started'}
-                  </span>
+              {/* Key Details Grid - 6 specific fields in order */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">Type</div>
+                  <div className="font-medium" style={{ color: INSIGHT_COLORS.semantic.primary }}>
+                    {getRoleType(hoveredNode.category)}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">Size</div>
+                  <div className="font-medium">{hoveredNode.num_employees?.toLocaleString() || 'N/A'} employees</div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">Revenue Tier</div>
+                  <div className="font-medium" style={{ color: INSIGHT_COLORS.categories.success }}>
+                    {formatRevenueTier(hoveredNode.revenue_tier)}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">ARR</div>
+                  <div className="font-medium" style={{ color: INSIGHT_COLORS.semantic.info }}>
+                    {formatRevenueValue(hoveredNode.revenue_value)}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">Risk Score</div>
+                  <div className="font-medium">{hoveredNode.risk_score || 'N/A'}</div>
+                </div>
+                
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wide">Accreditation</div>
+                  <div className="font-medium mt-1">
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      hoveredNode.accreditation_status === 'APPROVED' 
+                        ? 'text-green-300' 
+                        : hoveredNode.accreditation_status === 'PENDING'
+                        ? 'text-yellow-300'
+                        : 'text-gray-300'
+                    }`} style={{ 
+                      backgroundColor: hoveredNode.accreditation_status === 'APPROVED' 
+                        ? INSIGHT_COLORS.categories.success + '20'
+                        : hoveredNode.accreditation_status === 'PENDING'
+                        ? INSIGHT_COLORS.categories.warning + '20'
+                        : INSIGHT_COLORS.neutrals.gray + '20'
+                    }}>
+                      {hoveredNode.accreditation_status || 'Not Started'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
